@@ -39,8 +39,7 @@ The approximate structure is as follows.
                         
                         // "<propertyType>" must belong to one of the following three categories:
                         // 1. You can use well-known Java class names. In this case, write only the class name without the full package path. (e.g., java.lang.String > String)
-                        // 2. You can use one of the following values: Address, Portrait, Rating, Money, Email
-                        // 3. If there's a name defined in enumerations or valueObjects, you can use that name.
+                        // 2. If there's a name defined in enumerations or valueObjects, you can use that name.
                         ["type": "<propertyType>"], // If the type is String, do not specify the type.
                         ["isKey": true] // Indicates whether it's a primary key. Only one of the properties should have isKey set to true.
                     }

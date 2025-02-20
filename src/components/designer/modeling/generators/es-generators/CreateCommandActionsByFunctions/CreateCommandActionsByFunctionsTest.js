@@ -5,7 +5,7 @@ const { getEsValue, getEsDraft, esConfigs } = require("../mocks")
 
 class CreateCommandActionsByFunctionsTest {
     static async test() {
-        const esValue = getEsValue("libraryService", ["remainOnlyAggregate"]);
+        const esValue = getEsValue("civilApplication", ["remainOnlyAggregate"]);
 
 
         console.log("[*] 기존 이벤트 스토밍 정보: ", ESValueSummarizeWithFilter.getSummarizedESValue(
@@ -33,7 +33,7 @@ class CreateCommandActionsByFunctionsTest {
 
 
         generator.initInputs(
-            getEsDraft("libraryService"),
+            getEsDraft("civilApplication"),
             esValue,
             esConfigs.userInfo,
             esConfigs.information

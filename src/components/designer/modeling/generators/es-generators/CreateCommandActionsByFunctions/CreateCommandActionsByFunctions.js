@@ -300,11 +300,10 @@ Please follow these rules:
 Data Type Guidelines:
 1. Use appropriate Java data types:
    - Basic types: String, Long, Integer, Double, Boolean, Date
-   - Predefined complex types: Address, Portrait, Rating, Money, Email
    - Collection types: List<Type>, Set<Type>
-   - Custom types must be defined as Enumeration, ValueObject, or Entity within the Aggregate
+   - Custom types must be defined as Enumeration, ValueObject within the Aggregate
 2. Avoid using String type when a more specific type exists (e.g., use Date for dates, Integer for counts)
-3. For arrays/collections, always use List<Type> format (e.g., List<Address>, List<OrderItem>)
+3. For arrays/collections, always use List<Type> format (e.g., List<String>)
 
 Naming and Language Conventions:
 1. Technical names (classes, properties, methods) must be in English
@@ -522,7 +521,7 @@ Inference Guidelines:
                                     },
                                     {
                                         "name": "totalAmount",
-                                        "type": "Money"
+                                        "type": "Integer"
                                     }
                                 ],
                                 "enumerations": [
@@ -546,8 +545,7 @@ Inference Guidelines:
                                                 "name": "name"
                                             },
                                             {
-                                                "name": "email",
-                                                "type": "Email"
+                                                "name": "email"
                                             },
                                             {
                                                 "name": "phoneNumber"
@@ -638,7 +636,7 @@ Inference Guidelines:
                                     },
                                     {
                                         "name": "basePrice",
-                                        "type": "Money"
+                                        "type": "Double"
                                     },
                                     {
                                         "name": "status",
@@ -756,16 +754,16 @@ Inference Guidelines:
                 "entities": {
                     "Booking": {
                         "properties": [
-                            {"name": "bookingNumber", "type": "string", "required": true, "isPrimaryKey": true},
-                            {"name": "guestId", "type": "string", "required": true, "isForeignKey": true, "foreignEntity": "Guest"},
-                            {"name": "roomType", "type": "string", "required": true},
-                            {"name": "checkInDate", "type": "date", "required": true},
-                            {"name": "checkOutDate", "type": "date", "required": true},
-                            {"name": "numberOfGuests", "type": "integer", "required": true},
+                            {"name": "bookingNumber", "type": "String", "required": true, "isPrimaryKey": true},
+                            {"name": "guestId", "type": "String", "required": true, "isForeignKey": true, "foreignEntity": "Guest"},
+                            {"name": "roomType", "type": "String", "required": true},
+                            {"name": "checkInDate", "type": "Date", "required": true},
+                            {"name": "checkOutDate", "type": "Date", "required": true},
+                            {"name": "numberOfGuests", "type": "Integer", "required": true},
                             {"name": "mealPlan", "type": "enum", "required": true, "values": ["No Meal", "Breakfast Only", "Half Board", "Full Board"]},
-                            {"name": "specialRequests", "type": "string", "required": false},
+                            {"name": "specialRequests", "type": "String", "required": false},
                             {"name": "status", "type": "enum", "required": true, "values": ["Active", "Completed", "Cancelled"]},
-                            {"name": "totalAmount", "type": "decimal", "required": true}
+                            {"name": "totalAmount", "type": "Integer", "required": true}
                         ]
                     }
                 },
@@ -954,7 +952,7 @@ Inference Guidelines:
                                 },
                                 {
                                     "name": "totalAmount",
-                                    "type": "Money"
+                                    "type": "Integer"
                                 }
                             ]
                         }
@@ -1012,7 +1010,7 @@ Inference Guidelines:
                                 },
                                 {
                                     "name": "refundAmount",
-                                    "type": "Money"
+                                    "type": "Integer"
                                 }
                             ]
                         }
@@ -1058,7 +1056,7 @@ Inference Guidelines:
                                 },
                                 {
                                     "name": "totalAmount",
-                                    "type": "Money"
+                                    "type": "Integer"
                                 }
                             ],
                             "actor": "Guest"

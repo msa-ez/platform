@@ -96,45 +96,55 @@ class PreProcessingFunctionsGenerator extends FormattedJSONAIGenerator{
     }
 
     __buildTaskGuidelinesPrompt(){
-        return `You are tasked with thoroughly analyzing the user's requirements and converting them into a structured, unambiguous output. Follow these detailed guidelines to ensure a high-quality result:
+        return `You are tasked with analyzing the user requirements and converting them into a structured, unambiguous output. Please follow the detailed guidelines below to ensure a comprehensive and high-quality result:
 
 1. Comprehensive Analysis:
    - Capture all explicit requirements provided by the user.
    - Identify and include any implicit or inferred requirements.
-   - Consider dependencies and potential chain of events resulting from the requirements.
+   - Consider dependencies and potential chain reactions arising from the requirements.
 
 2. Clarity & Precision:
-   - Reformulate the user input to eliminate ambiguities.
-   - Use precise language to clearly define the scope and expectations.
+   - Restate the user input with precise language to eliminate ambiguities.
+   - Clearly define the scope, expectations, and validation rules.
 
 3. Structured Formatting:
-   - Ensure the output strictly adheres to the specified JSON format without any extra commentary.
-   - Organize the data into clearly defined sections (user stories, entities, business rules, interfaces).
+   - Produce the output strictly in the specified JSON format without any additional commentary.
+   - Organize the data into clearly defined sections such as user stories, entities, business rules, and interfaces.
 
-4. Validation & Completeness:
-   - Validate that all necessary fields and logical connections between requirements are addressed.
-   - Recheck for missed details or potential edge cases common to similar use cases.
+4. Entities Definition:
+   - For each entity's property, specify the data type. Use Java's basic data types (e.g., String, Long, Integer, Double, Boolean, Date) or define an enum when appropriate.
+   - If an enum is used, list the possible values in the "values" field.
 
-5. Inference & Justification:
-   - When inferring additional requirements, base them on logical assumptions and common practices for similar domains.
-   - Ensure that the inferred requirements are clearly justified by the provided information.
+5. Interfaces Specification:
+   - Within each interface's sections, for the fields configuration, enumerate appropriate field types (e.g., text, select, option, date, password, textarea, number, etc.).
+   - Ensure that the field types accurately capture the intended method of user input.
 
-6. Quality Assurance:
-   - Review the final structured output for consistency and completeness.
-   - Avoid including any internal comments or chain-of-thought details in the JSON result.
+6. Validation & Completeness:
+   - Confirm that all mandatory fields and logical relationships between requirements are thoroughly addressed.
+   - Recheck for any overlooked details or potential edge cases common to similar use cases.
 
-By meticulously following these guidelines, you will create a clear, comprehensive, and high-quality representation of the user's requirements.
+7. Inference & Justification:
+   - When inferring additional requirements, base them on logical assumptions and industry best practices.
+   - Provide clear justification for all inferred elements based on the supplied information.
+
+8. Quality Assurance:
+   - Review the final output for consistency, clarity, and completeness.
+   - Do not include internal commentary or chain-of-thought explanations in the JSON result.
+
+By following these guidelines meticulously, you will deliver a robust, clear, and comprehensive representation of the user’s requirements.
 `
     }
 
     __buildInferenceGuidelinesPrompt() {
         return `
 Inference Guidelines:
-1. The process of reasoning should be directly related to the output result, not a reference to a general strategy.
-2. Thoroughly analyze all the provided user requirements, focusing on both explicit details and any implicit or inferred needs.
-3. Evaluate the overall context, considering domain complexity, stakeholder impact, and technical feasibility.
-4. For each functional area (overview, user stories, entities, business rules, interfaces), ensure that all necessary details are captured and potential edge cases are addressed.
-        `;
+1. The reasoning process must be directly related to producing the output result without referencing a general strategy.
+2. Thoroughly analyze all provided user requirements, capturing both explicit details and any implicit or inferred needs.
+3. Evaluate the overall context by taking into account domain complexity, stakeholder impact, and technical feasibility.
+4. For each functional area (overview, user stories, entities, business rules, interfaces), ensure that all necessary details and potential edge cases are addressed.
+5. When analyzing entity definitions, verify that each property's data type is specified using Java's basic types (e.g., int, double, boolean, String) or an enum where suitable, with enum options clearly listed in the "values" field.
+6. In interface specifications, confirm that each section’s fields clearly state the input type (e.g., text, select, option, date, password, textarea, number, etc.) to accurately reflect the intended user input.
+`
     }
 
     __buildJsonResponseFormat() {
@@ -211,108 +221,219 @@ The 'Reservation Status' screen should show all booking history for guests. It s
 
     __buildJsonExampleOutputFormat() {
         return {
-            "inference": `The analysis of the provided requirements indicates the necessity for two distinct functionalities: the "Room Booking" interface and the "Reservation Status" interface. For the Room Booking screen, explicit requirements focus on gathering guest details and booking specifics with precise validations—such as mandatory fields, a searchable room type input, calendar-based date selections, and dropdown options for meal plans. Implicit requirements include dynamic interaction behaviors, like conditionally enabling the booking action only when every required field is correctly completed, and ensuring consistency in data inputs (e.g., valid check-in/check-out dates). Meanwhile, the Reservation Status screen is expected to present a historical view of bookings with filtering capabilities by date range and status, alongside interactive elements such as detailed view pop-ups and options for modifying or cancelling active bookings. This inference succinctly encapsulates both the clear, explicit directives and the inferred, context-driven needs, ensuring that the output comprehensively addresses user stories, entity definitions, business rules, and interface specifications while aligning with stakeholder expectations and technical feasibility.`,
+            "inference": "Based on the provided requirements for hotel room reservation, two screens are necessary. The Room Booking screen enables guests to enter and submit detailed personal and booking information, ensuring mandatory fields are filled. The Reservation Status screen displays historical booking data with filtering options for date and status, allowing for modifications and cancellations.",
             "result": {
                 "userStories": [
                     {
-                        "title": "Create New Room Booking",
-                        "description": "As a guest, I want to book a hotel room with my preferences so that I can secure my stay",
+                        "title": "Room Booking",
+                        "description": "As a guest, I want to book a hotel room by providing my personal and booking details, so that I can secure a reservation.",
                         "acceptance": [
-                            "All required guest information must be provided",
-                            "Room type must be selected through search popup",
-                            "Valid check-in and check-out dates must be selected",
-                            "Meal plan must be chosen from available options",
-                            "Booking button activates only when all required fields are filled"
+                            "Guest and booking details are separated into distinct sections.",
+                            "All required fields are validated before enabling booking.",
+                            "Room type can be searched using a magnifying glass icon.",
+                            "Check-in and check-out dates are selected via a calendar."
                         ]
                     },
                     {
-                        "title": "View Reservation Status",
-                        "description": "As a guest, I want to view my booking history and manage active reservations",
+                        "title": "Reservation Status",
+                        "description": "As a guest, I want to view my booking history with options to filter by date and status, so that I can track my reservations.",
                         "acceptance": [
-                            "Bookings are filterable by date range and status",
-                            "Detailed booking information shows in popup on row click",
-                            "Active bookings can be modified or cancelled",
-                            "All booking details are displayed in organized table format"
+                            "The booking history is displayed in a table.",
+                            "Filters for date range and booking status are available.",
+                            "Clicking a row shows detailed booking information.",
+                            "Active bookings provide options for modification or cancellation."
                         ]
                     }
                 ],
                 "entities": {
                     "Guest": {
                         "properties": [
-                            {"name": "guestId", "type": "string", "required": true, "isPrimaryKey": true},
-                            {"name": "name", "type": "string", "required": true},
-                            {"name": "membershipLevel", "type": "enum", "required": true, "values": ["standard", "VIP"]},
-                            {"name": "phoneNumber", "type": "string", "required": true},
-                            {"name": "email", "type": "string", "required": true}
+                            {
+                                "name": "name",
+                                "type": "String",
+                                "required": true
+                            },
+                            {
+                                "name": "guestId",
+                                "type": "String",
+                                "required": true,
+                                "isPrimaryKey": true
+                            },
+                            {
+                                "name": "membershipLevel",
+                                "type": "enum",
+                                "required": true,
+                                "values": ["standard", "VIP"]
+                            },
+                            {
+                                "name": "phoneNumber",
+                                "type": "String",
+                                "required": true
+                            },
+                            {
+                                "name": "email",
+                                "type": "String",
+                                "required": true
+                            },
+                            {
+                                "name": "activeBookings",
+                                "type": "Integer",
+                                "required": false
+                            }
                         ]
                     },
                     "Booking": {
                         "properties": [
-                            {"name": "bookingNumber", "type": "string", "required": true, "isPrimaryKey": true},
-                            {"name": "guestId", "type": "string", "required": true, "isForeignKey": true, "foreignEntity": "Guest"},
-                            {"name": "roomType", "type": "string", "required": true},
-                            {"name": "checkInDate", "type": "date", "required": true},
-                            {"name": "checkOutDate", "type": "date", "required": true},
-                            {"name": "numberOfGuests", "type": "integer", "required": true},
-                            {"name": "mealPlan", "type": "enum", "required": true, "values": ["No Meal", "Breakfast Only", "Half Board", "Full Board"]},
-                            {"name": "specialRequests", "type": "string", "required": false},
-                            {"name": "status", "type": "enum", "required": true, "values": ["Active", "Completed", "Cancelled"]},
-                            {"name": "totalAmount", "type": "decimal", "required": true}
+                            {
+                                "name": "bookingNumber",
+                                "type": "String",
+                                "required": true,
+                                "isPrimaryKey": true
+                            },
+                            {
+                                "name": "roomType",
+                                "type": "String",
+                                "required": true
+                            },
+                            {
+                                "name": "checkInDate",
+                                "type": "Date",
+                                "required": true
+                            },
+                            {
+                                "name": "checkOutDate",
+                                "type": "Date",
+                                "required": true
+                            },
+                            {
+                                "name": "numberOfGuests",
+                                "type": "Integer",
+                                "required": true
+                            },
+                            {
+                                "name": "mealPlan",
+                                "type": "enum",
+                                "required": true,
+                                "values": ["No Meal", "Breakfast Only", "Half Board", "Full Board"]
+                            },
+                            {
+                                "name": "specialRequests",
+                                "type": "String",
+                                "required": false
+                            }
                         ]
                     }
                 },
                 "businessRules": [
                     {
-                        "name": "ValidBookingDates",
-                        "description": "Check-out date must be after check-in date"
+                        "name": "Mandatory Fields",
+                        "description": "All fields except 'specialRequests' must be provided to enable the booking process."
                     },
                     {
-                        "name": "RequiredFields",
-                        "description": "All fields except special requests are mandatory for booking"
-                    },
-                    {
-                        "name": "ActiveBookingModification",
-                        "description": "Only active bookings can be modified or cancelled"
+                        "name": "Calendar Date Selection",
+                        "description": "Both check-in and check-out dates must be selected through a calendar to ensure correct date formatting."
                     }
                 ],
                 "interfaces": {
                     "RoomBooking": {
                         "sections": [
                             {
-                                "name": "GuestInformation",
+                                "name": "Guest Information",
                                 "type": "form",
                                 "fields": [
-                                    {"name": "name", "type": "text", "required": true},
-                                    {"name": "guestId", "type": "text", "required": true},
-                                    {"name": "membershipLevel", "type": "select", "required": true},
-                                    {"name": "phoneNumber", "type": "text", "required": true},
-                                    {"name": "email", "type": "email", "required": true}
-                                ]
+                                    {
+                                        "name": "name",
+                                        "type": "text",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "guestId",
+                                        "type": "text",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "membershipLevel",
+                                        "type": "select",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "phoneNumber",
+                                        "type": "text",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "email",
+                                        "type": "text",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "activeBookings",
+                                        "type": "number",
+                                        "required": false
+                                    }
+                                ],
+                                "actions": [],
+                                "filters": [],
+                                "resultTable": {
+                                    "columns": [],
+                                    "actions": []
+                                }
                             },
                             {
-                                "name": "BookingDetails",
+                                "name": "Booking Details",
                                 "type": "form",
                                 "fields": [
-                                    {"name": "roomType", "type": "search", "required": true},
-                                    {"name": "checkInDate", "type": "date", "required": true},
-                                    {"name": "checkOutDate", "type": "date", "required": true},
-                                    {"name": "numberOfGuests", "type": "number", "required": true},
-                                    {"name": "mealPlan", "type": "select", "required": true},
-                                    {"name": "specialRequests", "type": "textarea", "required": false}
+                                    {
+                                        "name": "roomType",
+                                        "type": "text",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "checkInDate",
+                                        "type": "date",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "checkOutDate",
+                                        "type": "date",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "numberOfGuests",
+                                        "type": "number",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "mealPlan",
+                                        "type": "select",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "specialRequests",
+                                        "type": "textarea",
+                                        "required": false
+                                    }
                                 ],
-                                "actions": ["Submit", "Clear"]
+                                "actions": ["Book Room"],
+                                "filters": [],
+                                "resultTable": {
+                                    "columns": [],
+                                    "actions": []
+                                }
                             }
                         ]
                     },
                     "ReservationStatus": {
                         "sections": [
                             {
-                                "name": "BookingHistory",
+                                "name": "Booking History",
                                 "type": "table",
+                                "fields": [],
+                                "actions": ["Modify Booking", "Cancel Booking"],
                                 "filters": ["dateRange", "bookingStatus"],
                                 "resultTable": {
                                     "columns": ["bookingNumber", "roomType", "checkInDate", "checkOutDate", "totalAmount", "status"],
-                                    "actions": ["viewDetails", "modify", "cancel"]
+                                    "actions": ["View Details"]
                                 }
                             }
                         ]

@@ -25,8 +25,7 @@ The approximate structure is as follows.
 
                         // "<propertyType>" must belong to one of the following three categories:
                         // 1. Well-known Java class names. In this case, write only the class name without the full package path. (e.g., java.lang.String > String)
-                        // 2. One of the following values: Address, Photo, User, Money, Email, Payment, Weather, File, Likes, Tags, Comment
-                        // 3. If there's a name defined in Enumerations or ValueObjects or Entities, It can be used as the property type.
+                        // 2. If there's a name defined in Enumerations or ValueObjects or Entities, It can be used as the property type.
                         // If the type is String, do not specify the type.
                         ["type": "<propertyType>"],
 

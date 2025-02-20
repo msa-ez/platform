@@ -202,19 +202,13 @@
                         const aggregateName = getValidAlias(item.aggregate.alias);
                         addClass(aggregateName, "Aggregate Root");
 
-                        if (Array.isArray(item.entities)) {
-                            item.entities.forEach(entity => {
-                                if (!entity.alias) return;
-                                const entityName = getValidAlias(entity.alias);
-                                addClass(entityName, "Entity");
-                                relationships.add(`    ${aggregateName} --> ${entityName}`);
-
-                                if (entity.referencedAggregate && entity.referencedAggregate.alias) {
-                                    const refAggName = entity.referencedAggregate.alias;
-                                    addClass(refAggName, "Aggregate Root");
-                                    relationships.add(`    ${entityName} --> ${refAggName}`);
-                                }
-                            });
+                        if (Array.isArray(item.enumerations)) {
+                            item.enumerations.forEach(enumeration => {
+                                if (!enumeration.alias) return;
+                                const enumerationName = getValidAlias(enumeration.alias);
+                                addClass(enumerationName, "Enumeration");
+                                relationships.add(`    ${aggregateName} --> ${enumerationName}`);
+                            })
                         }
 
                         if (Array.isArray(item.valueObjects)) {

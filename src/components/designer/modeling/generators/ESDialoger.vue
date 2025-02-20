@@ -352,7 +352,7 @@
                                 name: aggregate.name,
                                 alias: aggregate.alias
                             },
-                            entities: [],
+                            enumerations: [],
                             valueObjects: [] 
                         }));
                         accumulatedDrafts[boundedContext.name] = aggregates;
@@ -498,9 +498,6 @@
                 }
             })
             this.generators.DraftGeneratorByFunctions.generate = (structuredDescription, boundedContext, analysisResult) => {
-                // 해당 초안은 새롭게 생성시킬 대상이기 때문에 초가화된 상태로 전달함
-                this.generators.DraftGeneratorByFunctions.accumulatedDrafts[boundedContext.name] = []
-
                 this.generators.DraftGeneratorByFunctions.generator.client.input = {
                     description: structuredDescription,
                     boundedContext: boundedContext,
@@ -679,7 +676,9 @@
                             userStory: ''
                         }
                     }
-                    this.value.userStory = content;
+
+                    if(content && content.length > 0)
+                        this.value.userStory = content;
                 }
             },
 

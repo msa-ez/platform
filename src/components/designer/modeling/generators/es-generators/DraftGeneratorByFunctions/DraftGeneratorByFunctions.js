@@ -42,9 +42,9 @@ class DraftGeneratorByFunctions extends FormattedJSONAIGenerator{
                         aggregateElements = targetAggregate.aggregateRoot.entities.elements
                     }
 
-                    selectedOption.entities = aggregateInfo.entities.map(entityInfo => ({
-                        name: entityInfo.name,
-                        alias: (aggregateElements && aggregateElements[entityInfo.id]) ? aggregateElements[entityInfo.id].displayName : entityInfo.name
+                    selectedOption.enumerations = aggregateInfo.enumerations.map(enumInfo => ({
+                        name: enumInfo.name,
+                        alias: (aggregateElements && aggregateElements[enumInfo.id]) ? aggregateElements[enumInfo.id].displayName : enumInfo.name
                     }))
 
                     selectedOption.valueObjects = aggregateInfo.valueObjects.map(valueObjectInfo => ({
@@ -77,7 +77,7 @@ class DraftGeneratorByFunctions extends FormattedJSONAIGenerator{
                                         name: z.string(),
                                         alias: z.string()
                                     }).strict(),
-                                    entities: z.array(
+                                    enumerations: z.array(
                                         z.object({
                                             name: z.string(),
                                             alias: z.string()
@@ -121,6 +121,16 @@ class DraftGeneratorByFunctions extends FormattedJSONAIGenerator{
     }
     
     onGenerateBefore(inputParams){
+        inputParams.accumulatedDrafts = structuredClone(inputParams.accumulatedDrafts)
+        inputParams.aggregateNamesToSuggest = inputParams.accumulatedDrafts[inputParams.boundedContext.name]
+            .map(aggregateInfo => 
+                ({
+                    name: aggregateInfo.aggregate.name,
+                    alias: aggregateInfo.aggregate.alias
+                })
+            )
+        inputParams.accumulatedDrafts[inputParams.boundedContext.name] = []
+
         const existingAggregates = []
         for(const aggregateInfos of Object.values(inputParams.accumulatedDrafts)) {
             for(const aggregateInfo of aggregateInfos) {
@@ -128,18 +138,21 @@ class DraftGeneratorByFunctions extends FormattedJSONAIGenerator{
             }
         }
         inputParams.existingAggregates = existingAggregates
+
         inputParams.boundedContextDisplayName = inputParams.boundedContext.displayName ? inputParams.boundedContext.displayName : inputParams.boundedContext.name
         inputParams.subjectText = `Generating options for ${inputParams.boundedContextDisplayName} Bounded Context`
     }
 
 
     __buildAgentRolePrompt(){
-        return `You are a seasoned DDD architect with expertise in:
-- Structuring complex domains into aggregates
-- Defining boundaries for entities and value objects
-- Ensuring encapsulation and consistency
-- Creating scalable domain models
-- Weighing design options against business needs
+        return `You are a distinguished Domain-Driven Design (DDD) architect with extensive expertise in:
+- Structuring complex domains into well-defined aggregates
+- Aligning design proposals with detailed functional requirements and business rules
+- Ensuring transactional consistency, maintainability, and scalability
+- Evaluating design options based on cohesion, coupling, performance, and consistency
+- Accurately defining and referencing value objects and enumerations
+
+Your role is to draft proposals that clearly articulate aggregate boundaries, enforce business invariants, and select the optimal design among multiple options. Adhere strictly to naming conventions (use English for all object names) and rigorously analyze each design option in light of both functional requirements and business rules.
 `
     }
 
@@ -155,26 +168,34 @@ Guidelines:
 2. Transactional Consistency  
    - Consolidate transaction-critical data within a single Aggregate to preserve atomicity.  
    - Avoid splitting core transactional data (e.g., do not separate elements such as loan/loan details or order/order items).  
-   - Define Aggregate boundaries that respect the inherent business invariants.
+   - Define Aggregate boundaries that respect inherent business invariants.
 
 3. Design for Maintainability  
-   - Distribute properties across well-defined Value Objects and Entities to improve maintainability.  
-   - Avoid creating Value Objects or Entities with only one property unless they represent a significant domain concept.
+   - Distribute properties across well-defined Value Objects to improve maintainability.  
+   - Avoid creating Value Objects with only one property unless they represent a significant domain concept.  
+   - Unless in special cases, do not create meaningless or redundant Value Objects; include related properties directly within the Aggregate.  
+   - Do not derive an excessive number of Value Objects.
 
-4. Naming and Language Conventions  
+4. Proper Use of Enumerations  
+   - When storing state or similar information, always use Enumerations.  
+   - Ensure that all Enumerations are directly associated with the Aggregate and are not embedded within or produced by Value Objects.
+
+5. Naming and Language Conventions  
    - Use English for all object names.  
-   - Utilize the user’s preferred language for aliases, pros, cons, conclusions, and other descriptive elements to ensure clarity.
+   - Utilize the user’s preferred language for aliases, descriptions, pros, cons, conclusions, and other descriptive elements to ensure clarity.
 
-5. Reference Handling and Duplication Avoidance  
-   - Before creating an Aggregate, check if an Aggregate with the same core concept already exists in either accumulated drafts or other Bounded Contexts.  
-   - If it exists, reference it using a Value Object with a foreign key instead of duplicating its definition.  
+6. Reference Handling and Duplication Avoidance  
+   - Before creating an Aggregate, check if an Aggregate with the same core concept already exists in either accumulated drafts or in other Bounded Contexts.  
+   - If it exists, reference it using a Value Object with a foreign key rather than duplicating its definition.  
    - Ensure that any Aggregate referenced via a Value Object has a corresponding, pre-existing definition either in accumulated drafts or in the current design.
 
-6. Aggregate References  
+7. Aggregate References  
    - Aggregates that relate to other Aggregates should use Value Objects to hold these references.  
-   - Avoid bidirectional references: Ensure that references remain unidirectional by carefully determining which Aggregate owns the reference based on ownership and lifecycle dependencies.
+   - When referencing another Aggregate and it is a ValueObject, write the name as '<Referenced Aggregate Name> + Reference'. The same applies for aliases.
+   - Avoid bidirectional references: ensure that references remain unidirectional by carefully determining which Aggregate owns the reference based on ownership and lifecycle dependencies.  
+   - All Value Objects and Enumerations must be directly related to an Aggregate and should not be used to define or wrap additional independent Value Objects.
 
-7. Output Requirements  
+8. Output Requirements  
    - The final JSON output must not include any inline comments.  
    - Maintain clarity and conciseness in the JSON structure.
 
@@ -183,7 +204,7 @@ Proposal Writing Recommendations:
 - Design Proposals:  
   - Each Aggregate should encapsulate a complete business capability and enforce its invariants.  
   - Generate distinct design options that address transactional consistency, performance, scalability, and maintainability.  
-  - Clearly articulate the rationale for selecting a default option from your proposals.
+  - Clearly articulate the rationale for selecting a default option among your proposals.
 
 - Default Option Selection Criteria:  
   - Transactional Consistency: Ensure atomic operations and safeguard business invariants.  
@@ -200,11 +221,16 @@ Consistency > Domain Alignment > Performance > Maintainability > Flexibility
         return `
 Inference Guidelines:
 1. The process of reasoning should be directly related to the output result, not a reference to a general strategy.
-2. Thoroughly analyze the provided functional requirements, business rules, and the bounded context to understand the problem domain.
-3. Focus on determining aggregate boundaries and ensuring transactional consistency while grouping related entities and value objects.
-4. Evaluate multiple design options by considering key factors such as domain complexity, scalability, maintainability, and future flexibility.
-5. Assess the pros and cons of each option in terms of cohesion, coupling, consistency, performance, and encapsulation.
-6. Follow naming conventions strictly: all object names must be in English, while all aliases should be in the user's preferred language.
+2. Analyze the provided functional requirements, business rules, and the bounded context thoroughly to understand the problem domain.
+3. Focus on clearly defining aggregate boundaries and ensuring transactional consistency while properly grouping related entities and value objects.
+4. Evaluate multiple design options by considering factors such as domain complexity, scalability, maintainability, and future flexibility.
+5. Assess each option's strengths and weaknesses in terms of cohesion, coupling, consistency, performance, and encapsulation.
+6. Strictly adhere to naming conventions: all object names must be in English, and all aliases should be in the user's preferred language.
+7. Ensure proper handling of Value Objects and Enumerations:
+   - When storing state or similar information, always use Enumerations.
+   - All Value Objects and Enumerations must be directly associated with an Aggregate; avoid defining nested or indirect Value Objects.
+   - Refrain from creating meaningless or redundant Value Objects except in special cases.
+   - Do not derive an excessive number of Value Objects; incorporate properties directly into the Aggregate when appropriate.
 `   
     }
 
@@ -221,7 +247,7 @@ Inference Guidelines:
                             "name": "<name>",
                             "alias": "<alias>"
                         },
-                        "entities": [{
+                        "enumerations": [{
                             "name": "<name>",
                             "alias": "<alias>"
                         }],
@@ -264,144 +290,127 @@ Inference Guidelines:
     __buildJsonExampleInputFormat() {
         return {
             "Accumulated Drafts": {
-                "GuestManagement": [
+                "OrderProcessing": [],
+                "CustomerManagement": [
                     {
                         "aggregate": {
-                            "name": "Guest",
-                            "alias": "Hotel Guest Profile"
+                            "name": "CustomerProfile",
+                            "alias": "Customer Profile Data"
                         },
-                        "entities": [{
-                            "name": "GuestPreference",
-                            "alias": "Guest Stay Preferences"
-                        }],
-                        "valueObjects": [{
-                            "name": "GuestContact",
-                            "alias": "Guest Contact Information"
-                        }]
+                        "enumerations": [
+                            {
+                                "name": "CustomerType",
+                                "alias": "Customer Type Enumeration"
+                            }
+                        ],
+                        "valueObjects": [
+                            {
+                                "name": "CustomerAddress",
+                                "alias": "Customer Address Info"
+                            }
+                        ]
                     }
                 ],
-                "RoomManagement": [
+                "InventoryManagement": [
                     {
                         "aggregate": {
-                            "name": "Room",
-                            "alias": "Hotel Room"
+                            "name": "Product",
+                            "alias": "Product Details"
                         },
-                        "entities": [{
-                            "name": "RoomInventory",
-                            "alias": "Room Availability Management"
-                        }],
-                        "valueObjects": [{
-                            "name": "RoomRate",
-                            "alias": "Room Price Information"
-                        }]
+                        "enumerations": [
+                            {
+                                "name": "ProductStatus",
+                                "alias": "Product Availability Status"
+                            }
+                        ],
+                        "valueObjects": [
+                            {
+                                "name": "ProductSpecification",
+                                "alias": "Detailed Specifications"
+                            }
+                        ]
                     }
                 ]
             },
-
-            "Target Bounded Context Name": "BookingManagement",
-
+            "Target Bounded Context Name": "OrderProcessing",
             "Functional Requirements": {
                 "userStories": [
                     {
-                        "title": "Create New Room Booking",
-                        "description": "As a guest, I want to book a hotel room with my preferences so that I can secure my stay",
+                        "title": "Place an Order",
+                        "description": "As a customer, I want to place an order so that I can purchase products online.",
                         "acceptance": [
-                            "All required guest information must be provided",
-                            "Room type must be selected through search popup",
-                            "Valid check-in and check-out dates must be selected",
-                            "Meal plan must be chosen from available options",
-                            "Booking button activates only when all required fields are filled"
+                            "The order must include at least one product.",
+                            "Customer information is validated.",
+                            "Order total is correctly calculated.",
+                            "Payment process is invoked and approved."
                         ]
                     },
                     {
-                        "title": "View Reservation Status",
-                        "description": "As a guest, I want to view my booking history and manage active reservations",
+                        "title": "Cancel an Order",
+                        "description": "As a customer, I want to cancel my order before it is processed.",
                         "acceptance": [
-                            "Bookings are filterable by date range and status",
-                            "Detailed booking information shows in popup on row click",
-                            "Active bookings can be modified or cancelled",
-                            "All booking details are displayed in organized table format"
+                            "Only orders that are not yet shipped can be cancelled.",
+                            "Cancellation triggers refund initiation.",
+                            "Order status reflects cancellation."
                         ]
                     }
                 ],
                 "entities": {
-                    "Guest": {
+                    "Order": {
                         "properties": [
-                            {"name": "guestId", "type": "string", "required": true, "isPrimaryKey": true},
-                            {"name": "name", "type": "string", "required": true},
-                            {"name": "membershipLevel", "type": "enum", "required": true, "values": ["standard", "VIP"]},
-                            {"name": "phoneNumber", "type": "string", "required": true},
-                            {"name": "email", "type": "string", "required": true}
+                            {"name": "orderId", "type": "String", "required": true, "isPrimaryKey": true},
+                            {"name": "customerId", "type": "String", "required": true, "isForeignKey": true, "foreignEntity": "CustomerProfile"},
+                            {"name": "orderDate", "type": "Date", "required": true},
+                            {"name": "shippingAddress", "type": "String", "required": true},
+                            {"name": "totalAmount", "type": "Integer", "required": true},
+                            {"name": "orderStatus", "type": "enum", "required": true, "values": ["Pending", "Confirmed", "Shipped", "Cancelled"]}
                         ]
                     },
-                    "Booking": {
+                    "Payment": {
                         "properties": [
-                            {"name": "bookingNumber", "type": "string", "required": true, "isPrimaryKey": true},
-                            {"name": "guestId", "type": "string", "required": true, "isForeignKey": true, "foreignEntity": "Guest"},
-                            {"name": "roomType", "type": "string", "required": true},
-                            {"name": "checkInDate", "type": "date", "required": true},
-                            {"name": "checkOutDate", "type": "date", "required": true},
-                            {"name": "numberOfGuests", "type": "integer", "required": true},
-                            {"name": "mealPlan", "type": "enum", "required": true, "values": ["No Meal", "Breakfast Only", "Half Board", "Full Board"]},
-                            {"name": "specialRequests", "type": "string", "required": false},
-                            {"name": "status", "type": "enum", "required": true, "values": ["Active", "Completed", "Cancelled"]},
-                            {"name": "totalAmount", "type": "decimal", "required": true}
+                            {"name": "paymentId", "type": "String", "required": true, "isPrimaryKey": true},
+                            {"name": "orderId", "type": "String", "required": true, "isForeignKey": true, "foreignEntity": "Order"},
+                            {"name": "paymentMethod", "type": "enum", "required": true, "values": ["CreditCard", "PayPal", "BankTransfer"]},
+                            {"name": "paymentStatus", "type": "enum", "required": true, "values": ["Successful", "Failed", "Pending"]}
                         ]
                     }
                 },
                 "businessRules": [
                     {
-                        "name": "ValidBookingDates",
-                        "description": "Check-out date must be after check-in date"
+                        "name": "OrderValidationRule",
+                        "description": "An order must have a valid total amount greater than zero."
                     },
                     {
-                        "name": "RequiredFields",
-                        "description": "All fields except special requests are mandatory for booking"
-                    },
-                    {
-                        "name": "ActiveBookingModification",
-                        "description": "Only active bookings can be modified or cancelled"
+                        "name": "CancellationPolicy",
+                        "description": "Orders can only be cancelled within 1 hour of placement if not confirmed."
                     }
                 ],
                 "interfaces": {
-                    "RoomBooking": {
+                    "OrderInterface": {
                         "sections": [
                             {
-                                "name": "GuestInformation",
+                                "name": "OrderForm",
                                 "type": "form",
                                 "fields": [
-                                    {"name": "name", "type": "text", "required": true},
-                                    {"name": "guestId", "type": "text", "required": true},
-                                    {"name": "membershipLevel", "type": "select", "required": true},
-                                    {"name": "phoneNumber", "type": "text", "required": true},
-                                    {"name": "email", "type": "email", "required": true}
-                                ]
-                            },
-                            {
-                                "name": "BookingDetails",
-                                "type": "form",
-                                "fields": [
-                                    {"name": "roomType", "type": "search", "required": true},
-                                    {"name": "checkInDate", "type": "date", "required": true},
-                                    {"name": "checkOutDate", "type": "date", "required": true},
-                                    {"name": "numberOfGuests", "type": "number", "required": true},
-                                    {"name": "mealPlan", "type": "select", "required": true},
-                                    {"name": "specialRequests", "type": "textarea", "required": false}
+                                    {"name": "customerId", "type": "text", "required": true},
+                                    {"name": "shippingAddress", "type": "textarea", "required": true},
+                                    {"name": "orderDetails", "type": "textarea", "required": true}
                                 ],
-                                "actions": ["Submit", "Clear"]
+                                "actions": ["Submit", "Reset"]
                             }
                         ]
                     },
-                    "ReservationStatus": {
+                    "PaymentInterface": {
                         "sections": [
                             {
-                                "name": "BookingHistory",
-                                "type": "table",
-                                "filters": ["dateRange", "bookingStatus"],
-                                "resultTable": {
-                                    "columns": ["bookingNumber", "roomType", "checkInDate", "checkOutDate", "totalAmount", "status"],
-                                    "actions": ["viewDetails", "modify", "cancel"]
-                                }
+                                "name": "PaymentForm",
+                                "type": "form",
+                                "fields": [
+                                    {"name": "orderId", "type": "text", "required": true},
+                                    {"name": "paymentMethod", "type": "dropdown", "required": true},
+                                    {"name": "paymentAmount", "type": "decimal", "required": true}
+                                ],
+                                "actions": ["Pay", "Cancel"]
                             }
                         ]
                     }
@@ -412,139 +421,124 @@ Inference Guidelines:
 
     __buildJsonExampleOutputFormat() {
         return {
-            "inference": `After thoroughly reviewing the provided requirements and business rules, we deduced that the domain model must strictly enforce transactional consistency while also accommodating future scalability. The functional requirements—such as booking creation and reservation management—demand that all critical data are processed atomically within clearly defined aggregate boundaries. Two primary design options emerged:
-
-1. **Option 1:** A single consolidated Aggregate (i.e., "Booking") encapsulates both booking logic and associated details. This approach simplifies transaction management and guarantees atomicity, yet it may become less scalable as system complexity increases.
-
-2. **Option 2:** A decomposed model, where “Booking” and “BookingDetail” are managed as separate Aggregates. This design fosters scalability and flexibility through a clear division of concerns, though it also introduces added complexity in ensuring coordinated transactions.
-
-Considering the priority order—Consistency > Domain Alignment > Performance > Maintainability > Flexibility—we inferred that while Option 1 promises simplicity, Option 2 is more advantageous for environments anticipating growth. Therefore, Option 2 is recommended as it better aligns with long-term scalability and maintainability objectives without compromising transactional consistency.`,
+            "inference": "After analyzing the functional requirements and existing drafts, two design options were generated. The first option integrates Order and Payment into a single aggregate, promoting transactional consistency and simplifying interactions. The second option separates Order and Payment into distinct aggregates, ensuring specialized focus on each domain concern.",
             "result": {
                 "options": [
                     {
                         "structure": [
                             {
                                 "aggregate": {
-                                    "name": "Booking",
-                                    "alias": "Room Reservation"
+                                    "name": "OrderWithPayment",
+                                    "alias": "Complete Order Processing"
                                 },
-                                "entities": [
+                                "enumerations": [
                                     {
-                                        "name": "BookingDetail",
-                                        "alias": "Reservation Details"
+                                        "name": "OrderStatus",
+                                        "alias": "Order Status"
+                                    },
+                                    {
+                                        "name": "PaymentStatus",
+                                        "alias": "Payment Status"
                                     }
                                 ],
                                 "valueObjects": [
                                     {
-                                        "name": "Guest",
-                                        "alias": "Guest Reference",
-                                        "referencedAggregateName": "Guest"
+                                        "name": "ShippingAddress",
+                                        "alias": "Shipping Address Details"
                                     },
                                     {
-                                        "name": "Room",
-                                        "alias": "Room Reference",
-                                        "referencedAggregateName": "Room"
-                                    },
-                                    {
-                                        "name": "StayPeriod",
-                                        "alias": "Booking Period"
-                                    },
-                                    {
-                                        "name": "BookingStatus",
-                                        "alias": "Reservation Status"
+                                        "name": "CustomerProfileReference",
+                                        "alias": "Customer Profile Reference",
+                                        "referencedAggregateName": "CustomerProfile"
                                     }
                                 ]
                             }
                         ],
                         "pros": {
-                            "cohesion": "High cohesion with clear booking focus",
-                            "coupling": "Minimal coupling through value object references",
-                            "consistency": "Strong consistency within booking boundary",
-                            "encapsulation": "Well-encapsulated booking logic",
-                            "complexity": "Simple and straightforward structure",
-                            "independence": "Can evolve independently of Guest and Room",
-                            "performance": "Efficient booking operations"
+                            "cohesion": "Very High: Consolidates order and payment data into one unit.",
+                            "coupling": "Very Low: Eliminates inter-aggregate dependencies.",
+                            "consistency": "Very High: Guarantees transactional integrity within a single aggregate.",
+                            "encapsulation": "High: Simplifies domain boundaries and data access.",
+                            "complexity": "Moderate: Larger aggregate, but simpler data model.",
+                            "independence": "High: Operates atomically within a unified structure.",
+                            "performance": "High: Faster operations due to reduced join operations."
                         },
                         "cons": {
-                            "cohesion": "May need to split if booking features grow",
-                            "coupling": "Depends on Guest and Room aggregates",
-                            "consistency": "Requires careful transaction management",
-                            "encapsulation": "Some booking rules may leak to UI",
-                            "complexity": "Must handle reference synchronization",
-                            "independence": "Cannot operate without Guest and Room",
-                            "performance": "Multiple aggregate lookups needed"
+                            "cohesion": "Moderate: A unified aggregate may grow too large over time.",
+                            "coupling": "Low: Limits modular reuse of payment components in other contexts.",
+                            "consistency": "Moderate: Potential bottleneck if aggregate becomes too large.",
+                            "encapsulation": "Moderate: Requires careful management of internal boundaries.",
+                            "complexity": "Moderate: Less flexibility for independent evolution of order and payment.",
+                            "independence": "Moderate: Single point of failure may impact the entire transaction.",
+                            "performance": "Moderate: Increased data payload may affect certain operations."
                         }
                     },
                     {
                         "structure": [
                             {
                                 "aggregate": {
-                                    "name": "Booking",
-                                    "alias": "Room Reservation"
+                                    "name": "Order",
+                                    "alias": "Order Management"
                                 },
-                                "entities": [],
+                                "enumerations": [
+                                    {
+                                        "name": "OrderStatus",
+                                        "alias": "Order Status"
+                                    }
+                                ],
                                 "valueObjects": [
                                     {
-                                        "name": "Guest",
-                                        "alias": "Guest Reference",
-                                        "referencedAggregateName": "Guest"
+                                        "name": "ShippingAddress",
+                                        "alias": "Order Shipping Address"
                                     },
                                     {
-                                        "name": "Room",
-                                        "alias": "Room Reference",
-                                        "referencedAggregateName": "Room"
-                                    },
-                                    {
-                                        "name": "BookingStatus",
-                                        "alias": "Reservation Status"
+                                        "name": "PaymentReference",
+                                        "alias": "Payment Reference",
+                                        "referencedAggregateName": "Payment"
                                     }
                                 ]
                             },
                             {
                                 "aggregate": {
-                                    "name": "BookingDetail",
-                                    "alias": "Reservation Details"
+                                    "name": "Payment",
+                                    "alias": "Payment Processing"
                                 },
-                                "entities": [],
+                                "enumerations": [
+                                    {
+                                        "name": "PaymentMethod",
+                                        "alias": "Payment Methods"
+                                    }
+                                ],
                                 "valueObjects": [
                                     {
-                                        "name": "Booking",
-                                        "alias": "Booking Reference",
-                                        "referencedAggregateName": "Booking"
-                                    },
-                                    {
-                                        "name": "StayPeriod",
-                                        "alias": "Booking Period"
-                                    },
-                                    {
-                                        "name": "MealPlan",
-                                        "alias": "Meal Selection"
+                                        "name": "PaymentDetails",
+                                        "alias": "Payment Details Info"
                                     }
                                 ]
                             }
                         ],
                         "pros": {
-                            "cohesion": "Separate concerns for booking and details",
-                            "coupling": "Clear separation of core booking and details",
-                            "consistency": "Can manage details separately from core booking",
-                            "encapsulation": "Better encapsulation of different aspects",
-                            "complexity": "Clear separation of responsibilities",
-                            "independence": "Can evolve booking details independently",
-                            "performance": "Can load details on demand"
+                            "cohesion": "High: Clearly dedicated aggregates for orders and payments.",
+                            "coupling": "Low: Minimal inter-dependency except for necessary references.",
+                            "consistency": "High: Transactional boundaries are well established.",
+                            "encapsulation": "Moderate: Payment is referenced externally.",
+                            "complexity": "Moderate: Managing two aggregates increases overall system complexity.",
+                            "independence": "High: Aggregates can scale independently.",
+                            "performance": "Moderate: Extra join for payment reference may add slight overhead."
                         },
                         "cons": {
-                            "cohesion": "Split of related concepts",
-                            "coupling": "Need to maintain consistency between aggregates",
-                            "consistency": "More complex transaction management",
-                            "encapsulation": "More complex relationship management",
-                            "complexity": "Additional aggregate to manage",
-                            "independence": "Must coordinate changes across aggregates",
-                            "performance": "Multiple queries for full booking info"
+                            "cohesion": "Moderate: Cross-aggregate references may require additional handling.",
+                            "coupling": "Moderate: Requires careful integration between Order and Payment.",
+                            "consistency": "Moderate: Ensuring data consistency across aggregates can be challenging.",
+                            "encapsulation": "Moderate: Clear boundaries may sometimes restrict data sharing.",
+                            "complexity": "Moderate: Increases design and maintenance overhead.",
+                            "independence": "Moderate: Coordination needed for transactions spanning both aggregates.",
+                            "performance": "Low: Potential latency due to cross-aggregate communication."
                         }
                     }
                 ],
-                "defaultOptionIndex": 2,
-                "conclusions": "Option 1 offers strong transactional consistency and simpler maintenance but limited scalability, while Option 2 provides better scalability and flexibility through separation of concerns at the cost of more complex transaction management - recommended for systems expecting growth in booking features and query requirements."
+                "defaultOptionIndex": 1,
+                "conclusions": "Option 1 is recommended when transactional consistency and simplified data management are prioritized, as it consolidates order and payment into a single aggregate. Option 2 may be chosen if modular separation and independent scalability of order and payment processes are preferred."
             }
         }
     }
@@ -558,34 +552,15 @@ Considering the priority order—Consistency > Domain Alignment > Performance > 
             "Functional Requirements": this.client.input.description,
 
             "Final Check List": `
-* Validate that all functional requirements and business rules are properly addressed in the design
-* Ensure proper aggregate boundaries and consistency rules are maintained
-* Check that all Entities and ValueObjects have meaningful properties and business value
-* Verify that no single-property objects exist without clear domain significance
 * Confirm naming conventions:
   - All object names must be in English and follow PascalCase
   - All aliases must be in ${this.preferredLanguage}
-* Verify aggregate references:
-  - Existing aggregates must be referenced via ValueObjects with foreign keys
-  - New aggregates must not duplicate existing ones
-* Review aggregate relationships:
-  - Consider using foreign key references between related aggregates
-  - Example: Order aggregate should reference Customer via CustomerReference ValueObject
-* Evaluate each option for:
-  - Technical feasibility
-  - Maintainability
-  - Scalability
-  - Consistency with DDD principles
-* The entities in Functional Requirements serve as a reference point only:
-  - You can propose alternative aggregate structures that better align with DDD principles
-  - Feel free to suggest different entity groupings and relationships
-  - You may introduce new entities or combine existing ones if it improves the domain model
-  - Focus on creating a design that best serves the business requirements and maintains consistency
-* For each option, create a different number of Aggregates configured. Ex) Option 1 consists of one Aggregate, Option 2 consists of two Aggregates.
 `,
 
             "Guidelines": `
 * The following Aggregate should not be created because it already exists, but should be made to reference a ValueObject.: ${(this.client.input.existingAggregates && this.client.input.existingAggregates.length > 0) ? this.client.input.existingAggregates.join(", ") : "None"}
+* Please include Aggregates with the following names among the generated Aggregates: ${this.client.input.aggregateNamesToSuggest.map(aggregate => `${aggregate.name}(${aggregate.alias})`).join(", ")}
+* Each generated option is created to have a different number of Aggregates.
 `
         }
 

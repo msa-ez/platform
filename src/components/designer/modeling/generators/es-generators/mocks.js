@@ -7701,202 +7701,78 @@ const esValues = {
                 "structure": [
                     {
                         "aggregate": {
-                            "name": "CivilComplaintApplication",
-                            "alias": "민원신청서"
+                            "name": "ApplicationForm",
+                            "alias": "민원 신청서"
                         },
-                        "entities": [
-                            {
-                                "name": "ApplicationData",
-                                "alias": "신청서 정보"
-                            }
-                        ],
-                        "valueObjects": [
+                        "enumerations": [
                             {
                                 "name": "ApplicationStatus",
-                                "alias": "신청서 상태",
-                                "referencedAggregateName": ""
-                            }
-                        ]
-                    }
-                ],
-                "pros": {
-                    "cohesion": "하나의 집합체 내에서 민원 신청의 전체 생명주기를 관리하여 높은 응집력을 보임",
-                    "coupling": "외부 집합체와의 의존성이 없으므로 낮은 결합도를 유지",
-                    "consistency": "트랜잭션 경계가 명확하여 상태 전이와 검증을 원자적으로 처리함",
-                    "encapsulation": "신청서 작성, 임시저장, 제출, 검토를 하나의 집합체에 캡슐화함",
-                    "complexity": "구조가 단순하여 이해와 유지보수가 용이함",
-                    "independence": "다른 맥락과 독립적으로 동작 가능함",
-                    "performance": "단일 집합체 내에서 처리하여 성능 저하 요인이 적음"
-                },
-                "cons": {
-                    "cohesion": "모든 로직이 한 집합체에 집중되어 향후 기능 확장 시 복잡성이 증가할 수 있음",
-                    "coupling": "집합체 내부에서 모든 책임을 다루므로 책임 분리가 명확하지 않을 수 있음",
-                    "consistency": "모든 변경을 단일 트랜잭션으로 관리해야 하므로 규모가 커질 경우 성능 이슈가 발생할 수 있음",
-                    "encapsulation": "신청서 검토와 승인/반려 로직이 신청서 작성과 동일 컨텍스트에 있어서 분리 필요성이 있음",
-                    "complexity": "기능 확장이 진행될 경우 단일 집합체의 복잡도가 증가할 수 있음",
-                    "independence": "모든 기능이 묶여 있어 일부 기능만 독립적으로 변경하기 어려움",
-                    "performance": "집합체 크기가 커질 경우 일부 작업에서 병목현상이 발생할 수 있음"
-                },
-                "isAIRecommended": false,
-                "boundedContext": {
-                    "name": "ApplicationManagement",
-                    "alias": "민원 신청 관리",
-                    "displayName": "민원 신청 관리",
-                    "description": "[{\"type\":\"userStory\",\"text\":\"UC-001: 민원 신청서 작성\\n• 액터: 민원 신청자\\n• 목적: 사용자가 간편하게 민원 신청서를 작성하여 필요한 정보를 입력한다.\\n• 전제조건: 민원 신청자가 시스템에 로그인(인증) 완료되어 있어야 함, 개인정보 및 민원 관련 정보 준비\\n• 기본 흐름: 신규 신청서 생성(newApplication), 입력, validateInput, 임시저장(success message)\\n• 예외: 입력값 검증 실패 시 오류 메시지 출력\\n\\nUC-002: 민원 신청서 제출\\n• 액터: 민원 신청자\\n• 목적: 작성 완료된 민원 신청서를 최종 제출\\n• 전제조건: UC-001을 통해 작성된 임시저장 신청서 존재\\n• 기본 흐름: 임시 저장된 신청서 불러오기, submitApplication 호출, 재검증 후 대기 상태 변경\\n• 예외: 필수 정보 미입력 시 제출 불가\\n\\nUC-003: 민원 신청서 검토 및 승인/반려\\n• 액터: 민원 담당자\\n• 목적: 제출된 민원 신청서를 검토하여 승인 혹은 반려 결정\\n• 전제조건: UC-002를 통해 제출된 신청서 대기 리스트 존재, 담당자 권한 보유\\n• 기본 흐름: listPendingApplications, 상세내용 확인, approveApplication 또는 rejectApplication 호출, 승인 시 후속 발급 자동 시작, 반려 시 반려 사유 기록 및 통보\\n• 예외: 시스템 오류 발생 시 오류 메시지 로그 기록 및 재시도 요청\"},{\"type\":\"ddl\",\"text\":\"민원 신청 관리와 관련된 데이터: 민원신청서(제목, 상세내용, 첨부파일, 신청자 개인정보 등) 및 신청서 상태(임시저장, 제출, 승인, 반려)\"}]",
-                    "aggregates": [
-                        {
-                            "name": "Application",
-                            "alias": "민원신청서"
-                        }
-                    ]
-                },
-                "description": "{\"userStories\":[{\"title\":\"UC-001: 민원 신청서 작성\",\"description\":\"민원 신청자로서, 로그인이 완료된 상태에서 간편하게 민원 신청서를 작성하고 임시 저장하여 나중에 활용할 수 있도록 한다.\",\"acceptance\":[\"시스템에 로그인이 완료되어 있어야 한다.\",\"newApplication 기능을 통해 신규 신청서가 생성되어야 한다.\",\"입력 후 validateInput을 통해 입력값이 검증되어야 한다.\",\"임시저장 시 success message가 표시되어야 한다.\",\"입력 검증 실패 시 오류 메시지가 출력되어야 한다.\"]},{\"title\":\"UC-002: 민원 신청서 제출\",\"description\":\"민원 신청자로서, 임시 저장된 민원 신청서를 불러와 최종 제출하여 처리 상태를 대기 상태로 변경하고자 한다.\",\"acceptance\":[\"UC-001에서 임시 저장된 신청서가 존재해야 한다.\",\"submitApplication 호출 시 재검증이 수행되어야 한다.\",\"필수 정보가 누락된 경우 제출이 불가해야 한다.\",\"제출 후 신청서 상태가 대기로 변경되어야 한다.\"]},{\"title\":\"UC-003: 민원 신청서 검토 및 승인/반려\",\"description\":\"민원 담당자로서, 제출된 민원 신청서를 검토하고 승인 또는 반려하여 후속 처리를 수행하고, 반려 시에는 사유를 기록하여 신청자에게 통보할 수 있어야 한다.\",\"acceptance\":[\"담당자는 listPendingApplications를 통해 대기 중인 신청서를 확인할 수 있어야 한다.\",\"상세 내용을 확인한 후 approveApplication 또는 rejectApplication 기능이 호출되어야 한다.\",\"승인 시 후속 발급이 자동으로 시작되어야 한다.\",\"반려 시 반려 사유가 기록되고 신청자에게 통보되어야 한다.\",\"시스템 오류 발생 시 오류 메시지가 로그에 기록되고 재시도 요청이 가능해야 한다.\"]}],\"entities\":{\"CivilComplaintApplication\":{\"properties\":[{\"name\":\"applicationId\",\"type\":\"string\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"title\",\"type\":\"string\",\"required\":true},{\"name\":\"detail\",\"type\":\"string\",\"required\":true},{\"name\":\"attachedFiles\",\"type\":\"string\"},{\"name\":\"applicantInfo\",\"type\":\"string\",\"required\":true},{\"name\":\"status\",\"type\":\"enum\",\"required\":true,\"values\":[\"임시저장\",\"제출\",\"승인\",\"반려\"]}]}},\"businessRules\":[{\"name\":\"InputValidation\",\"description\":\"모든 입력 필드는 validateInput 함수를 통해 필수 항목 및 형식이 검증되어야 한다.\"},{\"name\":\"SubmissionMandatoryFields\",\"description\":\"임시 저장된 신청서 제출 시 필수 정보가 누락되면 제출할 수 없다.\"},{\"name\":\"ApplicationReviewAuthorization\",\"description\":\"민원 담당자는 권한이 있는 경우에만 대기 중인 신청서를 검토할 수 있으며, 승인/반려 후 적절한 후속 조치가 이루어져야 한다.\"}],\"interfaces\":{\"CivilComplaintApplicationForm\":{\"sections\":[{\"name\":\"ApplicationForm\",\"type\":\"form\",\"fields\":[{\"name\":\"title\",\"type\":\"text\",\"required\":true},{\"name\":\"detail\",\"type\":\"textarea\",\"required\":true},{\"name\":\"attachedFiles\",\"type\":\"file\"},{\"name\":\"applicantInfo\",\"type\":\"text\",\"required\":true}],\"actions\":[\"newApplication\",\"validateInput\",\"tempSave\",\"submitApplication\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}}]},\"ApplicationReview\":{\"sections\":[{\"name\":\"PendingApplications\",\"type\":\"table\",\"fields\":[],\"actions\":[],\"filters\":[\"applicationStatus\"],\"resultTable\":{\"columns\":[\"applicationId\",\"title\",\"applicantInfo\",\"status\"],\"actions\":[\"viewDetails\",\"approveApplication\",\"rejectApplication\"]}}]}}}"
-            },
-            "DocumentIssuance": {
-                "structure": [
-                    {
-                        "aggregate": {
-                            "name": "MinwonDocument",
-                            "alias": "민원문서"
-                        },
-                        "entities": [
-                            {
-                                "name": "DocumentData",
-                                "alias": "문서데이터"
+                                "alias": "신청서 상태"
                             }
                         ],
                         "valueObjects": [
                             {
-                                "name": "ApprovedApplicationReference",
-                                "alias": "승인신청서참조",
+                                "name": "ApplicationReviewReference",
+                                "alias": "민원 신청서 검토 참조",
                                 "referencedAggregate": {
-                                    "name": "CivilComplaintApplication",
-                                    "alias": "민원신청서"
+                                    "name": "ApplicationReview",
+                                    "alias": "민원 신청서 검토"
                                 }
                             },
                             {
-                                "name": "TransmissionRecordVO",
-                                "alias": "전송기록",
-                                "referencedAggregateName": ""
+                                "name": "DocumentReference",
+                                "alias": "민원 문서 참조",
+                                "referencedAggregate": {
+                                    "name": "Document",
+                                    "alias": "민원 문서"
+                                }
                             }
                         ]
                     }
                 ],
                 "pros": {
-                    "cohesion": "문서 발급 프로세스의 모든 핵심 기능(문서 생성 및 전송)이 단일 집합체 내에서 관리되어 높은 응집력을 가짐",
-                    "coupling": "외부 집합체(민원 신청)의 참조를 값 객체로 관리하여 결합도를 낮춤",
-                    "consistency": "트랜잭션 단위가 하나로 통합되어 일관성 유지가 용이함",
-                    "encapsulation": "도메인 규칙 및 비즈니스 로직이 한 곳에 집중되어 캡슐화가 우수함",
-                    "complexity": "단일 집합체로 설계되어 구조가 단순해짐",
-                    "independence": "외부 집합체에 대한 참조만 존재하므로, 해당 집합체와의 독립적인 진화가 가능함",
-                    "performance": "단일 집합체 내에서 원자적 처리가 가능해 성능 최적화에 유리함"
+                    "cohesion": "매우 높음: 단일 Aggregate 내에서 임시저장 및 제출 로직을 모두 관리하여 도메인 일관성이 유지됨.",
+                    "coupling": "매우 낮음: 외부 Aggregate에 대한 참조는 ValueObject 형태로 외부와 독립적으로 유지됨.",
+                    "consistency": "매우 높음: 모든 트랜잭션이 단일 Aggregate 내에서 처리되어 일관성이 보장됨.",
+                    "encapsulation": "높음: 도메인 내부의 상태 변화와 규칙이 명확하게 캡술화됨.",
+                    "complexity": "낮음: 시스템 전체가 단일 Aggregate로 단순화되어 관리하기 쉬움.",
+                    "independence": "높음: 모든 관련 로직이 한곳에 집중되어 독립적인 운영이 가능함.",
+                    "performance": "높음: 단일 Aggregate 접근으로 인한 연산 효율성이 좋음."
                 },
                 "cons": {
-                    "cohesion": "모든 기능이 한 집합체에 집중되어, 기능 확장이 필요한 경우 경계 조정이 필요할 수 있음",
-                    "coupling": "외부 시스템(민원 신청)의 변경에 영향을 받을 수 있음",
-                    "consistency": "모든 발급 관련 데이터가 단일 트랜잭션으로 처리되어 일부 경우 트랜잭션 크기가 커질 수 있음",
-                    "encapsulation": "모든 로직이 한곳에 있으므로, 복잡한 비즈니스 로직은 관리가 필요함",
-                    "complexity": "기능 확장이 심해질 경우 단일 집합체의 복잡도가 증가할 수 있음",
-                    "independence": "외부 값을 참조하므로 완전한 독립성은 보장하기 어려움",
-                    "performance": "집합체 크기가 커질 경우, 처리 성능에 미세한 영향이 있을 수 있음"
+                    "cohesion": "중간: 임시 저장과 제출 프로세스가 하나의 Aggregate에 포함되어 경우에 따라 복잡도가 증가할 수 있음.",
+                    "coupling": "낮음: 다만, 단일 Aggregate의 변화가 전체 프로세스에 영향을 줄 수 있음.",
+                    "consistency": "중간: Aggregate 크기가 커질 경우 응답시간에 영향을 줄 가능성 있음.",
+                    "encapsulation": "중간: 여러 역할을 수행하는 만큼 내부 경계 관리는 주의가 필요함.",
+                    "complexity": "낮음: 단일 Aggregate 설계로 복잡도는 낮으나 다양한 상태 관리가 필요함.",
+                    "independence": "높음: 하나의 Aggregate로 전체 프로세스를 관리하지만 역할 구분이 다소 모호할 수 있음.",
+                    "performance": "높음: 단일 데이터 접근으로 빠른 성능을 기대할 수 있음."
                 },
                 "isAIRecommended": true,
                 "boundedContext": {
-                    "name": "DocumentIssuance",
-                    "alias": "문서 발급 서비스",
-                    "displayName": "문서 발급 서비스",
-                    "description": "[{\"type\":\"userStory\",\"text\":\"UC-004: 민원 신청 발급 처리\\n• 액터: 민원 담당자 (승인 처리 후 자동 또는 수동 실행 가능)\\n• 목적: 승인된 민원 신청서를 기반으로 공식 민원 문서를 발급\\n• 전제조건: UC-003에서 승인된 신청서, 문서 발급에 필요한 데이터 및 서식 준비\\n• 기본 흐름: 승인된 신청서 확인, issueDocument 호출, PDF 등 문서 생성, 업로드 또는 이메일 전송, 발급 성공 메시지 전달\\n• 예외: 문서 생성 실패 시 오류 로그 기록, 재시도 또는 수동 발급 처리\"},{\"type\":\"ddl\",\"text\":\"문서 발급과 관련된 데이터: 민원문서(PDF 또는 지정 포맷), 발급 상태 및 전송 기록\"}]",
-                    "aggregates": [
-                        {
-                            "name": "Document",
-                            "alias": "민원문서"
-                        }
-                    ]
-                },
-                "description": "{\"userStories\":[{\"title\":\"UC-004: 민원 신청 발급 처리\",\"description\":\"민원 담당자가 UC-003에서 승인된 신청서를 바탕으로 공식 민원 문서를 발급하는 프로세스를 수행한다. 승인된 신청서를 확인 후 issueDocument 함수를 호출하여 PDF 등 문서를 생성하고, 문서를 업로드하거나 이메일로 전송하며 발급 성공 메시지를 제공한다.\",\"acceptance\":[\"승인된 신청서를 기반으로 문서 발급이 이루어져야 한다.\",\"issueDocument 호출 후 PDF 또는 지정 포맷 문서를 생성해야 한다.\",\"문서 업로드 또는 이메일 전송이 성공적으로 수행되어야 한다.\",\"문서 생성 실패 시 오류 로그가 기록되고, 재시도 또는 수동 발급 처리가 가능해야 한다.\"]}],\"entities\":{\"MinwonDocument\":{\"properties\":[{\"name\":\"documentId\",\"type\":\"string\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"documentFormat\",\"type\":\"enum\",\"required\":true,\"values\":[\"PDF\",\"SpecifiedFormat\"]},{\"name\":\"issueStatus\",\"type\":\"enum\",\"required\":true,\"values\":[\"Issued\",\"Failed\",\"Pending\"]},{\"name\":\"transmissionRecord\",\"type\":\"string\",\"required\":true}]}},\"businessRules\":[{\"name\":\"DocumentGenerationSuccess\",\"description\":\"문서 생성은 성공해야 하며, 실패 시 오류 로그를 기록하고 재시도 또는 수동 발급 처리가 가능해야 한다.\"},{\"name\":\"ApprovedApplicationRequired\",\"description\":\"문서 발급은 UC-003에서 승인된 신청서를 기반으로 진행되어야 한다.\"}],\"interfaces\":{\"DocumentIssuance\":{\"sections\":[{\"name\":\"ApplicationReview\",\"type\":\"form\",\"fields\":[{\"name\":\"applicationId\",\"type\":\"text\",\"required\":true},{\"name\":\"approvalStatus\",\"type\":\"text\",\"required\":true}],\"actions\":[\"issueDocument\",\"retry\",\"manualIssue\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}}]}}}"
-            },
-            "SystemOperations": {
-                "structure": [
-                    {
-                        "aggregate": {
-                            "name": "SystemOperation",
-                            "alias": "시스템 운영"
-                        },
-                        "entities": [
-                            {
-                                "name": "OperationData",
-                                "alias": "운영 데이터"
-                            }
-                        ],
-                        "valueObjects": [
-                            {
-                                "name": "FallbackStatus",
-                                "alias": "백업 상태",
-                                "referencedAggregateName": ""
-                            }
-                        ]
-                    }
-                ],
-                "pros": {
-                    "cohesion": "모든 시스템 운영 관련 데이터가 단일 Aggregate 내에 응집되어 있음",
-                    "coupling": "타 Aggregate과의 의존성이 없으며 독립적으로 운영 가능",
-                    "consistency": "하나의 트랜잭션으로 모든 시스템 정보를 일관성 있게 처리",
-                    "encapsulation": "모니터링 및 백업 전환 로직이 Aggregate 내부에서 캡슐화됨",
-                    "complexity": "구조가 단순하여 유지보수와 이해가 용이함",
-                    "independence": "시스템 운영 전반을 하나의 후보군으로 관리하여 독립적 발전 가능",
-                    "performance": "단일 Aggregate 조회로 성능 최적화가 가능함"
-                },
-                "cons": {
-                    "cohesion": "모든 기능이 한 Aggregate에 포함되어 기능 확장이 어려울 수 있음",
-                    "coupling": "모든 변화가 단일 Aggregate에 집중되어 있음",
-                    "consistency": "Aggregate 내 데이터 과부하 발생 시 일관성 관리가 도전적일 수 있음",
-                    "encapsulation": "복잡한 로직은 내부 구현이 커질 위험이 있음",
-                    "complexity": "기능 확장이 필요한 경우 리팩토링 난이도 상승 가능",
-                    "independence": "모든 기능이 함께 배포되어 개별 기능 독립성이 제한될 수 있음",
-                    "performance": "모든 데이터를 단일 조회할 경우 잠재적 성능 병목이 발생할 수 있음"
-                },
-                "isAIRecommended": true,
-                "boundedContext": {
-                    "name": "SystemOperations",
-                    "alias": "시스템 운영 및 모니터링",
-                    "displayName": "시스템 운영 및 모니터링",
-                    "description": "[{\"type\":\"userStory\",\"text\":\"UC-005: 시스템 관리 및 모니터링\\n• 액터: 시스템 관리자\\n• 목적: 서비스 안정성 확보와 운영 효율성을 위해 시스템을 관리, 모니터링\\n• 전제조건: 관리자 전용 콘솔 접근 권한 보유\\n• 기본 흐름: monitorSystem 호출로 서버 상태, 트랜잭션 로그 등 확인, 장애 발생 시 알림 및 즉각 조치, 정기적인 업데이트 및 보안 점검 실행\\n• 예외: 모니터링 도구 오류 시 백업 로깅 시스템으로 전환, 수동 모니터링 조치\"},{\"type\":\"ddl\",\"text\":\"시스템 운영과 관련된 데이터: 서버 상태, 트랜잭션 로그, 장애 및 알림 기록\"}]",
-                    "aggregates": [
-                        {
-                            "name": "SystemStatus",
-                            "alias": "시스템상태"
-                        }
-                    ]
-                },
-                "description": "{\"userStories\":[{\"title\":\"UC-005: 시스템 관리 및 모니터링\",\"description\":\"시스템 관리자로서, 서비스의 안정성과 운영 효율성을 확보하기 위해 시스템을 모니터링하고 관리하고자 합니다. 관리자 전용 콘솔에 접근하여 monitorSystem 호출을 통해 서버 상태, 트랜잭션 로그 및 장애 발생 시 알림을 확인하고 즉각 조치할 수 있어야 합니다. 또한 정기적인 업데이트와 보안 점검이 실행됩니다.\",\"acceptance\":[\"관리자 전용 콘솔 접근 권한 보유\",\"monitorSystem 호출 시 서버 상태, 트랜잭션 로그 확인\",\"장애 발생 시 알림 및 즉각 조치\",\"정기 업데이트 및 보안 점검의 실행 확인\",\"모니터링 도구 오류 발생 시 백업 로깅 시스템으로 전환 및 수동 모니터링 조치\"]}],\"entities\":{\"SystemOperation\":{\"properties\":[{\"name\":\"serverStatus\",\"type\":\"string\",\"required\":true},{\"name\":\"transactionLog\",\"type\":\"string\",\"required\":true},{\"name\":\"alertRecords\",\"type\":\"string\",\"required\":true}]}},\"businessRules\":[{\"name\":\"MonitorFallback\",\"description\":\"모니터링 도구 오류 발생 시 자동으로 백업 로깅 시스템으로 전환하고 수동 모니터링 조치를 수행할 수 있어야 한다.\"}],\"interfaces\":{\"SystemMonitoringConsole\":{\"sections\":[{\"name\":\"SystemOverview\",\"type\":\"form\",\"fields\":[{\"name\":\"serverStatus\",\"type\":\"text\",\"required\":true},{\"name\":\"transactionLog\",\"type\":\"textarea\",\"required\":true},{\"name\":\"alertRecords\",\"type\":\"textarea\",\"required\":true}],\"actions\":[\"monitorSystem\",\"switchToBackup\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}}]}}}"
-            }
-        },
-        esValue: {
-            "elements": {
-                "1e909e6e-53f8-febb-f8e0-016837952467": {
                     "_type": "org.uengine.modeling.model.BoundedContext",
                     "aggregates": [
                         {
-                            "id": "626b7229-4e39-028a-5f05-99bf207ed201"
+                            "id": "39120b26-cdde-82ad-fa95-a25d828ad2b7"
                         }
                     ],
                     "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
-                    "description": "[{\"type\":\"userStory\",\"text\":\"UC-001: 민원 신청서 작성\\n• 액터: 민원 신청자\\n• 목적: 사용자가 간편하게 민원 신청서를 작성하여 필요한 정보를 입력한다.\\n• 전제조건: 민원 신청자가 시스템에 로그인(인증) 완료되어 있어야 함, 개인정보 및 민원 관련 정보 준비\\n• 기본 흐름: 신규 신청서 생성(newApplication), 입력, validateInput, 임시저장(success message)\\n• 예외: 입력값 검증 실패 시 오류 메시지 출력\\n\\nUC-002: 민원 신청서 제출\\n• 액터: 민원 신청자\\n• 목적: 작성 완료된 민원 신청서를 최종 제출\\n• 전제조건: UC-001을 통해 작성된 임시저장 신청서 존재\\n• 기본 흐름: 임시 저장된 신청서 불러오기, submitApplication 호출, 재검증 후 대기 상태 변경\\n• 예외: 필수 정보 미입력 시 제출 불가\\n\\nUC-003: 민원 신청서 검토 및 승인/반려\\n• 액터: 민원 담당자\\n• 목적: 제출된 민원 신청서를 검토하여 승인 혹은 반려 결정\\n• 전제조건: UC-002를 통해 제출된 신청서 대기 리스트 존재, 담당자 권한 보유\\n• 기본 흐름: listPendingApplications, 상세내용 확인, approveApplication 또는 rejectApplication 호출, 승인 시 후속 발급 자동 시작, 반려 시 반려 사유 기록 및 통보\\n• 예외: 시스템 오류 발생 시 오류 메시지 로그 기록 및 재시도 요청\"},{\"type\":\"ddl\",\"text\":\"민원 신청 관리와 관련된 데이터: 민원신청서(제목, 상세내용, 첨부파일, 신청자 개인정보 등) 및 신청서 상태(임시저장, 제출, 승인, 반려)\"}]",
-                    "id": "1e909e6e-53f8-febb-f8e0-016837952467",
+                    "description": "[{\"type\":\"userStory\",\"text\":\"[유스케이스 UC-001: 민원 신청서 작성]\\n• 액터: 민원 신청자\\n• 목적: 사용자가 간편하게 민원 신청서를 작성하여 필요한 정보를 입력한다.\\n• 전제조건:\\n  - 민원 신청자가 시스템에 로그인(인증) 완료되어 있어야 함.\\n  - 필요한 개인정보 및 민원 관련 정보(예: 주민등록번호, 주소 등)가 준비되어 있음.\\n• 기본 흐름:\\n  1. 민원 신청자는 UI 화면에서 \\\"newApplication\\\" 폼을 호출한다.\\n  2. 사용자는 신청서 항목(예: 제목, 상세내용, 첨부파일 등)을 입력한다.\\n  3. UI는 \\\"validateInput\\\" 함수를 통해 입력값의 유효성 검사를 수행한다.\\n  4. 입력값이 유효하면, 데이터가 백엔드 데이터베이스로 전송된다.\\n  5. 시스템은 신청서 임시저장(success message)을 사용자에게 반환한다.\\n• 예외 흐름:\\n  - 입력값 검증 실패 시 → 오류 메시지를 출력하고, 수정 후 재입력을 요청.\"},{\"type\":\"userStory\",\"text\":\"[유스케이스 UC-002: 민원 신청서 제출]\\n• 액터: 민원 신청자\\n• 목적: 작성 완료된 민원 신청서를 최종 제출하여 민원 담당자가 검토할 수 있도록 한다.\\n• 전제조건:\\n  - UC-001을 통해 작성된 신청서가 존재함.\\n  - 신청서 데이터가 임시 저장된 상태임.\\n• 기본 흐름:\\n  1. 민원 신청자는 임시 저장된 신청서를 불러온 후, \\\"submitApplication\\\" 함수를 호출한다.\\n  2. 시스템은 신청서의 필수 항목들을 재검증 후 제증명 처리 대기 상태로 변경한다.\\n  3. 제출 완료 메시지를 사용자에게 반환한다.\\n• 예외 흐름:\\n  - 필수 정보 미입력 시 → 제출 불가 메시지 출력 및 수정 유도.\"}]",
+                    "id": "af1cc5ab-8a10-648b-d119-90a732415c27",
                     "elementView": {
                         "_type": "org.uengine.modeling.model.BoundedContext",
-                        "height": 860,
-                        "id": "1e909e6e-53f8-febb-f8e0-016837952467",
+                        "height": 590,
+                        "id": "af1cc5ab-8a10-648b-d119-90a732415c27",
                         "style": "{}",
                         "width": 560,
                         "x": 650,
-                        "y": 586
+                        "y": 450
                     },
                     "gitURL": null,
                     "hexagonalView": {
                         "_type": "org.uengine.modeling.model.BoundedContextHexagonal",
                         "height": 350,
-                        "id": "1e909e6e-53f8-febb-f8e0-016837952467",
+                        "id": "af1cc5ab-8a10-648b-d119-90a732415c27",
                         "style": "{}",
                         "width": 350,
                         "x": 235,
@@ -7914,40 +7790,112 @@ const esValues = {
                     "tempId": "",
                     "templatePerElements": {},
                     "views": [],
-                    "definitionId": "99898ec5cd1a76a95f8816a997de6897"
+                    "definitionId": "c53ab2766ab59bcc80c6ef8982e01cc6",
+                    "selected": false
                 },
-                "03323d91-1261-f9b8-65e2-333f1a241fc0": {
+                "description": "{\"userStories\":[{\"title\":\"유스케이스 UC-001: 민원 신청서 작성\",\"description\":\"민원 신청자는 시스템에 로그인한 후, newApplication 폼을 호출하여 제목, 상세내용, 첨부파일 및 필수 개인정보(주민등록번호, 주소 등)를 입력하고 임시 저장을 수행한다.\",\"acceptance\":[\"사용자는 시스템에 로그인되어 있어야 한다.\",\"newApplication 폼을 호출하면 신청서 작성 UI가 표시된다.\",\"validateInput 함수를 통해 입력값의 유효성이 검사된다.\",\"모든 필수 입력 항목이 입력될 경우 임시저장이 가능하다.\",\"입력값 검증 실패 시 오류 메시지가 출력된다.\"]},{\"title\":\"유스케이스 UC-002: 민원 신청서 제출\",\"description\":\"민원 신청자는 임시 저장된 신청서를 불러와 submitApplication 함수를 호출하여 최종 제출을 진행하며, 시스템은 재검증 후 신청서를 제출 상태(제증명 처리 대기)로 전환한다.\",\"acceptance\":[\"임시 저장된 신청서가 존재해야 한다.\",\"필수 항목에 대한 재검증이 수행된다.\",\"submitApplication 호출 후 신청서의 상태가 제출 대기 상태로 변경된다.\",\"필수 정보 미입력 시 제출이 불가하고, 수정이 유도된다.\"]}],\"entities\":{\"Application\":{\"properties\":[{\"name\":\"applicationId\",\"type\":\"String\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"title\",\"type\":\"String\",\"required\":true},{\"name\":\"detail\",\"type\":\"String\",\"required\":true},{\"name\":\"attachment\",\"type\":\"String\"},{\"name\":\"residentRegistrationNumber\",\"type\":\"String\",\"required\":true},{\"name\":\"address\",\"type\":\"String\",\"required\":true},{\"name\":\"status\",\"type\":\"enum\",\"required\":true,\"values\":[\"Draft\",\"PendingReview\"]}]}},\"businessRules\":[{\"name\":\"로그인 전제조건\",\"description\":\"민원 신청자는 시스템에 로그인(인증)되어 있어야 민원 신청서를 작성할 수 있다.\"},{\"name\":\"입력값 유효성 검증\",\"description\":\"validateInput 함수를 통해 모든 입력 데이터의 형식과 필수 항목 유무가 검증되어야 하며, 검증 실패 시 오류 메시지를 제공한다.\"},{\"name\":\"필수 항목 확인\",\"description\":\"민원 신청서 작성 시 제목, 상세내용, 주민등록번호, 주소 등 필수 정보가 모두 제공되어야만 임시 저장 또는 최종 제출이 가능하다.\"},{\"name\":\"재검증 규칙\",\"description\":\"신청서 제출 시 submitApplication 함수로 호출되기 전에 필수 항목들이 재검증되어야 하며, 누락된 정보가 있을 경우 제출이 제한된다.\"}],\"interfaces\":{\"newApplication\":{\"sections\":[{\"name\":\"신청서 작성\",\"type\":\"form\",\"fields\":[{\"name\":\"title\",\"type\":\"text\",\"required\":true},{\"name\":\"detail\",\"type\":\"textarea\",\"required\":true},{\"name\":\"attachment\",\"type\":\"file\"},{\"name\":\"residentRegistrationNumber\",\"type\":\"text\",\"required\":true},{\"name\":\"address\",\"type\":\"text\",\"required\":true}],\"actions\":[\"validateInput\",\"temporarySave\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}}]},\"submitApplication\":{\"sections\":[{\"name\":\"신청서 검토 및 제출\",\"type\":\"form\",\"fields\":[{\"name\":\"applicationId\",\"type\":\"text\",\"required\":true},{\"name\":\"title\",\"type\":\"text\",\"required\":true},{\"name\":\"detail\",\"type\":\"textarea\",\"required\":true},{\"name\":\"attachment\",\"type\":\"file\"},{\"name\":\"residentRegistrationNumber\",\"type\":\"text\",\"required\":true},{\"name\":\"address\",\"type\":\"text\",\"required\":true},{\"name\":\"status\",\"type\":\"select\",\"required\":true}],\"actions\":[\"submitApplication\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}}]}}}"
+            },
+            "ApplicationProcessing": {
+                "structure": [
+                    {
+                        "aggregate": {
+                            "name": "ApplicationReview",
+                            "alias": "민원 신청서 검토"
+                        },
+                        "enumerations": [
+                            {
+                                "name": "ApplicationStatus",
+                                "alias": "신청서 상태"
+                            }
+                        ],
+                        "valueObjects": [
+                            {
+                                "name": "ApplicationFormReference",
+                                "alias": "민원 신청서 참조",
+                                "referencedAggregate": {
+                                    "name": "ApplicationForm",
+                                    "alias": "민원 신청서"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "aggregate": {
+                            "name": "Document",
+                            "alias": "민원 문서"
+                        },
+                        "enumerations": [
+                            {
+                                "name": "DocumentFormat",
+                                "alias": "문서 포맷"
+                            }
+                        ],
+                        "valueObjects": [
+                            {
+                                "name": "ApplicationReviewReference",
+                                "alias": "민원 신청서 검토 참조",
+                                "referencedAggregate": {
+                                    "name": "ApplicationReview",
+                                    "alias": "민원 신청서 검토"
+                                }
+                            }
+                        ]
+                    }
+                ],
+                "pros": {
+                    "cohesion": "집계별 역할이 명확하여 관련 로직이 집중됨",
+                    "coupling": "필요한 참조만 존재하여 다른 시스템과의 결합도가 낮음",
+                    "consistency": "단일 트랜잭션 내 처리로 데이터 일관성이 높음",
+                    "encapsulation": "각 집계가 자신만의 책임 범위를 가져 내부 구현이 캡슐화됨",
+                    "complexity": "집계 수가 적어 설계와 유지보수가 단순함",
+                    "independence": "기능별로 독립적으로 운영 가능",
+                    "performance": "통합 처리로 호출 간 오버헤드가 낮음"
+                },
+                "cons": {
+                    "cohesion": "모든 처리를 하나의 트랜잭션 내에서 관리할 경우 집계가 커질 수 있음",
+                    "coupling": "응용 프로세스 확장이 필요한 경우 한 집계 내 책임이 증가할 수 있음",
+                    "consistency": "대규모 트랜잭션 시 록 경합이 발생할 가능성 존재",
+                    "encapsulation": "내부 로직 분리 시 세밀한 캡슐화 관리가 필요함",
+                    "complexity": "기능 추가 시 단일 집계의 복잡도가 상승할 수 있음",
+                    "independence": "모듈 분리 요구사항이 있는 경우 분리된 집계보다 독립성 낮을 수 있음",
+                    "performance": "집계 내 연산이 많아지면 응답 속도 저하 우려"
+                },
+                "isAIRecommended": true,
+                "boundedContext": {
                     "_type": "org.uengine.modeling.model.BoundedContext",
                     "aggregates": [
                         {
-                            "id": "66dacbed-e343-9cd7-2dd0-db20f2a86a90"
+                            "id": "8046de29-aeab-65f8-db12-c3ffe41abea5"
+                        },
+                        {
+                            "id": "1c1b8300-506a-2317-3fef-9fd3f7cc3dfd"
                         }
                     ],
                     "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
-                    "description": "[{\"type\":\"userStory\",\"text\":\"UC-004: 민원 신청 발급 처리\\n• 액터: 민원 담당자 (승인 처리 후 자동 또는 수동 실행 가능)\\n• 목적: 승인된 민원 신청서를 기반으로 공식 민원 문서를 발급\\n• 전제조건: UC-003에서 승인된 신청서, 문서 발급에 필요한 데이터 및 서식 준비\\n• 기본 흐름: 승인된 신청서 확인, issueDocument 호출, PDF 등 문서 생성, 업로드 또는 이메일 전송, 발급 성공 메시지 전달\\n• 예외: 문서 생성 실패 시 오류 로그 기록, 재시도 또는 수동 발급 처리\"},{\"type\":\"ddl\",\"text\":\"문서 발급과 관련된 데이터: 민원문서(PDF 또는 지정 포맷), 발급 상태 및 전송 기록\"}]",
-                    "id": "03323d91-1261-f9b8-65e2-333f1a241fc0",
+                    "description": "[{\"type\":\"userStory\",\"text\":\"[유스케이스 UC-003: 민원 신청서 검토 및 승인/반려]\\n• 액터: 민원 담당자\\n• 목적: 제출된 민원 신청서를 검토하여 승인 혹은 반려 여부를 결정한다.\\n• 전제조건:\\n  - UC-002를 통해 제출된 민원 신청서가 대기 리스트에 있음.\\n  - 민원 담당자는 필요한 권한이 부여되어 있음.\\n• 기본 흐름:\\n  1. 민원 담당자는 \\\"listPendingApplications\\\" 함수를 통해 대기중인 신청서 목록을 조회한다.\\n  2. 특정 신청서를 선택하여 상세 내용을 확인한다.\\n  3. 검토 후 \\\"approveApplication\\\" 또는 \\\"rejectApplication\\\" 함수를 호출하여 결정한다.\\n  4. 승인 시 → 신청서 상태가 승인으로 변경되고, 후속 발급 프로세스가 자동 시작됨.\\n  5. 반려 시 → 신청서에는 반려 사유를 기록하고, 민원 신청자에게 통보함.\\n• 예외 흐름:\\n  - 시스템 오류 시 → 오류 메시지를 로그에 기록하고, 민원 담당자에게 재시도 요청.\"},{\"type\":\"userStory\",\"text\":\"[유스케이스 UC-004: 민원 신청 발급 처리]\\n• 액터: 민원 담당자 (승인 처리 후 자동 또는 수동 실행 가능)\\n• 목적: 승인된 민원 신청서를 기반으로 공식 민원 문서를 발급한다.\\n• 전제조건:\\n  - UC-003에서 민원 신청서가 승인된 상태임.\\n  - 문서 발급에 필요한 외부 혹은 내부 데이터(예: 서식, 인증 로직 등)가 준비되어 있음.\\n• 기본 흐름:\\n  1. 시스템은 승인된 신청서를 확인 후 \\\"issueDocument\\\" 함수를 호출하여 문서 발급을 준비한다.\\n  2. 문서 발급 프로세스 내에서 PDF 혹은 해당 포맷으로 문서가 생성된다.\\n  3. 생성된 문서를 민원 신청자 계정에 업로드하거나 이메일로 전송한다.\\n  4. 발급 성공 메시지를 민원 담당자와 신청자 모두에게 제공한다.\\n• 예외 흐름:\\n  - 문서 생성 실패 시 → 오류 로그 기록, 민원 담당자에게 재시도 요청, 필요시 수동 발급 처리.\"}]",
+                    "id": "886c1ea5-4b72-c968-7f43-c888489594ec",
                     "elementView": {
                         "_type": "org.uengine.modeling.model.BoundedContext",
                         "height": 590,
-                        "id": "03323d91-1261-f9b8-65e2-333f1a241fc0",
+                        "id": "886c1ea5-4b72-c968-7f43-c888489594ec",
                         "style": "{}",
-                        "width": 560,
-                        "x": 1235,
+                        "width": 1010,
+                        "x": 1460,
                         "y": 450
                     },
                     "gitURL": null,
                     "hexagonalView": {
                         "_type": "org.uengine.modeling.model.BoundedContextHexagonal",
                         "height": 350,
-                        "id": "03323d91-1261-f9b8-65e2-333f1a241fc0",
+                        "id": "886c1ea5-4b72-c968-7f43-c888489594ec",
                         "style": "{}",
                         "width": 350,
                         "x": 235,
                         "y": 365
                     },
                     "members": [],
-                    "name": "DocumentIssuance",
-                    "displayName": "문서 발급 서비스",
+                    "name": "ApplicationProcessing",
+                    "displayName": "민원 검토 및 발급 처리",
                     "oldName": "",
                     "policies": [],
                     "portGenerated": 8080,
@@ -7957,39 +7905,77 @@ const esValues = {
                     "tempId": "",
                     "templatePerElements": {},
                     "views": [],
-                    "definitionId": "99898ec5cd1a76a95f8816a997de6897"
+                    "definitionId": "c53ab2766ab59bcc80c6ef8982e01cc6",
+                    "selected": false
                 },
-                "f0a567cc-2b73-509f-37cb-24dde03e0d76": {
+                "description": "{\"userStories\":[{\"title\":\"UC-003: 민원 신청서 검토 및 승인/반려\",\"description\":\"민원 담당자는 대기 리스트에 있는 민원 신청서를 검토하여 승인 또는 반려 여부를 결정한다. 민원 담당자는 listPendingApplications 함수를 통해 대기중인 신청서 목록을 조회하고, 특정 신청서를 선택하여 상세 내용을 확인한 후, approveApplication 또는 rejectApplication 함수를 호출하여 결정한다. 승인 시 신청서 상태가 승인으로 변경되며, 후속 발급 프로세스가 자동으로 시작된다. 반려 시에는 신청서에 반려 사유가 기록되고 민원 신청자에게 통보된다.\",\"acceptance\":[\"대기중인 민원 신청서 목록이 올바르게 조회되어야 한다.\",\"특정 신청서를 선택하면 상세 내용이 올바르게 표시되어야 한다.\",\"approveApplication 호출 시 신청서 상태가 승인으로 변경되고, 발급 프로세스가 시작되어야 한다.\",\"rejectApplication 호출 시 반려 사유가 기록되고 민원 신청자에게 통보되어야 한다.\",\"시스템 오류 발생 시 오류 로그가 기록되고 민원 담당자에게 재시도 요청 메시지가 표시되어야 한다.\"]},{\"title\":\"UC-004: 민원 신청 발급 처리\",\"description\":\"시스템은 승인된 민원 신청서를 확인 후 issueDocument 함수를 호출하여 공식 민원 문서를 발급한다. 문서 발급 프로세스 내에서 PDF 또는 해당 포맷의 문서를 생성하고, 생성된 문서를 민원 신청자 계정에 업로드하거나 이메일로 전송한다. 발급 성공 시 민원 담당자와 신청자 모두에게 성공 메시지를 제공한다.\",\"acceptance\":[\"승인된 민원 신청서에 대해서만 문서 발급이 진행되어야 한다.\",\"issueDocument 호출 후 PDF 또는 다른 지정 포맷의 문서가 생성되어야 한다.\",\"생성된 문서는 민원 신청자에게 업로드 또는 이메일 전송되어야 한다.\",\"발급 성공 메시지가 민원 담당자와 신청자에게 제공되어야 한다.\",\"문서 생성 실패 시 오류 로그가 기록되고 민원 담당자에게 재시도 요청이 표시되어야 한다.\"]}],\"entities\":{\"Application\":{\"properties\":[{\"name\":\"applicationId\",\"type\":\"String\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"status\",\"type\":\"enum\",\"required\":true,\"values\":[\"pending\",\"approved\",\"rejected\"]},{\"name\":\"applicantId\",\"type\":\"String\",\"required\":true},{\"name\":\"submissionDate\",\"type\":\"Date\",\"required\":true},{\"name\":\"rejectionReason\",\"type\":\"String\"},{\"name\":\"reviewedBy\",\"type\":\"String\"},{\"name\":\"reviewDate\",\"type\":\"Date\"}]},\"Document\":{\"properties\":[{\"name\":\"documentId\",\"type\":\"String\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"applicationId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Application\"},{\"name\":\"format\",\"type\":\"enum\",\"required\":true,\"values\":[\"PDF\",\"OTHER\"]},{\"name\":\"createdDate\",\"type\":\"Date\",\"required\":true},{\"name\":\"sentTo\",\"type\":\"String\",\"required\":true}]}},\"businessRules\":[{\"name\":\"민원 신청서 상태 규칙\",\"description\":\"신청서는 pending, approved, rejected 중 하나의 상태를 가져야 하며, 승인 및 반려 처리 후 상태가 변경되어야 한다.\"},{\"name\":\"문서 발급 규칙\",\"description\":\"문서 발급은 오직 승인된(approved) 신청서에 대해서만 수행되며, 이때 정확한 포맷(PDF 또는 OTHER)으로 생성되어야 한다.\"},{\"name\":\"오류 처리 규칙\",\"description\":\"시스템 오류 발생 시 오류 로그를 기록하고, 민원 담당자에게 재시도 요청을 표시해야 한다.\"}],\"interfaces\":{\"ApplicationReview\":{\"sections\":[{\"name\":\"Pending Applications\",\"type\":\"table\",\"fields\":[],\"actions\":[\"approveApplication\",\"rejectApplication\"],\"filters\":[\"dateRange\",\"status\"],\"resultTable\":{\"columns\":[\"applicationId\",\"applicantId\",\"submissionDate\",\"status\"],\"actions\":[\"View Details\"]}}]},\"DocumentIssuance\":{\"sections\":[{\"name\":\"Document Generation\",\"type\":\"form\",\"fields\":[{\"name\":\"applicationId\",\"type\":\"text\",\"required\":true},{\"name\":\"format\",\"type\":\"select\",\"required\":true}],\"actions\":[\"issueDocument\"],\"filters\":[],\"resultTable\":{\"columns\":[\"documentId\",\"applicationId\",\"format\",\"createdDate\",\"sentTo\"],\"actions\":[\"View Document\"]}}]}}}"
+            },
+            "Operations": {
+                "structure": [
+                    {
+                        "aggregate": {
+                            "name": "SystemMonitor",
+                            "alias": "시스템 모니터링"
+                        },
+                        "enumerations": [
+                            {
+                                "name": "MonitorStatus",
+                                "alias": "모니터링 상태"
+                            }
+                        ],
+                        "valueObjects": []
+                    }
+                ],
+                "pros": {
+                    "cohesion": "매우 높음 - 모든 시스템 모니터링 관련 데이터가 하나의 Aggregate로 집중되어 있음.",
+                    "coupling": "매우 낮음 - 내부 결합이 높지만 외부 종속성은 Value Object를 통해서만 관리됨.",
+                    "consistency": "매우 높음 - 단일 Aggregate로 트랜잭셔널 일관성이 보장됨.",
+                    "encapsulation": "높음 - 도메인 경계가 명확하며 관련 데이터들이 캡슐화됨.",
+                    "complexity": "낮음 - 구조가 단순하여 유지보수 및 관리가 용이함.",
+                    "independence": "높음 - 독립적으로 운영 가능하며, 다른 Aggregate와의 상호작용 최소화됨.",
+                    "performance": "높음 - 단일 Aggregate 내에서 처리되어 성능 최적화 가능."
+                },
+                "cons": {
+                    "cohesion": "단일 Aggregate에 모든 데이터를 포함할 경우, 향후 기능 확장 시 Aggregate 크기가 증가할 수 있음.",
+                    "coupling": "내부 구조가 복잡해지면 Aggregate 내 모듈 간 결합도가 증가할 가능성이 있음.",
+                    "consistency": "Aggregate가 커질 경우, 트랜잭션 복잡성이 상승할 수 있음.",
+                    "encapsulation": "모든 기능을 한 곳에 몰아넣음으로써 일부 변경이 전체에 영향을 줄 수 있음.",
+                    "complexity": "확장성 측면에서 분리된 책임보다는 복잡성이 증가할 수 있음.",
+                    "independence": "모든 관련 기능이 하나의 Aggregate에 묶여 있어 독립적 확장이 어려울 수 있음.",
+                    "performance": "Aggregate 크기가 지나치게 커질 경우 성능 저하 우려가 있을 수 있음."
+                },
+                "isAIRecommended": true,
+                "boundedContext": {
                     "_type": "org.uengine.modeling.model.BoundedContext",
                     "aggregates": [
                         {
-                            "id": "857059f8-228a-8b17-127a-354eece4ee86"
+                            "id": "9d7631f0-85d0-d398-e1d7-054976d2a870"
                         }
                     ],
                     "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
-                    "description": "[{\"type\":\"userStory\",\"text\":\"UC-005: 시스템 관리 및 모니터링\\n• 액터: 시스템 관리자\\n• 목적: 서비스 안정성 확보와 운영 효율성을 위해 시스템을 관리, 모니터링\\n• 전제조건: 관리자 전용 콘솔 접근 권한 보유\\n• 기본 흐름: monitorSystem 호출로 서버 상태, 트랜잭션 로그 등 확인, 장애 발생 시 알림 및 즉각 조치, 정기적인 업데이트 및 보안 점검 실행\\n• 예외: 모니터링 도구 오류 시 백업 로깅 시스템으로 전환, 수동 모니터링 조치\"},{\"type\":\"ddl\",\"text\":\"시스템 운영과 관련된 데이터: 서버 상태, 트랜잭션 로그, 장애 및 알림 기록\"}]",
-                    "id": "f0a567cc-2b73-509f-37cb-24dde03e0d76",
+                    "description": "[{\"type\":\"userStory\",\"text\":\"[유스케이스 UC-005: 시스템 관리 및 모니터링]\\n• 액터: 시스템 관리자\\n• 목적: 서비스 안정성 확보와 운영 효율성을 위해 시스템을 관리, 모니터링한다.\\n• 전제조건:\\n  - 관리자 전용 콘솔 접근 권한 보유.\\n• 기본 흐름:\\n  1. 시스템 관리자는 \\\"monitorSystem\\\" 함수를 통해 전체 시스템 상태(서버 상태, 트랜잭션 로그 등)를 확인한다.\\n  2. 장애 또는 비정상 상황 발생 시 알림을 확인하고, 즉각적인 조치 또는 해당 팀에 이슈 전달한다.\\n  3. 정기적인 업데이트 및 보안 점검 프로세스를 실행한다.\\n• 예외 흐름:\\n  - 모니터링 도구 오류 시 → 백업 로깅 시스템으로 전환, 수동 모니터링 조치.\"}]",
+                    "id": "81fab6f5-399c-4722-35ba-75ec4c67a041",
                     "elementView": {
                         "_type": "org.uengine.modeling.model.BoundedContext",
                         "height": 590,
-                        "id": "f0a567cc-2b73-509f-37cb-24dde03e0d76",
+                        "id": "81fab6f5-399c-4722-35ba-75ec4c67a041",
                         "style": "{}",
                         "width": 560,
-                        "x": 1820,
+                        "x": 2270,
                         "y": 450
                     },
                     "gitURL": null,
                     "hexagonalView": {
                         "_type": "org.uengine.modeling.model.BoundedContextHexagonal",
                         "height": 350,
-                        "id": "f0a567cc-2b73-509f-37cb-24dde03e0d76",
+                        "id": "81fab6f5-399c-4722-35ba-75ec4c67a041",
                         "style": "{}",
                         "width": 350,
                         "x": 235,
                         "y": 365
                     },
                     "members": [],
-                    "name": "SystemOperations",
+                    "name": "Operations",
                     "displayName": "시스템 운영 및 모니터링",
                     "oldName": "",
                     "policies": [],
@@ -8000,9 +7986,150 @@ const esValues = {
                     "tempId": "",
                     "templatePerElements": {},
                     "views": [],
-                    "definitionId": "99898ec5cd1a76a95f8816a997de6897"
+                    "definitionId": "c53ab2766ab59bcc80c6ef8982e01cc6",
+                    "selected": false
                 },
-                "626b7229-4e39-028a-5f05-99bf207ed201": {
+                "description": "{\"userStories\":[{\"title\":\"시스템 관리 및 모니터링\",\"description\":\"시스템 관리자는 관리자 전용 콘솔을 통해 monitorSystem 함수를 사용하여 전체 시스템 상태(서버 상태, 트랜잭션 로그 등)를 확인하고, 장애나 비정상 상황 발생시 즉각적으로 알림을 확인하여 조치하거나 관련 팀에 이슈를 전달하며, 정기적인 업데이트 및 보안 점검을 실행한다.\",\"acceptance\":[\"관리자 전용 콘솔 접근 권한이 필요하다.\",\"monitorSystem 함수를 통해 서버 상태, 트랜잭션 로그 등 전체 시스템 상태를 확인할 수 있어야 한다.\",\"장애나 비정상 상황 발생 시 알림이 제공되고, 즉각 조치 또는 이슈 전달이 가능해야 한다.\",\"모니터링 도구 오류 시 자동으로 백업 로깅 시스템으로 전환되어야 한다.\"]}],\"entities\":{\"SystemStatus\":{\"properties\":[{\"name\":\"statusId\",\"type\":\"String\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"serverStatus\",\"type\":\"String\",\"required\":true},{\"name\":\"transactionLog\",\"type\":\"String\",\"required\":true},{\"name\":\"lastChecked\",\"type\":\"Date\",\"required\":true},{\"name\":\"alerts\",\"type\":\"String\"}]}},\"businessRules\":[{\"name\":\"백업 로깅 시스템 전환\",\"description\":\"모니터링 도구 오류 발생 시, 시스템은 자동으로 백업 로깅 시스템으로 전환되어 수동 모니터링 조치를 지원해야 한다.\"}],\"interfaces\":{\"SystemMonitoring\":{\"sections\":[{\"name\":\"시스템 상태\",\"type\":\"form\",\"fields\":[{\"name\":\"serverStatus\",\"type\":\"text\",\"required\":true},{\"name\":\"transactionLog\",\"type\":\"textarea\",\"required\":true},{\"name\":\"lastChecked\",\"type\":\"date\",\"required\":true},{\"name\":\"alerts\",\"type\":\"textarea\"}],\"actions\":[\"monitorSystem\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}}]}}}"
+            }
+        },
+        esValue: {
+            "elements": {
+                "af1cc5ab-8a10-648b-d119-90a732415c27": {
+                    "_type": "org.uengine.modeling.model.BoundedContext",
+                    "aggregates": [
+                        {
+                            "id": "39120b26-cdde-82ad-fa95-a25d828ad2b7"
+                        }
+                    ],
+                    "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
+                    "description": "[{\"type\":\"userStory\",\"text\":\"[유스케이스 UC-001: 민원 신청서 작성]\\n• 액터: 민원 신청자\\n• 목적: 사용자가 간편하게 민원 신청서를 작성하여 필요한 정보를 입력한다.\\n• 전제조건:\\n  - 민원 신청자가 시스템에 로그인(인증) 완료되어 있어야 함.\\n  - 필요한 개인정보 및 민원 관련 정보(예: 주민등록번호, 주소 등)가 준비되어 있음.\\n• 기본 흐름:\\n  1. 민원 신청자는 UI 화면에서 \\\"newApplication\\\" 폼을 호출한다.\\n  2. 사용자는 신청서 항목(예: 제목, 상세내용, 첨부파일 등)을 입력한다.\\n  3. UI는 \\\"validateInput\\\" 함수를 통해 입력값의 유효성 검사를 수행한다.\\n  4. 입력값이 유효하면, 데이터가 백엔드 데이터베이스로 전송된다.\\n  5. 시스템은 신청서 임시저장(success message)을 사용자에게 반환한다.\\n• 예외 흐름:\\n  - 입력값 검증 실패 시 → 오류 메시지를 출력하고, 수정 후 재입력을 요청.\"},{\"type\":\"userStory\",\"text\":\"[유스케이스 UC-002: 민원 신청서 제출]\\n• 액터: 민원 신청자\\n• 목적: 작성 완료된 민원 신청서를 최종 제출하여 민원 담당자가 검토할 수 있도록 한다.\\n• 전제조건:\\n  - UC-001을 통해 작성된 신청서가 존재함.\\n  - 신청서 데이터가 임시 저장된 상태임.\\n• 기본 흐름:\\n  1. 민원 신청자는 임시 저장된 신청서를 불러온 후, \\\"submitApplication\\\" 함수를 호출한다.\\n  2. 시스템은 신청서의 필수 항목들을 재검증 후 제증명 처리 대기 상태로 변경한다.\\n  3. 제출 완료 메시지를 사용자에게 반환한다.\\n• 예외 흐름:\\n  - 필수 정보 미입력 시 → 제출 불가 메시지 출력 및 수정 유도.\"}]",
+                    "id": "af1cc5ab-8a10-648b-d119-90a732415c27",
+                    "elementView": {
+                        "_type": "org.uengine.modeling.model.BoundedContext",
+                        "height": 590,
+                        "id": "af1cc5ab-8a10-648b-d119-90a732415c27",
+                        "style": "{}",
+                        "width": 560,
+                        "x": 650,
+                        "y": 450
+                    },
+                    "gitURL": null,
+                    "hexagonalView": {
+                        "_type": "org.uengine.modeling.model.BoundedContextHexagonal",
+                        "height": 350,
+                        "id": "af1cc5ab-8a10-648b-d119-90a732415c27",
+                        "style": "{}",
+                        "width": 350,
+                        "x": 235,
+                        "y": 365
+                    },
+                    "members": [],
+                    "name": "ApplicationManagement",
+                    "displayName": "민원 신청 관리",
+                    "oldName": "",
+                    "policies": [],
+                    "portGenerated": null,
+                    "preferredPlatform": "template-spring-boot",
+                    "preferredPlatformConf": {},
+                    "rotateStatus": false,
+                    "tempId": "",
+                    "templatePerElements": {},
+                    "views": [],
+                    "definitionId": "c53ab2766ab59bcc80c6ef8982e01cc6",
+                    "selected": false
+                },
+                "886c1ea5-4b72-c968-7f43-c888489594ec": {
+                    "_type": "org.uengine.modeling.model.BoundedContext",
+                    "aggregates": [
+                        {
+                            "id": "8046de29-aeab-65f8-db12-c3ffe41abea5"
+                        },
+                        {
+                            "id": "1c1b8300-506a-2317-3fef-9fd3f7cc3dfd"
+                        }
+                    ],
+                    "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
+                    "description": "[{\"type\":\"userStory\",\"text\":\"[유스케이스 UC-003: 민원 신청서 검토 및 승인/반려]\\n• 액터: 민원 담당자\\n• 목적: 제출된 민원 신청서를 검토하여 승인 혹은 반려 여부를 결정한다.\\n• 전제조건:\\n  - UC-002를 통해 제출된 민원 신청서가 대기 리스트에 있음.\\n  - 민원 담당자는 필요한 권한이 부여되어 있음.\\n• 기본 흐름:\\n  1. 민원 담당자는 \\\"listPendingApplications\\\" 함수를 통해 대기중인 신청서 목록을 조회한다.\\n  2. 특정 신청서를 선택하여 상세 내용을 확인한다.\\n  3. 검토 후 \\\"approveApplication\\\" 또는 \\\"rejectApplication\\\" 함수를 호출하여 결정한다.\\n  4. 승인 시 → 신청서 상태가 승인으로 변경되고, 후속 발급 프로세스가 자동 시작됨.\\n  5. 반려 시 → 신청서에는 반려 사유를 기록하고, 민원 신청자에게 통보함.\\n• 예외 흐름:\\n  - 시스템 오류 시 → 오류 메시지를 로그에 기록하고, 민원 담당자에게 재시도 요청.\"},{\"type\":\"userStory\",\"text\":\"[유스케이스 UC-004: 민원 신청 발급 처리]\\n• 액터: 민원 담당자 (승인 처리 후 자동 또는 수동 실행 가능)\\n• 목적: 승인된 민원 신청서를 기반으로 공식 민원 문서를 발급한다.\\n• 전제조건:\\n  - UC-003에서 민원 신청서가 승인된 상태임.\\n  - 문서 발급에 필요한 외부 혹은 내부 데이터(예: 서식, 인증 로직 등)가 준비되어 있음.\\n• 기본 흐름:\\n  1. 시스템은 승인된 신청서를 확인 후 \\\"issueDocument\\\" 함수를 호출하여 문서 발급을 준비한다.\\n  2. 문서 발급 프로세스 내에서 PDF 혹은 해당 포맷으로 문서가 생성된다.\\n  3. 생성된 문서를 민원 신청자 계정에 업로드하거나 이메일로 전송한다.\\n  4. 발급 성공 메시지를 민원 담당자와 신청자 모두에게 제공한다.\\n• 예외 흐름:\\n  - 문서 생성 실패 시 → 오류 로그 기록, 민원 담당자에게 재시도 요청, 필요시 수동 발급 처리.\"}]",
+                    "id": "886c1ea5-4b72-c968-7f43-c888489594ec",
+                    "elementView": {
+                        "_type": "org.uengine.modeling.model.BoundedContext",
+                        "height": 590,
+                        "id": "886c1ea5-4b72-c968-7f43-c888489594ec",
+                        "style": "{}",
+                        "width": 1010,
+                        "x": 1460,
+                        "y": 450
+                    },
+                    "gitURL": null,
+                    "hexagonalView": {
+                        "_type": "org.uengine.modeling.model.BoundedContextHexagonal",
+                        "height": 350,
+                        "id": "886c1ea5-4b72-c968-7f43-c888489594ec",
+                        "style": "{}",
+                        "width": 350,
+                        "x": 235,
+                        "y": 365
+                    },
+                    "members": [],
+                    "name": "ApplicationProcessing",
+                    "displayName": "민원 검토 및 발급 처리",
+                    "oldName": "",
+                    "policies": [],
+                    "portGenerated": 8080,
+                    "preferredPlatform": "template-spring-boot",
+                    "preferredPlatformConf": {},
+                    "rotateStatus": false,
+                    "tempId": "",
+                    "templatePerElements": {},
+                    "views": [],
+                    "definitionId": "c53ab2766ab59bcc80c6ef8982e01cc6",
+                    "selected": false
+                },
+                "81fab6f5-399c-4722-35ba-75ec4c67a041": {
+                    "_type": "org.uengine.modeling.model.BoundedContext",
+                    "aggregates": [
+                        {
+                            "id": "9d7631f0-85d0-d398-e1d7-054976d2a870"
+                        }
+                    ],
+                    "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
+                    "description": "[{\"type\":\"userStory\",\"text\":\"[유스케이스 UC-005: 시스템 관리 및 모니터링]\\n• 액터: 시스템 관리자\\n• 목적: 서비스 안정성 확보와 운영 효율성을 위해 시스템을 관리, 모니터링한다.\\n• 전제조건:\\n  - 관리자 전용 콘솔 접근 권한 보유.\\n• 기본 흐름:\\n  1. 시스템 관리자는 \\\"monitorSystem\\\" 함수를 통해 전체 시스템 상태(서버 상태, 트랜잭션 로그 등)를 확인한다.\\n  2. 장애 또는 비정상 상황 발생 시 알림을 확인하고, 즉각적인 조치 또는 해당 팀에 이슈 전달한다.\\n  3. 정기적인 업데이트 및 보안 점검 프로세스를 실행한다.\\n• 예외 흐름:\\n  - 모니터링 도구 오류 시 → 백업 로깅 시스템으로 전환, 수동 모니터링 조치.\"}]",
+                    "id": "81fab6f5-399c-4722-35ba-75ec4c67a041",
+                    "elementView": {
+                        "_type": "org.uengine.modeling.model.BoundedContext",
+                        "height": 590,
+                        "id": "81fab6f5-399c-4722-35ba-75ec4c67a041",
+                        "style": "{}",
+                        "width": 560,
+                        "x": 2270,
+                        "y": 450
+                    },
+                    "gitURL": null,
+                    "hexagonalView": {
+                        "_type": "org.uengine.modeling.model.BoundedContextHexagonal",
+                        "height": 350,
+                        "id": "81fab6f5-399c-4722-35ba-75ec4c67a041",
+                        "style": "{}",
+                        "width": 350,
+                        "x": 235,
+                        "y": 365
+                    },
+                    "members": [],
+                    "name": "Operations",
+                    "displayName": "시스템 운영 및 모니터링",
+                    "oldName": "",
+                    "policies": [],
+                    "portGenerated": 8081,
+                    "preferredPlatform": "template-spring-boot",
+                    "preferredPlatformConf": {},
+                    "rotateStatus": false,
+                    "tempId": "",
+                    "templatePerElements": {},
+                    "views": [],
+                    "definitionId": "c53ab2766ab59bcc80c6ef8982e01cc6",
+                    "selected": false
+                },
+                "39120b26-cdde-82ad-fa95-a25d828ad2b7": {
                     "aggregateRoot": {
                         "_type": "org.uengine.modeling.model.AggregateRoot",
                         "fieldDescriptors": [
@@ -8013,6 +8140,66 @@ const esValues = {
                                 "name": "applicationId",
                                 "nameCamelCase": "applicationId",
                                 "namePascalCase": "ApplicationId",
+                                "displayName": "",
+                                "referenceClass": null,
+                                "isOverrideField": false,
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "String",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "title",
+                                "nameCamelCase": "title",
+                                "namePascalCase": "Title",
+                                "displayName": "",
+                                "referenceClass": null,
+                                "isOverrideField": false,
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "String",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "detail",
+                                "nameCamelCase": "detail",
+                                "namePascalCase": "Detail",
+                                "displayName": "",
+                                "referenceClass": null,
+                                "isOverrideField": false,
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "String",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "attachment",
+                                "nameCamelCase": "attachment",
+                                "namePascalCase": "Attachment",
+                                "displayName": "",
+                                "referenceClass": null,
+                                "isOverrideField": false,
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "String",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "residentRegistrationNumber",
+                                "nameCamelCase": "residentRegistrationNumber",
+                                "namePascalCase": "ResidentRegistrationNumber",
+                                "displayName": "",
+                                "referenceClass": null,
+                                "isOverrideField": false,
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "String",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "address",
+                                "nameCamelCase": "address",
+                                "namePascalCase": "Address",
                                 "displayName": "",
                                 "referenceClass": null,
                                 "isOverrideField": false,
@@ -8031,27 +8218,27 @@ const esValues = {
                                 "_type": "org.uengine.model.FieldDescriptor"
                             },
                             {
-                                "className": "ApplicationData",
+                                "className": "DocumentId",
                                 "isCopy": false,
                                 "isKey": false,
-                                "name": "applicationData",
-                                "nameCamelCase": "applicationData",
-                                "namePascalCase": "ApplicationData",
+                                "name": "documentId",
+                                "nameCamelCase": "documentId",
+                                "namePascalCase": "DocumentId",
                                 "displayName": "",
-                                "referenceClass": null,
-                                "isOverrideField": false,
+                                "referenceClass": "Document",
+                                "isOverrideField": true,
                                 "_type": "org.uengine.model.FieldDescriptor"
                             }
                         ],
                         "entities": {
                             "elements": {
-                                "4aee28d7-ebb2-c518-692e-bf4ed37a3c99": {
+                                "89cf284d-f75c-94db-0660-74f117eb9764": {
                                     "_type": "org.uengine.uml.model.Class",
-                                    "id": "4aee28d7-ebb2-c518-692e-bf4ed37a3c99",
-                                    "name": "CivilComplaintApplication",
-                                    "namePascalCase": "CivilComplaintApplication",
-                                    "nameCamelCase": "civilComplaintApplication",
-                                    "namePlural": "CivilComplaintApplications",
+                                    "id": "89cf284d-f75c-94db-0660-74f117eb9764",
+                                    "name": "ApplicationForm",
+                                    "namePascalCase": "ApplicationForm",
+                                    "nameCamelCase": "applicationForm",
+                                    "namePlural": "ApplicationForms",
                                     "fieldDescriptors": [
                                         {
                                             "className": "String",
@@ -8061,6 +8248,66 @@ const esValues = {
                                             "displayName": "",
                                             "nameCamelCase": "applicationId",
                                             "namePascalCase": "ApplicationId",
+                                            "_type": "org.uengine.model.FieldDescriptor",
+                                            "inputUI": null,
+                                            "options": null
+                                        },
+                                        {
+                                            "className": "String",
+                                            "isCopy": false,
+                                            "isKey": false,
+                                            "name": "title",
+                                            "displayName": "",
+                                            "nameCamelCase": "title",
+                                            "namePascalCase": "Title",
+                                            "_type": "org.uengine.model.FieldDescriptor",
+                                            "inputUI": null,
+                                            "options": null
+                                        },
+                                        {
+                                            "className": "String",
+                                            "isCopy": false,
+                                            "isKey": false,
+                                            "name": "detail",
+                                            "displayName": "",
+                                            "nameCamelCase": "detail",
+                                            "namePascalCase": "Detail",
+                                            "_type": "org.uengine.model.FieldDescriptor",
+                                            "inputUI": null,
+                                            "options": null
+                                        },
+                                        {
+                                            "className": "String",
+                                            "isCopy": false,
+                                            "isKey": false,
+                                            "name": "attachment",
+                                            "displayName": "",
+                                            "nameCamelCase": "attachment",
+                                            "namePascalCase": "Attachment",
+                                            "_type": "org.uengine.model.FieldDescriptor",
+                                            "inputUI": null,
+                                            "options": null
+                                        },
+                                        {
+                                            "className": "String",
+                                            "isCopy": false,
+                                            "isKey": false,
+                                            "name": "residentRegistrationNumber",
+                                            "displayName": "",
+                                            "nameCamelCase": "residentRegistrationNumber",
+                                            "namePascalCase": "ResidentRegistrationNumber",
+                                            "_type": "org.uengine.model.FieldDescriptor",
+                                            "inputUI": null,
+                                            "options": null
+                                        },
+                                        {
+                                            "className": "String",
+                                            "isCopy": false,
+                                            "isKey": false,
+                                            "name": "address",
+                                            "displayName": "",
+                                            "nameCamelCase": "address",
+                                            "namePascalCase": "Address",
                                             "_type": "org.uengine.model.FieldDescriptor",
                                             "inputUI": null,
                                             "options": null
@@ -8078,22 +8325,22 @@ const esValues = {
                                             "options": null
                                         },
                                         {
-                                            "className": "ApplicationData",
+                                            "className": "DocumentId",
                                             "isCopy": false,
                                             "isKey": false,
-                                            "name": "applicationData",
+                                            "name": "documentId",
+                                            "nameCamelCase": "documentId",
+                                            "namePascalCase": "DocumentId",
                                             "displayName": "",
-                                            "nameCamelCase": "applicationData",
-                                            "namePascalCase": "ApplicationData",
-                                            "_type": "org.uengine.model.FieldDescriptor",
-                                            "inputUI": null,
-                                            "options": null
+                                            "referenceClass": "Document",
+                                            "isOverrideField": true,
+                                            "_type": "org.uengine.model.FieldDescriptor"
                                         }
                                     ],
                                     "operations": [],
                                     "elementView": {
                                         "_type": "org.uengine.uml.model.Class",
-                                        "id": "4aee28d7-ebb2-c518-692e-bf4ed37a3c99",
+                                        "id": "89cf284d-f75c-94db-0660-74f117eb9764",
                                         "x": 200,
                                         "y": 200,
                                         "width": 200,
@@ -8112,96 +8359,316 @@ const esValues = {
                                     "isAbstract": false,
                                     "isInterface": false,
                                     "isAggregateRoot": true,
-                                    "parentId": "626b7229-4e39-028a-5f05-99bf207ed201"
+                                    "parentId": "39120b26-cdde-82ad-fa95-a25d828ad2b7"
                                 },
-                                "988dda2a-b1bb-5b3f-9dbf-ec28819faff6": {
-                                    "_type": "org.uengine.uml.model.Class",
-                                    "id": "988dda2a-b1bb-5b3f-9dbf-ec28819faff6",
-                                    "name": "ApplicationData",
-                                    "displayName": "신청서 정보",
-                                    "namePascalCase": "ApplicationData",
-                                    "nameCamelCase": "applicationData",
-                                    "namePlural": "applicationData",
+                                "d50a3c1b-805d-9fd0-fe26-a48d639c2d01": {
+                                    "_type": "org.uengine.uml.model.enum",
+                                    "id": "d50a3c1b-805d-9fd0-fe26-a48d639c2d01",
+                                    "name": "ApplicationStatus",
+                                    "displayName": "신청서 상태",
+                                    "nameCamelCase": "applicationStatus",
+                                    "namePascalCase": "ApplicationStatus",
+                                    "namePlural": "applicationStatuses",
+                                    "elementView": {
+                                        "_type": "org.uengine.uml.model.enum",
+                                        "id": "d50a3c1b-805d-9fd0-fe26-a48d639c2d01",
+                                        "x": 700,
+                                        "y": 456,
+                                        "width": 200,
+                                        "height": 100,
+                                        "style": "{}",
+                                        "titleH": 50,
+                                        "subEdgeH": 50
+                                    },
+                                    "selected": false,
+                                    "items": [
+                                        {
+                                            "value": "Draft"
+                                        },
+                                        {
+                                            "value": "PendingReview"
+                                        }
+                                    ],
+                                    "useKeyValue": false,
+                                    "relations": []
+                                },
+                                "cd12863f-b080-b2bf-dbf2-2520734ca903": {
+                                    "_type": "org.uengine.uml.model.vo.Class",
+                                    "id": "cd12863f-b080-b2bf-dbf2-2520734ca903",
+                                    "name": "DocumentId",
+                                    "displayName": "",
+                                    "namePascalCase": "DocumentId",
+                                    "nameCamelCase": "documentId",
                                     "fieldDescriptors": [
                                         {
-                                            "_type": "org.uengine.model.FieldDescriptor",
-                                            "name": "applicationDataId",
-                                            "nameCamelCase": "applicationDataId",
-                                            "namePascalCase": "ApplicationDataId",
                                             "className": "String",
                                             "isKey": true,
-                                            "isName": false,
-                                            "isList": false,
-                                            "isVO": false,
-                                            "isLob": false,
-                                            "isCorrelationKey": false,
-                                            "displayName": ""
+                                            "label": "- documentId: String",
+                                            "name": "documentId",
+                                            "nameCamelCase": "documentId",
+                                            "namePascalCase": "DocumentId",
+                                            "displayName": "",
+                                            "referenceClass": "Document",
+                                            "isOverrideField": true,
+                                            "_type": "org.uengine.model.FieldDescriptor"
+                                        }
+                                    ],
+                                    "operations": [],
+                                    "elementView": {
+                                        "_type": "org.uengine.uml.model.vo.address.Class",
+                                        "id": "cd12863f-b080-b2bf-dbf2-2520734ca903",
+                                        "x": 700,
+                                        "y": 152,
+                                        "width": 200,
+                                        "height": 100,
+                                        "style": "{}",
+                                        "titleH": 50,
+                                        "subEdgeH": 170,
+                                        "fieldH": 150,
+                                        "methodH": 30
+                                    },
+                                    "selected": false,
+                                    "parentOperations": [],
+                                    "relationType": null,
+                                    "isVO": true,
+                                    "relations": [],
+                                    "groupElement": null,
+                                    "isAggregateRoot": false,
+                                    "namePlural": "DocumentIds",
+                                    "isAbstract": false,
+                                    "isInterface": false
+                                }
+                            },
+                            "relations": {}
+                        },
+                        "operations": []
+                    },
+                    "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
+                    "boundedContext": {
+                        "name": "af1cc5ab-8a10-648b-d119-90a732415c27",
+                        "id": "af1cc5ab-8a10-648b-d119-90a732415c27"
+                    },
+                    "commands": [],
+                    "description": null,
+                    "id": "39120b26-cdde-82ad-fa95-a25d828ad2b7",
+                    "elementView": {
+                        "_type": "org.uengine.modeling.model.Aggregate",
+                        "id": "39120b26-cdde-82ad-fa95-a25d828ad2b7",
+                        "x": 650,
+                        "y": 450,
+                        "width": 130,
+                        "height": 400
+                    },
+                    "events": [],
+                    "hexagonalView": {
+                        "_type": "org.uengine.modeling.model.AggregateHexagonal",
+                        "id": "39120b26-cdde-82ad-fa95-a25d828ad2b7",
+                        "x": 0,
+                        "y": 0,
+                        "subWidth": 0,
+                        "width": 0
+                    },
+                    "name": "ApplicationForm",
+                    "displayName": "민원 신청서",
+                    "nameCamelCase": "applicationForm",
+                    "namePascalCase": "ApplicationForm",
+                    "namePlural": "applicationForms",
+                    "rotateStatus": false,
+                    "selected": false,
+                    "_type": "org.uengine.modeling.model.Aggregate"
+                },
+                "8046de29-aeab-65f8-db12-c3ffe41abea5": {
+                    "aggregateRoot": {
+                        "_type": "org.uengine.modeling.model.AggregateRoot",
+                        "fieldDescriptors": [
+                            {
+                                "className": "String",
+                                "isCopy": false,
+                                "isKey": true,
+                                "name": "reviewId",
+                                "nameCamelCase": "reviewId",
+                                "namePascalCase": "ReviewId",
+                                "displayName": "",
+                                "referenceClass": null,
+                                "isOverrideField": false,
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "String",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "applicationId",
+                                "nameCamelCase": "applicationId",
+                                "namePascalCase": "ApplicationId",
+                                "displayName": "",
+                                "referenceClass": null,
+                                "isOverrideField": false,
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "String",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "reviewer",
+                                "nameCamelCase": "reviewer",
+                                "namePascalCase": "Reviewer",
+                                "displayName": "",
+                                "referenceClass": null,
+                                "isOverrideField": false,
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "Date",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "reviewDate",
+                                "nameCamelCase": "reviewDate",
+                                "namePascalCase": "ReviewDate",
+                                "displayName": "",
+                                "referenceClass": null,
+                                "isOverrideField": false,
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "ApplicationStatus",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "status",
+                                "nameCamelCase": "status",
+                                "namePascalCase": "Status",
+                                "displayName": "",
+                                "referenceClass": null,
+                                "isOverrideField": false,
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "String",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "rejectionReason",
+                                "nameCamelCase": "rejectionReason",
+                                "namePascalCase": "RejectionReason",
+                                "displayName": "",
+                                "referenceClass": null,
+                                "isOverrideField": false,
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "ApplicationFormId",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "applicationFormId",
+                                "nameCamelCase": "applicationFormId",
+                                "namePascalCase": "ApplicationFormId",
+                                "displayName": "",
+                                "referenceClass": "ApplicationForm",
+                                "isOverrideField": true,
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            }
+                        ],
+                        "entities": {
+                            "elements": {
+                                "ebbb516c-08c6-075c-5fa0-33a7cffe0867": {
+                                    "_type": "org.uengine.uml.model.Class",
+                                    "id": "ebbb516c-08c6-075c-5fa0-33a7cffe0867",
+                                    "name": "ApplicationReview",
+                                    "namePascalCase": "ApplicationReview",
+                                    "nameCamelCase": "applicationReview",
+                                    "namePlural": "ApplicationReviews",
+                                    "fieldDescriptors": [
+                                        {
+                                            "className": "String",
+                                            "isCopy": false,
+                                            "isKey": true,
+                                            "name": "reviewId",
+                                            "displayName": "",
+                                            "nameCamelCase": "reviewId",
+                                            "namePascalCase": "ReviewId",
+                                            "_type": "org.uengine.model.FieldDescriptor",
+                                            "inputUI": null,
+                                            "options": null
                                         },
                                         {
-                                            "_type": "org.uengine.model.FieldDescriptor",
-                                            "name": "title",
-                                            "nameCamelCase": "title",
-                                            "namePascalCase": "Title",
                                             "className": "String",
+                                            "isCopy": false,
                                             "isKey": false,
-                                            "isName": false,
-                                            "isList": false,
-                                            "isVO": false,
-                                            "isLob": false,
-                                            "isCorrelationKey": false,
-                                            "displayName": ""
+                                            "name": "applicationId",
+                                            "displayName": "",
+                                            "nameCamelCase": "applicationId",
+                                            "namePascalCase": "ApplicationId",
+                                            "_type": "org.uengine.model.FieldDescriptor",
+                                            "inputUI": null,
+                                            "options": null
                                         },
                                         {
-                                            "_type": "org.uengine.model.FieldDescriptor",
-                                            "name": "detail",
-                                            "nameCamelCase": "detail",
-                                            "namePascalCase": "Detail",
                                             "className": "String",
+                                            "isCopy": false,
                                             "isKey": false,
-                                            "isName": false,
-                                            "isList": false,
-                                            "isVO": false,
-                                            "isLob": false,
-                                            "isCorrelationKey": false,
-                                            "displayName": ""
+                                            "name": "reviewer",
+                                            "displayName": "",
+                                            "nameCamelCase": "reviewer",
+                                            "namePascalCase": "Reviewer",
+                                            "_type": "org.uengine.model.FieldDescriptor",
+                                            "inputUI": null,
+                                            "options": null
                                         },
                                         {
-                                            "_type": "org.uengine.model.FieldDescriptor",
-                                            "name": "attachedFiles",
-                                            "nameCamelCase": "attachedFiles",
-                                            "namePascalCase": "AttachedFiles",
-                                            "className": "String",
+                                            "className": "Date",
+                                            "isCopy": false,
                                             "isKey": false,
-                                            "isName": false,
-                                            "isList": false,
-                                            "isVO": false,
-                                            "isLob": false,
-                                            "isCorrelationKey": false,
-                                            "displayName": ""
+                                            "name": "reviewDate",
+                                            "displayName": "",
+                                            "nameCamelCase": "reviewDate",
+                                            "namePascalCase": "ReviewDate",
+                                            "_type": "org.uengine.model.FieldDescriptor",
+                                            "inputUI": null,
+                                            "options": null
                                         },
                                         {
-                                            "_type": "org.uengine.model.FieldDescriptor",
-                                            "name": "applicantInfo",
-                                            "nameCamelCase": "applicantInfo",
-                                            "namePascalCase": "ApplicantInfo",
-                                            "className": "String",
+                                            "className": "ApplicationStatus",
+                                            "isCopy": false,
                                             "isKey": false,
-                                            "isName": false,
-                                            "isList": false,
-                                            "isVO": false,
-                                            "isLob": false,
-                                            "isCorrelationKey": false,
-                                            "displayName": ""
+                                            "name": "status",
+                                            "displayName": "",
+                                            "nameCamelCase": "status",
+                                            "namePascalCase": "Status",
+                                            "_type": "org.uengine.model.FieldDescriptor",
+                                            "inputUI": null,
+                                            "options": null
+                                        },
+                                        {
+                                            "className": "String",
+                                            "isCopy": false,
+                                            "isKey": false,
+                                            "name": "rejectionReason",
+                                            "displayName": "",
+                                            "nameCamelCase": "rejectionReason",
+                                            "namePascalCase": "RejectionReason",
+                                            "_type": "org.uengine.model.FieldDescriptor",
+                                            "inputUI": null,
+                                            "options": null
+                                        },
+                                        {
+                                            "className": "ApplicationFormId",
+                                            "isCopy": false,
+                                            "isKey": false,
+                                            "name": "applicationFormId",
+                                            "nameCamelCase": "applicationFormId",
+                                            "namePascalCase": "ApplicationFormId",
+                                            "displayName": "",
+                                            "referenceClass": "ApplicationForm",
+                                            "isOverrideField": true,
+                                            "_type": "org.uengine.model.FieldDescriptor"
                                         }
                                     ],
                                     "operations": [],
                                     "elementView": {
                                         "_type": "org.uengine.uml.model.Class",
-                                        "id": "988dda2a-b1bb-5b3f-9dbf-ec28819faff6",
-                                        "x": 700,
-                                        "y": 760,
+                                        "id": "ebbb516c-08c6-075c-5fa0-33a7cffe0867",
+                                        "x": 200,
+                                        "y": 200,
                                         "width": 200,
-                                        "height": 150,
+                                        "height": 100,
                                         "style": "{}",
                                         "titleH": 50,
                                         "subEdgeH": 120,
@@ -8215,11 +8682,12 @@ const esValues = {
                                     "isVO": false,
                                     "isAbstract": false,
                                     "isInterface": false,
-                                    "isAggregateRoot": false
+                                    "isAggregateRoot": true,
+                                    "parentId": "8046de29-aeab-65f8-db12-c3ffe41abea5"
                                 },
-                                "56c3c677-d7f5-0747-3a2a-2d9964e384da": {
+                                "27572536-3564-bae4-f9d5-008201819e91": {
                                     "_type": "org.uengine.uml.model.enum",
-                                    "id": "56c3c677-d7f5-0747-3a2a-2d9964e384da",
+                                    "id": "27572536-3564-bae4-f9d5-008201819e91",
                                     "name": "ApplicationStatus",
                                     "displayName": "신청서 상태",
                                     "nameCamelCase": "applicationStatus",
@@ -8227,7 +8695,7 @@ const esValues = {
                                     "namePlural": "applicationStatuses",
                                     "elementView": {
                                         "_type": "org.uengine.uml.model.enum",
-                                        "id": "56c3c677-d7f5-0747-3a2a-2d9964e384da",
+                                        "id": "27572536-3564-bae4-f9d5-008201819e91",
                                         "x": 700,
                                         "y": 456,
                                         "width": 200,
@@ -8239,10 +8707,7 @@ const esValues = {
                                     "selected": false,
                                     "items": [
                                         {
-                                            "value": "TEMPORARY"
-                                        },
-                                        {
-                                            "value": "SUBMITTED"
+                                            "value": "PENDING"
                                         },
                                         {
                                             "value": "APPROVED"
@@ -8253,6 +8718,52 @@ const esValues = {
                                     ],
                                     "useKeyValue": false,
                                     "relations": []
+                                },
+                                "0fad5eab-c72e-7b7f-b432-159549c2730b": {
+                                    "_type": "org.uengine.uml.model.vo.Class",
+                                    "id": "0fad5eab-c72e-7b7f-b432-159549c2730b",
+                                    "name": "ApplicationFormId",
+                                    "displayName": "",
+                                    "namePascalCase": "ApplicationFormId",
+                                    "nameCamelCase": "applicationFormId",
+                                    "fieldDescriptors": [
+                                        {
+                                            "className": "String",
+                                            "isKey": true,
+                                            "label": "- applicationId: String",
+                                            "name": "applicationId",
+                                            "nameCamelCase": "applicationId",
+                                            "namePascalCase": "ApplicationId",
+                                            "displayName": "",
+                                            "referenceClass": "ApplicationForm",
+                                            "isOverrideField": true,
+                                            "_type": "org.uengine.model.FieldDescriptor"
+                                        }
+                                    ],
+                                    "operations": [],
+                                    "elementView": {
+                                        "_type": "org.uengine.uml.model.vo.address.Class",
+                                        "id": "0fad5eab-c72e-7b7f-b432-159549c2730b",
+                                        "x": 700,
+                                        "y": 152,
+                                        "width": 200,
+                                        "height": 100,
+                                        "style": "{}",
+                                        "titleH": 50,
+                                        "subEdgeH": 170,
+                                        "fieldH": 150,
+                                        "methodH": 30
+                                    },
+                                    "selected": false,
+                                    "parentOperations": [],
+                                    "relationType": null,
+                                    "isVO": true,
+                                    "relations": [],
+                                    "groupElement": null,
+                                    "isAggregateRoot": false,
+                                    "namePlural": "ApplicationFormIds",
+                                    "isAbstract": false,
+                                    "isInterface": false
                                 }
                             },
                             "relations": {}
@@ -8261,39 +8772,39 @@ const esValues = {
                     },
                     "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
                     "boundedContext": {
-                        "name": "1e909e6e-53f8-febb-f8e0-016837952467",
-                        "id": "1e909e6e-53f8-febb-f8e0-016837952467"
+                        "name": "886c1ea5-4b72-c968-7f43-c888489594ec",
+                        "id": "886c1ea5-4b72-c968-7f43-c888489594ec"
                     },
                     "commands": [],
                     "description": null,
-                    "id": "626b7229-4e39-028a-5f05-99bf207ed201",
+                    "id": "8046de29-aeab-65f8-db12-c3ffe41abea5",
                     "elementView": {
                         "_type": "org.uengine.modeling.model.Aggregate",
-                        "id": "626b7229-4e39-028a-5f05-99bf207ed201",
-                        "x": 650,
-                        "y": 600,
+                        "id": "8046de29-aeab-65f8-db12-c3ffe41abea5",
+                        "x": 1235,
+                        "y": 450,
                         "width": 130,
-                        "height": 700
+                        "height": 400
                     },
                     "events": [],
                     "hexagonalView": {
                         "_type": "org.uengine.modeling.model.AggregateHexagonal",
-                        "id": "626b7229-4e39-028a-5f05-99bf207ed201",
+                        "id": "8046de29-aeab-65f8-db12-c3ffe41abea5",
                         "x": 0,
                         "y": 0,
                         "subWidth": 0,
                         "width": 0
                     },
-                    "name": "CivilComplaintApplication",
-                    "displayName": "민원신청서",
-                    "nameCamelCase": "civilComplaintApplication",
-                    "namePascalCase": "CivilComplaintApplication",
-                    "namePlural": "civilComplaintApplications",
+                    "name": "ApplicationReview",
+                    "displayName": "민원 신청서 검토",
+                    "nameCamelCase": "applicationReview",
+                    "namePascalCase": "ApplicationReview",
+                    "namePlural": "applicationReviews",
                     "rotateStatus": false,
                     "selected": false,
                     "_type": "org.uengine.modeling.model.Aggregate"
                 },
-                "66dacbed-e343-9cd7-2dd0-db20f2a86a90": {
+                "1c1b8300-506a-2317-3fef-9fd3f7cc3dfd": {
                     "aggregateRoot": {
                         "_type": "org.uengine.modeling.model.AggregateRoot",
                         "fieldDescriptors": [
@@ -8310,75 +8821,75 @@ const esValues = {
                                 "_type": "org.uengine.model.FieldDescriptor"
                             },
                             {
+                                "className": "String",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "applicationId",
+                                "nameCamelCase": "applicationId",
+                                "namePascalCase": "ApplicationId",
+                                "displayName": "",
+                                "referenceClass": null,
+                                "isOverrideField": false,
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
                                 "className": "DocumentFormat",
                                 "isCopy": false,
                                 "isKey": false,
-                                "name": "documentFormat",
-                                "nameCamelCase": "documentFormat",
-                                "namePascalCase": "DocumentFormat",
+                                "name": "format",
+                                "nameCamelCase": "format",
+                                "namePascalCase": "Format",
                                 "displayName": "",
                                 "referenceClass": null,
                                 "isOverrideField": false,
                                 "_type": "org.uengine.model.FieldDescriptor"
                             },
                             {
-                                "className": "IssueStatus",
+                                "className": "Date",
                                 "isCopy": false,
                                 "isKey": false,
-                                "name": "issueStatus",
-                                "nameCamelCase": "issueStatus",
-                                "namePascalCase": "IssueStatus",
+                                "name": "createdDate",
+                                "nameCamelCase": "createdDate",
+                                "namePascalCase": "CreatedDate",
                                 "displayName": "",
                                 "referenceClass": null,
                                 "isOverrideField": false,
                                 "_type": "org.uengine.model.FieldDescriptor"
                             },
                             {
-                                "className": "TransmissionRecordVO",
+                                "className": "String",
                                 "isCopy": false,
                                 "isKey": false,
-                                "name": "transmissionRecord",
-                                "nameCamelCase": "transmissionRecord",
-                                "namePascalCase": "TransmissionRecord",
+                                "name": "sentTo",
+                                "nameCamelCase": "sentTo",
+                                "namePascalCase": "SentTo",
                                 "displayName": "",
                                 "referenceClass": null,
                                 "isOverrideField": false,
                                 "_type": "org.uengine.model.FieldDescriptor"
                             },
                             {
-                                "className": "DocumentData",
+                                "className": "ApplicationReviewId",
                                 "isCopy": false,
                                 "isKey": false,
-                                "name": "documentData",
-                                "nameCamelCase": "documentData",
-                                "namePascalCase": "DocumentData",
+                                "name": "applicationReviewId",
+                                "nameCamelCase": "applicationReviewId",
+                                "namePascalCase": "ApplicationReviewId",
                                 "displayName": "",
-                                "referenceClass": null,
-                                "isOverrideField": false,
-                                "_type": "org.uengine.model.FieldDescriptor"
-                            },
-                            {
-                                "className": "CivilComplaintApplicationId",
-                                "isCopy": false,
-                                "isKey": false,
-                                "name": "civilComplaintApplicationId",
-                                "nameCamelCase": "civilComplaintApplicationId",
-                                "namePascalCase": "CivilComplaintApplicationId",
-                                "displayName": "",
-                                "referenceClass": "CivilComplaintApplication",
+                                "referenceClass": "ApplicationReview",
                                 "isOverrideField": true,
                                 "_type": "org.uengine.model.FieldDescriptor"
                             }
                         ],
                         "entities": {
                             "elements": {
-                                "42e42acc-bcea-565f-6412-f36434b3fed3": {
+                                "1e523b48-6fab-2056-f95a-1338c1f648c9": {
                                     "_type": "org.uengine.uml.model.Class",
-                                    "id": "42e42acc-bcea-565f-6412-f36434b3fed3",
-                                    "name": "MinwonDocument",
-                                    "namePascalCase": "MinwonDocument",
-                                    "nameCamelCase": "minwonDocument",
-                                    "namePlural": "MinwonDocuments",
+                                    "id": "1e523b48-6fab-2056-f95a-1338c1f648c9",
+                                    "name": "Document",
+                                    "namePascalCase": "Document",
+                                    "nameCamelCase": "document",
+                                    "namePlural": "Documents",
                                     "fieldDescriptors": [
                                         {
                                             "className": "String",
@@ -8393,62 +8904,62 @@ const esValues = {
                                             "options": null
                                         },
                                         {
+                                            "className": "String",
+                                            "isCopy": false,
+                                            "isKey": false,
+                                            "name": "applicationId",
+                                            "displayName": "",
+                                            "nameCamelCase": "applicationId",
+                                            "namePascalCase": "ApplicationId",
+                                            "_type": "org.uengine.model.FieldDescriptor",
+                                            "inputUI": null,
+                                            "options": null
+                                        },
+                                        {
                                             "className": "DocumentFormat",
                                             "isCopy": false,
                                             "isKey": false,
-                                            "name": "documentFormat",
+                                            "name": "format",
                                             "displayName": "",
-                                            "nameCamelCase": "documentFormat",
-                                            "namePascalCase": "DocumentFormat",
+                                            "nameCamelCase": "format",
+                                            "namePascalCase": "Format",
                                             "_type": "org.uengine.model.FieldDescriptor",
                                             "inputUI": null,
                                             "options": null
                                         },
                                         {
-                                            "className": "IssueStatus",
+                                            "className": "Date",
                                             "isCopy": false,
                                             "isKey": false,
-                                            "name": "issueStatus",
+                                            "name": "createdDate",
                                             "displayName": "",
-                                            "nameCamelCase": "issueStatus",
-                                            "namePascalCase": "IssueStatus",
+                                            "nameCamelCase": "createdDate",
+                                            "namePascalCase": "CreatedDate",
                                             "_type": "org.uengine.model.FieldDescriptor",
                                             "inputUI": null,
                                             "options": null
                                         },
                                         {
-                                            "className": "TransmissionRecordVO",
+                                            "className": "String",
                                             "isCopy": false,
                                             "isKey": false,
-                                            "name": "transmissionRecord",
+                                            "name": "sentTo",
                                             "displayName": "",
-                                            "nameCamelCase": "transmissionRecord",
-                                            "namePascalCase": "TransmissionRecord",
+                                            "nameCamelCase": "sentTo",
+                                            "namePascalCase": "SentTo",
                                             "_type": "org.uengine.model.FieldDescriptor",
                                             "inputUI": null,
                                             "options": null
                                         },
                                         {
-                                            "className": "DocumentData",
+                                            "className": "ApplicationReviewId",
                                             "isCopy": false,
                                             "isKey": false,
-                                            "name": "documentData",
+                                            "name": "applicationReviewId",
+                                            "nameCamelCase": "applicationReviewId",
+                                            "namePascalCase": "ApplicationReviewId",
                                             "displayName": "",
-                                            "nameCamelCase": "documentData",
-                                            "namePascalCase": "DocumentData",
-                                            "_type": "org.uengine.model.FieldDescriptor",
-                                            "inputUI": null,
-                                            "options": null
-                                        },
-                                        {
-                                            "className": "CivilComplaintApplicationId",
-                                            "isCopy": false,
-                                            "isKey": false,
-                                            "name": "civilComplaintApplicationId",
-                                            "nameCamelCase": "civilComplaintApplicationId",
-                                            "namePascalCase": "CivilComplaintApplicationId",
-                                            "displayName": "",
-                                            "referenceClass": "CivilComplaintApplication",
+                                            "referenceClass": "ApplicationReview",
                                             "isOverrideField": true,
                                             "_type": "org.uengine.model.FieldDescriptor"
                                         }
@@ -8456,7 +8967,7 @@ const esValues = {
                                     "operations": [],
                                     "elementView": {
                                         "_type": "org.uengine.uml.model.Class",
-                                        "id": "42e42acc-bcea-565f-6412-f36434b3fed3",
+                                        "id": "1e523b48-6fab-2056-f95a-1338c1f648c9",
                                         "x": 200,
                                         "y": 200,
                                         "width": 200,
@@ -8475,138 +8986,19 @@ const esValues = {
                                     "isAbstract": false,
                                     "isInterface": false,
                                     "isAggregateRoot": true,
-                                    "parentId": "66dacbed-e343-9cd7-2dd0-db20f2a86a90"
+                                    "parentId": "1c1b8300-506a-2317-3fef-9fd3f7cc3dfd"
                                 },
-                                "5d63b1d9-fada-a0ca-f7e7-ec08de27e302": {
-                                    "_type": "org.uengine.uml.model.Class",
-                                    "id": "5d63b1d9-fada-a0ca-f7e7-ec08de27e302",
-                                    "name": "DocumentData",
-                                    "displayName": "문서데이터",
-                                    "namePascalCase": "DocumentData",
-                                    "nameCamelCase": "documentData",
-                                    "namePlural": "documentData",
-                                    "fieldDescriptors": [
-                                        {
-                                            "_type": "org.uengine.model.FieldDescriptor",
-                                            "name": "documentDataId",
-                                            "nameCamelCase": "documentDataId",
-                                            "namePascalCase": "DocumentDataId",
-                                            "className": "String",
-                                            "isKey": true,
-                                            "isName": false,
-                                            "isList": false,
-                                            "isVO": false,
-                                            "isLob": false,
-                                            "isCorrelationKey": false,
-                                            "displayName": ""
-                                        },
-                                        {
-                                            "_type": "org.uengine.model.FieldDescriptor",
-                                            "name": "content",
-                                            "nameCamelCase": "content",
-                                            "namePascalCase": "Content",
-                                            "className": "String",
-                                            "isKey": false,
-                                            "isName": false,
-                                            "isList": false,
-                                            "isVO": false,
-                                            "isLob": false,
-                                            "isCorrelationKey": false,
-                                            "displayName": ""
-                                        }
-                                    ],
-                                    "operations": [],
-                                    "elementView": {
-                                        "_type": "org.uengine.uml.model.Class",
-                                        "id": "5d63b1d9-fada-a0ca-f7e7-ec08de27e302",
-                                        "x": 700,
-                                        "y": 760,
-                                        "width": 200,
-                                        "height": 150,
-                                        "style": "{}",
-                                        "titleH": 50,
-                                        "subEdgeH": 120,
-                                        "fieldH": 90,
-                                        "methodH": 30
-                                    },
-                                    "selected": false,
-                                    "relations": [],
-                                    "parentOperations": [],
-                                    "relationType": null,
-                                    "isVO": false,
-                                    "isAbstract": false,
-                                    "isInterface": false,
-                                    "isAggregateRoot": false
-                                },
-                                "af1f426e-5c41-fcef-c46f-0a724172df44": {
-                                    "_type": "org.uengine.uml.model.vo.Class",
-                                    "id": "af1f426e-5c41-fcef-c46f-0a724172df44",
-                                    "name": "TransmissionRecordVO",
-                                    "displayName": "전송기록",
-                                    "namePascalCase": "TransmissionRecordVo",
-                                    "nameCamelCase": "transmissionRecordVo",
-                                    "fieldDescriptors": [
-                                        {
-                                            "className": "String",
-                                            "isKey": false,
-                                            "label": "- method: String",
-                                            "name": "method",
-                                            "nameCamelCase": "method",
-                                            "namePascalCase": "Method",
-                                            "displayName": "",
-                                            "referenceClass": null,
-                                            "isOverrideField": false,
-                                            "_type": "org.uengine.model.FieldDescriptor"
-                                        },
-                                        {
-                                            "className": "Date",
-                                            "isKey": false,
-                                            "label": "- sentDate: Date",
-                                            "name": "sentDate",
-                                            "nameCamelCase": "sentDate",
-                                            "namePascalCase": "SentDate",
-                                            "displayName": "",
-                                            "referenceClass": null,
-                                            "isOverrideField": false,
-                                            "_type": "org.uengine.model.FieldDescriptor"
-                                        }
-                                    ],
-                                    "operations": [],
-                                    "elementView": {
-                                        "_type": "org.uengine.uml.model.vo.address.Class",
-                                        "id": "af1f426e-5c41-fcef-c46f-0a724172df44",
-                                        "x": 700,
-                                        "y": 152,
-                                        "width": 200,
-                                        "height": 100,
-                                        "style": "{}",
-                                        "titleH": 50,
-                                        "subEdgeH": 170,
-                                        "fieldH": 150,
-                                        "methodH": 30
-                                    },
-                                    "selected": false,
-                                    "parentOperations": [],
-                                    "relationType": null,
-                                    "isVO": true,
-                                    "relations": [],
-                                    "groupElement": null,
-                                    "isAggregateRoot": false,
-                                    "namePlural": "TransmissionRecordVOs",
-                                    "isAbstract": false,
-                                    "isInterface": false
-                                },
-                                "4cb8390a-27e9-0332-aa36-e99c3c57bbae": {
+                                "ab12c5b2-30f8-9585-c974-360da3e0fa84": {
                                     "_type": "org.uengine.uml.model.enum",
-                                    "id": "4cb8390a-27e9-0332-aa36-e99c3c57bbae",
+                                    "id": "ab12c5b2-30f8-9585-c974-360da3e0fa84",
                                     "name": "DocumentFormat",
-                                    "displayName": "문서형식",
+                                    "displayName": "문서 포맷",
                                     "nameCamelCase": "documentFormat",
                                     "namePascalCase": "DocumentFormat",
                                     "namePlural": "documentFormats",
                                     "elementView": {
                                         "_type": "org.uengine.uml.model.enum",
-                                        "id": "4cb8390a-27e9-0332-aa36-e99c3c57bbae",
+                                        "id": "ab12c5b2-30f8-9585-c974-360da3e0fa84",
                                         "x": 700,
                                         "y": 456,
                                         "width": 200,
@@ -8621,63 +9013,29 @@ const esValues = {
                                             "value": "PDF"
                                         },
                                         {
-                                            "value": "SpecifiedFormat"
+                                            "value": "OTHER"
                                         }
                                     ],
                                     "useKeyValue": false,
                                     "relations": []
                                 },
-                                "927786fa-77fa-0579-79d9-0d462e62b134": {
-                                    "_type": "org.uengine.uml.model.enum",
-                                    "id": "927786fa-77fa-0579-79d9-0d462e62b134",
-                                    "name": "IssueStatus",
-                                    "displayName": "발급상태",
-                                    "nameCamelCase": "issueStatus",
-                                    "namePascalCase": "IssueStatus",
-                                    "namePlural": "issueStatuses",
-                                    "elementView": {
-                                        "_type": "org.uengine.uml.model.enum",
-                                        "id": "927786fa-77fa-0579-79d9-0d462e62b134",
-                                        "x": 950,
-                                        "y": 456,
-                                        "width": 200,
-                                        "height": 100,
-                                        "style": "{}",
-                                        "titleH": 50,
-                                        "subEdgeH": 50
-                                    },
-                                    "selected": false,
-                                    "items": [
-                                        {
-                                            "value": "Issued"
-                                        },
-                                        {
-                                            "value": "Failed"
-                                        },
-                                        {
-                                            "value": "Pending"
-                                        }
-                                    ],
-                                    "useKeyValue": false,
-                                    "relations": []
-                                },
-                                "5b0626c9-db66-2c06-d636-3a9c1a57be92": {
+                                "9c90b044-1c7f-06c0-ac24-5c907c51c528": {
                                     "_type": "org.uengine.uml.model.vo.Class",
-                                    "id": "5b0626c9-db66-2c06-d636-3a9c1a57be92",
-                                    "name": "CivilComplaintApplicationId",
+                                    "id": "9c90b044-1c7f-06c0-ac24-5c907c51c528",
+                                    "name": "ApplicationReviewId",
                                     "displayName": "",
-                                    "namePascalCase": "CivilComplaintApplicationId",
-                                    "nameCamelCase": "civilComplaintApplicationId",
+                                    "namePascalCase": "ApplicationReviewId",
+                                    "nameCamelCase": "applicationReviewId",
                                     "fieldDescriptors": [
                                         {
                                             "className": "String",
                                             "isKey": true,
-                                            "label": "- applicationId: String",
-                                            "name": "applicationId",
-                                            "nameCamelCase": "applicationId",
-                                            "namePascalCase": "ApplicationId",
+                                            "label": "- reviewId: String",
+                                            "name": "reviewId",
+                                            "nameCamelCase": "reviewId",
+                                            "namePascalCase": "ReviewId",
                                             "displayName": "",
-                                            "referenceClass": "CivilComplaintApplication",
+                                            "referenceClass": "ApplicationReview",
                                             "isOverrideField": true,
                                             "_type": "org.uengine.model.FieldDescriptor"
                                         }
@@ -8685,8 +9043,8 @@ const esValues = {
                                     "operations": [],
                                     "elementView": {
                                         "_type": "org.uengine.uml.model.vo.address.Class",
-                                        "id": "5b0626c9-db66-2c06-d636-3a9c1a57be92",
-                                        "x": 950,
+                                        "id": "9c90b044-1c7f-06c0-ac24-5c907c51c528",
+                                        "x": 700,
                                         "y": 152,
                                         "width": 200,
                                         "height": 100,
@@ -8703,7 +9061,7 @@ const esValues = {
                                     "relations": [],
                                     "groupElement": null,
                                     "isAggregateRoot": false,
-                                    "namePlural": "CivilComplaintApplicationIds",
+                                    "namePlural": "ApplicationReviewIds",
                                     "isAbstract": false,
                                     "isInterface": false
                                 }
@@ -8714,16 +9072,16 @@ const esValues = {
                     },
                     "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
                     "boundedContext": {
-                        "name": "03323d91-1261-f9b8-65e2-333f1a241fc0",
-                        "id": "03323d91-1261-f9b8-65e2-333f1a241fc0"
+                        "name": "886c1ea5-4b72-c968-7f43-c888489594ec",
+                        "id": "886c1ea5-4b72-c968-7f43-c888489594ec"
                     },
                     "commands": [],
                     "description": null,
-                    "id": "66dacbed-e343-9cd7-2dd0-db20f2a86a90",
+                    "id": "1c1b8300-506a-2317-3fef-9fd3f7cc3dfd",
                     "elementView": {
                         "_type": "org.uengine.modeling.model.Aggregate",
-                        "id": "66dacbed-e343-9cd7-2dd0-db20f2a86a90",
-                        "x": 1235,
+                        "id": "1c1b8300-506a-2317-3fef-9fd3f7cc3dfd",
+                        "x": 1665,
                         "y": 450,
                         "width": 130,
                         "height": 400
@@ -8731,56 +9089,92 @@ const esValues = {
                     "events": [],
                     "hexagonalView": {
                         "_type": "org.uengine.modeling.model.AggregateHexagonal",
-                        "id": "66dacbed-e343-9cd7-2dd0-db20f2a86a90",
+                        "id": "1c1b8300-506a-2317-3fef-9fd3f7cc3dfd",
                         "x": 0,
                         "y": 0,
                         "subWidth": 0,
                         "width": 0
                     },
-                    "name": "MinwonDocument",
-                    "displayName": "민원문서",
-                    "nameCamelCase": "minwonDocument",
-                    "namePascalCase": "MinwonDocument",
-                    "namePlural": "minwonDocuments",
+                    "name": "Document",
+                    "displayName": "민원 문서",
+                    "nameCamelCase": "document",
+                    "namePascalCase": "Document",
+                    "namePlural": "documents",
                     "rotateStatus": false,
                     "selected": false,
                     "_type": "org.uengine.modeling.model.Aggregate"
                 },
-                "857059f8-228a-8b17-127a-354eece4ee86": {
+                "9d7631f0-85d0-d398-e1d7-054976d2a870": {
                     "aggregateRoot": {
                         "_type": "org.uengine.modeling.model.AggregateRoot",
                         "fieldDescriptors": [
                             {
-                                "className": "Long",
+                                "className": "String",
                                 "isCopy": false,
                                 "isKey": true,
-                                "name": "operationId",
-                                "nameCamelCase": "operationId",
-                                "namePascalCase": "OperationId",
+                                "name": "monitorId",
+                                "nameCamelCase": "monitorId",
+                                "namePascalCase": "MonitorId",
                                 "displayName": "",
                                 "referenceClass": null,
                                 "isOverrideField": false,
                                 "_type": "org.uengine.model.FieldDescriptor"
                             },
                             {
-                                "className": "FallbackStatus",
+                                "className": "String",
                                 "isCopy": false,
                                 "isKey": false,
-                                "name": "fallbackStatus",
-                                "nameCamelCase": "fallbackStatus",
-                                "namePascalCase": "FallbackStatus",
+                                "name": "serverStatus",
+                                "nameCamelCase": "serverStatus",
+                                "namePascalCase": "ServerStatus",
                                 "displayName": "",
                                 "referenceClass": null,
                                 "isOverrideField": false,
                                 "_type": "org.uengine.model.FieldDescriptor"
                             },
                             {
-                                "className": "OperationData",
+                                "className": "String",
                                 "isCopy": false,
                                 "isKey": false,
-                                "name": "operationData",
-                                "nameCamelCase": "operationData",
-                                "namePascalCase": "OperationData",
+                                "name": "transactionLog",
+                                "nameCamelCase": "transactionLog",
+                                "namePascalCase": "TransactionLog",
+                                "displayName": "",
+                                "referenceClass": null,
+                                "isOverrideField": false,
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "Date",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "lastChecked",
+                                "nameCamelCase": "lastChecked",
+                                "namePascalCase": "LastChecked",
+                                "displayName": "",
+                                "referenceClass": null,
+                                "isOverrideField": false,
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "String",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "alerts",
+                                "nameCamelCase": "alerts",
+                                "namePascalCase": "Alerts",
+                                "displayName": "",
+                                "referenceClass": null,
+                                "isOverrideField": false,
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "MonitorStatus",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "status",
+                                "nameCamelCase": "status",
+                                "namePascalCase": "Status",
                                 "displayName": "",
                                 "referenceClass": null,
                                 "isOverrideField": false,
@@ -8789,46 +9183,82 @@ const esValues = {
                         ],
                         "entities": {
                             "elements": {
-                                "9e1e1410-621f-fe3a-9ce1-3080f7eca9a1": {
+                                "53a2e7d4-df9b-ad4b-ca8d-e1bc49db8028": {
                                     "_type": "org.uengine.uml.model.Class",
-                                    "id": "9e1e1410-621f-fe3a-9ce1-3080f7eca9a1",
-                                    "name": "SystemOperation",
-                                    "namePascalCase": "SystemOperation",
-                                    "nameCamelCase": "systemOperation",
-                                    "namePlural": "SystemOperations",
+                                    "id": "53a2e7d4-df9b-ad4b-ca8d-e1bc49db8028",
+                                    "name": "SystemMonitor",
+                                    "namePascalCase": "SystemMonitor",
+                                    "nameCamelCase": "systemMonitor",
+                                    "namePlural": "SystemMonitors",
                                     "fieldDescriptors": [
                                         {
-                                            "className": "Long",
+                                            "className": "String",
                                             "isCopy": false,
                                             "isKey": true,
-                                            "name": "operationId",
+                                            "name": "monitorId",
                                             "displayName": "",
-                                            "nameCamelCase": "operationId",
-                                            "namePascalCase": "OperationId",
+                                            "nameCamelCase": "monitorId",
+                                            "namePascalCase": "MonitorId",
                                             "_type": "org.uengine.model.FieldDescriptor",
                                             "inputUI": null,
                                             "options": null
                                         },
                                         {
-                                            "className": "FallbackStatus",
+                                            "className": "String",
                                             "isCopy": false,
                                             "isKey": false,
-                                            "name": "fallbackStatus",
+                                            "name": "serverStatus",
                                             "displayName": "",
-                                            "nameCamelCase": "fallbackStatus",
-                                            "namePascalCase": "FallbackStatus",
+                                            "nameCamelCase": "serverStatus",
+                                            "namePascalCase": "ServerStatus",
                                             "_type": "org.uengine.model.FieldDescriptor",
                                             "inputUI": null,
                                             "options": null
                                         },
                                         {
-                                            "className": "OperationData",
+                                            "className": "String",
                                             "isCopy": false,
                                             "isKey": false,
-                                            "name": "operationData",
+                                            "name": "transactionLog",
                                             "displayName": "",
-                                            "nameCamelCase": "operationData",
-                                            "namePascalCase": "OperationData",
+                                            "nameCamelCase": "transactionLog",
+                                            "namePascalCase": "TransactionLog",
+                                            "_type": "org.uengine.model.FieldDescriptor",
+                                            "inputUI": null,
+                                            "options": null
+                                        },
+                                        {
+                                            "className": "Date",
+                                            "isCopy": false,
+                                            "isKey": false,
+                                            "name": "lastChecked",
+                                            "displayName": "",
+                                            "nameCamelCase": "lastChecked",
+                                            "namePascalCase": "LastChecked",
+                                            "_type": "org.uengine.model.FieldDescriptor",
+                                            "inputUI": null,
+                                            "options": null
+                                        },
+                                        {
+                                            "className": "String",
+                                            "isCopy": false,
+                                            "isKey": false,
+                                            "name": "alerts",
+                                            "displayName": "",
+                                            "nameCamelCase": "alerts",
+                                            "namePascalCase": "Alerts",
+                                            "_type": "org.uengine.model.FieldDescriptor",
+                                            "inputUI": null,
+                                            "options": null
+                                        },
+                                        {
+                                            "className": "MonitorStatus",
+                                            "isCopy": false,
+                                            "isKey": false,
+                                            "name": "status",
+                                            "displayName": "",
+                                            "nameCamelCase": "status",
+                                            "namePascalCase": "Status",
                                             "_type": "org.uengine.model.FieldDescriptor",
                                             "inputUI": null,
                                             "options": null
@@ -8837,7 +9267,7 @@ const esValues = {
                                     "operations": [],
                                     "elementView": {
                                         "_type": "org.uengine.uml.model.Class",
-                                        "id": "9e1e1410-621f-fe3a-9ce1-3080f7eca9a1",
+                                        "id": "53a2e7d4-df9b-ad4b-ca8d-e1bc49db8028",
                                         "x": 200,
                                         "y": 200,
                                         "width": 200,
@@ -8856,154 +9286,41 @@ const esValues = {
                                     "isAbstract": false,
                                     "isInterface": false,
                                     "isAggregateRoot": true,
-                                    "parentId": "857059f8-228a-8b17-127a-354eece4ee86"
+                                    "parentId": "9d7631f0-85d0-d398-e1d7-054976d2a870"
                                 },
-                                "70d61a68-66e9-712e-a126-f306b9882d8e": {
-                                    "_type": "org.uengine.uml.model.Class",
-                                    "id": "70d61a68-66e9-712e-a126-f306b9882d8e",
-                                    "name": "OperationData",
-                                    "displayName": "운영 데이터",
-                                    "namePascalCase": "OperationData",
-                                    "nameCamelCase": "operationData",
-                                    "namePlural": "operationData",
-                                    "fieldDescriptors": [
-                                        {
-                                            "_type": "org.uengine.model.FieldDescriptor",
-                                            "name": "dataId",
-                                            "nameCamelCase": "dataId",
-                                            "namePascalCase": "DataId",
-                                            "className": "Long",
-                                            "isKey": true,
-                                            "isName": false,
-                                            "isList": false,
-                                            "isVO": false,
-                                            "isLob": false,
-                                            "isCorrelationKey": false,
-                                            "displayName": ""
-                                        },
-                                        {
-                                            "_type": "org.uengine.model.FieldDescriptor",
-                                            "name": "serverStatus",
-                                            "nameCamelCase": "serverStatus",
-                                            "namePascalCase": "ServerStatus",
-                                            "className": "String",
-                                            "isKey": false,
-                                            "isName": false,
-                                            "isList": false,
-                                            "isVO": false,
-                                            "isLob": false,
-                                            "isCorrelationKey": false,
-                                            "displayName": ""
-                                        },
-                                        {
-                                            "_type": "org.uengine.model.FieldDescriptor",
-                                            "name": "transactionLog",
-                                            "nameCamelCase": "transactionLog",
-                                            "namePascalCase": "TransactionLog",
-                                            "className": "String",
-                                            "isKey": false,
-                                            "isName": false,
-                                            "isList": false,
-                                            "isVO": false,
-                                            "isLob": false,
-                                            "isCorrelationKey": false,
-                                            "displayName": ""
-                                        },
-                                        {
-                                            "_type": "org.uengine.model.FieldDescriptor",
-                                            "name": "alertRecords",
-                                            "nameCamelCase": "alertRecords",
-                                            "namePascalCase": "AlertRecords",
-                                            "className": "String",
-                                            "isKey": false,
-                                            "isName": false,
-                                            "isList": false,
-                                            "isVO": false,
-                                            "isLob": false,
-                                            "isCorrelationKey": false,
-                                            "displayName": ""
-                                        }
-                                    ],
-                                    "operations": [],
+                                "3031c176-5928-b82a-284b-13325eb8d770": {
+                                    "_type": "org.uengine.uml.model.enum",
+                                    "id": "3031c176-5928-b82a-284b-13325eb8d770",
+                                    "name": "MonitorStatus",
+                                    "displayName": "모니터링 상태",
+                                    "nameCamelCase": "monitorStatus",
+                                    "namePascalCase": "MonitorStatus",
+                                    "namePlural": "monitorStatuses",
                                     "elementView": {
-                                        "_type": "org.uengine.uml.model.Class",
-                                        "id": "70d61a68-66e9-712e-a126-f306b9882d8e",
+                                        "_type": "org.uengine.uml.model.enum",
+                                        "id": "3031c176-5928-b82a-284b-13325eb8d770",
                                         "x": 700,
-                                        "y": 760,
-                                        "width": 200,
-                                        "height": 150,
-                                        "style": "{}",
-                                        "titleH": 50,
-                                        "subEdgeH": 120,
-                                        "fieldH": 90,
-                                        "methodH": 30
-                                    },
-                                    "selected": false,
-                                    "relations": [],
-                                    "parentOperations": [],
-                                    "relationType": null,
-                                    "isVO": false,
-                                    "isAbstract": false,
-                                    "isInterface": false,
-                                    "isAggregateRoot": false
-                                },
-                                "48695ce7-3cc5-8cb0-65ae-53f29fa20f24": {
-                                    "_type": "org.uengine.uml.model.vo.Class",
-                                    "id": "48695ce7-3cc5-8cb0-65ae-53f29fa20f24",
-                                    "name": "FallbackStatus",
-                                    "displayName": "백업 상태",
-                                    "namePascalCase": "FallbackStatus",
-                                    "nameCamelCase": "fallbackStatus",
-                                    "fieldDescriptors": [
-                                        {
-                                            "className": "Boolean",
-                                            "isKey": false,
-                                            "label": "- active: Boolean",
-                                            "name": "active",
-                                            "nameCamelCase": "active",
-                                            "namePascalCase": "Active",
-                                            "displayName": "",
-                                            "referenceClass": null,
-                                            "isOverrideField": false,
-                                            "_type": "org.uengine.model.FieldDescriptor"
-                                        },
-                                        {
-                                            "className": "Date",
-                                            "isKey": false,
-                                            "label": "- lastSwitchedDate: Date",
-                                            "name": "lastSwitchedDate",
-                                            "nameCamelCase": "lastSwitchedDate",
-                                            "namePascalCase": "LastSwitchedDate",
-                                            "displayName": "",
-                                            "referenceClass": null,
-                                            "isOverrideField": false,
-                                            "_type": "org.uengine.model.FieldDescriptor"
-                                        }
-                                    ],
-                                    "operations": [],
-                                    "elementView": {
-                                        "_type": "org.uengine.uml.model.vo.address.Class",
-                                        "id": "48695ce7-3cc5-8cb0-65ae-53f29fa20f24",
-                                        "x": 700,
-                                        "y": 152,
+                                        "y": 456,
                                         "width": 200,
                                         "height": 100,
                                         "style": "{}",
                                         "titleH": 50,
-                                        "subEdgeH": 170,
-                                        "fieldH": 150,
-                                        "methodH": 30
+                                        "subEdgeH": 50
                                     },
                                     "selected": false,
-                                    "parentOperations": [],
-                                    "relationType": null,
-                                    "isVO": true,
-                                    "relations": [],
-                                    "groupElement": null,
-                                    "isAggregateRoot": false,
-                                    "namePlural": "FallbackStatuss",
-                                    "isAbstract": false,
-                                    "isInterface": false
+                                    "items": [
+                                        {
+                                            "value": "NORMAL"
+                                        },
+                                        {
+                                            "value": "ALERT"
+                                        },
+                                        {
+                                            "value": "BACKUP"
+                                        }
+                                    ],
+                                    "useKeyValue": false,
+                                    "relations": []
                                 }
                             },
                             "relations": {}
@@ -9012,16 +9329,16 @@ const esValues = {
                     },
                     "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
                     "boundedContext": {
-                        "name": "f0a567cc-2b73-509f-37cb-24dde03e0d76",
-                        "id": "f0a567cc-2b73-509f-37cb-24dde03e0d76"
+                        "name": "81fab6f5-399c-4722-35ba-75ec4c67a041",
+                        "id": "81fab6f5-399c-4722-35ba-75ec4c67a041"
                     },
                     "commands": [],
                     "description": null,
-                    "id": "857059f8-228a-8b17-127a-354eece4ee86",
+                    "id": "9d7631f0-85d0-d398-e1d7-054976d2a870",
                     "elementView": {
                         "_type": "org.uengine.modeling.model.Aggregate",
-                        "id": "857059f8-228a-8b17-127a-354eece4ee86",
-                        "x": 1820,
+                        "id": "9d7631f0-85d0-d398-e1d7-054976d2a870",
+                        "x": 2270,
                         "y": 450,
                         "width": 130,
                         "height": 400
@@ -9029,31 +9346,31 @@ const esValues = {
                     "events": [],
                     "hexagonalView": {
                         "_type": "org.uengine.modeling.model.AggregateHexagonal",
-                        "id": "857059f8-228a-8b17-127a-354eece4ee86",
+                        "id": "9d7631f0-85d0-d398-e1d7-054976d2a870",
                         "x": 0,
                         "y": 0,
                         "subWidth": 0,
                         "width": 0
                     },
-                    "name": "SystemOperation",
-                    "displayName": "시스템 운영",
-                    "nameCamelCase": "systemOperation",
-                    "namePascalCase": "SystemOperation",
-                    "namePlural": "systemOperations",
+                    "name": "SystemMonitor",
+                    "displayName": "시스템 모니터링",
+                    "nameCamelCase": "systemMonitor",
+                    "namePascalCase": "SystemMonitor",
+                    "namePlural": "systemMonitors",
                     "rotateStatus": false,
                     "selected": false,
                     "_type": "org.uengine.modeling.model.Aggregate"
                 },
-                "66f3458b-5642-0fcb-b29b-ebe3befd6d33": {
+                "55357fca-db61-d383-c8ec-8a24a26abeb3": {
                     "alertURL": "/static/image/symbol/alert-icon.png",
                     "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
                     "checkAlert": true,
                     "description": null,
-                    "id": "66f3458b-5642-0fcb-b29b-ebe3befd6d33",
+                    "id": "55357fca-db61-d383-c8ec-8a24a26abeb3",
                     "elementView": {
                         "angle": 0,
                         "height": 116,
-                        "id": "66f3458b-5642-0fcb-b29b-ebe3befd6d33",
+                        "id": "55357fca-db61-d383-c8ec-8a24a26abeb3",
                         "style": "{}",
                         "width": 100,
                         "x": 744,
@@ -9095,9 +9412,9 @@ const esValues = {
                             "className": "String",
                             "isCopy": false,
                             "isKey": false,
-                            "name": "attachedFiles",
-                            "nameCamelCase": "attachedFiles",
-                            "namePascalCase": "AttachedFiles",
+                            "name": "attachment",
+                            "nameCamelCase": "attachment",
+                            "namePascalCase": "Attachment",
                             "displayName": "",
                             "_type": "org.uengine.model.FieldDescriptor"
                         },
@@ -9105,9 +9422,19 @@ const esValues = {
                             "className": "String",
                             "isCopy": false,
                             "isKey": false,
-                            "name": "applicantInfo",
-                            "nameCamelCase": "applicantInfo",
-                            "namePascalCase": "ApplicantInfo",
+                            "name": "residentRegistrationNumber",
+                            "nameCamelCase": "residentRegistrationNumber",
+                            "namePascalCase": "ResidentRegistrationNumber",
+                            "displayName": "",
+                            "_type": "org.uengine.model.FieldDescriptor"
+                        },
+                        {
+                            "className": "String",
+                            "isCopy": false,
+                            "isKey": false,
+                            "name": "address",
+                            "nameCamelCase": "address",
+                            "namePascalCase": "Address",
                             "displayName": "",
                             "_type": "org.uengine.model.FieldDescriptor"
                         },
@@ -9124,17 +9451,17 @@ const esValues = {
                     ],
                     "hexagonalView": {
                         "height": 0,
-                        "id": "66f3458b-5642-0fcb-b29b-ebe3befd6d33",
+                        "id": "55357fca-db61-d383-c8ec-8a24a26abeb3",
                         "style": "{}",
                         "width": 0,
                         "x": 0,
                         "y": 0,
                         "_type": "org.uengine.modeling.model.EventHexagonal"
                     },
-                    "name": "CivilComplaintApplicationCreated",
-                    "displayName": "민원 신청서 임시 저장 완료",
-                    "nameCamelCase": "civilComplaintApplicationCreated",
-                    "namePascalCase": "CivilComplaintApplicationCreated",
+                    "name": "ApplicationDraftSaved",
+                    "displayName": "임시 저장된 민원 신청서 생성됨",
+                    "nameCamelCase": "applicationDraftSaved",
+                    "namePascalCase": "ApplicationDraftSaved",
                     "namePlural": "",
                     "relationCommandInfo": [],
                     "relationPolicyInfo": [],
@@ -9143,22 +9470,23 @@ const esValues = {
                     "trigger": "@PostPersist",
                     "_type": "org.uengine.modeling.model.Event",
                     "aggregate": {
-                        "id": "626b7229-4e39-028a-5f05-99bf207ed201"
+                        "id": "39120b26-cdde-82ad-fa95-a25d828ad2b7"
                     },
                     "boundedContext": {
-                        "id": "1e909e6e-53f8-febb-f8e0-016837952467"
-                    }
+                        "id": "af1cc5ab-8a10-648b-d119-90a732415c27"
+                    },
+                    "visibility": "public"
                 },
-                "f29c3838-ea28-5652-c1f1-cf692b607ab0": {
+                "17c64ef9-77d3-1c17-4e3e-5a755753f79b": {
                     "alertURL": "/static/image/symbol/alert-icon.png",
                     "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
                     "checkAlert": true,
                     "description": null,
-                    "id": "f29c3838-ea28-5652-c1f1-cf692b607ab0",
+                    "id": "17c64ef9-77d3-1c17-4e3e-5a755753f79b",
                     "elementView": {
                         "angle": 0,
                         "height": 116,
-                        "id": "f29c3838-ea28-5652-c1f1-cf692b607ab0",
+                        "id": "17c64ef9-77d3-1c17-4e3e-5a755753f79b",
                         "style": "{}",
                         "width": 100,
                         "x": 744,
@@ -9177,29 +9505,89 @@ const esValues = {
                             "_type": "org.uengine.model.FieldDescriptor"
                         },
                         {
+                            "className": "String",
+                            "isCopy": false,
+                            "isKey": false,
+                            "name": "title",
+                            "nameCamelCase": "title",
+                            "namePascalCase": "Title",
+                            "displayName": "",
+                            "_type": "org.uengine.model.FieldDescriptor"
+                        },
+                        {
+                            "className": "String",
+                            "isCopy": false,
+                            "isKey": false,
+                            "name": "detail",
+                            "nameCamelCase": "detail",
+                            "namePascalCase": "Detail",
+                            "displayName": "",
+                            "_type": "org.uengine.model.FieldDescriptor"
+                        },
+                        {
+                            "className": "String",
+                            "isCopy": false,
+                            "isKey": false,
+                            "name": "attachment",
+                            "nameCamelCase": "attachment",
+                            "namePascalCase": "Attachment",
+                            "displayName": "",
+                            "_type": "org.uengine.model.FieldDescriptor"
+                        },
+                        {
+                            "className": "String",
+                            "isCopy": false,
+                            "isKey": false,
+                            "name": "residentRegistrationNumber",
+                            "nameCamelCase": "residentRegistrationNumber",
+                            "namePascalCase": "ResidentRegistrationNumber",
+                            "displayName": "",
+                            "_type": "org.uengine.model.FieldDescriptor"
+                        },
+                        {
+                            "className": "String",
+                            "isCopy": false,
+                            "isKey": false,
+                            "name": "address",
+                            "nameCamelCase": "address",
+                            "namePascalCase": "Address",
+                            "displayName": "",
+                            "_type": "org.uengine.model.FieldDescriptor"
+                        },
+                        {
+                            "className": "ApplicationStatus",
+                            "isCopy": false,
+                            "isKey": false,
+                            "name": "status",
+                            "nameCamelCase": "status",
+                            "namePascalCase": "Status",
+                            "displayName": "",
+                            "_type": "org.uengine.model.FieldDescriptor"
+                        },
+                        {
                             "className": "Date",
                             "isCopy": false,
                             "isKey": false,
-                            "name": "submittedAt",
-                            "nameCamelCase": "submittedAt",
-                            "namePascalCase": "SubmittedAt",
+                            "name": "submitDate",
+                            "nameCamelCase": "submitDate",
+                            "namePascalCase": "SubmitDate",
                             "displayName": "",
                             "_type": "org.uengine.model.FieldDescriptor"
                         }
                     ],
                     "hexagonalView": {
                         "height": 0,
-                        "id": "f29c3838-ea28-5652-c1f1-cf692b607ab0",
+                        "id": "17c64ef9-77d3-1c17-4e3e-5a755753f79b",
                         "style": "{}",
                         "width": 0,
                         "x": 0,
                         "y": 0,
                         "_type": "org.uengine.modeling.model.EventHexagonal"
                     },
-                    "name": "CivilComplaintApplicationSubmitted",
-                    "displayName": "민원 신청서 제출 완료",
-                    "nameCamelCase": "civilComplaintApplicationSubmitted",
-                    "namePascalCase": "CivilComplaintApplicationSubmitted",
+                    "name": "ApplicationSubmitted",
+                    "displayName": "민원 신청서 제출 완료됨",
+                    "nameCamelCase": "applicationSubmitted",
+                    "namePascalCase": "ApplicationSubmitted",
                     "namePlural": "",
                     "relationCommandInfo": [],
                     "relationPolicyInfo": [],
@@ -9208,163 +9596,24 @@ const esValues = {
                     "trigger": "@PostPersist",
                     "_type": "org.uengine.modeling.model.Event",
                     "aggregate": {
-                        "id": "626b7229-4e39-028a-5f05-99bf207ed201"
+                        "id": "39120b26-cdde-82ad-fa95-a25d828ad2b7"
                     },
                     "boundedContext": {
-                        "id": "1e909e6e-53f8-febb-f8e0-016837952467"
-                    }
+                        "id": "af1cc5ab-8a10-648b-d119-90a732415c27"
+                    },
+                    "visibility": "public"
                 },
-                "bc5229a7-862e-d110-8cbc-09473b572133": {
-                    "alertURL": "/static/image/symbol/alert-icon.png",
-                    "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
-                    "checkAlert": true,
-                    "description": null,
-                    "id": "bc5229a7-862e-d110-8cbc-09473b572133",
-                    "elementView": {
-                        "angle": 0,
-                        "height": 116,
-                        "id": "bc5229a7-862e-d110-8cbc-09473b572133",
-                        "style": "{}",
-                        "width": 100,
-                        "x": 744,
-                        "y": 510,
-                        "_type": "org.uengine.modeling.model.Event"
-                    },
-                    "fieldDescriptors": [
-                        {
-                            "className": "String",
-                            "isCopy": false,
-                            "isKey": true,
-                            "name": "applicationId",
-                            "nameCamelCase": "applicationId",
-                            "namePascalCase": "ApplicationId",
-                            "displayName": "",
-                            "_type": "org.uengine.model.FieldDescriptor"
-                        },
-                        {
-                            "className": "Date",
-                            "isCopy": false,
-                            "isKey": false,
-                            "name": "approvedAt",
-                            "nameCamelCase": "approvedAt",
-                            "namePascalCase": "ApprovedAt",
-                            "displayName": "",
-                            "_type": "org.uengine.model.FieldDescriptor"
-                        }
-                    ],
-                    "hexagonalView": {
-                        "height": 0,
-                        "id": "bc5229a7-862e-d110-8cbc-09473b572133",
-                        "style": "{}",
-                        "width": 0,
-                        "x": 0,
-                        "y": 0,
-                        "_type": "org.uengine.modeling.model.EventHexagonal"
-                    },
-                    "name": "CivilComplaintApplicationApproved",
-                    "displayName": "민원 신청서 승인 완료",
-                    "nameCamelCase": "civilComplaintApplicationApproved",
-                    "namePascalCase": "CivilComplaintApplicationApproved",
-                    "namePlural": "",
-                    "relationCommandInfo": [],
-                    "relationPolicyInfo": [],
-                    "rotateStatus": false,
-                    "selected": false,
-                    "trigger": "@PostPersist",
-                    "_type": "org.uengine.modeling.model.Event",
-                    "aggregate": {
-                        "id": "626b7229-4e39-028a-5f05-99bf207ed201"
-                    },
-                    "boundedContext": {
-                        "id": "1e909e6e-53f8-febb-f8e0-016837952467"
-                    }
-                },
-                "76b52ff8-08f2-4639-5353-53dc2421a6c8": {
-                    "alertURL": "/static/image/symbol/alert-icon.png",
-                    "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
-                    "checkAlert": true,
-                    "description": null,
-                    "id": "76b52ff8-08f2-4639-5353-53dc2421a6c8",
-                    "elementView": {
-                        "angle": 0,
-                        "height": 116,
-                        "id": "76b52ff8-08f2-4639-5353-53dc2421a6c8",
-                        "style": "{}",
-                        "width": 100,
-                        "x": 744,
-                        "y": 640,
-                        "_type": "org.uengine.modeling.model.Event"
-                    },
-                    "fieldDescriptors": [
-                        {
-                            "className": "String",
-                            "isCopy": false,
-                            "isKey": true,
-                            "name": "applicationId",
-                            "nameCamelCase": "applicationId",
-                            "namePascalCase": "ApplicationId",
-                            "displayName": "",
-                            "_type": "org.uengine.model.FieldDescriptor"
-                        },
-                        {
-                            "className": "String",
-                            "isCopy": false,
-                            "isKey": false,
-                            "name": "rejectionReason",
-                            "nameCamelCase": "rejectionReason",
-                            "namePascalCase": "RejectionReason",
-                            "displayName": "",
-                            "_type": "org.uengine.model.FieldDescriptor"
-                        },
-                        {
-                            "className": "Date",
-                            "isCopy": false,
-                            "isKey": false,
-                            "name": "rejectedAt",
-                            "nameCamelCase": "rejectedAt",
-                            "namePascalCase": "RejectedAt",
-                            "displayName": "",
-                            "_type": "org.uengine.model.FieldDescriptor"
-                        }
-                    ],
-                    "hexagonalView": {
-                        "height": 0,
-                        "id": "76b52ff8-08f2-4639-5353-53dc2421a6c8",
-                        "style": "{}",
-                        "width": 0,
-                        "x": 0,
-                        "y": 0,
-                        "_type": "org.uengine.modeling.model.EventHexagonal"
-                    },
-                    "name": "CivilComplaintApplicationRejected",
-                    "displayName": "민원 신청서 반려 완료",
-                    "nameCamelCase": "civilComplaintApplicationRejected",
-                    "namePascalCase": "CivilComplaintApplicationRejected",
-                    "namePlural": "",
-                    "relationCommandInfo": [],
-                    "relationPolicyInfo": [],
-                    "rotateStatus": false,
-                    "selected": false,
-                    "trigger": "@PostPersist",
-                    "_type": "org.uengine.modeling.model.Event",
-                    "aggregate": {
-                        "id": "626b7229-4e39-028a-5f05-99bf207ed201"
-                    },
-                    "boundedContext": {
-                        "id": "1e909e6e-53f8-febb-f8e0-016837952467"
-                    }
-                },
-                "30a5302a-47fa-1359-ef3c-530be470a9ad": {
+                "707794be-6f3b-f683-1e06-100f5044c1fd": {
                     "_type": "org.uengine.modeling.model.Command",
                     "outputEvents": [
-                        "CivilComplaintApplicationCreated"
+                        "ApplicationDraftSaved"
                     ],
                     "aggregate": {
-                        "id": "626b7229-4e39-028a-5f05-99bf207ed201"
+                        "id": "39120b26-cdde-82ad-fa95-a25d828ad2b7"
                     },
                     "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
                     "boundedContext": {
-                        "id": "1e909e6e-53f8-febb-f8e0-016837952467"
+                        "id": "af1cc5ab-8a10-648b-d119-90a732415c27"
                     },
                     "controllerInfo": {
                         "method": "POST"
@@ -9394,9 +9643,9 @@ const esValues = {
                             "className": "String",
                             "isCopy": false,
                             "isKey": false,
-                            "name": "attachedFiles",
-                            "nameCamelCase": "attachedFiles",
-                            "namePascalCase": "AttachedFiles",
+                            "name": "attachment",
+                            "nameCamelCase": "attachment",
+                            "namePascalCase": "Attachment",
                             "displayName": "",
                             "_type": "org.uengine.model.FieldDescriptor"
                         },
@@ -9404,19 +9653,29 @@ const esValues = {
                             "className": "String",
                             "isCopy": false,
                             "isKey": false,
-                            "name": "applicantInfo",
-                            "nameCamelCase": "applicantInfo",
-                            "namePascalCase": "ApplicantInfo",
+                            "name": "residentRegistrationNumber",
+                            "nameCamelCase": "residentRegistrationNumber",
+                            "namePascalCase": "ResidentRegistrationNumber",
+                            "displayName": "",
+                            "_type": "org.uengine.model.FieldDescriptor"
+                        },
+                        {
+                            "className": "String",
+                            "isCopy": false,
+                            "isKey": false,
+                            "name": "address",
+                            "nameCamelCase": "address",
+                            "namePascalCase": "Address",
                             "displayName": "",
                             "_type": "org.uengine.model.FieldDescriptor"
                         }
                     ],
                     "description": null,
-                    "id": "30a5302a-47fa-1359-ef3c-530be470a9ad",
+                    "id": "707794be-6f3b-f683-1e06-100f5044c1fd",
                     "elementView": {
                         "_type": "org.uengine.modeling.model.Command",
                         "height": 116,
-                        "id": "30a5302a-47fa-1359-ef3c-530be470a9ad",
+                        "id": "707794be-6f3b-f683-1e06-100f5044c1fd",
                         "style": "{}",
                         "width": 100,
                         "x": 556,
@@ -9426,18 +9685,18 @@ const esValues = {
                     "hexagonalView": {
                         "_type": "org.uengine.modeling.model.CommandHexagonal",
                         "height": 0,
-                        "id": "30a5302a-47fa-1359-ef3c-530be470a9ad",
+                        "id": "707794be-6f3b-f683-1e06-100f5044c1fd",
                         "style": "{}",
                         "width": 0,
                         "x": 0,
                         "y": 0
                     },
                     "isRestRepository": false,
-                    "name": "CreateCivilComplaintApplication",
-                    "displayName": "신규 민원 신청서 생성",
-                    "nameCamelCase": "createCivilComplaintApplication",
-                    "namePascalCase": "CreateCivilComplaintApplication",
-                    "namePlural": "createCivilComplaintApplications",
+                    "name": "TemporarySaveApplication",
+                    "displayName": "임시 저장 민원 신청서",
+                    "nameCamelCase": "temporarySaveApplication",
+                    "namePascalCase": "TemporarySaveApplication",
+                    "namePlural": "temporarySaveApplications",
                     "relationCommandInfo": [],
                     "relationEventInfo": [],
                     "restRepositoryInfo": {
@@ -9451,263 +9710,62 @@ const esValues = {
                             "given": [
                                 {
                                     "type": "Aggregate",
-                                    "name": "CivilComplaintApplication",
+                                    "name": "ApplicationForm",
                                     "value": {
-                                        "applicationId": null,
+                                        "applicationId": "N/A",
+                                        "title": "민원 신청서 제목",
+                                        "detail": "신청서 상세내용",
+                                        "attachment": "document.pdf",
+                                        "residentRegistrationNumber": "123456-1234567",
+                                        "address": "서울시 강남구",
                                         "status": "N/A",
-                                        "applicationData": {
-                                            "title": "N/A",
-                                            "detail": "N/A",
-                                            "attachedFiles": "N/A",
-                                            "applicantInfo": "N/A"
-                                        }
+                                        "documentId": "N/A"
                                     }
                                 }
                             ],
                             "when": [
                                 {
                                     "type": "Command",
-                                    "name": "CreateCivilComplaintApplication",
+                                    "name": "TemporarySaveApplication",
                                     "value": {
-                                        "title": "도로 파손 신고",
-                                        "detail": "도로 포장 파손으로 인한 불편 발생",
-                                        "attachedFiles": "file1.png",
-                                        "applicantInfo": "홍길동"
+                                        "title": "민원 신청서 제목",
+                                        "detail": "신청서 상세내용",
+                                        "attachment": "document.pdf",
+                                        "residentRegistrationNumber": "123456-1234567",
+                                        "address": "서울시 강남구"
                                     }
                                 }
                             ],
                             "then": [
                                 {
                                     "type": "Event",
-                                    "name": "CivilComplaintApplicationCreated",
+                                    "name": "ApplicationDraftSaved",
                                     "value": {
                                         "applicationId": "APP-001",
-                                        "title": "도로 파손 신고",
-                                        "detail": "도로 포장 파손으로 인한 불편 발생",
-                                        "attachedFiles": "file1.png",
-                                        "applicantInfo": "홍길동",
-                                        "status": "TEMPORARY"
+                                        "title": "민원 신청서 제목",
+                                        "detail": "신청서 상세내용",
+                                        "attachment": "document.pdf",
+                                        "residentRegistrationNumber": "123456-1234567",
+                                        "address": "서울시 강남구",
+                                        "status": "Draft"
                                     }
                                 }
                             ]
                         }
-                    ]
+                    ],
+                    "visibility": "public"
                 },
-                "fa84a2f3-3fd2-fcd6-d045-f39cf6024bc3": {
+                "fb44e9a8-29fd-2a3d-2642-bc0a47be31d6": {
                     "_type": "org.uengine.modeling.model.Command",
                     "outputEvents": [
-                        "CivilComplaintApplicationSubmitted"
+                        "ApplicationSubmitted"
                     ],
                     "aggregate": {
-                        "id": "626b7229-4e39-028a-5f05-99bf207ed201"
+                        "id": "39120b26-cdde-82ad-fa95-a25d828ad2b7"
                     },
                     "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
                     "boundedContext": {
-                        "id": "1e909e6e-53f8-febb-f8e0-016837952467"
-                    },
-                    "controllerInfo": {
-                        "method": "PUT"
-                    },
-                    "fieldDescriptors": [
-                        {
-                            "className": "String",
-                            "isCopy": false,
-                            "isKey": true,
-                            "name": "applicationId",
-                            "nameCamelCase": "applicationId",
-                            "namePascalCase": "ApplicationId",
-                            "displayName": "",
-                            "_type": "org.uengine.model.FieldDescriptor"
-                        }
-                    ],
-                    "description": null,
-                    "id": "fa84a2f3-3fd2-fcd6-d045-f39cf6024bc3",
-                    "elementView": {
-                        "_type": "org.uengine.modeling.model.Command",
-                        "height": 116,
-                        "id": "fa84a2f3-3fd2-fcd6-d045-f39cf6024bc3",
-                        "style": "{}",
-                        "width": 100,
-                        "x": 556,
-                        "y": 380,
-                        "z-index": 999
-                    },
-                    "hexagonalView": {
-                        "_type": "org.uengine.modeling.model.CommandHexagonal",
-                        "height": 0,
-                        "id": "fa84a2f3-3fd2-fcd6-d045-f39cf6024bc3",
-                        "style": "{}",
-                        "width": 0,
-                        "x": 0,
-                        "y": 0
-                    },
-                    "isRestRepository": false,
-                    "name": "SubmitCivilComplaintApplication",
-                    "displayName": "민원 신청서 제출",
-                    "nameCamelCase": "submitCivilComplaintApplication",
-                    "namePascalCase": "SubmitCivilComplaintApplication",
-                    "namePlural": "submitCivilComplaintApplications",
-                    "relationCommandInfo": [],
-                    "relationEventInfo": [],
-                    "restRepositoryInfo": {
-                        "method": "PUT"
-                    },
-                    "rotateStatus": false,
-                    "selected": false,
-                    "trigger": "@PrePersist",
-                    "examples": [
-                        {
-                            "given": [
-                                {
-                                    "type": "Aggregate",
-                                    "name": "CivilComplaintApplication",
-                                    "value": {
-                                        "applicationId": "APP-001",
-                                        "status": "TEMPORARY",
-                                        "applicationData": {
-                                            "title": "도로 파손 신고",
-                                            "detail": "도로 포장 파손으로 인한 불편 발생",
-                                            "attachedFiles": "file1.png",
-                                            "applicantInfo": "홍길동"
-                                        }
-                                    }
-                                }
-                            ],
-                            "when": [
-                                {
-                                    "type": "Command",
-                                    "name": "SubmitCivilComplaintApplication",
-                                    "value": {
-                                        "applicationId": "APP-001"
-                                    }
-                                }
-                            ],
-                            "then": [
-                                {
-                                    "type": "Event",
-                                    "name": "CivilComplaintApplicationSubmitted",
-                                    "value": {
-                                        "applicationId": "APP-001",
-                                        "submittedAt": "2024-03-20T10:00:00Z"
-                                    }
-                                }
-                            ]
-                        }
-                    ]
-                },
-                "162056e1-3668-2d15-3622-74cba332f2b8": {
-                    "_type": "org.uengine.modeling.model.Command",
-                    "outputEvents": [
-                        "CivilComplaintApplicationApproved"
-                    ],
-                    "aggregate": {
-                        "id": "626b7229-4e39-028a-5f05-99bf207ed201"
-                    },
-                    "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
-                    "boundedContext": {
-                        "id": "1e909e6e-53f8-febb-f8e0-016837952467"
-                    },
-                    "controllerInfo": {
-                        "method": "PUT"
-                    },
-                    "fieldDescriptors": [
-                        {
-                            "className": "String",
-                            "isCopy": false,
-                            "isKey": true,
-                            "name": "applicationId",
-                            "nameCamelCase": "applicationId",
-                            "namePascalCase": "ApplicationId",
-                            "displayName": "",
-                            "_type": "org.uengine.model.FieldDescriptor"
-                        }
-                    ],
-                    "description": null,
-                    "id": "162056e1-3668-2d15-3622-74cba332f2b8",
-                    "elementView": {
-                        "_type": "org.uengine.modeling.model.Command",
-                        "height": 116,
-                        "id": "162056e1-3668-2d15-3622-74cba332f2b8",
-                        "style": "{}",
-                        "width": 100,
-                        "x": 556,
-                        "y": 510,
-                        "z-index": 999
-                    },
-                    "hexagonalView": {
-                        "_type": "org.uengine.modeling.model.CommandHexagonal",
-                        "height": 0,
-                        "id": "162056e1-3668-2d15-3622-74cba332f2b8",
-                        "style": "{}",
-                        "width": 0,
-                        "x": 0,
-                        "y": 0
-                    },
-                    "isRestRepository": false,
-                    "name": "ApproveCivilComplaintApplication",
-                    "displayName": "민원 신청서 승인",
-                    "nameCamelCase": "approveCivilComplaintApplication",
-                    "namePascalCase": "ApproveCivilComplaintApplication",
-                    "namePlural": "approveCivilComplaintApplications",
-                    "relationCommandInfo": [],
-                    "relationEventInfo": [],
-                    "restRepositoryInfo": {
-                        "method": "PUT"
-                    },
-                    "rotateStatus": false,
-                    "selected": false,
-                    "trigger": "@PrePersist",
-                    "examples": [
-                        {
-                            "given": [
-                                {
-                                    "type": "Aggregate",
-                                    "name": "CivilComplaintApplication",
-                                    "value": {
-                                        "applicationId": "APP-002",
-                                        "status": "SUBMITTED",
-                                        "applicationData": {
-                                            "title": "건물 안전 점검 신청",
-                                            "detail": "건물 외벽 균열 발견",
-                                            "attachedFiles": "file2.pdf",
-                                            "applicantInfo": "이순신"
-                                        }
-                                    }
-                                }
-                            ],
-                            "when": [
-                                {
-                                    "type": "Command",
-                                    "name": "ApproveCivilComplaintApplication",
-                                    "value": {
-                                        "applicationId": "APP-002"
-                                    }
-                                }
-                            ],
-                            "then": [
-                                {
-                                    "type": "Event",
-                                    "name": "CivilComplaintApplicationApproved",
-                                    "value": {
-                                        "applicationId": "APP-002",
-                                        "approvedAt": "2024-03-21T09:00:00Z"
-                                    }
-                                }
-                            ]
-                        }
-                    ]
-                },
-                "c5b36c63-3d6c-b6d8-fab5-1b633c05f1da": {
-                    "_type": "org.uengine.modeling.model.Command",
-                    "outputEvents": [
-                        "CivilComplaintApplicationRejected"
-                    ],
-                    "aggregate": {
-                        "id": "626b7229-4e39-028a-5f05-99bf207ed201"
-                    },
-                    "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
-                    "boundedContext": {
-                        "id": "1e909e6e-53f8-febb-f8e0-016837952467"
+                        "id": "af1cc5ab-8a10-648b-d119-90a732415c27"
                     },
                     "controllerInfo": {
                         "method": "PUT"
@@ -9727,40 +9785,90 @@ const esValues = {
                             "className": "String",
                             "isCopy": false,
                             "isKey": false,
-                            "name": "rejectionReason",
-                            "nameCamelCase": "rejectionReason",
-                            "namePascalCase": "RejectionReason",
+                            "name": "title",
+                            "nameCamelCase": "title",
+                            "namePascalCase": "Title",
+                            "displayName": "",
+                            "_type": "org.uengine.model.FieldDescriptor"
+                        },
+                        {
+                            "className": "String",
+                            "isCopy": false,
+                            "isKey": false,
+                            "name": "detail",
+                            "nameCamelCase": "detail",
+                            "namePascalCase": "Detail",
+                            "displayName": "",
+                            "_type": "org.uengine.model.FieldDescriptor"
+                        },
+                        {
+                            "className": "String",
+                            "isCopy": false,
+                            "isKey": false,
+                            "name": "attachment",
+                            "nameCamelCase": "attachment",
+                            "namePascalCase": "Attachment",
+                            "displayName": "",
+                            "_type": "org.uengine.model.FieldDescriptor"
+                        },
+                        {
+                            "className": "String",
+                            "isCopy": false,
+                            "isKey": false,
+                            "name": "residentRegistrationNumber",
+                            "nameCamelCase": "residentRegistrationNumber",
+                            "namePascalCase": "ResidentRegistrationNumber",
+                            "displayName": "",
+                            "_type": "org.uengine.model.FieldDescriptor"
+                        },
+                        {
+                            "className": "String",
+                            "isCopy": false,
+                            "isKey": false,
+                            "name": "address",
+                            "nameCamelCase": "address",
+                            "namePascalCase": "Address",
+                            "displayName": "",
+                            "_type": "org.uengine.model.FieldDescriptor"
+                        },
+                        {
+                            "className": "ApplicationStatus",
+                            "isCopy": false,
+                            "isKey": false,
+                            "name": "status",
+                            "nameCamelCase": "status",
+                            "namePascalCase": "Status",
                             "displayName": "",
                             "_type": "org.uengine.model.FieldDescriptor"
                         }
                     ],
                     "description": null,
-                    "id": "c5b36c63-3d6c-b6d8-fab5-1b633c05f1da",
+                    "id": "fb44e9a8-29fd-2a3d-2642-bc0a47be31d6",
                     "elementView": {
                         "_type": "org.uengine.modeling.model.Command",
                         "height": 116,
-                        "id": "c5b36c63-3d6c-b6d8-fab5-1b633c05f1da",
+                        "id": "fb44e9a8-29fd-2a3d-2642-bc0a47be31d6",
                         "style": "{}",
                         "width": 100,
                         "x": 556,
-                        "y": 640,
+                        "y": 380,
                         "z-index": 999
                     },
                     "hexagonalView": {
                         "_type": "org.uengine.modeling.model.CommandHexagonal",
                         "height": 0,
-                        "id": "c5b36c63-3d6c-b6d8-fab5-1b633c05f1da",
+                        "id": "fb44e9a8-29fd-2a3d-2642-bc0a47be31d6",
                         "style": "{}",
                         "width": 0,
                         "x": 0,
                         "y": 0
                     },
                     "isRestRepository": false,
-                    "name": "RejectCivilComplaintApplication",
-                    "displayName": "민원 신청서 반려",
-                    "nameCamelCase": "rejectCivilComplaintApplication",
-                    "namePascalCase": "RejectCivilComplaintApplication",
-                    "namePlural": "rejectCivilComplaintApplications",
+                    "name": "SubmitApplication",
+                    "displayName": "민원 신청서 제출",
+                    "nameCamelCase": "submitApplication",
+                    "namePascalCase": "SubmitApplication",
+                    "namePlural": "submitApplications",
                     "relationCommandInfo": [],
                     "relationEventInfo": [],
                     "restRepositoryInfo": {
@@ -9774,59 +9882,70 @@ const esValues = {
                             "given": [
                                 {
                                     "type": "Aggregate",
-                                    "name": "CivilComplaintApplication",
+                                    "name": "ApplicationForm",
                                     "value": {
-                                        "applicationId": "APP-003",
-                                        "status": "SUBMITTED",
-                                        "applicationData": {
-                                            "title": "소음 민원 신청",
-                                            "detail": "야간 소음으로 인한 불편",
-                                            "attachedFiles": "file3.docx",
-                                            "applicantInfo": "김유신"
-                                        }
+                                        "applicationId": "APP-001",
+                                        "title": "민원 신청서 제목",
+                                        "detail": "신청서 상세내용",
+                                        "attachment": "document.pdf",
+                                        "residentRegistrationNumber": "123456-1234567",
+                                        "address": "서울시 강남구",
+                                        "status": "Draft",
+                                        "documentId": "N/A"
                                     }
                                 }
                             ],
                             "when": [
                                 {
                                     "type": "Command",
-                                    "name": "RejectCivilComplaintApplication",
+                                    "name": "SubmitApplication",
                                     "value": {
-                                        "applicationId": "APP-003",
-                                        "rejectionReason": "제출된 정보가 불충분하여 재검토 필요"
+                                        "applicationId": "APP-001",
+                                        "title": "민원 신청서 제목",
+                                        "detail": "신청서 상세내용",
+                                        "attachment": "document.pdf",
+                                        "residentRegistrationNumber": "123456-1234567",
+                                        "address": "서울시 강남구",
+                                        "status": "PendingReview"
                                     }
                                 }
                             ],
                             "then": [
                                 {
                                     "type": "Event",
-                                    "name": "CivilComplaintApplicationRejected",
+                                    "name": "ApplicationSubmitted",
                                     "value": {
-                                        "applicationId": "APP-003",
-                                        "rejectionReason": "제출된 정보가 불충분하여 재검토 필요",
-                                        "rejectedAt": "2024-03-22T15:00:00Z"
+                                        "applicationId": "APP-001",
+                                        "title": "민원 신청서 제목",
+                                        "detail": "신청서 상세내용",
+                                        "attachment": "document.pdf",
+                                        "residentRegistrationNumber": "123456-1234567",
+                                        "address": "서울시 강남구",
+                                        "status": "PendingReview",
+                                        "submitDate": "2024-03-20T12:00:00Z"
                                     }
                                 }
                             ]
                         }
-                    ]
+                    ],
+                    "visibility": "public"
                 },
-                "3f68da4c-b2a8-f1c2-6f6e-e2144061f511": {
+                "4730f8b2-7822-ea8e-9c35-0c4a2faf7bf5": {
                     "_type": "org.uengine.modeling.model.View",
-                    "id": "3f68da4c-b2a8-f1c2-6f6e-e2144061f511",
+                    "id": "4730f8b2-7822-ea8e-9c35-0c4a2faf7bf5",
                     "visibility": "public",
-                    "name": "CivilComplaintApplicationDetails",
+                    "name": "ApplicationFormSummary",
                     "oldName": "",
-                    "displayName": "민원 신청서 상세 정보",
-                    "namePascalCase": "CivilComplaintApplicationDetails",
-                    "namePlural": "civilComplaintApplicationDetails",
+                    "displayName": "민원 신청서 요약 정보",
+                    "namePascalCase": "ApplicationFormSummary",
+                    "namePlural": "applicationFormSummaries",
                     "aggregate": {
-                        "id": "626b7229-4e39-028a-5f05-99bf207ed201"
+                        "id": "39120b26-cdde-82ad-fa95-a25d828ad2b7"
                     },
                     "description": null,
                     "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
                     "boundedContext": {
-                        "id": "1e909e6e-53f8-febb-f8e0-016837952467"
+                        "id": "af1cc5ab-8a10-648b-d119-90a732415c27"
                     },
                     "fieldDescriptors": [
                         {
@@ -9848,118 +9967,17 @@ const esValues = {
                             "namePascalCase": "ApplicationId",
                             "displayName": "",
                             "_type": "org.uengine.model.FieldDescriptor"
-                        }
-                    ],
-                    "queryOption": {
-                        "apiPath": "",
-                        "useDefaultUri": true,
-                        "multipleResult": false
-                    },
-                    "controllerInfo": {
-                        "url": ""
-                    },
-                    "elementView": {
-                        "_type": "org.uengine.modeling.model.View",
-                        "id": "3f68da4c-b2a8-f1c2-6f6e-e2144061f511",
-                        "x": 556,
-                        "y": 770,
-                        "width": 100,
-                        "height": 116,
-                        "style": "{}",
-                        "z-index": 999
-                    },
-                    "editingView": false,
-                    "dataProjection": "query-for-aggregate",
-                    "createRules": [
+                        },
                         {
-                            "_type": "viewStoreRule",
-                            "operation": "CREATE",
-                            "when": null,
-                            "fieldMapping": [
-                                {
-                                    "viewField": null,
-                                    "eventField": null,
-                                    "operator": "="
-                                }
-                            ],
-                            "where": [
-                                {
-                                    "viewField": null,
-                                    "eventField": null
-                                }
-                            ]
-                        }
-                    ],
-                    "updateRules": [
-                        {
-                            "_type": "viewStoreRule",
-                            "operation": "UPDATE",
-                            "when": null,
-                            "fieldMapping": [
-                                {
-                                    "viewField": null,
-                                    "eventField": null,
-                                    "operator": "="
-                                }
-                            ],
-                            "where": [
-                                {
-                                    "viewField": null,
-                                    "eventField": null
-                                }
-                            ]
-                        }
-                    ],
-                    "deleteRules": [
-                        {
-                            "_type": "viewStoreRule",
-                            "operation": "DELETE",
-                            "when": null,
-                            "fieldMapping": [
-                                {
-                                    "viewField": null,
-                                    "eventField": null
-                                }
-                            ],
-                            "where": [
-                                {
-                                    "viewField": null,
-                                    "eventField": null
-                                }
-                            ]
-                        }
-                    ],
-                    "rotateStatus": false,
-                    "definitionId": ""
-                },
-                "560f34e0-bcdd-7ab7-a097-11b7807cb915": {
-                    "_type": "org.uengine.modeling.model.View",
-                    "id": "560f34e0-bcdd-7ab7-a097-11b7807cb915",
-                    "visibility": "public",
-                    "name": "PendingCivilComplaintApplications",
-                    "oldName": "",
-                    "displayName": "대기중인 민원 신청서 목록",
-                    "namePascalCase": "PendingCivilComplaintApplications",
-                    "namePlural": "pendingCivilComplaintApplications",
-                    "aggregate": {
-                        "id": "626b7229-4e39-028a-5f05-99bf207ed201"
-                    },
-                    "description": null,
-                    "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
-                    "boundedContext": {
-                        "id": "1e909e6e-53f8-febb-f8e0-016837952467"
-                    },
-                    "fieldDescriptors": [
-                        {
-                            "_type": "org.uengine.model.FieldDescriptor",
-                            "name": "id",
-                            "className": "Long",
-                            "nameCamelCase": "id",
-                            "namePascalCase": "Id",
-                            "isKey": true
-                        }
-                    ],
-                    "queryParameters": [
+                            "className": "String",
+                            "isCopy": false,
+                            "isKey": false,
+                            "name": "title",
+                            "nameCamelCase": "title",
+                            "namePascalCase": "Title",
+                            "displayName": "",
+                            "_type": "org.uengine.model.FieldDescriptor"
+                        },
                         {
                             "className": "ApplicationStatus",
                             "isCopy": false,
@@ -9981,9 +9999,9 @@ const esValues = {
                     },
                     "elementView": {
                         "_type": "org.uengine.modeling.model.View",
-                        "id": "560f34e0-bcdd-7ab7-a097-11b7807cb915",
+                        "id": "4730f8b2-7822-ea8e-9c35-0c4a2faf7bf5",
                         "x": 556,
-                        "y": 900,
+                        "y": 510,
                         "width": 100,
                         "height": 116,
                         "style": "{}",
@@ -10051,20 +10069,21 @@ const esValues = {
                         }
                     ],
                     "rotateStatus": false,
-                    "definitionId": ""
+                    "definitionId": "",
+                    "selected": false
                 },
-                "931f4b29-2dbf-78e7-95ac-24dff68ddd67": {
+                "681bddf0-597d-7f24-959c-6de221a3c128": {
                     "_type": "org.uengine.modeling.model.Actor",
                     "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
                     "boundedContext": {
-                        "id": "1e909e6e-53f8-febb-f8e0-016837952467"
+                        "id": "af1cc5ab-8a10-648b-d119-90a732415c27"
                     },
                     "description": null,
-                    "id": "931f4b29-2dbf-78e7-95ac-24dff68ddd67",
+                    "id": "681bddf0-597d-7f24-959c-6de221a3c128",
                     "elementView": {
                         "_type": "org.uengine.modeling.model.Actor",
                         "height": 100,
-                        "id": "931f4b29-2dbf-78e7-95ac-24dff68ddd67",
+                        "id": "681bddf0-597d-7f24-959c-6de221a3c128",
                         "style": "{}",
                         "width": 100,
                         "x": 475,
@@ -10080,20 +10099,21 @@ const esValues = {
                     "name": "Applicant",
                     "oldName": "",
                     "rotateStatus": false,
-                    "displayName": ""
+                    "displayName": "",
+                    "selected": false
                 },
-                "03283964-9f9b-a737-cbb1-7ed84bc72b66": {
+                "5142d1dc-c442-11b8-e372-a5001392f4c9": {
                     "_type": "org.uengine.modeling.model.Actor",
                     "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
                     "boundedContext": {
-                        "id": "1e909e6e-53f8-febb-f8e0-016837952467"
+                        "id": "af1cc5ab-8a10-648b-d119-90a732415c27"
                     },
                     "description": null,
-                    "id": "03283964-9f9b-a737-cbb1-7ed84bc72b66",
+                    "id": "5142d1dc-c442-11b8-e372-a5001392f4c9",
                     "elementView": {
                         "_type": "org.uengine.modeling.model.Actor",
                         "height": 100,
-                        "id": "03283964-9f9b-a737-cbb1-7ed84bc72b66",
+                        "id": "5142d1dc-c442-11b8-e372-a5001392f4c9",
                         "style": "{}",
                         "width": 100,
                         "x": 475,
@@ -10109,20 +10129,21 @@ const esValues = {
                     "name": "Applicant",
                     "oldName": "",
                     "rotateStatus": false,
-                    "displayName": ""
+                    "displayName": "",
+                    "selected": false
                 },
-                "62d1a098-88e6-5b4d-98df-923064c3adb1": {
+                "305bd2f1-d3f5-61fb-5202-e3b87ab3a8b0": {
                     "_type": "org.uengine.modeling.model.Actor",
                     "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
                     "boundedContext": {
-                        "id": "1e909e6e-53f8-febb-f8e0-016837952467"
+                        "id": "af1cc5ab-8a10-648b-d119-90a732415c27"
                     },
                     "description": null,
-                    "id": "62d1a098-88e6-5b4d-98df-923064c3adb1",
+                    "id": "305bd2f1-d3f5-61fb-5202-e3b87ab3a8b0",
                     "elementView": {
                         "_type": "org.uengine.modeling.model.Actor",
                         "height": 100,
-                        "id": "62d1a098-88e6-5b4d-98df-923064c3adb1",
+                        "id": "305bd2f1-d3f5-61fb-5202-e3b87ab3a8b0",
                         "style": "{}",
                         "width": 100,
                         "x": 475,
@@ -10135,26 +10156,827 @@ const esValues = {
                         "policy": [],
                         "view": []
                     },
-                    "name": "Reviewer",
+                    "name": "Applicant",
                     "oldName": "",
                     "rotateStatus": false,
-                    "displayName": ""
+                    "displayName": "",
+                    "selected": false
                 },
-                "615302d8-8e3e-a938-c852-41a137fc1381": {
+                "692db540-1c57-1df9-982f-6398c4c279d9": {
+                    "alertURL": "/static/image/symbol/alert-icon.png",
+                    "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
+                    "checkAlert": true,
+                    "description": null,
+                    "id": "692db540-1c57-1df9-982f-6398c4c279d9",
+                    "elementView": {
+                        "angle": 0,
+                        "height": 116,
+                        "id": "692db540-1c57-1df9-982f-6398c4c279d9",
+                        "style": "{}",
+                        "width": 100,
+                        "x": 1329,
+                        "y": 250,
+                        "_type": "org.uengine.modeling.model.Event"
+                    },
+                    "fieldDescriptors": [
+                        {
+                            "className": "Long",
+                            "isCopy": false,
+                            "isKey": true,
+                            "name": "reviewId",
+                            "nameCamelCase": "reviewId",
+                            "namePascalCase": "ReviewId",
+                            "displayName": "",
+                            "_type": "org.uengine.model.FieldDescriptor"
+                        },
+                        {
+                            "className": "String",
+                            "isCopy": false,
+                            "isKey": false,
+                            "name": "applicationId",
+                            "nameCamelCase": "applicationId",
+                            "namePascalCase": "ApplicationId",
+                            "displayName": "",
+                            "_type": "org.uengine.model.FieldDescriptor"
+                        },
+                        {
+                            "className": "String",
+                            "isCopy": false,
+                            "isKey": false,
+                            "name": "reviewer",
+                            "nameCamelCase": "reviewer",
+                            "namePascalCase": "Reviewer",
+                            "displayName": "",
+                            "_type": "org.uengine.model.FieldDescriptor"
+                        },
+                        {
+                            "className": "Date",
+                            "isCopy": false,
+                            "isKey": false,
+                            "name": "reviewDate",
+                            "nameCamelCase": "reviewDate",
+                            "namePascalCase": "ReviewDate",
+                            "displayName": "",
+                            "_type": "org.uengine.model.FieldDescriptor"
+                        },
+                        {
+                            "className": "ApplicationStatus",
+                            "isCopy": false,
+                            "isKey": false,
+                            "name": "status",
+                            "nameCamelCase": "status",
+                            "namePascalCase": "Status",
+                            "displayName": "",
+                            "_type": "org.uengine.model.FieldDescriptor"
+                        }
+                    ],
+                    "hexagonalView": {
+                        "height": 0,
+                        "id": "692db540-1c57-1df9-982f-6398c4c279d9",
+                        "style": "{}",
+                        "width": 0,
+                        "x": 0,
+                        "y": 0,
+                        "_type": "org.uengine.modeling.model.EventHexagonal"
+                    },
+                    "name": "ApplicationReviewApproved",
+                    "displayName": "민원 신청 승인됨",
+                    "nameCamelCase": "applicationReviewApproved",
+                    "namePascalCase": "ApplicationReviewApproved",
+                    "namePlural": "",
+                    "relationCommandInfo": [],
+                    "relationPolicyInfo": [],
+                    "rotateStatus": false,
+                    "selected": false,
+                    "trigger": "@PostPersist",
+                    "_type": "org.uengine.modeling.model.Event",
+                    "aggregate": {
+                        "id": "8046de29-aeab-65f8-db12-c3ffe41abea5"
+                    },
+                    "boundedContext": {
+                        "id": "886c1ea5-4b72-c968-7f43-c888489594ec"
+                    },
+                    "visibility": "public"
+                },
+                "6ec7b754-ff48-048a-c096-36c4c4883e16": {
+                    "alertURL": "/static/image/symbol/alert-icon.png",
+                    "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
+                    "checkAlert": true,
+                    "description": null,
+                    "id": "6ec7b754-ff48-048a-c096-36c4c4883e16",
+                    "elementView": {
+                        "angle": 0,
+                        "height": 116,
+                        "id": "6ec7b754-ff48-048a-c096-36c4c4883e16",
+                        "style": "{}",
+                        "width": 100,
+                        "x": 1329,
+                        "y": 380,
+                        "_type": "org.uengine.modeling.model.Event"
+                    },
+                    "fieldDescriptors": [
+                        {
+                            "className": "Long",
+                            "isCopy": false,
+                            "isKey": true,
+                            "name": "reviewId",
+                            "nameCamelCase": "reviewId",
+                            "namePascalCase": "ReviewId",
+                            "displayName": "",
+                            "_type": "org.uengine.model.FieldDescriptor"
+                        },
+                        {
+                            "className": "String",
+                            "isCopy": false,
+                            "isKey": false,
+                            "name": "applicationId",
+                            "nameCamelCase": "applicationId",
+                            "namePascalCase": "ApplicationId",
+                            "displayName": "",
+                            "_type": "org.uengine.model.FieldDescriptor"
+                        },
+                        {
+                            "className": "String",
+                            "isCopy": false,
+                            "isKey": false,
+                            "name": "reviewer",
+                            "nameCamelCase": "reviewer",
+                            "namePascalCase": "Reviewer",
+                            "displayName": "",
+                            "_type": "org.uengine.model.FieldDescriptor"
+                        },
+                        {
+                            "className": "Date",
+                            "isCopy": false,
+                            "isKey": false,
+                            "name": "reviewDate",
+                            "nameCamelCase": "reviewDate",
+                            "namePascalCase": "ReviewDate",
+                            "displayName": "",
+                            "_type": "org.uengine.model.FieldDescriptor"
+                        },
+                        {
+                            "className": "ApplicationStatus",
+                            "isCopy": false,
+                            "isKey": false,
+                            "name": "status",
+                            "nameCamelCase": "status",
+                            "namePascalCase": "Status",
+                            "displayName": "",
+                            "_type": "org.uengine.model.FieldDescriptor"
+                        },
+                        {
+                            "className": "String",
+                            "isCopy": false,
+                            "isKey": false,
+                            "name": "rejectionReason",
+                            "nameCamelCase": "rejectionReason",
+                            "namePascalCase": "RejectionReason",
+                            "displayName": "",
+                            "_type": "org.uengine.model.FieldDescriptor"
+                        }
+                    ],
+                    "hexagonalView": {
+                        "height": 0,
+                        "id": "6ec7b754-ff48-048a-c096-36c4c4883e16",
+                        "style": "{}",
+                        "width": 0,
+                        "x": 0,
+                        "y": 0,
+                        "_type": "org.uengine.modeling.model.EventHexagonal"
+                    },
+                    "name": "ApplicationReviewRejected",
+                    "displayName": "민원 신청 반려됨",
+                    "nameCamelCase": "applicationReviewRejected",
+                    "namePascalCase": "ApplicationReviewRejected",
+                    "namePlural": "",
+                    "relationCommandInfo": [],
+                    "relationPolicyInfo": [],
+                    "rotateStatus": false,
+                    "selected": false,
+                    "trigger": "@PostPersist",
+                    "_type": "org.uengine.modeling.model.Event",
+                    "aggregate": {
+                        "id": "8046de29-aeab-65f8-db12-c3ffe41abea5"
+                    },
+                    "boundedContext": {
+                        "id": "886c1ea5-4b72-c968-7f43-c888489594ec"
+                    },
+                    "visibility": "public"
+                },
+                "60773c6d-b4f0-d588-7aef-5842ea8aeb2a": {
+                    "_type": "org.uengine.modeling.model.Command",
+                    "outputEvents": [
+                        "ApplicationReviewApproved"
+                    ],
+                    "aggregate": {
+                        "id": "8046de29-aeab-65f8-db12-c3ffe41abea5"
+                    },
+                    "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
+                    "boundedContext": {
+                        "id": "886c1ea5-4b72-c968-7f43-c888489594ec"
+                    },
+                    "controllerInfo": {
+                        "method": "PUT"
+                    },
+                    "fieldDescriptors": [
+                        {
+                            "className": "Long",
+                            "isCopy": false,
+                            "isKey": true,
+                            "name": "reviewId",
+                            "nameCamelCase": "reviewId",
+                            "namePascalCase": "ReviewId",
+                            "displayName": "",
+                            "_type": "org.uengine.model.FieldDescriptor"
+                        },
+                        {
+                            "className": "String",
+                            "isCopy": false,
+                            "isKey": false,
+                            "name": "reviewer",
+                            "nameCamelCase": "reviewer",
+                            "namePascalCase": "Reviewer",
+                            "displayName": "",
+                            "_type": "org.uengine.model.FieldDescriptor"
+                        }
+                    ],
+                    "description": null,
+                    "id": "60773c6d-b4f0-d588-7aef-5842ea8aeb2a",
+                    "elementView": {
+                        "_type": "org.uengine.modeling.model.Command",
+                        "height": 116,
+                        "id": "60773c6d-b4f0-d588-7aef-5842ea8aeb2a",
+                        "style": "{}",
+                        "width": 100,
+                        "x": 1141,
+                        "y": 250,
+                        "z-index": 999
+                    },
+                    "hexagonalView": {
+                        "_type": "org.uengine.modeling.model.CommandHexagonal",
+                        "height": 0,
+                        "id": "60773c6d-b4f0-d588-7aef-5842ea8aeb2a",
+                        "style": "{}",
+                        "width": 0,
+                        "x": 0,
+                        "y": 0
+                    },
+                    "isRestRepository": false,
+                    "name": "ApproveApplicationReview",
+                    "displayName": "민원 신청 승인",
+                    "nameCamelCase": "approveApplicationReview",
+                    "namePascalCase": "ApproveApplicationReview",
+                    "namePlural": "approveApplicationReviews",
+                    "relationCommandInfo": [],
+                    "relationEventInfo": [],
+                    "restRepositoryInfo": {
+                        "method": "PUT"
+                    },
+                    "rotateStatus": false,
+                    "selected": false,
+                    "trigger": "@PrePersist",
+                    "examples": [
+                        {
+                            "given": [
+                                {
+                                    "type": "Aggregate",
+                                    "name": "ApplicationReview",
+                                    "value": {
+                                        "reviewId": 1001,
+                                        "applicationId": "APP-001",
+                                        "reviewer": null,
+                                        "reviewDate": null,
+                                        "status": "PENDING",
+                                        "rejectionReason": null,
+                                        "applicationFormId": "APPFORM-001"
+                                    }
+                                }
+                            ],
+                            "when": [
+                                {
+                                    "type": "Command",
+                                    "name": "ApproveApplicationReview",
+                                    "value": {
+                                        "reviewId": 1001,
+                                        "reviewer": "Alice"
+                                    }
+                                }
+                            ],
+                            "then": [
+                                {
+                                    "type": "Event",
+                                    "name": "ApplicationReviewApproved",
+                                    "value": {
+                                        "reviewId": 1001,
+                                        "applicationId": "APP-001",
+                                        "reviewer": "Alice",
+                                        "reviewDate": "2024-04-01T10:00:00Z",
+                                        "status": "APPROVED"
+                                    }
+                                }
+                            ]
+                        }
+                    ],
+                    "visibility": "public"
+                },
+                "0df9b6da-7669-ec3c-af1b-9c0e102218b6": {
+                    "_type": "org.uengine.modeling.model.Command",
+                    "outputEvents": [
+                        "ApplicationReviewRejected"
+                    ],
+                    "aggregate": {
+                        "id": "8046de29-aeab-65f8-db12-c3ffe41abea5"
+                    },
+                    "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
+                    "boundedContext": {
+                        "id": "886c1ea5-4b72-c968-7f43-c888489594ec"
+                    },
+                    "controllerInfo": {
+                        "method": "PUT"
+                    },
+                    "fieldDescriptors": [
+                        {
+                            "className": "Long",
+                            "isCopy": false,
+                            "isKey": true,
+                            "name": "reviewId",
+                            "nameCamelCase": "reviewId",
+                            "namePascalCase": "ReviewId",
+                            "displayName": "",
+                            "_type": "org.uengine.model.FieldDescriptor"
+                        },
+                        {
+                            "className": "String",
+                            "isCopy": false,
+                            "isKey": false,
+                            "name": "reviewer",
+                            "nameCamelCase": "reviewer",
+                            "namePascalCase": "Reviewer",
+                            "displayName": "",
+                            "_type": "org.uengine.model.FieldDescriptor"
+                        },
+                        {
+                            "className": "String",
+                            "isCopy": false,
+                            "isKey": false,
+                            "name": "rejectionReason",
+                            "nameCamelCase": "rejectionReason",
+                            "namePascalCase": "RejectionReason",
+                            "displayName": "",
+                            "_type": "org.uengine.model.FieldDescriptor"
+                        }
+                    ],
+                    "description": null,
+                    "id": "0df9b6da-7669-ec3c-af1b-9c0e102218b6",
+                    "elementView": {
+                        "_type": "org.uengine.modeling.model.Command",
+                        "height": 116,
+                        "id": "0df9b6da-7669-ec3c-af1b-9c0e102218b6",
+                        "style": "{}",
+                        "width": 100,
+                        "x": 1141,
+                        "y": 380,
+                        "z-index": 999
+                    },
+                    "hexagonalView": {
+                        "_type": "org.uengine.modeling.model.CommandHexagonal",
+                        "height": 0,
+                        "id": "0df9b6da-7669-ec3c-af1b-9c0e102218b6",
+                        "style": "{}",
+                        "width": 0,
+                        "x": 0,
+                        "y": 0
+                    },
+                    "isRestRepository": false,
+                    "name": "RejectApplicationReview",
+                    "displayName": "민원 신청 반려",
+                    "nameCamelCase": "rejectApplicationReview",
+                    "namePascalCase": "RejectApplicationReview",
+                    "namePlural": "rejectApplicationReviews",
+                    "relationCommandInfo": [],
+                    "relationEventInfo": [],
+                    "restRepositoryInfo": {
+                        "method": "PUT"
+                    },
+                    "rotateStatus": false,
+                    "selected": false,
+                    "trigger": "@PrePersist",
+                    "examples": [
+                        {
+                            "given": [
+                                {
+                                    "type": "Aggregate",
+                                    "name": "ApplicationReview",
+                                    "value": {
+                                        "reviewId": 1002,
+                                        "applicationId": "APP-002",
+                                        "reviewer": null,
+                                        "reviewDate": null,
+                                        "status": "PENDING",
+                                        "rejectionReason": null,
+                                        "applicationFormId": "APPFORM-002"
+                                    }
+                                }
+                            ],
+                            "when": [
+                                {
+                                    "type": "Command",
+                                    "name": "RejectApplicationReview",
+                                    "value": {
+                                        "reviewId": 1002,
+                                        "reviewer": "Bob",
+                                        "rejectionReason": "서류 미비"
+                                    }
+                                }
+                            ],
+                            "then": [
+                                {
+                                    "type": "Event",
+                                    "name": "ApplicationReviewRejected",
+                                    "value": {
+                                        "reviewId": 1002,
+                                        "applicationId": "APP-002",
+                                        "reviewer": "Bob",
+                                        "reviewDate": "2024-04-01T11:00:00Z",
+                                        "status": "REJECTED",
+                                        "rejectionReason": "서류 미비"
+                                    }
+                                }
+                            ]
+                        }
+                    ],
+                    "visibility": "public"
+                },
+                "b60b4bd1-1941-e871-0cc3-bdb5cc98430d": {
+                    "_type": "org.uengine.modeling.model.View",
+                    "id": "b60b4bd1-1941-e871-0cc3-bdb5cc98430d",
+                    "visibility": "public",
+                    "name": "PendingApplicationReviewSummary",
+                    "oldName": "",
+                    "displayName": "대기민원 신청서 목록",
+                    "namePascalCase": "PendingApplicationReviewSummary",
+                    "namePlural": "pendingApplicationReviewSummaries",
+                    "aggregate": {
+                        "id": "8046de29-aeab-65f8-db12-c3ffe41abea5"
+                    },
+                    "description": null,
+                    "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
+                    "boundedContext": {
+                        "id": "886c1ea5-4b72-c968-7f43-c888489594ec"
+                    },
+                    "fieldDescriptors": [
+                        {
+                            "_type": "org.uengine.model.FieldDescriptor",
+                            "name": "id",
+                            "className": "Long",
+                            "nameCamelCase": "id",
+                            "namePascalCase": "Id",
+                            "isKey": true
+                        }
+                    ],
+                    "queryParameters": [
+                        {
+                            "className": "Long",
+                            "isCopy": false,
+                            "isKey": true,
+                            "name": "reviewId",
+                            "nameCamelCase": "reviewId",
+                            "namePascalCase": "ReviewId",
+                            "displayName": "",
+                            "_type": "org.uengine.model.FieldDescriptor"
+                        },
+                        {
+                            "className": "String",
+                            "isCopy": false,
+                            "isKey": false,
+                            "name": "applicationId",
+                            "nameCamelCase": "applicationId",
+                            "namePascalCase": "ApplicationId",
+                            "displayName": "",
+                            "_type": "org.uengine.model.FieldDescriptor"
+                        },
+                        {
+                            "className": "ApplicationStatus",
+                            "isCopy": false,
+                            "isKey": false,
+                            "name": "status",
+                            "nameCamelCase": "status",
+                            "namePascalCase": "Status",
+                            "displayName": "",
+                            "_type": "org.uengine.model.FieldDescriptor"
+                        }
+                    ],
+                    "queryOption": {
+                        "apiPath": "",
+                        "useDefaultUri": true,
+                        "multipleResult": true
+                    },
+                    "controllerInfo": {
+                        "url": ""
+                    },
+                    "elementView": {
+                        "_type": "org.uengine.modeling.model.View",
+                        "id": "b60b4bd1-1941-e871-0cc3-bdb5cc98430d",
+                        "x": 1141,
+                        "y": 510,
+                        "width": 100,
+                        "height": 116,
+                        "style": "{}",
+                        "z-index": 999
+                    },
+                    "editingView": false,
+                    "dataProjection": "query-for-aggregate",
+                    "createRules": [
+                        {
+                            "_type": "viewStoreRule",
+                            "operation": "CREATE",
+                            "when": null,
+                            "fieldMapping": [
+                                {
+                                    "viewField": null,
+                                    "eventField": null,
+                                    "operator": "="
+                                }
+                            ],
+                            "where": [
+                                {
+                                    "viewField": null,
+                                    "eventField": null
+                                }
+                            ]
+                        }
+                    ],
+                    "updateRules": [
+                        {
+                            "_type": "viewStoreRule",
+                            "operation": "UPDATE",
+                            "when": null,
+                            "fieldMapping": [
+                                {
+                                    "viewField": null,
+                                    "eventField": null,
+                                    "operator": "="
+                                }
+                            ],
+                            "where": [
+                                {
+                                    "viewField": null,
+                                    "eventField": null
+                                }
+                            ]
+                        }
+                    ],
+                    "deleteRules": [
+                        {
+                            "_type": "viewStoreRule",
+                            "operation": "DELETE",
+                            "when": null,
+                            "fieldMapping": [
+                                {
+                                    "viewField": null,
+                                    "eventField": null
+                                }
+                            ],
+                            "where": [
+                                {
+                                    "viewField": null,
+                                    "eventField": null
+                                }
+                            ]
+                        }
+                    ],
+                    "rotateStatus": false,
+                    "definitionId": "",
+                    "selected": false
+                },
+                "66c1ffb4-4913-2d62-4955-fe99b4dded0a": {
+                    "_type": "org.uengine.modeling.model.View",
+                    "id": "66c1ffb4-4913-2d62-4955-fe99b4dded0a",
+                    "visibility": "public",
+                    "name": "ApplicationReviewDetails",
+                    "oldName": "",
+                    "displayName": "민원 신청서 상세 내용",
+                    "namePascalCase": "ApplicationReviewDetails",
+                    "namePlural": "applicationReviewDetails",
+                    "aggregate": {
+                        "id": "8046de29-aeab-65f8-db12-c3ffe41abea5"
+                    },
+                    "description": null,
+                    "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
+                    "boundedContext": {
+                        "id": "886c1ea5-4b72-c968-7f43-c888489594ec"
+                    },
+                    "fieldDescriptors": [
+                        {
+                            "_type": "org.uengine.model.FieldDescriptor",
+                            "name": "id",
+                            "className": "Long",
+                            "nameCamelCase": "id",
+                            "namePascalCase": "Id",
+                            "isKey": true
+                        }
+                    ],
+                    "queryParameters": [
+                        {
+                            "className": "Long",
+                            "isCopy": false,
+                            "isKey": true,
+                            "name": "reviewId",
+                            "nameCamelCase": "reviewId",
+                            "namePascalCase": "ReviewId",
+                            "displayName": "",
+                            "_type": "org.uengine.model.FieldDescriptor"
+                        }
+                    ],
+                    "queryOption": {
+                        "apiPath": "",
+                        "useDefaultUri": true,
+                        "multipleResult": false
+                    },
+                    "controllerInfo": {
+                        "url": ""
+                    },
+                    "elementView": {
+                        "_type": "org.uengine.modeling.model.View",
+                        "id": "66c1ffb4-4913-2d62-4955-fe99b4dded0a",
+                        "x": 1141,
+                        "y": 640,
+                        "width": 100,
+                        "height": 116,
+                        "style": "{}",
+                        "z-index": 999
+                    },
+                    "editingView": false,
+                    "dataProjection": "query-for-aggregate",
+                    "createRules": [
+                        {
+                            "_type": "viewStoreRule",
+                            "operation": "CREATE",
+                            "when": null,
+                            "fieldMapping": [
+                                {
+                                    "viewField": null,
+                                    "eventField": null,
+                                    "operator": "="
+                                }
+                            ],
+                            "where": [
+                                {
+                                    "viewField": null,
+                                    "eventField": null
+                                }
+                            ]
+                        }
+                    ],
+                    "updateRules": [
+                        {
+                            "_type": "viewStoreRule",
+                            "operation": "UPDATE",
+                            "when": null,
+                            "fieldMapping": [
+                                {
+                                    "viewField": null,
+                                    "eventField": null,
+                                    "operator": "="
+                                }
+                            ],
+                            "where": [
+                                {
+                                    "viewField": null,
+                                    "eventField": null
+                                }
+                            ]
+                        }
+                    ],
+                    "deleteRules": [
+                        {
+                            "_type": "viewStoreRule",
+                            "operation": "DELETE",
+                            "when": null,
+                            "fieldMapping": [
+                                {
+                                    "viewField": null,
+                                    "eventField": null
+                                }
+                            ],
+                            "where": [
+                                {
+                                    "viewField": null,
+                                    "eventField": null
+                                }
+                            ]
+                        }
+                    ],
+                    "rotateStatus": false,
+                    "definitionId": "",
+                    "selected": false
+                },
+                "45282bbe-1807-4581-fa49-0810f3ea21bd": {
                     "_type": "org.uengine.modeling.model.Actor",
                     "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
                     "boundedContext": {
-                        "id": "1e909e6e-53f8-febb-f8e0-016837952467"
+                        "id": "886c1ea5-4b72-c968-7f43-c888489594ec"
                     },
                     "description": null,
-                    "id": "615302d8-8e3e-a938-c852-41a137fc1381",
+                    "id": "45282bbe-1807-4581-fa49-0810f3ea21bd",
                     "elementView": {
                         "_type": "org.uengine.modeling.model.Actor",
                         "height": 100,
-                        "id": "615302d8-8e3e-a938-c852-41a137fc1381",
+                        "id": "45282bbe-1807-4581-fa49-0810f3ea21bd",
                         "style": "{}",
                         "width": 100,
-                        "x": 475,
+                        "x": 1060,
+                        "y": 250
+                    },
+                    "innerAggregate": {
+                        "command": [],
+                        "event": [],
+                        "external": [],
+                        "policy": [],
+                        "view": []
+                    },
+                    "name": "Reviewer",
+                    "oldName": "",
+                    "rotateStatus": false,
+                    "displayName": "",
+                    "selected": false
+                },
+                "0175caff-72a0-0fea-1233-cd9a492c7a3b": {
+                    "_type": "org.uengine.modeling.model.Actor",
+                    "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
+                    "boundedContext": {
+                        "id": "886c1ea5-4b72-c968-7f43-c888489594ec"
+                    },
+                    "description": null,
+                    "id": "0175caff-72a0-0fea-1233-cd9a492c7a3b",
+                    "elementView": {
+                        "_type": "org.uengine.modeling.model.Actor",
+                        "height": 100,
+                        "id": "0175caff-72a0-0fea-1233-cd9a492c7a3b",
+                        "style": "{}",
+                        "width": 100,
+                        "x": 1060,
+                        "y": 380
+                    },
+                    "innerAggregate": {
+                        "command": [],
+                        "event": [],
+                        "external": [],
+                        "policy": [],
+                        "view": []
+                    },
+                    "name": "Reviewer",
+                    "oldName": "",
+                    "rotateStatus": false,
+                    "displayName": "",
+                    "selected": false
+                },
+                "e7043fe8-838d-4f78-248e-91b82f768ea6": {
+                    "_type": "org.uengine.modeling.model.Actor",
+                    "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
+                    "boundedContext": {
+                        "id": "886c1ea5-4b72-c968-7f43-c888489594ec"
+                    },
+                    "description": null,
+                    "id": "e7043fe8-838d-4f78-248e-91b82f768ea6",
+                    "elementView": {
+                        "_type": "org.uengine.modeling.model.Actor",
+                        "height": 100,
+                        "id": "e7043fe8-838d-4f78-248e-91b82f768ea6",
+                        "style": "{}",
+                        "width": 100,
+                        "x": 1060,
+                        "y": 510
+                    },
+                    "innerAggregate": {
+                        "command": [],
+                        "event": [],
+                        "external": [],
+                        "policy": [],
+                        "view": []
+                    },
+                    "name": "Reviewer",
+                    "oldName": "",
+                    "rotateStatus": false,
+                    "displayName": "",
+                    "selected": false
+                },
+                "23f0d8dd-3a7e-a68d-5a6e-4b3ec00fa1bd": {
+                    "_type": "org.uengine.modeling.model.Actor",
+                    "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
+                    "boundedContext": {
+                        "id": "886c1ea5-4b72-c968-7f43-c888489594ec"
+                    },
+                    "description": null,
+                    "id": "23f0d8dd-3a7e-a68d-5a6e-4b3ec00fa1bd",
+                    "elementView": {
+                        "_type": "org.uengine.modeling.model.Actor",
+                        "height": 100,
+                        "id": "23f0d8dd-3a7e-a68d-5a6e-4b3ec00fa1bd",
+                        "style": "{}",
+                        "width": 100,
+                        "x": 1060,
                         "y": 640
                     },
                     "innerAggregate": {
@@ -10167,79 +10989,22 @@ const esValues = {
                     "name": "Reviewer",
                     "oldName": "",
                     "rotateStatus": false,
-                    "displayName": ""
+                    "displayName": "",
+                    "selected": false
                 },
-                "173359b3-af08-c0f8-df3e-637e5f39fb23": {
-                    "_type": "org.uengine.modeling.model.Actor",
-                    "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
-                    "boundedContext": {
-                        "id": "1e909e6e-53f8-febb-f8e0-016837952467"
-                    },
-                    "description": null,
-                    "id": "173359b3-af08-c0f8-df3e-637e5f39fb23",
-                    "elementView": {
-                        "_type": "org.uengine.modeling.model.Actor",
-                        "height": 100,
-                        "id": "173359b3-af08-c0f8-df3e-637e5f39fb23",
-                        "style": "{}",
-                        "width": 100,
-                        "x": 475,
-                        "y": 770
-                    },
-                    "innerAggregate": {
-                        "command": [],
-                        "event": [],
-                        "external": [],
-                        "policy": [],
-                        "view": []
-                    },
-                    "name": "Applicant",
-                    "oldName": "",
-                    "rotateStatus": false,
-                    "displayName": ""
-                },
-                "87800a4c-7058-e6d4-7baf-d5dacf2745d3": {
-                    "_type": "org.uengine.modeling.model.Actor",
-                    "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
-                    "boundedContext": {
-                        "id": "1e909e6e-53f8-febb-f8e0-016837952467"
-                    },
-                    "description": null,
-                    "id": "87800a4c-7058-e6d4-7baf-d5dacf2745d3",
-                    "elementView": {
-                        "_type": "org.uengine.modeling.model.Actor",
-                        "height": 100,
-                        "id": "87800a4c-7058-e6d4-7baf-d5dacf2745d3",
-                        "style": "{}",
-                        "width": 100,
-                        "x": 475,
-                        "y": 900
-                    },
-                    "innerAggregate": {
-                        "command": [],
-                        "event": [],
-                        "external": [],
-                        "policy": [],
-                        "view": []
-                    },
-                    "name": "Reviewer",
-                    "oldName": "",
-                    "rotateStatus": false,
-                    "displayName": ""
-                },
-                "94c1991e-6b7c-f5de-70cb-ae0a75ef09ab": {
+                "8faa65b0-dbde-3427-7818-aad33c1571ca": {
                     "alertURL": "/static/image/symbol/alert-icon.png",
                     "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
                     "checkAlert": true,
                     "description": null,
-                    "id": "94c1991e-6b7c-f5de-70cb-ae0a75ef09ab",
+                    "id": "8faa65b0-dbde-3427-7818-aad33c1571ca",
                     "elementView": {
                         "angle": 0,
                         "height": 116,
-                        "id": "94c1991e-6b7c-f5de-70cb-ae0a75ef09ab",
+                        "id": "8faa65b0-dbde-3427-7818-aad33c1571ca",
                         "style": "{}",
                         "width": 100,
-                        "x": 1329,
+                        "x": 1759,
                         "y": 250,
                         "_type": "org.uengine.modeling.model.Event"
                     },
@@ -10247,20 +11012,10 @@ const esValues = {
                         {
                             "className": "String",
                             "isCopy": false,
-                            "isKey": true,
-                            "name": "documentId",
-                            "nameCamelCase": "documentId",
-                            "namePascalCase": "DocumentId",
-                            "displayName": "",
-                            "_type": "org.uengine.model.FieldDescriptor"
-                        },
-                        {
-                            "className": "CivilComplaintApplicationId",
-                            "isCopy": false,
                             "isKey": false,
-                            "name": "civilComplaintApplicationId",
-                            "nameCamelCase": "civilComplaintApplicationId",
-                            "namePascalCase": "CivilComplaintApplicationId",
+                            "name": "applicationId",
+                            "nameCamelCase": "applicationId",
+                            "namePascalCase": "ApplicationId",
                             "displayName": "",
                             "_type": "org.uengine.model.FieldDescriptor"
                         },
@@ -10268,29 +11023,9 @@ const esValues = {
                             "className": "DocumentFormat",
                             "isCopy": false,
                             "isKey": false,
-                            "name": "documentFormat",
-                            "nameCamelCase": "documentFormat",
-                            "namePascalCase": "DocumentFormat",
-                            "displayName": "",
-                            "_type": "org.uengine.model.FieldDescriptor"
-                        },
-                        {
-                            "className": "IssueStatus",
-                            "isCopy": false,
-                            "isKey": false,
-                            "name": "issueStatus",
-                            "nameCamelCase": "issueStatus",
-                            "namePascalCase": "IssueStatus",
-                            "displayName": "",
-                            "_type": "org.uengine.model.FieldDescriptor"
-                        },
-                        {
-                            "className": "TransmissionRecordVO",
-                            "isCopy": false,
-                            "isKey": false,
-                            "name": "transmissionRecord",
-                            "nameCamelCase": "transmissionRecord",
-                            "namePascalCase": "TransmissionRecord",
+                            "name": "format",
+                            "nameCamelCase": "format",
+                            "namePascalCase": "Format",
                             "displayName": "",
                             "_type": "org.uengine.model.FieldDescriptor"
                         },
@@ -10298,26 +11033,36 @@ const esValues = {
                             "className": "Date",
                             "isCopy": false,
                             "isKey": false,
-                            "name": "issuedAt",
-                            "nameCamelCase": "issuedAt",
-                            "namePascalCase": "IssuedAt",
+                            "name": "createdDate",
+                            "nameCamelCase": "createdDate",
+                            "namePascalCase": "CreatedDate",
+                            "displayName": "",
+                            "_type": "org.uengine.model.FieldDescriptor"
+                        },
+                        {
+                            "className": "String",
+                            "isCopy": false,
+                            "isKey": false,
+                            "name": "sentTo",
+                            "nameCamelCase": "sentTo",
+                            "namePascalCase": "SentTo",
                             "displayName": "",
                             "_type": "org.uengine.model.FieldDescriptor"
                         }
                     ],
                     "hexagonalView": {
                         "height": 0,
-                        "id": "94c1991e-6b7c-f5de-70cb-ae0a75ef09ab",
+                        "id": "8faa65b0-dbde-3427-7818-aad33c1571ca",
                         "style": "{}",
                         "width": 0,
                         "x": 0,
                         "y": 0,
                         "_type": "org.uengine.modeling.model.EventHexagonal"
                     },
-                    "name": "MinwonDocumentIssued",
-                    "displayName": "민원문서 발급 완료",
-                    "nameCamelCase": "minwonDocumentIssued",
-                    "namePascalCase": "MinwonDocumentIssued",
+                    "name": "DocumentIssued",
+                    "displayName": "문서 발급 완료",
+                    "nameCamelCase": "documentIssued",
+                    "namePascalCase": "DocumentIssued",
                     "namePlural": "",
                     "relationCommandInfo": [],
                     "relationPolicyInfo": [],
@@ -10326,35 +11071,36 @@ const esValues = {
                     "trigger": "@PostPersist",
                     "_type": "org.uengine.modeling.model.Event",
                     "aggregate": {
-                        "id": "66dacbed-e343-9cd7-2dd0-db20f2a86a90"
+                        "id": "1c1b8300-506a-2317-3fef-9fd3f7cc3dfd"
                     },
                     "boundedContext": {
-                        "id": "03323d91-1261-f9b8-65e2-333f1a241fc0"
-                    }
+                        "id": "886c1ea5-4b72-c968-7f43-c888489594ec"
+                    },
+                    "visibility": "public"
                 },
-                "75f8fa95-e80d-e653-5afe-af30b2b6abc7": {
+                "e276a629-4038-03c0-d2bd-4be915e2b024": {
                     "_type": "org.uengine.modeling.model.Command",
                     "outputEvents": [
-                        "MinwonDocumentIssued"
+                        "DocumentIssued"
                     ],
                     "aggregate": {
-                        "id": "66dacbed-e343-9cd7-2dd0-db20f2a86a90"
+                        "id": "1c1b8300-506a-2317-3fef-9fd3f7cc3dfd"
                     },
                     "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
                     "boundedContext": {
-                        "id": "03323d91-1261-f9b8-65e2-333f1a241fc0"
+                        "id": "886c1ea5-4b72-c968-7f43-c888489594ec"
                     },
                     "controllerInfo": {
                         "method": "POST"
                     },
                     "fieldDescriptors": [
                         {
-                            "className": "CivilComplaintApplicationId",
+                            "className": "String",
                             "isCopy": false,
                             "isKey": false,
-                            "name": "civilComplaintApplicationId",
-                            "nameCamelCase": "civilComplaintApplicationId",
-                            "namePascalCase": "CivilComplaintApplicationId",
+                            "name": "applicationId",
+                            "nameCamelCase": "applicationId",
+                            "namePascalCase": "ApplicationId",
                             "displayName": "",
                             "_type": "org.uengine.model.FieldDescriptor"
                         },
@@ -10362,40 +11108,40 @@ const esValues = {
                             "className": "DocumentFormat",
                             "isCopy": false,
                             "isKey": false,
-                            "name": "documentFormat",
-                            "nameCamelCase": "documentFormat",
-                            "namePascalCase": "DocumentFormat",
+                            "name": "format",
+                            "nameCamelCase": "format",
+                            "namePascalCase": "Format",
                             "displayName": "",
                             "_type": "org.uengine.model.FieldDescriptor"
                         }
                     ],
                     "description": null,
-                    "id": "75f8fa95-e80d-e653-5afe-af30b2b6abc7",
+                    "id": "e276a629-4038-03c0-d2bd-4be915e2b024",
                     "elementView": {
                         "_type": "org.uengine.modeling.model.Command",
                         "height": 116,
-                        "id": "75f8fa95-e80d-e653-5afe-af30b2b6abc7",
+                        "id": "e276a629-4038-03c0-d2bd-4be915e2b024",
                         "style": "{}",
                         "width": 100,
-                        "x": 1141,
+                        "x": 1571,
                         "y": 250,
                         "z-index": 999
                     },
                     "hexagonalView": {
                         "_type": "org.uengine.modeling.model.CommandHexagonal",
                         "height": 0,
-                        "id": "75f8fa95-e80d-e653-5afe-af30b2b6abc7",
+                        "id": "e276a629-4038-03c0-d2bd-4be915e2b024",
                         "style": "{}",
                         "width": 0,
                         "x": 0,
                         "y": 0
                     },
                     "isRestRepository": false,
-                    "name": "IssueMinwonDocument",
-                    "displayName": "민원문서 발급 요청",
-                    "nameCamelCase": "issueMinwonDocument",
-                    "namePascalCase": "IssueMinwonDocument",
-                    "namePlural": "issueMinwonDocuments",
+                    "name": "IssueDocument",
+                    "displayName": "문서 발급",
+                    "nameCamelCase": "issueDocument",
+                    "namePascalCase": "IssueDocument",
+                    "namePlural": "issueDocuments",
                     "relationCommandInfo": [],
                     "relationEventInfo": [],
                     "restRepositoryInfo": {
@@ -10409,41 +11155,36 @@ const esValues = {
                             "given": [
                                 {
                                     "type": "Aggregate",
-                                    "name": "MinwonDocument",
+                                    "name": "Document",
                                     "value": {
                                         "documentId": "N/A",
-                                        "documentFormat": "PDF",
-                                        "issueStatus": "Pending",
-                                        "transmissionRecord": "N/A",
-                                        "documentData": "N/A",
-                                        "civilComplaintApplicationId": "APPROVED-001"
+                                        "applicationId": "APP-123",
+                                        "format": "PDF",
+                                        "createdDate": null,
+                                        "sentTo": null,
+                                        "applicationReviewId": "N/A"
                                     }
                                 }
                             ],
                             "when": [
                                 {
                                     "type": "Command",
-                                    "name": "IssueMinwonDocument",
+                                    "name": "IssueDocument",
                                     "value": {
-                                        "civilComplaintApplicationId": "APPROVED-001",
-                                        "documentFormat": "PDF"
+                                        "applicationId": "APP-123",
+                                        "format": "PDF"
                                     }
                                 }
                             ],
                             "then": [
                                 {
                                     "type": "Event",
-                                    "name": "MinwonDocumentIssued",
+                                    "name": "DocumentIssued",
                                     "value": {
-                                        "documentId": "DOC-001",
-                                        "civilComplaintApplicationId": "APPROVED-001",
-                                        "documentFormat": "PDF",
-                                        "issueStatus": "Issued",
-                                        "transmissionRecord": {
-                                            "method": "Email",
-                                            "sentDate": "2024-03-20T00:00:00Z"
-                                        },
-                                        "issuedAt": "2024-03-20T00:00:00Z"
+                                        "applicationId": "APP-123",
+                                        "format": "PDF",
+                                        "createdDate": "2024-03-20T12:00:00Z",
+                                        "sentTo": "applicant@example.com"
                                     }
                                 }
                             ]
@@ -10452,63 +11193,59 @@ const esValues = {
                             "given": [
                                 {
                                     "type": "Aggregate",
-                                    "name": "MinwonDocument",
+                                    "name": "Document",
                                     "value": {
                                         "documentId": "N/A",
-                                        "documentFormat": "SpecifiedFormat",
-                                        "issueStatus": "Pending",
-                                        "transmissionRecord": "N/A",
-                                        "documentData": "N/A",
-                                        "civilComplaintApplicationId": "APPROVED-002"
+                                        "applicationId": "APP-124",
+                                        "format": "PDF",
+                                        "createdDate": null,
+                                        "sentTo": null,
+                                        "applicationReviewId": "N/A"
                                     }
                                 }
                             ],
                             "when": [
                                 {
                                     "type": "Command",
-                                    "name": "IssueMinwonDocument",
+                                    "name": "IssueDocument",
                                     "value": {
-                                        "civilComplaintApplicationId": "APPROVED-002",
-                                        "documentFormat": "SpecifiedFormat"
+                                        "applicationId": "APP-124",
+                                        "format": "OTHER"
                                     }
                                 }
                             ],
                             "then": [
                                 {
                                     "type": "Event",
-                                    "name": "MinwonDocumentIssued",
+                                    "name": "DocumentIssued",
                                     "value": {
-                                        "documentId": "DOC-002",
-                                        "civilComplaintApplicationId": "APPROVED-002",
-                                        "documentFormat": "SpecifiedFormat",
-                                        "issueStatus": "Failed",
-                                        "transmissionRecord": {
-                                            "method": "N/A",
-                                            "sentDate": null
-                                        },
-                                        "issuedAt": "2024-03-20T00:00:00Z"
+                                        "applicationId": "APP-124",
+                                        "format": "OTHER",
+                                        "createdDate": null,
+                                        "sentTo": null
                                     }
                                 }
                             ]
                         }
-                    ]
+                    ],
+                    "visibility": "public"
                 },
-                "e6442477-0d7b-fdfe-1653-def2818d68e4": {
+                "31c4b8cd-c05c-bab0-5616-efbfb181ba31": {
                     "_type": "org.uengine.modeling.model.View",
-                    "id": "e6442477-0d7b-fdfe-1653-def2818d68e4",
+                    "id": "31c4b8cd-c05c-bab0-5616-efbfb181ba31",
                     "visibility": "public",
-                    "name": "MinwonDocumentSummary",
+                    "name": "DocumentIssuanceSummary",
                     "oldName": "",
-                    "displayName": "민원문서 발급 상태",
-                    "namePascalCase": "MinwonDocumentSummary",
-                    "namePlural": "minwonDocumentSummaries",
+                    "displayName": "문서 발급 내역",
+                    "namePascalCase": "DocumentIssuanceSummary",
+                    "namePlural": "documentIssuanceSummaries",
                     "aggregate": {
-                        "id": "66dacbed-e343-9cd7-2dd0-db20f2a86a90"
+                        "id": "1c1b8300-506a-2317-3fef-9fd3f7cc3dfd"
                     },
                     "description": null,
                     "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
                     "boundedContext": {
-                        "id": "03323d91-1261-f9b8-65e2-333f1a241fc0"
+                        "id": "886c1ea5-4b72-c968-7f43-c888489594ec"
                     },
                     "fieldDescriptors": [
                         {
@@ -10524,30 +11261,20 @@ const esValues = {
                         {
                             "className": "String",
                             "isCopy": false,
-                            "isKey": true,
-                            "name": "documentId",
-                            "nameCamelCase": "documentId",
-                            "namePascalCase": "DocumentId",
+                            "isKey": false,
+                            "name": "applicationId",
+                            "nameCamelCase": "applicationId",
+                            "namePascalCase": "ApplicationId",
                             "displayName": "",
                             "_type": "org.uengine.model.FieldDescriptor"
                         },
                         {
-                            "className": "IssueStatus",
+                            "className": "DocumentFormat",
                             "isCopy": false,
                             "isKey": false,
-                            "name": "issueStatus",
-                            "nameCamelCase": "issueStatus",
-                            "namePascalCase": "IssueStatus",
-                            "displayName": "",
-                            "_type": "org.uengine.model.FieldDescriptor"
-                        },
-                        {
-                            "className": "TransmissionRecordVO",
-                            "isCopy": false,
-                            "isKey": false,
-                            "name": "transmissionRecord",
-                            "nameCamelCase": "transmissionRecord",
-                            "namePascalCase": "TransmissionRecord",
+                            "name": "format",
+                            "nameCamelCase": "format",
+                            "namePascalCase": "Format",
                             "displayName": "",
                             "_type": "org.uengine.model.FieldDescriptor"
                         },
@@ -10555,9 +11282,19 @@ const esValues = {
                             "className": "Date",
                             "isCopy": false,
                             "isKey": false,
-                            "name": "issuedAt",
-                            "nameCamelCase": "issuedAt",
-                            "namePascalCase": "IssuedAt",
+                            "name": "createdDate",
+                            "nameCamelCase": "createdDate",
+                            "namePascalCase": "CreatedDate",
+                            "displayName": "",
+                            "_type": "org.uengine.model.FieldDescriptor"
+                        },
+                        {
+                            "className": "String",
+                            "isCopy": false,
+                            "isKey": false,
+                            "name": "sentTo",
+                            "nameCamelCase": "sentTo",
+                            "namePascalCase": "SentTo",
                             "displayName": "",
                             "_type": "org.uengine.model.FieldDescriptor"
                         }
@@ -10565,15 +11302,15 @@ const esValues = {
                     "queryOption": {
                         "apiPath": "",
                         "useDefaultUri": true,
-                        "multipleResult": false
+                        "multipleResult": true
                     },
                     "controllerInfo": {
                         "url": ""
                     },
                     "elementView": {
                         "_type": "org.uengine.modeling.model.View",
-                        "id": "e6442477-0d7b-fdfe-1653-def2818d68e4",
-                        "x": 1141,
+                        "id": "31c4b8cd-c05c-bab0-5616-efbfb181ba31",
+                        "x": 1571,
                         "y": 380,
                         "width": 100,
                         "height": 116,
@@ -10642,23 +11379,24 @@ const esValues = {
                         }
                     ],
                     "rotateStatus": false,
-                    "definitionId": ""
+                    "definitionId": "",
+                    "selected": false
                 },
-                "024d893a-7af4-8e32-55c3-b882ebbef679": {
+                "23af8434-91ba-ab07-dbde-97c0e052070b": {
                     "_type": "org.uengine.modeling.model.Actor",
                     "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
                     "boundedContext": {
-                        "id": "03323d91-1261-f9b8-65e2-333f1a241fc0"
+                        "id": "886c1ea5-4b72-c968-7f43-c888489594ec"
                     },
                     "description": null,
-                    "id": "024d893a-7af4-8e32-55c3-b882ebbef679",
+                    "id": "23af8434-91ba-ab07-dbde-97c0e052070b",
                     "elementView": {
                         "_type": "org.uengine.modeling.model.Actor",
                         "height": 100,
-                        "id": "024d893a-7af4-8e32-55c3-b882ebbef679",
+                        "id": "23af8434-91ba-ab07-dbde-97c0e052070b",
                         "style": "{}",
                         "width": 100,
-                        "x": 1060,
+                        "x": 1490,
                         "y": 250
                     },
                     "innerAggregate": {
@@ -10668,26 +11406,27 @@ const esValues = {
                         "policy": [],
                         "view": []
                     },
-                    "name": "Reviewer",
+                    "name": "System",
                     "oldName": "",
                     "rotateStatus": false,
-                    "displayName": ""
+                    "displayName": "",
+                    "selected": false
                 },
-                "71e75fe6-1293-65c1-b234-11d9c3dbc1dc": {
+                "8e9765b9-a0b2-c465-76c9-a4cf268a26bb": {
                     "_type": "org.uengine.modeling.model.Actor",
                     "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
                     "boundedContext": {
-                        "id": "03323d91-1261-f9b8-65e2-333f1a241fc0"
+                        "id": "886c1ea5-4b72-c968-7f43-c888489594ec"
                     },
                     "description": null,
-                    "id": "71e75fe6-1293-65c1-b234-11d9c3dbc1dc",
+                    "id": "8e9765b9-a0b2-c465-76c9-a4cf268a26bb",
                     "elementView": {
                         "_type": "org.uengine.modeling.model.Actor",
                         "height": 100,
-                        "id": "71e75fe6-1293-65c1-b234-11d9c3dbc1dc",
+                        "id": "8e9765b9-a0b2-c465-76c9-a4cf268a26bb",
                         "style": "{}",
                         "width": 100,
-                        "x": 1060,
+                        "x": 1490,
                         "y": 380
                     },
                     "innerAggregate": {
@@ -10700,21 +11439,22 @@ const esValues = {
                     "name": "Reviewer",
                     "oldName": "",
                     "rotateStatus": false,
-                    "displayName": ""
+                    "displayName": "",
+                    "selected": false
                 },
-                "be82b54d-1d1b-c7c3-1072-61ac006a77e7": {
+                "a35cc1b5-5399-2070-eaf1-f10eac2beb3e": {
                     "alertURL": "/static/image/symbol/alert-icon.png",
                     "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
                     "checkAlert": true,
                     "description": null,
-                    "id": "be82b54d-1d1b-c7c3-1072-61ac006a77e7",
+                    "id": "a35cc1b5-5399-2070-eaf1-f10eac2beb3e",
                     "elementView": {
                         "angle": 0,
                         "height": 116,
-                        "id": "be82b54d-1d1b-c7c3-1072-61ac006a77e7",
+                        "id": "a35cc1b5-5399-2070-eaf1-f10eac2beb3e",
                         "style": "{}",
                         "width": 100,
-                        "x": 1914,
+                        "x": 2364,
                         "y": 250,
                         "_type": "org.uengine.modeling.model.Event"
                     },
@@ -10723,9 +11463,9 @@ const esValues = {
                             "className": "Long",
                             "isCopy": false,
                             "isKey": true,
-                            "name": "operationId",
-                            "nameCamelCase": "operationId",
-                            "namePascalCase": "OperationId",
+                            "name": "monitorId",
+                            "nameCamelCase": "monitorId",
+                            "namePascalCase": "MonitorId",
                             "displayName": "",
                             "_type": "org.uengine.model.FieldDescriptor"
                         },
@@ -10750,29 +11490,39 @@ const esValues = {
                             "_type": "org.uengine.model.FieldDescriptor"
                         },
                         {
-                            "className": "String",
+                            "className": "Date",
                             "isCopy": false,
                             "isKey": false,
-                            "name": "alertRecords",
-                            "nameCamelCase": "alertRecords",
-                            "namePascalCase": "AlertRecords",
+                            "name": "lastChecked",
+                            "nameCamelCase": "lastChecked",
+                            "namePascalCase": "LastChecked",
                             "displayName": "",
                             "_type": "org.uengine.model.FieldDescriptor"
                         },
                         {
-                            "className": "Date",
+                            "className": "String",
                             "isCopy": false,
                             "isKey": false,
-                            "name": "monitoredAt",
-                            "nameCamelCase": "monitoredAt",
-                            "namePascalCase": "MonitoredAt",
+                            "name": "alerts",
+                            "nameCamelCase": "alerts",
+                            "namePascalCase": "Alerts",
+                            "displayName": "",
+                            "_type": "org.uengine.model.FieldDescriptor"
+                        },
+                        {
+                            "className": "MonitorStatus",
+                            "isCopy": false,
+                            "isKey": false,
+                            "name": "status",
+                            "nameCamelCase": "status",
+                            "namePascalCase": "Status",
                             "displayName": "",
                             "_type": "org.uengine.model.FieldDescriptor"
                         }
                     ],
                     "hexagonalView": {
                         "height": 0,
-                        "id": "be82b54d-1d1b-c7c3-1072-61ac006a77e7",
+                        "id": "a35cc1b5-5399-2070-eaf1-f10eac2beb3e",
                         "style": "{}",
                         "width": 0,
                         "x": 0,
@@ -10780,7 +11530,7 @@ const esValues = {
                         "_type": "org.uengine.modeling.model.EventHexagonal"
                     },
                     "name": "SystemMonitored",
-                    "displayName": "시스템 모니터링 결과 확인",
+                    "displayName": "시스템 모니터링 완료",
                     "nameCamelCase": "systemMonitored",
                     "namePascalCase": "SystemMonitored",
                     "namePlural": "",
@@ -10791,25 +11541,26 @@ const esValues = {
                     "trigger": "@PostPersist",
                     "_type": "org.uengine.modeling.model.Event",
                     "aggregate": {
-                        "id": "857059f8-228a-8b17-127a-354eece4ee86"
+                        "id": "9d7631f0-85d0-d398-e1d7-054976d2a870"
                     },
                     "boundedContext": {
-                        "id": "f0a567cc-2b73-509f-37cb-24dde03e0d76"
-                    }
+                        "id": "81fab6f5-399c-4722-35ba-75ec4c67a041"
+                    },
+                    "visibility": "public"
                 },
-                "8694fbe0-4ea2-32bc-a86e-b8a03dd5f8ef": {
+                "295ea3f0-6a93-75f2-6b36-151ca8d11b2d": {
                     "alertURL": "/static/image/symbol/alert-icon.png",
                     "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
                     "checkAlert": true,
                     "description": null,
-                    "id": "8694fbe0-4ea2-32bc-a86e-b8a03dd5f8ef",
+                    "id": "295ea3f0-6a93-75f2-6b36-151ca8d11b2d",
                     "elementView": {
                         "angle": 0,
                         "height": 116,
-                        "id": "8694fbe0-4ea2-32bc-a86e-b8a03dd5f8ef",
+                        "id": "295ea3f0-6a93-75f2-6b36-151ca8d11b2d",
                         "style": "{}",
                         "width": 100,
-                        "x": 1914,
+                        "x": 2364,
                         "y": 380,
                         "_type": "org.uengine.modeling.model.Event"
                     },
@@ -10818,19 +11569,9 @@ const esValues = {
                             "className": "Long",
                             "isCopy": false,
                             "isKey": true,
-                            "name": "operationId",
-                            "nameCamelCase": "operationId",
-                            "namePascalCase": "OperationId",
-                            "displayName": "",
-                            "_type": "org.uengine.model.FieldDescriptor"
-                        },
-                        {
-                            "className": "FallbackStatus",
-                            "isCopy": false,
-                            "isKey": false,
-                            "name": "fallbackStatus",
-                            "nameCamelCase": "fallbackStatus",
-                            "namePascalCase": "FallbackStatus",
+                            "name": "monitorId",
+                            "nameCamelCase": "monitorId",
+                            "namePascalCase": "MonitorId",
                             "displayName": "",
                             "_type": "org.uengine.model.FieldDescriptor"
                         },
@@ -10838,9 +11579,9 @@ const esValues = {
                             "className": "String",
                             "isCopy": false,
                             "isKey": false,
-                            "name": "failureReason",
-                            "nameCamelCase": "failureReason",
-                            "namePascalCase": "FailureReason",
+                            "name": "errorDetail",
+                            "nameCamelCase": "errorDetail",
+                            "namePascalCase": "ErrorDetail",
                             "displayName": "",
                             "_type": "org.uengine.model.FieldDescriptor"
                         },
@@ -10848,26 +11589,26 @@ const esValues = {
                             "className": "Date",
                             "isCopy": false,
                             "isKey": false,
-                            "name": "switchedAt",
-                            "nameCamelCase": "switchedAt",
-                            "namePascalCase": "SwitchedAt",
+                            "name": "activatedAt",
+                            "nameCamelCase": "activatedAt",
+                            "namePascalCase": "ActivatedAt",
                             "displayName": "",
                             "_type": "org.uengine.model.FieldDescriptor"
                         }
                     ],
                     "hexagonalView": {
                         "height": 0,
-                        "id": "8694fbe0-4ea2-32bc-a86e-b8a03dd5f8ef",
+                        "id": "295ea3f0-6a93-75f2-6b36-151ca8d11b2d",
                         "style": "{}",
                         "width": 0,
                         "x": 0,
                         "y": 0,
                         "_type": "org.uengine.modeling.model.EventHexagonal"
                     },
-                    "name": "BackupSwitched",
+                    "name": "BackupLoggingActivated",
                     "displayName": "백업 로깅 시스템 전환 완료",
-                    "nameCamelCase": "backupSwitched",
-                    "namePascalCase": "BackupSwitched",
+                    "nameCamelCase": "backupLoggingActivated",
+                    "namePascalCase": "BackupLoggingActivated",
                     "namePlural": "",
                     "relationCommandInfo": [],
                     "relationPolicyInfo": [],
@@ -10876,23 +11617,24 @@ const esValues = {
                     "trigger": "@PostPersist",
                     "_type": "org.uengine.modeling.model.Event",
                     "aggregate": {
-                        "id": "857059f8-228a-8b17-127a-354eece4ee86"
+                        "id": "9d7631f0-85d0-d398-e1d7-054976d2a870"
                     },
                     "boundedContext": {
-                        "id": "f0a567cc-2b73-509f-37cb-24dde03e0d76"
-                    }
+                        "id": "81fab6f5-399c-4722-35ba-75ec4c67a041"
+                    },
+                    "visibility": "public"
                 },
-                "173099e3-2c6a-013a-d89d-c3fb3668f1ab": {
+                "645a47c3-c65a-19fb-7811-8dd2994cca68": {
                     "_type": "org.uengine.modeling.model.Command",
                     "outputEvents": [
                         "SystemMonitored"
                     ],
                     "aggregate": {
-                        "id": "857059f8-228a-8b17-127a-354eece4ee86"
+                        "id": "9d7631f0-85d0-d398-e1d7-054976d2a870"
                     },
                     "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
                     "boundedContext": {
-                        "id": "f0a567cc-2b73-509f-37cb-24dde03e0d76"
+                        "id": "81fab6f5-399c-4722-35ba-75ec4c67a041"
                     },
                     "controllerInfo": {
                         "method": "POST"
@@ -10902,29 +11644,29 @@ const esValues = {
                             "className": "Long",
                             "isCopy": false,
                             "isKey": true,
-                            "name": "operationId",
-                            "nameCamelCase": "operationId",
-                            "namePascalCase": "OperationId",
+                            "name": "monitorId",
+                            "nameCamelCase": "monitorId",
+                            "namePascalCase": "MonitorId",
                             "displayName": "",
                             "_type": "org.uengine.model.FieldDescriptor"
                         }
                     ],
                     "description": null,
-                    "id": "173099e3-2c6a-013a-d89d-c3fb3668f1ab",
+                    "id": "645a47c3-c65a-19fb-7811-8dd2994cca68",
                     "elementView": {
                         "_type": "org.uengine.modeling.model.Command",
                         "height": 116,
-                        "id": "173099e3-2c6a-013a-d89d-c3fb3668f1ab",
+                        "id": "645a47c3-c65a-19fb-7811-8dd2994cca68",
                         "style": "{}",
                         "width": 100,
-                        "x": 1726,
+                        "x": 2176,
                         "y": 250,
                         "z-index": 999
                     },
                     "hexagonalView": {
                         "_type": "org.uengine.modeling.model.CommandHexagonal",
                         "height": 0,
-                        "id": "173099e3-2c6a-013a-d89d-c3fb3668f1ab",
+                        "id": "645a47c3-c65a-19fb-7811-8dd2994cca68",
                         "style": "{}",
                         "width": 0,
                         "x": 0,
@@ -10932,7 +11674,7 @@ const esValues = {
                     },
                     "isRestRepository": false,
                     "name": "MonitorSystem",
-                    "displayName": "시스템 모니터링 호출",
+                    "displayName": "시스템 모니터링 실행",
                     "nameCamelCase": "monitorSystem",
                     "namePascalCase": "MonitorSystem",
                     "namePlural": "monitorSystems",
@@ -10949,19 +11691,14 @@ const esValues = {
                             "given": [
                                 {
                                     "type": "Aggregate",
-                                    "name": "SystemOperation",
+                                    "name": "SystemMonitor",
                                     "value": {
-                                        "operationId": 1001,
-                                        "fallbackStatus": {
-                                            "active": false,
-                                            "lastSwitchedDate": null
-                                        },
-                                        "operationData": {
-                                            "dataId": 1,
-                                            "serverStatus": "OK",
-                                            "transactionLog": "No issues",
-                                            "alertRecords": "None"
-                                        }
+                                        "monitorId": 101,
+                                        "serverStatus": "NORMAL",
+                                        "transactionLog": "정상 로그 기록",
+                                        "lastChecked": "2024-03-25T10:00:00Z",
+                                        "alerts": [],
+                                        "status": "NORMAL"
                                     }
                                 }
                             ],
@@ -10970,7 +11707,7 @@ const esValues = {
                                     "type": "Command",
                                     "name": "MonitorSystem",
                                     "value": {
-                                        "operationId": 1001
+                                        "monitorId": 101
                                     }
                                 }
                             ],
@@ -10979,28 +11716,30 @@ const esValues = {
                                     "type": "Event",
                                     "name": "SystemMonitored",
                                     "value": {
-                                        "operationId": 1001,
-                                        "serverStatus": "OK",
-                                        "transactionLog": "No issues",
-                                        "alertRecords": "None",
-                                        "monitoredAt": "2024-03-20T12:00:00Z"
+                                        "monitorId": 101,
+                                        "serverStatus": "NORMAL",
+                                        "transactionLog": "정상 로그 기록",
+                                        "lastChecked": "2024-03-25T10:05:00Z",
+                                        "alerts": [],
+                                        "status": "NORMAL"
                                     }
                                 }
                             ]
                         }
-                    ]
+                    ],
+                    "visibility": "public"
                 },
-                "e61a8b5e-75b4-8087-f67c-f248c89f5a8b": {
+                "3738bd3a-f0c0-3636-0772-1d8acd44a8ce": {
                     "_type": "org.uengine.modeling.model.Command",
                     "outputEvents": [
-                        "BackupSwitched"
+                        "BackupLoggingActivated"
                     ],
                     "aggregate": {
-                        "id": "857059f8-228a-8b17-127a-354eece4ee86"
+                        "id": "9d7631f0-85d0-d398-e1d7-054976d2a870"
                     },
                     "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
                     "boundedContext": {
-                        "id": "f0a567cc-2b73-509f-37cb-24dde03e0d76"
+                        "id": "81fab6f5-399c-4722-35ba-75ec4c67a041"
                     },
                     "controllerInfo": {
                         "method": "POST"
@@ -11010,9 +11749,9 @@ const esValues = {
                             "className": "Long",
                             "isCopy": false,
                             "isKey": true,
-                            "name": "operationId",
-                            "nameCamelCase": "operationId",
-                            "namePascalCase": "OperationId",
+                            "name": "monitorId",
+                            "nameCamelCase": "monitorId",
+                            "namePascalCase": "MonitorId",
                             "displayName": "",
                             "_type": "org.uengine.model.FieldDescriptor"
                         },
@@ -11020,9 +11759,9 @@ const esValues = {
                             "className": "String",
                             "isCopy": false,
                             "isKey": false,
-                            "name": "failureReason",
-                            "nameCamelCase": "failureReason",
-                            "namePascalCase": "FailureReason",
+                            "name": "errorDetail",
+                            "nameCamelCase": "errorDetail",
+                            "namePascalCase": "ErrorDetail",
                             "displayName": "",
                             "_type": "org.uengine.model.FieldDescriptor"
                         },
@@ -11030,40 +11769,40 @@ const esValues = {
                             "className": "String",
                             "isCopy": false,
                             "isKey": false,
-                            "name": "failureReason",
-                            "nameCamelCase": "failureReason",
-                            "namePascalCase": "FailureReason",
+                            "name": "errorDetail",
+                            "nameCamelCase": "errorDetail",
+                            "namePascalCase": "ErrorDetail",
                             "displayName": "",
                             "_type": "org.uengine.model.FieldDescriptor"
                         }
                     ],
                     "description": null,
-                    "id": "e61a8b5e-75b4-8087-f67c-f248c89f5a8b",
+                    "id": "3738bd3a-f0c0-3636-0772-1d8acd44a8ce",
                     "elementView": {
                         "_type": "org.uengine.modeling.model.Command",
                         "height": 116,
-                        "id": "e61a8b5e-75b4-8087-f67c-f248c89f5a8b",
+                        "id": "3738bd3a-f0c0-3636-0772-1d8acd44a8ce",
                         "style": "{}",
                         "width": 100,
-                        "x": 1726,
+                        "x": 2176,
                         "y": 380,
                         "z-index": 999
                     },
                     "hexagonalView": {
                         "_type": "org.uengine.modeling.model.CommandHexagonal",
                         "height": 0,
-                        "id": "e61a8b5e-75b4-8087-f67c-f248c89f5a8b",
+                        "id": "3738bd3a-f0c0-3636-0772-1d8acd44a8ce",
                         "style": "{}",
                         "width": 0,
                         "x": 0,
                         "y": 0
                     },
                     "isRestRepository": false,
-                    "name": "SwitchToBackup",
-                    "displayName": "백업 로깅 시스템 전환",
-                    "nameCamelCase": "switchToBackup",
-                    "namePascalCase": "SwitchToBackup",
-                    "namePlural": "switchToBackups",
+                    "name": "ActivateBackupLogging",
+                    "displayName": "백업 로깅 시스템 활성화",
+                    "nameCamelCase": "activateBackupLogging",
+                    "namePascalCase": "ActivateBackupLogging",
+                    "namePlural": "activateBackupLoggings",
                     "relationCommandInfo": [],
                     "relationEventInfo": [],
                     "restRepositoryInfo": {
@@ -11077,66 +11816,60 @@ const esValues = {
                             "given": [
                                 {
                                     "type": "Aggregate",
-                                    "name": "SystemOperation",
+                                    "name": "SystemMonitor",
                                     "value": {
-                                        "operationId": 1001,
-                                        "fallbackStatus": {
-                                            "active": false,
-                                            "lastSwitchedDate": null
-                                        },
-                                        "operationData": {
-                                            "dataId": 1,
-                                            "serverStatus": "OK",
-                                            "transactionLog": "No issues",
-                                            "alertRecords": "None"
-                                        }
+                                        "monitorId": 101,
+                                        "serverStatus": "ALERT",
+                                        "transactionLog": "오류 발생 로그",
+                                        "lastChecked": "2024-03-25T10:05:00Z",
+                                        "alerts": [
+                                            "시스템 장애 감지"
+                                        ],
+                                        "status": "ALERT"
                                     }
                                 }
                             ],
                             "when": [
                                 {
                                     "type": "Command",
-                                    "name": "SwitchToBackup",
+                                    "name": "ActivateBackupLogging",
                                     "value": {
-                                        "operationId": 1001,
-                                        "failureReason": "모니터링 도구 오류"
+                                        "monitorId": 101,
+                                        "errorDetail": "모니터링 도구 오류 - 백업 로깅 전환"
                                     }
                                 }
                             ],
                             "then": [
                                 {
                                     "type": "Event",
-                                    "name": "BackupSwitched",
+                                    "name": "BackupLoggingActivated",
                                     "value": {
-                                        "operationId": 1001,
-                                        "fallbackStatus": {
-                                            "active": true,
-                                            "lastSwitchedDate": "2024-03-20T12:05:00Z"
-                                        },
-                                        "failureReason": "모니터링 도구 오류",
-                                        "switchedAt": "2024-03-20T12:05:00Z"
+                                        "monitorId": 101,
+                                        "errorDetail": "모니터링 도구 오류 - 백업 로깅 전환",
+                                        "activatedAt": "2024-03-25T10:06:00Z"
                                     }
                                 }
                             ]
                         }
-                    ]
+                    ],
+                    "visibility": "public"
                 },
-                "e7bad477-f749-7564-2452-6e009f45db88": {
+                "5295e95a-4db4-4cc2-e02b-0b08346edce8": {
                     "_type": "org.uengine.modeling.model.View",
-                    "id": "e7bad477-f749-7564-2452-6e009f45db88",
+                    "id": "5295e95a-4db4-4cc2-e02b-0b08346edce8",
                     "visibility": "public",
-                    "name": "SystemOperationDetails",
+                    "name": "SystemMonitorSummary",
                     "oldName": "",
-                    "displayName": "시스템 운영 상세 조회",
-                    "namePascalCase": "SystemOperationDetails",
-                    "namePlural": "systemOperationDetails",
+                    "displayName": "시스템 모니터링 요약",
+                    "namePascalCase": "SystemMonitorSummary",
+                    "namePlural": "systemMonitorSummaries",
                     "aggregate": {
-                        "id": "857059f8-228a-8b17-127a-354eece4ee86"
+                        "id": "9d7631f0-85d0-d398-e1d7-054976d2a870"
                     },
                     "description": null,
                     "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
                     "boundedContext": {
-                        "id": "f0a567cc-2b73-509f-37cb-24dde03e0d76"
+                        "id": "81fab6f5-399c-4722-35ba-75ec4c67a041"
                     },
                     "fieldDescriptors": [
                         {
@@ -11153,9 +11886,59 @@ const esValues = {
                             "className": "Long",
                             "isCopy": false,
                             "isKey": true,
-                            "name": "operationId",
-                            "nameCamelCase": "operationId",
-                            "namePascalCase": "OperationId",
+                            "name": "monitorId",
+                            "nameCamelCase": "monitorId",
+                            "namePascalCase": "MonitorId",
+                            "displayName": "",
+                            "_type": "org.uengine.model.FieldDescriptor"
+                        },
+                        {
+                            "className": "String",
+                            "isCopy": false,
+                            "isKey": false,
+                            "name": "serverStatus",
+                            "nameCamelCase": "serverStatus",
+                            "namePascalCase": "ServerStatus",
+                            "displayName": "",
+                            "_type": "org.uengine.model.FieldDescriptor"
+                        },
+                        {
+                            "className": "String",
+                            "isCopy": false,
+                            "isKey": false,
+                            "name": "transactionLog",
+                            "nameCamelCase": "transactionLog",
+                            "namePascalCase": "TransactionLog",
+                            "displayName": "",
+                            "_type": "org.uengine.model.FieldDescriptor"
+                        },
+                        {
+                            "className": "Date",
+                            "isCopy": false,
+                            "isKey": false,
+                            "name": "lastChecked",
+                            "nameCamelCase": "lastChecked",
+                            "namePascalCase": "LastChecked",
+                            "displayName": "",
+                            "_type": "org.uengine.model.FieldDescriptor"
+                        },
+                        {
+                            "className": "String",
+                            "isCopy": false,
+                            "isKey": false,
+                            "name": "alerts",
+                            "nameCamelCase": "alerts",
+                            "namePascalCase": "Alerts",
+                            "displayName": "",
+                            "_type": "org.uengine.model.FieldDescriptor"
+                        },
+                        {
+                            "className": "MonitorStatus",
+                            "isCopy": false,
+                            "isKey": false,
+                            "name": "status",
+                            "nameCamelCase": "status",
+                            "namePascalCase": "Status",
                             "displayName": "",
                             "_type": "org.uengine.model.FieldDescriptor"
                         }
@@ -11170,8 +11953,8 @@ const esValues = {
                     },
                     "elementView": {
                         "_type": "org.uengine.modeling.model.View",
-                        "id": "e7bad477-f749-7564-2452-6e009f45db88",
-                        "x": 1726,
+                        "id": "5295e95a-4db4-4cc2-e02b-0b08346edce8",
+                        "x": 2176,
                         "y": 510,
                         "width": 100,
                         "height": 116,
@@ -11240,23 +12023,24 @@ const esValues = {
                         }
                     ],
                     "rotateStatus": false,
-                    "definitionId": ""
+                    "definitionId": "",
+                    "selected": false
                 },
-                "a89e5e57-2b72-ab89-1ba9-d099aeae4e89": {
+                "0d51f965-c28d-4d89-616e-655275aaa81b": {
                     "_type": "org.uengine.modeling.model.Actor",
                     "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
                     "boundedContext": {
-                        "id": "f0a567cc-2b73-509f-37cb-24dde03e0d76"
+                        "id": "81fab6f5-399c-4722-35ba-75ec4c67a041"
                     },
                     "description": null,
-                    "id": "a89e5e57-2b72-ab89-1ba9-d099aeae4e89",
+                    "id": "0d51f965-c28d-4d89-616e-655275aaa81b",
                     "elementView": {
                         "_type": "org.uengine.modeling.model.Actor",
                         "height": 100,
-                        "id": "a89e5e57-2b72-ab89-1ba9-d099aeae4e89",
+                        "id": "0d51f965-c28d-4d89-616e-655275aaa81b",
                         "style": "{}",
                         "width": 100,
-                        "x": 1645,
+                        "x": 2095,
                         "y": 250
                     },
                     "innerAggregate": {
@@ -11266,26 +12050,27 @@ const esValues = {
                         "policy": [],
                         "view": []
                     },
-                    "name": "관리자",
+                    "name": "Admin",
                     "oldName": "",
                     "rotateStatus": false,
-                    "displayName": ""
+                    "displayName": "",
+                    "selected": false
                 },
-                "b9907810-76e7-724b-399a-020aa427efc8": {
+                "3cf87e2f-d32b-c765-122e-718b88c42611": {
                     "_type": "org.uengine.modeling.model.Actor",
                     "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
                     "boundedContext": {
-                        "id": "f0a567cc-2b73-509f-37cb-24dde03e0d76"
+                        "id": "81fab6f5-399c-4722-35ba-75ec4c67a041"
                     },
                     "description": null,
-                    "id": "b9907810-76e7-724b-399a-020aa427efc8",
+                    "id": "3cf87e2f-d32b-c765-122e-718b88c42611",
                     "elementView": {
                         "_type": "org.uengine.modeling.model.Actor",
                         "height": 100,
-                        "id": "b9907810-76e7-724b-399a-020aa427efc8",
+                        "id": "3cf87e2f-d32b-c765-122e-718b88c42611",
                         "style": "{}",
                         "width": 100,
-                        "x": 1645,
+                        "x": 2095,
                         "y": 380
                     },
                     "innerAggregate": {
@@ -11295,26 +12080,27 @@ const esValues = {
                         "policy": [],
                         "view": []
                     },
-                    "name": "관리자",
+                    "name": "System",
                     "oldName": "",
                     "rotateStatus": false,
-                    "displayName": ""
+                    "displayName": "",
+                    "selected": false
                 },
-                "cc42cc23-614f-0cf3-4979-c70511cdf33f": {
+                "43fa5c05-46dd-4f19-01cd-8780b33f4a68": {
                     "_type": "org.uengine.modeling.model.Actor",
                     "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
                     "boundedContext": {
-                        "id": "f0a567cc-2b73-509f-37cb-24dde03e0d76"
+                        "id": "81fab6f5-399c-4722-35ba-75ec4c67a041"
                     },
                     "description": null,
-                    "id": "cc42cc23-614f-0cf3-4979-c70511cdf33f",
+                    "id": "43fa5c05-46dd-4f19-01cd-8780b33f4a68",
                     "elementView": {
                         "_type": "org.uengine.modeling.model.Actor",
                         "height": 100,
-                        "id": "cc42cc23-614f-0cf3-4979-c70511cdf33f",
+                        "id": "43fa5c05-46dd-4f19-01cd-8780b33f4a68",
                         "style": "{}",
                         "width": 100,
-                        "x": 1645,
+                        "x": 2095,
                         "y": 510
                     },
                     "innerAggregate": {
@@ -11324,52 +12110,126 @@ const esValues = {
                         "policy": [],
                         "view": []
                     },
-                    "name": "관리자",
+                    "name": "Admin",
                     "oldName": "",
                     "rotateStatus": false,
-                    "displayName": ""
+                    "displayName": "",
+                    "selected": false
                 },
-                "c8477556-23cf-8ba5-21da-b80482dfb375": {
-                    "id": "c8477556-23cf-8ba5-21da-b80482dfb375",
+                "5e160713-db48-9ea5-77e5-dc1c8314bd1e": {
+                    "id": "5e160713-db48-9ea5-77e5-dc1c8314bd1e",
                     "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
                     "boundedContext": {
-                        "id": "03323d91-1261-f9b8-65e2-333f1a241fc0"
+                        "id": "886c1ea5-4b72-c968-7f43-c888489594ec"
                     },
-                    "description": "민원 신청서 승인 시, 민원문서 발급을 자동으로 시작하여 후속 처리의 일관성과 효율성을 보장하기 위함",
+                    "description": "신청서 최종 제출 시 발생하는 ApplicationSubmitted 이벤트를 감지하여, Document aggregate의 IssueDocument 명령을 실행함으로써 신청서의 상태를 제증명 처리 대기 상태로 전환하고 문서 발행 프로세스를 개시한다.",
                     "elementView": {
                         "height": 116,
                         "width": 100,
-                        "x": 1022,
+                        "x": 1452,
                         "y": 250,
-                        "id": "c8477556-23cf-8ba5-21da-b80482dfb375",
+                        "id": "5e160713-db48-9ea5-77e5-dc1c8314bd1e",
                         "style": "{}",
                         "_type": "org.uengine.modeling.model.Policy"
                     },
                     "fieldDescriptors": [],
                     "hexagonalView": {
                         "height": 20,
-                        "id": "c8477556-23cf-8ba5-21da-b80482dfb375",
+                        "id": "5e160713-db48-9ea5-77e5-dc1c8314bd1e",
                         "style": "{}",
                         "subWidth": 100,
                         "width": 20,
                         "_type": "org.uengine.modeling.model.PolicyHexagonal"
                     },
                     "isSaga": false,
-                    "name": "DocumentIssuancePolicy",
-                    "displayName": "문서 발급 자동화",
-                    "nameCamelCase": "documentIssuancePolicy",
-                    "namePascalCase": "DocumentIssuancePolicy",
-                    "namePlural": "documentIssuancePolicies",
+                    "name": "ApplicationSubmissionDocumentPolicy",
+                    "displayName": "신청서 제출 문서 발행 자동화",
+                    "nameCamelCase": "applicationSubmissionDocumentPolicy",
+                    "namePascalCase": "ApplicationSubmissionDocumentPolicy",
+                    "namePlural": "applicationSubmissionDocumentPolicies",
                     "oldName": "",
                     "rotateStatus": false,
-                    "_type": "org.uengine.modeling.model.Policy"
+                    "_type": "org.uengine.modeling.model.Policy",
+                    "selected": false
+                },
+                "52cbfd28-a17f-4a0c-82f8-97c9336151b9": {
+                    "id": "52cbfd28-a17f-4a0c-82f8-97c9336151b9",
+                    "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
+                    "boundedContext": {
+                        "id": "81fab6f5-399c-4722-35ba-75ec4c67a041"
+                    },
+                    "description": "신청서 임시 저장 시 발생하는 ApplicationDraftSaved 이벤트를 교차 Bounded Context의 SystemMonitor aggregate로 전달하여, 시스템 모니터링 및 로깅 체계를 강화하고 운영 상태를 점검할 수 있도록 한다.",
+                    "elementView": {
+                        "height": 116,
+                        "width": 100,
+                        "x": 2057,
+                        "y": 250,
+                        "id": "52cbfd28-a17f-4a0c-82f8-97c9336151b9",
+                        "style": "{}",
+                        "_type": "org.uengine.modeling.model.Policy"
+                    },
+                    "fieldDescriptors": [],
+                    "hexagonalView": {
+                        "height": 20,
+                        "id": "52cbfd28-a17f-4a0c-82f8-97c9336151b9",
+                        "style": "{}",
+                        "subWidth": 100,
+                        "width": 20,
+                        "_type": "org.uengine.modeling.model.PolicyHexagonal"
+                    },
+                    "isSaga": false,
+                    "name": "ApplicationDraftMonitoringPolicy",
+                    "displayName": "임시 저장 신청서 모니터링",
+                    "nameCamelCase": "applicationDraftMonitoringPolicy",
+                    "namePascalCase": "ApplicationDraftMonitoringPolicy",
+                    "namePlural": "applicationDraftMonitoringPolicies",
+                    "oldName": "",
+                    "rotateStatus": false,
+                    "_type": "org.uengine.modeling.model.Policy",
+                    "selected": false
+                },
+                "e16944e7-b8c4-f70f-9512-22a51f578b0b": {
+                    "id": "e16944e7-b8c4-f70f-9512-22a51f578b0b",
+                    "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
+                    "boundedContext": {
+                        "id": "886c1ea5-4b72-c968-7f43-c888489594ec"
+                    },
+                    "description": "민원 신청서가 승인되면, 문서 발급 프로세스를 시작하여 승인된 신청서에 대한 문서를 생성합니다.",
+                    "elementView": {
+                        "height": 116,
+                        "width": 100,
+                        "x": 1452,
+                        "y": 250,
+                        "id": "e16944e7-b8c4-f70f-9512-22a51f578b0b",
+                        "style": "{}",
+                        "_type": "org.uengine.modeling.model.Policy"
+                    },
+                    "fieldDescriptors": [],
+                    "hexagonalView": {
+                        "height": 20,
+                        "id": "e16944e7-b8c4-f70f-9512-22a51f578b0b",
+                        "style": "{}",
+                        "subWidth": 100,
+                        "width": 20,
+                        "_type": "org.uengine.modeling.model.PolicyHexagonal"
+                    },
+                    "isSaga": false,
+                    "name": "ApplicationReviewApprovalDocumentPolicy",
+                    "displayName": "심사 승인 후 문서 발급 자동화",
+                    "nameCamelCase": "applicationReviewApprovalDocumentPolicy",
+                    "namePascalCase": "ApplicationReviewApprovalDocumentPolicy",
+                    "namePlural": "applicationReviewApprovalDocumentPolicies",
+                    "oldName": "",
+                    "rotateStatus": false,
+                    "_type": "org.uengine.modeling.model.Policy",
+                    "selected": false
                 }
             },
             "relations": {
-                "16161d8f-07da-e555-e00d-c2becdc85c0e": {
+                "e8b6bee6-ac3a-447f-c5c9-6f5413a52bdc": {
                     "_type": "org.uengine.modeling.model.Relation",
                     "name": "",
-                    "id": "16161d8f-07da-e555-e00d-c2becdc85c0e",
+                    "id": "e8b6bee6-ac3a-447f-c5c9-6f5413a52bdc",
                     "sourceElement": {
                         "aggregateRoot": {
                             "_type": "org.uengine.modeling.model.AggregateRoot",
@@ -11378,57 +12238,69 @@ const esValues = {
                                     "className": "String",
                                     "isCopy": false,
                                     "isKey": true,
-                                    "name": "documentId",
-                                    "nameCamelCase": "documentId",
-                                    "namePascalCase": "DocumentId",
+                                    "name": "reviewId",
+                                    "nameCamelCase": "reviewId",
+                                    "namePascalCase": "ReviewId",
                                     "displayName": "",
                                     "referenceClass": null,
                                     "isOverrideField": false,
                                     "_type": "org.uengine.model.FieldDescriptor"
                                 },
                                 {
-                                    "className": "DocumentFormat",
+                                    "className": "String",
                                     "isCopy": false,
                                     "isKey": false,
-                                    "name": "documentFormat",
-                                    "nameCamelCase": "documentFormat",
-                                    "namePascalCase": "DocumentFormat",
+                                    "name": "applicationId",
+                                    "nameCamelCase": "applicationId",
+                                    "namePascalCase": "ApplicationId",
                                     "displayName": "",
                                     "referenceClass": null,
                                     "isOverrideField": false,
                                     "_type": "org.uengine.model.FieldDescriptor"
                                 },
                                 {
-                                    "className": "IssueStatus",
+                                    "className": "String",
                                     "isCopy": false,
                                     "isKey": false,
-                                    "name": "issueStatus",
-                                    "nameCamelCase": "issueStatus",
-                                    "namePascalCase": "IssueStatus",
+                                    "name": "reviewer",
+                                    "nameCamelCase": "reviewer",
+                                    "namePascalCase": "Reviewer",
                                     "displayName": "",
                                     "referenceClass": null,
                                     "isOverrideField": false,
                                     "_type": "org.uengine.model.FieldDescriptor"
                                 },
                                 {
-                                    "className": "TransmissionRecordVO",
+                                    "className": "Date",
                                     "isCopy": false,
                                     "isKey": false,
-                                    "name": "transmissionRecord",
-                                    "nameCamelCase": "transmissionRecord",
-                                    "namePascalCase": "TransmissionRecord",
+                                    "name": "reviewDate",
+                                    "nameCamelCase": "reviewDate",
+                                    "namePascalCase": "ReviewDate",
                                     "displayName": "",
                                     "referenceClass": null,
                                     "isOverrideField": false,
                                     "_type": "org.uengine.model.FieldDescriptor"
                                 },
                                 {
-                                    "className": "DocumentData",
+                                    "className": "ApplicationStatus",
                                     "isCopy": false,
                                     "isKey": false,
-                                    "name": "documentData",
-                                    "nameCamelCase": "documentData",
-                                    "namePascalCase": "DocumentData",
+                                    "name": "status",
+                                    "nameCamelCase": "status",
+                                    "namePascalCase": "Status",
+                                    "displayName": "",
+                                    "referenceClass": null,
+                                    "isOverrideField": false,
+                                    "_type": "org.uengine.model.FieldDescriptor"
+                                },
+                                {
+                                    "className": "String",
+                                    "isCopy": false,
+                                    "isKey": false,
+                                    "name": "rejectionReason",
+                                    "nameCamelCase": "rejectionReason",
+                                    "namePascalCase": "RejectionReason",
                                     "displayName": "",
                                     "referenceClass": null,
                                     "isOverrideField": false,
@@ -11437,70 +12309,82 @@ const esValues = {
                             ],
                             "entities": {
                                 "elements": {
-                                    "42e42acc-bcea-565f-6412-f36434b3fed3": {
+                                    "ebbb516c-08c6-075c-5fa0-33a7cffe0867": {
                                         "_type": "org.uengine.uml.model.Class",
-                                        "id": "42e42acc-bcea-565f-6412-f36434b3fed3",
-                                        "name": "MinwonDocument",
-                                        "namePascalCase": "MinwonDocument",
-                                        "nameCamelCase": "minwonDocument",
-                                        "namePlural": "MinwonDocuments",
+                                        "id": "ebbb516c-08c6-075c-5fa0-33a7cffe0867",
+                                        "name": "ApplicationReview",
+                                        "namePascalCase": "ApplicationReview",
+                                        "nameCamelCase": "applicationReview",
+                                        "namePlural": "ApplicationReviews",
                                         "fieldDescriptors": [
                                             {
                                                 "className": "String",
                                                 "isCopy": false,
                                                 "isKey": true,
-                                                "name": "documentId",
+                                                "name": "reviewId",
                                                 "displayName": "",
-                                                "nameCamelCase": "documentId",
-                                                "namePascalCase": "DocumentId",
+                                                "nameCamelCase": "reviewId",
+                                                "namePascalCase": "ReviewId",
                                                 "_type": "org.uengine.model.FieldDescriptor",
                                                 "inputUI": null,
                                                 "options": null
                                             },
                                             {
-                                                "className": "DocumentFormat",
+                                                "className": "String",
                                                 "isCopy": false,
                                                 "isKey": false,
-                                                "name": "documentFormat",
+                                                "name": "applicationId",
                                                 "displayName": "",
-                                                "nameCamelCase": "documentFormat",
-                                                "namePascalCase": "DocumentFormat",
+                                                "nameCamelCase": "applicationId",
+                                                "namePascalCase": "ApplicationId",
                                                 "_type": "org.uengine.model.FieldDescriptor",
                                                 "inputUI": null,
                                                 "options": null
                                             },
                                             {
-                                                "className": "IssueStatus",
+                                                "className": "String",
                                                 "isCopy": false,
                                                 "isKey": false,
-                                                "name": "issueStatus",
+                                                "name": "reviewer",
                                                 "displayName": "",
-                                                "nameCamelCase": "issueStatus",
-                                                "namePascalCase": "IssueStatus",
+                                                "nameCamelCase": "reviewer",
+                                                "namePascalCase": "Reviewer",
                                                 "_type": "org.uengine.model.FieldDescriptor",
                                                 "inputUI": null,
                                                 "options": null
                                             },
                                             {
-                                                "className": "TransmissionRecordVO",
+                                                "className": "Date",
                                                 "isCopy": false,
                                                 "isKey": false,
-                                                "name": "transmissionRecord",
+                                                "name": "reviewDate",
                                                 "displayName": "",
-                                                "nameCamelCase": "transmissionRecord",
-                                                "namePascalCase": "TransmissionRecord",
+                                                "nameCamelCase": "reviewDate",
+                                                "namePascalCase": "ReviewDate",
                                                 "_type": "org.uengine.model.FieldDescriptor",
                                                 "inputUI": null,
                                                 "options": null
                                             },
                                             {
-                                                "className": "DocumentData",
+                                                "className": "ApplicationStatus",
                                                 "isCopy": false,
                                                 "isKey": false,
-                                                "name": "documentData",
+                                                "name": "status",
                                                 "displayName": "",
-                                                "nameCamelCase": "documentData",
-                                                "namePascalCase": "DocumentData",
+                                                "nameCamelCase": "status",
+                                                "namePascalCase": "Status",
+                                                "_type": "org.uengine.model.FieldDescriptor",
+                                                "inputUI": null,
+                                                "options": null
+                                            },
+                                            {
+                                                "className": "String",
+                                                "isCopy": false,
+                                                "isKey": false,
+                                                "name": "rejectionReason",
+                                                "displayName": "",
+                                                "nameCamelCase": "rejectionReason",
+                                                "namePascalCase": "RejectionReason",
                                                 "_type": "org.uengine.model.FieldDescriptor",
                                                 "inputUI": null,
                                                 "options": null
@@ -11509,7 +12393,7 @@ const esValues = {
                                         "operations": [],
                                         "elementView": {
                                             "_type": "org.uengine.uml.model.Class",
-                                            "id": "42e42acc-bcea-565f-6412-f36434b3fed3",
+                                            "id": "ebbb516c-08c6-075c-5fa0-33a7cffe0867",
                                             "x": 200,
                                             "y": 200,
                                             "width": 200,
@@ -11528,138 +12412,19 @@ const esValues = {
                                         "isAbstract": false,
                                         "isInterface": false,
                                         "isAggregateRoot": true,
-                                        "parentId": "66dacbed-e343-9cd7-2dd0-db20f2a86a90"
+                                        "parentId": "8046de29-aeab-65f8-db12-c3ffe41abea5"
                                     },
-                                    "5d63b1d9-fada-a0ca-f7e7-ec08de27e302": {
-                                        "_type": "org.uengine.uml.model.Class",
-                                        "id": "5d63b1d9-fada-a0ca-f7e7-ec08de27e302",
-                                        "name": "DocumentData",
-                                        "displayName": "문서데이터",
-                                        "namePascalCase": "DocumentData",
-                                        "nameCamelCase": "documentData",
-                                        "namePlural": "documentData",
-                                        "fieldDescriptors": [
-                                            {
-                                                "_type": "org.uengine.model.FieldDescriptor",
-                                                "name": "documentDataId",
-                                                "nameCamelCase": "documentDataId",
-                                                "namePascalCase": "DocumentDataId",
-                                                "className": "String",
-                                                "isKey": true,
-                                                "isName": false,
-                                                "isList": false,
-                                                "isVO": false,
-                                                "isLob": false,
-                                                "isCorrelationKey": false,
-                                                "displayName": ""
-                                            },
-                                            {
-                                                "_type": "org.uengine.model.FieldDescriptor",
-                                                "name": "content",
-                                                "nameCamelCase": "content",
-                                                "namePascalCase": "Content",
-                                                "className": "String",
-                                                "isKey": false,
-                                                "isName": false,
-                                                "isList": false,
-                                                "isVO": false,
-                                                "isLob": false,
-                                                "isCorrelationKey": false,
-                                                "displayName": ""
-                                            }
-                                        ],
-                                        "operations": [],
-                                        "elementView": {
-                                            "_type": "org.uengine.uml.model.Class",
-                                            "id": "5d63b1d9-fada-a0ca-f7e7-ec08de27e302",
-                                            "x": 700,
-                                            "y": 760,
-                                            "width": 200,
-                                            "height": 150,
-                                            "style": "{}",
-                                            "titleH": 50,
-                                            "subEdgeH": 120,
-                                            "fieldH": 90,
-                                            "methodH": 30
-                                        },
-                                        "selected": false,
-                                        "relations": [],
-                                        "parentOperations": [],
-                                        "relationType": null,
-                                        "isVO": false,
-                                        "isAbstract": false,
-                                        "isInterface": false,
-                                        "isAggregateRoot": false
-                                    },
-                                    "af1f426e-5c41-fcef-c46f-0a724172df44": {
-                                        "_type": "org.uengine.uml.model.vo.Class",
-                                        "id": "af1f426e-5c41-fcef-c46f-0a724172df44",
-                                        "name": "TransmissionRecordVO",
-                                        "displayName": "전송기록",
-                                        "namePascalCase": "TransmissionRecordVo",
-                                        "nameCamelCase": "transmissionRecordVo",
-                                        "fieldDescriptors": [
-                                            {
-                                                "className": "String",
-                                                "isKey": false,
-                                                "label": "- method: String",
-                                                "name": "method",
-                                                "nameCamelCase": "method",
-                                                "namePascalCase": "Method",
-                                                "displayName": "",
-                                                "referenceClass": null,
-                                                "isOverrideField": false,
-                                                "_type": "org.uengine.model.FieldDescriptor"
-                                            },
-                                            {
-                                                "className": "Date",
-                                                "isKey": false,
-                                                "label": "- sentDate: Date",
-                                                "name": "sentDate",
-                                                "nameCamelCase": "sentDate",
-                                                "namePascalCase": "SentDate",
-                                                "displayName": "",
-                                                "referenceClass": null,
-                                                "isOverrideField": false,
-                                                "_type": "org.uengine.model.FieldDescriptor"
-                                            }
-                                        ],
-                                        "operations": [],
-                                        "elementView": {
-                                            "_type": "org.uengine.uml.model.vo.address.Class",
-                                            "id": "af1f426e-5c41-fcef-c46f-0a724172df44",
-                                            "x": 700,
-                                            "y": 152,
-                                            "width": 200,
-                                            "height": 100,
-                                            "style": "{}",
-                                            "titleH": 50,
-                                            "subEdgeH": 170,
-                                            "fieldH": 150,
-                                            "methodH": 30
-                                        },
-                                        "selected": false,
-                                        "parentOperations": [],
-                                        "relationType": null,
-                                        "isVO": true,
-                                        "relations": [],
-                                        "groupElement": null,
-                                        "isAggregateRoot": false,
-                                        "namePlural": "TransmissionRecordVOs",
-                                        "isAbstract": false,
-                                        "isInterface": false
-                                    },
-                                    "4cb8390a-27e9-0332-aa36-e99c3c57bbae": {
+                                    "27572536-3564-bae4-f9d5-008201819e91": {
                                         "_type": "org.uengine.uml.model.enum",
-                                        "id": "4cb8390a-27e9-0332-aa36-e99c3c57bbae",
-                                        "name": "DocumentFormat",
-                                        "displayName": "문서형식",
-                                        "nameCamelCase": "documentFormat",
-                                        "namePascalCase": "DocumentFormat",
-                                        "namePlural": "documentFormats",
+                                        "id": "27572536-3564-bae4-f9d5-008201819e91",
+                                        "name": "ApplicationStatus",
+                                        "displayName": "신청서 상태",
+                                        "nameCamelCase": "applicationStatus",
+                                        "namePascalCase": "ApplicationStatus",
+                                        "namePlural": "applicationStatuses",
                                         "elementView": {
                                             "_type": "org.uengine.uml.model.enum",
-                                            "id": "4cb8390a-27e9-0332-aa36-e99c3c57bbae",
+                                            "id": "27572536-3564-bae4-f9d5-008201819e91",
                                             "x": 700,
                                             "y": 456,
                                             "width": 200,
@@ -11671,44 +12436,13 @@ const esValues = {
                                         "selected": false,
                                         "items": [
                                             {
-                                                "value": "PDF"
+                                                "value": "PENDING"
                                             },
                                             {
-                                                "value": "SpecifiedFormat"
-                                            }
-                                        ],
-                                        "useKeyValue": false,
-                                        "relations": []
-                                    },
-                                    "927786fa-77fa-0579-79d9-0d462e62b134": {
-                                        "_type": "org.uengine.uml.model.enum",
-                                        "id": "927786fa-77fa-0579-79d9-0d462e62b134",
-                                        "name": "IssueStatus",
-                                        "displayName": "발급상태",
-                                        "nameCamelCase": "issueStatus",
-                                        "namePascalCase": "IssueStatus",
-                                        "namePlural": "issueStatuses",
-                                        "elementView": {
-                                            "_type": "org.uengine.uml.model.enum",
-                                            "id": "927786fa-77fa-0579-79d9-0d462e62b134",
-                                            "x": 950,
-                                            "y": 456,
-                                            "width": 200,
-                                            "height": 100,
-                                            "style": "{}",
-                                            "titleH": 50,
-                                            "subEdgeH": 50
-                                        },
-                                        "selected": false,
-                                        "items": [
-                                            {
-                                                "value": "Issued"
+                                                "value": "APPROVED"
                                             },
                                             {
-                                                "value": "Failed"
-                                            },
-                                            {
-                                                "value": "Pending"
+                                                "value": "REJECTED"
                                             }
                                         ],
                                         "useKeyValue": false,
@@ -11721,15 +12455,15 @@ const esValues = {
                         },
                         "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
                         "boundedContext": {
-                            "name": "03323d91-1261-f9b8-65e2-333f1a241fc0",
-                            "id": "03323d91-1261-f9b8-65e2-333f1a241fc0"
+                            "name": "886c1ea5-4b72-c968-7f43-c888489594ec",
+                            "id": "886c1ea5-4b72-c968-7f43-c888489594ec"
                         },
                         "commands": [],
                         "description": null,
-                        "id": "66dacbed-e343-9cd7-2dd0-db20f2a86a90",
+                        "id": "8046de29-aeab-65f8-db12-c3ffe41abea5",
                         "elementView": {
                             "_type": "org.uengine.modeling.model.Aggregate",
-                            "id": "66dacbed-e343-9cd7-2dd0-db20f2a86a90",
+                            "id": "8046de29-aeab-65f8-db12-c3ffe41abea5",
                             "x": 1235,
                             "y": 450,
                             "width": 130,
@@ -11738,17 +12472,17 @@ const esValues = {
                         "events": [],
                         "hexagonalView": {
                             "_type": "org.uengine.modeling.model.AggregateHexagonal",
-                            "id": "66dacbed-e343-9cd7-2dd0-db20f2a86a90",
+                            "id": "8046de29-aeab-65f8-db12-c3ffe41abea5",
                             "x": 0,
                             "y": 0,
                             "subWidth": 0,
                             "width": 0
                         },
-                        "name": "MinwonDocument",
-                        "displayName": "민원문서",
-                        "nameCamelCase": "minwonDocument",
-                        "namePascalCase": "MinwonDocument",
-                        "namePlural": "minwonDocuments",
+                        "name": "ApplicationReview",
+                        "displayName": "민원 신청서 검토",
+                        "nameCamelCase": "applicationReview",
+                        "namePascalCase": "ApplicationReview",
+                        "namePlural": "applicationReviews",
                         "rotateStatus": false,
                         "selected": false,
                         "_type": "org.uengine.modeling.model.Aggregate"
@@ -11770,6 +12504,66 @@ const esValues = {
                                     "_type": "org.uengine.model.FieldDescriptor"
                                 },
                                 {
+                                    "className": "String",
+                                    "isCopy": false,
+                                    "isKey": false,
+                                    "name": "title",
+                                    "nameCamelCase": "title",
+                                    "namePascalCase": "Title",
+                                    "displayName": "",
+                                    "referenceClass": null,
+                                    "isOverrideField": false,
+                                    "_type": "org.uengine.model.FieldDescriptor"
+                                },
+                                {
+                                    "className": "String",
+                                    "isCopy": false,
+                                    "isKey": false,
+                                    "name": "detail",
+                                    "nameCamelCase": "detail",
+                                    "namePascalCase": "Detail",
+                                    "displayName": "",
+                                    "referenceClass": null,
+                                    "isOverrideField": false,
+                                    "_type": "org.uengine.model.FieldDescriptor"
+                                },
+                                {
+                                    "className": "String",
+                                    "isCopy": false,
+                                    "isKey": false,
+                                    "name": "attachment",
+                                    "nameCamelCase": "attachment",
+                                    "namePascalCase": "Attachment",
+                                    "displayName": "",
+                                    "referenceClass": null,
+                                    "isOverrideField": false,
+                                    "_type": "org.uengine.model.FieldDescriptor"
+                                },
+                                {
+                                    "className": "String",
+                                    "isCopy": false,
+                                    "isKey": false,
+                                    "name": "residentRegistrationNumber",
+                                    "nameCamelCase": "residentRegistrationNumber",
+                                    "namePascalCase": "ResidentRegistrationNumber",
+                                    "displayName": "",
+                                    "referenceClass": null,
+                                    "isOverrideField": false,
+                                    "_type": "org.uengine.model.FieldDescriptor"
+                                },
+                                {
+                                    "className": "String",
+                                    "isCopy": false,
+                                    "isKey": false,
+                                    "name": "address",
+                                    "nameCamelCase": "address",
+                                    "namePascalCase": "Address",
+                                    "displayName": "",
+                                    "referenceClass": null,
+                                    "isOverrideField": false,
+                                    "_type": "org.uengine.model.FieldDescriptor"
+                                },
+                                {
                                     "className": "ApplicationStatus",
                                     "isCopy": false,
                                     "isKey": false,
@@ -11780,29 +12574,17 @@ const esValues = {
                                     "referenceClass": null,
                                     "isOverrideField": false,
                                     "_type": "org.uengine.model.FieldDescriptor"
-                                },
-                                {
-                                    "className": "ApplicationData",
-                                    "isCopy": false,
-                                    "isKey": false,
-                                    "name": "applicationData",
-                                    "nameCamelCase": "applicationData",
-                                    "namePascalCase": "ApplicationData",
-                                    "displayName": "",
-                                    "referenceClass": null,
-                                    "isOverrideField": false,
-                                    "_type": "org.uengine.model.FieldDescriptor"
                                 }
                             ],
                             "entities": {
                                 "elements": {
-                                    "4aee28d7-ebb2-c518-692e-bf4ed37a3c99": {
+                                    "89cf284d-f75c-94db-0660-74f117eb9764": {
                                         "_type": "org.uengine.uml.model.Class",
-                                        "id": "4aee28d7-ebb2-c518-692e-bf4ed37a3c99",
-                                        "name": "CivilComplaintApplication",
-                                        "namePascalCase": "CivilComplaintApplication",
-                                        "nameCamelCase": "civilComplaintApplication",
-                                        "namePlural": "CivilComplaintApplications",
+                                        "id": "89cf284d-f75c-94db-0660-74f117eb9764",
+                                        "name": "ApplicationForm",
+                                        "namePascalCase": "ApplicationForm",
+                                        "nameCamelCase": "applicationForm",
+                                        "namePlural": "ApplicationForms",
                                         "fieldDescriptors": [
                                             {
                                                 "className": "String",
@@ -11812,6 +12594,66 @@ const esValues = {
                                                 "displayName": "",
                                                 "nameCamelCase": "applicationId",
                                                 "namePascalCase": "ApplicationId",
+                                                "_type": "org.uengine.model.FieldDescriptor",
+                                                "inputUI": null,
+                                                "options": null
+                                            },
+                                            {
+                                                "className": "String",
+                                                "isCopy": false,
+                                                "isKey": false,
+                                                "name": "title",
+                                                "displayName": "",
+                                                "nameCamelCase": "title",
+                                                "namePascalCase": "Title",
+                                                "_type": "org.uengine.model.FieldDescriptor",
+                                                "inputUI": null,
+                                                "options": null
+                                            },
+                                            {
+                                                "className": "String",
+                                                "isCopy": false,
+                                                "isKey": false,
+                                                "name": "detail",
+                                                "displayName": "",
+                                                "nameCamelCase": "detail",
+                                                "namePascalCase": "Detail",
+                                                "_type": "org.uengine.model.FieldDescriptor",
+                                                "inputUI": null,
+                                                "options": null
+                                            },
+                                            {
+                                                "className": "String",
+                                                "isCopy": false,
+                                                "isKey": false,
+                                                "name": "attachment",
+                                                "displayName": "",
+                                                "nameCamelCase": "attachment",
+                                                "namePascalCase": "Attachment",
+                                                "_type": "org.uengine.model.FieldDescriptor",
+                                                "inputUI": null,
+                                                "options": null
+                                            },
+                                            {
+                                                "className": "String",
+                                                "isCopy": false,
+                                                "isKey": false,
+                                                "name": "residentRegistrationNumber",
+                                                "displayName": "",
+                                                "nameCamelCase": "residentRegistrationNumber",
+                                                "namePascalCase": "ResidentRegistrationNumber",
+                                                "_type": "org.uengine.model.FieldDescriptor",
+                                                "inputUI": null,
+                                                "options": null
+                                            },
+                                            {
+                                                "className": "String",
+                                                "isCopy": false,
+                                                "isKey": false,
+                                                "name": "address",
+                                                "displayName": "",
+                                                "nameCamelCase": "address",
+                                                "namePascalCase": "Address",
                                                 "_type": "org.uengine.model.FieldDescriptor",
                                                 "inputUI": null,
                                                 "options": null
@@ -11827,24 +12669,12 @@ const esValues = {
                                                 "_type": "org.uengine.model.FieldDescriptor",
                                                 "inputUI": null,
                                                 "options": null
-                                            },
-                                            {
-                                                "className": "ApplicationData",
-                                                "isCopy": false,
-                                                "isKey": false,
-                                                "name": "applicationData",
-                                                "displayName": "",
-                                                "nameCamelCase": "applicationData",
-                                                "namePascalCase": "ApplicationData",
-                                                "_type": "org.uengine.model.FieldDescriptor",
-                                                "inputUI": null,
-                                                "options": null
                                             }
                                         ],
                                         "operations": [],
                                         "elementView": {
                                             "_type": "org.uengine.uml.model.Class",
-                                            "id": "4aee28d7-ebb2-c518-692e-bf4ed37a3c99",
+                                            "id": "89cf284d-f75c-94db-0660-74f117eb9764",
                                             "x": 200,
                                             "y": 200,
                                             "width": 200,
@@ -11863,96 +12693,298 @@ const esValues = {
                                         "isAbstract": false,
                                         "isInterface": false,
                                         "isAggregateRoot": true,
-                                        "parentId": "626b7229-4e39-028a-5f05-99bf207ed201"
+                                        "parentId": "39120b26-cdde-82ad-fa95-a25d828ad2b7"
                                     },
-                                    "988dda2a-b1bb-5b3f-9dbf-ec28819faff6": {
+                                    "d50a3c1b-805d-9fd0-fe26-a48d639c2d01": {
+                                        "_type": "org.uengine.uml.model.enum",
+                                        "id": "d50a3c1b-805d-9fd0-fe26-a48d639c2d01",
+                                        "name": "ApplicationStatus",
+                                        "displayName": "신청서 상태",
+                                        "nameCamelCase": "applicationStatus",
+                                        "namePascalCase": "ApplicationStatus",
+                                        "namePlural": "applicationStatuses",
+                                        "elementView": {
+                                            "_type": "org.uengine.uml.model.enum",
+                                            "id": "d50a3c1b-805d-9fd0-fe26-a48d639c2d01",
+                                            "x": 700,
+                                            "y": 456,
+                                            "width": 200,
+                                            "height": 100,
+                                            "style": "{}",
+                                            "titleH": 50,
+                                            "subEdgeH": 50
+                                        },
+                                        "selected": false,
+                                        "items": [
+                                            {
+                                                "value": "Draft"
+                                            },
+                                            {
+                                                "value": "PendingReview"
+                                            }
+                                        ],
+                                        "useKeyValue": false,
+                                        "relations": []
+                                    }
+                                },
+                                "relations": {}
+                            },
+                            "operations": []
+                        },
+                        "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
+                        "boundedContext": {
+                            "name": "af1cc5ab-8a10-648b-d119-90a732415c27",
+                            "id": "af1cc5ab-8a10-648b-d119-90a732415c27"
+                        },
+                        "commands": [],
+                        "description": null,
+                        "id": "39120b26-cdde-82ad-fa95-a25d828ad2b7",
+                        "elementView": {
+                            "_type": "org.uengine.modeling.model.Aggregate",
+                            "id": "39120b26-cdde-82ad-fa95-a25d828ad2b7",
+                            "x": 650,
+                            "y": 450,
+                            "width": 130,
+                            "height": 400
+                        },
+                        "events": [],
+                        "hexagonalView": {
+                            "_type": "org.uengine.modeling.model.AggregateHexagonal",
+                            "id": "39120b26-cdde-82ad-fa95-a25d828ad2b7",
+                            "x": 0,
+                            "y": 0,
+                            "subWidth": 0,
+                            "width": 0
+                        },
+                        "name": "ApplicationForm",
+                        "displayName": "민원 신청서",
+                        "nameCamelCase": "applicationForm",
+                        "namePascalCase": "ApplicationForm",
+                        "namePlural": "applicationForms",
+                        "rotateStatus": false,
+                        "selected": false,
+                        "_type": "org.uengine.modeling.model.Aggregate"
+                    },
+                    "from": "8046de29-aeab-65f8-db12-c3ffe41abea5",
+                    "to": "39120b26-cdde-82ad-fa95-a25d828ad2b7",
+                    "relationView": {
+                        "id": "e8b6bee6-ac3a-447f-c5c9-6f5413a52bdc",
+                        "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"none\"}",
+                        "from": "8046de29-aeab-65f8-db12-c3ffe41abea5",
+                        "to": "39120b26-cdde-82ad-fa95-a25d828ad2b7",
+                        "needReconnect": true,
+                        "value": "[[1170,456],[715,456]]"
+                    },
+                    "hexagonalView": {
+                        "_type": "org.uengine.modeling.model.RelationHexagonal",
+                        "from": "8046de29-aeab-65f8-db12-c3ffe41abea5",
+                        "id": "e8b6bee6-ac3a-447f-c5c9-6f5413a52bdc",
+                        "needReconnect": true,
+                        "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"none\"}",
+                        "to": "39120b26-cdde-82ad-fa95-a25d828ad2b7",
+                        "value": null
+                    },
+                    "sourceMultiplicity": "1",
+                    "targetMultiplicity": "1",
+                    "displayName": "",
+                    "selected": false
+                },
+                "d2e2bc60-b15b-ecd2-6781-7dc2c0aa285a": {
+                    "_type": "org.uengine.modeling.model.Relation",
+                    "name": "",
+                    "id": "d2e2bc60-b15b-ecd2-6781-7dc2c0aa285a",
+                    "sourceElement": {
+                        "aggregateRoot": {
+                            "_type": "org.uengine.modeling.model.AggregateRoot",
+                            "fieldDescriptors": [
+                                {
+                                    "className": "String",
+                                    "isCopy": false,
+                                    "isKey": true,
+                                    "name": "applicationId",
+                                    "nameCamelCase": "applicationId",
+                                    "namePascalCase": "ApplicationId",
+                                    "displayName": "",
+                                    "referenceClass": null,
+                                    "isOverrideField": false,
+                                    "_type": "org.uengine.model.FieldDescriptor"
+                                },
+                                {
+                                    "className": "String",
+                                    "isCopy": false,
+                                    "isKey": false,
+                                    "name": "title",
+                                    "nameCamelCase": "title",
+                                    "namePascalCase": "Title",
+                                    "displayName": "",
+                                    "referenceClass": null,
+                                    "isOverrideField": false,
+                                    "_type": "org.uengine.model.FieldDescriptor"
+                                },
+                                {
+                                    "className": "String",
+                                    "isCopy": false,
+                                    "isKey": false,
+                                    "name": "detail",
+                                    "nameCamelCase": "detail",
+                                    "namePascalCase": "Detail",
+                                    "displayName": "",
+                                    "referenceClass": null,
+                                    "isOverrideField": false,
+                                    "_type": "org.uengine.model.FieldDescriptor"
+                                },
+                                {
+                                    "className": "String",
+                                    "isCopy": false,
+                                    "isKey": false,
+                                    "name": "attachment",
+                                    "nameCamelCase": "attachment",
+                                    "namePascalCase": "Attachment",
+                                    "displayName": "",
+                                    "referenceClass": null,
+                                    "isOverrideField": false,
+                                    "_type": "org.uengine.model.FieldDescriptor"
+                                },
+                                {
+                                    "className": "String",
+                                    "isCopy": false,
+                                    "isKey": false,
+                                    "name": "residentRegistrationNumber",
+                                    "nameCamelCase": "residentRegistrationNumber",
+                                    "namePascalCase": "ResidentRegistrationNumber",
+                                    "displayName": "",
+                                    "referenceClass": null,
+                                    "isOverrideField": false,
+                                    "_type": "org.uengine.model.FieldDescriptor"
+                                },
+                                {
+                                    "className": "String",
+                                    "isCopy": false,
+                                    "isKey": false,
+                                    "name": "address",
+                                    "nameCamelCase": "address",
+                                    "namePascalCase": "Address",
+                                    "displayName": "",
+                                    "referenceClass": null,
+                                    "isOverrideField": false,
+                                    "_type": "org.uengine.model.FieldDescriptor"
+                                },
+                                {
+                                    "className": "ApplicationStatus",
+                                    "isCopy": false,
+                                    "isKey": false,
+                                    "name": "status",
+                                    "nameCamelCase": "status",
+                                    "namePascalCase": "Status",
+                                    "displayName": "",
+                                    "referenceClass": null,
+                                    "isOverrideField": false,
+                                    "_type": "org.uengine.model.FieldDescriptor"
+                                }
+                            ],
+                            "entities": {
+                                "elements": {
+                                    "89cf284d-f75c-94db-0660-74f117eb9764": {
                                         "_type": "org.uengine.uml.model.Class",
-                                        "id": "988dda2a-b1bb-5b3f-9dbf-ec28819faff6",
-                                        "name": "ApplicationData",
-                                        "displayName": "신청서 정보",
-                                        "namePascalCase": "ApplicationData",
-                                        "nameCamelCase": "applicationData",
-                                        "namePlural": "applicationData",
+                                        "id": "89cf284d-f75c-94db-0660-74f117eb9764",
+                                        "name": "ApplicationForm",
+                                        "namePascalCase": "ApplicationForm",
+                                        "nameCamelCase": "applicationForm",
+                                        "namePlural": "ApplicationForms",
                                         "fieldDescriptors": [
                                             {
-                                                "_type": "org.uengine.model.FieldDescriptor",
-                                                "name": "applicationDataId",
-                                                "nameCamelCase": "applicationDataId",
-                                                "namePascalCase": "ApplicationDataId",
                                                 "className": "String",
+                                                "isCopy": false,
                                                 "isKey": true,
-                                                "isName": false,
-                                                "isList": false,
-                                                "isVO": false,
-                                                "isLob": false,
-                                                "isCorrelationKey": false,
-                                                "displayName": ""
+                                                "name": "applicationId",
+                                                "displayName": "",
+                                                "nameCamelCase": "applicationId",
+                                                "namePascalCase": "ApplicationId",
+                                                "_type": "org.uengine.model.FieldDescriptor",
+                                                "inputUI": null,
+                                                "options": null
                                             },
                                             {
-                                                "_type": "org.uengine.model.FieldDescriptor",
+                                                "className": "String",
+                                                "isCopy": false,
+                                                "isKey": false,
                                                 "name": "title",
+                                                "displayName": "",
                                                 "nameCamelCase": "title",
                                                 "namePascalCase": "Title",
-                                                "className": "String",
-                                                "isKey": false,
-                                                "isName": false,
-                                                "isList": false,
-                                                "isVO": false,
-                                                "isLob": false,
-                                                "isCorrelationKey": false,
-                                                "displayName": ""
+                                                "_type": "org.uengine.model.FieldDescriptor",
+                                                "inputUI": null,
+                                                "options": null
                                             },
                                             {
-                                                "_type": "org.uengine.model.FieldDescriptor",
+                                                "className": "String",
+                                                "isCopy": false,
+                                                "isKey": false,
                                                 "name": "detail",
+                                                "displayName": "",
                                                 "nameCamelCase": "detail",
                                                 "namePascalCase": "Detail",
-                                                "className": "String",
-                                                "isKey": false,
-                                                "isName": false,
-                                                "isList": false,
-                                                "isVO": false,
-                                                "isLob": false,
-                                                "isCorrelationKey": false,
-                                                "displayName": ""
+                                                "_type": "org.uengine.model.FieldDescriptor",
+                                                "inputUI": null,
+                                                "options": null
                                             },
                                             {
-                                                "_type": "org.uengine.model.FieldDescriptor",
-                                                "name": "attachedFiles",
-                                                "nameCamelCase": "attachedFiles",
-                                                "namePascalCase": "AttachedFiles",
                                                 "className": "String",
+                                                "isCopy": false,
                                                 "isKey": false,
-                                                "isName": false,
-                                                "isList": false,
-                                                "isVO": false,
-                                                "isLob": false,
-                                                "isCorrelationKey": false,
-                                                "displayName": ""
+                                                "name": "attachment",
+                                                "displayName": "",
+                                                "nameCamelCase": "attachment",
+                                                "namePascalCase": "Attachment",
+                                                "_type": "org.uengine.model.FieldDescriptor",
+                                                "inputUI": null,
+                                                "options": null
                                             },
                                             {
-                                                "_type": "org.uengine.model.FieldDescriptor",
-                                                "name": "applicantInfo",
-                                                "nameCamelCase": "applicantInfo",
-                                                "namePascalCase": "ApplicantInfo",
                                                 "className": "String",
+                                                "isCopy": false,
                                                 "isKey": false,
-                                                "isName": false,
-                                                "isList": false,
-                                                "isVO": false,
-                                                "isLob": false,
-                                                "isCorrelationKey": false,
-                                                "displayName": ""
+                                                "name": "residentRegistrationNumber",
+                                                "displayName": "",
+                                                "nameCamelCase": "residentRegistrationNumber",
+                                                "namePascalCase": "ResidentRegistrationNumber",
+                                                "_type": "org.uengine.model.FieldDescriptor",
+                                                "inputUI": null,
+                                                "options": null
+                                            },
+                                            {
+                                                "className": "String",
+                                                "isCopy": false,
+                                                "isKey": false,
+                                                "name": "address",
+                                                "displayName": "",
+                                                "nameCamelCase": "address",
+                                                "namePascalCase": "Address",
+                                                "_type": "org.uengine.model.FieldDescriptor",
+                                                "inputUI": null,
+                                                "options": null
+                                            },
+                                            {
+                                                "className": "ApplicationStatus",
+                                                "isCopy": false,
+                                                "isKey": false,
+                                                "name": "status",
+                                                "displayName": "",
+                                                "nameCamelCase": "status",
+                                                "namePascalCase": "Status",
+                                                "_type": "org.uengine.model.FieldDescriptor",
+                                                "inputUI": null,
+                                                "options": null
                                             }
                                         ],
                                         "operations": [],
                                         "elementView": {
                                             "_type": "org.uengine.uml.model.Class",
-                                            "id": "988dda2a-b1bb-5b3f-9dbf-ec28819faff6",
-                                            "x": 700,
-                                            "y": 760,
+                                            "id": "89cf284d-f75c-94db-0660-74f117eb9764",
+                                            "x": 200,
+                                            "y": 200,
                                             "width": 200,
-                                            "height": 150,
+                                            "height": 100,
                                             "style": "{}",
                                             "titleH": 50,
                                             "subEdgeH": 120,
@@ -11966,11 +12998,12 @@ const esValues = {
                                         "isVO": false,
                                         "isAbstract": false,
                                         "isInterface": false,
-                                        "isAggregateRoot": false
+                                        "isAggregateRoot": true,
+                                        "parentId": "39120b26-cdde-82ad-fa95-a25d828ad2b7"
                                     },
-                                    "56c3c677-d7f5-0747-3a2a-2d9964e384da": {
+                                    "d50a3c1b-805d-9fd0-fe26-a48d639c2d01": {
                                         "_type": "org.uengine.uml.model.enum",
-                                        "id": "56c3c677-d7f5-0747-3a2a-2d9964e384da",
+                                        "id": "d50a3c1b-805d-9fd0-fe26-a48d639c2d01",
                                         "name": "ApplicationStatus",
                                         "displayName": "신청서 상태",
                                         "nameCamelCase": "applicationStatus",
@@ -11978,7 +13011,7 @@ const esValues = {
                                         "namePlural": "applicationStatuses",
                                         "elementView": {
                                             "_type": "org.uengine.uml.model.enum",
-                                            "id": "56c3c677-d7f5-0747-3a2a-2d9964e384da",
+                                            "id": "d50a3c1b-805d-9fd0-fe26-a48d639c2d01",
                                             "x": 700,
                                             "y": 456,
                                             "width": 200,
@@ -11990,16 +13023,10 @@ const esValues = {
                                         "selected": false,
                                         "items": [
                                             {
-                                                "value": "TEMPORARY"
+                                                "value": "Draft"
                                             },
                                             {
-                                                "value": "SUBMITTED"
-                                            },
-                                            {
-                                                "value": "APPROVED"
-                                            },
-                                            {
-                                                "value": "REJECTED"
+                                                "value": "PendingReview"
                                             }
                                         ],
                                         "useKeyValue": false,
@@ -12012,15 +13039,15 @@ const esValues = {
                         },
                         "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
                         "boundedContext": {
-                            "name": "1e909e6e-53f8-febb-f8e0-016837952467",
-                            "id": "1e909e6e-53f8-febb-f8e0-016837952467"
+                            "name": "af1cc5ab-8a10-648b-d119-90a732415c27",
+                            "id": "af1cc5ab-8a10-648b-d119-90a732415c27"
                         },
                         "commands": [],
                         "description": null,
-                        "id": "626b7229-4e39-028a-5f05-99bf207ed201",
+                        "id": "39120b26-cdde-82ad-fa95-a25d828ad2b7",
                         "elementView": {
                             "_type": "org.uengine.modeling.model.Aggregate",
-                            "id": "626b7229-4e39-028a-5f05-99bf207ed201",
+                            "id": "39120b26-cdde-82ad-fa95-a25d828ad2b7",
                             "x": 650,
                             "y": 450,
                             "width": 130,
@@ -12029,59 +13056,875 @@ const esValues = {
                         "events": [],
                         "hexagonalView": {
                             "_type": "org.uengine.modeling.model.AggregateHexagonal",
-                            "id": "626b7229-4e39-028a-5f05-99bf207ed201",
+                            "id": "39120b26-cdde-82ad-fa95-a25d828ad2b7",
                             "x": 0,
                             "y": 0,
                             "subWidth": 0,
                             "width": 0
                         },
-                        "name": "CivilComplaintApplication",
-                        "displayName": "민원신청서",
-                        "nameCamelCase": "civilComplaintApplication",
-                        "namePascalCase": "CivilComplaintApplication",
-                        "namePlural": "civilComplaintApplications",
+                        "name": "ApplicationForm",
+                        "displayName": "민원 신청서",
+                        "nameCamelCase": "applicationForm",
+                        "namePascalCase": "ApplicationForm",
+                        "namePlural": "applicationForms",
                         "rotateStatus": false,
                         "selected": false,
                         "_type": "org.uengine.modeling.model.Aggregate"
                     },
-                    "from": "66dacbed-e343-9cd7-2dd0-db20f2a86a90",
-                    "to": "626b7229-4e39-028a-5f05-99bf207ed201",
+                    "targetElement": {
+                        "aggregateRoot": {
+                            "_type": "org.uengine.modeling.model.AggregateRoot",
+                            "fieldDescriptors": [
+                                {
+                                    "className": "String",
+                                    "isCopy": false,
+                                    "isKey": true,
+                                    "name": "documentId",
+                                    "nameCamelCase": "documentId",
+                                    "namePascalCase": "DocumentId",
+                                    "displayName": "",
+                                    "referenceClass": null,
+                                    "isOverrideField": false,
+                                    "_type": "org.uengine.model.FieldDescriptor"
+                                },
+                                {
+                                    "className": "String",
+                                    "isCopy": false,
+                                    "isKey": false,
+                                    "name": "applicationId",
+                                    "nameCamelCase": "applicationId",
+                                    "namePascalCase": "ApplicationId",
+                                    "displayName": "",
+                                    "referenceClass": null,
+                                    "isOverrideField": false,
+                                    "_type": "org.uengine.model.FieldDescriptor"
+                                },
+                                {
+                                    "className": "DocumentFormat",
+                                    "isCopy": false,
+                                    "isKey": false,
+                                    "name": "format",
+                                    "nameCamelCase": "format",
+                                    "namePascalCase": "Format",
+                                    "displayName": "",
+                                    "referenceClass": null,
+                                    "isOverrideField": false,
+                                    "_type": "org.uengine.model.FieldDescriptor"
+                                },
+                                {
+                                    "className": "Date",
+                                    "isCopy": false,
+                                    "isKey": false,
+                                    "name": "createdDate",
+                                    "nameCamelCase": "createdDate",
+                                    "namePascalCase": "CreatedDate",
+                                    "displayName": "",
+                                    "referenceClass": null,
+                                    "isOverrideField": false,
+                                    "_type": "org.uengine.model.FieldDescriptor"
+                                },
+                                {
+                                    "className": "String",
+                                    "isCopy": false,
+                                    "isKey": false,
+                                    "name": "sentTo",
+                                    "nameCamelCase": "sentTo",
+                                    "namePascalCase": "SentTo",
+                                    "displayName": "",
+                                    "referenceClass": null,
+                                    "isOverrideField": false,
+                                    "_type": "org.uengine.model.FieldDescriptor"
+                                }
+                            ],
+                            "entities": {
+                                "elements": {
+                                    "1e523b48-6fab-2056-f95a-1338c1f648c9": {
+                                        "_type": "org.uengine.uml.model.Class",
+                                        "id": "1e523b48-6fab-2056-f95a-1338c1f648c9",
+                                        "name": "Document",
+                                        "namePascalCase": "Document",
+                                        "nameCamelCase": "document",
+                                        "namePlural": "Documents",
+                                        "fieldDescriptors": [
+                                            {
+                                                "className": "String",
+                                                "isCopy": false,
+                                                "isKey": true,
+                                                "name": "documentId",
+                                                "displayName": "",
+                                                "nameCamelCase": "documentId",
+                                                "namePascalCase": "DocumentId",
+                                                "_type": "org.uengine.model.FieldDescriptor",
+                                                "inputUI": null,
+                                                "options": null
+                                            },
+                                            {
+                                                "className": "String",
+                                                "isCopy": false,
+                                                "isKey": false,
+                                                "name": "applicationId",
+                                                "displayName": "",
+                                                "nameCamelCase": "applicationId",
+                                                "namePascalCase": "ApplicationId",
+                                                "_type": "org.uengine.model.FieldDescriptor",
+                                                "inputUI": null,
+                                                "options": null
+                                            },
+                                            {
+                                                "className": "DocumentFormat",
+                                                "isCopy": false,
+                                                "isKey": false,
+                                                "name": "format",
+                                                "displayName": "",
+                                                "nameCamelCase": "format",
+                                                "namePascalCase": "Format",
+                                                "_type": "org.uengine.model.FieldDescriptor",
+                                                "inputUI": null,
+                                                "options": null
+                                            },
+                                            {
+                                                "className": "Date",
+                                                "isCopy": false,
+                                                "isKey": false,
+                                                "name": "createdDate",
+                                                "displayName": "",
+                                                "nameCamelCase": "createdDate",
+                                                "namePascalCase": "CreatedDate",
+                                                "_type": "org.uengine.model.FieldDescriptor",
+                                                "inputUI": null,
+                                                "options": null
+                                            },
+                                            {
+                                                "className": "String",
+                                                "isCopy": false,
+                                                "isKey": false,
+                                                "name": "sentTo",
+                                                "displayName": "",
+                                                "nameCamelCase": "sentTo",
+                                                "namePascalCase": "SentTo",
+                                                "_type": "org.uengine.model.FieldDescriptor",
+                                                "inputUI": null,
+                                                "options": null
+                                            }
+                                        ],
+                                        "operations": [],
+                                        "elementView": {
+                                            "_type": "org.uengine.uml.model.Class",
+                                            "id": "1e523b48-6fab-2056-f95a-1338c1f648c9",
+                                            "x": 200,
+                                            "y": 200,
+                                            "width": 200,
+                                            "height": 100,
+                                            "style": "{}",
+                                            "titleH": 50,
+                                            "subEdgeH": 120,
+                                            "fieldH": 90,
+                                            "methodH": 30
+                                        },
+                                        "selected": false,
+                                        "relations": [],
+                                        "parentOperations": [],
+                                        "relationType": null,
+                                        "isVO": false,
+                                        "isAbstract": false,
+                                        "isInterface": false,
+                                        "isAggregateRoot": true,
+                                        "parentId": "1c1b8300-506a-2317-3fef-9fd3f7cc3dfd"
+                                    },
+                                    "ab12c5b2-30f8-9585-c974-360da3e0fa84": {
+                                        "_type": "org.uengine.uml.model.enum",
+                                        "id": "ab12c5b2-30f8-9585-c974-360da3e0fa84",
+                                        "name": "DocumentFormat",
+                                        "displayName": "문서 포맷",
+                                        "nameCamelCase": "documentFormat",
+                                        "namePascalCase": "DocumentFormat",
+                                        "namePlural": "documentFormats",
+                                        "elementView": {
+                                            "_type": "org.uengine.uml.model.enum",
+                                            "id": "ab12c5b2-30f8-9585-c974-360da3e0fa84",
+                                            "x": 700,
+                                            "y": 456,
+                                            "width": 200,
+                                            "height": 100,
+                                            "style": "{}",
+                                            "titleH": 50,
+                                            "subEdgeH": 50
+                                        },
+                                        "selected": false,
+                                        "items": [
+                                            {
+                                                "value": "PDF"
+                                            },
+                                            {
+                                                "value": "OTHER"
+                                            }
+                                        ],
+                                        "useKeyValue": false,
+                                        "relations": []
+                                    }
+                                },
+                                "relations": {}
+                            },
+                            "operations": []
+                        },
+                        "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
+                        "boundedContext": {
+                            "name": "886c1ea5-4b72-c968-7f43-c888489594ec",
+                            "id": "886c1ea5-4b72-c968-7f43-c888489594ec"
+                        },
+                        "commands": [],
+                        "description": null,
+                        "id": "1c1b8300-506a-2317-3fef-9fd3f7cc3dfd",
+                        "elementView": {
+                            "_type": "org.uengine.modeling.model.Aggregate",
+                            "id": "1c1b8300-506a-2317-3fef-9fd3f7cc3dfd",
+                            "x": 1665,
+                            "y": 450,
+                            "width": 130,
+                            "height": 400
+                        },
+                        "events": [],
+                        "hexagonalView": {
+                            "_type": "org.uengine.modeling.model.AggregateHexagonal",
+                            "id": "1c1b8300-506a-2317-3fef-9fd3f7cc3dfd",
+                            "x": 0,
+                            "y": 0,
+                            "subWidth": 0,
+                            "width": 0
+                        },
+                        "name": "Document",
+                        "displayName": "민원 문서",
+                        "nameCamelCase": "document",
+                        "namePascalCase": "Document",
+                        "namePlural": "documents",
+                        "rotateStatus": false,
+                        "selected": false,
+                        "_type": "org.uengine.modeling.model.Aggregate"
+                    },
+                    "from": "39120b26-cdde-82ad-fa95-a25d828ad2b7",
+                    "to": "1c1b8300-506a-2317-3fef-9fd3f7cc3dfd",
                     "relationView": {
-                        "id": "16161d8f-07da-e555-e00d-c2becdc85c0e",
+                        "id": "d2e2bc60-b15b-ecd2-6781-7dc2c0aa285a",
                         "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"none\"}",
-                        "from": "66dacbed-e343-9cd7-2dd0-db20f2a86a90",
-                        "to": "626b7229-4e39-028a-5f05-99bf207ed201",
+                        "from": "39120b26-cdde-82ad-fa95-a25d828ad2b7",
+                        "to": "1c1b8300-506a-2317-3fef-9fd3f7cc3dfd",
                         "needReconnect": true,
-                        "value": "[[1170,456],[715,456]]"
+                        "value": "[[715,456],[1600,456]]"
                     },
                     "hexagonalView": {
                         "_type": "org.uengine.modeling.model.RelationHexagonal",
-                        "from": "66dacbed-e343-9cd7-2dd0-db20f2a86a90",
-                        "id": "16161d8f-07da-e555-e00d-c2becdc85c0e",
+                        "from": "39120b26-cdde-82ad-fa95-a25d828ad2b7",
+                        "id": "d2e2bc60-b15b-ecd2-6781-7dc2c0aa285a",
                         "needReconnect": true,
                         "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"none\"}",
-                        "to": "626b7229-4e39-028a-5f05-99bf207ed201",
+                        "to": "1c1b8300-506a-2317-3fef-9fd3f7cc3dfd",
                         "value": null
                     },
                     "sourceMultiplicity": "1",
                     "targetMultiplicity": "1",
-                    "displayName": ""
+                    "displayName": "",
+                    "selected": false
                 },
-                "95ae76f1-10d3-d643-a704-fe774e680ecc": {
+                "69ff7246-e3c6-f3b8-8353-d89ec8fa3b7b": {
                     "_type": "org.uengine.modeling.model.Relation",
                     "name": "",
-                    "id": "95ae76f1-10d3-d643-a704-fe774e680ecc",
+                    "id": "69ff7246-e3c6-f3b8-8353-d89ec8fa3b7b",
                     "sourceElement": {
-                        "_type": "org.uengine.modeling.model.Command",
-                        "outputEvents": [
-                            "CivilComplaintApplicationCreated"
-                        ],
-                        "aggregate": {
-                            "id": "626b7229-4e39-028a-5f05-99bf207ed201"
+                        "aggregateRoot": {
+                            "_type": "org.uengine.modeling.model.AggregateRoot",
+                            "fieldDescriptors": [
+                                {
+                                    "className": "String",
+                                    "isCopy": false,
+                                    "isKey": true,
+                                    "name": "documentId",
+                                    "nameCamelCase": "documentId",
+                                    "namePascalCase": "DocumentId",
+                                    "displayName": "",
+                                    "referenceClass": null,
+                                    "isOverrideField": false,
+                                    "_type": "org.uengine.model.FieldDescriptor"
+                                },
+                                {
+                                    "className": "String",
+                                    "isCopy": false,
+                                    "isKey": false,
+                                    "name": "applicationId",
+                                    "nameCamelCase": "applicationId",
+                                    "namePascalCase": "ApplicationId",
+                                    "displayName": "",
+                                    "referenceClass": null,
+                                    "isOverrideField": false,
+                                    "_type": "org.uengine.model.FieldDescriptor"
+                                },
+                                {
+                                    "className": "DocumentFormat",
+                                    "isCopy": false,
+                                    "isKey": false,
+                                    "name": "format",
+                                    "nameCamelCase": "format",
+                                    "namePascalCase": "Format",
+                                    "displayName": "",
+                                    "referenceClass": null,
+                                    "isOverrideField": false,
+                                    "_type": "org.uengine.model.FieldDescriptor"
+                                },
+                                {
+                                    "className": "Date",
+                                    "isCopy": false,
+                                    "isKey": false,
+                                    "name": "createdDate",
+                                    "nameCamelCase": "createdDate",
+                                    "namePascalCase": "CreatedDate",
+                                    "displayName": "",
+                                    "referenceClass": null,
+                                    "isOverrideField": false,
+                                    "_type": "org.uengine.model.FieldDescriptor"
+                                },
+                                {
+                                    "className": "String",
+                                    "isCopy": false,
+                                    "isKey": false,
+                                    "name": "sentTo",
+                                    "nameCamelCase": "sentTo",
+                                    "namePascalCase": "SentTo",
+                                    "displayName": "",
+                                    "referenceClass": null,
+                                    "isOverrideField": false,
+                                    "_type": "org.uengine.model.FieldDescriptor"
+                                }
+                            ],
+                            "entities": {
+                                "elements": {
+                                    "1e523b48-6fab-2056-f95a-1338c1f648c9": {
+                                        "_type": "org.uengine.uml.model.Class",
+                                        "id": "1e523b48-6fab-2056-f95a-1338c1f648c9",
+                                        "name": "Document",
+                                        "namePascalCase": "Document",
+                                        "nameCamelCase": "document",
+                                        "namePlural": "Documents",
+                                        "fieldDescriptors": [
+                                            {
+                                                "className": "String",
+                                                "isCopy": false,
+                                                "isKey": true,
+                                                "name": "documentId",
+                                                "displayName": "",
+                                                "nameCamelCase": "documentId",
+                                                "namePascalCase": "DocumentId",
+                                                "_type": "org.uengine.model.FieldDescriptor",
+                                                "inputUI": null,
+                                                "options": null
+                                            },
+                                            {
+                                                "className": "String",
+                                                "isCopy": false,
+                                                "isKey": false,
+                                                "name": "applicationId",
+                                                "displayName": "",
+                                                "nameCamelCase": "applicationId",
+                                                "namePascalCase": "ApplicationId",
+                                                "_type": "org.uengine.model.FieldDescriptor",
+                                                "inputUI": null,
+                                                "options": null
+                                            },
+                                            {
+                                                "className": "DocumentFormat",
+                                                "isCopy": false,
+                                                "isKey": false,
+                                                "name": "format",
+                                                "displayName": "",
+                                                "nameCamelCase": "format",
+                                                "namePascalCase": "Format",
+                                                "_type": "org.uengine.model.FieldDescriptor",
+                                                "inputUI": null,
+                                                "options": null
+                                            },
+                                            {
+                                                "className": "Date",
+                                                "isCopy": false,
+                                                "isKey": false,
+                                                "name": "createdDate",
+                                                "displayName": "",
+                                                "nameCamelCase": "createdDate",
+                                                "namePascalCase": "CreatedDate",
+                                                "_type": "org.uengine.model.FieldDescriptor",
+                                                "inputUI": null,
+                                                "options": null
+                                            },
+                                            {
+                                                "className": "String",
+                                                "isCopy": false,
+                                                "isKey": false,
+                                                "name": "sentTo",
+                                                "displayName": "",
+                                                "nameCamelCase": "sentTo",
+                                                "namePascalCase": "SentTo",
+                                                "_type": "org.uengine.model.FieldDescriptor",
+                                                "inputUI": null,
+                                                "options": null
+                                            }
+                                        ],
+                                        "operations": [],
+                                        "elementView": {
+                                            "_type": "org.uengine.uml.model.Class",
+                                            "id": "1e523b48-6fab-2056-f95a-1338c1f648c9",
+                                            "x": 200,
+                                            "y": 200,
+                                            "width": 200,
+                                            "height": 100,
+                                            "style": "{}",
+                                            "titleH": 50,
+                                            "subEdgeH": 120,
+                                            "fieldH": 90,
+                                            "methodH": 30
+                                        },
+                                        "selected": false,
+                                        "relations": [],
+                                        "parentOperations": [],
+                                        "relationType": null,
+                                        "isVO": false,
+                                        "isAbstract": false,
+                                        "isInterface": false,
+                                        "isAggregateRoot": true,
+                                        "parentId": "1c1b8300-506a-2317-3fef-9fd3f7cc3dfd"
+                                    },
+                                    "ab12c5b2-30f8-9585-c974-360da3e0fa84": {
+                                        "_type": "org.uengine.uml.model.enum",
+                                        "id": "ab12c5b2-30f8-9585-c974-360da3e0fa84",
+                                        "name": "DocumentFormat",
+                                        "displayName": "문서 포맷",
+                                        "nameCamelCase": "documentFormat",
+                                        "namePascalCase": "DocumentFormat",
+                                        "namePlural": "documentFormats",
+                                        "elementView": {
+                                            "_type": "org.uengine.uml.model.enum",
+                                            "id": "ab12c5b2-30f8-9585-c974-360da3e0fa84",
+                                            "x": 700,
+                                            "y": 456,
+                                            "width": 200,
+                                            "height": 100,
+                                            "style": "{}",
+                                            "titleH": 50,
+                                            "subEdgeH": 50
+                                        },
+                                        "selected": false,
+                                        "items": [
+                                            {
+                                                "value": "PDF"
+                                            },
+                                            {
+                                                "value": "OTHER"
+                                            }
+                                        ],
+                                        "useKeyValue": false,
+                                        "relations": []
+                                    }
+                                },
+                                "relations": {}
+                            },
+                            "operations": []
                         },
                         "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
                         "boundedContext": {
-                            "id": "1e909e6e-53f8-febb-f8e0-016837952467"
+                            "name": "886c1ea5-4b72-c968-7f43-c888489594ec",
+                            "id": "886c1ea5-4b72-c968-7f43-c888489594ec"
+                        },
+                        "commands": [],
+                        "description": null,
+                        "id": "1c1b8300-506a-2317-3fef-9fd3f7cc3dfd",
+                        "elementView": {
+                            "_type": "org.uengine.modeling.model.Aggregate",
+                            "id": "1c1b8300-506a-2317-3fef-9fd3f7cc3dfd",
+                            "x": 1665,
+                            "y": 450,
+                            "width": 130,
+                            "height": 400
+                        },
+                        "events": [],
+                        "hexagonalView": {
+                            "_type": "org.uengine.modeling.model.AggregateHexagonal",
+                            "id": "1c1b8300-506a-2317-3fef-9fd3f7cc3dfd",
+                            "x": 0,
+                            "y": 0,
+                            "subWidth": 0,
+                            "width": 0
+                        },
+                        "name": "Document",
+                        "displayName": "민원 문서",
+                        "nameCamelCase": "document",
+                        "namePascalCase": "Document",
+                        "namePlural": "documents",
+                        "rotateStatus": false,
+                        "selected": false,
+                        "_type": "org.uengine.modeling.model.Aggregate"
+                    },
+                    "targetElement": {
+                        "aggregateRoot": {
+                            "_type": "org.uengine.modeling.model.AggregateRoot",
+                            "fieldDescriptors": [
+                                {
+                                    "className": "String",
+                                    "isCopy": false,
+                                    "isKey": true,
+                                    "name": "reviewId",
+                                    "nameCamelCase": "reviewId",
+                                    "namePascalCase": "ReviewId",
+                                    "displayName": "",
+                                    "referenceClass": null,
+                                    "isOverrideField": false,
+                                    "_type": "org.uengine.model.FieldDescriptor"
+                                },
+                                {
+                                    "className": "String",
+                                    "isCopy": false,
+                                    "isKey": false,
+                                    "name": "applicationId",
+                                    "nameCamelCase": "applicationId",
+                                    "namePascalCase": "ApplicationId",
+                                    "displayName": "",
+                                    "referenceClass": null,
+                                    "isOverrideField": false,
+                                    "_type": "org.uengine.model.FieldDescriptor"
+                                },
+                                {
+                                    "className": "String",
+                                    "isCopy": false,
+                                    "isKey": false,
+                                    "name": "reviewer",
+                                    "nameCamelCase": "reviewer",
+                                    "namePascalCase": "Reviewer",
+                                    "displayName": "",
+                                    "referenceClass": null,
+                                    "isOverrideField": false,
+                                    "_type": "org.uengine.model.FieldDescriptor"
+                                },
+                                {
+                                    "className": "Date",
+                                    "isCopy": false,
+                                    "isKey": false,
+                                    "name": "reviewDate",
+                                    "nameCamelCase": "reviewDate",
+                                    "namePascalCase": "ReviewDate",
+                                    "displayName": "",
+                                    "referenceClass": null,
+                                    "isOverrideField": false,
+                                    "_type": "org.uengine.model.FieldDescriptor"
+                                },
+                                {
+                                    "className": "ApplicationStatus",
+                                    "isCopy": false,
+                                    "isKey": false,
+                                    "name": "status",
+                                    "nameCamelCase": "status",
+                                    "namePascalCase": "Status",
+                                    "displayName": "",
+                                    "referenceClass": null,
+                                    "isOverrideField": false,
+                                    "_type": "org.uengine.model.FieldDescriptor"
+                                },
+                                {
+                                    "className": "String",
+                                    "isCopy": false,
+                                    "isKey": false,
+                                    "name": "rejectionReason",
+                                    "nameCamelCase": "rejectionReason",
+                                    "namePascalCase": "RejectionReason",
+                                    "displayName": "",
+                                    "referenceClass": null,
+                                    "isOverrideField": false,
+                                    "_type": "org.uengine.model.FieldDescriptor"
+                                },
+                                {
+                                    "className": "ApplicationFormId",
+                                    "isCopy": false,
+                                    "isKey": false,
+                                    "name": "applicationFormId",
+                                    "nameCamelCase": "applicationFormId",
+                                    "namePascalCase": "ApplicationFormId",
+                                    "displayName": "",
+                                    "referenceClass": "ApplicationForm",
+                                    "isOverrideField": true,
+                                    "_type": "org.uengine.model.FieldDescriptor"
+                                }
+                            ],
+                            "entities": {
+                                "elements": {
+                                    "ebbb516c-08c6-075c-5fa0-33a7cffe0867": {
+                                        "_type": "org.uengine.uml.model.Class",
+                                        "id": "ebbb516c-08c6-075c-5fa0-33a7cffe0867",
+                                        "name": "ApplicationReview",
+                                        "namePascalCase": "ApplicationReview",
+                                        "nameCamelCase": "applicationReview",
+                                        "namePlural": "ApplicationReviews",
+                                        "fieldDescriptors": [
+                                            {
+                                                "className": "String",
+                                                "isCopy": false,
+                                                "isKey": true,
+                                                "name": "reviewId",
+                                                "displayName": "",
+                                                "nameCamelCase": "reviewId",
+                                                "namePascalCase": "ReviewId",
+                                                "_type": "org.uengine.model.FieldDescriptor",
+                                                "inputUI": null,
+                                                "options": null
+                                            },
+                                            {
+                                                "className": "String",
+                                                "isCopy": false,
+                                                "isKey": false,
+                                                "name": "applicationId",
+                                                "displayName": "",
+                                                "nameCamelCase": "applicationId",
+                                                "namePascalCase": "ApplicationId",
+                                                "_type": "org.uengine.model.FieldDescriptor",
+                                                "inputUI": null,
+                                                "options": null
+                                            },
+                                            {
+                                                "className": "String",
+                                                "isCopy": false,
+                                                "isKey": false,
+                                                "name": "reviewer",
+                                                "displayName": "",
+                                                "nameCamelCase": "reviewer",
+                                                "namePascalCase": "Reviewer",
+                                                "_type": "org.uengine.model.FieldDescriptor",
+                                                "inputUI": null,
+                                                "options": null
+                                            },
+                                            {
+                                                "className": "Date",
+                                                "isCopy": false,
+                                                "isKey": false,
+                                                "name": "reviewDate",
+                                                "displayName": "",
+                                                "nameCamelCase": "reviewDate",
+                                                "namePascalCase": "ReviewDate",
+                                                "_type": "org.uengine.model.FieldDescriptor",
+                                                "inputUI": null,
+                                                "options": null
+                                            },
+                                            {
+                                                "className": "ApplicationStatus",
+                                                "isCopy": false,
+                                                "isKey": false,
+                                                "name": "status",
+                                                "displayName": "",
+                                                "nameCamelCase": "status",
+                                                "namePascalCase": "Status",
+                                                "_type": "org.uengine.model.FieldDescriptor",
+                                                "inputUI": null,
+                                                "options": null
+                                            },
+                                            {
+                                                "className": "String",
+                                                "isCopy": false,
+                                                "isKey": false,
+                                                "name": "rejectionReason",
+                                                "displayName": "",
+                                                "nameCamelCase": "rejectionReason",
+                                                "namePascalCase": "RejectionReason",
+                                                "_type": "org.uengine.model.FieldDescriptor",
+                                                "inputUI": null,
+                                                "options": null
+                                            },
+                                            {
+                                                "className": "ApplicationFormId",
+                                                "isCopy": false,
+                                                "isKey": false,
+                                                "name": "applicationFormId",
+                                                "nameCamelCase": "applicationFormId",
+                                                "namePascalCase": "ApplicationFormId",
+                                                "displayName": "",
+                                                "referenceClass": "ApplicationForm",
+                                                "isOverrideField": true,
+                                                "_type": "org.uengine.model.FieldDescriptor"
+                                            }
+                                        ],
+                                        "operations": [],
+                                        "elementView": {
+                                            "_type": "org.uengine.uml.model.Class",
+                                            "id": "ebbb516c-08c6-075c-5fa0-33a7cffe0867",
+                                            "x": 200,
+                                            "y": 200,
+                                            "width": 200,
+                                            "height": 100,
+                                            "style": "{}",
+                                            "titleH": 50,
+                                            "subEdgeH": 120,
+                                            "fieldH": 90,
+                                            "methodH": 30
+                                        },
+                                        "selected": false,
+                                        "relations": [],
+                                        "parentOperations": [],
+                                        "relationType": null,
+                                        "isVO": false,
+                                        "isAbstract": false,
+                                        "isInterface": false,
+                                        "isAggregateRoot": true,
+                                        "parentId": "8046de29-aeab-65f8-db12-c3ffe41abea5"
+                                    },
+                                    "27572536-3564-bae4-f9d5-008201819e91": {
+                                        "_type": "org.uengine.uml.model.enum",
+                                        "id": "27572536-3564-bae4-f9d5-008201819e91",
+                                        "name": "ApplicationStatus",
+                                        "displayName": "신청서 상태",
+                                        "nameCamelCase": "applicationStatus",
+                                        "namePascalCase": "ApplicationStatus",
+                                        "namePlural": "applicationStatuses",
+                                        "elementView": {
+                                            "_type": "org.uengine.uml.model.enum",
+                                            "id": "27572536-3564-bae4-f9d5-008201819e91",
+                                            "x": 700,
+                                            "y": 456,
+                                            "width": 200,
+                                            "height": 100,
+                                            "style": "{}",
+                                            "titleH": 50,
+                                            "subEdgeH": 50
+                                        },
+                                        "selected": false,
+                                        "items": [
+                                            {
+                                                "value": "PENDING"
+                                            },
+                                            {
+                                                "value": "APPROVED"
+                                            },
+                                            {
+                                                "value": "REJECTED"
+                                            }
+                                        ],
+                                        "useKeyValue": false,
+                                        "relations": []
+                                    },
+                                    "0fad5eab-c72e-7b7f-b432-159549c2730b": {
+                                        "_type": "org.uengine.uml.model.vo.Class",
+                                        "id": "0fad5eab-c72e-7b7f-b432-159549c2730b",
+                                        "name": "ApplicationFormId",
+                                        "displayName": "",
+                                        "namePascalCase": "ApplicationFormId",
+                                        "nameCamelCase": "applicationFormId",
+                                        "fieldDescriptors": [
+                                            {
+                                                "className": "String",
+                                                "isKey": true,
+                                                "label": "- applicationId: String",
+                                                "name": "applicationId",
+                                                "nameCamelCase": "applicationId",
+                                                "namePascalCase": "ApplicationId",
+                                                "displayName": "",
+                                                "referenceClass": "ApplicationForm",
+                                                "isOverrideField": true,
+                                                "_type": "org.uengine.model.FieldDescriptor"
+                                            }
+                                        ],
+                                        "operations": [],
+                                        "elementView": {
+                                            "_type": "org.uengine.uml.model.vo.address.Class",
+                                            "id": "0fad5eab-c72e-7b7f-b432-159549c2730b",
+                                            "x": 700,
+                                            "y": 152,
+                                            "width": 200,
+                                            "height": 100,
+                                            "style": "{}",
+                                            "titleH": 50,
+                                            "subEdgeH": 170,
+                                            "fieldH": 150,
+                                            "methodH": 30
+                                        },
+                                        "selected": false,
+                                        "parentOperations": [],
+                                        "relationType": null,
+                                        "isVO": true,
+                                        "relations": [],
+                                        "groupElement": null,
+                                        "isAggregateRoot": false,
+                                        "namePlural": "ApplicationFormIds",
+                                        "isAbstract": false,
+                                        "isInterface": false
+                                    }
+                                },
+                                "relations": {}
+                            },
+                            "operations": []
+                        },
+                        "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
+                        "boundedContext": {
+                            "name": "886c1ea5-4b72-c968-7f43-c888489594ec",
+                            "id": "886c1ea5-4b72-c968-7f43-c888489594ec"
+                        },
+                        "commands": [],
+                        "description": null,
+                        "id": "8046de29-aeab-65f8-db12-c3ffe41abea5",
+                        "elementView": {
+                            "_type": "org.uengine.modeling.model.Aggregate",
+                            "id": "8046de29-aeab-65f8-db12-c3ffe41abea5",
+                            "x": 1235,
+                            "y": 450,
+                            "width": 130,
+                            "height": 400
+                        },
+                        "events": [],
+                        "hexagonalView": {
+                            "_type": "org.uengine.modeling.model.AggregateHexagonal",
+                            "id": "8046de29-aeab-65f8-db12-c3ffe41abea5",
+                            "x": 0,
+                            "y": 0,
+                            "subWidth": 0,
+                            "width": 0
+                        },
+                        "name": "ApplicationReview",
+                        "displayName": "민원 신청서 검토",
+                        "nameCamelCase": "applicationReview",
+                        "namePascalCase": "ApplicationReview",
+                        "namePlural": "applicationReviews",
+                        "rotateStatus": false,
+                        "selected": false,
+                        "_type": "org.uengine.modeling.model.Aggregate"
+                    },
+                    "from": "1c1b8300-506a-2317-3fef-9fd3f7cc3dfd",
+                    "to": "8046de29-aeab-65f8-db12-c3ffe41abea5",
+                    "relationView": {
+                        "id": "69ff7246-e3c6-f3b8-8353-d89ec8fa3b7b",
+                        "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"none\"}",
+                        "from": "1c1b8300-506a-2317-3fef-9fd3f7cc3dfd",
+                        "to": "8046de29-aeab-65f8-db12-c3ffe41abea5",
+                        "needReconnect": true,
+                        "value": "[[1600,456],[1300,456]]"
+                    },
+                    "hexagonalView": {
+                        "_type": "org.uengine.modeling.model.RelationHexagonal",
+                        "from": "1c1b8300-506a-2317-3fef-9fd3f7cc3dfd",
+                        "id": "69ff7246-e3c6-f3b8-8353-d89ec8fa3b7b",
+                        "needReconnect": true,
+                        "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"none\"}",
+                        "to": "8046de29-aeab-65f8-db12-c3ffe41abea5",
+                        "value": null
+                    },
+                    "sourceMultiplicity": "1",
+                    "targetMultiplicity": "1",
+                    "displayName": "",
+                    "selected": false
+                },
+                "d52c5280-3f33-c4b9-bacf-0791f6e7a60c": {
+                    "_type": "org.uengine.modeling.model.Relation",
+                    "name": "",
+                    "id": "d52c5280-3f33-c4b9-bacf-0791f6e7a60c",
+                    "sourceElement": {
+                        "_type": "org.uengine.modeling.model.Command",
+                        "outputEvents": [
+                            "ApplicationDraftSaved"
+                        ],
+                        "aggregate": {
+                            "id": "39120b26-cdde-82ad-fa95-a25d828ad2b7"
+                        },
+                        "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
+                        "boundedContext": {
+                            "id": "af1cc5ab-8a10-648b-d119-90a732415c27"
                         },
                         "controllerInfo": {
                             "method": "POST"
@@ -12111,9 +13954,9 @@ const esValues = {
                                 "className": "String",
                                 "isCopy": false,
                                 "isKey": false,
-                                "name": "attachedFiles",
-                                "nameCamelCase": "attachedFiles",
-                                "namePascalCase": "AttachedFiles",
+                                "name": "attachment",
+                                "nameCamelCase": "attachment",
+                                "namePascalCase": "Attachment",
                                 "displayName": "",
                                 "_type": "org.uengine.model.FieldDescriptor"
                             },
@@ -12121,19 +13964,29 @@ const esValues = {
                                 "className": "String",
                                 "isCopy": false,
                                 "isKey": false,
-                                "name": "applicantInfo",
-                                "nameCamelCase": "applicantInfo",
-                                "namePascalCase": "ApplicantInfo",
+                                "name": "residentRegistrationNumber",
+                                "nameCamelCase": "residentRegistrationNumber",
+                                "namePascalCase": "ResidentRegistrationNumber",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "String",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "address",
+                                "nameCamelCase": "address",
+                                "namePascalCase": "Address",
                                 "displayName": "",
                                 "_type": "org.uengine.model.FieldDescriptor"
                             }
                         ],
                         "description": null,
-                        "id": "30a5302a-47fa-1359-ef3c-530be470a9ad",
+                        "id": "707794be-6f3b-f683-1e06-100f5044c1fd",
                         "elementView": {
                             "_type": "org.uengine.modeling.model.Command",
                             "height": 116,
-                            "id": "30a5302a-47fa-1359-ef3c-530be470a9ad",
+                            "id": "707794be-6f3b-f683-1e06-100f5044c1fd",
                             "style": "{}",
                             "width": 100,
                             "x": 556,
@@ -12143,18 +13996,18 @@ const esValues = {
                         "hexagonalView": {
                             "_type": "org.uengine.modeling.model.CommandHexagonal",
                             "height": 0,
-                            "id": "30a5302a-47fa-1359-ef3c-530be470a9ad",
+                            "id": "707794be-6f3b-f683-1e06-100f5044c1fd",
                             "style": "{}",
                             "width": 0,
                             "x": 0,
                             "y": 0
                         },
                         "isRestRepository": false,
-                        "name": "CreateCivilComplaintApplication",
-                        "displayName": "신규 민원 신청서 생성",
-                        "nameCamelCase": "createCivilComplaintApplication",
-                        "namePascalCase": "CreateCivilComplaintApplication",
-                        "namePlural": "createCivilComplaintApplications",
+                        "name": "TemporarySaveApplication",
+                        "displayName": "임시 저장 민원 신청서",
+                        "nameCamelCase": "temporarySaveApplication",
+                        "namePascalCase": "TemporarySaveApplication",
+                        "namePlural": "temporarySaveApplications",
                         "relationCommandInfo": [],
                         "relationEventInfo": [],
                         "restRepositoryInfo": {
@@ -12169,11 +14022,11 @@ const esValues = {
                         "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
                         "checkAlert": true,
                         "description": null,
-                        "id": "66f3458b-5642-0fcb-b29b-ebe3befd6d33",
+                        "id": "55357fca-db61-d383-c8ec-8a24a26abeb3",
                         "elementView": {
                             "angle": 0,
                             "height": 116,
-                            "id": "66f3458b-5642-0fcb-b29b-ebe3befd6d33",
+                            "id": "55357fca-db61-d383-c8ec-8a24a26abeb3",
                             "style": "{}",
                             "width": 100,
                             "x": 744,
@@ -12215,9 +14068,9 @@ const esValues = {
                                 "className": "String",
                                 "isCopy": false,
                                 "isKey": false,
-                                "name": "attachedFiles",
-                                "nameCamelCase": "attachedFiles",
-                                "namePascalCase": "AttachedFiles",
+                                "name": "attachment",
+                                "nameCamelCase": "attachment",
+                                "namePascalCase": "Attachment",
                                 "displayName": "",
                                 "_type": "org.uengine.model.FieldDescriptor"
                             },
@@ -12225,9 +14078,19 @@ const esValues = {
                                 "className": "String",
                                 "isCopy": false,
                                 "isKey": false,
-                                "name": "applicantInfo",
-                                "nameCamelCase": "applicantInfo",
-                                "namePascalCase": "ApplicantInfo",
+                                "name": "residentRegistrationNumber",
+                                "nameCamelCase": "residentRegistrationNumber",
+                                "namePascalCase": "ResidentRegistrationNumber",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "String",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "address",
+                                "nameCamelCase": "address",
+                                "namePascalCase": "Address",
                                 "displayName": "",
                                 "_type": "org.uengine.model.FieldDescriptor"
                             },
@@ -12244,17 +14107,17 @@ const esValues = {
                         ],
                         "hexagonalView": {
                             "height": 0,
-                            "id": "66f3458b-5642-0fcb-b29b-ebe3befd6d33",
+                            "id": "55357fca-db61-d383-c8ec-8a24a26abeb3",
                             "style": "{}",
                             "width": 0,
                             "x": 0,
                             "y": 0,
                             "_type": "org.uengine.modeling.model.EventHexagonal"
                         },
-                        "name": "CivilComplaintApplicationCreated",
-                        "displayName": "민원 신청서 임시 저장 완료",
-                        "nameCamelCase": "civilComplaintApplicationCreated",
-                        "namePascalCase": "CivilComplaintApplicationCreated",
+                        "name": "ApplicationDraftSaved",
+                        "displayName": "임시 저장된 민원 신청서 생성됨",
+                        "nameCamelCase": "applicationDraftSaved",
+                        "namePascalCase": "ApplicationDraftSaved",
                         "namePlural": "",
                         "relationCommandInfo": [],
                         "relationPolicyInfo": [],
@@ -12263,50 +14126,51 @@ const esValues = {
                         "trigger": "@PostPersist",
                         "_type": "org.uengine.modeling.model.Event",
                         "aggregate": {
-                            "id": "626b7229-4e39-028a-5f05-99bf207ed201"
+                            "id": "39120b26-cdde-82ad-fa95-a25d828ad2b7"
                         },
                         "boundedContext": {
-                            "id": "1e909e6e-53f8-febb-f8e0-016837952467"
+                            "id": "af1cc5ab-8a10-648b-d119-90a732415c27"
                         }
                     },
-                    "from": "30a5302a-47fa-1359-ef3c-530be470a9ad",
-                    "to": "66f3458b-5642-0fcb-b29b-ebe3befd6d33",
+                    "from": "707794be-6f3b-f683-1e06-100f5044c1fd",
+                    "to": "55357fca-db61-d383-c8ec-8a24a26abeb3",
                     "relationView": {
-                        "id": "95ae76f1-10d3-d643-a704-fe774e680ecc",
+                        "id": "d52c5280-3f33-c4b9-bacf-0791f6e7a60c",
                         "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"none\"}",
-                        "from": "30a5302a-47fa-1359-ef3c-530be470a9ad",
-                        "to": "66f3458b-5642-0fcb-b29b-ebe3befd6d33",
+                        "from": "707794be-6f3b-f683-1e06-100f5044c1fd",
+                        "to": "55357fca-db61-d383-c8ec-8a24a26abeb3",
                         "needReconnect": true,
                         "value": "[[606,252],[694,252]]"
                     },
                     "hexagonalView": {
                         "_type": "org.uengine.modeling.model.RelationHexagonal",
-                        "from": "30a5302a-47fa-1359-ef3c-530be470a9ad",
-                        "id": "95ae76f1-10d3-d643-a704-fe774e680ecc",
+                        "from": "707794be-6f3b-f683-1e06-100f5044c1fd",
+                        "id": "d52c5280-3f33-c4b9-bacf-0791f6e7a60c",
                         "needReconnect": true,
                         "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"none\"}",
-                        "to": "66f3458b-5642-0fcb-b29b-ebe3befd6d33",
+                        "to": "55357fca-db61-d383-c8ec-8a24a26abeb3",
                         "value": null
                     },
                     "sourceMultiplicity": "1",
                     "targetMultiplicity": "1",
-                    "displayName": ""
+                    "displayName": "",
+                    "selected": false
                 },
-                "08503850-8345-7ed9-577e-3e577423bcaf": {
+                "3e3b1367-f0ff-fa20-dd61-8e049de6a299": {
                     "_type": "org.uengine.modeling.model.Relation",
                     "name": "",
-                    "id": "08503850-8345-7ed9-577e-3e577423bcaf",
+                    "id": "3e3b1367-f0ff-fa20-dd61-8e049de6a299",
                     "sourceElement": {
                         "_type": "org.uengine.modeling.model.Command",
                         "outputEvents": [
-                            "CivilComplaintApplicationSubmitted"
+                            "ApplicationSubmitted"
                         ],
                         "aggregate": {
-                            "id": "626b7229-4e39-028a-5f05-99bf207ed201"
+                            "id": "39120b26-cdde-82ad-fa95-a25d828ad2b7"
                         },
                         "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
                         "boundedContext": {
-                            "id": "1e909e6e-53f8-febb-f8e0-016837952467"
+                            "id": "af1cc5ab-8a10-648b-d119-90a732415c27"
                         },
                         "controllerInfo": {
                             "method": "PUT"
@@ -12321,14 +14185,74 @@ const esValues = {
                                 "namePascalCase": "ApplicationId",
                                 "displayName": "",
                                 "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "String",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "title",
+                                "nameCamelCase": "title",
+                                "namePascalCase": "Title",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "String",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "detail",
+                                "nameCamelCase": "detail",
+                                "namePascalCase": "Detail",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "String",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "attachment",
+                                "nameCamelCase": "attachment",
+                                "namePascalCase": "Attachment",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "String",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "residentRegistrationNumber",
+                                "nameCamelCase": "residentRegistrationNumber",
+                                "namePascalCase": "ResidentRegistrationNumber",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "String",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "address",
+                                "nameCamelCase": "address",
+                                "namePascalCase": "Address",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "ApplicationStatus",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "status",
+                                "nameCamelCase": "status",
+                                "namePascalCase": "Status",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
                             }
                         ],
                         "description": null,
-                        "id": "fa84a2f3-3fd2-fcd6-d045-f39cf6024bc3",
+                        "id": "fb44e9a8-29fd-2a3d-2642-bc0a47be31d6",
                         "elementView": {
                             "_type": "org.uengine.modeling.model.Command",
                             "height": 116,
-                            "id": "fa84a2f3-3fd2-fcd6-d045-f39cf6024bc3",
+                            "id": "fb44e9a8-29fd-2a3d-2642-bc0a47be31d6",
                             "style": "{}",
                             "width": 100,
                             "x": 556,
@@ -12338,18 +14262,18 @@ const esValues = {
                         "hexagonalView": {
                             "_type": "org.uengine.modeling.model.CommandHexagonal",
                             "height": 0,
-                            "id": "fa84a2f3-3fd2-fcd6-d045-f39cf6024bc3",
+                            "id": "fb44e9a8-29fd-2a3d-2642-bc0a47be31d6",
                             "style": "{}",
                             "width": 0,
                             "x": 0,
                             "y": 0
                         },
                         "isRestRepository": false,
-                        "name": "SubmitCivilComplaintApplication",
+                        "name": "SubmitApplication",
                         "displayName": "민원 신청서 제출",
-                        "nameCamelCase": "submitCivilComplaintApplication",
-                        "namePascalCase": "SubmitCivilComplaintApplication",
-                        "namePlural": "submitCivilComplaintApplications",
+                        "nameCamelCase": "submitApplication",
+                        "namePascalCase": "SubmitApplication",
+                        "namePlural": "submitApplications",
                         "relationCommandInfo": [],
                         "relationEventInfo": [],
                         "restRepositoryInfo": {
@@ -12364,11 +14288,11 @@ const esValues = {
                         "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
                         "checkAlert": true,
                         "description": null,
-                        "id": "f29c3838-ea28-5652-c1f1-cf692b607ab0",
+                        "id": "17c64ef9-77d3-1c17-4e3e-5a755753f79b",
                         "elementView": {
                             "angle": 0,
                             "height": 116,
-                            "id": "f29c3838-ea28-5652-c1f1-cf692b607ab0",
+                            "id": "17c64ef9-77d3-1c17-4e3e-5a755753f79b",
                             "style": "{}",
                             "width": 100,
                             "x": 744,
@@ -12387,29 +14311,89 @@ const esValues = {
                                 "_type": "org.uengine.model.FieldDescriptor"
                             },
                             {
+                                "className": "String",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "title",
+                                "nameCamelCase": "title",
+                                "namePascalCase": "Title",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "String",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "detail",
+                                "nameCamelCase": "detail",
+                                "namePascalCase": "Detail",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "String",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "attachment",
+                                "nameCamelCase": "attachment",
+                                "namePascalCase": "Attachment",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "String",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "residentRegistrationNumber",
+                                "nameCamelCase": "residentRegistrationNumber",
+                                "namePascalCase": "ResidentRegistrationNumber",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "String",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "address",
+                                "nameCamelCase": "address",
+                                "namePascalCase": "Address",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "ApplicationStatus",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "status",
+                                "nameCamelCase": "status",
+                                "namePascalCase": "Status",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
                                 "className": "Date",
                                 "isCopy": false,
                                 "isKey": false,
-                                "name": "submittedAt",
-                                "nameCamelCase": "submittedAt",
-                                "namePascalCase": "SubmittedAt",
+                                "name": "submitDate",
+                                "nameCamelCase": "submitDate",
+                                "namePascalCase": "SubmitDate",
                                 "displayName": "",
                                 "_type": "org.uengine.model.FieldDescriptor"
                             }
                         ],
                         "hexagonalView": {
                             "height": 0,
-                            "id": "f29c3838-ea28-5652-c1f1-cf692b607ab0",
+                            "id": "17c64ef9-77d3-1c17-4e3e-5a755753f79b",
                             "style": "{}",
                             "width": 0,
                             "x": 0,
                             "y": 0,
                             "_type": "org.uengine.modeling.model.EventHexagonal"
                         },
-                        "name": "CivilComplaintApplicationSubmitted",
-                        "displayName": "민원 신청서 제출 완료",
-                        "nameCamelCase": "civilComplaintApplicationSubmitted",
-                        "namePascalCase": "CivilComplaintApplicationSubmitted",
+                        "name": "ApplicationSubmitted",
+                        "displayName": "민원 신청서 제출 완료됨",
+                        "nameCamelCase": "applicationSubmitted",
+                        "namePascalCase": "ApplicationSubmitted",
                         "namePlural": "",
                         "relationCommandInfo": [],
                         "relationPolicyInfo": [],
@@ -12418,412 +14402,83 @@ const esValues = {
                         "trigger": "@PostPersist",
                         "_type": "org.uengine.modeling.model.Event",
                         "aggregate": {
-                            "id": "626b7229-4e39-028a-5f05-99bf207ed201"
+                            "id": "39120b26-cdde-82ad-fa95-a25d828ad2b7"
                         },
                         "boundedContext": {
-                            "id": "1e909e6e-53f8-febb-f8e0-016837952467"
+                            "id": "af1cc5ab-8a10-648b-d119-90a732415c27"
                         }
                     },
-                    "from": "fa84a2f3-3fd2-fcd6-d045-f39cf6024bc3",
-                    "to": "f29c3838-ea28-5652-c1f1-cf692b607ab0",
+                    "from": "fb44e9a8-29fd-2a3d-2642-bc0a47be31d6",
+                    "to": "17c64ef9-77d3-1c17-4e3e-5a755753f79b",
                     "relationView": {
-                        "id": "08503850-8345-7ed9-577e-3e577423bcaf",
+                        "id": "3e3b1367-f0ff-fa20-dd61-8e049de6a299",
                         "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"none\"}",
-                        "from": "fa84a2f3-3fd2-fcd6-d045-f39cf6024bc3",
-                        "to": "f29c3838-ea28-5652-c1f1-cf692b607ab0",
+                        "from": "fb44e9a8-29fd-2a3d-2642-bc0a47be31d6",
+                        "to": "17c64ef9-77d3-1c17-4e3e-5a755753f79b",
                         "needReconnect": true,
                         "value": "[[606,380],[694,380]]"
                     },
                     "hexagonalView": {
                         "_type": "org.uengine.modeling.model.RelationHexagonal",
-                        "from": "fa84a2f3-3fd2-fcd6-d045-f39cf6024bc3",
-                        "id": "08503850-8345-7ed9-577e-3e577423bcaf",
+                        "from": "fb44e9a8-29fd-2a3d-2642-bc0a47be31d6",
+                        "id": "3e3b1367-f0ff-fa20-dd61-8e049de6a299",
                         "needReconnect": true,
                         "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"none\"}",
-                        "to": "f29c3838-ea28-5652-c1f1-cf692b607ab0",
+                        "to": "17c64ef9-77d3-1c17-4e3e-5a755753f79b",
                         "value": null
                     },
                     "sourceMultiplicity": "1",
                     "targetMultiplicity": "1",
-                    "displayName": ""
+                    "displayName": "",
+                    "selected": false
                 },
-                "b37c8054-7490-cdb8-cf73-deb594963de3": {
+                "2d676dd5-7088-2477-af61-ae1825af4c26": {
                     "_type": "org.uengine.modeling.model.Relation",
                     "name": "",
-                    "id": "b37c8054-7490-cdb8-cf73-deb594963de3",
+                    "id": "2d676dd5-7088-2477-af61-ae1825af4c26",
                     "sourceElement": {
                         "_type": "org.uengine.modeling.model.Command",
                         "outputEvents": [
-                            "CivilComplaintApplicationApproved"
+                            "ApplicationReviewApproved"
                         ],
                         "aggregate": {
-                            "id": "626b7229-4e39-028a-5f05-99bf207ed201"
+                            "id": "8046de29-aeab-65f8-db12-c3ffe41abea5"
                         },
                         "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
                         "boundedContext": {
-                            "id": "1e909e6e-53f8-febb-f8e0-016837952467"
+                            "id": "886c1ea5-4b72-c968-7f43-c888489594ec"
                         },
                         "controllerInfo": {
                             "method": "PUT"
                         },
                         "fieldDescriptors": [
                             {
-                                "className": "String",
+                                "className": "Long",
                                 "isCopy": false,
                                 "isKey": true,
-                                "name": "applicationId",
-                                "nameCamelCase": "applicationId",
-                                "namePascalCase": "ApplicationId",
+                                "name": "reviewId",
+                                "nameCamelCase": "reviewId",
+                                "namePascalCase": "ReviewId",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "String",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "reviewer",
+                                "nameCamelCase": "reviewer",
+                                "namePascalCase": "Reviewer",
                                 "displayName": "",
                                 "_type": "org.uengine.model.FieldDescriptor"
                             }
                         ],
                         "description": null,
-                        "id": "162056e1-3668-2d15-3622-74cba332f2b8",
+                        "id": "60773c6d-b4f0-d588-7aef-5842ea8aeb2a",
                         "elementView": {
                             "_type": "org.uengine.modeling.model.Command",
                             "height": 116,
-                            "id": "162056e1-3668-2d15-3622-74cba332f2b8",
-                            "style": "{}",
-                            "width": 100,
-                            "x": 556,
-                            "y": 510,
-                            "z-index": 999
-                        },
-                        "hexagonalView": {
-                            "_type": "org.uengine.modeling.model.CommandHexagonal",
-                            "height": 0,
-                            "id": "162056e1-3668-2d15-3622-74cba332f2b8",
-                            "style": "{}",
-                            "width": 0,
-                            "x": 0,
-                            "y": 0
-                        },
-                        "isRestRepository": false,
-                        "name": "ApproveCivilComplaintApplication",
-                        "displayName": "민원 신청서 승인",
-                        "nameCamelCase": "approveCivilComplaintApplication",
-                        "namePascalCase": "ApproveCivilComplaintApplication",
-                        "namePlural": "approveCivilComplaintApplications",
-                        "relationCommandInfo": [],
-                        "relationEventInfo": [],
-                        "restRepositoryInfo": {
-                            "method": "PUT"
-                        },
-                        "rotateStatus": false,
-                        "selected": false,
-                        "trigger": "@PrePersist"
-                    },
-                    "targetElement": {
-                        "alertURL": "/static/image/symbol/alert-icon.png",
-                        "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
-                        "checkAlert": true,
-                        "description": null,
-                        "id": "bc5229a7-862e-d110-8cbc-09473b572133",
-                        "elementView": {
-                            "angle": 0,
-                            "height": 116,
-                            "id": "bc5229a7-862e-d110-8cbc-09473b572133",
-                            "style": "{}",
-                            "width": 100,
-                            "x": 744,
-                            "y": 510,
-                            "_type": "org.uengine.modeling.model.Event"
-                        },
-                        "fieldDescriptors": [
-                            {
-                                "className": "String",
-                                "isCopy": false,
-                                "isKey": true,
-                                "name": "applicationId",
-                                "nameCamelCase": "applicationId",
-                                "namePascalCase": "ApplicationId",
-                                "displayName": "",
-                                "_type": "org.uengine.model.FieldDescriptor"
-                            },
-                            {
-                                "className": "Date",
-                                "isCopy": false,
-                                "isKey": false,
-                                "name": "approvedAt",
-                                "nameCamelCase": "approvedAt",
-                                "namePascalCase": "ApprovedAt",
-                                "displayName": "",
-                                "_type": "org.uengine.model.FieldDescriptor"
-                            }
-                        ],
-                        "hexagonalView": {
-                            "height": 0,
-                            "id": "bc5229a7-862e-d110-8cbc-09473b572133",
-                            "style": "{}",
-                            "width": 0,
-                            "x": 0,
-                            "y": 0,
-                            "_type": "org.uengine.modeling.model.EventHexagonal"
-                        },
-                        "name": "CivilComplaintApplicationApproved",
-                        "displayName": "민원 신청서 승인 완료",
-                        "nameCamelCase": "civilComplaintApplicationApproved",
-                        "namePascalCase": "CivilComplaintApplicationApproved",
-                        "namePlural": "",
-                        "relationCommandInfo": [],
-                        "relationPolicyInfo": [],
-                        "rotateStatus": false,
-                        "selected": false,
-                        "trigger": "@PostPersist",
-                        "_type": "org.uengine.modeling.model.Event",
-                        "aggregate": {
-                            "id": "626b7229-4e39-028a-5f05-99bf207ed201"
-                        },
-                        "boundedContext": {
-                            "id": "1e909e6e-53f8-febb-f8e0-016837952467"
-                        }
-                    },
-                    "from": "162056e1-3668-2d15-3622-74cba332f2b8",
-                    "to": "bc5229a7-862e-d110-8cbc-09473b572133",
-                    "relationView": {
-                        "id": "b37c8054-7490-cdb8-cf73-deb594963de3",
-                        "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"none\"}",
-                        "from": "162056e1-3668-2d15-3622-74cba332f2b8",
-                        "to": "bc5229a7-862e-d110-8cbc-09473b572133",
-                        "needReconnect": true,
-                        "value": "[[606,512],[694,512]]"
-                    },
-                    "hexagonalView": {
-                        "_type": "org.uengine.modeling.model.RelationHexagonal",
-                        "from": "162056e1-3668-2d15-3622-74cba332f2b8",
-                        "id": "b37c8054-7490-cdb8-cf73-deb594963de3",
-                        "needReconnect": true,
-                        "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"none\"}",
-                        "to": "bc5229a7-862e-d110-8cbc-09473b572133",
-                        "value": null
-                    },
-                    "sourceMultiplicity": "1",
-                    "targetMultiplicity": "1",
-                    "displayName": ""
-                },
-                "66a6f2ee-2c86-69be-3619-35ef125a963a": {
-                    "_type": "org.uengine.modeling.model.Relation",
-                    "name": "",
-                    "id": "66a6f2ee-2c86-69be-3619-35ef125a963a",
-                    "sourceElement": {
-                        "_type": "org.uengine.modeling.model.Command",
-                        "outputEvents": [
-                            "CivilComplaintApplicationRejected"
-                        ],
-                        "aggregate": {
-                            "id": "626b7229-4e39-028a-5f05-99bf207ed201"
-                        },
-                        "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
-                        "boundedContext": {
-                            "id": "1e909e6e-53f8-febb-f8e0-016837952467"
-                        },
-                        "controllerInfo": {
-                            "method": "PUT"
-                        },
-                        "fieldDescriptors": [
-                            {
-                                "className": "String",
-                                "isCopy": false,
-                                "isKey": true,
-                                "name": "applicationId",
-                                "nameCamelCase": "applicationId",
-                                "namePascalCase": "ApplicationId",
-                                "displayName": "",
-                                "_type": "org.uengine.model.FieldDescriptor"
-                            },
-                            {
-                                "className": "String",
-                                "isCopy": false,
-                                "isKey": false,
-                                "name": "rejectionReason",
-                                "nameCamelCase": "rejectionReason",
-                                "namePascalCase": "RejectionReason",
-                                "displayName": "",
-                                "_type": "org.uengine.model.FieldDescriptor"
-                            }
-                        ],
-                        "description": null,
-                        "id": "c5b36c63-3d6c-b6d8-fab5-1b633c05f1da",
-                        "elementView": {
-                            "_type": "org.uengine.modeling.model.Command",
-                            "height": 116,
-                            "id": "c5b36c63-3d6c-b6d8-fab5-1b633c05f1da",
-                            "style": "{}",
-                            "width": 100,
-                            "x": 556,
-                            "y": 640,
-                            "z-index": 999
-                        },
-                        "hexagonalView": {
-                            "_type": "org.uengine.modeling.model.CommandHexagonal",
-                            "height": 0,
-                            "id": "c5b36c63-3d6c-b6d8-fab5-1b633c05f1da",
-                            "style": "{}",
-                            "width": 0,
-                            "x": 0,
-                            "y": 0
-                        },
-                        "isRestRepository": false,
-                        "name": "RejectCivilComplaintApplication",
-                        "displayName": "민원 신청서 반려",
-                        "nameCamelCase": "rejectCivilComplaintApplication",
-                        "namePascalCase": "RejectCivilComplaintApplication",
-                        "namePlural": "rejectCivilComplaintApplications",
-                        "relationCommandInfo": [],
-                        "relationEventInfo": [],
-                        "restRepositoryInfo": {
-                            "method": "PUT"
-                        },
-                        "rotateStatus": false,
-                        "selected": false,
-                        "trigger": "@PrePersist"
-                    },
-                    "targetElement": {
-                        "alertURL": "/static/image/symbol/alert-icon.png",
-                        "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
-                        "checkAlert": true,
-                        "description": null,
-                        "id": "76b52ff8-08f2-4639-5353-53dc2421a6c8",
-                        "elementView": {
-                            "angle": 0,
-                            "height": 116,
-                            "id": "76b52ff8-08f2-4639-5353-53dc2421a6c8",
-                            "style": "{}",
-                            "width": 100,
-                            "x": 744,
-                            "y": 640,
-                            "_type": "org.uengine.modeling.model.Event"
-                        },
-                        "fieldDescriptors": [
-                            {
-                                "className": "String",
-                                "isCopy": false,
-                                "isKey": true,
-                                "name": "applicationId",
-                                "nameCamelCase": "applicationId",
-                                "namePascalCase": "ApplicationId",
-                                "displayName": "",
-                                "_type": "org.uengine.model.FieldDescriptor"
-                            },
-                            {
-                                "className": "String",
-                                "isCopy": false,
-                                "isKey": false,
-                                "name": "rejectionReason",
-                                "nameCamelCase": "rejectionReason",
-                                "namePascalCase": "RejectionReason",
-                                "displayName": "",
-                                "_type": "org.uengine.model.FieldDescriptor"
-                            },
-                            {
-                                "className": "Date",
-                                "isCopy": false,
-                                "isKey": false,
-                                "name": "rejectedAt",
-                                "nameCamelCase": "rejectedAt",
-                                "namePascalCase": "RejectedAt",
-                                "displayName": "",
-                                "_type": "org.uengine.model.FieldDescriptor"
-                            }
-                        ],
-                        "hexagonalView": {
-                            "height": 0,
-                            "id": "76b52ff8-08f2-4639-5353-53dc2421a6c8",
-                            "style": "{}",
-                            "width": 0,
-                            "x": 0,
-                            "y": 0,
-                            "_type": "org.uengine.modeling.model.EventHexagonal"
-                        },
-                        "name": "CivilComplaintApplicationRejected",
-                        "displayName": "민원 신청서 반려 완료",
-                        "nameCamelCase": "civilComplaintApplicationRejected",
-                        "namePascalCase": "CivilComplaintApplicationRejected",
-                        "namePlural": "",
-                        "relationCommandInfo": [],
-                        "relationPolicyInfo": [],
-                        "rotateStatus": false,
-                        "selected": false,
-                        "trigger": "@PostPersist",
-                        "_type": "org.uengine.modeling.model.Event",
-                        "aggregate": {
-                            "id": "626b7229-4e39-028a-5f05-99bf207ed201"
-                        },
-                        "boundedContext": {
-                            "id": "1e909e6e-53f8-febb-f8e0-016837952467"
-                        }
-                    },
-                    "from": "c5b36c63-3d6c-b6d8-fab5-1b633c05f1da",
-                    "to": "76b52ff8-08f2-4639-5353-53dc2421a6c8",
-                    "relationView": {
-                        "id": "66a6f2ee-2c86-69be-3619-35ef125a963a",
-                        "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"none\"}",
-                        "from": "c5b36c63-3d6c-b6d8-fab5-1b633c05f1da",
-                        "to": "76b52ff8-08f2-4639-5353-53dc2421a6c8",
-                        "needReconnect": true,
-                        "value": "[[606,640],[694,640]]"
-                    },
-                    "hexagonalView": {
-                        "_type": "org.uengine.modeling.model.RelationHexagonal",
-                        "from": "c5b36c63-3d6c-b6d8-fab5-1b633c05f1da",
-                        "id": "66a6f2ee-2c86-69be-3619-35ef125a963a",
-                        "needReconnect": true,
-                        "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"none\"}",
-                        "to": "76b52ff8-08f2-4639-5353-53dc2421a6c8",
-                        "value": null
-                    },
-                    "sourceMultiplicity": "1",
-                    "targetMultiplicity": "1",
-                    "displayName": ""
-                },
-                "fdad08df-01e7-43ee-4d21-6db80befae58": {
-                    "_type": "org.uengine.modeling.model.Relation",
-                    "name": "",
-                    "id": "fdad08df-01e7-43ee-4d21-6db80befae58",
-                    "sourceElement": {
-                        "_type": "org.uengine.modeling.model.Command",
-                        "outputEvents": [
-                            "MinwonDocumentIssued"
-                        ],
-                        "aggregate": {
-                            "id": "66dacbed-e343-9cd7-2dd0-db20f2a86a90"
-                        },
-                        "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
-                        "boundedContext": {
-                            "id": "03323d91-1261-f9b8-65e2-333f1a241fc0"
-                        },
-                        "controllerInfo": {
-                            "method": "POST"
-                        },
-                        "fieldDescriptors": [
-                            {
-                                "className": "CivilComplaintApplicationId",
-                                "isCopy": false,
-                                "isKey": false,
-                                "name": "civilComplaintApplicationId",
-                                "nameCamelCase": "civilComplaintApplicationId",
-                                "namePascalCase": "CivilComplaintApplicationId",
-                                "displayName": "",
-                                "_type": "org.uengine.model.FieldDescriptor"
-                            },
-                            {
-                                "className": "DocumentFormat",
-                                "isCopy": false,
-                                "isKey": false,
-                                "name": "documentFormat",
-                                "nameCamelCase": "documentFormat",
-                                "namePascalCase": "DocumentFormat",
-                                "displayName": "",
-                                "_type": "org.uengine.model.FieldDescriptor"
-                            }
-                        ],
-                        "description": null,
-                        "id": "75f8fa95-e80d-e653-5afe-af30b2b6abc7",
-                        "elementView": {
-                            "_type": "org.uengine.modeling.model.Command",
-                            "height": 116,
-                            "id": "75f8fa95-e80d-e653-5afe-af30b2b6abc7",
+                            "id": "60773c6d-b4f0-d588-7aef-5842ea8aeb2a",
                             "style": "{}",
                             "width": 100,
                             "x": 1141,
@@ -12833,18 +14488,430 @@ const esValues = {
                         "hexagonalView": {
                             "_type": "org.uengine.modeling.model.CommandHexagonal",
                             "height": 0,
-                            "id": "75f8fa95-e80d-e653-5afe-af30b2b6abc7",
+                            "id": "60773c6d-b4f0-d588-7aef-5842ea8aeb2a",
                             "style": "{}",
                             "width": 0,
                             "x": 0,
                             "y": 0
                         },
                         "isRestRepository": false,
-                        "name": "IssueMinwonDocument",
-                        "displayName": "민원문서 발급 요청",
-                        "nameCamelCase": "issueMinwonDocument",
-                        "namePascalCase": "IssueMinwonDocument",
-                        "namePlural": "issueMinwonDocuments",
+                        "name": "ApproveApplicationReview",
+                        "displayName": "민원 신청 승인",
+                        "nameCamelCase": "approveApplicationReview",
+                        "namePascalCase": "ApproveApplicationReview",
+                        "namePlural": "approveApplicationReviews",
+                        "relationCommandInfo": [],
+                        "relationEventInfo": [],
+                        "restRepositoryInfo": {
+                            "method": "PUT"
+                        },
+                        "rotateStatus": false,
+                        "selected": false,
+                        "trigger": "@PrePersist"
+                    },
+                    "targetElement": {
+                        "alertURL": "/static/image/symbol/alert-icon.png",
+                        "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
+                        "checkAlert": true,
+                        "description": null,
+                        "id": "692db540-1c57-1df9-982f-6398c4c279d9",
+                        "elementView": {
+                            "angle": 0,
+                            "height": 116,
+                            "id": "692db540-1c57-1df9-982f-6398c4c279d9",
+                            "style": "{}",
+                            "width": 100,
+                            "x": 1329,
+                            "y": 250,
+                            "_type": "org.uengine.modeling.model.Event"
+                        },
+                        "fieldDescriptors": [
+                            {
+                                "className": "Long",
+                                "isCopy": false,
+                                "isKey": true,
+                                "name": "reviewId",
+                                "nameCamelCase": "reviewId",
+                                "namePascalCase": "ReviewId",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "String",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "applicationId",
+                                "nameCamelCase": "applicationId",
+                                "namePascalCase": "ApplicationId",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "String",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "reviewer",
+                                "nameCamelCase": "reviewer",
+                                "namePascalCase": "Reviewer",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "Date",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "reviewDate",
+                                "nameCamelCase": "reviewDate",
+                                "namePascalCase": "ReviewDate",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "ApplicationStatus",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "status",
+                                "nameCamelCase": "status",
+                                "namePascalCase": "Status",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            }
+                        ],
+                        "hexagonalView": {
+                            "height": 0,
+                            "id": "692db540-1c57-1df9-982f-6398c4c279d9",
+                            "style": "{}",
+                            "width": 0,
+                            "x": 0,
+                            "y": 0,
+                            "_type": "org.uengine.modeling.model.EventHexagonal"
+                        },
+                        "name": "ApplicationReviewApproved",
+                        "displayName": "민원 신청 승인됨",
+                        "nameCamelCase": "applicationReviewApproved",
+                        "namePascalCase": "ApplicationReviewApproved",
+                        "namePlural": "",
+                        "relationCommandInfo": [],
+                        "relationPolicyInfo": [],
+                        "rotateStatus": false,
+                        "selected": false,
+                        "trigger": "@PostPersist",
+                        "_type": "org.uengine.modeling.model.Event",
+                        "aggregate": {
+                            "id": "8046de29-aeab-65f8-db12-c3ffe41abea5"
+                        },
+                        "boundedContext": {
+                            "id": "886c1ea5-4b72-c968-7f43-c888489594ec"
+                        }
+                    },
+                    "from": "60773c6d-b4f0-d588-7aef-5842ea8aeb2a",
+                    "to": "692db540-1c57-1df9-982f-6398c4c279d9",
+                    "relationView": {
+                        "id": "2d676dd5-7088-2477-af61-ae1825af4c26",
+                        "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"none\"}",
+                        "from": "60773c6d-b4f0-d588-7aef-5842ea8aeb2a",
+                        "to": "692db540-1c57-1df9-982f-6398c4c279d9",
+                        "needReconnect": true,
+                        "value": "[[1191,252],[1279,252]]"
+                    },
+                    "hexagonalView": {
+                        "_type": "org.uengine.modeling.model.RelationHexagonal",
+                        "from": "60773c6d-b4f0-d588-7aef-5842ea8aeb2a",
+                        "id": "2d676dd5-7088-2477-af61-ae1825af4c26",
+                        "needReconnect": true,
+                        "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"none\"}",
+                        "to": "692db540-1c57-1df9-982f-6398c4c279d9",
+                        "value": null
+                    },
+                    "sourceMultiplicity": "1",
+                    "targetMultiplicity": "1",
+                    "displayName": "",
+                    "selected": false
+                },
+                "2e496eb4-e949-f581-71c8-835e4e351eae": {
+                    "_type": "org.uengine.modeling.model.Relation",
+                    "name": "",
+                    "id": "2e496eb4-e949-f581-71c8-835e4e351eae",
+                    "sourceElement": {
+                        "_type": "org.uengine.modeling.model.Command",
+                        "outputEvents": [
+                            "ApplicationReviewRejected"
+                        ],
+                        "aggregate": {
+                            "id": "8046de29-aeab-65f8-db12-c3ffe41abea5"
+                        },
+                        "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
+                        "boundedContext": {
+                            "id": "886c1ea5-4b72-c968-7f43-c888489594ec"
+                        },
+                        "controllerInfo": {
+                            "method": "PUT"
+                        },
+                        "fieldDescriptors": [
+                            {
+                                "className": "Long",
+                                "isCopy": false,
+                                "isKey": true,
+                                "name": "reviewId",
+                                "nameCamelCase": "reviewId",
+                                "namePascalCase": "ReviewId",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "String",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "reviewer",
+                                "nameCamelCase": "reviewer",
+                                "namePascalCase": "Reviewer",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "String",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "rejectionReason",
+                                "nameCamelCase": "rejectionReason",
+                                "namePascalCase": "RejectionReason",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            }
+                        ],
+                        "description": null,
+                        "id": "0df9b6da-7669-ec3c-af1b-9c0e102218b6",
+                        "elementView": {
+                            "_type": "org.uengine.modeling.model.Command",
+                            "height": 116,
+                            "id": "0df9b6da-7669-ec3c-af1b-9c0e102218b6",
+                            "style": "{}",
+                            "width": 100,
+                            "x": 1141,
+                            "y": 380,
+                            "z-index": 999
+                        },
+                        "hexagonalView": {
+                            "_type": "org.uengine.modeling.model.CommandHexagonal",
+                            "height": 0,
+                            "id": "0df9b6da-7669-ec3c-af1b-9c0e102218b6",
+                            "style": "{}",
+                            "width": 0,
+                            "x": 0,
+                            "y": 0
+                        },
+                        "isRestRepository": false,
+                        "name": "RejectApplicationReview",
+                        "displayName": "민원 신청 반려",
+                        "nameCamelCase": "rejectApplicationReview",
+                        "namePascalCase": "RejectApplicationReview",
+                        "namePlural": "rejectApplicationReviews",
+                        "relationCommandInfo": [],
+                        "relationEventInfo": [],
+                        "restRepositoryInfo": {
+                            "method": "PUT"
+                        },
+                        "rotateStatus": false,
+                        "selected": false,
+                        "trigger": "@PrePersist"
+                    },
+                    "targetElement": {
+                        "alertURL": "/static/image/symbol/alert-icon.png",
+                        "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
+                        "checkAlert": true,
+                        "description": null,
+                        "id": "6ec7b754-ff48-048a-c096-36c4c4883e16",
+                        "elementView": {
+                            "angle": 0,
+                            "height": 116,
+                            "id": "6ec7b754-ff48-048a-c096-36c4c4883e16",
+                            "style": "{}",
+                            "width": 100,
+                            "x": 1329,
+                            "y": 380,
+                            "_type": "org.uengine.modeling.model.Event"
+                        },
+                        "fieldDescriptors": [
+                            {
+                                "className": "Long",
+                                "isCopy": false,
+                                "isKey": true,
+                                "name": "reviewId",
+                                "nameCamelCase": "reviewId",
+                                "namePascalCase": "ReviewId",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "String",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "applicationId",
+                                "nameCamelCase": "applicationId",
+                                "namePascalCase": "ApplicationId",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "String",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "reviewer",
+                                "nameCamelCase": "reviewer",
+                                "namePascalCase": "Reviewer",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "Date",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "reviewDate",
+                                "nameCamelCase": "reviewDate",
+                                "namePascalCase": "ReviewDate",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "ApplicationStatus",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "status",
+                                "nameCamelCase": "status",
+                                "namePascalCase": "Status",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "String",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "rejectionReason",
+                                "nameCamelCase": "rejectionReason",
+                                "namePascalCase": "RejectionReason",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            }
+                        ],
+                        "hexagonalView": {
+                            "height": 0,
+                            "id": "6ec7b754-ff48-048a-c096-36c4c4883e16",
+                            "style": "{}",
+                            "width": 0,
+                            "x": 0,
+                            "y": 0,
+                            "_type": "org.uengine.modeling.model.EventHexagonal"
+                        },
+                        "name": "ApplicationReviewRejected",
+                        "displayName": "민원 신청 반려됨",
+                        "nameCamelCase": "applicationReviewRejected",
+                        "namePascalCase": "ApplicationReviewRejected",
+                        "namePlural": "",
+                        "relationCommandInfo": [],
+                        "relationPolicyInfo": [],
+                        "rotateStatus": false,
+                        "selected": false,
+                        "trigger": "@PostPersist",
+                        "_type": "org.uengine.modeling.model.Event",
+                        "aggregate": {
+                            "id": "8046de29-aeab-65f8-db12-c3ffe41abea5"
+                        },
+                        "boundedContext": {
+                            "id": "886c1ea5-4b72-c968-7f43-c888489594ec"
+                        }
+                    },
+                    "from": "0df9b6da-7669-ec3c-af1b-9c0e102218b6",
+                    "to": "6ec7b754-ff48-048a-c096-36c4c4883e16",
+                    "relationView": {
+                        "id": "2e496eb4-e949-f581-71c8-835e4e351eae",
+                        "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"none\"}",
+                        "from": "0df9b6da-7669-ec3c-af1b-9c0e102218b6",
+                        "to": "6ec7b754-ff48-048a-c096-36c4c4883e16",
+                        "needReconnect": true,
+                        "value": "[[1191,380],[1279,380]]"
+                    },
+                    "hexagonalView": {
+                        "_type": "org.uengine.modeling.model.RelationHexagonal",
+                        "from": "0df9b6da-7669-ec3c-af1b-9c0e102218b6",
+                        "id": "2e496eb4-e949-f581-71c8-835e4e351eae",
+                        "needReconnect": true,
+                        "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"none\"}",
+                        "to": "6ec7b754-ff48-048a-c096-36c4c4883e16",
+                        "value": null
+                    },
+                    "sourceMultiplicity": "1",
+                    "targetMultiplicity": "1",
+                    "displayName": "",
+                    "selected": false
+                },
+                "feefb19a-e320-5040-c0f3-7d8ba58bfa1d": {
+                    "_type": "org.uengine.modeling.model.Relation",
+                    "name": "",
+                    "id": "feefb19a-e320-5040-c0f3-7d8ba58bfa1d",
+                    "sourceElement": {
+                        "_type": "org.uengine.modeling.model.Command",
+                        "outputEvents": [
+                            "DocumentIssued"
+                        ],
+                        "aggregate": {
+                            "id": "1c1b8300-506a-2317-3fef-9fd3f7cc3dfd"
+                        },
+                        "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
+                        "boundedContext": {
+                            "id": "886c1ea5-4b72-c968-7f43-c888489594ec"
+                        },
+                        "controllerInfo": {
+                            "method": "POST"
+                        },
+                        "fieldDescriptors": [
+                            {
+                                "className": "String",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "applicationId",
+                                "nameCamelCase": "applicationId",
+                                "namePascalCase": "ApplicationId",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "DocumentFormat",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "format",
+                                "nameCamelCase": "format",
+                                "namePascalCase": "Format",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            }
+                        ],
+                        "description": null,
+                        "id": "e276a629-4038-03c0-d2bd-4be915e2b024",
+                        "elementView": {
+                            "_type": "org.uengine.modeling.model.Command",
+                            "height": 116,
+                            "id": "e276a629-4038-03c0-d2bd-4be915e2b024",
+                            "style": "{}",
+                            "width": 100,
+                            "x": 1571,
+                            "y": 250,
+                            "z-index": 999
+                        },
+                        "hexagonalView": {
+                            "_type": "org.uengine.modeling.model.CommandHexagonal",
+                            "height": 0,
+                            "id": "e276a629-4038-03c0-d2bd-4be915e2b024",
+                            "style": "{}",
+                            "width": 0,
+                            "x": 0,
+                            "y": 0
+                        },
+                        "isRestRepository": false,
+                        "name": "IssueDocument",
+                        "displayName": "문서 발급",
+                        "nameCamelCase": "issueDocument",
+                        "namePascalCase": "IssueDocument",
+                        "namePlural": "issueDocuments",
                         "relationCommandInfo": [],
                         "relationEventInfo": [],
                         "restRepositoryInfo": {
@@ -12859,14 +14926,14 @@ const esValues = {
                         "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
                         "checkAlert": true,
                         "description": null,
-                        "id": "94c1991e-6b7c-f5de-70cb-ae0a75ef09ab",
+                        "id": "8faa65b0-dbde-3427-7818-aad33c1571ca",
                         "elementView": {
                             "angle": 0,
                             "height": 116,
-                            "id": "94c1991e-6b7c-f5de-70cb-ae0a75ef09ab",
+                            "id": "8faa65b0-dbde-3427-7818-aad33c1571ca",
                             "style": "{}",
                             "width": 100,
-                            "x": 1329,
+                            "x": 1759,
                             "y": 250,
                             "_type": "org.uengine.modeling.model.Event"
                         },
@@ -12874,20 +14941,10 @@ const esValues = {
                             {
                                 "className": "String",
                                 "isCopy": false,
-                                "isKey": true,
-                                "name": "documentId",
-                                "nameCamelCase": "documentId",
-                                "namePascalCase": "DocumentId",
-                                "displayName": "",
-                                "_type": "org.uengine.model.FieldDescriptor"
-                            },
-                            {
-                                "className": "CivilComplaintApplicationId",
-                                "isCopy": false,
                                 "isKey": false,
-                                "name": "civilComplaintApplicationId",
-                                "nameCamelCase": "civilComplaintApplicationId",
-                                "namePascalCase": "CivilComplaintApplicationId",
+                                "name": "applicationId",
+                                "nameCamelCase": "applicationId",
+                                "namePascalCase": "ApplicationId",
                                 "displayName": "",
                                 "_type": "org.uengine.model.FieldDescriptor"
                             },
@@ -12895,29 +14952,9 @@ const esValues = {
                                 "className": "DocumentFormat",
                                 "isCopy": false,
                                 "isKey": false,
-                                "name": "documentFormat",
-                                "nameCamelCase": "documentFormat",
-                                "namePascalCase": "DocumentFormat",
-                                "displayName": "",
-                                "_type": "org.uengine.model.FieldDescriptor"
-                            },
-                            {
-                                "className": "IssueStatus",
-                                "isCopy": false,
-                                "isKey": false,
-                                "name": "issueStatus",
-                                "nameCamelCase": "issueStatus",
-                                "namePascalCase": "IssueStatus",
-                                "displayName": "",
-                                "_type": "org.uengine.model.FieldDescriptor"
-                            },
-                            {
-                                "className": "TransmissionRecordVO",
-                                "isCopy": false,
-                                "isKey": false,
-                                "name": "transmissionRecord",
-                                "nameCamelCase": "transmissionRecord",
-                                "namePascalCase": "TransmissionRecord",
+                                "name": "format",
+                                "nameCamelCase": "format",
+                                "namePascalCase": "Format",
                                 "displayName": "",
                                 "_type": "org.uengine.model.FieldDescriptor"
                             },
@@ -12925,26 +14962,36 @@ const esValues = {
                                 "className": "Date",
                                 "isCopy": false,
                                 "isKey": false,
-                                "name": "issuedAt",
-                                "nameCamelCase": "issuedAt",
-                                "namePascalCase": "IssuedAt",
+                                "name": "createdDate",
+                                "nameCamelCase": "createdDate",
+                                "namePascalCase": "CreatedDate",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "String",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "sentTo",
+                                "nameCamelCase": "sentTo",
+                                "namePascalCase": "SentTo",
                                 "displayName": "",
                                 "_type": "org.uengine.model.FieldDescriptor"
                             }
                         ],
                         "hexagonalView": {
                             "height": 0,
-                            "id": "94c1991e-6b7c-f5de-70cb-ae0a75ef09ab",
+                            "id": "8faa65b0-dbde-3427-7818-aad33c1571ca",
                             "style": "{}",
                             "width": 0,
                             "x": 0,
                             "y": 0,
                             "_type": "org.uengine.modeling.model.EventHexagonal"
                         },
-                        "name": "MinwonDocumentIssued",
-                        "displayName": "민원문서 발급 완료",
-                        "nameCamelCase": "minwonDocumentIssued",
-                        "namePascalCase": "MinwonDocumentIssued",
+                        "name": "DocumentIssued",
+                        "displayName": "문서 발급 완료",
+                        "nameCamelCase": "documentIssued",
+                        "namePascalCase": "DocumentIssued",
                         "namePlural": "",
                         "relationCommandInfo": [],
                         "relationPolicyInfo": [],
@@ -12953,50 +15000,51 @@ const esValues = {
                         "trigger": "@PostPersist",
                         "_type": "org.uengine.modeling.model.Event",
                         "aggregate": {
-                            "id": "66dacbed-e343-9cd7-2dd0-db20f2a86a90"
+                            "id": "1c1b8300-506a-2317-3fef-9fd3f7cc3dfd"
                         },
                         "boundedContext": {
-                            "id": "03323d91-1261-f9b8-65e2-333f1a241fc0"
+                            "id": "886c1ea5-4b72-c968-7f43-c888489594ec"
                         }
                     },
-                    "from": "75f8fa95-e80d-e653-5afe-af30b2b6abc7",
-                    "to": "94c1991e-6b7c-f5de-70cb-ae0a75ef09ab",
+                    "from": "e276a629-4038-03c0-d2bd-4be915e2b024",
+                    "to": "8faa65b0-dbde-3427-7818-aad33c1571ca",
                     "relationView": {
-                        "id": "fdad08df-01e7-43ee-4d21-6db80befae58",
+                        "id": "feefb19a-e320-5040-c0f3-7d8ba58bfa1d",
                         "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"none\"}",
-                        "from": "75f8fa95-e80d-e653-5afe-af30b2b6abc7",
-                        "to": "94c1991e-6b7c-f5de-70cb-ae0a75ef09ab",
+                        "from": "e276a629-4038-03c0-d2bd-4be915e2b024",
+                        "to": "8faa65b0-dbde-3427-7818-aad33c1571ca",
                         "needReconnect": true,
-                        "value": "[[1191,252],[1279,252]]"
+                        "value": "[[1621,252],[1709,252]]"
                     },
                     "hexagonalView": {
                         "_type": "org.uengine.modeling.model.RelationHexagonal",
-                        "from": "75f8fa95-e80d-e653-5afe-af30b2b6abc7",
-                        "id": "fdad08df-01e7-43ee-4d21-6db80befae58",
+                        "from": "e276a629-4038-03c0-d2bd-4be915e2b024",
+                        "id": "feefb19a-e320-5040-c0f3-7d8ba58bfa1d",
                         "needReconnect": true,
                         "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"none\"}",
-                        "to": "94c1991e-6b7c-f5de-70cb-ae0a75ef09ab",
+                        "to": "8faa65b0-dbde-3427-7818-aad33c1571ca",
                         "value": null
                     },
                     "sourceMultiplicity": "1",
                     "targetMultiplicity": "1",
-                    "displayName": ""
+                    "displayName": "",
+                    "selected": false
                 },
-                "d62aecdc-5373-8b5e-379b-dd9a3cffc253": {
+                "1eaf495a-af7c-94b1-6b0f-fbca1da50fbe": {
                     "_type": "org.uengine.modeling.model.Relation",
                     "name": "",
-                    "id": "d62aecdc-5373-8b5e-379b-dd9a3cffc253",
+                    "id": "1eaf495a-af7c-94b1-6b0f-fbca1da50fbe",
                     "sourceElement": {
                         "_type": "org.uengine.modeling.model.Command",
                         "outputEvents": [
                             "SystemMonitored"
                         ],
                         "aggregate": {
-                            "id": "857059f8-228a-8b17-127a-354eece4ee86"
+                            "id": "9d7631f0-85d0-d398-e1d7-054976d2a870"
                         },
                         "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
                         "boundedContext": {
-                            "id": "f0a567cc-2b73-509f-37cb-24dde03e0d76"
+                            "id": "81fab6f5-399c-4722-35ba-75ec4c67a041"
                         },
                         "controllerInfo": {
                             "method": "POST"
@@ -13006,29 +15054,29 @@ const esValues = {
                                 "className": "Long",
                                 "isCopy": false,
                                 "isKey": true,
-                                "name": "operationId",
-                                "nameCamelCase": "operationId",
-                                "namePascalCase": "OperationId",
+                                "name": "monitorId",
+                                "nameCamelCase": "monitorId",
+                                "namePascalCase": "MonitorId",
                                 "displayName": "",
                                 "_type": "org.uengine.model.FieldDescriptor"
                             }
                         ],
                         "description": null,
-                        "id": "173099e3-2c6a-013a-d89d-c3fb3668f1ab",
+                        "id": "645a47c3-c65a-19fb-7811-8dd2994cca68",
                         "elementView": {
                             "_type": "org.uengine.modeling.model.Command",
                             "height": 116,
-                            "id": "173099e3-2c6a-013a-d89d-c3fb3668f1ab",
+                            "id": "645a47c3-c65a-19fb-7811-8dd2994cca68",
                             "style": "{}",
                             "width": 100,
-                            "x": 1726,
+                            "x": 2176,
                             "y": 250,
                             "z-index": 999
                         },
                         "hexagonalView": {
                             "_type": "org.uengine.modeling.model.CommandHexagonal",
                             "height": 0,
-                            "id": "173099e3-2c6a-013a-d89d-c3fb3668f1ab",
+                            "id": "645a47c3-c65a-19fb-7811-8dd2994cca68",
                             "style": "{}",
                             "width": 0,
                             "x": 0,
@@ -13036,7 +15084,7 @@ const esValues = {
                         },
                         "isRestRepository": false,
                         "name": "MonitorSystem",
-                        "displayName": "시스템 모니터링 호출",
+                        "displayName": "시스템 모니터링 실행",
                         "nameCamelCase": "monitorSystem",
                         "namePascalCase": "MonitorSystem",
                         "namePlural": "monitorSystems",
@@ -13054,14 +15102,14 @@ const esValues = {
                         "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
                         "checkAlert": true,
                         "description": null,
-                        "id": "be82b54d-1d1b-c7c3-1072-61ac006a77e7",
+                        "id": "a35cc1b5-5399-2070-eaf1-f10eac2beb3e",
                         "elementView": {
                             "angle": 0,
                             "height": 116,
-                            "id": "be82b54d-1d1b-c7c3-1072-61ac006a77e7",
+                            "id": "a35cc1b5-5399-2070-eaf1-f10eac2beb3e",
                             "style": "{}",
                             "width": 100,
-                            "x": 1914,
+                            "x": 2364,
                             "y": 250,
                             "_type": "org.uengine.modeling.model.Event"
                         },
@@ -13070,9 +15118,9 @@ const esValues = {
                                 "className": "Long",
                                 "isCopy": false,
                                 "isKey": true,
-                                "name": "operationId",
-                                "nameCamelCase": "operationId",
-                                "namePascalCase": "OperationId",
+                                "name": "monitorId",
+                                "nameCamelCase": "monitorId",
+                                "namePascalCase": "MonitorId",
                                 "displayName": "",
                                 "_type": "org.uengine.model.FieldDescriptor"
                             },
@@ -13097,29 +15145,39 @@ const esValues = {
                                 "_type": "org.uengine.model.FieldDescriptor"
                             },
                             {
-                                "className": "String",
+                                "className": "Date",
                                 "isCopy": false,
                                 "isKey": false,
-                                "name": "alertRecords",
-                                "nameCamelCase": "alertRecords",
-                                "namePascalCase": "AlertRecords",
+                                "name": "lastChecked",
+                                "nameCamelCase": "lastChecked",
+                                "namePascalCase": "LastChecked",
                                 "displayName": "",
                                 "_type": "org.uengine.model.FieldDescriptor"
                             },
                             {
-                                "className": "Date",
+                                "className": "String",
                                 "isCopy": false,
                                 "isKey": false,
-                                "name": "monitoredAt",
-                                "nameCamelCase": "monitoredAt",
-                                "namePascalCase": "MonitoredAt",
+                                "name": "alerts",
+                                "nameCamelCase": "alerts",
+                                "namePascalCase": "Alerts",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "MonitorStatus",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "status",
+                                "nameCamelCase": "status",
+                                "namePascalCase": "Status",
                                 "displayName": "",
                                 "_type": "org.uengine.model.FieldDescriptor"
                             }
                         ],
                         "hexagonalView": {
                             "height": 0,
-                            "id": "be82b54d-1d1b-c7c3-1072-61ac006a77e7",
+                            "id": "a35cc1b5-5399-2070-eaf1-f10eac2beb3e",
                             "style": "{}",
                             "width": 0,
                             "x": 0,
@@ -13127,7 +15185,7 @@ const esValues = {
                             "_type": "org.uengine.modeling.model.EventHexagonal"
                         },
                         "name": "SystemMonitored",
-                        "displayName": "시스템 모니터링 결과 확인",
+                        "displayName": "시스템 모니터링 완료",
                         "nameCamelCase": "systemMonitored",
                         "namePascalCase": "SystemMonitored",
                         "namePlural": "",
@@ -13138,50 +15196,51 @@ const esValues = {
                         "trigger": "@PostPersist",
                         "_type": "org.uengine.modeling.model.Event",
                         "aggregate": {
-                            "id": "857059f8-228a-8b17-127a-354eece4ee86"
+                            "id": "9d7631f0-85d0-d398-e1d7-054976d2a870"
                         },
                         "boundedContext": {
-                            "id": "f0a567cc-2b73-509f-37cb-24dde03e0d76"
+                            "id": "81fab6f5-399c-4722-35ba-75ec4c67a041"
                         }
                     },
-                    "from": "173099e3-2c6a-013a-d89d-c3fb3668f1ab",
-                    "to": "be82b54d-1d1b-c7c3-1072-61ac006a77e7",
+                    "from": "645a47c3-c65a-19fb-7811-8dd2994cca68",
+                    "to": "a35cc1b5-5399-2070-eaf1-f10eac2beb3e",
                     "relationView": {
-                        "id": "d62aecdc-5373-8b5e-379b-dd9a3cffc253",
+                        "id": "1eaf495a-af7c-94b1-6b0f-fbca1da50fbe",
                         "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"none\"}",
-                        "from": "173099e3-2c6a-013a-d89d-c3fb3668f1ab",
-                        "to": "be82b54d-1d1b-c7c3-1072-61ac006a77e7",
+                        "from": "645a47c3-c65a-19fb-7811-8dd2994cca68",
+                        "to": "a35cc1b5-5399-2070-eaf1-f10eac2beb3e",
                         "needReconnect": true,
-                        "value": "[[1776,252],[1864,252]]"
+                        "value": "[[2226,252],[2314,252]]"
                     },
                     "hexagonalView": {
                         "_type": "org.uengine.modeling.model.RelationHexagonal",
-                        "from": "173099e3-2c6a-013a-d89d-c3fb3668f1ab",
-                        "id": "d62aecdc-5373-8b5e-379b-dd9a3cffc253",
+                        "from": "645a47c3-c65a-19fb-7811-8dd2994cca68",
+                        "id": "1eaf495a-af7c-94b1-6b0f-fbca1da50fbe",
                         "needReconnect": true,
                         "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"none\"}",
-                        "to": "be82b54d-1d1b-c7c3-1072-61ac006a77e7",
+                        "to": "a35cc1b5-5399-2070-eaf1-f10eac2beb3e",
                         "value": null
                     },
                     "sourceMultiplicity": "1",
                     "targetMultiplicity": "1",
-                    "displayName": ""
+                    "displayName": "",
+                    "selected": false
                 },
-                "7c2df6ef-60bf-90fb-9347-502ad4c4da48": {
+                "4816c87e-32ff-3a31-d6b5-5b3600ad1ea0": {
                     "_type": "org.uengine.modeling.model.Relation",
                     "name": "",
-                    "id": "7c2df6ef-60bf-90fb-9347-502ad4c4da48",
+                    "id": "4816c87e-32ff-3a31-d6b5-5b3600ad1ea0",
                     "sourceElement": {
                         "_type": "org.uengine.modeling.model.Command",
                         "outputEvents": [
-                            "BackupSwitched"
+                            "BackupLoggingActivated"
                         ],
                         "aggregate": {
-                            "id": "857059f8-228a-8b17-127a-354eece4ee86"
+                            "id": "9d7631f0-85d0-d398-e1d7-054976d2a870"
                         },
                         "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
                         "boundedContext": {
-                            "id": "f0a567cc-2b73-509f-37cb-24dde03e0d76"
+                            "id": "81fab6f5-399c-4722-35ba-75ec4c67a041"
                         },
                         "controllerInfo": {
                             "method": "POST"
@@ -13191,9 +15250,9 @@ const esValues = {
                                 "className": "Long",
                                 "isCopy": false,
                                 "isKey": true,
-                                "name": "operationId",
-                                "nameCamelCase": "operationId",
-                                "namePascalCase": "OperationId",
+                                "name": "monitorId",
+                                "nameCamelCase": "monitorId",
+                                "namePascalCase": "MonitorId",
                                 "displayName": "",
                                 "_type": "org.uengine.model.FieldDescriptor"
                             },
@@ -13201,9 +15260,9 @@ const esValues = {
                                 "className": "String",
                                 "isCopy": false,
                                 "isKey": false,
-                                "name": "failureReason",
-                                "nameCamelCase": "failureReason",
-                                "namePascalCase": "FailureReason",
+                                "name": "errorDetail",
+                                "nameCamelCase": "errorDetail",
+                                "namePascalCase": "ErrorDetail",
                                 "displayName": "",
                                 "_type": "org.uengine.model.FieldDescriptor"
                             },
@@ -13211,40 +15270,40 @@ const esValues = {
                                 "className": "String",
                                 "isCopy": false,
                                 "isKey": false,
-                                "name": "failureReason",
-                                "nameCamelCase": "failureReason",
-                                "namePascalCase": "FailureReason",
+                                "name": "errorDetail",
+                                "nameCamelCase": "errorDetail",
+                                "namePascalCase": "ErrorDetail",
                                 "displayName": "",
                                 "_type": "org.uengine.model.FieldDescriptor"
                             }
                         ],
                         "description": null,
-                        "id": "e61a8b5e-75b4-8087-f67c-f248c89f5a8b",
+                        "id": "3738bd3a-f0c0-3636-0772-1d8acd44a8ce",
                         "elementView": {
                             "_type": "org.uengine.modeling.model.Command",
                             "height": 116,
-                            "id": "e61a8b5e-75b4-8087-f67c-f248c89f5a8b",
+                            "id": "3738bd3a-f0c0-3636-0772-1d8acd44a8ce",
                             "style": "{}",
                             "width": 100,
-                            "x": 1726,
+                            "x": 2176,
                             "y": 380,
                             "z-index": 999
                         },
                         "hexagonalView": {
                             "_type": "org.uengine.modeling.model.CommandHexagonal",
                             "height": 0,
-                            "id": "e61a8b5e-75b4-8087-f67c-f248c89f5a8b",
+                            "id": "3738bd3a-f0c0-3636-0772-1d8acd44a8ce",
                             "style": "{}",
                             "width": 0,
                             "x": 0,
                             "y": 0
                         },
                         "isRestRepository": false,
-                        "name": "SwitchToBackup",
-                        "displayName": "백업 로깅 시스템 전환",
-                        "nameCamelCase": "switchToBackup",
-                        "namePascalCase": "SwitchToBackup",
-                        "namePlural": "switchToBackups",
+                        "name": "ActivateBackupLogging",
+                        "displayName": "백업 로깅 시스템 활성화",
+                        "nameCamelCase": "activateBackupLogging",
+                        "namePascalCase": "ActivateBackupLogging",
+                        "namePlural": "activateBackupLoggings",
                         "relationCommandInfo": [],
                         "relationEventInfo": [],
                         "restRepositoryInfo": {
@@ -13259,14 +15318,14 @@ const esValues = {
                         "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
                         "checkAlert": true,
                         "description": null,
-                        "id": "8694fbe0-4ea2-32bc-a86e-b8a03dd5f8ef",
+                        "id": "295ea3f0-6a93-75f2-6b36-151ca8d11b2d",
                         "elementView": {
                             "angle": 0,
                             "height": 116,
-                            "id": "8694fbe0-4ea2-32bc-a86e-b8a03dd5f8ef",
+                            "id": "295ea3f0-6a93-75f2-6b36-151ca8d11b2d",
                             "style": "{}",
                             "width": 100,
-                            "x": 1914,
+                            "x": 2364,
                             "y": 380,
                             "_type": "org.uengine.modeling.model.Event"
                         },
@@ -13275,19 +15334,9 @@ const esValues = {
                                 "className": "Long",
                                 "isCopy": false,
                                 "isKey": true,
-                                "name": "operationId",
-                                "nameCamelCase": "operationId",
-                                "namePascalCase": "OperationId",
-                                "displayName": "",
-                                "_type": "org.uengine.model.FieldDescriptor"
-                            },
-                            {
-                                "className": "FallbackStatus",
-                                "isCopy": false,
-                                "isKey": false,
-                                "name": "fallbackStatus",
-                                "nameCamelCase": "fallbackStatus",
-                                "namePascalCase": "FallbackStatus",
+                                "name": "monitorId",
+                                "nameCamelCase": "monitorId",
+                                "namePascalCase": "MonitorId",
                                 "displayName": "",
                                 "_type": "org.uengine.model.FieldDescriptor"
                             },
@@ -13295,9 +15344,9 @@ const esValues = {
                                 "className": "String",
                                 "isCopy": false,
                                 "isKey": false,
-                                "name": "failureReason",
-                                "nameCamelCase": "failureReason",
-                                "namePascalCase": "FailureReason",
+                                "name": "errorDetail",
+                                "nameCamelCase": "errorDetail",
+                                "namePascalCase": "ErrorDetail",
                                 "displayName": "",
                                 "_type": "org.uengine.model.FieldDescriptor"
                             },
@@ -13305,26 +15354,26 @@ const esValues = {
                                 "className": "Date",
                                 "isCopy": false,
                                 "isKey": false,
-                                "name": "switchedAt",
-                                "nameCamelCase": "switchedAt",
-                                "namePascalCase": "SwitchedAt",
+                                "name": "activatedAt",
+                                "nameCamelCase": "activatedAt",
+                                "namePascalCase": "ActivatedAt",
                                 "displayName": "",
                                 "_type": "org.uengine.model.FieldDescriptor"
                             }
                         ],
                         "hexagonalView": {
                             "height": 0,
-                            "id": "8694fbe0-4ea2-32bc-a86e-b8a03dd5f8ef",
+                            "id": "295ea3f0-6a93-75f2-6b36-151ca8d11b2d",
                             "style": "{}",
                             "width": 0,
                             "x": 0,
                             "y": 0,
                             "_type": "org.uengine.modeling.model.EventHexagonal"
                         },
-                        "name": "BackupSwitched",
+                        "name": "BackupLoggingActivated",
                         "displayName": "백업 로깅 시스템 전환 완료",
-                        "nameCamelCase": "backupSwitched",
-                        "namePascalCase": "BackupSwitched",
+                        "nameCamelCase": "backupLoggingActivated",
+                        "namePascalCase": "BackupLoggingActivated",
                         "namePlural": "",
                         "relationCommandInfo": [],
                         "relationPolicyInfo": [],
@@ -13333,53 +15382,54 @@ const esValues = {
                         "trigger": "@PostPersist",
                         "_type": "org.uengine.modeling.model.Event",
                         "aggregate": {
-                            "id": "857059f8-228a-8b17-127a-354eece4ee86"
+                            "id": "9d7631f0-85d0-d398-e1d7-054976d2a870"
                         },
                         "boundedContext": {
-                            "id": "f0a567cc-2b73-509f-37cb-24dde03e0d76"
+                            "id": "81fab6f5-399c-4722-35ba-75ec4c67a041"
                         }
                     },
-                    "from": "e61a8b5e-75b4-8087-f67c-f248c89f5a8b",
-                    "to": "8694fbe0-4ea2-32bc-a86e-b8a03dd5f8ef",
+                    "from": "3738bd3a-f0c0-3636-0772-1d8acd44a8ce",
+                    "to": "295ea3f0-6a93-75f2-6b36-151ca8d11b2d",
                     "relationView": {
-                        "id": "7c2df6ef-60bf-90fb-9347-502ad4c4da48",
+                        "id": "4816c87e-32ff-3a31-d6b5-5b3600ad1ea0",
                         "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"none\"}",
-                        "from": "e61a8b5e-75b4-8087-f67c-f248c89f5a8b",
-                        "to": "8694fbe0-4ea2-32bc-a86e-b8a03dd5f8ef",
+                        "from": "3738bd3a-f0c0-3636-0772-1d8acd44a8ce",
+                        "to": "295ea3f0-6a93-75f2-6b36-151ca8d11b2d",
                         "needReconnect": true,
-                        "value": "[[1776,380],[1864,380]]"
+                        "value": "[[2226,380],[2314,380]]"
                     },
                     "hexagonalView": {
                         "_type": "org.uengine.modeling.model.RelationHexagonal",
-                        "from": "e61a8b5e-75b4-8087-f67c-f248c89f5a8b",
-                        "id": "7c2df6ef-60bf-90fb-9347-502ad4c4da48",
+                        "from": "3738bd3a-f0c0-3636-0772-1d8acd44a8ce",
+                        "id": "4816c87e-32ff-3a31-d6b5-5b3600ad1ea0",
                         "needReconnect": true,
                         "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"none\"}",
-                        "to": "8694fbe0-4ea2-32bc-a86e-b8a03dd5f8ef",
+                        "to": "295ea3f0-6a93-75f2-6b36-151ca8d11b2d",
                         "value": null
                     },
                     "sourceMultiplicity": "1",
                     "targetMultiplicity": "1",
-                    "displayName": ""
+                    "displayName": "",
+                    "selected": false
                 },
-                "154dd8f5-55a9-7b96-d905-51583ee01741": {
+                "8b16108d-d01d-20ba-7ec1-9868342a677b": {
                     "_type": "org.uengine.modeling.model.Relation",
                     "name": "",
-                    "id": "154dd8f5-55a9-7b96-d905-51583ee01741",
+                    "id": "8b16108d-d01d-20ba-7ec1-9868342a677b",
                     "sourceElement": {
                         "alertURL": "/static/image/symbol/alert-icon.png",
                         "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
                         "checkAlert": true,
                         "description": null,
-                        "id": "bc5229a7-862e-d110-8cbc-09473b572133",
+                        "id": "17c64ef9-77d3-1c17-4e3e-5a755753f79b",
                         "elementView": {
                             "angle": 0,
                             "height": 116,
-                            "id": "bc5229a7-862e-d110-8cbc-09473b572133",
+                            "id": "17c64ef9-77d3-1c17-4e3e-5a755753f79b",
                             "style": "{}",
                             "width": 100,
                             "x": 744,
-                            "y": 510,
+                            "y": 380,
                             "_type": "org.uengine.modeling.model.Event"
                         },
                         "fieldDescriptors": [
@@ -13394,29 +15444,89 @@ const esValues = {
                                 "_type": "org.uengine.model.FieldDescriptor"
                             },
                             {
+                                "className": "String",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "title",
+                                "nameCamelCase": "title",
+                                "namePascalCase": "Title",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "String",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "detail",
+                                "nameCamelCase": "detail",
+                                "namePascalCase": "Detail",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "String",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "attachment",
+                                "nameCamelCase": "attachment",
+                                "namePascalCase": "Attachment",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "String",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "residentRegistrationNumber",
+                                "nameCamelCase": "residentRegistrationNumber",
+                                "namePascalCase": "ResidentRegistrationNumber",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "String",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "address",
+                                "nameCamelCase": "address",
+                                "namePascalCase": "Address",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "ApplicationStatus",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "status",
+                                "nameCamelCase": "status",
+                                "namePascalCase": "Status",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
                                 "className": "Date",
                                 "isCopy": false,
                                 "isKey": false,
-                                "name": "approvedAt",
-                                "nameCamelCase": "approvedAt",
-                                "namePascalCase": "ApprovedAt",
+                                "name": "submitDate",
+                                "nameCamelCase": "submitDate",
+                                "namePascalCase": "SubmitDate",
                                 "displayName": "",
                                 "_type": "org.uengine.model.FieldDescriptor"
                             }
                         ],
                         "hexagonalView": {
                             "height": 0,
-                            "id": "bc5229a7-862e-d110-8cbc-09473b572133",
+                            "id": "17c64ef9-77d3-1c17-4e3e-5a755753f79b",
                             "style": "{}",
                             "width": 0,
                             "x": 0,
                             "y": 0,
                             "_type": "org.uengine.modeling.model.EventHexagonal"
                         },
-                        "name": "CivilComplaintApplicationApproved",
-                        "displayName": "민원 신청서 승인 완료",
-                        "nameCamelCase": "civilComplaintApplicationApproved",
-                        "namePascalCase": "CivilComplaintApplicationApproved",
+                        "name": "ApplicationSubmitted",
+                        "displayName": "민원 신청서 제출 완료됨",
+                        "nameCamelCase": "applicationSubmitted",
+                        "namePascalCase": "ApplicationSubmitted",
                         "namePlural": "",
                         "relationCommandInfo": [],
                         "relationPolicyInfo": [],
@@ -13425,105 +15535,106 @@ const esValues = {
                         "trigger": "@PostPersist",
                         "_type": "org.uengine.modeling.model.Event",
                         "aggregate": {
-                            "id": "626b7229-4e39-028a-5f05-99bf207ed201"
+                            "id": "39120b26-cdde-82ad-fa95-a25d828ad2b7"
                         },
                         "boundedContext": {
-                            "id": "1e909e6e-53f8-febb-f8e0-016837952467"
+                            "id": "af1cc5ab-8a10-648b-d119-90a732415c27"
                         }
                     },
                     "targetElement": {
-                        "id": "c8477556-23cf-8ba5-21da-b80482dfb375",
+                        "id": "5e160713-db48-9ea5-77e5-dc1c8314bd1e",
                         "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
                         "boundedContext": {
-                            "id": "03323d91-1261-f9b8-65e2-333f1a241fc0"
+                            "id": "886c1ea5-4b72-c968-7f43-c888489594ec"
                         },
-                        "description": "민원 신청서 승인 시, 민원문서 발급을 자동으로 시작하여 후속 처리의 일관성과 효율성을 보장하기 위함",
+                        "description": "신청서 최종 제출 시 발생하는 ApplicationSubmitted 이벤트를 감지하여, Document aggregate의 IssueDocument 명령을 실행함으로써 신청서의 상태를 제증명 처리 대기 상태로 전환하고 문서 발행 프로세스를 개시한다.",
                         "elementView": {
                             "height": 116,
                             "width": 100,
-                            "x": 1022,
+                            "x": 1452,
                             "y": 250,
-                            "id": "c8477556-23cf-8ba5-21da-b80482dfb375",
+                            "id": "5e160713-db48-9ea5-77e5-dc1c8314bd1e",
                             "style": "{}",
                             "_type": "org.uengine.modeling.model.Policy"
                         },
                         "fieldDescriptors": [],
                         "hexagonalView": {
                             "height": 20,
-                            "id": "c8477556-23cf-8ba5-21da-b80482dfb375",
+                            "id": "5e160713-db48-9ea5-77e5-dc1c8314bd1e",
                             "style": "{}",
                             "subWidth": 100,
                             "width": 20,
                             "_type": "org.uengine.modeling.model.PolicyHexagonal"
                         },
                         "isSaga": false,
-                        "name": "DocumentIssuancePolicy",
-                        "displayName": "문서 발급 자동화",
-                        "nameCamelCase": "documentIssuancePolicy",
-                        "namePascalCase": "DocumentIssuancePolicy",
-                        "namePlural": "documentIssuancePolicies",
+                        "name": "ApplicationSubmissionDocumentPolicy",
+                        "displayName": "신청서 제출 문서 발행 자동화",
+                        "nameCamelCase": "applicationSubmissionDocumentPolicy",
+                        "namePascalCase": "ApplicationSubmissionDocumentPolicy",
+                        "namePlural": "applicationSubmissionDocumentPolicies",
                         "oldName": "",
                         "rotateStatus": false,
                         "_type": "org.uengine.modeling.model.Policy"
                     },
-                    "from": "bc5229a7-862e-d110-8cbc-09473b572133",
-                    "to": "c8477556-23cf-8ba5-21da-b80482dfb375",
+                    "from": "17c64ef9-77d3-1c17-4e3e-5a755753f79b",
+                    "to": "5e160713-db48-9ea5-77e5-dc1c8314bd1e",
                     "relationView": {
-                        "id": "154dd8f5-55a9-7b96-d905-51583ee01741",
+                        "id": "8b16108d-d01d-20ba-7ec1-9868342a677b",
                         "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"none\"}",
-                        "from": "bc5229a7-862e-d110-8cbc-09473b572133",
-                        "to": "c8477556-23cf-8ba5-21da-b80482dfb375",
+                        "from": "17c64ef9-77d3-1c17-4e3e-5a755753f79b",
+                        "to": "5e160713-db48-9ea5-77e5-dc1c8314bd1e",
                         "needReconnect": true,
-                        "value": "[[794,512],[884,512],[884,252],[972,252]]"
+                        "value": "[[794,380],[1100,380],[1100,252],[1402,252]]"
                     },
                     "hexagonalView": {
                         "_type": "org.uengine.modeling.model.RelationHexagonal",
-                        "from": "bc5229a7-862e-d110-8cbc-09473b572133",
-                        "id": "154dd8f5-55a9-7b96-d905-51583ee01741",
+                        "from": "17c64ef9-77d3-1c17-4e3e-5a755753f79b",
+                        "id": "8b16108d-d01d-20ba-7ec1-9868342a677b",
                         "needReconnect": true,
                         "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"none\"}",
-                        "to": "c8477556-23cf-8ba5-21da-b80482dfb375",
+                        "to": "5e160713-db48-9ea5-77e5-dc1c8314bd1e",
                         "value": null
                     },
                     "sourceMultiplicity": "1",
                     "targetMultiplicity": "1",
-                    "displayName": ""
+                    "displayName": "",
+                    "selected": false
                 },
-                "48faa5aa-f6e4-006f-b5bf-9002e5ec00c2": {
+                "a319d619-a4dd-a4ce-70d5-a4ae63aafe91": {
                     "_type": "org.uengine.modeling.model.Relation",
                     "name": "",
-                    "id": "48faa5aa-f6e4-006f-b5bf-9002e5ec00c2",
+                    "id": "a319d619-a4dd-a4ce-70d5-a4ae63aafe91",
                     "sourceElement": {
-                        "id": "c8477556-23cf-8ba5-21da-b80482dfb375",
+                        "id": "5e160713-db48-9ea5-77e5-dc1c8314bd1e",
                         "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
                         "boundedContext": {
-                            "id": "03323d91-1261-f9b8-65e2-333f1a241fc0"
+                            "id": "886c1ea5-4b72-c968-7f43-c888489594ec"
                         },
-                        "description": "민원 신청서 승인 시, 민원문서 발급을 자동으로 시작하여 후속 처리의 일관성과 효율성을 보장하기 위함",
+                        "description": "신청서 최종 제출 시 발생하는 ApplicationSubmitted 이벤트를 감지하여, Document aggregate의 IssueDocument 명령을 실행함으로써 신청서의 상태를 제증명 처리 대기 상태로 전환하고 문서 발행 프로세스를 개시한다.",
                         "elementView": {
                             "height": 116,
                             "width": 100,
-                            "x": 1022,
+                            "x": 1452,
                             "y": 250,
-                            "id": "c8477556-23cf-8ba5-21da-b80482dfb375",
+                            "id": "5e160713-db48-9ea5-77e5-dc1c8314bd1e",
                             "style": "{}",
                             "_type": "org.uengine.modeling.model.Policy"
                         },
                         "fieldDescriptors": [],
                         "hexagonalView": {
                             "height": 20,
-                            "id": "c8477556-23cf-8ba5-21da-b80482dfb375",
+                            "id": "5e160713-db48-9ea5-77e5-dc1c8314bd1e",
                             "style": "{}",
                             "subWidth": 100,
                             "width": 20,
                             "_type": "org.uengine.modeling.model.PolicyHexagonal"
                         },
                         "isSaga": false,
-                        "name": "DocumentIssuancePolicy",
-                        "displayName": "문서 발급 자동화",
-                        "nameCamelCase": "documentIssuancePolicy",
-                        "namePascalCase": "DocumentIssuancePolicy",
-                        "namePlural": "documentIssuancePolicies",
+                        "name": "ApplicationSubmissionDocumentPolicy",
+                        "displayName": "신청서 제출 문서 발행 자동화",
+                        "nameCamelCase": "applicationSubmissionDocumentPolicy",
+                        "namePascalCase": "ApplicationSubmissionDocumentPolicy",
+                        "namePlural": "applicationSubmissionDocumentPolicies",
                         "oldName": "",
                         "rotateStatus": false,
                         "_type": "org.uengine.modeling.model.Policy"
@@ -13531,26 +15642,26 @@ const esValues = {
                     "targetElement": {
                         "_type": "org.uengine.modeling.model.Command",
                         "outputEvents": [
-                            "MinwonDocumentIssued"
+                            "DocumentIssued"
                         ],
                         "aggregate": {
-                            "id": "66dacbed-e343-9cd7-2dd0-db20f2a86a90"
+                            "id": "1c1b8300-506a-2317-3fef-9fd3f7cc3dfd"
                         },
                         "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
                         "boundedContext": {
-                            "id": "03323d91-1261-f9b8-65e2-333f1a241fc0"
+                            "id": "886c1ea5-4b72-c968-7f43-c888489594ec"
                         },
                         "controllerInfo": {
                             "method": "POST"
                         },
                         "fieldDescriptors": [
                             {
-                                "className": "CivilComplaintApplicationId",
+                                "className": "String",
                                 "isCopy": false,
                                 "isKey": false,
-                                "name": "civilComplaintApplicationId",
-                                "nameCamelCase": "civilComplaintApplicationId",
-                                "namePascalCase": "CivilComplaintApplicationId",
+                                "name": "applicationId",
+                                "nameCamelCase": "applicationId",
+                                "namePascalCase": "ApplicationId",
                                 "displayName": "",
                                 "_type": "org.uengine.model.FieldDescriptor"
                             },
@@ -13558,40 +15669,40 @@ const esValues = {
                                 "className": "DocumentFormat",
                                 "isCopy": false,
                                 "isKey": false,
-                                "name": "documentFormat",
-                                "nameCamelCase": "documentFormat",
-                                "namePascalCase": "DocumentFormat",
+                                "name": "format",
+                                "nameCamelCase": "format",
+                                "namePascalCase": "Format",
                                 "displayName": "",
                                 "_type": "org.uengine.model.FieldDescriptor"
                             }
                         ],
                         "description": null,
-                        "id": "75f8fa95-e80d-e653-5afe-af30b2b6abc7",
+                        "id": "e276a629-4038-03c0-d2bd-4be915e2b024",
                         "elementView": {
                             "_type": "org.uengine.modeling.model.Command",
                             "height": 116,
-                            "id": "75f8fa95-e80d-e653-5afe-af30b2b6abc7",
+                            "id": "e276a629-4038-03c0-d2bd-4be915e2b024",
                             "style": "{}",
                             "width": 100,
-                            "x": 1141,
+                            "x": 1571,
                             "y": 250,
                             "z-index": 999
                         },
                         "hexagonalView": {
                             "_type": "org.uengine.modeling.model.CommandHexagonal",
                             "height": 0,
-                            "id": "75f8fa95-e80d-e653-5afe-af30b2b6abc7",
+                            "id": "e276a629-4038-03c0-d2bd-4be915e2b024",
                             "style": "{}",
                             "width": 0,
                             "x": 0,
                             "y": 0
                         },
                         "isRestRepository": false,
-                        "name": "IssueMinwonDocument",
-                        "displayName": "민원문서 발급 요청",
-                        "nameCamelCase": "issueMinwonDocument",
-                        "namePascalCase": "IssueMinwonDocument",
-                        "namePlural": "issueMinwonDocuments",
+                        "name": "IssueDocument",
+                        "displayName": "문서 발급",
+                        "nameCamelCase": "issueDocument",
+                        "namePascalCase": "IssueDocument",
+                        "namePlural": "issueDocuments",
                         "relationCommandInfo": [],
                         "relationEventInfo": [],
                         "restRepositoryInfo": {
@@ -13601,28 +15712,627 @@ const esValues = {
                         "selected": false,
                         "trigger": "@PrePersist"
                     },
-                    "from": "c8477556-23cf-8ba5-21da-b80482dfb375",
-                    "to": "75f8fa95-e80d-e653-5afe-af30b2b6abc7",
+                    "from": "5e160713-db48-9ea5-77e5-dc1c8314bd1e",
+                    "to": "e276a629-4038-03c0-d2bd-4be915e2b024",
                     "relationView": {
-                        "id": "48faa5aa-f6e4-006f-b5bf-9002e5ec00c2",
+                        "id": "a319d619-a4dd-a4ce-70d5-a4ae63aafe91",
                         "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"none\"}",
-                        "from": "c8477556-23cf-8ba5-21da-b80482dfb375",
-                        "to": "75f8fa95-e80d-e653-5afe-af30b2b6abc7",
+                        "from": "5e160713-db48-9ea5-77e5-dc1c8314bd1e",
+                        "to": "e276a629-4038-03c0-d2bd-4be915e2b024",
                         "needReconnect": true,
-                        "value": "[[1072,252],[1091,252]]"
+                        "value": "[[1502,252],[1521,252]]"
                     },
                     "hexagonalView": {
                         "_type": "org.uengine.modeling.model.RelationHexagonal",
-                        "from": "c8477556-23cf-8ba5-21da-b80482dfb375",
-                        "id": "48faa5aa-f6e4-006f-b5bf-9002e5ec00c2",
+                        "from": "5e160713-db48-9ea5-77e5-dc1c8314bd1e",
+                        "id": "a319d619-a4dd-a4ce-70d5-a4ae63aafe91",
                         "needReconnect": true,
                         "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"none\"}",
-                        "to": "75f8fa95-e80d-e653-5afe-af30b2b6abc7",
+                        "to": "e276a629-4038-03c0-d2bd-4be915e2b024",
                         "value": null
                     },
                     "sourceMultiplicity": "1",
                     "targetMultiplicity": "1",
-                    "displayName": ""
+                    "displayName": "",
+                    "selected": false
+                },
+                "2c6c4dcc-ed0c-c1ed-f92a-71d0d1dbdbba": {
+                    "_type": "org.uengine.modeling.model.Relation",
+                    "name": "",
+                    "id": "2c6c4dcc-ed0c-c1ed-f92a-71d0d1dbdbba",
+                    "sourceElement": {
+                        "alertURL": "/static/image/symbol/alert-icon.png",
+                        "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
+                        "checkAlert": true,
+                        "description": null,
+                        "id": "55357fca-db61-d383-c8ec-8a24a26abeb3",
+                        "elementView": {
+                            "angle": 0,
+                            "height": 116,
+                            "id": "55357fca-db61-d383-c8ec-8a24a26abeb3",
+                            "style": "{}",
+                            "width": 100,
+                            "x": 744,
+                            "y": 250,
+                            "_type": "org.uengine.modeling.model.Event"
+                        },
+                        "fieldDescriptors": [
+                            {
+                                "className": "String",
+                                "isCopy": false,
+                                "isKey": true,
+                                "name": "applicationId",
+                                "nameCamelCase": "applicationId",
+                                "namePascalCase": "ApplicationId",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "String",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "title",
+                                "nameCamelCase": "title",
+                                "namePascalCase": "Title",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "String",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "detail",
+                                "nameCamelCase": "detail",
+                                "namePascalCase": "Detail",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "String",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "attachment",
+                                "nameCamelCase": "attachment",
+                                "namePascalCase": "Attachment",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "String",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "residentRegistrationNumber",
+                                "nameCamelCase": "residentRegistrationNumber",
+                                "namePascalCase": "ResidentRegistrationNumber",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "String",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "address",
+                                "nameCamelCase": "address",
+                                "namePascalCase": "Address",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "ApplicationStatus",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "status",
+                                "nameCamelCase": "status",
+                                "namePascalCase": "Status",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            }
+                        ],
+                        "hexagonalView": {
+                            "height": 0,
+                            "id": "55357fca-db61-d383-c8ec-8a24a26abeb3",
+                            "style": "{}",
+                            "width": 0,
+                            "x": 0,
+                            "y": 0,
+                            "_type": "org.uengine.modeling.model.EventHexagonal"
+                        },
+                        "name": "ApplicationDraftSaved",
+                        "displayName": "임시 저장된 민원 신청서 생성됨",
+                        "nameCamelCase": "applicationDraftSaved",
+                        "namePascalCase": "ApplicationDraftSaved",
+                        "namePlural": "",
+                        "relationCommandInfo": [],
+                        "relationPolicyInfo": [],
+                        "rotateStatus": false,
+                        "selected": false,
+                        "trigger": "@PostPersist",
+                        "_type": "org.uengine.modeling.model.Event",
+                        "aggregate": {
+                            "id": "39120b26-cdde-82ad-fa95-a25d828ad2b7"
+                        },
+                        "boundedContext": {
+                            "id": "af1cc5ab-8a10-648b-d119-90a732415c27"
+                        }
+                    },
+                    "targetElement": {
+                        "id": "52cbfd28-a17f-4a0c-82f8-97c9336151b9",
+                        "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
+                        "boundedContext": {
+                            "id": "81fab6f5-399c-4722-35ba-75ec4c67a041"
+                        },
+                        "description": "신청서 임시 저장 시 발생하는 ApplicationDraftSaved 이벤트를 교차 Bounded Context의 SystemMonitor aggregate로 전달하여, 시스템 모니터링 및 로깅 체계를 강화하고 운영 상태를 점검할 수 있도록 한다.",
+                        "elementView": {
+                            "height": 116,
+                            "width": 100,
+                            "x": 2057,
+                            "y": 250,
+                            "id": "52cbfd28-a17f-4a0c-82f8-97c9336151b9",
+                            "style": "{}",
+                            "_type": "org.uengine.modeling.model.Policy"
+                        },
+                        "fieldDescriptors": [],
+                        "hexagonalView": {
+                            "height": 20,
+                            "id": "52cbfd28-a17f-4a0c-82f8-97c9336151b9",
+                            "style": "{}",
+                            "subWidth": 100,
+                            "width": 20,
+                            "_type": "org.uengine.modeling.model.PolicyHexagonal"
+                        },
+                        "isSaga": false,
+                        "name": "ApplicationDraftMonitoringPolicy",
+                        "displayName": "임시 저장 신청서 모니터링",
+                        "nameCamelCase": "applicationDraftMonitoringPolicy",
+                        "namePascalCase": "ApplicationDraftMonitoringPolicy",
+                        "namePlural": "applicationDraftMonitoringPolicies",
+                        "oldName": "",
+                        "rotateStatus": false,
+                        "_type": "org.uengine.modeling.model.Policy"
+                    },
+                    "from": "55357fca-db61-d383-c8ec-8a24a26abeb3",
+                    "to": "52cbfd28-a17f-4a0c-82f8-97c9336151b9",
+                    "relationView": {
+                        "id": "2c6c4dcc-ed0c-c1ed-f92a-71d0d1dbdbba",
+                        "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"none\"}",
+                        "from": "55357fca-db61-d383-c8ec-8a24a26abeb3",
+                        "to": "52cbfd28-a17f-4a0c-82f8-97c9336151b9",
+                        "needReconnect": true,
+                        "value": "[[794,252],[2007,252]]"
+                    },
+                    "hexagonalView": {
+                        "_type": "org.uengine.modeling.model.RelationHexagonal",
+                        "from": "55357fca-db61-d383-c8ec-8a24a26abeb3",
+                        "id": "2c6c4dcc-ed0c-c1ed-f92a-71d0d1dbdbba",
+                        "needReconnect": true,
+                        "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"none\"}",
+                        "to": "52cbfd28-a17f-4a0c-82f8-97c9336151b9",
+                        "value": null
+                    },
+                    "sourceMultiplicity": "1",
+                    "targetMultiplicity": "1",
+                    "displayName": "",
+                    "selected": false
+                },
+                "2e0a5679-6129-ac6a-eb44-89d8db43a01e": {
+                    "_type": "org.uengine.modeling.model.Relation",
+                    "name": "",
+                    "id": "2e0a5679-6129-ac6a-eb44-89d8db43a01e",
+                    "sourceElement": {
+                        "id": "52cbfd28-a17f-4a0c-82f8-97c9336151b9",
+                        "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
+                        "boundedContext": {
+                            "id": "81fab6f5-399c-4722-35ba-75ec4c67a041"
+                        },
+                        "description": "신청서 임시 저장 시 발생하는 ApplicationDraftSaved 이벤트를 교차 Bounded Context의 SystemMonitor aggregate로 전달하여, 시스템 모니터링 및 로깅 체계를 강화하고 운영 상태를 점검할 수 있도록 한다.",
+                        "elementView": {
+                            "height": 116,
+                            "width": 100,
+                            "x": 2057,
+                            "y": 250,
+                            "id": "52cbfd28-a17f-4a0c-82f8-97c9336151b9",
+                            "style": "{}",
+                            "_type": "org.uengine.modeling.model.Policy"
+                        },
+                        "fieldDescriptors": [],
+                        "hexagonalView": {
+                            "height": 20,
+                            "id": "52cbfd28-a17f-4a0c-82f8-97c9336151b9",
+                            "style": "{}",
+                            "subWidth": 100,
+                            "width": 20,
+                            "_type": "org.uengine.modeling.model.PolicyHexagonal"
+                        },
+                        "isSaga": false,
+                        "name": "ApplicationDraftMonitoringPolicy",
+                        "displayName": "임시 저장 신청서 모니터링",
+                        "nameCamelCase": "applicationDraftMonitoringPolicy",
+                        "namePascalCase": "ApplicationDraftMonitoringPolicy",
+                        "namePlural": "applicationDraftMonitoringPolicies",
+                        "oldName": "",
+                        "rotateStatus": false,
+                        "_type": "org.uengine.modeling.model.Policy"
+                    },
+                    "targetElement": {
+                        "_type": "org.uengine.modeling.model.Command",
+                        "outputEvents": [
+                            "SystemMonitored"
+                        ],
+                        "aggregate": {
+                            "id": "9d7631f0-85d0-d398-e1d7-054976d2a870"
+                        },
+                        "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
+                        "boundedContext": {
+                            "id": "81fab6f5-399c-4722-35ba-75ec4c67a041"
+                        },
+                        "controllerInfo": {
+                            "method": "POST"
+                        },
+                        "fieldDescriptors": [
+                            {
+                                "className": "Long",
+                                "isCopy": false,
+                                "isKey": true,
+                                "name": "monitorId",
+                                "nameCamelCase": "monitorId",
+                                "namePascalCase": "MonitorId",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            }
+                        ],
+                        "description": null,
+                        "id": "645a47c3-c65a-19fb-7811-8dd2994cca68",
+                        "elementView": {
+                            "_type": "org.uengine.modeling.model.Command",
+                            "height": 116,
+                            "id": "645a47c3-c65a-19fb-7811-8dd2994cca68",
+                            "style": "{}",
+                            "width": 100,
+                            "x": 2176,
+                            "y": 250,
+                            "z-index": 999
+                        },
+                        "hexagonalView": {
+                            "_type": "org.uengine.modeling.model.CommandHexagonal",
+                            "height": 0,
+                            "id": "645a47c3-c65a-19fb-7811-8dd2994cca68",
+                            "style": "{}",
+                            "width": 0,
+                            "x": 0,
+                            "y": 0
+                        },
+                        "isRestRepository": false,
+                        "name": "MonitorSystem",
+                        "displayName": "시스템 모니터링 실행",
+                        "nameCamelCase": "monitorSystem",
+                        "namePascalCase": "MonitorSystem",
+                        "namePlural": "monitorSystems",
+                        "relationCommandInfo": [],
+                        "relationEventInfo": [],
+                        "restRepositoryInfo": {
+                            "method": "POST"
+                        },
+                        "rotateStatus": false,
+                        "selected": false,
+                        "trigger": "@PrePersist"
+                    },
+                    "from": "52cbfd28-a17f-4a0c-82f8-97c9336151b9",
+                    "to": "645a47c3-c65a-19fb-7811-8dd2994cca68",
+                    "relationView": {
+                        "id": "2e0a5679-6129-ac6a-eb44-89d8db43a01e",
+                        "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"none\"}",
+                        "from": "52cbfd28-a17f-4a0c-82f8-97c9336151b9",
+                        "to": "645a47c3-c65a-19fb-7811-8dd2994cca68",
+                        "needReconnect": true,
+                        "value": "[[2107,252],[2126,252]]"
+                    },
+                    "hexagonalView": {
+                        "_type": "org.uengine.modeling.model.RelationHexagonal",
+                        "from": "52cbfd28-a17f-4a0c-82f8-97c9336151b9",
+                        "id": "2e0a5679-6129-ac6a-eb44-89d8db43a01e",
+                        "needReconnect": true,
+                        "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"none\"}",
+                        "to": "645a47c3-c65a-19fb-7811-8dd2994cca68",
+                        "value": null
+                    },
+                    "sourceMultiplicity": "1",
+                    "targetMultiplicity": "1",
+                    "displayName": "",
+                    "selected": false
+                },
+                "5b8c6bf5-100c-e2d5-fdac-6cecb5f09859": {
+                    "_type": "org.uengine.modeling.model.Relation",
+                    "name": "",
+                    "id": "5b8c6bf5-100c-e2d5-fdac-6cecb5f09859",
+                    "sourceElement": {
+                        "alertURL": "/static/image/symbol/alert-icon.png",
+                        "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
+                        "checkAlert": true,
+                        "description": null,
+                        "id": "692db540-1c57-1df9-982f-6398c4c279d9",
+                        "elementView": {
+                            "angle": 0,
+                            "height": 116,
+                            "id": "692db540-1c57-1df9-982f-6398c4c279d9",
+                            "style": "{}",
+                            "width": 100,
+                            "x": 1329,
+                            "y": 250,
+                            "_type": "org.uengine.modeling.model.Event"
+                        },
+                        "fieldDescriptors": [
+                            {
+                                "className": "Long",
+                                "isCopy": false,
+                                "isKey": true,
+                                "name": "reviewId",
+                                "nameCamelCase": "reviewId",
+                                "namePascalCase": "ReviewId",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "String",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "applicationId",
+                                "nameCamelCase": "applicationId",
+                                "namePascalCase": "ApplicationId",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "String",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "reviewer",
+                                "nameCamelCase": "reviewer",
+                                "namePascalCase": "Reviewer",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "Date",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "reviewDate",
+                                "nameCamelCase": "reviewDate",
+                                "namePascalCase": "ReviewDate",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "ApplicationStatus",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "status",
+                                "nameCamelCase": "status",
+                                "namePascalCase": "Status",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            }
+                        ],
+                        "hexagonalView": {
+                            "height": 0,
+                            "id": "692db540-1c57-1df9-982f-6398c4c279d9",
+                            "style": "{}",
+                            "width": 0,
+                            "x": 0,
+                            "y": 0,
+                            "_type": "org.uengine.modeling.model.EventHexagonal"
+                        },
+                        "name": "ApplicationReviewApproved",
+                        "displayName": "민원 신청 승인됨",
+                        "nameCamelCase": "applicationReviewApproved",
+                        "namePascalCase": "ApplicationReviewApproved",
+                        "namePlural": "",
+                        "relationCommandInfo": [],
+                        "relationPolicyInfo": [],
+                        "rotateStatus": false,
+                        "selected": false,
+                        "trigger": "@PostPersist",
+                        "_type": "org.uengine.modeling.model.Event",
+                        "aggregate": {
+                            "id": "8046de29-aeab-65f8-db12-c3ffe41abea5"
+                        },
+                        "boundedContext": {
+                            "id": "886c1ea5-4b72-c968-7f43-c888489594ec"
+                        }
+                    },
+                    "targetElement": {
+                        "id": "e16944e7-b8c4-f70f-9512-22a51f578b0b",
+                        "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
+                        "boundedContext": {
+                            "id": "886c1ea5-4b72-c968-7f43-c888489594ec"
+                        },
+                        "description": "민원 신청서가 승인되면, 문서 발급 프로세스를 시작하여 승인된 신청서에 대한 문서를 생성합니다.",
+                        "elementView": {
+                            "height": 116,
+                            "width": 100,
+                            "x": 1452,
+                            "y": 250,
+                            "id": "e16944e7-b8c4-f70f-9512-22a51f578b0b",
+                            "style": "{}",
+                            "_type": "org.uengine.modeling.model.Policy"
+                        },
+                        "fieldDescriptors": [],
+                        "hexagonalView": {
+                            "height": 20,
+                            "id": "e16944e7-b8c4-f70f-9512-22a51f578b0b",
+                            "style": "{}",
+                            "subWidth": 100,
+                            "width": 20,
+                            "_type": "org.uengine.modeling.model.PolicyHexagonal"
+                        },
+                        "isSaga": false,
+                        "name": "ApplicationReviewApprovalDocumentPolicy",
+                        "displayName": "심사 승인 후 문서 발급 자동화",
+                        "nameCamelCase": "applicationReviewApprovalDocumentPolicy",
+                        "namePascalCase": "ApplicationReviewApprovalDocumentPolicy",
+                        "namePlural": "applicationReviewApprovalDocumentPolicies",
+                        "oldName": "",
+                        "rotateStatus": false,
+                        "_type": "org.uengine.modeling.model.Policy"
+                    },
+                    "from": "692db540-1c57-1df9-982f-6398c4c279d9",
+                    "to": "e16944e7-b8c4-f70f-9512-22a51f578b0b",
+                    "relationView": {
+                        "id": "5b8c6bf5-100c-e2d5-fdac-6cecb5f09859",
+                        "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"none\"}",
+                        "from": "692db540-1c57-1df9-982f-6398c4c279d9",
+                        "to": "e16944e7-b8c4-f70f-9512-22a51f578b0b",
+                        "needReconnect": true,
+                        "value": "[[1379,252],[1402,252]]"
+                    },
+                    "hexagonalView": {
+                        "_type": "org.uengine.modeling.model.RelationHexagonal",
+                        "from": "692db540-1c57-1df9-982f-6398c4c279d9",
+                        "id": "5b8c6bf5-100c-e2d5-fdac-6cecb5f09859",
+                        "needReconnect": true,
+                        "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"none\"}",
+                        "to": "e16944e7-b8c4-f70f-9512-22a51f578b0b",
+                        "value": null
+                    },
+                    "sourceMultiplicity": "1",
+                    "targetMultiplicity": "1",
+                    "displayName": "",
+                    "selected": false
+                },
+                "184390cf-315b-9190-dd12-c30af2f88c07": {
+                    "_type": "org.uengine.modeling.model.Relation",
+                    "name": "",
+                    "id": "184390cf-315b-9190-dd12-c30af2f88c07",
+                    "sourceElement": {
+                        "id": "e16944e7-b8c4-f70f-9512-22a51f578b0b",
+                        "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
+                        "boundedContext": {
+                            "id": "886c1ea5-4b72-c968-7f43-c888489594ec"
+                        },
+                        "description": "민원 신청서가 승인되면, 문서 발급 프로세스를 시작하여 승인된 신청서에 대한 문서를 생성합니다.",
+                        "elementView": {
+                            "height": 116,
+                            "width": 100,
+                            "x": 1452,
+                            "y": 250,
+                            "id": "e16944e7-b8c4-f70f-9512-22a51f578b0b",
+                            "style": "{}",
+                            "_type": "org.uengine.modeling.model.Policy"
+                        },
+                        "fieldDescriptors": [],
+                        "hexagonalView": {
+                            "height": 20,
+                            "id": "e16944e7-b8c4-f70f-9512-22a51f578b0b",
+                            "style": "{}",
+                            "subWidth": 100,
+                            "width": 20,
+                            "_type": "org.uengine.modeling.model.PolicyHexagonal"
+                        },
+                        "isSaga": false,
+                        "name": "ApplicationReviewApprovalDocumentPolicy",
+                        "displayName": "심사 승인 후 문서 발급 자동화",
+                        "nameCamelCase": "applicationReviewApprovalDocumentPolicy",
+                        "namePascalCase": "ApplicationReviewApprovalDocumentPolicy",
+                        "namePlural": "applicationReviewApprovalDocumentPolicies",
+                        "oldName": "",
+                        "rotateStatus": false,
+                        "_type": "org.uengine.modeling.model.Policy"
+                    },
+                    "targetElement": {
+                        "_type": "org.uengine.modeling.model.Command",
+                        "outputEvents": [
+                            "DocumentIssued"
+                        ],
+                        "aggregate": {
+                            "id": "1c1b8300-506a-2317-3fef-9fd3f7cc3dfd"
+                        },
+                        "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
+                        "boundedContext": {
+                            "id": "886c1ea5-4b72-c968-7f43-c888489594ec"
+                        },
+                        "controllerInfo": {
+                            "method": "POST"
+                        },
+                        "fieldDescriptors": [
+                            {
+                                "className": "String",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "applicationId",
+                                "nameCamelCase": "applicationId",
+                                "namePascalCase": "ApplicationId",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            },
+                            {
+                                "className": "DocumentFormat",
+                                "isCopy": false,
+                                "isKey": false,
+                                "name": "format",
+                                "nameCamelCase": "format",
+                                "namePascalCase": "Format",
+                                "displayName": "",
+                                "_type": "org.uengine.model.FieldDescriptor"
+                            }
+                        ],
+                        "description": null,
+                        "id": "e276a629-4038-03c0-d2bd-4be915e2b024",
+                        "elementView": {
+                            "_type": "org.uengine.modeling.model.Command",
+                            "height": 116,
+                            "id": "e276a629-4038-03c0-d2bd-4be915e2b024",
+                            "style": "{}",
+                            "width": 100,
+                            "x": 1571,
+                            "y": 250,
+                            "z-index": 999
+                        },
+                        "hexagonalView": {
+                            "_type": "org.uengine.modeling.model.CommandHexagonal",
+                            "height": 0,
+                            "id": "e276a629-4038-03c0-d2bd-4be915e2b024",
+                            "style": "{}",
+                            "width": 0,
+                            "x": 0,
+                            "y": 0
+                        },
+                        "isRestRepository": false,
+                        "name": "IssueDocument",
+                        "displayName": "문서 발급",
+                        "nameCamelCase": "issueDocument",
+                        "namePascalCase": "IssueDocument",
+                        "namePlural": "issueDocuments",
+                        "relationCommandInfo": [],
+                        "relationEventInfo": [],
+                        "restRepositoryInfo": {
+                            "method": "POST"
+                        },
+                        "rotateStatus": false,
+                        "selected": false,
+                        "trigger": "@PrePersist"
+                    },
+                    "from": "e16944e7-b8c4-f70f-9512-22a51f578b0b",
+                    "to": "e276a629-4038-03c0-d2bd-4be915e2b024",
+                    "relationView": {
+                        "id": "184390cf-315b-9190-dd12-c30af2f88c07",
+                        "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"none\"}",
+                        "from": "e16944e7-b8c4-f70f-9512-22a51f578b0b",
+                        "to": "e276a629-4038-03c0-d2bd-4be915e2b024",
+                        "needReconnect": true,
+                        "value": "[[1502,252],[1521,252]]"
+                    },
+                    "hexagonalView": {
+                        "_type": "org.uengine.modeling.model.RelationHexagonal",
+                        "from": "e16944e7-b8c4-f70f-9512-22a51f578b0b",
+                        "id": "184390cf-315b-9190-dd12-c30af2f88c07",
+                        "needReconnect": true,
+                        "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"none\"}",
+                        "to": "e276a629-4038-03c0-d2bd-4be915e2b024",
+                        "value": null
+                    },
+                    "sourceMultiplicity": "1",
+                    "targetMultiplicity": "1",
+                    "displayName": "",
+                    "selected": false
                 }
             },
             "basePlatform": null,
@@ -13639,13 +16349,13 @@ const esValues = {
             "version": 3,
             "k8sValue": {
                 "elements": {
-                    "b99b550f-fe8a-7223-06bf-c5902ee5a51e": {
+                    "3dca26f7-b684-2bc1-0270-f950cfe711f6": {
                         "_type": "Deployment",
                         "name": "",
                         "namespace": "",
                         "elementView": {
                             "_type": "Deployment",
-                            "id": "b99b550f-fe8a-7223-06bf-c5902ee5a51e",
+                            "id": "3dca26f7-b684-2bc1-0270-f950cfe711f6",
                             "x": 151,
                             "y": 400,
                             "width": 100,
@@ -13738,7 +16448,7 @@ const esValues = {
                         "inboundDestinationRule": null,
                         "outboundSecrets": []
                     },
-                    "936afaff-5ecc-675b-35b4-c18e2a1e49c2": {
+                    "c6d98ba6-068a-e8eb-2e48-1af0ada2c1b5": {
                         "_type": "Service",
                         "name": "",
                         "namespace": "",
@@ -13746,7 +16456,7 @@ const esValues = {
                         "path": "",
                         "elementView": {
                             "_type": "Service",
-                            "id": "936afaff-5ecc-675b-35b4-c18e2a1e49c2",
+                            "id": "c6d98ba6-068a-e8eb-2e48-1af0ada2c1b5",
                             "x": 151,
                             "y": 200,
                             "width": 100,
@@ -13784,7 +16494,7 @@ const esValues = {
                             "namespace": "",
                             "elementView": {
                                 "_type": "Deployment",
-                                "id": "b99b550f-fe8a-7223-06bf-c5902ee5a51e",
+                                "id": "3dca26f7-b684-2bc1-0270-f950cfe711f6",
                                 "x": 151,
                                 "y": 400,
                                 "width": 100,
@@ -13892,13 +16602,13 @@ const esValues = {
                         ],
                         "status": null
                     },
-                    "f1b2ca02-8b49-31d9-f5b5-6d3adcabf7cc": {
+                    "8bbacd66-9fe9-037b-b0b7-e78e81a264e5": {
                         "_type": "Deployment",
                         "name": "",
                         "namespace": "",
                         "elementView": {
                             "_type": "Deployment",
-                            "id": "f1b2ca02-8b49-31d9-f5b5-6d3adcabf7cc",
+                            "id": "8bbacd66-9fe9-037b-b0b7-e78e81a264e5",
                             "x": 351,
                             "y": 400,
                             "width": 100,
@@ -13910,9 +16620,9 @@ const esValues = {
                             "apiVersion": "apps/v1",
                             "kind": "Deployment",
                             "metadata": {
-                                "name": "documentissuance",
+                                "name": "applicationprocessing",
                                 "labels": {
-                                    "app": "documentissuance"
+                                    "app": "applicationprocessing"
                                 },
                                 "annotations": {
                                     "msaez.io/x": "351"
@@ -13921,20 +16631,20 @@ const esValues = {
                             "spec": {
                                 "selector": {
                                     "matchLabels": {
-                                        "app": "documentissuance"
+                                        "app": "applicationprocessing"
                                     }
                                 },
                                 "replicas": 1,
                                 "template": {
                                     "metadata": {
                                         "labels": {
-                                            "app": "documentissuance"
+                                            "app": "applicationprocessing"
                                         }
                                     },
                                     "spec": {
                                         "containers": [
                                             {
-                                                "name": "documentissuance",
+                                                "name": "applicationprocessing",
                                                 "image": "ghcr.io/undefined",
                                                 "ports": [
                                                     {
@@ -13991,7 +16701,7 @@ const esValues = {
                         "inboundDestinationRule": null,
                         "outboundSecrets": []
                     },
-                    "aa7cafa6-f251-83b0-48b4-acaecee553f8": {
+                    "285ffddc-b3f8-aa0c-6a6a-8b9624dca46c": {
                         "_type": "Service",
                         "name": "",
                         "namespace": "",
@@ -13999,7 +16709,7 @@ const esValues = {
                         "path": "",
                         "elementView": {
                             "_type": "Service",
-                            "id": "aa7cafa6-f251-83b0-48b4-acaecee553f8",
+                            "id": "285ffddc-b3f8-aa0c-6a6a-8b9624dca46c",
                             "x": 351,
                             "y": 200,
                             "width": 100,
@@ -14011,9 +16721,9 @@ const esValues = {
                             "apiVersion": "v1",
                             "kind": "Service",
                             "metadata": {
-                                "name": "documentissuance",
+                                "name": "applicationprocessing",
                                 "labels": {
-                                    "app": "documentissuance"
+                                    "app": "applicationprocessing"
                                 },
                                 "annotations": {
                                     "msaez.io/x": "351"
@@ -14027,7 +16737,7 @@ const esValues = {
                                     }
                                 ],
                                 "selector": {
-                                    "app": "documentissuance"
+                                    "app": "applicationprocessing"
                                 }
                             }
                         },
@@ -14037,7 +16747,7 @@ const esValues = {
                             "namespace": "",
                             "elementView": {
                                 "_type": "Deployment",
-                                "id": "f1b2ca02-8b49-31d9-f5b5-6d3adcabf7cc",
+                                "id": "8bbacd66-9fe9-037b-b0b7-e78e81a264e5",
                                 "x": 351,
                                 "y": 400,
                                 "width": 100,
@@ -14049,9 +16759,9 @@ const esValues = {
                                 "apiVersion": "apps/v1",
                                 "kind": "Deployment",
                                 "metadata": {
-                                    "name": "documentissuance",
+                                    "name": "applicationprocessing",
                                     "labels": {
-                                        "app": "documentissuance"
+                                        "app": "applicationprocessing"
                                     },
                                     "annotations": {
                                         "msaez.io/x": "351"
@@ -14060,20 +16770,20 @@ const esValues = {
                                 "spec": {
                                     "selector": {
                                         "matchLabels": {
-                                            "app": "documentissuance"
+                                            "app": "applicationprocessing"
                                         }
                                     },
                                     "replicas": 1,
                                     "template": {
                                         "metadata": {
                                             "labels": {
-                                                "app": "documentissuance"
+                                                "app": "applicationprocessing"
                                             }
                                         },
                                         "spec": {
                                             "containers": [
                                                 {
-                                                    "name": "documentissuance",
+                                                    "name": "applicationprocessing",
                                                     "image": "ghcr.io/undefined",
                                                     "ports": [
                                                         {
@@ -14145,13 +16855,13 @@ const esValues = {
                         ],
                         "status": null
                     },
-                    "b497c682-b28b-cbf9-a6b4-12941eb94834": {
+                    "3b6512ae-3fc1-ca01-1c41-54236cc580d1": {
                         "_type": "Deployment",
                         "name": "",
                         "namespace": "",
                         "elementView": {
                             "_type": "Deployment",
-                            "id": "b497c682-b28b-cbf9-a6b4-12941eb94834",
+                            "id": "3b6512ae-3fc1-ca01-1c41-54236cc580d1",
                             "x": 551,
                             "y": 400,
                             "width": 100,
@@ -14163,9 +16873,9 @@ const esValues = {
                             "apiVersion": "apps/v1",
                             "kind": "Deployment",
                             "metadata": {
-                                "name": "systemoperations",
+                                "name": "operations",
                                 "labels": {
-                                    "app": "systemoperations"
+                                    "app": "operations"
                                 },
                                 "annotations": {
                                     "msaez.io/x": "551"
@@ -14174,20 +16884,20 @@ const esValues = {
                             "spec": {
                                 "selector": {
                                     "matchLabels": {
-                                        "app": "systemoperations"
+                                        "app": "operations"
                                     }
                                 },
                                 "replicas": 1,
                                 "template": {
                                     "metadata": {
                                         "labels": {
-                                            "app": "systemoperations"
+                                            "app": "operations"
                                         }
                                     },
                                     "spec": {
                                         "containers": [
                                             {
-                                                "name": "systemoperations",
+                                                "name": "operations",
                                                 "image": "ghcr.io/undefined",
                                                 "ports": [
                                                     {
@@ -14244,7 +16954,7 @@ const esValues = {
                         "inboundDestinationRule": null,
                         "outboundSecrets": []
                     },
-                    "15d08ae0-664f-9ad7-b068-f572de13603f": {
+                    "cd7fdb51-438e-fe69-453e-735463a5f97a": {
                         "_type": "Service",
                         "name": "",
                         "namespace": "",
@@ -14252,7 +16962,7 @@ const esValues = {
                         "path": "",
                         "elementView": {
                             "_type": "Service",
-                            "id": "15d08ae0-664f-9ad7-b068-f572de13603f",
+                            "id": "cd7fdb51-438e-fe69-453e-735463a5f97a",
                             "x": 551,
                             "y": 200,
                             "width": 100,
@@ -14264,9 +16974,9 @@ const esValues = {
                             "apiVersion": "v1",
                             "kind": "Service",
                             "metadata": {
-                                "name": "systemoperations",
+                                "name": "operations",
                                 "labels": {
-                                    "app": "systemoperations"
+                                    "app": "operations"
                                 },
                                 "annotations": {
                                     "msaez.io/x": "551"
@@ -14280,7 +16990,7 @@ const esValues = {
                                     }
                                 ],
                                 "selector": {
-                                    "app": "systemoperations"
+                                    "app": "operations"
                                 }
                             }
                         },
@@ -14290,7 +17000,7 @@ const esValues = {
                             "namespace": "",
                             "elementView": {
                                 "_type": "Deployment",
-                                "id": "b497c682-b28b-cbf9-a6b4-12941eb94834",
+                                "id": "3b6512ae-3fc1-ca01-1c41-54236cc580d1",
                                 "x": 551,
                                 "y": 400,
                                 "width": 100,
@@ -14302,9 +17012,9 @@ const esValues = {
                                 "apiVersion": "apps/v1",
                                 "kind": "Deployment",
                                 "metadata": {
-                                    "name": "systemoperations",
+                                    "name": "operations",
                                     "labels": {
-                                        "app": "systemoperations"
+                                        "app": "operations"
                                     },
                                     "annotations": {
                                         "msaez.io/x": "551"
@@ -14313,20 +17023,20 @@ const esValues = {
                                 "spec": {
                                     "selector": {
                                         "matchLabels": {
-                                            "app": "systemoperations"
+                                            "app": "operations"
                                         }
                                     },
                                     "replicas": 1,
                                     "template": {
                                         "metadata": {
                                             "labels": {
-                                                "app": "systemoperations"
+                                                "app": "operations"
                                             }
                                         },
                                         "spec": {
                                             "containers": [
                                                 {
-                                                    "name": "systemoperations",
+                                                    "name": "operations",
                                                     "image": "ghcr.io/undefined",
                                                     "ports": [
                                                         {
@@ -14400,7 +17110,7 @@ const esValues = {
                     }
                 },
                 "relations": {
-                    "4ffa1348-9a8f-bdc4-2d7c-f85383206989": {
+                    "d75c7d21-4534-7b61-ba37-bbb570b5b459": {
                         "_type": "org.uengine.modeling.model.Relation",
                         "name": "",
                         "sourceElement": {
@@ -14411,7 +17121,7 @@ const esValues = {
                             "path": "",
                             "elementView": {
                                 "_type": "Service",
-                                "id": "936afaff-5ecc-675b-35b4-c18e2a1e49c2",
+                                "id": "c6d98ba6-068a-e8eb-2e48-1af0ada2c1b5",
                                 "x": 151,
                                 "y": 200,
                                 "width": 100,
@@ -14449,7 +17159,7 @@ const esValues = {
                                 "namespace": "",
                                 "elementView": {
                                     "_type": "Deployment",
-                                    "id": "b99b550f-fe8a-7223-06bf-c5902ee5a51e",
+                                    "id": "3dca26f7-b684-2bc1-0270-f950cfe711f6",
                                     "x": 151,
                                     "y": 400,
                                     "width": 100,
@@ -14563,7 +17273,7 @@ const esValues = {
                             "namespace": "",
                             "elementView": {
                                 "_type": "Deployment",
-                                "id": "b99b550f-fe8a-7223-06bf-c5902ee5a51e",
+                                "id": "3dca26f7-b684-2bc1-0270-f950cfe711f6",
                                 "x": 151,
                                 "y": 400,
                                 "width": 100,
@@ -14656,21 +17366,21 @@ const esValues = {
                             "inboundDestinationRule": null,
                             "outboundSecrets": []
                         },
-                        "from": "936afaff-5ecc-675b-35b4-c18e2a1e49c2",
-                        "to": "b99b550f-fe8a-7223-06bf-c5902ee5a51e",
+                        "from": "c6d98ba6-068a-e8eb-2e48-1af0ada2c1b5",
+                        "to": "3dca26f7-b684-2bc1-0270-f950cfe711f6",
                         "relationView": {
-                            "id": "4ffa1348-9a8f-bdc4-2d7c-f85383206989",
+                            "id": "d75c7d21-4534-7b61-ba37-bbb570b5b459",
                             "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"none\"}",
                             "value": "[[152,250],[152,350]]",
-                            "from": "936afaff-5ecc-675b-35b4-c18e2a1e49c2",
-                            "to": "b99b550f-fe8a-7223-06bf-c5902ee5a51e",
+                            "from": "c6d98ba6-068a-e8eb-2e48-1af0ada2c1b5",
+                            "to": "3dca26f7-b684-2bc1-0270-f950cfe711f6",
                             "needReconnect": true
                         },
                         "sourceMultiplicity": 3,
                         "targetMultiplicity": 3,
                         "style": {}
                     },
-                    "29718b80-a201-bdef-b7be-6ebac6f9b832": {
+                    "5ab9d915-02e2-012e-66d8-efa4968675cf": {
                         "_type": "org.uengine.modeling.model.Relation",
                         "name": "",
                         "sourceElement": {
@@ -14681,7 +17391,7 @@ const esValues = {
                             "path": "",
                             "elementView": {
                                 "_type": "Service",
-                                "id": "aa7cafa6-f251-83b0-48b4-acaecee553f8",
+                                "id": "285ffddc-b3f8-aa0c-6a6a-8b9624dca46c",
                                 "x": 351,
                                 "y": 200,
                                 "width": 100,
@@ -14693,9 +17403,9 @@ const esValues = {
                                 "apiVersion": "v1",
                                 "kind": "Service",
                                 "metadata": {
-                                    "name": "documentissuance",
+                                    "name": "applicationprocessing",
                                     "labels": {
-                                        "app": "documentissuance"
+                                        "app": "applicationprocessing"
                                     },
                                     "annotations": {
                                         "msaez.io/x": "351"
@@ -14709,7 +17419,7 @@ const esValues = {
                                         }
                                     ],
                                     "selector": {
-                                        "app": "documentissuance"
+                                        "app": "applicationprocessing"
                                     }
                                 }
                             },
@@ -14719,7 +17429,7 @@ const esValues = {
                                 "namespace": "",
                                 "elementView": {
                                     "_type": "Deployment",
-                                    "id": "f1b2ca02-8b49-31d9-f5b5-6d3adcabf7cc",
+                                    "id": "8bbacd66-9fe9-037b-b0b7-e78e81a264e5",
                                     "x": 351,
                                     "y": 400,
                                     "width": 100,
@@ -14731,9 +17441,9 @@ const esValues = {
                                     "apiVersion": "apps/v1",
                                     "kind": "Deployment",
                                     "metadata": {
-                                        "name": "documentissuance",
+                                        "name": "applicationprocessing",
                                         "labels": {
-                                            "app": "documentissuance"
+                                            "app": "applicationprocessing"
                                         },
                                         "annotations": {
                                             "msaez.io/x": "351"
@@ -14742,20 +17452,20 @@ const esValues = {
                                     "spec": {
                                         "selector": {
                                             "matchLabels": {
-                                                "app": "documentissuance"
+                                                "app": "applicationprocessing"
                                             }
                                         },
                                         "replicas": 1,
                                         "template": {
                                             "metadata": {
                                                 "labels": {
-                                                    "app": "documentissuance"
+                                                    "app": "applicationprocessing"
                                                 }
                                             },
                                             "spec": {
                                                 "containers": [
                                                     {
-                                                        "name": "documentissuance",
+                                                        "name": "applicationprocessing",
                                                         "image": "ghcr.io/undefined",
                                                         "ports": [
                                                             {
@@ -14833,7 +17543,7 @@ const esValues = {
                             "namespace": "",
                             "elementView": {
                                 "_type": "Deployment",
-                                "id": "f1b2ca02-8b49-31d9-f5b5-6d3adcabf7cc",
+                                "id": "8bbacd66-9fe9-037b-b0b7-e78e81a264e5",
                                 "x": 351,
                                 "y": 400,
                                 "width": 100,
@@ -14845,9 +17555,9 @@ const esValues = {
                                 "apiVersion": "apps/v1",
                                 "kind": "Deployment",
                                 "metadata": {
-                                    "name": "documentissuance",
+                                    "name": "applicationprocessing",
                                     "labels": {
-                                        "app": "documentissuance"
+                                        "app": "applicationprocessing"
                                     },
                                     "annotations": {
                                         "msaez.io/x": "351"
@@ -14856,20 +17566,20 @@ const esValues = {
                                 "spec": {
                                     "selector": {
                                         "matchLabels": {
-                                            "app": "documentissuance"
+                                            "app": "applicationprocessing"
                                         }
                                     },
                                     "replicas": 1,
                                     "template": {
                                         "metadata": {
                                             "labels": {
-                                                "app": "documentissuance"
+                                                "app": "applicationprocessing"
                                             }
                                         },
                                         "spec": {
                                             "containers": [
                                                 {
-                                                    "name": "documentissuance",
+                                                    "name": "applicationprocessing",
                                                     "image": "ghcr.io/undefined",
                                                     "ports": [
                                                         {
@@ -14926,21 +17636,21 @@ const esValues = {
                             "inboundDestinationRule": null,
                             "outboundSecrets": []
                         },
-                        "from": "aa7cafa6-f251-83b0-48b4-acaecee553f8",
-                        "to": "f1b2ca02-8b49-31d9-f5b5-6d3adcabf7cc",
+                        "from": "285ffddc-b3f8-aa0c-6a6a-8b9624dca46c",
+                        "to": "8bbacd66-9fe9-037b-b0b7-e78e81a264e5",
                         "relationView": {
-                            "id": "29718b80-a201-bdef-b7be-6ebac6f9b832",
+                            "id": "5ab9d915-02e2-012e-66d8-efa4968675cf",
                             "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"none\"}",
                             "value": "[[352,250],[352,350]]",
-                            "from": "aa7cafa6-f251-83b0-48b4-acaecee553f8",
-                            "to": "f1b2ca02-8b49-31d9-f5b5-6d3adcabf7cc",
+                            "from": "285ffddc-b3f8-aa0c-6a6a-8b9624dca46c",
+                            "to": "8bbacd66-9fe9-037b-b0b7-e78e81a264e5",
                             "needReconnect": true
                         },
                         "sourceMultiplicity": 3,
                         "targetMultiplicity": 3,
                         "style": {}
                     },
-                    "bd80e5eb-dc45-4530-481d-d69d75696019": {
+                    "3ec233e8-c1af-ebba-8efb-c6af382add55": {
                         "_type": "org.uengine.modeling.model.Relation",
                         "name": "",
                         "sourceElement": {
@@ -14951,7 +17661,7 @@ const esValues = {
                             "path": "",
                             "elementView": {
                                 "_type": "Service",
-                                "id": "15d08ae0-664f-9ad7-b068-f572de13603f",
+                                "id": "cd7fdb51-438e-fe69-453e-735463a5f97a",
                                 "x": 551,
                                 "y": 200,
                                 "width": 100,
@@ -14963,9 +17673,9 @@ const esValues = {
                                 "apiVersion": "v1",
                                 "kind": "Service",
                                 "metadata": {
-                                    "name": "systemoperations",
+                                    "name": "operations",
                                     "labels": {
-                                        "app": "systemoperations"
+                                        "app": "operations"
                                     },
                                     "annotations": {
                                         "msaez.io/x": "551"
@@ -14979,7 +17689,7 @@ const esValues = {
                                         }
                                     ],
                                     "selector": {
-                                        "app": "systemoperations"
+                                        "app": "operations"
                                     }
                                 }
                             },
@@ -14989,7 +17699,7 @@ const esValues = {
                                 "namespace": "",
                                 "elementView": {
                                     "_type": "Deployment",
-                                    "id": "b497c682-b28b-cbf9-a6b4-12941eb94834",
+                                    "id": "3b6512ae-3fc1-ca01-1c41-54236cc580d1",
                                     "x": 551,
                                     "y": 400,
                                     "width": 100,
@@ -15001,9 +17711,9 @@ const esValues = {
                                     "apiVersion": "apps/v1",
                                     "kind": "Deployment",
                                     "metadata": {
-                                        "name": "systemoperations",
+                                        "name": "operations",
                                         "labels": {
-                                            "app": "systemoperations"
+                                            "app": "operations"
                                         },
                                         "annotations": {
                                             "msaez.io/x": "551"
@@ -15012,20 +17722,20 @@ const esValues = {
                                     "spec": {
                                         "selector": {
                                             "matchLabels": {
-                                                "app": "systemoperations"
+                                                "app": "operations"
                                             }
                                         },
                                         "replicas": 1,
                                         "template": {
                                             "metadata": {
                                                 "labels": {
-                                                    "app": "systemoperations"
+                                                    "app": "operations"
                                                 }
                                             },
                                             "spec": {
                                                 "containers": [
                                                     {
-                                                        "name": "systemoperations",
+                                                        "name": "operations",
                                                         "image": "ghcr.io/undefined",
                                                         "ports": [
                                                             {
@@ -15103,7 +17813,7 @@ const esValues = {
                             "namespace": "",
                             "elementView": {
                                 "_type": "Deployment",
-                                "id": "b497c682-b28b-cbf9-a6b4-12941eb94834",
+                                "id": "3b6512ae-3fc1-ca01-1c41-54236cc580d1",
                                 "x": 551,
                                 "y": 400,
                                 "width": 100,
@@ -15115,9 +17825,9 @@ const esValues = {
                                 "apiVersion": "apps/v1",
                                 "kind": "Deployment",
                                 "metadata": {
-                                    "name": "systemoperations",
+                                    "name": "operations",
                                     "labels": {
-                                        "app": "systemoperations"
+                                        "app": "operations"
                                     },
                                     "annotations": {
                                         "msaez.io/x": "551"
@@ -15126,20 +17836,20 @@ const esValues = {
                                 "spec": {
                                     "selector": {
                                         "matchLabels": {
-                                            "app": "systemoperations"
+                                            "app": "operations"
                                         }
                                     },
                                     "replicas": 1,
                                     "template": {
                                         "metadata": {
                                             "labels": {
-                                                "app": "systemoperations"
+                                                "app": "operations"
                                             }
                                         },
                                         "spec": {
                                             "containers": [
                                                 {
-                                                    "name": "systemoperations",
+                                                    "name": "operations",
                                                     "image": "ghcr.io/undefined",
                                                     "ports": [
                                                         {
@@ -15196,14 +17906,14 @@ const esValues = {
                             "inboundDestinationRule": null,
                             "outboundSecrets": []
                         },
-                        "from": "15d08ae0-664f-9ad7-b068-f572de13603f",
-                        "to": "b497c682-b28b-cbf9-a6b4-12941eb94834",
+                        "from": "cd7fdb51-438e-fe69-453e-735463a5f97a",
+                        "to": "3b6512ae-3fc1-ca01-1c41-54236cc580d1",
                         "relationView": {
-                            "id": "bd80e5eb-dc45-4530-481d-d69d75696019",
+                            "id": "3ec233e8-c1af-ebba-8efb-c6af382add55",
                             "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"none\"}",
                             "value": "[[552,250],[552,350]]",
-                            "from": "15d08ae0-664f-9ad7-b068-f572de13603f",
-                            "to": "b497c682-b28b-cbf9-a6b4-12941eb94834",
+                            "from": "cd7fdb51-438e-fe69-453e-735463a5f97a",
+                            "to": "3b6512ae-3fc1-ca01-1c41-54236cc580d1",
                             "needReconnect": true
                         },
                         "sourceMultiplicity": 3,

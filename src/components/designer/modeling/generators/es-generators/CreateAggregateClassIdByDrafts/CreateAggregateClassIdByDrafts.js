@@ -426,7 +426,7 @@ Inference Guidelines:
                                     },
                                     {
                                         "name": "totalAmount",
-                                        "type": "Money"
+                                        "type": "Integer"
                                     }
                                 ]
                             },
@@ -466,6 +466,7 @@ Inference Guidelines:
                             "name": "Order",
                             "alias": "Order"
                         },
+                        "enumerations": [],
                         "valueObjects": [
                             {
                                 "name": "CustomerReference",
@@ -484,6 +485,7 @@ Inference Guidelines:
                             "name": "Customer",
                             "alias": "Customer"
                         },
+                        "enumerations": [],
                         "valueObjects": [
                             {
                                 "name": "OrderReference",
