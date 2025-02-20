@@ -5,6 +5,13 @@ class OpenAIClient extends BaseAPIClient {
   constructor(client, options, model, aiGenerator) {
     super(client, options, model, aiGenerator)
     this.aiGenerator.roleNames.system = "developer"
+    this.deterministicModelParams = {
+      temperature: 0,
+      frequency_penalty: 0,
+      presence_penalty: 0,
+      top_p: 1,
+      seed: 42
+    }
   }
   
   _makeRequestParams(messages, modelInfo, token){
@@ -17,6 +24,18 @@ class OpenAIClient extends BaseAPIClient {
       top_p: modelInfo.requestArgs.topP,
       reasoning_effort: modelInfo.requestArgs.reasoningEffort,
       stream: true
+    }
+
+    if(localStorage.getItem("deterministicModel") === "true") {
+      requestData = {
+        ...requestData,
+        ...this.deterministicModelParams
+      }
+
+      if(modelInfo.requestModelName.startsWith("o3-mini")) {
+        requestData.top_p = undefined
+        requestData.temperature = undefined
+      }
     }
 
     if(modelInfo.requestModelName.startsWith("o3-mini") || modelInfo.requestModelName.startsWith("gpt-4o"))

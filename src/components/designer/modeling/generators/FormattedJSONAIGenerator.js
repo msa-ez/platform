@@ -165,17 +165,18 @@ class FormattedJSONAIGenerator extends AIGenerator {
         if(this.useJsonRestoreStrategy && this.jsonOutputTextToRestore) {
             this.changeToSimpleModel()
 
+            this.createdPrompt = this._getJsonRestorePrompt(this.jsonOutputTextToRestore)
+            console.log("[*] Json 파싱에러가 난 데이터를 복구하는 전략으로 시도", {
+                prompt: structuredClone(this.createdPrompt),
+                modelInfo: this.modelInfo
+            })
+
             this.useJsonRestoreStrategy = false
             this.jsonOutputTextToRestore = undefined
 
             this.savedOnSendCallback = this.client.onSend
             this.client.onSend = undefined
 
-            this.createdPrompt = this._getJsonRestorePrompt(this.jsonOutputTextToRestore)
-            console.log("[*] Json 파싱에러가 난 데이터를 복구하는 전략으로 시도", {
-                prompt: structuredClone(this.createdPrompt),
-                modelInfo: this.modelInfo
-            })
             return this.createdPrompt
         }
         else {
@@ -494,6 +495,7 @@ ${JSON.stringify(exampleOutputs)}
             startTime: this.startTime,
             currentTime: Date.now(),
             passedSeconds: (Date.now() - this.startTime) / 1000,
+            currentState: this.state,
             actions: {
                 stopGeneration: () => {
                     this.stop()
@@ -504,11 +506,15 @@ ${JSON.stringify(exampleOutputs)}
             }
         }
 
+        if(returnObj.isStopped) 
+            return returnObj
+
         if(!text) {
             console.log("[*] 별도의 처리할 텍스트가 없음", { ...this._makeDebugObject(returnObj) })
             return returnObj
         }
 
+        
         if(this.isFirstResponse) {
             this.prevPartialAiOutput = {}
             returnObj.isFirstResponse = this.isFirstResponse
