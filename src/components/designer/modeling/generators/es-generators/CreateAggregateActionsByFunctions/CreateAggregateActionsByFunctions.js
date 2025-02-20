@@ -14,7 +14,7 @@ class CreateAggregateActionsByFunctions extends FormattedJSONAIGenerator{
 
         this.generatorName = "CreateAggregateActionsByFunctions"
         this.checkInputParamsKeys = ["targetBoundedContext", "description", "draftOption", "esValue", "userInfo", "information", "isAccumulated"]
-        this.progressCheckStrings = ["inference", "aggregateActions", "entityActions", "valueObjectActions", "enumerationActions"]
+        this.progressCheckStrings = ["inference", "aggregateActions", "valueObjectActions", "enumerationActions"]
     }
 
     /**
@@ -182,28 +182,6 @@ class CreateAggregateActionsByFunctions extends FormattedJSONAIGenerator{
                             }).strict(),
                         }).strict()
                     ),
-                    entityActions: z.array(
-                        z.object({
-                            actionName: z.string(),
-                            objectType: z.literal("Entity"),
-                            ids: z.object({
-                                aggregateId: z.string(),
-                                entityId: z.string(),
-                            }).strict(),
-                            args: z.object({
-                                entityName: z.string(),
-                                entityAlias: z.string(),
-                                properties: z.array(
-                                    z.object({
-                                        name: z.string(),
-                                        type: z.string(),
-                                        isKey: z.boolean(),
-                                        isForeignProperty: z.boolean(),
-                                    }).strict()
-                                ),
-                            }).strict(),
-                        }).strict()
-                    ),
                     valueObjectActions: z.array(
                         z.object({
                             actionName: z.string(),
@@ -252,16 +230,14 @@ class CreateAggregateActionsByFunctions extends FormattedJSONAIGenerator{
     }
 
     async onGenerateBefore(inputParams){
-        inputParams.esValue = JSON.parse(JSON.stringify(inputParams.esValue))
-        inputParams.draftOption = this._removeClassIdProperties(JSON.parse(JSON.stringify(inputParams.draftOption)))
-
+        inputParams.esValue = structuredClone(inputParams.esValue)
+        inputParams.draftOption = this._removeClassIdProperties(structuredClone(inputParams.draftOption))
 
         inputParams.targetAggregate = Object.values(inputParams.draftOption)[0].aggregate
         inputParams.aggregateDisplayName = inputParams.targetAggregate.alias ? inputParams.targetAggregate.alias : inputParams.targetAggregate.name
         inputParams.esAliasTransManager = new ESAliasTransManager(inputParams.esValue)
 
-
-        let targetBCRemovedESValue = JSON.parse(JSON.stringify(inputParams.esValue))
+        let targetBCRemovedESValue = structuredClone(inputParams.esValue)
         if(!inputParams.isAccumulated)
             this._removePrevBoundedContextRelatedElements(inputParams.targetBoundedContext.name, targetBCRemovedESValue)
         
@@ -312,7 +288,7 @@ class CreateAggregateActionsByFunctions extends FormattedJSONAIGenerator{
         
         const aggregateStructure = inputParams.draftOption[0]
         const hasValueObjects = (aggregateStructure.valueObjects) ? aggregateStructure.valueObjects.length > 0 : false
-        const hasEntities = (aggregateStructure.entities) ? aggregateStructure.entities.length > 0 : false
+        const hasEnumerations = (aggregateStructure.enumerations) ? aggregateStructure.enumerations.length > 0 : false
         
         return `Task: Creating ${aggregateName} Aggregate in ${boundedContextName} Bounded Context
         
@@ -321,7 +297,7 @@ ${description}
 
 Aggregate Structure:
 - Creating new aggregate '${aggregateName}'${inputParams.targetAggregate.alias ? ` (${inputParams.targetAggregate.alias})` : ''}
-- Will contain ${hasValueObjects ? 'value objects' : ''}${hasValueObjects && hasEntities ? ' and ' : ''}${hasEntities ? 'entities' : ''}
+- Will contain ${hasValueObjects ? 'value objects' : ''}${hasValueObjects && hasEnumerations ? ' and ' : ''}${hasEnumerations ? 'enumerations' : ''}
 - Part of ${boundedContextName} domain
 
 Focus:
@@ -332,136 +308,129 @@ Focus:
 
 
     __buildAgentRolePrompt(){
-        return `You are a DDD expert specializing in:
-1. Converting business requirements into precise domain models
-2. Designing clean bounded contexts and aggregates
-3. Implementing event sourcing patterns
-4. Creating maintainable domain structures
+        return `You are a Domain-Driven Design (DDD) expert with a proven track record in transforming intricate business requirements into precise and scalable domain models. Your expertise includes:
 
-Focus on:
-- Strategic DDD principles
-- Aggregate design best practices 
-- Clear domain boundaries
-- Consistent naming conventions
-`
+1. Translating complex business processes and requirements into coherent, well-structured aggregates.
+2. Designing and maintaining clear, robust bounded contexts that effectively separate and isolate different domains.
+3. Implementing event sourcing strategies to accurately capture and track domain events.
+4. Utilizing best practices for incorporating value objects and enumerations in domain models to ensure data integrity.
+
+Focus Areas:
+- Strict adherence to DDD principles with clear demarcation of domain boundaries and strategic modeling.
+- Consistent use of domain-specific naming conventions to enhance clarity and maintainability.
+- Efficient mapping of relationships, dependencies, and interactions between aggregates, value objects, and enumerations.
+- Alignment of all domain elements with technical constraints and business requirements to achieve scalable and resilient architectures.
+
+Apply your expertise to craft maintainable, high-integrity domain structures that adapt seamlessly to evolving business needs.`
     }
 
     __buildTaskGuidelinesPrompt(){
-        return `In your current event storming model, you need to write actions to add elements inside a particular Bounded Context, following the structure provided by the user.
+        return `In your current event storming model, you need to write actions to add elements inside a particular Bounded Context following the structure provided by the user.
 
-Please follow these rules:
+Please adhere to the following guidelines:
 
 Data Type Rules:
 1. For Aggregate properties, use:
    - Basic Java types: String, Long, Integer, Double, Boolean, Date
-   - Predefined types: Address, Portrait, Rating, Money, Email
-   - Custom types must be defined as: Enumeration, ValueObject, or Entity
-2. For collections, use 'List<ClassName>' syntax (e.g., List<Address>)
+   - Custom types must be defined as either Enumeration or ValueObject.
+2. For collections, use the 'List<ClassName>' syntax (e.g., List<String>).
 
 Type Reference and Enumeration Rules:
 3. When to use Enumerations:
-   - For any property representing a fixed set of values or categories
-   - When the property value must be one of a predefined list
-   - When the property name ends with: Type, Status, Category, Level, Phase, Stage
-   
-   ALWAYS create as Enumeration (not ValueObject) when the property:
-   - Represents a classification (e.g., BookCategory, AccountType)
-   - Represents a status (e.g., OrderStatus, PaymentStatus)
-   - Represents a type (e.g., UserType, ProductType)
-   - Has a fixed set of possible values (e.g., DayOfWeek, Currency)
-   - Is used for categorization or classification
-   
-   Example Enumeration cases:
-   - category -> BookCategory (Enumeration)
-   - status -> OrderStatus (Enumeration)
-   - type -> ProductType (Enumeration)
-   - level -> MembershipLevel (Enumeration)
-   - paymentMethod -> PaymentMethod (Enumeration)
+   - When a property represents a fixed set of values or categories.
+   - When the property value must be one of a predefined list.
+   - When the property name ends with words such as Type, Status, Category, Level, Phase, or Stage.
+   - Specifically, when storing state or status information, an Enumeration must be used.
+   Example cases:
+     • category → BookCategory (Enumeration)
+     • status → OrderStatus (Enumeration)
+     • type → ProductType (Enumeration)
+     • level → MembershipLevel (Enumeration)
+     • paymentMethod → PaymentMethod (Enumeration)
 
 4. When to use ValueObjects:
-   - When the type contains multiple related properties
-   - When the properties together form a meaningful concept
-   - When immutability is required
-   
-   Example ValueObject cases:
-   - address -> Address (street, city, zipCode)
-   - period -> DateRange (startDate, endDate)
-   - money -> Money (amount, currency)
-   - contact -> ContactInfo (phone, email, address)
+   - When a group of related properties forms a meaningful concept and immutability is required.
+   - **All ValueObjects must be directly associated with their Aggregate.** Do not define ValueObjects that are nested within or used by other ValueObjects.
+   - Unless there is a special case, avoid creating meaningless ValueObjects. Instead, incorporate such properties directly within the Aggregate.
+   - Refrain from creating an excessive number of ValueObjects.
+   Example cases:
+     • address → Address (street, city, zipCode)
+     • period → DateRange (startDate, endDate)
+     • money → Money (amount, currency)
+     • contact → ContactInfo (phone, email, address)
 
 Naming and Language Conventions:
-5. Object names (classes, properties, methods) must be in English
-6. Supporting content (aliases, descriptions) must be in ${this.preferredLanguage}
+5. Object names (classes, properties, methods) must be in English.
+6. Supporting content (aliases, descriptions) must adhere to the preferred language setting.
 
 Structural Rules:
 7. Aggregates:
-   - Must have exactly one primary key attribute
-   - For composite keys, create a ValueObject and use it as the primary key
-   - Reference other Aggregates using their class names, not IDs
-   - Avoid creating separate transaction objects when the main aggregate can manage the lifecycle:
-     * Do not create Transaction entities if their properties duplicate the main aggregate
-     * Use the aggregate root to manage state transitions and history
-     * Consider Event Sourcing for tracking historical changes instead of transaction objects
-     * Transaction records should only be created when they have unique business value beyond the aggregate's lifecycle
+   - Must have exactly one primary key attribute.
+   - For composite keys, create a ValueObject and use it as the primary key.
+   - Reference other Aggregates using their class names rather than IDs.
+   - Avoid creating separate transaction objects when the main Aggregate can manage its lifecycle. Do not duplicate properties by creating Transaction ValueObjects if they overlap with the main Aggregate.
+   - Use the Aggregate root to manage state transitions and history. Consider Event Sourcing for tracking historical changes if needed.
 
 8. ValueObjects:
-   - Must contain multiple related properties
-   - Should be immutable
-   - Cannot have single properties unless absolutely necessary
+   - Must be directly linked to an Aggregate; avoid defining ValueObjects that are internally nested or that represent subordinate structures.
+   - Should encapsulate multiple, related properties and be immutable.
+   - Prevent the creation of trivial or redundant ValueObjects by including properties directly in the Aggregate unless a special case dictates otherwise.
+   - Do not generate an excessive number of ValueObjects.
 
 Creation Guidelines:
 9. Create only:
-   - Aggregates listed in 'Aggregate to create'
-   - All ValueObjects and Entities from the provided structure
-   - Enumerations for any property requiring fixed values
-   - All supporting types needed by properties
+   - Aggregates listed under 'Aggregate to create'.
+   - All ValueObjects from the provided structure that have a direct association with the Aggregate.
+   - Enumerations for any property requiring a fixed set of values.
+   - All supporting types needed for the properties.
 
 10. Property Type Selection:
-    - Use specific types over generic ones
+    - Opt for specific types over generic ones.
     - Example mappings:
-      * startDate -> Date
-      * currentCapacity -> Integer
-      * price -> Money
-      * category -> Enumeration
-      * status -> Enumeration
+      • startDate → Date
+      • currentCapacity → Integer
+      • price → Double
+      • category → Enumeration
+      • status → Enumeration
 
 Type Dependency Resolution:
-11. Before finalizing the result:
-    - Review all property types
-    - Create Enumerations for any classification, status, or type properties
-    - Ensure all custom types are properly defined
-    - Verify correct usage of ValueObjects vs Enumerations
+11. Before finalizing your result:
+    - Validate all property types.
+    - Create Enumerations for properties representing classifications, statuses, or types.
+    - Ensure that all custom types are clearly defined.
+    - Verify the appropriate usage of ValueObjects versus Enumerations.
 
 Constraints:
 12. Rules:
-    - Only reference existing Aggregates without modifying them
-    - Do not recreate types that already exist in the system
-    - Do not write comments in the output JSON object
-    - Do not create duplicate elements in the model
-    - Do not create ValueObjects for properties that should be defined as Enumerations
-    - Do not append type names (like 'Enumeration', 'ValueObject', 'Entity') to object names - use base names only (e.g., 'BookStatus' instead of 'BookStatusEnumeration')
-    - Names must be unique across all actions and existing elements:
-      * No duplicate names between new and existing elements
-      * No duplicate names within new elements, regardless of their type
-      * Example: If creating a ValueObject named "Address" and an Enumeration, the Enumeration cannot be named "Address" even though they are different types
+    - Only reference existing Aggregates without altering them.
+    - Do not recreate types that already exist in the system.
+    - Avoid including comments in the output JSON object.
+    - Prevent duplicate elements in the model.
+    - Do not use ValueObjects for properties that should be defined as Enumerations.
+    - Refrain from appending type names (e.g., 'Enumeration' or 'ValueObject') to object names; use base names only (e.g., 'BookStatus' rather than 'BookStatusEnumeration').
+    - Ensure names are unique across both new and existing elements, with no duplicates.
 
 13. Required Elements:
-    - All ValueObjects, Entities, and Enumerations must be used as properties
-    - All elements from the user's structure must be implemented
-    - All relationships must be properly mapped
-    - All custom types must have corresponding definitions
+    - Every ValueObject and Enumeration must be directly associated with an Aggregate.
+    - Every generated ValueObject and Enumeration must be included as a named attribute in at least one Aggregate.
+    - Implement all elements specified in the user's structure.
+    - Accurately map all relationships.
+    - Provide corresponding definitions for all custom types.
 `
     }
 
     __buildInferenceGuidelinesPrompt() {
         return `
 Inference Guidelines:
-1. The process of reasoning should be directly related to the output result, not a reference to a general strategy.
+1. The reasoning should directly inform the output result with specific design decisions rather than generic strategies.
 2. Begin by thoroughly understanding the task requirements and the overall domain context.
-3. Consider key design aspects, including domain alignment, structural integrity, and technical feasibility.
-4. Analyze the relationships and dependencies between Aggregates, ValueObjects, Entities, and Enumerations.
-5. Ensure that all design decisions adhere to Domain-Driven Design principles and best practices.
-`   
+3. Evaluate key design aspects, including domain alignment, adherence to Domain-Driven Design (DDD) principles, and technical feasibility.
+4. Analyze the relationships and dependencies between Aggregates, ValueObjects, and Enumerations precisely.
+5. Ensure that all design decisions comply with DDD best practices.
+6. When properties represent state or status information, enforce the use of Enumerations to clearly define valid values.
+7. Verify that every ValueObject and Enumeration is directly associated with an Aggregate; avoid nested or subordinate ValueObject definitions.
+8. Avoid creating unnecessary or excessive ValueObjects; integrate properties directly into the Aggregate unless a distinct ValueObject offers significant encapsulation.
+`
     }
 
     __buildRequestFormatPrompt(){
@@ -473,7 +442,7 @@ Inference Guidelines:
 {
     "inference": "<inference>",
     "result": {
-        // aggregateId can be used when defining Enumeration, ValueObject, Entity that belong to an Aggregate.
+        // aggregateId can be used when defining Enumeration, ValueObject that belong to an Aggregate.
         "aggregateActions": [
             {
                 // Write the ActionName that you utilized in the previous steps
@@ -491,32 +460,6 @@ Inference Guidelines:
                             "name": "<propertyName>",
                             ["type": "<propertyType>"], // If the type is String, do not specify the type.
                             ["isKey": true] // Write only if there is a primary key.
-                        }
-                    ]
-                }
-            }
-        ],
-
-        // Unlike ValueObjects, Entities are mutable objects with their own identity and lifecycle.
-        // They represent complex domain concepts that don't qualify as Aggregates but need more flexibility than ValueObjects.
-        "entityActions": [
-            {
-                "actionName": "<actionName>",
-                "objectType": "Entity",
-                "ids": {
-                    "aggregateId": "<aggregateId>",
-                    "entityId": "<entityId>"
-                },
-                "args": {
-                    "entityName": "<entityName>",
-                    "entityAlias": "<entityAlias>",
-
-                    "properties": [
-                        {
-                            "name": "<propertyName>",
-                            ["type": "<propertyType>"], // If the type is String, do not specify the type.
-                            ["isKey": true], // Write only if there is a primary key.
-                            ["isForeignProperty": true] // Whether it is a foreign key. Write only if this attribute references another table's attribute.
                         }
                     ]
                 }
@@ -580,73 +523,39 @@ Inference Guidelines:
                 "deletedProperties": ESValueSummarizeWithFilter.KEY_FILTER_TEMPLATES.aggregateOuterStickers,
                 "boundedContexts": [
                     {
-                        "id": "bc-hotel",
-                        "name": "hotelservice",
+                        "id": "bc-order",
+                        "name": "orderservice",
                         "actors": [
-                            {
-                                "id": "act-guest",
-                                "name": "Guest"
-                            },
-                            {
-                                "id": "act-staff",
-                                "name": "HotelStaff"
-                            }
+                            { "id": "act-customer", "name": "Customer" },
+                            { "id": "act-admin", "name": "Admin" }
                         ],
                         "aggregates": [
                             {
-                                "id": "agg-room",
-                                "name": "Room",
+                                "id": "agg-product",
+                                "name": "Product",
                                 "properties": [
-                                    {
-                                        "name": "roomId",
-                                        "type": "Long",
-                                        "isKey": true
-                                    },
-                                    {
-                                        "name": "roomNumber"
-                                    },
-                                    {
-                                        "name": "type",
-                                        "type": "RoomType"
-                                    },
-                                    {
-                                        "name": "rate",
-                                        "type": "Money"
-                                    },
-                                    {
-                                        "name": "status",
-                                        "type": "RoomStatus"
-                                    }
+                                    { "name": "productId", "type": "Long", "isKey": true },
+                                    { "name": "name" },
+                                    { "name": "price", "type": "Double" },
+                                    { "name": "category", "type": "ProductCategory" },
+                                    { "name": "stock", "type": "Integer" }
                                 ],
                                 "entities": [],
                                 "enumerations": [
                                     {
-                                        "id": "enum-room-type",
-                                        "name": "RoomType",
-                                        "items": ["STANDARD", "DELUXE", "SUITE", "PRESIDENTIAL"]
-                                    },
-                                    {
-                                        "id": "enum-room-status",
-                                        "name": "RoomStatus",
-                                        "items": ["AVAILABLE", "OCCUPIED", "MAINTENANCE", "RESERVED"]
+                                        "id": "enum-product-category",
+                                        "name": "ProductCategory",
+                                        "items": ["ELECTRONICS", "FURNITURE", "CLOTHING", "FOOD"]
                                     }
                                 ],
                                 "valueObjects": [
                                     {
-                                        "id": "vo-room-amenities",
-                                        "name": "RoomAmenities",
+                                        "id": "vo-product-dimensions",
+                                        "name": "ProductDimensions",
                                         "properties": [
-                                            {
-                                                "name": "hasMinibar",
-                                                "type": "Boolean"
-                                            },
-                                            {
-                                                "name": "hasWifi",
-                                                "type": "Boolean"
-                                            },
-                                            {
-                                                "name": "viewType"
-                                            }
+                                            { "name": "length", "type": "Double" },
+                                            { "name": "width", "type": "Double" },
+                                            { "name": "height", "type": "Double" }
                                         ]
                                     }
                                 ]
@@ -655,381 +564,199 @@ Inference Guidelines:
                     }
                 ]
             },
-
-            "Bounded Context to Generate Actions": "hotelservice",
-
+            "Bounded Context to Generate Actions": "orderservice",
             "Functional Requirements": {
                 "userStories": [
                     {
-                        "title": "Create New Room Booking",
-                        "description": "As a guest, I want to book a hotel room with my preferences so that I can secure my stay",
+                        "title": "Place New Order",
+                        "description": "As a customer, I want to place a new order with my selected products to complete my purchase.",
                         "acceptance": [
-                            "All required guest information must be provided",
-                            "Room type must be selected through search popup",
-                            "Valid check-in and check-out dates must be selected",
-                            "Meal plan must be chosen from available options",
-                            "Booking button activates only when all required fields are filled"
+                            "All selected products must be available in stock.",
+                            "Customer information must be valid.",
+                            "Payment should be processed successfully."
                         ]
                     },
                     {
-                        "title": "View Reservation Status",
-                        "description": "As a guest, I want to view my booking history and manage active reservations",
+                        "title": "View Order History",
+                        "description": "As a customer, I want to view my past orders and their statuses.",
                         "acceptance": [
-                            "Bookings are filterable by date range and status",
-                            "Detailed booking information shows in popup on row click",
-                            "Active bookings can be modified or cancelled",
-                            "All booking details are displayed in organized table format"
+                            "Orders must be sorted by order date.",
+                            "Order details are displayed correctly.",
+                            "Filtering by order status is available."
                         ]
                     }
                 ],
                 "entities": {
-                    "Guest": {
+                    "Customer": {
                         "properties": [
-                            {"name": "guestId", "type": "string", "required": true, "isPrimaryKey": true},
-                            {"name": "name", "type": "string", "required": true},
-                            {"name": "membershipLevel", "type": "enum", "required": true, "values": ["standard", "VIP"]},
-                            {"name": "phoneNumber", "type": "string", "required": true},
-                            {"name": "email", "type": "string", "required": true}
+                            { "name": "customerId", "type": "Long", "required": true, "isPrimaryKey": true },
+                            { "name": "name", "type": "String", "required": true },
+                            { "name": "email", "type": "String", "required": true }
                         ]
                     },
-                    "Booking": {
+                    "Order": {
                         "properties": [
-                            {"name": "bookingNumber", "type": "string", "required": true, "isPrimaryKey": true},
-                            {"name": "guestId", "type": "string", "required": true, "isForeignKey": true, "foreignEntity": "Guest"},
-                            {"name": "roomType", "type": "string", "required": true},
-                            {"name": "checkInDate", "type": "date", "required": true},
-                            {"name": "checkOutDate", "type": "date", "required": true},
-                            {"name": "numberOfGuests", "type": "integer", "required": true},
-                            {"name": "mealPlan", "type": "enum", "required": true, "values": ["No Meal", "Breakfast Only", "Half Board", "Full Board"]},
-                            {"name": "specialRequests", "type": "string", "required": false},
-                            {"name": "status", "type": "enum", "required": true, "values": ["Active", "Completed", "Cancelled"]},
-                            {"name": "totalAmount", "type": "decimal", "required": true}
+                            { "name": "orderId", "type": "Long", "required": true, "isPrimaryKey": true },
+                            { "name": "customerId", "type": "Long", "required": true, "isForeignKey": true, "foreignEntity": "Customer" },
+                            { "name": "orderDate", "type": "Date", "required": true },
+                            { "name": "totalAmount", "type": "Integer", "required": true }
                         ]
                     }
                 },
                 "businessRules": [
-                    {
-                        "name": "ValidBookingDates",
-                        "description": "Check-out date must be after check-in date"
-                    },
-                    {
-                        "name": "RequiredFields",
-                        "description": "All fields except special requests are mandatory for booking"
-                    },
-                    {
-                        "name": "ActiveBookingModification",
-                        "description": "Only active bookings can be modified or cancelled"
-                    }
+                    { "name": "ValidOrderTotal", "description": "Order total must be a positive value." },
+                    { "name": "CustomerExists", "description": "Order must be associated with an existing customer." }
                 ],
                 "interfaces": {
-                    "RoomBooking": {
+                    "NewOrder": {
                         "sections": [
                             {
-                                "name": "GuestInformation",
+                                "name": "OrderDetails",
                                 "type": "form",
                                 "fields": [
-                                    {"name": "name", "type": "text", "required": true},
-                                    {"name": "guestId", "type": "text", "required": true},
-                                    {"name": "membershipLevel", "type": "select", "required": true},
-                                    {"name": "phoneNumber", "type": "text", "required": true},
-                                    {"name": "email", "type": "email", "required": true}
+                                    { "name": "customerId", "type": "text", "required": true },
+                                    { "name": "orderDate", "type": "date", "required": true },
+                                    { "name": "totalAmount", "type": "number", "required": true }
                                 ]
                             },
                             {
-                                "name": "BookingDetails",
-                                "type": "form",
-                                "fields": [
-                                    {"name": "roomType", "type": "search", "required": true},
-                                    {"name": "checkInDate", "type": "date", "required": true},
-                                    {"name": "checkOutDate", "type": "date", "required": true},
-                                    {"name": "numberOfGuests", "type": "number", "required": true},
-                                    {"name": "mealPlan", "type": "select", "required": true},
-                                    {"name": "specialRequests", "type": "textarea", "required": false}
-                                ],
-                                "actions": ["Submit", "Clear"]
+                                "name": "ProductSelection",
+                                "type": "table",
+                                "filters": [ "category", "priceRange" ],
+                                "resultTable": {
+                                    "columns": [ "productId", "name", "price", "stock" ],
+                                    "actions": [ "select", "viewDetails" ]
+                                }
                             }
                         ]
                     },
-                    "ReservationStatus": {
+                    "OrderHistory": {
                         "sections": [
                             {
-                                "name": "BookingHistory",
+                                "name": "PastOrders",
                                 "type": "table",
-                                "filters": ["dateRange", "bookingStatus"],
+                                "filters": [ "dateRange", "status" ],
                                 "resultTable": {
-                                    "columns": ["bookingNumber", "roomType", "checkInDate", "checkOutDate", "totalAmount", "status"],
-                                    "actions": ["viewDetails", "modify", "cancel"]
+                                    "columns": [ "orderId", "orderDate", "totalAmount", "status" ],
+                                    "actions": [ "viewDetails", "reorder" ]
                                 }
                             }
                         ]
                     }
                 }
             },
-
             "Suggested Structure": [
                 {
                     "aggregate": {
-                        "name": "Booking",
-                        "alias": "Room Booking"
+                        "name": "Order",
+                        "alias": "Customer Order"
                     },
-                    "valueObjects": [
+                    "enumerations": [
                         {
-                            "name": "GuestInformation",
-                            "alias": "Guest Details"
-                        },
-                        {
-                            "name": "BookingPeriod",
-                            "alias": "Stay Duration"
+                            "name": "OrderStatus",
+                            "alias": "Order Status"
                         }
                     ],
-                    "entities": [
+                    "valueObjects": [
+                        {
+                            "name": "ShippingAddress",
+                            "alias": "Shipping Address"
+                        },
                         {
                             "name": "PaymentDetail",
-                            "alias": "Payment Information"
+                            "alias": "Payment Detail"
                         }
                     ]
                 }
             ],
-
             "Aggregate to create": {
-                "name": "Booking",
-                "alias": "Room Booking"
+                "name": "Order",
+                "alias": "Customer Order"
             }
         }
     }
 
     __buildJsonExampleOutputFormat() {
         return {
-            "inference": `In this solution, we began by thoroughly analyzing the provided business requirements and the overall domain context, with a clear focus on Domain-Driven Design principles. We identified 'Booking' as the aggregate to create with its alias 'Room Booking' and ensured that it incorporates a single primary key (using 'bookingId') while encompassing its related subcomponents. Specifically, we recognized that the 'GuestInformation' and 'BookingPeriod' structures should be modeled as value objects due to their inherent immutability and related property grouping, and that 'PaymentDetail' should be treated as an entity, given its own identity and mutable lifecycle. Furthermore, we followed the mapping rules precisely by allocating specific types (e.g., Long for identifiers, Money for monetary values) and utilizing enumerations (such as BookingStatus, RoomType, PaymentMethod, PaymentStatus, and MembershipLevel) when dealing with fixed sets of values. Each naming decision was aligned with the requirement that all names must be unique and in English. This reasoning process directly supports the output result by ensuring that the generated actions for aggregates, entities, value objects, and enumerations strictly conform to the established modeling guidelines and business constraints.`,
+            "inference": "The Customer Order aggregate has been created successfully. OrderStatus enumeration defines the order states, while ShippingAddress and PaymentDetail value objects encapsulate address and payment information respectively.",
             "result": {
                 "aggregateActions": [
                     {
-                        "actionName": "CreateBookingAggregate",
+                        "actionName": "CreateOrderAggregate",
                         "objectType": "Aggregate",
                         "ids": {
-                            "aggregateId": "agg-booking"
+                            "aggregateId": "agg-order"
                         },
                         "args": {
-                            "aggregateName": "Booking",
-                            "aggregateAlias": "Room Booking",
+                            "aggregateName": "Order",
+                            "aggregateAlias": "Customer Order",
                             "properties": [
-                                {
-                                    "name": "bookingId",
-                                    "type": "Long",
-                                    "isKey": true
-                                },
-                                {
-                                    "name": "guestInformation",
-                                    "type": "GuestInformation"
-                                },
-                                {
-                                    "name": "bookingPeriod",
-                                    "type": "BookingPeriod"
-                                },
-                                {
-                                    "name": "paymentDetails",
-                                    "type": "List<PaymentDetail>"
-                                },
-                                {
-                                    "name": "status",
-                                    "type": "BookingStatus"
-                                },
-                                {
-                                    "name": "totalAmount",
-                                    "type": "Money"
-                                },
-                                {
-                                    "name": "specialRequests"
-                                }
+                                { "name": "orderId", "type": "Long", "isKey": true },
+                                { "name": "customerId", "type": "Long" },
+                                { "name": "orderDate", "type": "Date" },
+                                { "name": "totalAmount", "type": "Integer" },
+                                { "name": "shippingAddress", "type": "ShippingAddress" },
+                                { "name": "paymentDetail", "type": "PaymentDetail" },
+                                { "name": "status", "type": "OrderStatus" }
                             ]
                         }
                     }
                 ],
-
-                "entityActions": [
-                    {
-                        "actionName": "CreatePaymentDetailEntity",
-                        "objectType": "Entity",
-                        "ids": {
-                            "aggregateId": "agg-booking",
-                            "entityId": "entity-payment-detail"
-                        },
-                        "args": {
-                            "entityName": "PaymentDetail",
-                            "entityAlias": "Payment Information",
-                            "properties": [
-                                {
-                                    "name": "paymentId",
-                                    "type": "Long",
-                                    "isKey": true
-                                },
-                                {
-                                    "name": "paymentMethod",
-                                    "type": "PaymentMethod"
-                                },
-                                {
-                                    "name": "paymentStatus",
-                                    "type": "PaymentStatus"
-                                },
-                                {
-                                    "name": "amount",
-                                    "type": "Money"
-                                },
-                                {
-                                    "name": "transactionDate",
-                                    "type": "Date"
-                                }
-                            ]
-                        }
-                    }
-                ],
-
                 "valueObjectActions": [
                     {
-                        "actionName": "CreateGuestInformationValueObject",
+                        "actionName": "CreateShippingAddressVO",
                         "objectType": "ValueObject",
                         "ids": {
-                            "aggregateId": "agg-booking",
-                            "valueObjectId": "vo-guest-information"
+                            "aggregateId": "agg-order",
+                            "valueObjectId": "vo-shipping-address"
                         },
                         "args": {
-                            "valueObjectName": "GuestInformation",
-                            "valueObjectAlias": "Guest Details",
+                            "valueObjectName": "ShippingAddress",
+                            "valueObjectAlias": "Shipping Address",
                             "properties": [
-                                {
-                                    "name": "name"
-                                },
-                                {
-                                    "name": "email",
-                                    "type": "Email"
-                                },
-                                {
-                                    "name": "phoneNumber"
-                                },
-                                {
-                                    "name": "membershipLevel",
-                                    "type": "MembershipLevel"
-                                }
+                                { "name": "street" },
+                                { "name": "city" },
+                                { "name": "state" },
+                                { "name": "zipCode" }
                             ]
                         }
                     },
                     {
-                        "actionName": "CreateBookingPeriodValueObject",
+                        "actionName": "CreatePaymentDetailVO",
                         "objectType": "ValueObject",
                         "ids": {
-                            "aggregateId": "agg-booking",
-                            "valueObjectId": "vo-booking-period"
+                            "aggregateId": "agg-order",
+                            "valueObjectId": "vo-payment-detail"
                         },
                         "args": {
-                            "valueObjectName": "BookingPeriod",
-                            "valueObjectAlias": "Stay Duration",
+                            "valueObjectName": "PaymentDetail",
+                            "valueObjectAlias": "Payment Detail",
                             "properties": [
-                                {
-                                    "name": "checkInDate",
-                                    "type": "Date"
-                                },
-                                {
-                                    "name": "checkOutDate",
-                                    "type": "Date"
-                                },
-                                {
-                                    "name": "numberOfNights",
-                                    "type": "Integer"
-                                }
+                                { "name": "cardNumber" },
+                                { "name": "cardHolder" },
+                                { "name": "expirationDate", "type": "Date" },
+                                { "name": "securityCode" }
                             ]
                         }
                     }
                 ],
-
                 "enumerationActions": [
                     {
-                        "actionName": "CreateBookingStatusEnumeration",
+                        "actionName": "CreateOrderStatusEnum",
                         "objectType": "Enumeration",
                         "ids": {
-                            "aggregateId": "agg-booking",
-                            "enumerationId": "enum-booking-status"
+                            "aggregateId": "agg-order",
+                            "enumerationId": "enum-order-status"
                         },
                         "args": {
-                            "enumerationName": "BookingStatus",
-                            "enumerationAlias": "Booking Status",
+                            "enumerationName": "OrderStatus",
+                            "enumerationAlias": "Order Status",
                             "properties": [
-                                {"name": "PENDING"},
-                                {"name": "CONFIRMED"},
-                                {"name": "CHECKED_IN"},
-                                {"name": "CHECKED_OUT"},
-                                {"name": "CANCELLED"}
-                            ]
-                        }
-                    },
-                    {
-                        "actionName": "CreateRoomTypeEnumeration",
-                        "objectType": "Enumeration",
-                        "ids": {
-                            "aggregateId": "agg-booking",
-                            "enumerationId": "enum-room-type"
-                        },
-                        "args": {
-                            "enumerationName": "RoomType",
-                            "enumerationAlias": "Room Type",
-                            "properties": [
-                                {"name": "STANDARD"},
-                                {"name": "DELUXE"},
-                                {"name": "SUITE"},
-                                {"name": "PRESIDENTIAL"}
-                            ]
-                        }
-                    },
-                    {
-                        "actionName": "CreatePaymentMethodEnumeration",
-                        "objectType": "Enumeration",
-                        "ids": {
-                            "aggregateId": "agg-booking",
-                            "enumerationId": "enum-payment-method"
-                        },
-                        "args": {
-                            "enumerationName": "PaymentMethod",
-                            "enumerationAlias": "Payment Method",
-                            "properties": [
-                                {"name": "CREDIT_CARD"},
-                                {"name": "DEBIT_CARD"},
-                                {"name": "CASH"},
-                                {"name": "BANK_TRANSFER"}
-                            ]
-                        }
-                    },
-                    {
-                        "actionName": "CreatePaymentStatusEnumeration",
-                        "objectType": "Enumeration",
-                        "ids": {
-                            "aggregateId": "agg-booking",
-                            "enumerationId": "enum-payment-status"
-                        },
-                        "args": {
-                            "enumerationName": "PaymentStatus",
-                            "enumerationAlias": "Payment Status",
-                            "properties": [
-                                {"name": "PENDING"},
-                                {"name": "COMPLETED"},
-                                {"name": "FAILED"},
-                                {"name": "REFUNDED"}
-                            ]
-                        }
-                    },
-                    {
-                        "actionName": "CreateMembershipLevelEnumeration",
-                        "objectType": "Enumeration",
-                        "ids": {
-                            "aggregateId": "agg-booking",
-                            "enumerationId": "enum-membership-level"
-                        },
-                        "args": {
-                            "enumerationName": "MembershipLevel",
-                            "enumerationAlias": "Membership Level",
-                            "properties": [
-                                {"name": "STANDARD"},
-                                {"name": "VIP"},
-                                {"name": "PLATINUM"},
-                                {"name": "DIAMOND"}
+                                { "name": "PENDING" },
+                                { "name": "CONFIRMED" },
+                                { "name": "SHIPPED" },
+                                { "name": "DELIVERED" },
+                                { "name": "CANCELLED" }
                             ]
                         }
                     }
@@ -1051,46 +778,11 @@ Inference Guidelines:
             "Aggregate to create": JSON.stringify(this.client.input.targetAggregate),
 
             "Final Check": `
-1. Requirements Validation:
-   * Verify all functional requirements are implemented
-   * Ensure business rules are properly enforced
-   * Check if all user stories are supported by the model
-
-2. Property Management:
-   * Remove duplicate or redundant properties
-   * Ensure proper encapsulation in value objects
-   * Validate property naming conventions
-   * Verify all properties have appropriate data types
-
-3. Language and Naming:
+1. Language and Naming:
    * Object names (classes, methods, properties): English only
    * Alias properties: ${this.preferredLanguage} only
    * Follow consistent naming patterns
    * Use domain-specific terminology
-
-4. Structural Integrity:
-   * Create all ValueObjects from proposed structure
-   * Implement all Entities from proposed structure
-   * Ensure proper aggregate boundaries
-   * Validate relationship mappings
-
-5. Duplication Prevention:
-   * Avoid recreating existing ValueObjects
-   * Prevent duplicate Entity definitions
-   * Check for redundant Enumeration declarations
-   * Verify unique identifier usage
-
-6. Technical Validation:
-   * Confirm appropriate data type usage
-   * Validate foreign key relationships
-   * Ensure proper inheritance structures
-   * Check transaction boundaries
-
-7. Documentation:
-   * Verify all aliases are meaningful
-   * Ensure clear property descriptions
-   * Document complex relationships
-   * Include business rule explanations
 `,
         }
     }
@@ -1128,7 +820,6 @@ Inference Guidelines:
     onCreateModelFinished(returnObj){
         let actions = [
             ...returnObj.modelValue.aiOutput.result.aggregateActions,
-            ...returnObj.modelValue.aiOutput.result.entityActions,
             ...returnObj.modelValue.aiOutput.result.valueObjectActions,
             ...returnObj.modelValue.aiOutput.result.enumerationActions
         ]

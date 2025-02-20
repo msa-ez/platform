@@ -2,7 +2,8 @@ const AIGenerator = require("./AIGenerator");
 const { TokenCounter, JsonParsingUtil } = require("./utils")
 
 const DEFAULT_CONFIG = {
-    MAX_RETRY_COUNT: 3
+    MAX_RETRY_COUNT: 3,
+    MAX_NETWORK_RETRY_COUNT: 3
 }
 
 /**
@@ -95,6 +96,8 @@ class FormattedJSONAIGenerator extends AIGenerator {
 
         this.MAX_RETRY_COUNT = DEFAULT_CONFIG.MAX_RETRY_COUNT
         this.leftRetryCount = this.MAX_RETRY_COUNT
+        this.MAX_NETWORK_RETRY_COUNT = DEFAULT_CONFIG.MAX_NETWORK_RETRY_COUNT
+        this.leftNetworkRetryCount = this.MAX_NETWORK_RETRY_COUNT
         this.isStopped = false // stop이 실행되어도 계속 실행되는 경우가 있기 때문에 관련 상태를 추적함
 
         this.checkInputParamsKeys = []
@@ -154,7 +157,28 @@ class FormattedJSONAIGenerator extends AIGenerator {
 
         await this.onGenerateBefore(this.client.input, this.generatorName)
         if(this.client.onGenerateBefore) await this.client.onGenerateBefore(this.client.input, this.generatorName)
-        await super.generate()
+
+        try {
+
+            await super.generate()
+
+        } catch(e) {
+
+            console.error(`[!] ${this.generatorName}에 대한 생성 도중 네트워크 의심 에러 발생!`, {inputParams: this.client.input, error:e})
+            console.error(e)
+            
+            this.leftNetworkRetryCount--
+            if(this.leftNetworkRetryCount > 0) {
+                console.log(`[*] ${this.generatorName}에 대한 생성 도중 네트워크 의심 에러 발생! 재시도 중...`)
+                await this.generate()
+            }
+            else {
+                console.error(`[!] ${this.generatorName}에 대한 생성 도중 네트워크 의심 에러 발생! 재시도 실패!`)
+                alert(`[!] A network error occurred during AI generation. Please try again later or review the relevant options. : ${e.message}`)
+                throw e
+            }
+
+        }
     }
     // generate() 호출 전에 파라미터를 완전히 구성하기 어려운 특수한 케이스에서 사용됨
     // Ex) 새로운 이벤트 스토밍 캔버스를 새 탭으로 열고, GeneraterUI에 의해서 즉시 실행되어서, 대상 Bounded Context와 같은 파라미터를 전달하기 어려운 경우
@@ -487,6 +511,7 @@ ${JSON.stringify(exampleOutputs)}
             modelRawValue: text,
             isFirstResponse: this.isFirstResponse,
             leftRetryCount: this.leftRetryCount,
+            leftNetworkRetryCount: this.leftNetworkRetryCount,
             isStopped: this.stopSignaled,
             modelValue: {},
             createdPrompt: this.createdPrompt,

@@ -417,12 +417,12 @@ Inference Guidelines:
                 "entities": {
                     "Reservation": {
                         "properties": [
-                            {"name": "reservationId", "type": "string", "required": true, "isPrimaryKey": true},
-                            {"name": "customerId", "type": "string", "required": true},
-                            {"name": "partySize", "type": "integer", "required": true},
-                            {"name": "dateTime", "type": "datetime", "required": true},
+                            {"name": "reservationId", "type": "String", "required": true, "isPrimaryKey": true},
+                            {"name": "customerId", "type": "String", "required": true},
+                            {"name": "partySize", "type": "Integer", "required": true},
+                            {"name": "dateTime", "type": "Date", "required": true},
                             {"name": "status", "type": "enum", "required": true, "values": ["Pending", "Confirmed", "Cancelled"]},
-                            {"name": "specialRequests", "type": "string", "required": false}
+                            {"name": "specialRequests", "type": "String", "required": false}
                         ]
                     }
                 },

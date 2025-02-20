@@ -2945,6 +2945,18 @@
                 // 공통 처리 루트로 들어가기 위한 작업
                 onInputParamsCheckBefore: (inputParams) => {
                     console.log("[*] 바로 이벤트 스토밍 생성 실행", {inputParams})
+
+
+                    // 이벤트 스토밍 초안으로 부터 '이벤트 스토밍 생성' 버튼을 여러번 눌렀을 경우를 대비
+                    // 항상 완전히 초기화된 상태로부터 시작
+                    for(const element of Object.values(this.value.elements).filter(element => element))
+                        this.removeElementAction(element)
+
+                    this.changedByMe = true
+                    this.$set(this.value, "elements", {})
+                    this.$set(this.value, "relations", {})
+
+
                     this.generateAggregatesFromDraft(inputParams.draftOptions)
                     return {stop: true}
                 }
