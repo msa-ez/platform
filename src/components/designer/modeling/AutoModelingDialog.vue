@@ -546,7 +546,8 @@
                     var settingProjectId = me.storageCondition.projectId.replaceAll(' ', '-').trim();
                     let originSetProjectId = JSON.parse(JSON.stringify(settingProjectId))
                     if(me.userInfo.providerUid){
-                        settingProjectId = `${me.userInfo.providerUid}_${me.storageCondition.type}_${settingProjectId}`
+                        // providerUid를 붙여서 저장하는 이유?
+                        // settingProjectId = `${me.userInfo.providerUid}_${me.storageCondition.type}_${settingProjectId}`
                     }
 
                     me.projectInfo.author = me.userInfo.uid
@@ -842,12 +843,14 @@
                     this.projectInfo.draft = {};
                 }
                 this.projectInfo.draft = messages;
+                this.saveProject();
             },
             updateAggregateDrafts(messages){
                 if(!this.projectInfo.draft) {
                     this.projectInfo.draft = {};
                 }
                 this.projectInfo.draft = messages;
+                this.saveProject();
             },
         }
     }

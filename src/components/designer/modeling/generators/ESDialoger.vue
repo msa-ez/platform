@@ -715,9 +715,13 @@
                         newResult[model.devisionAspect] = model;
                     }
                     
+                    // 메시지 상태 업데이트
                     me.updateMessageState(currentMessage.uniqueId, {
                         result: newResult,
-                        isGeneratingBoundedContext: me.isGeneratingBoundedContext
+                        isGeneratingBoundedContext: me.isGeneratingBoundedContext,
+                        isStartMapping: me.isStartMapping,
+                        processingRate: me.processingRate,
+                        currentProcessingBoundedContext: me.currentProcessingBoundedContext
                     });
 
                     me.resultDevideBoundedContext = JSON.parse(JSON.stringify(newResult));
@@ -815,32 +819,33 @@
                 this.generateDevideBoundedContext();
             },
 
-            reGenerateWithFeedback(feedback, messageId) {
-                const targetMessage = this.messages.find(msg => msg.uniqueId === messageId);
+            reGenerateWithFeedback(obj){
+                const targetMessage = this.messages.find(msg => msg.uniqueId === obj.messageId);
                 if (!targetMessage) return;
 
-                // 새로운 메시지 생성 전에 상태 초기화
+                // 피드백 기반 재생성 시작
                 this.isGeneratingBoundedContext = true;
                 this.isStartMapping = false;
                 this.processingRate = 0;
                 this.currentProcessingBoundedContext = '';
 
-                // 피드백 메시지 추가
-                this.messages.push(
-                    this.generateMessage("userMessage", null, feedback)
-                );
+                // 기존 메시지의 상태 업데이트
+                this.updateMessageState(obj.messageId, {
+                    isGeneratingBoundedContext: this.isGeneratingBoundedContext,
+                    isStartMapping: this.isStartMapping,
+                    processingRate: this.processingRate,
+                    currentProcessingBoundedContext: this.currentProcessingBoundedContext
+                });
 
-                // 새로운 boundedContext 결과 메시지 추가 (초기 상태로)
-                const newMessage = this.generateMessage("boundedContextResult");
-                this.messages.push(newMessage);
-
-                // 생성 시작
+                // 생성기 설정 및 실행
                 this.generator = new DevideBoundedContextGenerator(this);
                 this.state.generator = "DevideBoundedContextGenerator";
                 this.generatorName = "DevideBoundedContextGenerator";
                 
                 this.input.devisionAspect = targetMessage.selectedAspect;
-                this.generator.generateWithFeedback(feedback);
+                this.input.previousAspectModel = targetMessage.result;
+                this.input.feedback = obj.feedback;
+                this.generator.generate();
             },
 
             setGenerateOption(option, isNewChoice) {
