@@ -90,6 +90,7 @@
     "boundedContextDivisionResult": "Seperating into multiple Bounded Contexts",
     "aspectsOfBoundedContexts": "Key Aspects of Bounded Context",
     "domainAspect": "Domain",
+    "processAspect": "Process",
     "organizationalAspect": "Organizational", 
     "personaAspect": "Persona",
     "transactionPerformanceAspect": "Transaction/Performance",

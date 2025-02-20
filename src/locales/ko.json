@@ -90,6 +90,7 @@
     "boundedContextDivisionResult": "서비스 (Bounded Context) 분할 결과",
     "aspectsOfBoundedContexts": "Bounded Context 주요 관점",
     "domainAspect": "도메인 복잡도 분리",
+    "processAspect": "프로세스(value stream) 기반 분리",
     "organizationalAspect": "조직 자율성(Autonomy) 증대",
     "personaAspect": "페르소나(사용자) 관점의 분리",
     "transactionPerformanceAspect": "트랜잭션/성능을 위한 분리 (장애전파 차단)",

@@ -583,7 +583,8 @@
                         id: `BC${index}`,
                         text: bc.alias,
                         editable: true,
-                        edgeType: 'stadium'
+                        edgeType: 'stadium',
+                        style: this.getDomainStyle(bc.importance)
                     });
                 });
                 
@@ -809,6 +810,14 @@
                     boundedContexts: this.resultDevideBoundedContext[aspect].boundedContexts || [],
                     relations: this.resultDevideBoundedContext[aspect].relations || []
                 });
+            },
+            getDomainStyle(importance) {
+                const colors = {
+                    'Core Domain': 'fill:#8fbcaa,stroke:#333,stroke-width:2px',
+                    'Supporting Domain': 'fill:#b39ddb,stroke:#333,stroke-width:2px',
+                    'Generic Domain': 'fill:#9e9e9e,stroke:#333,stroke-width:2px'
+                };
+                return colors[importance] || 'fill:#ddd,stroke:#333,stroke-width:2px';
             }
         }
     }
