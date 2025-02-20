@@ -38,13 +38,18 @@ Key principles:
 
 Scoring Instructions:
 - complexity: Score from 0.0 to 1.0 indicating the technical and business complexity
-  - 0.0: Very simple, straightforward implementation
-  - 0.5: Moderate complexity with some business rules
-  - 1.0: Highly complex with many business rules and technical challenges
+  - 0.0-0.3: Simple implementation (Generic Domain level)
+  - 0.4-0.7: Moderate complexity (Supporting Domain level)
+  - 0.8-1.0: High complexity (Core Domain level)
 - differentiation: Score from 0.0 to 1.0 indicating business differentiation value
-  - 0.0: Generic functionality, easily replaceable
-  - 0.5: Some unique business value
-  - 1.0: Core competitive advantage, highly unique
+  - 0.0-0.3: Generic functionality (Generic Domain level)
+  - 0.4-0.7: Some unique value (Supporting Domain level)
+  - 0.8-1.0: Core competitive advantage (Core Domain level)
+
+Note: Scores should align with the domain importance:
+- Core Domain: Both complexity and differentiation should be in 0.8-1.0 range
+- Supporting Domain: Both scores should be in 0.4-0.7 range
+- Generic Domain: Both scores should be in 0.0-0.3 range
 
 Language Instruction of Output:
 - Use the "same national language" as the Requirements at thoughts, context of explanations, alias, requirements.
