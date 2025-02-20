@@ -124,7 +124,21 @@
                             </div>
                         </div>
                         <div :key="reGenKey">
-                            <ESDialoger v-if="genType == 'ES2'"     ref="esDialoger"    v-model="projectInfo.eventStorming"      :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" @change="backupProject" :uiStyle="uiStyle"   ></ESDialoger>
+                            <ESDialoger 
+                                v-if="genType == 'ES2'"     
+                                ref="esDialoger"    
+                                v-model="projectInfo.eventStorming"     
+                                :isServerProject="isServer" 
+                                :projectId="projectId" 
+                                :projectInfo="projectInfo"
+                                :modelIds="modelIds" 
+                                :prompt="projectInfo.prompt" 
+                                :cachedModels="cachedModels" 
+                                @change="backupProject" 
+                                @update:boundedContextDrafts="updateBoundedContextDrafts" 
+                                @update:aggregateDrafts="updateAggregateDrafts"
+                                :uiStyle="uiStyle"  
+                            ></ESDialoger>
                             <CJMDialoger v-if="genType == 'CJM'"    ref="cjMDialoger"   v-model="projectInfo.customerJourneyMap" :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" @change="backupProject" @setPersonas="setPersonas" ></CJMDialoger>
                             <BMDialoger v-if="genType == 'BM2'"     ref="bmDialoger"    v-model="projectInfo.businessModel"      :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" @change="backupProject"></BMDialoger>
                             <USMDialoger v-if="genType == 'USM'"    ref="usmDialoger"   v-model="projectInfo.userStoryMap"       :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" @change="backupProject"></USMDialoger>
@@ -197,7 +211,8 @@
                         customerJourneyMap: null,
                         businessModel: null,
                         userStoryMap: null,
-                        prompt: ''
+                        prompt: '',
+                        draft: null
                     }
                 }
             },
@@ -822,6 +837,18 @@
                     me.$router.push({path: `business-model-canvas/${dbuid}`});
                 }
             },  
+            updateBoundedContextDrafts(messages){
+                if(!this.projectInfo.draft) {
+                    this.projectInfo.draft = {};
+                }
+                this.projectInfo.draft = messages;
+            },
+            updateAggregateDrafts(messages){
+                if(!this.projectInfo.draft) {
+                    this.projectInfo.draft = {};
+                }
+                this.projectInfo.draft = messages;
+            },
         }
     }
 </script>

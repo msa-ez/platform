@@ -175,6 +175,7 @@
             uiStyle: Object,
             cachedModels: Object,
             projectId: String,
+            projectInfo: Object,
             modelIds: Object,
             isServerProject: Boolean
         },
@@ -198,8 +199,8 @@
         },
         async created(){
             await this.setUserInfo()
+            this.initESDialoger();
             this.autoModel = getParent(this.$parent, 'auto-modeling-dialog');
-
             this.textChunker = new TextChunker({
                 chunkSize: 2000,  // GPT-4 컨텍스트 크기를 고려한 설정
                 overlapSize: 100  // 문맥 유지를 위한 오버랩
@@ -485,8 +486,10 @@
                     }
 
                     this.generators.DraftGeneratorByFunctions.updateAccumulatedDrafts(returnObj.modelValue.output, returnObj.inputParams.boundedContext)
-                    if(!this.generators.PreProcessingFunctionsGenerator.generateIfInputsExist())
+                    if(!this.generators.PreProcessingFunctionsGenerator.generateIfInputsExist()){
+                        this.$emit("update:aggregateDrafts", this.messages)
                         return
+                    }
                 },
 
                 onRetry: (returnObj) => {
@@ -641,6 +644,10 @@
             }
         },
         methods: {
+            initESDialoger(){
+                if(!this.projectInfo.draft) return;
+                this.messages = this.projectInfo.draft;
+            },
             deleteModel(id){
                 var me = this
                 var index = me.value.modelList.findIndex(x => x == id)
@@ -714,6 +721,7 @@
                     });
 
                     me.resultDevideBoundedContext = JSON.parse(JSON.stringify(newResult));
+                    me.$emit("update:boundedContextDrafts", me.messages);
                     console.log("output: ", model)
                 }
 
