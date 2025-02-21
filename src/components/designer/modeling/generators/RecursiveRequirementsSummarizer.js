@@ -5,8 +5,8 @@ class RecursiveRequirementsSummarizer extends RequirementsSummarizer {
     constructor(client) {
         super(client);
         this.textChunker = new TextChunker({
-            chunkSize: 5000,
-            spareSize: 1000
+            chunkSize: 30000,
+            spareSize: 2000
         });
         this.maxIterations = 3;
         
@@ -65,55 +65,89 @@ class RecursiveRequirementsSummarizer extends RequirementsSummarizer {
     }
 
     processNextChunk() {
-        if (this.currentChunkIndex < this.currentChunks.length) {
-            // 다음 청크 처리
-            this.client.input = {
-                requirements: {
-                    userStory: this.currentChunks[this.currentChunkIndex],
-                    currentChunk: this.currentChunkIndex + 1,
-                    totalChunks: this.currentChunks.length,
-                    isFinalSummary: false
-                }
-            };
-            this.generate();
-        } else {
-            // 모든 청크 처리 완료, 합치기
-            const combinedText = this.summarizedChunks.join('\n\n');
-            
-            // 합친 텍스트가 여전히 크다면 최종 요약
-            if (combinedText.length > this.textChunker.chunkSize) {
+        try {
+            if (this.currentChunkIndex < this.currentChunks.length) {
+                // 다음 청크 처리
                 this.client.input = {
                     requirements: {
-                        userStory: combinedText,
-                        isFinalSummary: true
+                        userStory: this.currentChunks[this.currentChunkIndex],
+                        currentChunk: this.currentChunkIndex + 1,
+                        totalChunks: this.currentChunks.length,
+                        isFinalSummary: false
                     }
                 };
                 this.generate();
             } else {
-                this.resolveCurrentProcess(combinedText);
+                // 모든 청크 처리 완료, 합치기
+                const combinedText = this.summarizedChunks.join('\n\n');
+                
+                // 합친 텍스트가 여전히 크다면 최종 요약
+                if (combinedText.length > this.textChunker.chunkSize) {
+                    this.client.input = {
+                        requirements: {
+                            userStory: combinedText,
+                            isFinalSummary: true
+                        }
+                    };
+                    this.generate();
+                } else {
+                    this.resolveCurrentProcess(combinedText);
+                }
             }
+        } catch (e) {
+            console.error('Error in processNextChunk:', error);
+            // 에러 발생 시 현재 청크의 원본 텍스트 사용
+            this.summarizedChunks.push(this.currentChunks[this.currentChunkIndex]);
+            this.currentChunkIndex++;
+            // 재귀적으로 다음 청크 처리
+            setTimeout(() => this.processNextChunk(), 100);
         }
     }
 
     handleGenerationFinished(model) {
         try {
-            const summarizedText = model.summarizedRequirements;
+            // model이 null이거나 summarizedRequirements가 없는 경우 처리
+            let summarizedText;
+            if (!model || !model.summarizedRequirements) {
+                console.warn('Invalid model received:', model);
+                // 현재 청크의 원본 텍스트 사용
+                summarizedText = this.currentChunks[this.currentChunkIndex];
+            } else {
+                summarizedText = model.summarizedRequirements;
+            }
             
             if (!this.client.input.requirements.isFinalSummary) {
                 // 청크 요약 결과 저장 및 다음 청크 처리
+                console.log(`Processing chunk ${this.currentChunkIndex + 1}/${this.currentChunks.length}`);
                 this.summarizedChunks.push(summarizedText);
                 this.currentChunkIndex++;
-                this.processNextChunk();
+                // lockKey 해제를 위해 setTimeout 사용
+                setTimeout(() => this.processNextChunk(), 100);
             } else {
                 // 최종 요약 완료
+                console.log('Final summary completed');
                 if (this.resolveCurrentProcess) {
                     this.resolveCurrentProcess(summarizedText);
                 }
             }
         } catch (e) {
-            console.error('Error parsing summary result:', e);
-            if (this.resolveCurrentProcess) {
-                this.resolveCurrentProcess(model);
+            console.error('Error in handleGenerationFinished:', e);
+            // 에러 발생 시 현재 청크의 원본 텍스트 사용
+            const fallbackText = this.client.input.requirements.isFinalSummary ? 
+                this.client.input.requirements.userStory : 
+                this.currentChunks[this.currentChunkIndex];
+                
+            if (!this.client.input.requirements.isFinalSummary) {
+                console.log(`Fallback: Using original text for chunk ${this.currentChunkIndex + 1}`);
+                this.summarizedChunks.push(fallbackText);
+                this.currentChunkIndex++;
+                // lockKey 해제를 위해 setTimeout 사용
+                setTimeout(() => this.processNextChunk(), 100);
+            } else {
+                console.log('Fallback: Using original text for final summary');
+                if (this.resolveCurrentProcess) {
+                    this.resolveCurrentProcess(fallbackText);
+                }
             }
         }
     }

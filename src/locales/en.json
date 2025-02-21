@@ -32,7 +32,7 @@
   },
   "BCGenerationOption" : {
     "generationOption": "Generation Options",
-    "numberOfBCs": "Number of Bounded Contexts (max 15)",
+    "numberOfBCs": "Maximum Number of Bounded Contexts (max 15)",
     "selectAspects": "Select Analysis Aspects",
     "additionalRequirements": "Additional Requirements",
     "generate" : "Generate",

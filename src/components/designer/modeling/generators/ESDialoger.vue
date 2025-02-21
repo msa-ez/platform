@@ -933,7 +933,7 @@
 
             generateDevideBoundedContext(feedback){
                 // 현재 요약본이 너무 길면 먼저 요약 진행
-                if (this.value.userStory.length > 6000 && this.summarizedResult.length == 0) {
+                if (this.value.userStory.length > 30000 && this.summarizedResult.length == 0) {
                     this.pendingBCGeneration = true;
                     this.summarizeRequirements();
                     return;

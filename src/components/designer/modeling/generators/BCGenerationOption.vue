@@ -175,7 +175,7 @@ export default {
                this.isSummarizeStarted || 
                this.isGeneratingBoundedContext || 
                this.isStartMapping || 
-               this.localOptions.numberOfBCs >= 15;
+               this.localOptions.numberOfBCs > 15;
         },
     },
 

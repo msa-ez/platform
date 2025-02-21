@@ -148,81 +148,94 @@ class BaseAPIClient {
 
     async generate(generateOption) {
         const g = this.aiGenerator
-
+    
         if(g.lockKey) {
             return Promise.reject(new Error("현재 다른 요청이 진행 중입니다. 잠시 후 다시 시도해 주세요."));
         }
-
-        g.lockKey = true
+    
+        g.lockKey = true;
+        
         try {
             g.token = await g.getToken(g.modelInfo.vendor);
         } catch (err) {
-            g.lockKey = false
+            g.lockKey = false;
             return Promise.reject(err);
         }
-
-        return new Promise(async (resolve, reject) => {
-            g.state = 'running'
-            g.messages = this._getMessages(generateOption)
     
-            if(localStorage.getItem("useCache") === "true") {
-                const hashKey = HashUtil.generateHashKey(JSON.stringify(g.messages));
-                let existingResult = localStorage.getItem("cache-" + hashKey);
-    
-                if(existingResult){
-                    setTimeout(()=>{
-                        g.state = 'end';
-                        const model = g.createModel(existingResult);
-                        if(g.client.onModelCreated){
-                            g.client.onModelCreated(model);
-                        }
-                        if(g.client.onGenerationFinished){
-                            g.client.onGenerationFinished(model);
-                            resolve(model)
-                        }
-                    }, 0);
-                    return;
-                }
-            }
-    
-    
-            g.gptResponseId = null;
-
-            const requestParams = this._makeRequestParams(g.messages, g.modelInfo, g.token)
-
+        return new Promise((resolve, reject) => {
             try {
-                console.log("[*] 최종적으로 요청되는 정보", { 
-                    ...requestParams,
-                    requestData: requestParams.requestData ? JSON.parse(requestParams.requestData) : null
-                 })
-            } catch {
-                console.log("[*] 최종적으로 요청되는 정보", { requestParams })
+                g.state = 'running';
+                g.messages = this._getMessages(generateOption);
+        
+                if(localStorage.getItem("useCache") === "true") {
+                    const hashKey = HashUtil.generateHashKey(JSON.stringify(g.messages));
+                    let existingResult = localStorage.getItem("cache-" + hashKey);
+        
+                    if(existingResult){
+                        setTimeout(()=>{
+                            g.state = 'end';
+                            const model = g.createModel(existingResult);
+                            if(g.client.onModelCreated){
+                                g.client.onModelCreated(model);
+                            }
+                            if(g.client.onGenerationFinished){
+                                g.client.onGenerationFinished(model);
+                                resolve(model);
+                            }
+                            g.lockKey = false;
+                        }, 0);
+                        return;
+                    }
+                }
+        
+                g.gptResponseId = null;
+                const requestParams = this._makeRequestParams(g.messages, g.modelInfo, g.token);
+    
+                try {
+                    console.log("[*] 최종적으로 요청되는 정보", { 
+                        ...requestParams,
+                        requestData: requestParams.requestData ? JSON.parse(requestParams.requestData) : null
+                    });
+                } catch {
+                    console.log("[*] 최종적으로 요청되는 정보", { requestParams });
+                }
+    
+                RequestUtil.sendPostRequest(
+                    requestParams.requestUrl,
+                    requestParams.requestData,
+                    requestParams.requestHeaders,
+                    this._onProgress.bind(this),
+                    (event) => {
+                        this._onLoadEnd(event, resolve, reject);
+                        g.lockKey = false;
+                    },
+                    (error) => {
+                        this._onError(error, resolve, reject);
+                        g.lockKey = false;
+                    },
+                    resolve,
+                    (error) => {
+                        g.lockKey = false;
+                        reject(error);
+                    }
+                );
+    
+                if(g.client.onSend) {
+                    g.client.onSend(g.client.input, () => {
+                        g.stop();
+                    });
+    
+                    g.onSend(g.client.input, () => {
+                        g.stop();
+                    });
+                }
+            } catch(e) {
+                g.lockKey = false;
+                reject(e);
             }
-
-            RequestUtil.sendPostRequest(
-                requestParams.requestUrl,
-                requestParams.requestData,
-                requestParams.requestHeaders,
-                this._onProgress.bind(this),
-                this._onLoadEnd.bind(this),
-                this._onError.bind(this),
-                resolve,
-                reject
-            )
-
-
-            // 추론 모델은 첫 응답을 받기까지 어느정도 시간이 걸리기 때문에 이에 대한 안내를 제공하기 위한 콜백을 추가
-            if(g.client.onSend) {
-                g.client.onSend(g.client.input, () => {
-                    g.stop()
-                })
-
-                g.onSend(g.client.input, () => {
-                    g.stop()
-                })
-            }
-        }).finally(() => {
+        }).catch(error => {
             g.lockKey = false;
+            throw error;
         });
     }
     /**

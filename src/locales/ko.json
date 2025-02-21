@@ -32,7 +32,7 @@
   },
   "BCGenerationOption" : {
     "generationOption": "서비스 분리 목적",
-    "numberOfBCs": "서비스 분리 (바운디드 컨텍스트) 개수 (15개 이하)",
+    "numberOfBCs": "서비스 분리 (바운디드 컨텍스트) 최대 개수 (15개 이하)",
     "selectAspects": "분리 목적 선택",
     "additionalRequirements": "추가 요구사항",
     "generate" : "생성",

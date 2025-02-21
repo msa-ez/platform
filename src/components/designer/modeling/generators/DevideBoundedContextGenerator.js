@@ -3,9 +3,8 @@ const JsonAIGenerator = require("./JsonAIGenerator");
 class DevideBoundedContextGenerator extends JsonAIGenerator {
 
     constructor(client){
-        super(client);
+        super(client,{},"simpleModel");
 
-        this.temperature = 0.3
         this.generatorName = 'DevideBoundedContextGenerator'
     }
 
@@ -19,7 +18,7 @@ ${this.client.input['devisionAspect']}
 
 ${this.aspectDetails()}
 
-Generate Number of Bounded Contexts:
+Maximum Number of Bounded Contexts:
 ${this.client.input['generateOption']['numberOfBCs']}
 
 Additional requirements:
@@ -146,12 +145,12 @@ Should be used all of the Bounded Contexts.
             return `"requirements":[ // Use all of the requirements(userStory, DDL) context that are relevant to this Bounded Context.
                     {
                         "type":"userStory",
-                    "text":"Original requirements text, containing only the problem domain relevant to this Bounded Context, copied verbatim"
-                },
-                {
-                    "type":"ddl",
-                    "text":"Original requirements text, containing only the problem domain relevant to this Bounded Context, copied verbatim"
-                }
+                        "text":"Original requirements text, containing all of the problem domain relevant to this Bounded Context, copied verbatim"
+                    },
+                    {
+                        "type":"ddl",
+                        "text":"Original requirements text, containing all of the problem domain relevant to this Bounded Context, copied verbatim"
+                    }
             ]`;
         }else{
             return `"requirements":[ ] // must be empty`;
