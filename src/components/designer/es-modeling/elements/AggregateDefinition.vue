@@ -445,10 +445,9 @@
                         obj.element.sourceElement.elementView.id == me.value.elementView.id)
                 ) {
                     var fieldDescriptors = Object.values(me.value.aggregateRoot.fieldDescriptors)
-                    var isIncluded = fieldDescriptors.some((el) =>
-                        el &&
-                        el.isVO &&
-                        el.namePascalCase == obj.element.targetElement.name + "Id"
+                    var isIncluded = fieldDescriptors.some((el) => el && el.isVO && (
+                        el.name == obj.element.targetElement.name + "Id" ||
+                        el.namePascalCase == obj.element.targetElement.name + "Id")
                     )
                     if(!isIncluded) {
                         me.addAggRelation(obj.element)
