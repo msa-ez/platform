@@ -34,7 +34,7 @@ class Gitea extends Git {
         //     localStorage.setItem('giteaToken', '');
         // }
         return {
-            Authorization: 'token ' + localStorage.getItem('giteaToken')
+            Authorization: 'token ' + localStorage.getItem('gitToken')
         };
     }
 
