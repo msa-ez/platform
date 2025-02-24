@@ -1581,8 +1581,9 @@
 
                     //firebase DB input
                     me.writeUserData(uid, userName, userEmail, userProfile, provider)
-
-                    me.$gtag.event('login', {method: provider})
+                    if(me.$gtag){
+                        me.$gtag.event('login', {method: provider})
+                    }
                 } catch (e) {
                     console.log(`Error] signInWithRedirectResult: ${e}`)
 
@@ -2076,7 +2077,9 @@
                 if(window.MODE == 'onprem') {
                     localStorage.clear();
                     me.$EventBus.$emit('login', null);
-                    me.$gtag.event('logout', {method: 'google'});
+                    if(me.$gtag){
+                        me.$gtag.event('logout', {method: 'google'});
+                    }
                     var newURL = window.location.protocol + "//" + window.location.host + "/";
                     window.location.href = newURL;
                 } else {
@@ -2098,7 +2101,9 @@
                         window.localStorage.removeItem("gitOrgName");
 
                         me.$EventBus.$emit('login', null)
-                        me.$gtag.event('logout', {method: 'google'})
+                        if(me.$gtag){
+                            me.$gtag.event('logout', {method: 'google'})
+                        }
                         var newURL = window.location.protocol + "//" + window.location.host + "/";
                         window.location.href = newURL;
                     })

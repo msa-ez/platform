@@ -2118,12 +2118,14 @@
             },
 
             track() {
-                this.$gtag.pageview(
-                    {
-                        page_title: `${this.$route.params.labId} 랩실`,
+                if(this.$gtag){
+                    this.$gtag.pageview(
+                        {
+                            page_title: `${this.$route.params.labId} 랩실`,
                         page_path: this.$route.path
-                    }
-                )
+                        }
+                    )
+                }
             },
             closeIDE() {
                 console.log('LabLocator------------------ IDE CLOSE')

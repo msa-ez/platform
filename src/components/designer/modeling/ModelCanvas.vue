@@ -1201,12 +1201,14 @@
                 }
             },
             track() {
-                this.$gtag.pageview(
-                    {
-                        page_title: `${this.canvasType} 모델링`,
-                        page_path: this.$route.path
-                    }
-                )
+                if(this.$gtag){
+                    this.$gtag.pageview(
+                        {
+                            page_title: `${this.canvasType} 모델링`,
+                            page_path: this.$route.path
+                        }
+                    )
+                }
             },
             onJoin() {
                 this.webRtcDialog = true

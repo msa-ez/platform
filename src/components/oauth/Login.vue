@@ -517,8 +517,9 @@
                         me.$emit('isGitLogin')
                         //firebase DB input
                         me.writeUserData(uid, userName, userEmail, userProfile, 'github')
-
-                        me.$gtag.event('login', {method: 'github'})
+                        if(me.$gtag){
+                            me.$gtag.event('login', {method: 'github'})
+                        }
                         // window.location.reload();
                     }).catch(function (error) {
                         var errorCode = error.code;
