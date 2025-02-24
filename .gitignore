@@ -2,7 +2,7 @@
 .DS_Store
 node_modules
 /dist
-
+/gitea
 authorized_keys
 # local env files
 .env.local

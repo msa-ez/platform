@@ -25,6 +25,9 @@ class Usage {
   async use() {
     var me = this;
     try{
+        if(window.PROVIDER){
+            return true;
+        }
         let userInfo = await this.storage.getCurrentUser();
         if(!me.serviceType) return false;
         if(!userInfo || !userInfo.email) {

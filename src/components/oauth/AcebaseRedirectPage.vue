@@ -8,7 +8,7 @@
     import Gitlab from "../../utils/Gitlab"
     import Github from "../../utils/Github"
     import CommonStorageBase from "../CommonStorageBase"
-import Gitea from "../../utils/Gitea";
+    import Gitea from "../../utils/Gitea";
 
     export default {
         name: "GitlabRedirectPage",
@@ -87,8 +87,9 @@ import Gitea from "../../utils/Gitea";
                     .catch(e => console.log(e));
                 } else if (result.provider.name == 'gitea') {
                     git = new Git(new Gitea())
+                    console.log(result)
                     window.localStorage.setItem("gitAuthor", result.user.email);
-                    window.localStorage.setItem("gitUserName", result.user.displayName);
+                    window.localStorage.setItem("gitUserName", result.user.settings.gitea_preferred_username);
                     window.localStorage.setItem("gitEmail", result.user.email);
                     window.localStorage.setItem(
                         "gitToken",
@@ -96,7 +97,7 @@ import Gitea from "../../utils/Gitea";
                     );
                     
                     window.localStorage.setItem("author", result.user.email)
-                    window.localStorage.setItem("userName", result.user.displayName)
+                    window.localStorage.setItem("userName", result.user.settings.gitea_preferred_username)
                     window.localStorage.setItem("email", result.user.email)
                     window.localStorage.setItem("picture", result.user.picture)
                     window.localStorage.setItem("accessToken", result.accessToken)

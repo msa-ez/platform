@@ -1917,12 +1917,14 @@
                 }
             },
             track() {
-                this.$gtag.pageview(
-                    {
-                        page_title: `${this.$route.params.classId} 라운지`,
-                        page_path: this.$route.path
-                    }
-                )
+                if(this.$gtag){
+                    this.$gtag.pageview(
+                        {
+                            page_title: `${this.$route.params.classId} 라운지`,
+                            page_path: this.$route.path
+                        }
+                    )
+                }
             },
             onChangedMandatory(labInfo) {
                 try {
