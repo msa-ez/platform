@@ -25,7 +25,7 @@ class OllamaClient extends BaseAPIClient {
       requestUrl: "http://localhost:4000/api/ollama/chat",
       requestData: JSON.stringify(requestData),
       requestHeaders: {
-        "Content-Type": "application/json"
+        "content-type": "application/json"
       }
     }
   }

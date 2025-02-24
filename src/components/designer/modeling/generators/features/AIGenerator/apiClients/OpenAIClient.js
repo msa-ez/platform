@@ -45,8 +45,8 @@ class OpenAIClient extends BaseAPIClient {
       requestUrl: "https://api.openai.com/v1/chat/completions",
       requestData: JSON.stringify(requestData),
       requestHeaders: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + token
+        "content-type": "application/json",
+        "authorization": "Bearer " + token
       }
     }
   }
