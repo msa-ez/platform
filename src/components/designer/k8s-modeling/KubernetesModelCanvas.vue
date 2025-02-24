@@ -1,6 +1,7 @@
 <template xmlns:v-on="http://www.w3.org/1999/xhtml">
     <div class="page" :class="{ 'embedded' : embedded }">
         <separate-panel-components
+            class="ma-0 pa-0"
             :min="mainSeparatePanel.min"
             :max="mainSeparatePanel.max"
             :triggerLength="5"
@@ -202,11 +203,9 @@
                                                         @click="openCodeViewer()"
                                                         v-on="on"
                                                 >
-                                                    <Icon class="gs-icon-style"
-                                                        icon="icomoon-free:git"
-                                                        style="margin-right: 2px;
-                                                        height: 22px;
-                                                        width: 22px"
+                                                    <Icons class="gs-icon-style"
+                                                        :icon="'git'"
+                                                        style="margin-right: 2px;"
                                                     />
                                                     <div class="k8s-hide-gitops">GITOPS</div>
                                                 </v-btn>
@@ -1029,7 +1028,7 @@
                                                             value="url"
                                                     ></v-radio>
                                                     <v-radio
-                                                            label="select"
+                                                            :label="$t('labelText.select')"
                                                             value="select"
                                                     ></v-radio>
                                                 </v-radio-group>
@@ -1154,7 +1153,7 @@
                                                             value="url"
                                                     ></v-radio>
                                                     <v-radio
-                                                            label="select"
+                                                            :label="$t('labelText.select')"
                                                             value="select"
                                                     ></v-radio>
                                                 </v-radio-group>

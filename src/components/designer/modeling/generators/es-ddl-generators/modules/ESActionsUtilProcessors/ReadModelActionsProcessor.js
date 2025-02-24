@@ -182,7 +182,7 @@ class ReadModelActionsProcessor {
                     "name": property.name,
                     "nameCamelCase": changeCase.camelCase(property.name),
                     "namePascalCase": changeCase.pascalCase(property.name),
-                    "displayName": "",
+                    "displayName": property.displayName ? property.displayName : "",
                     "_type": "org.uengine.model.FieldDescriptor"
                 }
             })

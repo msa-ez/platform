@@ -48,7 +48,7 @@
                     <v-card flat>
                         <v-card-text>
                             <v-text-field                                
-                                    label="Name"
+                                    :label="$t('labelText.name')"
                                     :disabled="isReadOnly"
                                     autofocus
                                     v-model="value.object.metadata.name"

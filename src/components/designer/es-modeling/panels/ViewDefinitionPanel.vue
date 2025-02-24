@@ -15,7 +15,7 @@
         <template slot="t-title-name">ReadModel</template>
 
         <template slot="md-level-btn">
-            <v-chip @click="toggleDesignLevel" style="margin-left: 16px; cursor: pointer;" color="primary" outlined>
+            <v-chip @click="toggleDesignLevel" style="margin-right: 16px; margin-bottom: 5px; cursor: pointer;" color="primary" outlined>
                 <v-icon left>{{ isDesignLevelVisible ? 'mdi-eye' : 'mdi-eye-off' }}</v-icon>
                 {{ $t('CommandDefinitionPanel.implementationSettings') }}
             </v-chip>
@@ -62,10 +62,9 @@
 
         <template slot="md-title-side">
             <v-btn
-                    text
-                    color="primary"
-                    :disabled="isReadOnly || !exampleAvailable || value.dataProjection != 'query-for-aggregate'"
-                    @click="openExampleDialog()"
+                color="primary"
+                :disabled="isReadOnly || !exampleAvailable || value.dataProjection != 'query-for-aggregate'"
+                @click="openExampleDialog()"
             >Examples</v-btn>
             <v-tooltip bottom v-if="!exampleAvailable">
                 <template v-slot:activator="{ on, attrs }">
@@ -119,7 +118,7 @@
 
                         <div class="mt-4" v-if="value.dataProjection == 'query-for-aggregate'">
                             <div>
-                                <span class="panel-title">Associated Aggregate</span>
+                                <span class="panel-title">{{ $t('TitleText.associatedAggregate') }}</span>
                                 <v-text-field
                                         v-model="relatedAggregateName"
                                         label="Position the sticker adjacent to the Aggregate sticker"
@@ -155,7 +154,7 @@
                                             :type="value._type"
                                             :dataProjection="value.dataProjection"
                                             :elementId="value.elementView.id"
-                                            @sync-attribute="syncFromAggregate"
+                                            @sync-attribute="syncFromAggregate('queryParameters')"
                                             :entities="relatedAggregate ? relatedAggregate.aggregateRoot.entities : null"
                                             :fields="relatedAggregate ? relatedAggregate.aggregateRoot.fieldDescriptors : null"
                                     ></event-storming-attribute>
@@ -204,7 +203,7 @@
                                             :isReadOnly="isReadOnly"
                                             :type="value._type"
                                             :elementId="value.elementView.id"
-                                            @sync-attribute="syncFromAggregate"
+                                            @sync-attribute="syncFromAggregate('fieldDescriptors')"
                                     ></event-storming-attribute>
                                 </v-card-text>
                             </v-card>

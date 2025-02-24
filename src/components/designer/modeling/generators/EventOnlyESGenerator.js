@@ -7,6 +7,7 @@ class EventOnlyESGenerator extends ESGenerator{
 
     constructor(client){
         super(client);
+        this.fixedLanguage = "English"
     }
     
     createPrompt(){

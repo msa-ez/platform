@@ -8,12 +8,22 @@
             :validation-lists="validationLists"
             :translate-obj="translateObj"
             :element-author-display="elementAuthorDisplay"
+            :isShowGenAITab="true"
+            :genAIDto="genAIDto"
             @close="closePanel"
             @changeTranslate="changeTranslate"
             @updateBCName="updateBCName()"
+            @generateWithDescription="handleGenerateWithDescription"
+            @onClickStopGenerateWithDescription="$emit('onClickStopGenerateWithDescription')"
             v-on:update:members="value.members = $event"
             class="pb-10"
     >
+        <template slot="md-level-btn">
+            <v-chip @click="toggleDesignLevel" style="margin-right: 16px; margin-bottom: 5px; cursor: pointer;" color="primary" outlined>
+                <v-icon left>{{ isDesignLevelVisible ? 'mdi-eye' : 'mdi-eye-off' }}</v-icon>
+                {{ $t('CommandDefinitionPanel.implementationSettings') }}
+            </v-chip>
+        </template>
 
         <template slot="t-description-text">
             {{ $t('panelInfo.BoundedContextCMPanel') }}
@@ -44,27 +54,10 @@
                 </v-chip>
             </div>
         </template>
-
-        <template slot="generateWithAi">
-            <div>
-                <span>
-                    <v-row class="ma-0 pa-0">
-                        <v-spacer></v-spacer>
-                        <v-btn v-if="generateDone" :disabled="!value.description" 
-                            class="auto-modeling-btn" color="primary" @click="onClickReGenerateInside">
-                            <v-icon>mdi-auto-fix</v-icon>(RE)Generate Inside
-                        </v-btn>
-                        <v-btn v-else class="auto-modeling-btn" color="primary" @click="$emit('onClickStopReGenerateInside')">
-                            <v-icon>mdi-auto-fix</v-icon>Stop Generation
-                        </v-btn>
-                    </v-row>
-                </span>
-            </div>
-        </template>
             
         <template slot="element">
-            <div class="pa-4 pb-0">
-                <span class="panel-title">Read/Write Authority</span>
+            <div v-show="isDesignLevelVisible" class="pa-4 pb-0">
+                <span class="panel-title">{{ $t('TitleText.readWriteAuthority') }}</span>
                 <!-- <v-alert
                     color="grey darken-1"
                     text
@@ -92,7 +85,7 @@
                                 filled
                                 chips
                                 color="blue-grey lighten-2"
-                                label="Select"
+                                :label="$t('labelText.select')"
                                 item-text="userName"
                                 return-object
                                 :disabled="isReadOnly"
@@ -166,7 +159,7 @@
         mixins: [EventStormingModelPanel],
         name: 'boundedcontext-panel',
         props: {
-            generateDone: {type: Boolean, required: true, default: true}
+            genAIDto: {type: Object, required: true, default: {isGenerateWithDescriptionDone: true}}
         },
         components: {
             CommonPanel
@@ -175,21 +168,21 @@
             return {
                 userTableHeaders: [
                     {
-                        text: 'Name',
+                        text: this.$t('BoundedContextPanel.name'),
                         align: 'start',
                         sortable: false,
                         value: 'userName',
                     },
                     {
-                        text: 'Readable',
+                        text: this.$t('BoundedContextPanel.readable'),
                         value: 'readable',
                     },
                     {
-                        text: 'Writable',
+                        text: this.$t('BoundedContextPanel.writable'),
                         value: 'writable',
                     },
                     {
-                        text: 'Admin',
+                        text: this.$t('BoundedContextPanel.admin'),
                         value: 'admin',
                     }
                 ]
@@ -263,6 +256,10 @@
                     ...this.value,
                     description: this.value.description
                 })
+            },
+
+            handleGenerateWithDescription(boundedContext) {
+                this.$emit('generateWithDescription', boundedContext);
             }
         }
     }

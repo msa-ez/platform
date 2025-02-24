@@ -1,5 +1,4 @@
 <template>
-
     <common-panel
             v-model="value"
             :image="image"
@@ -12,6 +11,12 @@
             @close="closePanel"
             @changeTranslate="changeTranslate"
     >
+        <template slot="md-level-btn">
+            <v-chip @click="toggleDesignLevel" style="margin-right: 16px; margin-bottom: 5px; cursor: pointer;" color="primary" outlined>
+                <v-icon left>{{ isDesignLevelVisible ? 'mdi-eye' : 'mdi-eye-off' }}</v-icon>
+                {{ $t('CommandDefinitionPanel.implementationSettings') }}
+            </v-chip>
+        </template>
 
         <template slot="t-description-text">
             {{ $t('panelInfo.ExternalDefinitionPanel') }}
@@ -45,7 +50,7 @@
 
 
         <template slot="element">
-            <div>
+            <div v-show="isDesignLevelVisible">
                 <v-card flat>
                     <v-card-text class="panel-title">Api path</v-card-text>
                     <v-card-text>
@@ -72,7 +77,6 @@
             </div>
         </template>
     </common-panel>
-
 </template>
 
 

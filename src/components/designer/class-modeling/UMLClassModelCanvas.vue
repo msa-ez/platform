@@ -99,26 +99,6 @@
                                 style="position: absolute; top: 22px; right: 70px;"
                                 :style="embedded ? '':'z-index: 1'"
                         >
-                            <!-- <v-btn
-                                style="position: absolute; top:26px; right: 130px;"
-                                color="orange"
-                                @click="openCommandViewer()"
-                                small
-                                text
-                            >
-                                <v-icon>mdi-code-greater-than</v-icon>
-                                <div>Java Parse</div>
-                            </v-btn> -->
-                            <!-- <v-btn
-                                    v-if="!isReadOnlyModel"
-                                    color="primary"
-                                    text
-                                    @click="openAutoModelingDialog()"
-                                    style="margin-right:5px;"
-                            >
-                                <Icon icon="arcticons:openai-chatgpt" style="margin-right:5px; stroke-width: 3px;" width="24" height="24"/>
-                                <div>Chat</div>
-                            </v-btn> -->
                         </div>
 
                         <v-flex v-if="!embedded" style="justify:end; align:start;">

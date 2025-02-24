@@ -68,14 +68,14 @@
                                 <v-icon size="22">mdi-menu</v-icon>
                             </v-btn>
                         </template>
-                        <span>left menu fold & unfold</span>
+                        <span>{{ $t('CodeGenerator.fileExplorer') }}</span>
                     </v-tooltip>
                     <div>
                         <v-menu
-                                v-model="gitMenu"
-                                :close-on-click="false"
-                                :close-on-content-click="false"
-                                offset-y
+                            v-model="gitMenu"
+                            :close-on-click="false"
+                            :close-on-content-click="false"
+                            offset-y
                         >
                             <template v-slot:activator="{ on: menu, attrs }">
                                 <v-tooltip bottom>
@@ -95,7 +95,7 @@
                                             <v-icon size="22" style="float:right;" :style="gitMenu ? 'color:gray':''">mdi-git</v-icon>
                                         </v-btn>
                                     </template>
-                                    <span>Push to Git</span>
+                                    <span>{{ $t('CodeGenerator.pushToGit') }}</span>
                                 </v-tooltip>
                             </template>
 
@@ -179,7 +179,7 @@
                                 </v-btn>
                             </div>
                         </template>
-                        <span>Download Archive</span>
+                        <span>{{ $t('CodeGenerator.downloadArchive') }}</span>
                     </v-tooltip>
 
                     <v-tooltip bottom>
@@ -193,7 +193,7 @@
                                 </div>
                             </v-btn>
                         </template>
-                        <span>Search</span>
+                        <span>{{ $t('CodeGenerator.search') }}</span>
                     </v-tooltip>
 
                     <v-tooltip bottom v-if="editableTemplate">
@@ -205,7 +205,7 @@
                                 <v-icon size="22">mdi-code-braces</v-icon>
                             </v-btn>
                         </template>
-                        <span>Edit Template</span>
+                        <span>{{ $t('CodeGenerator.editTemplate') }}</span>
                     </v-tooltip>
 
                     <v-tooltip bottom v-if="editableTemplate">
@@ -243,13 +243,12 @@
                                     icon fab
                                     @click="onOffDesignPatterns()"
                             >
-                                <Icon :color="showDesignPatterns ? 'rgb(25,118,210)' : '' "
-                                        icon="mdi:file-document-check-outline"
-                                        size="22"
+                                <Icons :icon="'document-check'" :size="22"
+                                    :color="showDesignPatterns ? 'rgb(25,118,210)' : '' "
                                 />
                             </v-btn>
                         </template>
-                        <span>Design Patterns</span>
+                        <span>{{ $t('CodeGenerator.designPatterns') }}</span>
                     </v-tooltip>
 
                     <v-tooltip bottom>
@@ -257,10 +256,10 @@
                             <v-btn v-on="on" class="code-preview-btn"
                                     icon fab @click="onDiffMode()"
                             >
-                                <Icon size="22" icon="codicon:diff" :color="diffMode ? 'rgb(25,118,210)' : '' "/>
+                                <Icons :icon="'diff'" :size="26" :color="diffMode ? 'rgb(25,118,210)' : '' "/>
                             </v-btn>
                         </template>
-                        <span>Diff Mode</span>
+                        <span>{{ $t('CodeGenerator.diffMode') }}</span>
                     </v-tooltip>
                     <v-spacer />
                     <v-menu left :close-on-content-click="false" :close-on-click="false" @input="onClickToppingBox(true)"
@@ -680,6 +679,7 @@
                                                                 >
                                                                     <template v-slot:activator="{ on, attrs}" >
                                                                         <v-chip
+                                                                                v-if="!item.isPBCCode"
                                                                                 @mouseenter="showFullNameforSelectedTemplateKey = item.key"
                                                                                 @mouseleave="showFullNameforSelectedTemplateKey = null"
                                                                                 x-small
@@ -1009,28 +1009,28 @@
                                                                                      @mouseleave="setHover()"
                                                                                 >
                                                                                     <div style="display:flex; align-items: center;" :style="editTemplateFrameWorkList[platform][template].isPushed ? 'color: darkgray;':''">
-                                                                                        <Icon v-if="editTemplateFrameWorkList[platform][template].isPushed"
-                                                                                              icon="mdi:file-document-arrow-right-outline" width="20" height="20"
+                                                                                        <Icons v-if="editTemplateFrameWorkList[platform][template].isPushed"
+                                                                                              :icon="'document-arrow-right'" :size="20"
                                                                                               style="color: darkgray;"
                                                                                         />
-                                                                                        <Icon v-else-if="editTemplateFrameWorkList[platform][template].isFixed"
-                                                                                              icon="mdi:file-document-check-outline" width="20" height="20"
+                                                                                        <Icons v-else-if="editTemplateFrameWorkList[platform][template].isFixed"
+                                                                                              :icon="'document-check'" :size="20"
                                                                                               style="color: green;"
                                                                                         />
-                                                                                        <Icon v-else-if="editTemplateFrameWorkList[platform][template].failedGenerate"
-                                                                                              icon="mdi:file-document-alert-outline" width="20" height="20"
+                                                                                        <Icons v-else-if="editTemplateFrameWorkList[platform][template].failedGenerate"
+                                                                                              :icon="'document-alert'" :size="20"
                                                                                               style="color: red;"
                                                                                         />
-                                                                                        <Icon v-else-if="editTemplateFrameWorkList[platform][template].isAdded"
-                                                                                              icon="mdi:file-document-plus-outline" width="20" height="20"
+                                                                                        <Icons v-else-if="editTemplateFrameWorkList[platform][template].isAdded"
+                                                                                              :icon="'document-plus'" :size="20"
                                                                                               style="color: #2278cf;"
                                                                                         />
-                                                                                        <Icon v-else-if="editTemplateFrameWorkList[platform][template].isDeleted"
-                                                                                              icon="mdi:file-document-minus-outline" width="20" height="20"
+                                                                                        <Icons v-else-if="editTemplateFrameWorkList[platform][template].isDeleted"
+                                                                                              :icon="'document-minus'" :size="20"
                                                                                               style="color: red;"
                                                                                         />
-                                                                                        <Icon v-else
-                                                                                              icon="mdi:file-document-edit-outline" width="20" height="20"
+                                                                                        <Icons v-else
+                                                                                              :icon="'document-edit'" :size="20"
                                                                                               style="color: #2278cf;"
                                                                                         />
                                                                                         <div>
@@ -2284,7 +2284,9 @@
                             me.treeOpenLists = [];
 
                             if (selectedElement && selectedElement._type && selectedElement._type.endsWith("BoundedContext")) {
-                                returnArray = me.treeLists.filter(tree => tree.bcId == selectedId)
+                                returnArray = me.treeLists.filter(tree => tree && tree.bcId == selectedId)
+                            } else if (selectedElement && selectedElement._type && selectedElement._type.endsWith("PBC")) {
+                                returnArray = me.treeLists.filter(tree => tree && tree.elementId == selectedId)
                             } else {
                                 me.showTemplatePath = true
 
@@ -2812,50 +2814,94 @@
                 }
 
             },
-            async generateOpenAPI(value){
+            
+            async generateCodeOfPBC(){
+                // !!!PBC
                 var me = this
-                if(!value) return;
+                let pbcLists =  Object.values(me.value.elements).filter(ele => ele && ele._type.endsWith("PBC"));
+                for(let index = 0; index < pbcLists.length; index++) {
+                    let pbcElement = pbcLists[index];
 
-                let pbcLists =  Object.values(value.elements).filter(ele => ele && ele._type.endsWith("PBC") && ele.modelValue && ele.modelValue.openAPI);
-                if(pbcLists.length > 0){
-                    for(let pbc of pbcLists){
+                    if(pbcElement.modelValue.openAPI) {
+                        const openAPIUrl = pbcElement.modelValue.openAPI
                         const githubRegex = /^https?:\/\/github\.com\/([^/]+)\/([^/]+)\/blob\/(.+)\/(.+)$/;
-                        const match = pbc.modelValue.openAPI.match(githubRegex);
+                        const match = openAPIUrl.match(githubRegex);
                         if (match) {
-                            // Extracted values
                             const org = match[1];
                             const repo = match[2];
-                            const branch = match[3].split('/').splice(0,1)[0]
                             const path = match[3].split('/').splice(1).join('/')
-
-                            if( branch == 'main'){
-                                try {
-                                    let fileNames = ['readme.md', 'docker-compose.yml', 'openapi.yaml']
-                                    let trees =  await me.gitAPI.getFolder(org, repo, path)
-                                    for(const tree of trees.data){
-                                        let fileName = tree.name
-                                        if( fileNames.includes(fileName.toLowerCase()) ){
-                                            let folder = path ? `${path}/` : ''
-                                            let res = await me.gitAPI.getFile(org, repo, `${folder}${fileName}`)
-
-                                            let options = {
-                                                element: pbc.elementView.id,
-                                                fullPath: `${changeCase.pascalCase(pbc.name)}/${folder}${fileName}`,
-                                                generatedType: 'MAIN'
-                                            }
-                                            me.codeLists.push(me.generateCodeObj(fileName, res.data, options));
-                                        }
-                                    }
-                                } catch(e){
-                                    // error
+                            let fileNames = ['.template']
+                            let trees = await me.gitAPI.getFolder(org, repo, path)
+                            for(const tree of trees.data){
+                                let fileName = tree.name
+                                if(!fileNames.includes(fileName.toLowerCase())){
+                                    let folder = path ? `${path}/` : ''
+                                    let res = await me.gitAPI.getFile(org, repo, `${folder}${fileName}`)
+                                    let formattedCode = me.generateCodeObj(fileName, res.data, {
+                                        element: pbcElement.elementView.id,
+                                        fullPath: `${changeCase.pascalCase(pbcElement.name)}/${folder}${fileName}`,
+                                        generatedType: 'MAIN'
+                                    })
+                                    formattedCode.isPBCCode=true
+                                    me.codeLists.push(formattedCode);
                                 }
-                            } else {
-                                // branch...
-
                             }
                         }
+                    } else if(pbcElement.modelValue.scm) {
+                        let pbcSCM = pbcElement.modelValue.scm
+                        let code = 
+`
+## ${pbcElement.name}의 소스코드 사용방법
+
+**저장소 복제**:
+
+\`\`\`sh
+git clone https://github.com/${pbcSCM.org}/${pbcSCM.repo}.git
+\`\`\`
+
+해당 명령어를 사용하여 릴리스된 소스코드를 다운로드 하여 사용 할 수 있습니다.
+`
+                        if(pbcSCM.tag){
+                            code = `
+## ${pbcElement.name}의 소스코드 사용방법
+
+**소스 압축파일 다운로드**: ZIP 또는 TAR.GZ된 파일을 다운로드합니다.
+- zip 형식 파일 다운로드
+\`\`\`sh
+curl -LJO https://github.com/${pbcSCM.org}/${pbcSCM.repo}/archive/refs/tags/${pbcSCM.tag}.zip
+\`\`\`
+
+- tar.gz 형식 파일 다운로드
+\`\`\`sh
+curl -LJO https://github.com/${pbcSCM.org}/${pbcSCM.repo}/archive/refs/tags/${pbcSCM.tag}.tar.gz
+\`\`\`
+
+**압축 해제**:
+- zip 파일 압축 해제
+\`\`\`sh
+unzip ${pbcSCM.repo}-${pbcSCM.tag.replace(/v/g, '')}.zip
+\`\`\`
+
+- tar.gz 파일 압축 해제
+\`\`\`sh
+tar -xzf ${pbcSCM.repo}-${pbcSCM.tag.replace(/v/g, '')}.tar.gz
+\`\`\`
+
+해당 명령어를 사용하여 릴리스된 소스코드를 다운로드 하여 사용 할 수 있습니다.
+                                `
+                        }
+                        let formattedCode = me.generateCodeObj(`README.md`, code, {
+                                element: pbcElement.elementView.id,
+                                fullPath: `${changeCase.pascalCase(pbcElement.name)}/README.md`,
+                                generatedType: 'MAIN'
+                            })
+                            formattedCode.isPBCCode=true
+                        me.codeLists.push(formattedCode);
+                    } else {
+                        // code Generator
                     }
                 }
+                   
             },
             jumpToActions(){
                 if(this.value.scm && this.value.scm.org && this.value.scm.repo){
@@ -3257,7 +3303,7 @@ jobs:
                 }
             },
             alertReLogin(){
-                alert("You need to re-login because session is expired")
+                alert(this.$t('alertMessage.sessionExpired'));
                 this.showLoginCard = true
             },
             showTemplateListChip(obj){
@@ -6083,22 +6129,24 @@ jobs:
                                 var fileObj = currentFolder.find(x => x.name === fileName.trim());
                                 if(!fileObj){
                                     fileObj = {
-                                        bcId: codeObj.bcId,
-                                        name: fileName.trim(),
-                                        key: codeObj.key,
-                                        file: codeObj.file,
-                                        code: codeObj.code,
-                                        hash: codeObj.hash,
-                                        path: codeObj.fullPath,
-                                        changed: 0,
-                                        children: isFolder ? [] : null,
+                                        elementId: codeObj.element, // element id
+                                        bcId: codeObj.bcId, // Included BC
+                                        name: fileName.trim(), // fileName
+                                        key: codeObj.key, // Duplicate prevention key
+                                        file: codeObj.file, // file Type
+                                        code: codeObj.code, // file Code
+                                        hash: codeObj.hash, // file Hash
+                                        path: codeObj.fullPath, // file Path
+                                        changed: 0, // file Changed
+                                        children: isFolder ? [] : null, // file Children
 
                                         // codeRef: codeObj,
                                         templatePath: codeObj.templatePath,
                                         fullPath: codeObj.fullPath,
                                         template: codeObj.template,
                                         generatedType: codeObj.generatedType,
-                                        isMirrorElement: codeObj.isMirrorElement
+                                        isMirrorElement: codeObj.isMirrorElement,
+                                        isPBCCode: codeObj.isPBCCode
                                     };
                                     if(codeObj.hash == fileObj.hash && codeObj.fileName != fileObj.name){
                                         fileObj.hash = fileObj.hash + 1
@@ -7297,7 +7345,7 @@ jobs:
                 let extractBoundedContext = []
 
                 try{
-                    async function callPBC( modelValue, modelInfo ){
+                    async function callPBC(modelValue, modelInfo){
                         let value = JSON.parse(JSON.stringify(modelValue));
                         let bcLists =  Object.values(value.elements).filter(x => x && x._type.endsWith("BoundedContext"));
                         let pbcLists =  Object.values(value.elements).filter(x => x && x._type.endsWith("PBC"));
@@ -7319,6 +7367,7 @@ jobs:
                                 } else {
                                     modelVerValue = modelVerInfo.versionValue ? JSON.parse(modelVerInfo.versionValue.value) : {'elements': {}, 'relations': {}};;
                                 }
+                                if(!modelVerInfo.scm) modelVerInfo.scm = modelVerValue.scm;
                                 await callPBC(modelVerValue, modelVerInfo);
                             }
                         }
@@ -7330,6 +7379,40 @@ jobs:
                 } catch(e) {
                     console.log(e)
                     return [];
+                }
+            },
+            async settingBoundedContextsOfPBC( values, info ){
+                var me = this
+                try{
+                    async function callPBC(modelValue, modelInfo){
+                        let value = JSON.parse(JSON.stringify(modelValue));
+                        let bcLists =  Object.values(value.elements).filter(x => x && x._type.endsWith("BoundedContext"));
+                        let pbcLists =  Object.values(value.elements).filter(x => x && x._type.endsWith("PBC"));
+
+                        if(modelInfo){
+                            bcLists = me.settingSCM(bcLists, modelInfo);
+                            bcLists = bcLists.filter(x => x.scm);
+                        }
+
+                        for(let pbc of pbcLists){
+                            let config = pbc.modelValue;
+                            if( config.projectId && config.projectVersion ){
+                                let modelVerInfo = await me.list(`db://definitions/${config.projectId}/versionLists/${config.projectVersion}`);
+                                let modelVerValue = {'elements': {}, 'relations': {}};
+
+                                if(modelVerInfo && modelVerInfo.valueUrl){
+                                    modelVerValue = await me.getObject(`storage://${modelVerInfo.valueUrl}`);
+                                } else {
+                                    modelVerValue = modelVerInfo.versionValue ? JSON.parse(modelVerInfo.versionValue.value) : {'elements': {}, 'relations': {}};;
+                                }
+                                if(!modelVerInfo.scm) modelVerInfo.scm = modelVerValue.scm;
+                                await callPBC(modelVerValue, modelVerInfo);
+                            }
+                        }
+                    }
+                    await callPBC(values, info);
+                } catch(e) {
+                    console.log(e)
                 }
             },
             async callGenerate(options){
@@ -7461,10 +7544,10 @@ jobs:
                     let originValue = JSON.parse(JSON.stringify(value));
 
                     // add pbc Element.
-                    if( Object.values(value.elements).find(x => x && x._type.endsWith("PBC")) ) {
-                        value.elements = Object.assign(me.canvas.pbcValue.elements, value.elements);
-                        value.relations = Object.assign(me.canvas.pbcValue.relations, value.relations);
-                    }
+                    // if( Object.values(value.elements).find(x => x && x._type.endsWith("PBC")) ) {
+                    //     value.elements = Object.assign(me.canvas.pbcValue.elements, value.elements);
+                    //     value.relations = Object.assign(me.canvas.pbcValue.relations, value.relations);
+                    // }
 
                     let rootModelAndElement
                     if(me.reGenerateOnlyModifiedTemplate){
@@ -7479,20 +7562,21 @@ jobs:
                     let modelForElements = rootModelAndElement.modelForElements
 
                     // Generate BC Of PBC
-                    let bcOfPBC = await me.extractBoundedContextsOfPBC(JSON.parse(JSON.stringify(value)));
-                    rootModel.boundedContexts = [...rootModel.boundedContexts, ...bcOfPBC];
-                    modelForElements.BoundedContext = rootModel.boundedContexts
+                    // await me.settingBoundedContextsOfPBC(JSON.parse(JSON.stringify(value)));
+                    // let bcOfPBC = await me.extractBoundedContextsOfPBC(JSON.parse(JSON.stringify(value)));
+                    // rootModel.boundedContexts = [...rootModel.boundedContexts, ...bcOfPBC];
+                    // modelForElements.BoundedContext = rootModel.boundedContexts
 
 
                     // if(me.rootModelAndElementMap.modelForElements.BoundedContext.length === 1){
-                    if(
-                        modelForElements.BoundedContext.length === 1
-                        && Object.values(value.elements).filter(x => x && x._type.endsWith("PBC")).length == 0
-                    ){
+                    // if(
+                    //     modelForElements.BoundedContext.length === 1
+                    //     && Object.values(value.elements).filter(x => x && x._type.endsWith("PBC")).length == 0
+                    // ){
                         // 1 BC AND NO PBC.
                         // me.isOneBCModel = true
                         // me.onlyOneBcId = me.rootModelAndElementMap.modelForElements.BoundedContext[0].id
-                    }
+                    // }
 
 
                     let basePlatforms =  value.basePlatform ? value.basePlatform : ( options && options.baseTemplate ? options.baseTemplate : me.defaultTemplate )
@@ -7599,7 +7683,8 @@ jobs:
                             await me.setToppingList(toppingPlatform);
                         }
                     }
-                    await me.generateOpenAPI(originValue)
+                    await me.generateCodeOfPBC();
+                    // await me.generateOpenAPI(originValue)
                     //////////////////////////////////////////////// TEMPLATE END ////////////////////////////////////////////////
 
                     //Data Preprocessing

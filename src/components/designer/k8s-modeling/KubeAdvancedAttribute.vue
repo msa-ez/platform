@@ -71,14 +71,14 @@
                         v-on="on"
                         v-bind="attrs"
                         @click="attrDialog = true">
-                    ADD ATTRIBUTE
+                    {{ $t('buttonText.addAttribute') }}
                 </v-btn>
             </template>
 
             <v-card>
                 <v-card-title class="headline">
                     <v-tabs>
-                        <v-tab @click="isAddAttr=true;">ADD ATTRIBUTE</v-tab>
+                        <v-tab @click="isAddAttr=true;">{{ $t('buttonText.addAttribute') }}</v-tab>
                         <v-tab @click="isAddAttr=false; attrKey=''; attrVal='';">USER DEFINED</v-tab>
                     </v-tabs>
                 </v-card-title>

@@ -92,70 +92,65 @@
                         </v-snackbar>
 
                         <v-snackbar
-                                v-model="snackbar.show"
-                                outlined
-                                :color="snackbar.color"
-                                :multi-line="snackbar.mode === 'multi-line'"
-                                :timeout="snackbar.timeout"
-                                :vertical="snackbar.mode === 'vertical'"
-                                :top="snackbar.top"
-                                :bottom="snackbar.bottom"
-                                :centered="snackbar.centered"
+                            v-model="snackbar.show"
+                            outlined
+                            :color="snackbar.color"
+                            :multi-line="snackbar.mode === 'multi-line'"
+                            :timeout="snackbar.timeout"
+                            :vertical="snackbar.mode === 'vertical'"
+                            :top="snackbar.top"
+                            :bottom="snackbar.bottom"
+                            :centered="snackbar.centered"
                         >
                             {{ snackbar.text }}
                             <v-btn
-                                    v-if="snackbar.closeBtn"
-                                    dark
-                                    @click="snackbar.show = false"
-                                    small
-                                    style="margin-left: 10px"
+                                v-if="snackbar.closeBtn"
+                                dark
+                                @click="snackbar.show = false"
+                                small
+                                style="margin-left: 10px"
                             >
                                 close
                             </v-btn>
                         </v-snackbar>
 
                         <v-alert
-                                dense
-                                elevation="6"
-                                colored-border
-                                :value="alertInfo.show"
-                                :border="alertInfo.border"
-                                :type="alertInfo.type"
-                                :max-width="alertInfo.maxWidth"
-                                :color="alertInfo.color"
-                                width="100%"
-                                style="
-                                position: absolute;
+                            dense
+                            elevation="6"
+                            colored-border
+                            :value="alertInfo.show" 
+                            :border="alertInfo.border"
+                            :type="alertInfo.type"
+                            :max-width="alertInfo.maxWidth"
+                            :color="alertInfo.color"
+                            width="100%"
+                            style="position: absolute;
                                 z-index: 999;
                                 left: 50%;
-                                transform: translate(-50%, 0%);
-                            "
+                                transform: translate(-50%, 0%);"
                         >
+                            <v-row class="pa-0 ma-0">
+                                <v-spacer></v-spacer>
+                                <v-icon @click="alertClose(alertInfo.fnNum)">mdi-close</v-icon>
+                            </v-row>
                             <div style="color: black">{{ alertInfo.text }}</div>
-                            <a
-                                    v-if="alertInfo.link"
-                                    target="_blank"
-                                    :href="alertInfo.link"
-                            >Github Persenal Access Token 발행 방법</a
-                            >
-                            <div style="text-align: right">
+                            <a v-if="alertInfo.link"
+                                target="_blank"
+                                :href="alertInfo.link"
+                            >Github Persenal Access Token 발행 방법
+                            </a>
+                            <v-row class="pa-0 ma-0 mt-2">
+                                <v-spacer></v-spacer>
                                 <v-btn
-                                        v-if="alertInfo.submit"
-                                        @click="alertSubmit(alertInfo.fnNum)"
-                                        small
-                                        color="green"
-                                        style="margin-right: 5px"
-                                        dark
+                                    v-if="alertInfo.submit"
+                                    @click="alertSubmit(alertInfo.fnNum)"
+                                    small
+                                    color="primary"
+                                    dark
                                 >
                                     {{ alertInfo.submit }}
                                 </v-btn>
-                                <v-btn
-                                        @click="alertClose(alertInfo.fnNum)"
-                                        small
-                                        text
-                                >{{ $t("word.close") }}</v-btn
-                                >
-                            </div>
+                            </v-row>
                         </v-alert>
 
                         <v-layout right>
@@ -694,7 +689,7 @@
                                                                         :disabled="!initLoad"
                                                                         @click="toggleMonitoringDialog()"
                                                                 >
-                                                                    <div>MONITORING</div>
+                                                                    <v-icon>mdi-monitor</v-icon>MONITORING
                                                                 </v-btn>
                                                             </div>
                                                         </template>
@@ -951,6 +946,18 @@
                                 class="tools"
                                 style="top: 100px; text-align: center"
                             >
+
+                            <v-tooltip right>
+                                <template v-slot:activator="{ on, attrs }">
+                                    <span v-on="on" v-bind="attrs" @click="toggleVisibility" style="cursor: pointer;">
+                                        <v-icon v-if="processMode">mdi-eye</v-icon>
+                                        <v-icon v-else color="primary">mdi-eye-off</v-icon>
+                                    </span>
+                                </template>
+                                <span v-if="processMode">{{ $t('modelingPanelTool.processModeOn') }}</span>
+                                <span v-else>{{ $t('modelingPanelTool.processModeOff') }}</span>
+                            </v-tooltip>
+
                                 <v-tooltip right>
                                     <template v-slot:activator="{ on, attrs }">
                                         <span
@@ -1257,22 +1264,6 @@
                             :modelValue="value"
                             :tabs="tabs"
                     >
-                        <!-- <v-tooltip slot="buttons" bottom>
-                            <template v-slot:activator="{ on, attrs }">
-                                <v-btn
-                                        @click="generateAggregate()"
-                                        icon
-                                        small
-                                        v-bind="attrs"
-                                        v-on="on"
-                                        style="margin-right: 10px; z-index: 2"
-                                        disabled
-                                >
-                                    <Icon icon="ph:tag-simple-light" width="30" height="30" />
-                                </v-btn>
-                            </template>
-                            <span>Generate Code</span>
-                        </v-tooltip> -->
                     </GeneratorUI>
 
                     <div v-if="showUiWizard">
@@ -1532,25 +1523,16 @@
                             transition="dialog-bottom-transition"
                     >
                         <v-card>
-                            <Icon
-                                    v-if="
-                                    embeddedCanvasType ==
-                                    'Domain Class Modeling'
-                                "
-                                    class="gs-icon-style"
-                                    icon="fluent-mdl2:modeling-view"
-                                    style="
-                                    margin-right: 2px;
-                                    height: 40px;
-                                    width: 40px;
-                                    color: #1e88e5;
+                            <Icons v-if="embeddedCanvasType == 'Domain Class Modeling'"
+                                class="gs-icon-style"
+                                :icon="'modeling-view'"
+                                :size="50"
+                                :color="'#1e88e5'"
+                                style="margin-right: 2px;
                                     position: fixed;
                                     z-index: 1;
                                     top: 15px;
-                                    left: 20px;
-                                    width: 50px;
-                                    height: 50px;
-                                "
+                                    left: 20px;"
                             />
                             <v-icon
                                     v-else-if="embeddedCanvasType == 'Kubernetes'"
@@ -1705,23 +1687,27 @@
                             scrollable
                     >
                         <v-card style="height: 100%">
-                            <v-card-title style="position: absolute; top: -10px"
-                            >Select Model for PBC</v-card-title
-                            >
-                            <v-card-actions style="justify-content: flex-end">
+                            <v-card-title>Select Model for PBC</v-card-title>
+                            <!-- <v-card-actions style="justify-content: flex-end">
                                 <v-btn
-                                        @click="closeModelingListsDialog()"
-                                        small
-                                        text
-                                ><v-icon small>mdi-close</v-icon></v-btn
-                                >
-                            </v-card-actions>
+                                    @click="closeModelingListsDialog()"
+                                    small
+                                    text>
+                                    <v-icon small>mdi-close</v-icon>
+                                </v-btn>
+                            </v-card-actions> -->
                             <v-card-text>
-                                <PBCModelList
+                                <MarketPlace
+                                    :isPBCMarket="true"
+                                    :pbc="modelingPBCElement"
+                                    @selected-model="applyModelingListsDialog"
+                                    @closeMarketplaceDialog="closeModelingListsDialog"
+                                />
+                                <!-- <PBCModelList
                                         :pbc="modelingPBCElement"
                                         @selected-model="applyModelingListsDialog"
                                         @close="closeModelingListsDialog"
-                                ></PBCModelList>
+                                ></PBCModelList> -->
                             </v-card-text>
                         </v-card>
                     </v-dialog>
@@ -1730,8 +1716,9 @@
                         <div class="d-flex justify-space-between">
                             <div>
                                 <v-tabs v-model="monitoringTab">
-                                    <v-tab v-for="tab in monitoringTabs" :key="tab">
-                                        {{ tab.toUpperCase() }} Events
+                                    <!-- tab.text를 사용하여 화면에 표시 -->
+                                    <v-tab v-for="tab in monitoringTabs" :key="tab.value">
+                                        {{ tab.text.toUpperCase() }} {{ $t('EventStormingModelCanvas.events') }}
                                     </v-tab>
                                 </v-tabs>
                             </div>
@@ -1740,20 +1727,21 @@
                             </v-btn>
                         </div>
                         <v-card-text>
-                            <v-alert v-if="monitoringMsg.length > 0" type="warning" outlined>
+                            <v-alert v-if="monitoringMsg.length > 0" type="warning" outlined dense>
                                 {{ monitoringMsg }}
                             </v-alert>
                             <v-tabs-items v-model="monitoringTab">
-                                <v-tab-item v-for="tab in monitoringTabs" :key="tab">
-                                    <div v-if="tab === 'filtered'">
+                                <!-- tab.value를 사용하여 데이터 처리 -->
+                                <v-tab-item v-for="tab in monitoringTabs" :key="tab.value">
+                                    <div v-if="tab.value === 'filtered'" class="pt-2">
                                         <v-text-field
                                             v-model="searchKeyword"
-                                            label="Search"
+                                            :label="$t('EventStormingModelCanvas.search')"
                                             clearable
                                             outlined
                                             dense
                                             persistent-hint
-                                            :hint="'Search by event ' + searchKeyList.join(', ')"
+                                            :hint="$t('EventStormingModelCanvas.searchByEvent', {label: searchKeyList.join(', ')})"
                                             @keydown.enter="searchEventByKeyword()"
                                         >
                                             <template v-slot:append>
@@ -1762,7 +1750,7 @@
                                         </v-text-field>
                                     </div>
 
-                                    <v-data-table
+                                    <v-data-table class="monitoring-dialog-table"
                                         v-if="isEventLogsFetched"
                                         :headers="eventHeaders"
                                         :items="eventLogs"
@@ -1771,6 +1759,7 @@
                                         show-expand
                                         single-expand
                                         :expanded.sync="expandedLogs"
+                                        :style="tab.value === 'filtered' ? 'height:83vh;' : 'height:92vh;'"
                                     >
                                         <template v-slot:item="{ item, index }">
                                             <tr @click="selectedEventProgress(item, index)"
@@ -1782,13 +1771,16 @@
                                                 <td>{{ item.timestamp }}</td>
                                                 <td @click.stop="toggleEventPayload(item)">
                                                     <v-icon>
-                                                        {{ expandedLogs.includes(item) ? 'mdi-chevron-up' : 'mdi-chevron-down' }}
+                                                        {{ expandedLogs.length > 0 ? 'mdi-chevron-up' : 'mdi-chevron-down' }}
                                                     </v-icon>
                                                 </td>
                                             </tr>
                                         </template>
                                         <template v-slot:expanded-item="{ headers, item }">
                                             <td :colspan="headers.length">
+                                                <v-alert v-if="item.error" type="error" outlined dense>
+                                                    {{ item.error }}
+                                                </v-alert>
                                                 <div class="pa-1">
                                                     <tree-view :data="item.payload"></tree-view>
                                                 </div>
@@ -1969,20 +1961,24 @@
           </v-dialog>
 
           <v-dialog
-                  v-model="modelDraftDialogWithXAIDto.isShow"
+                  v-model="AggregateDraftDialogDto.isShow"
                   persistent
                   max-width="1200"
                   max-height="800"
                   overflow="scroll"
           >
-            <ModelDraftDialogWithXAI
-                :draftOptions="modelDraftDialogWithXAIDto.draftOptions"
-                :draftUIInfos="modelDraftDialogWithXAIDto.draftUIInfos"
-                :isGeneratorButtonEnabled="modelDraftDialogWithXAIDto.isGeneratorButtonEnabled"
-                @generateFromDraft="generateFromDraftWithXAI"
-                @onClose="modelDraftDialogWithXAIDto.isShow = false; modelDraftDialogWithXAIDto.actions.stop()"
-                @onRetry="modelDraftDialogWithXAIDto.actions.retry()"
-            ></ModelDraftDialogWithXAI>
+            <AggregateDraftDialog
+                :draftOptions="AggregateDraftDialogDto.draftOptions"
+                :draftUIInfos="AggregateDraftDialogDto.draftUIInfos"
+                :isGeneratorButtonEnabled="AggregateDraftDialogDto.isGeneratorButtonEnabled"
+                :uiType="'EventStormingModelCanvas'"
+
+                @onClose="AggregateDraftDialogDto.isShow = false; AggregateDraftDialogDto.actions.stop()"
+                @onRetry="AggregateDraftDialogDto.actions.retry()"
+
+                @generateFromDraft="generateAggregatesFromDraft"
+                @feedbackFromDraft="AggregateDraftDialogDto.actions.feedbackFromDraft"
+            ></AggregateDraftDialog>
           </v-dialog>
 
           
@@ -2025,6 +2021,7 @@
     import UMLClassDiagram from "../class-modeling/UMLClassModelCanvas";
     import CodeGenerator from "../modeling/CodeGenerator";
     import PBCModelList from "./PBCModelList";
+    import MarketPlace from "../MarketPlace";
     import UIWizardDialoger from "../modeling/generators/UIWizardDialoger";
     import Login from "../../oauth/Login";
     import isAttached from "../../../utils/isAttached";
@@ -2035,14 +2032,16 @@
     import BoundedContextRelocateActionsGenerator from "../modeling/generators/es-ddl-generators/BoundedContextRelocateActionsGenerator"
     import ModelDraftDialog from "../modeling/ModelDraftDialog"
     import EventStormingTestTerminal from "./testTerminals/EventStormingTestTerminal.vue";
-    import ModelDraftDialogWithXAI from "../context-mapping-modeling/dialogs/ModelDraftDialogWithXAI.vue"
-    import GWTGeneratorByFunctions from "../modeling/generators/es-ddl-generators/GWTGeneratorByFunctions";
-    import DraftGeneratorByFunctions from "../modeling/generators/es-ddl-generators/DraftGeneratorByFunctions";
-    import CreateAggregateActionsByFunctions from "../modeling/generators/es-ddl-generators/CreateAggregateActionsByFunctions";
-    import CreateCommandActionsByFunctions from "../modeling/generators/es-ddl-generators/CreateCommandActionsByFunctions";
-    import CreatePolicyActionsByFunctions from "../modeling/generators/es-ddl-generators/CreatePolicyActionsByFunctions";
+    import {
+        DraftGeneratorByFunctions,
+        CreateAggregateActionsByFunctions, 
+        CreateAggregateClassIdByDrafts,
+        CreateCommandActionsByFunctions,
+        CreatePolicyActionsByFunctions,
+        CommandGWTGeneratorByFunctions,
+        AggregateDraftDialog
+    } from "../modeling/generators/es-generators";
     import GeneratorProgress from "./components/GeneratorProgress.vue"
-    import PreProcessingFunctionsGenerator from "../modeling/generators/es-ddl-generators/PreProcessingFunctionsGenerator";
     import ESActionsUtil from "../modeling/generators/es-ddl-generators/modules/ESActionsUtil"
     const prettier = require("prettier");
     const plugins = require("prettier-plugin-java");
@@ -2110,10 +2109,11 @@
             "uml-class-model-canvas": UMLClassDiagram,
             CodeGenerator,
             PBCModelList,
+            MarketPlace,
             MouseCursorComponent,
             ModelDraftDialog,
             ModelDraftDialogForDistribution,
-            ModelDraftDialogWithXAI,
+            AggregateDraftDialog,
             GeneratorProgress
             // ModelCodeGenerator
         },
@@ -2126,13 +2126,16 @@
                 //monitoring
                 monitoringDialog: false,
                 monitoringTab: 0,
-                monitoringTabs: ["recent", "filtered"],
+                monitoringTabs: [
+                    { text: this.$t('EventStormingModelCanvas.recent'), value: "recent" },
+                    { text: this.$t('EventStormingModelCanvas.filtered'), value: "filtered" }
+                ],
                 isEventLogsFetched: false,
                 eventHeaders: [
-                    { text: 'Key', value: 'correlationKey' },
-                    { text: 'Type', value: 'type' },
-                    { text: 'Timestamp', value: 'timestamp' },
-                    { text: 'Payload', value: 'data-table-expand' }
+                    { text: this.$t('EventStormingModelCanvas.correlationKey'), value: 'correlationKey' },
+                    { text: this.$t('EventStormingModelCanvas.text'), value: 'type' },
+                    { text: this.$t('EventStormingModelCanvas.timestamp'), value: 'timestamp' },
+                    { text: this.$t('EventStormingModelCanvas.payload'), value: 'data-table-expand', width: 'auto' }
                 ],
                 eventLogs: [],
                 expandedLogs: [],
@@ -2520,7 +2523,7 @@
                 },
                 isDraftGeneratorButtonEnabledForRelocate: true,
 
-                modelDraftDialogWithXAIDto: {
+                AggregateDraftDialogDto: {
                     isShow: false,
                     draftOptions: [],
                     draftUIInfos: {
@@ -2529,7 +2532,8 @@
                     isGeneratorButtonEnabled: true,
                     actions: {
                         stop: () => {},
-                        retry: () => {}
+                        retry: () => {},
+                        feedbackFromDraft: (boundedContextInfo, feedback, draftOptions) => {}
                     }
                 },
 
@@ -2543,62 +2547,22 @@
                 },
 
                 generators: {
-                    CreateAggregateActionsByFunctions: {
-                        generator: null,
-                        inputs: [],
-                        generateIfInputsExist: () => {},
-                        initInputs: (draftOptions) => {},
-                        callbacks: {
-                            addAggregateRelation: []
-                        }
-                    },
-
-                    CreateCommandActionsByFunctions: {
-                        generator: null,
-                        inputs: [],
-                        generateIfInputsExist: () => {},
-                        initInputs: (draftOptions) => {}
-                    },
-
-                    CreatePolicyActionsByFunctions: {
-                        generator: null,
-                        inputs: [],
-                        generateIfInputsExist: () => {},
-                        initInputs: (draftOptions) => {}
-                    },
-
-                    GWTGeneratorByFunctions: {
-                        generator: null,
-                        inputs: [],
-                        generateIfInputsExist: () => {},
-                        initInputs: (draftOptions) => {}
-                    },
-
-                    DraftGeneratorByFunctions: {
-                        generator: null,
-                        initialAccumulatedDrafts: {},
-                        accumulatedDrafts: {},
-                        generate: (structuredDescription, boundedContext) => {},
-                        updateAccumulatedDrafts: (output, targetBoundedContext) => {}
-                    },
-
-                    PreProcessingFunctionsGenerator: {
-                        generator: null
-                    }
+                    CreateAggregateActionsByFunctions: {generator: null},
+                    CreateAggregateClassIdByDrafts: {generator: null},
+                    CreateCommandActionsByFunctions: {generator: null},
+                    CreatePolicyActionsByFunctions: {generator: null},
+                    CommandGWTGeneratorByFunctions: {generator: null}
                 },
 
                 generatorsInGeneratorUI: {
-                    PreProcessingFunctionsGenerator: {
-                        callbacks: {},
-                        initialInputs: [],
-                        inputs: [],
-                        buildInitialInputs: () => {},
-                        initInputs: () => {},
-                        generateIfInputsExist: () => {}
+                    CreateAggregateActionsByFunctions: {
+                        callbacks: {}
                     }
                 },
 
-                selectedDraftOptions: []
+                selectedDraftOptions: [],
+
+                processMode: true,
             };
         },
         computed: {
@@ -2757,24 +2721,54 @@
                 }
             })
 
-            this.generators.CreateAggregateActionsByFunctions.generator = new CreateAggregateActionsByFunctions({
-                input: null,
+
+            let thinkingUpdateInterval = undefined
+            const createThinkingUpdateInterval = (elapsedSeconds=0, subjectText) => {
+                clearThinkingUpdateInterval()
+
+                const updateMessage = (elapsedSeconds, subjectText) => {
+                    this.generatorProgressDto.displayMessage = `Thinking for ${elapsedSeconds} second${elapsedSeconds > 1 ? 's' : ''}... (Subject: ${subjectText})`
+                }
+
+                updateMessage(elapsedSeconds, subjectText)
+                thinkingUpdateInterval = setInterval(() => {
+                    elapsedSeconds += 1
+                    updateMessage(elapsedSeconds, subjectText)
+                }, 1000)
+            }
+            const clearThinkingUpdateInterval = () => {
+                if(thinkingUpdateInterval) {
+                    clearInterval(thinkingUpdateInterval)
+                    thinkingUpdateInterval = undefined
+                }
+            }
+
+            const byFunctionCallbacks = {
+                onSend: (input, stopCallback) => {
+                    this.AggregateDraftDialogDto = {
+                        ...this.AggregateDraftDialogDto,
+                        isShow: false
+                    }
+
+                    this.generatorProgressDto = {
+                        generateDone: false,
+                        displayMessage: "",
+                        progress: null,
+                        actions: {
+                            stopGeneration: () => {
+                                stopCallback()
+                            }
+                        }
+                    }
+
+                    createThinkingUpdateInterval(0, input.subjectText)
+                },
 
                 onFirstResponse: (returnObj) => {
-                    this.modelDraftDialogWithXAIDto = {
-                        ...this.modelDraftDialogWithXAIDto,
-                        isShow: false,
-                        draftUIInfos: {
-                            leftBoundedContextCount: 1,
-                            directMessage: returnObj.directMessage
-                        },
-                        actions: {
-                            stop: () => {
-                            },
-                            retry: () => {
-                            }
-                        },
-                        isGeneratorButtonEnabled: false
+                    clearThinkingUpdateInterval()
+                    this.AggregateDraftDialogDto = {
+                        ...this.AggregateDraftDialogDto,
+                        isShow: false
                     }
 
                     this.generatorProgressDto = {
@@ -2788,9 +2782,9 @@
                         }
                     }
                 },
-
+                
                 onModelCreated: (returnObj) => {
-                    this.modelDraftDialogWithXAIDto.draftUIInfos.directMessage = returnObj.directMessage
+                    clearThinkingUpdateInterval()
                     this.generatorProgressDto.displayMessage = returnObj.directMessage
                     this.generatorProgressDto.progress = returnObj.progress
 
@@ -2802,6 +2796,7 @@
                 },
 
                 onGenerationSucceeded: (returnObj) => {
+                    clearThinkingUpdateInterval()
                     if(returnObj.modelValue.removedElements && returnObj.modelValue.removedElements.length > 0) {
                         returnObj.modelValue.removedElements.forEach(element => {
                             if(this.value.elements[element.id])
@@ -2814,606 +2809,156 @@
                         this.$set(this.value, "elements", returnObj.modelValue.createdESValue.elements)
                         this.$set(this.value, "relations", returnObj.modelValue.createdESValue.relations) 
                     }
-
-                    if(returnObj.modelValue.callbacks && returnObj.modelValue.callbacks.addAggregateRelation) {
-                        this.generators.CreateAggregateActionsByFunctions.callbacks.addAggregateRelation.push((esValue) => {
-                            returnObj.modelValue.callbacks.addAggregateRelation(esValue)
-                        })
-                    }
-
-
-                    if(this.generators.CreateAggregateActionsByFunctions.generateIfInputsExist())
-                        return
-
-                    if(this.generators.CreateAggregateActionsByFunctions.callbacks.addAggregateRelation.length > 0) {
-                        this.changedByMe = true
-                        this.generators.CreateAggregateActionsByFunctions.callbacks.addAggregateRelation.forEach(callback => callback(this.value))
-                    }
-                    this.forceRefreshCanvas()
-
-                    this.generators.CreateCommandActionsByFunctions.initInputs(this.selectedDraftOptions)
-                    if(this.generators.CreateCommandActionsByFunctions.generateIfInputsExist())
-                        return
-
-
-                    this.modelDraftDialogWithXAIDto = {
-                        ...this.modelDraftDialogWithXAIDto,
-                        isShow: false,
-                        draftUIInfos: {
-                            leftBoundedContextCount: 0
-                        },
-                        isGeneratorButtonEnabled: true
-                    }
-                    this.generatorProgressDto.generateDone = true
                 },
 
                 onRetry: (returnObj) => {
-                    alert(`[!] An error occurred during aggregate creation, please try again.\n* Error log \n${returnObj.errorMessage}`)
-                    this.modelDraftDialogWithXAIDto = {
-                        ...this.modelDraftDialogWithXAIDto,
+                    clearThinkingUpdateInterval()
+                    alert(`[!] An error occurred during creation, please try again.\n* Error log \n${returnObj.errorMessage}`)
+                    this.AggregateDraftDialogDto = {
+                        ...this.AggregateDraftDialogDto,
                         isShow: true,
                         draftUIInfos: {
                             leftBoundedContextCount: 0
                         },
                         isGeneratorButtonEnabled: true
                     }
-                    this.generatorProgressDto.generateDone = true
+                    this.generatorProgressDto.generateDone = tru
                 },
 
                 onStopped: () => {
+                    clearThinkingUpdateInterval()
+                    this.generatorProgressDto.generateDone = true
+                },
+
+                onGenerationDone: () => {
+                    clearThinkingUpdateInterval()
                     this.generatorProgressDto.generateDone = true
                 }
-            })
-            this.generators.CreateAggregateActionsByFunctions.generateIfInputsExist = () => {
-                if(this.generators.CreateAggregateActionsByFunctions.inputs.length > 0) {
-                    this.generators.CreateAggregateActionsByFunctions.generator.client.input = this.generators.CreateAggregateActionsByFunctions.inputs.shift()
-                    this.generators.CreateAggregateActionsByFunctions.generator.generate()
-                    return true
-                }
-                return false
-            }
-            this.generators.CreateAggregateActionsByFunctions.initInputs = (draftOptions) => {
-                let inputs = []
-                for(const eachDraftOption of Object.values(draftOptions)) {
-                    inputs = inputs.concat(
-                        eachDraftOption.structure.map((aggregateStructure, index) => ({
-                            targetBoundedContext: eachDraftOption.boundedContext,
-                            description: eachDraftOption.description,
-                            draftOption: [aggregateStructure],
-                            esValue: this.value,
-                            userInfo: this.userInfo,
-                            information: this.information,
-                            isAccumulated: index > 0
-                        })))
-                }
-                this.generators.CreateAggregateActionsByFunctions.callbacks.addAggregateRelation = []
-                this.generators.CreateAggregateActionsByFunctions.inputs = inputs
             }
 
-            this.generators.CreateCommandActionsByFunctions.generator = new CreateCommandActionsByFunctions({
-                input: null,
-
-                onFirstResponse: (returnObj) => {
-                    this.modelDraftDialogWithXAIDto = {
-                        ...this.modelDraftDialogWithXAIDto,
-                        isShow: false,
-                        draftUIInfos: {
-                            leftBoundedContextCount: 1,
-                            directMessage: returnObj.directMessage
-                        },
-                        actions: {
-                            stop: () => {
-                            },
-                            retry: () => {
+            this.generators.CreateAggregateActionsByFunctions.generator = CreateAggregateActionsByFunctions.createGeneratorByDraftOptions(
+                {
+                    ...byFunctionCallbacks,
+                    onGenerationDone: () => {
+                        // 이미 기존에 생성한 다른 BC 내용이 있더라도 적절하게 클래스 ID를 생성시키기 위해서 임시 초안 생성
+                        const draftOptionsByEsValue = {}
+                        Object.entries(DraftGeneratorByFunctions.esValueToAccumulatedDrafts(
+                            this.value,
+                            {name: ""}
+                        )).forEach(([boundedContextName, draftOptions]) => {
+                            draftOptionsByEsValue[boundedContextName] = {
+                                structure: draftOptions
                             }
-                        },
-                        isGeneratorButtonEnabled: false
-                    }
-
-                    this.generatorProgressDto = {
-                        generateDone: false,
-                        displayMessage: returnObj.directMessage,
-                        progress: 0,
-                        actions: {
-                            stopGeneration: () => {
-                                returnObj.actions.stopGeneration()
-                            }
-                        }
-                    }
-                },
-
-                onModelCreated: (returnObj) => {
-                    this.modelDraftDialogWithXAIDto.draftUIInfos.directMessage = returnObj.directMessage
-                    this.generatorProgressDto.displayMessage = returnObj.directMessage
-                    this.generatorProgressDto.progress = returnObj.progress
-
-                    if(returnObj.modelValue && returnObj.modelValue.createdESValue) {
-                        this.changedByMe = true
-                        this.$set(this.value, "elements", returnObj.modelValue.createdESValue.elements)
-                        this.$set(this.value, "relations", returnObj.modelValue.createdESValue.relations) 
-                    }
-                },
-
-                onGenerationSucceeded: (returnObj) => {
-                    if(returnObj.modelValue && returnObj.modelValue.createdESValue) {
-                        this.changedByMe = true
-                        this.$set(this.value, "elements", returnObj.modelValue.createdESValue.elements)
-                        this.$set(this.value, "relations", returnObj.modelValue.createdESValue.relations) 
-                    }
-
-                    if(this.generators.CreateCommandActionsByFunctions.generateIfInputsExist())
-                        return
-
-                    this.forceRefreshCanvas()
-
-                    this.generators.CreatePolicyActionsByFunctions.initInputs(this.selectedDraftOptions)
-                    if(this.generators.CreatePolicyActionsByFunctions.generateIfInputsExist())
-                        return
-
-                    this.modelDraftDialogWithXAIDto = {
-                        ...this.modelDraftDialogWithXAIDto,
-                        isShow: false,
-                        draftUIInfos: {
-                            leftBoundedContextCount: 0
-                        },
-                        isGeneratorButtonEnabled: true
-                    }
-                    this.generatorProgressDto.generateDone = true
-                },
-
-                onRetry: (returnObj) => {
-                    alert(`[!] An error occurred during command creation, please try again.\n* Error log \n${returnObj.errorMessage}`)
-                    this.modelDraftDialogWithXAIDto = {
-                        ...this.modelDraftDialogWithXAIDto,
-                        isShow: true,
-                        draftUIInfos: {
-                            leftBoundedContextCount: 0
-                        },
-                        isGeneratorButtonEnabled: true
-                    }
-                    this.generatorProgressDto.generateDone = true
-                },
-
-                onStopped: () => {
-                    this.generatorProgressDto.generateDone = true
-                }
-            })
-            this.generators.CreateCommandActionsByFunctions.generateIfInputsExist = () => {
-                if(this.generators.CreateCommandActionsByFunctions.inputs.length > 0) {
-                    this.generators.CreateCommandActionsByFunctions.generator.client.input = this.generators.CreateCommandActionsByFunctions.inputs.shift()
-                    this.generators.CreateCommandActionsByFunctions.generator.generate()
-                    return true
-                }
-                return false
-            }
-            this.generators.CreateCommandActionsByFunctions.initInputs = (draftOptions) => {
-                let inputs = []
-                for(const eachDraftOption of Object.values(draftOptions)) {
-                    const targetAggregates = Object.values(this.value.elements).filter(element => element && element._type === "org.uengine.modeling.model.Aggregate" && element.boundedContext.id === eachDraftOption.boundedContext.id)
-
-                    // Aggregate각각마다 커맨드/이벤트/ReadModel 생성 요청을 함으로써 다루는 문제영역을 최소화함
-                    for(const targetAggregate of targetAggregates) {
-                        inputs.push({
-                            targetBoundedContext: eachDraftOption.boundedContext,
-                            targetAggregate: targetAggregate,
-                            description: eachDraftOption.description,
-                            esValue: this.value,
-                            userInfo: this.userInfo,
-                            information: this.information
                         })
+
+                        Object.keys(this.selectedDraftOptions).forEach(boundedContextName => {
+                            draftOptionsByEsValue[boundedContextName] = this.selectedDraftOptions[boundedContextName]
+                        })
+                        
+                        this.generators.CreateAggregateClassIdByDrafts.generator.initInputs(
+                            draftOptionsByEsValue,
+                            this.value,
+                            this.userInfo,
+                            this.information
+                        )
+                        if(this.generators.CreateAggregateClassIdByDrafts.generator.generateIfInputsExist())
+                            return
+
+
+                        // 별도로 추가시킬 클래스 ID가 없을 경우, 바로 커맨드 생성 단계로 이동
+                        this.generators.CreateCommandActionsByFunctions.generator.initInputs(
+                            this.selectedDraftOptions,
+                            this.value,
+                            this.userInfo,
+                            this.information
+                        )
+                        if(this.generators.CreateCommandActionsByFunctions.generator.generateIfInputsExist())
+                            return
+
+
+                        byFunctionCallbacks.onGenerationDone()
                     }
                 }
-                this.generators.CreateCommandActionsByFunctions.inputs = inputs
-            }
+            )
 
-            this.generators.CreatePolicyActionsByFunctions.generator = new CreatePolicyActionsByFunctions({
-                input: null,
-
-                onFirstResponse: (returnObj) => {
-                    this.modelDraftDialogWithXAIDto = {
-                        ...this.modelDraftDialogWithXAIDto,
-                        isShow: false,
-                        draftUIInfos: {
-                            leftBoundedContextCount: 1,
-                            directMessage: returnObj.directMessage
-                        },
-                        actions: {
-                            stop: () => {
-                            },
-                            retry: () => {
-                            }
-                        },
-                        isGeneratorButtonEnabled: false
+            this.generators.CreateAggregateClassIdByDrafts.generator = CreateAggregateClassIdByDrafts.createGeneratorByDraftOptions(
+                {
+                    ...byFunctionCallbacks,
+                    onGenerationDone: () => {
+                        this.generators.CreateCommandActionsByFunctions.generator.initInputs(
+                            this.selectedDraftOptions,
+                            this.value,
+                            this.userInfo,
+                            this.information
+                        )
+                        if(this.generators.CreateCommandActionsByFunctions.generator.generateIfInputsExist())
+                            return
+                        
+                        byFunctionCallbacks.onGenerationDone()
                     }
+                }
+            )
 
-                    this.generatorProgressDto = {
-                        generateDone: false,
-                        displayMessage: returnObj.directMessage,
-                        progress: 0,
-                        actions: {
-                            stopGeneration: () => {
-                                returnObj.actions.stopGeneration()
-                            }
-                        }
-                    }
-                },
-
-                onModelCreated: (returnObj) => {
-                    this.modelDraftDialogWithXAIDto.draftUIInfos.directMessage = returnObj.directMessage
-                    this.generatorProgressDto.displayMessage = returnObj.directMessage
-                    this.generatorProgressDto.progress = returnObj.progress
-                },
-
-                onGenerationSucceeded: (returnObj) => {
-                    if(returnObj.modelValue && returnObj.modelValue.createdESValue) {
-                        this.changedByMe = true
-                        this.$set(this.value, "elements", returnObj.modelValue.createdESValue.elements)
-                        this.$set(this.value, "relations", returnObj.modelValue.createdESValue.relations) 
-                    }
-
-                    if(this.generators.CreatePolicyActionsByFunctions.generateIfInputsExist())
+            this.generators.CreateCommandActionsByFunctions.generator = CreateCommandActionsByFunctions.createGeneratorByDraftOptions({
+                ...byFunctionCallbacks,
+                onGenerationDone: () => {
+                    this.generators.CreatePolicyActionsByFunctions.generator.initInputs(
+                        this.selectedDraftOptions,
+                        this.value,
+                        this.userInfo,
+                        this.information
+                    )
+                    if(this.generators.CreatePolicyActionsByFunctions.generator.generateIfInputsExist())
                         return
 
-                    this.forceRefreshCanvas()
-
-                    this.generators.GWTGeneratorByFunctions.initInputs(this.selectedDraftOptions)
-                    if(this.generators.GWTGeneratorByFunctions.generateIfInputsExist())
-                        return
-
-                    this.modelDraftDialogWithXAIDto = {
-                        ...this.modelDraftDialogWithXAIDto,
-                        isShow: false,
-                        draftUIInfos: {
-                            leftBoundedContextCount: 0
-                        },
-                        isGeneratorButtonEnabled: true
-                    }
-                    this.generatorProgressDto.generateDone = true
-                },
-
-                onRetry: (returnObj) => {
-                    alert(`[!] An error occurred during policy creation, please try again.\n* Error log \n${returnObj.errorMessage}`)
-                    this.modelDraftDialogWithXAIDto = {
-                        ...this.modelDraftDialogWithXAIDto,
-                        isShow: true,
-                        draftUIInfos: {
-                            leftBoundedContextCount: 0
-                        },
-                        isGeneratorButtonEnabled: true
-                    }
-                    this.generatorProgressDto.generateDone = true
-                },
-
-                onStopped: () => {
-                    this.generatorProgressDto.generateDone = true
+                    byFunctionCallbacks.onGenerationDone()
                 }
             })
-            this.generators.CreatePolicyActionsByFunctions.generateIfInputsExist = () => {
-                if(this.generators.CreatePolicyActionsByFunctions.inputs.length > 0) {
-                    this.generators.CreatePolicyActionsByFunctions.generator.client.input = this.generators.CreatePolicyActionsByFunctions.inputs.shift()
-                    this.generators.CreatePolicyActionsByFunctions.generator.generate()
-                    return true
+
+            this.generators.CreatePolicyActionsByFunctions.generator = CreatePolicyActionsByFunctions.createGeneratorByDraftOptions({
+                ...byFunctionCallbacks,
+                onGenerationDone: () => {
+                    this.generators.CommandGWTGeneratorByFunctions.generator.initInputs(
+                        this.selectedDraftOptions,
+                        this.value
+                    )
+                    if(this.generators.CommandGWTGeneratorByFunctions.generator.generateIfInputsExist())
+                        return
+
+                    byFunctionCallbacks.onGenerationDone()
                 }
-                return false
-            }
-            this.generators.CreatePolicyActionsByFunctions.initInputs = (draftOptions) => {
-                let inputs = []
-                for(const eachDraftOption of Object.values(draftOptions)) {
-                    inputs.push({
-                            targetBoundedContext: eachDraftOption.boundedContext,
-                            description: eachDraftOption.description,
-                            esValue: this.value,
-                            userInfo: this.userInfo,
-                            information: this.information
-                        })
-                }
-                this.generators.CreatePolicyActionsByFunctions.inputs = inputs
-            }
+            })
 
-            this.generators.GWTGeneratorByFunctions.generator = new GWTGeneratorByFunctions({
-                input: null,
-
-                onFirstResponse: (returnObj) => {
-                    this.modelDraftDialogWithXAIDto = {
-                        ...this.modelDraftDialogWithXAIDto,
-                        isShow: false,
-                        draftUIInfos: {
-                            leftBoundedContextCount: 1,
-                            directMessage: returnObj.directMessage
-                        },
-                        actions: {
-                            stop: () => {
-                            },
-                            retry: () => {
-                            }
-                        },
-                        isGeneratorButtonEnabled: false
-                    }
-
-                    this.generatorProgressDto = {
-                        generateDone: false,
-                        displayMessage: returnObj.directMessage,
-                        progress: 0,
-                        actions: {
-                            stopGeneration: () => {
-                                returnObj.actions.stopGeneration()
-                            }
-                        }
-                    }
-                },
-
-                onModelCreated: (returnObj) => {
-                    this.modelDraftDialogWithXAIDto.draftUIInfos.directMessage = returnObj.directMessage
-                    this.generatorProgressDto.displayMessage = returnObj.directMessage
-                    this.generatorProgressDto.progress = returnObj.progress
-                },
-
+            this.generators.CommandGWTGeneratorByFunctions.generator = CommandGWTGeneratorByFunctions.createGeneratorByDraftOptions({
+                ...byFunctionCallbacks,
                 onGenerationSucceeded: (returnObj) => {
                     if(returnObj.modelValue && returnObj.modelValue.commandsToReplace) {
+                        this.changedByMe = true
                         for(const command of returnObj.modelValue.commandsToReplace)
                             this.$set(this.value.elements, command.id, command)
-                        this.changedByMe = true
                     }
-
-
-                    if(this.generators.GWTGeneratorByFunctions.generateIfInputsExist())
-                        return
-
-                    this.modelDraftDialogWithXAIDto = {
-                        ...this.modelDraftDialogWithXAIDto,
-                        isShow: false,
-                        draftUIInfos: {
-                            leftBoundedContextCount: 0
-                        },
-                        isGeneratorButtonEnabled: true
-                    }
-                    this.generatorProgressDto.generateDone = true
-                },
-
-                onRetry: (returnObj) => {
-                    alert(`[!] GWT 생성 과정에서 오류가 발생했습니다. 다시 시도해주세요.\n* Error log \n${returnObj.errorMessage}`)
-                    this.modelDraftDialogWithXAIDto = {
-                        ...this.modelDraftDialogWithXAIDto,
-                        isShow: true,
-                        draftUIInfos: {
-                            leftBoundedContextCount: 0
-                        },
-                        isGeneratorButtonEnabled: true
-                    }
-                    this.generatorProgressDto.generateDone = true
-                },
-
-                onStopped: () => {
-                    this.generatorProgressDto.generateDone = true
                 }
             })
-            this.generators.GWTGeneratorByFunctions.generateIfInputsExist = () => {
-                if(this.generators.GWTGeneratorByFunctions.inputs.length > 0) {
-                    this.generators.GWTGeneratorByFunctions.generator.client.input = this.generators.GWTGeneratorByFunctions.inputs.shift()
-                    this.generators.GWTGeneratorByFunctions.generator.generate()
-                    return true
-                }
-                return false
-            }
-            this.generators.GWTGeneratorByFunctions.initInputs = (draftOptions) => {
-                let inputs = []
-                for(const eachDraftOption of Object.values(draftOptions)) {
-                    const targetAggregates = Object.values(this.value.elements).filter(element => element && element._type === "org.uengine.modeling.model.Aggregate" && element.boundedContext.id === eachDraftOption.boundedContext.id)
-
-                    // Aggregate각각마다 존재하는 커맨드에 GWT를 생성하는 요청을 함으로써 다루는 문제영역을 최소화함
-                    for(const targetAggregate of targetAggregates) {
-                        const targetCommandIds = Object.values(this.value.elements)
-                        .filter(element => element && element._type === "org.uengine.modeling.model.Command" && element.aggregate.id === targetAggregate.id)
-                        .map(command => command.id)
-                        if(!targetCommandIds || targetCommandIds.length === 0) continue
-
-                        inputs.push({
-                            targetBoundedContext: eachDraftOption.boundedContext,
-                            targetCommandIds: targetCommandIds,
-                            description: eachDraftOption.description,
-                            esValue: this.value
-                        })
-                    }
-                }
-                this.generators.GWTGeneratorByFunctions.inputs = inputs
-            }
 
             // 이 Generator의 호출은 ESDialoger.jump()에서 간접적으로 이루어짐
-            this.generatorsInGeneratorUI.PreProcessingFunctionsGenerator.callbacks = {
+            this.generatorsInGeneratorUI.CreateAggregateActionsByFunctions.callbacks = {
+                // 공통 처리 루트로 들어가기 위한 작업
                 onInputParamsCheckBefore: (inputParams) => {
-                    if(this.generatorsInGeneratorUI.PreProcessingFunctionsGenerator.initialInputs.length > 0)
-                        return
+                    console.log("[*] 바로 이벤트 스토밍 생성 실행", {inputParams})
 
-                    this.generatorsInGeneratorUI.PreProcessingFunctionsGenerator.buildInitialInputs(inputParams.passedGeneratorInputs)
-                    this.generatorsInGeneratorUI.PreProcessingFunctionsGenerator.initInputs()
-                    this.generatorsInGeneratorUI.PreProcessingFunctionsGenerator.inputs.shift() // 이미 대상이 된 옵션 제거
-                },
 
-                onFirstResponse: (returnObj) => {
-                    this.modelDraftDialogWithXAIDto = {
-                        ...this.modelDraftDialogWithXAIDto,
-                        isShow: true,
-                        draftUIInfos: {
-                            leftBoundedContextCount: this.generatorsInGeneratorUI.PreProcessingFunctionsGenerator.inputs.length + 1,
-                            directMessage: "",
-                            progress: 0
-                        },
-                        isGeneratorButtonEnabled: true,
-                        actions: {
-                            stop: () => {
-                                returnObj.actions.stopGeneration()
-                            },
-                            retry: () => {
-                                this.generatorsInGeneratorUI.PreProcessingFunctionsGenerator.initInputs()
-                                this.generatorsInGeneratorUI.PreProcessingFunctionsGenerator.generateIfInputsExist()
-                            }
-                        }
-                    }
-                },
+                    // 이벤트 스토밍 초안으로 부터 '이벤트 스토밍 생성' 버튼을 여러번 눌렀을 경우를 대비
+                    // 항상 완전히 초기화된 상태로부터 시작
+                    for(const element of Object.values(this.value.elements).filter(element => element))
+                        this.removeElementAction(element)
 
-                onModelCreated: (returnObj) => {
-                    this.modelDraftDialogWithXAIDto.draftUIInfos.directMessage = returnObj.directMessage
-                    this.modelDraftDialogWithXAIDto.draftUIInfos.progress = returnObj.progress
-                },
+                    this.changedByMe = true
+                    this.$set(this.value, "elements", {})
+                    this.$set(this.value, "relations", {})
 
-                onGenerationSucceeded: (returnObj) => {
-                    this.modelDraftDialogWithXAIDto = {
-                        ...this.modelDraftDialogWithXAIDto,
-                        draftUIInfos: {
-                            leftBoundedContextCount: this.generatorsInGeneratorUI.PreProcessingFunctionsGenerator.inputs.length + 1,
-                            directMessage: returnObj.directMessage,
-                            progress: 100
-                        }
-                    }
 
-                    this.generators.DraftGeneratorByFunctions.generate(JSON.stringify(returnObj.modelValue.output), returnObj.inputParams.boundedContext)
-                },
-
-                onRetry: (returnObj) => {
-                    alert(`[!] An error occurred while analysing your requirements, please try again..\n* Error log \n${returnObj.errorMessage}`)
-                    this.modelDraftDialogWithXAIDto.isShow = false
-                },
-
-                onStopped: () => {
-                    this.modelDraftDialogWithXAIDto.isShow = false
-                }
-            }
-            this.generatorsInGeneratorUI.PreProcessingFunctionsGenerator.buildInitialInputs = (passedGeneratorInputs) => {
-                this.generatorsInGeneratorUI.PreProcessingFunctionsGenerator.initialInputs = JSON.parse(JSON.stringify(passedGeneratorInputs))
-
-                // 제공된 정보를 기반으로 아직 생성되지는 않았으나, 참조할 수 있는 초안 정보를 미리 생성함
-                // 이 정보는 추후에 AI가 초안을 실제 생성한 경우, AI의 디폴트 선택 옵션의 내용으로 순차적으로 업데이트됨
-                const accumulatedDrafts = {};
-                passedGeneratorInputs.forEach(item => {
-                    const boundedContext = item.boundedContext;
-                    if (boundedContext && boundedContext.aggregates && boundedContext.aggregates.length > 0) {
-                        const aggregates = boundedContext.aggregates.map(aggregate => ({
-                            aggregate: {
-                                name: aggregate.name,
-                                alias: aggregate.alias
-                            },
-                            entities: [],
-                            valueObjects: [] 
-                        }));
-                        accumulatedDrafts[boundedContext.name] = aggregates;
-                    }
-                });
-                this.generators.DraftGeneratorByFunctions.initialAccumulatedDrafts = accumulatedDrafts;
-            }
-            this.generatorsInGeneratorUI.PreProcessingFunctionsGenerator.initInputs = () => {
-                this.modelDraftDialogWithXAIDto.draftOptions = []
-
-                this.generatorsInGeneratorUI.PreProcessingFunctionsGenerator.inputs = JSON.parse(JSON.stringify(
-                        this.generatorsInGeneratorUI.PreProcessingFunctionsGenerator.initialInputs
-                ))
-
-                this.generators.DraftGeneratorByFunctions.accumulatedDrafts = JSON.parse(JSON.stringify(
-                    this.generators.DraftGeneratorByFunctions.initialAccumulatedDrafts
-                ))
-            }
-            this.generatorsInGeneratorUI.PreProcessingFunctionsGenerator.generateIfInputsExist = () => {
-                if(this.generatorsInGeneratorUI.PreProcessingFunctionsGenerator.inputs.length > 0) {
-                    this.generators.PreProcessingFunctionsGenerator.generator.client.input = this.generatorsInGeneratorUI.PreProcessingFunctionsGenerator.inputs.shift()
-                    this.generators.PreProcessingFunctionsGenerator.generator.generate()
-                    return true
-                }
-                return false
-            }
-
-            this.generators.PreProcessingFunctionsGenerator.generator = new PreProcessingFunctionsGenerator({
-                input: null,
-                ...this.generatorsInGeneratorUI.PreProcessingFunctionsGenerator.callbacks
-            })
-            
-            this.generators.DraftGeneratorByFunctions.generator = new DraftGeneratorByFunctions({
-                input: null,
-
-                onFirstResponse: (returnObj) => {
-                    this.modelDraftDialogWithXAIDto = {
-                        ...this.modelDraftDialogWithXAIDto,
-                        isShow: true,
-                        draftUIInfos: {
-                            leftBoundedContextCount: this.generatorsInGeneratorUI.PreProcessingFunctionsGenerator.inputs.length + 1,
-                            directMessage: "",
-                            progress: 0
-                        },
-                        isGeneratorButtonEnabled: true,
-                        actions: {
-                            ...this.modelDraftDialogWithXAIDto.actions,
-                            stop: () => {
-                                returnObj.actions.stopGeneration()
-                            }
-                        }
-                    }
-                },
-
-                onModelCreated: (returnObj) => {
-                    this.modelDraftDialogWithXAIDto.draftUIInfos.directMessage = returnObj.directMessage
-                    this.modelDraftDialogWithXAIDto.draftUIInfos.progress = returnObj.progress
-                },
-
-                onGenerationSucceeded: (returnObj) => {
-                    const getXAIDtoDraftOptions = (output, targetBoundedContext, description) => {
-                        return {
-                            boundedContext: targetBoundedContext.name,
-                            boundedContextAlias: targetBoundedContext.displayName,
-                            description: description,
-                            options: output.options.map(option => ({
-                                ...option,
-                                boundedContext: targetBoundedContext,
-                                description: description
-                            })),
-                            conclusions: output.conclusions,
-                            defaultOptionIndex: output.defaultOptionIndex
-                        }
-                    }
-
-                    this.modelDraftDialogWithXAIDto = {
-                        ...this.modelDraftDialogWithXAIDto,
-                        draftOptions: [
-                            ...this.modelDraftDialogWithXAIDto.draftOptions,
-                            getXAIDtoDraftOptions(
-                                returnObj.modelValue.output,
-                                returnObj.inputParams.boundedContext,
-                                returnObj.inputParams.description
-                            )
-                        ],
-                        draftUIInfos: {
-                            leftBoundedContextCount: this.generatorsInGeneratorUI.PreProcessingFunctionsGenerator.inputs.length,
-                            directMessage: returnObj.directMessage,
-                            progress: 100
-                        }
-                    }
-
-                    this.generators.DraftGeneratorByFunctions.updateAccumulatedDrafts(returnObj.modelValue.output, returnObj.inputParams.boundedContext)
-                    if(!this.generatorsInGeneratorUI.PreProcessingFunctionsGenerator.generateIfInputsExist())
-                        return
-                },
-
-                onRetry: (returnObj) => {
-                    alert(`[!] There was an error creating your draft, please try again.\n* Error log \n${returnObj.errorMessage}`)
-                    this.modelDraftDialogWithXAIDto.isShow = false
-                },
-
-                onStopped: () => {
-                    this.modelDraftDialogWithXAIDto.isShow = false
-                }
-            })
-            this.generators.DraftGeneratorByFunctions.generate = (structuredDescription, boundedContext) => {
-                // 해당 초안은 새롭게 생성시킬 대상이기 때문에 초가화된 상태로 전달함
-                this.generators.DraftGeneratorByFunctions.accumulatedDrafts[boundedContext.name] = []
-
-                this.generators.DraftGeneratorByFunctions.generator.client.input = {
-                    description: structuredDescription,
-                    boundedContext: boundedContext,
-                    accumulatedDrafts: this.generators.DraftGeneratorByFunctions.accumulatedDrafts
-                }
-                this.generators.DraftGeneratorByFunctions.generator.generate()
-            }
-            this.generators.DraftGeneratorByFunctions.updateAccumulatedDrafts = (output, targetBoundedContext) => {
-                this.generators.DraftGeneratorByFunctions.accumulatedDrafts = {
-                    ...this.generators.DraftGeneratorByFunctions.accumulatedDrafts,
-                    ...DraftGeneratorByFunctions.outputToAccumulatedDrafts(output, targetBoundedContext)
+                    this.generateAggregatesFromDraft(inputParams.draftOptions)
+                    return {stop: true}
                 }
             }
         },
@@ -3486,7 +3031,7 @@
 
             me.$EventBus.$on('repairBoundedContext', function (boundedContext) {
                 me.repairBoundedContext(boundedContext)
-            })
+            });
         },
         beforeDestroy() {
             if (this.fetchEventInterval) {
@@ -3575,6 +3120,16 @@
 
         },
         methods: {
+            toggleVisibility() {
+                this.processMode = !this.processMode;
+                localStorage.setItem('processMode', this.processMode); // processMode 값을 localStorage에 저장
+                this.$nextTick(() => {
+                    const elements = document.querySelectorAll('text[text-anchor="start"]');
+                    elements.forEach(el => {
+                        el.style.display = this.processMode ? 'block' : 'none';
+                    });
+                });
+            },
             attachedLists() {
                 var me = this;
                 let result = {};
@@ -3794,9 +3349,11 @@
                 return elementValues;
             },
             convertNameForElement(item) {
-                item.namePascalCase = changeCase.pascalCase(item.name);
-                item.nameCamelCase = changeCase.camelCase(item.name);
-                item.namePlural = pluralize(item.nameCamelCase);
+                if(item && item.name){
+                    item.namePascalCase = changeCase.pascalCase(item.name);
+                    item.nameCamelCase = changeCase.camelCase(item.name);
+                    item.namePlural = pluralize(item.nameCamelCase);
+                }
             },
             getAttachedBoundedContext(element, boundedLists) {
                 var me = this;
@@ -3879,7 +3436,7 @@
                 me.mirrorElementDialog = false;
             },
             alertReLogin() {
-                alert("You need to re-login because session is expired");
+                alert(this.$t('alertMessage.sessionExpired'));
                 this.showLoginCard = true;
             },
             onChangedValue(oldVal, newVal){
@@ -4545,7 +4102,7 @@
             },
 
 
-            generateFromDraftWithXAI(draftOptions) {
+            generateAggregatesFromDraft(draftOptions) {
                 console.log("[*] 유저가 선택한 초안 옵션들을 이용해서 모델 생성 로직이 실행됨",
                     {prevDraftOptions: JSON.parse(JSON.stringify(draftOptions))}
                 )
@@ -4557,8 +4114,13 @@
 
                 console.log("[*] 초안 전처리 완료", {afterDraftOptions: JSON.parse(JSON.stringify(draftOptions))})
 
-                this.generators.CreateAggregateActionsByFunctions.initInputs(this.selectedDraftOptions)
-                this.generators.CreateAggregateActionsByFunctions.generateIfInputsExist()
+                this.generators.CreateAggregateActionsByFunctions.generator.initInputs(
+                    this.selectedDraftOptions,
+                    this.value,
+                    this.userInfo,
+                    this.information
+                )
+                this.generators.CreateAggregateActionsByFunctions.generator.generateIfInputsExist()
             },
 
             _removeInvalidReferencedAggregateProperties(draftOptions) {
@@ -4573,7 +4135,10 @@
                                         otherContext.structure.some(otherAggregateInfo =>
                                             otherAggregateInfo.aggregate.name === referencedAggregateName
                                         )
-                                    );
+                                    ) || Object.values(this.value.elements).some(element =>
+                                        element && element._type === "org.uengine.modeling.model.Aggregate" && element.name === referencedAggregateName
+                                    )
+                    
                                     if (!isValidReference) {
                                         delete valueObject.referencedAggregate;
                                         valueObject.name = valueObject.name.replace("Reference", "").trim()
@@ -4793,10 +4358,9 @@
                 }
 
                 if(model && model.updateElement){
-                    me.value.elements[model.updateElement.id] = model.updateElement
+                    this.$set(this.value.elements, model.updateElement.id, model.updateElement)
                     me.changedByMe = true
                 }
-                alert("model.updateElement")
             },
             createModelFromDDL(model){
                 var me = this;
@@ -6141,10 +5705,7 @@
             },
             applyModelingListsDialog(model) {
                 var me = this;
-                me.modelingPBCElement = me.generatePBC(
-                    me.modelingPBCElement,
-                    model
-                );
+                me.modelingPBCElement = me.generatePBC(me.modelingPBCElement, model);
                 me.addElementAction(me.modelingPBCElement);
                 me.closeModelingListsDialog();
             },
@@ -6154,20 +5715,17 @@
             },
             generatePBC(pbcElement, modelObj) {
                 var me = this;
-
                 if (modelObj) {
-                    var values = { elements: {}, relations: {} };
-                    var projectId = modelObj.projectId;
-                    var projectName = modelObj.projectName;
-                    var projectValue = modelObj.projectValue;
-                    var projectVersion = modelObj.projectVersion;
-                    var modelValueObj = {
-                        projectId: projectId,
-                        projectName: projectName,
-                        projectVersion: projectVersion,
+                    let values = { elements: {}, relations: {} };
+                    let projectValue = modelObj.projectValue;
+
+                    pbcElement.name = modelObj.projectName;
+                    pbcElement.modelValue = {
+                        projectId: modelObj.projectId,
+                        projectName: modelObj.projectName,
+                        projectVersion: modelObj.projectVersion,
+                        scm: modelObj.projectValue.scm
                     };
-                    pbcElement.name = projectName;
-                    pbcElement.modelValue = modelValueObj;
                     // init
                     pbcElement.boundedContextes = [];
                     pbcElement.aggregates = [];
@@ -6194,21 +5752,25 @@
                                 copyEl.isPBCModel = true;
 
                                 if (element._type.endsWith("Event")) {
+                                    me.convertNameForElement(copyEl);
                                     copyEl.isView = true;
                                     pbcElement.events.push(copyEl);
                                 } else if (element._type.endsWith("Command")) {
+                                    me.convertNameForElement(copyEl);
                                     copyEl.isView = true;
                                     pbcElement.commands.push(copyEl);
                                 } else if (element._type.endsWith("Policy")) {
+                                    me.convertNameForElement(copyEl);
                                     copyEl.isView = true;
                                     pbcElement.policies.push(copyEl);
-                                } else if (
-                                    element._type.endsWith("BoundedContext")
-                                ) {
+                                } else if (element._type.endsWith("BoundedContext")) {
+                                    me.convertNameForElement(copyEl);
                                     pbcElement.boundedContextes.push(copyEl);
                                 } else if (element._type.endsWith("Aggregate")) {
+                                    me.convertNameForElement(copyEl);
                                     pbcElement.aggregates.push(copyEl);
                                 } else if (element._type.endsWith("View")) {
+                                    me.convertNameForElement(copyEl);
                                     pbcElement.views.push(copyEl);
                                 }
                             }
@@ -8442,9 +8004,13 @@
             async fetchEventCollections() {
                 var me = this
                 var reqUrl = 'http://localhost:9999/eventCollectors'
-                var result = [];
+                var result = []
                 if (me.searchKeyword && me.searchKeyword.length > 0) {
-                    reqUrl += '/search/findBySearchKey';
+                    if (me.searchKeyList.length === 1) {
+                        reqUrl += '/search/findByCorrelationKey';
+                    } else {
+                        reqUrl += '/search/findBySearchKey';                        
+                    }
                     me.searchKeyList.forEach((key, index) => {
                         if (index == 0) {
                             reqUrl += `?${key}=${me.searchKeyword}`;
@@ -8552,17 +8118,24 @@
                         me.progressElements.forEach(el => {
                             me.$EventBus.$emit('hideProgress', el.id);
                             if (el.name === eventLog.type) {
-                                if (event && event.type === eventLog.type) {
-                                    progressEvents.push({id: el.id, isParticular: true, sequence: index + 1});
-                                } else {
-                                    progressEvents.push({id: el.id, isParticular: false, sequence: index + 1});
+                                var eventEl = {
+                                    id: el.id,
+                                    isParticular: false,
+                                    sequence: index + 1,
+                                    error: eventLog.error || null
                                 }
+                                if (event && event.type === eventLog.type) {
+                                    eventEl.isParticular = true
+                                } else {
+                                    eventEl.isParticular = false
+                                }
+                               progressEvents.push(eventEl)
                             }
                         })
                     }
                 });
                 progressEvents.forEach(el => {
-                    me.$EventBus.$emit('showProgress', el.id, el.sequence, el.isParticular);
+                    me.$EventBus.$emit('showProgress', el);
                 });
             },
             async selectedEventProgress(event, index) {
@@ -8606,8 +8179,8 @@
             },
             toggleEventPayload(eventLog) {
                 var me = this;
-                if (me.expandedLogs.includes(eventLog)) {
-                    me.expandedLogs = me.expandedLogs.filter(log => log !== eventLog);
+                if (me.expandedLogs.length > 0) {
+                    me.expandedLogs = [];
                 } else {
                     me.expandedLogs = [eventLog];
                 }
@@ -8969,13 +8542,16 @@
     }
 
     .monitoring-dialog {
-        width: 450px;
-        max-height: 600px;
+        width: 33vw;
+        height: 100vh;
         position: absolute;
         bottom: 0px;
         right: 0px;
-        overflow: auto;
         z-index: 9999;
+    }
+
+    .monitoring-dialog-table {
+        overflow-y: auto;
     }
 
     .selected-event-row {

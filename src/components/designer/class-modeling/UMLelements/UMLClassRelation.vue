@@ -10,7 +10,7 @@
                 :from.sync="value.from"
                 :to.sync="value.to"
                 :_style="style_"
-                :label="name"
+                ::label="$t('labelText.name')"
                 :fromLabel="value.fromLabel ? value.fromLabel : ''"
                 :toLabel="value.toLabel ? value.toLabel : ''"
                 v-on:selectShape="selectedActivity"

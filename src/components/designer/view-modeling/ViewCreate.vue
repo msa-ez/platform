@@ -12,7 +12,7 @@
 
         <v-list-item-subtitle style="margin-top:15px; padding-bottom:15px;">
             <v-col align="start" justify="start" style="padding-top: 10px">
-                <v-row align="start" justify="start" style=" margin-left: 5px; margin-right: 5px;">
+                <v-row align="start" justify="start" style="margin:0; padding:0;">
                     <v-autocomplete
                         v-model="createItem.when"
                         :items="eventLists"
@@ -20,7 +20,7 @@
                         return-object
                         prefix="CREATE WHEN"
                         label=" Select Event"
-                        style="font-size: 15px; marign-top:15px;"
+                        style="font-size: 15px; margin-top:15px;"
                         dense
                     ></v-autocomplete>
                 </v-row>
@@ -104,9 +104,11 @@
                     </template>
                 </v-simple-table>
 
-                <v-row align="center" justify="end">
-                    <v-btn text block style="height: 20px;" @click.native="addRow()">
-                        <v-icon small> mdi-plus-circle-outline </v-icon>
+                <v-row align="center" justify="end" class="ma-0 pa-0 mt-2">
+                    <v-btn text block @click.native="addRow()"
+                        style="height: 20px;"
+                    >
+                        <v-icon small>mdi-plus-circle-outline</v-icon>
                     </v-btn>
                 </v-row>
 

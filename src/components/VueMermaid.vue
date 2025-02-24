@@ -98,7 +98,7 @@
           const groupNodes = this.getGroupNodes(nodes);
           const code = parseCode + groupNodes + this.customStyle.join(" \n");
           this.load(code);
-          console.log(code);
+          // console.log(code);
           return code;
         } else {
           return "";

@@ -85,6 +85,14 @@
             </sub-elements>
 
             <sub-elements v-else>
+                <text-element v-if="pbcDescription"
+                    :sub-width="'100%'"
+                    :sub-height="60"
+                    :sub-top="elementCoordinate.height / 2 - 30"
+                    :sub-left="0"
+                    :text="'해당 PBC를 더블 클릭하여, 사용할 API나 참조할 도메인 이벤트를 선택하여 활성화하시기 바랍니다.'"
+                >
+                </text-element>
                 <geometry-rect
                         v-if="movingElement"
                         :_style="{
@@ -125,12 +133,12 @@
             <sub-controller
                     v-if="value.modelValue.projectId"
                     :image="'open-in-new.png'"
-                    @click="openProject(false)"
+                    @click="open(false)"
             ></sub-controller>
             <sub-controller
-                    v-if="value.modelValue.openAPI"
+                    v-if="value.modelValue.openAPI || value.modelValue.modelPath"
                     :image="'open-in-new.png'"
-                    @click="openProject(true)"
+                    @click="open(true)"
             ></sub-controller>
 
         </group-element>
@@ -221,6 +229,7 @@
                 reference: this.value.classReference != null,
                 referenceClassName: this.value.classReference,
                 panelValue: null,
+                pbcDescription: true
             };
         },
         created: function () {
@@ -315,6 +324,7 @@
                                 leftSideElement = leftSideElement.concat(element.commands, element.views)
                                 leftSideElement = leftSideElement.filter(ele => ele && (!ele.visibility || ele.visibility == 'public'))
                                 if(leftSideElement.length > 0) {
+                                    me.pbcDescription = false
                                     let leftElementLen = leftSideElement.length;
                                     let leftElementH = (pbcHeight/leftElementLen) - 5 ;
                                     leftElementH = leftElementH > 100 ? 100 : leftElementH
@@ -335,16 +345,6 @@
                                             item.aggregate.elementView.y = item.elementView.y
                                             item.aggregate.elementView.height = item.elementView.height
                                             me.$set(pbcElements, item.aggregate.elementView.id, item.aggregate)
-
-                                            // let findAggreate = me.value.aggregates.find(agg => agg.id == item.aggregate.id)
-                                            // if(findAggreate){
-                                            //     findAggreate.pbcId = pbcId
-                                            //     findAggreate.elementView.id = findAggreate.id ? findAggreate.id + idx : findAggreate.elementView.id + idx
-                                            //     findAggreate.elementView.x = item.elementView.x + item.elementView.width
-                                            //     findAggreate.elementView.y = item.elementView.y
-                                            //     findAggreate.elementView.height = item.elementView.height
-                                            //     me.$set(pbcElements, findAggreate.elementView.id, findAggreate)
-                                            // }
                                         }
                                     });
                                 }
@@ -353,6 +353,7 @@
                                 rightSideElement = rightSideElement.concat(element.events);
                                 rightSideElement = rightSideElement.filter(ele => ele && (!ele.visibility || ele.visibility == 'public'));
                                 if(rightSideElement.length > 0) {
+                                    me.pbcDescription = false
                                     let rightElementLen = rightSideElement.length;
                                     let rightElementH = (pbcHeight/rightElementLen) - 5 ;
                                     rightElementH = rightElementH > 100 ? 100 : rightElementH
@@ -392,10 +393,11 @@
                     }
                 })
             },
-            openProject(isOpenAPI) {
+            open(isModelInfo) {
                 var me = this
-                if(isOpenAPI){
-                    window.open(me.value.modelValue.openAPI, '_blank')
+                if(isModelInfo){
+                    let path = me.value.modelValue.openAPI ? me.value.modelValue.openAPI : me.value.modelValue.modelPath
+                    window.open(path, '_blank')
                 } else {
                     if(me.value.modelValue.projectId.split('_').length == 3){
                         let info = me.value.modelValue.projectId.split('_');

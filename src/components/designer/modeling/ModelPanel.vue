@@ -91,7 +91,7 @@
             /**
              * Btn Click Event: Close Panel
              **/
-            closePanel(){
+            closePanel() {
                 this.$emit('close')
             },
             updatePanel(isClose) {
@@ -141,6 +141,24 @@
             executeBeforeDestroy(){
                 this.updatePanel(true)
             },
+
+            updateElementVisibility() {
+                // localStorage에서 processMode 값을 불러오고, 없으면 true로 설정
+                let storedProcessMode = localStorage.getItem('processMode');
+                if (storedProcessMode === null) {
+                    storedProcessMode = 'true';
+                    localStorage.setItem('processMode', storedProcessMode);
+                }
+                const processMode = storedProcessMode === 'true'; // 문자열 'true'를 불리언 true로 변환
+
+                // processMode에 따라 요소의 표시 여부를 설정
+                this.$nextTick(() => {
+                    const elements = document.querySelectorAll('text[text-anchor="start"]');
+                    elements.forEach(el => {
+                        el.style.display = processMode ? 'block' : 'none';
+                    });
+                });
+            },
             /**
              * panelInit > openPanelAction
              * Panel open Action
@@ -156,6 +174,7 @@
                         console.log(`[Error] Open PanelAction: ${e}`)
                     }
                 })
+                this.updateElementVisibility();
             },
             /**
              * executeBeforeDestroy > closePanelAction
@@ -172,7 +191,7 @@
                         console.log(`[Error] Close PanelAction: ${e}`)
                     }
                 })
-
+                this.updateElementVisibility();
             },
              /**
              * Panel Open Queue

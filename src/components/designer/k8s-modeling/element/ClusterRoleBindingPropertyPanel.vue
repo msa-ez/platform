@@ -19,7 +19,7 @@
 
         <template slot="edit-property">
             <v-text-field
-                    label="Name"
+                    :label="$t('labelText.name')"
                     v-model="value.object.metadata.name"
                     autofocus
                     :disabled="isReadOnly"

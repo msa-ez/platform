@@ -889,7 +889,7 @@
                 // Loading initial snapshot + init queue;
             },
             alertReLogin(){
-                alert("You need to re-login because session is expired")
+                alert(this.$t('alertMessage.sessionExpired'));
                 this.showLoginCard = true
             },
             async saveLocalScreenshot(){
@@ -1283,7 +1283,7 @@
 
                                         if (me.information.permissions[me.userInfo.uid].request == false) {
                                             me.alertInfo.show = true
-                                            me.alertInfo.text = 'After requesting access permission, it was not accepted.'
+                                            me.alertInfo.text = me.$t('ModelCanvas.requestRejected')
                                             me.alertInfo.type = 'info'
                                             if (isPublic) {
                                                 me.isEditable = false
@@ -1291,12 +1291,12 @@
                                             } else {
                                                 me.isDisable = true
                                                 me.alertInfo.fnNum = 1
-                                                me.alertInfo.submit = 'Request again'
+                                                me.alertInfo.submit = me.$t('ModelCanvas.requestAgain')
                                             }
                                         } else if (me.information.permissions[me.userInfo.uid].request == true) {
                                             me.joinRequested = true
                                             me.alertInfo.show = true
-                                            me.alertInfo.text = 'After the request, the authority is unconfirmed.'
+                                            me.alertInfo.text = me.$t('ModelCanvas.requestPending')
                                             me.alertInfo.type = 'info'
 
                                             if (isPublic) {
@@ -1305,7 +1305,7 @@
                                             } else {
                                                 me.isDisable = true
                                                 me.alertInfo.fnNum = 1
-                                                me.alertInfo.submit = 'Request again'
+                                                me.alertInfo.submit = me.$t('ModelCanvas.requestAgain')
                                             }
                                         }
                                     } else if (me.information.permissions[me.userInfo.uid].write) {
@@ -1320,28 +1320,28 @@
                                         me.isDisable = true
 
                                         me.alertInfo.show = true
-                                        me.alertInfo.text = 'This model is not shared with you. Please send share request to the author.'
+                                        me.alertInfo.text = me.$t('ModelCanvas.modelNotShared')
                                         me.alertInfo.type = 'info'
                                         me.alertInfo.fnNum = 1
-                                        me.alertInfo.submit = 'Request'
+                                        me.alertInfo.submit = me.$t('buttonText.registerRequest')
                                     }
                                 }
                             } else {
                                 me.isDisable = true
 
                                 me.alertInfo.show = true
-                                me.alertInfo.text = 'You\'re not permitted to access. (Need to request acess right to the author)'
+                                me.alertInfo.text = me.$t('ModelCanvas.notPermittedNeedRequest')
                                 me.alertInfo.type = 'info'
                                 me.alertInfo.fnNum = 1
-                                me.alertInfo.submit = 'Request'
+                                me.alertInfo.submit = me.$t('buttonText.requestPermission')
                             }
                         } else {
                             me.isDisable = true
 
                             me.alertInfo.show = true
-                            me.alertInfo.text = 'You\'re not permitted to access (Need to logged in)'
+                            me.alertInfo.text = me.$t('ModelCanvas.notPermittedNeedLogin')
                             me.alertInfo.fnNum = 1
-                            me.alertInfo.submit = 'Request'
+                            me.alertInfo.submit = me.$t('buttonText.login')
 
                             // if (me.information && me.information.permissions && me.information.permissions['everyone']) {
                             //     me.readOnly = true
@@ -1672,47 +1672,28 @@
                 try {
                     var check = await me.validateStorageCondition(me.storageCondition, 'backup');
                     if(check){
-                        var originProjectId = me.projectId;
-                        var projectVersion = me.storageCondition.version.replaceAll('.','-').trim();
+                        let originProjectId = me.projectId;
+                        let projectVersion = me.storageCondition.version.replaceAll('.','-').trim();
                         let associatedProject = me.storageCondition.associatedProject
                                 
                         // set tag
                         if(me.value.scm.org && me.value.scm.repo){
                             me.value.scm.tag = me.storageCondition.version;
                         }
-
-                        let img = await me.$refs['modeler-image-generator'].save(me.projectName, me.canvas);
+                        const img = await me.$refs['modeler-image-generator'].save(me.projectName, me.canvas);
 
                         // input image storage.
                         await me.putString(`storage://definitions/${originProjectId}/information/image`, img);
 
-                        var putInformation = {
-                            lastVersionName: projectVersion,
-                            projectName: me.storageCondition.editProjectName,
-                            comment: me.storageCondition.comment,
-                        }
-
                         let valueUrl = await me.putString(`storage://definitions/${originProjectId}/versionLists/${projectVersion}/versionValue`, JSON.stringify(me.value));
                         let imagURL = await me.putString(`storage://definitions/${originProjectId}/versionLists/${projectVersion}/image`, img);
-                        // console.log(settingProjectId, originProjectId)
-                        // var versionInfoObj = {
-                        //     lastQueueKey: me.latestQueueKey,
-                        //     saveUser: me.userInfo.uid,
-                        //     saveUserEmail: me.userInfo.email,
-                        //     saveUserName: me.userInfo.name,
-                        //     projectName: me.storageCondition.editProjectName,
-                        //     img: imagURL,
-                        //     timeStamp: Date.now(),
-                        //     comment: me.storageCondition.comment,
-                        //     valueUrl: valueUrl
-                        // }
-
-                        if(associatedProject){
-                            // Sync connected associatedProject.
+                 
+                        if(associatedProject){ 
+                            // for project sync
                             await me.synchronizeAssociatedProject(associatedProject, originProjectId);
                         }
 
-                        me.projectName = putInformation.projectName
+                        me.projectName = me.storageCondition.editProjectName
                         me.onCreateGitTagName(me.storageCondition);
                         await me.putObject(`db://definitions/${originProjectId}/versionLists/${projectVersion}`, {
                             lastQueueKey: me.latestQueueKey,
@@ -1727,11 +1708,13 @@
                         })
                         // await me.putObject(`db://definitions/${originProjectId}/versionLists/${projectVersion}/versionValue`, versionValueObj)
 
-                        await me.putObject(`db://definitions/${originProjectId}/information`, putInformation)
-                        // console.log(settingProjectId, originProjectId)
-                        me.storageDialogCancel()
-                        //alert('Success: Saved model.')
+                        await me.putObject(`db://definitions/${originProjectId}/information`, {
+                            lastVersionName: projectVersion,
+                            projectName: me.storageCondition.editProjectName,
+                            comment: me.storageCondition.comment,
+                        })
 
+                        me.storageDialogCancel()
                     } else {
                         this.storageCondition.loading = false
                     }

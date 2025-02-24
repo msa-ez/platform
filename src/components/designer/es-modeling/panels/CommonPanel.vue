@@ -56,108 +56,160 @@
                             </v-list>
                         </slot>
 
-                        <slot name="middle">
-                            <v-list class="pt-0" dense flat>
-                                <v-divider></v-divider>
-                                <div>
-                                    <v-card-text>
-                                        <slot name="md-title">
-                                            <div v-if="isValidationLists" style="margin-left: -17px;">
-                                                <v-list-group
-                                                        :value="openValidationLists"
-                                                        @click.native="openValidationLists = !openValidationLists"
-                                                >
-                                                    <template v-slot:activator>
-                                                        <v-icon style="margin-right: 2%;" :color="validationLevelIcon[validationLists[0].level].color">{{ validationLevelIcon[validationLists[0].level].icon }}</v-icon>
-                                                        <v-list-item-title>{{representativeValidation}}</v-list-item-title>
-                                                    </template>
+                        <v-tabs v-model="activeTab">
+                            <v-tab>Basic Info</v-tab>
+                            <v-tab v-if="isShowGenAITab">Gen AI</v-tab>
+                        </v-tabs>
 
-                                                    <v-list-item
-                                                            v-for="item in validationLists"
-                                                            :key="item.code"
-                                                            style="margin-left: 5%;"
-                                                    >
-                                                        <v-icon style="margin-right: 2%;" :color="validationLevelIcon[item.level].color">{{validationLevelIcon[item.level].icon}}</v-icon>
-                                                        <v-list-item-title>{{item.msg}}</v-list-item-title>
-                                                    </v-list-item>
-                                                </v-list-group>
+                        <v-tabs-items v-model="activeTab">
+                            <v-tab-item>
+                                <slot name="basic-info">
+                                    <slot name="middle">
+                                        <v-list class="pt-0" dense flat>
+                                            <v-divider></v-divider>
+                                            <div>
+                                                <v-card-text class="pb-0">
+                                                    <slot name="md-title">
+                                                        <div v-if="isValidationLists" style="margin-left: -17px;">
+                                                            <v-list-group
+                                                                    :value="openValidationLists"
+                                                                    @click.native="openValidationLists = !openValidationLists"
+                                                            >
+                                                                <template v-slot:activator>
+                                                                    <v-icon style="margin-right: 2%;" :color="validationLevelIcon[validationLists[0].level].color">{{ validationLevelIcon[validationLists[0].level].icon }}</v-icon>
+                                                                    <v-list-item-title>{{representativeValidation}}</v-list-item-title>
+                                                                </template>
+
+                                                                <v-list-item
+                                                                        v-for="item in validationLists"
+                                                                        :key="item.code"
+                                                                        style="margin-left: 5%;"
+                                                                >
+                                                                    <v-icon style="margin-right: 2%;" :color="validationLevelIcon[item.level].color">{{validationLevelIcon[item.level].icon}}</v-icon>
+                                                                    <v-list-item-title>{{item.msg}}</v-list-item-title>
+                                                                </v-list-item>
+                                                            </v-list-group>
+                                                        </div>
+                                                        <v-row class="pa-0 ma-0" align="center">
+                                                            <!-- <div class="panel-title">Basic Info</div> -->
+                                                            <slot name="md-level-btn"></slot>
+                                                            <slot name="md-title-side"></slot>
+                                                        </v-row>
+                                                    </slot>
+                                                    <div>
+                                                        <slot name="md-name-panel">
+                                                            <v-text-field
+                                                                v-model="value.name"
+                                                                :error="value.name == ''"
+                                                                id="elementName"
+                                                                class="delete-input-detail"
+                                                                :disabled="isReadOnly"
+                                                                :label="$t('CommonPanel.name')"
+                                                                autofocus
+                                                            >
+                                                            </v-text-field>
+                                                            <!-- <detail-component
+                                                                :title="nameExample"
+                                                            /> -->
+                                                            <v-text-field
+                                                                v-model="value.displayName"
+                                                                :disabled="isReadOnly"
+                                                                :label="$t('CommonPanel.displayName')"
+                                                                class="delete-input-detail"
+                                                            >
+                                                            </v-text-field>
+                                                            <detail-component
+                                                                :title="$t('CommonPanel.nameInfoTitle')"
+                                                                :details="nameInfoDetails"
+                                                            />
+                                                        </slot>
+
+                                                        <slot name="md-name-panel-translate">
+                                                            <v-card style="margin-bottom: 10px;" class="recommendWord-style" outlined v-if="translateObj.usedTranslate"
+                                                                    :disabled="isReadOnly">
+                                                                <v-card-text id="suggested-words" @click="changeTranslate()">
+                                                                    {{$t('word.recommendWord')}} : {{ translateObj.translateText }}
+                                                                </v-card-text>
+                                                                <v-card-text>
+                                                                    {{$t('word.recommendWordDetail')}}
+                                                                </v-card-text>
+                                                            </v-card>
+                                                        </slot>
+
+                                                        <slot name="md-description">
+                                                            <v-textarea class="delete-input-detail"
+                                                                v-model="value.description"
+                                                                :label="$t('CommonPanel.description')"
+                                                                :disabled="isReadOnly"
+                                                                outlined
+                                                                auto-grow
+                                                            ></v-textarea>
+                                                            <!-- <RuleExampleDialog v-if="openExample" v-model="value" @closeExampleDialog="closeExampleDialog()" />
+                                                            <v-btn 
+                                                                v-if="value._type == 'org.uengine.modeling.model.Command' || value._type == 'org.uengine.modeling.model.Policy'" 
+                                                                @click="openExampleDialog()">
+                                                                Example
+                                                            </v-btn> -->
+                                                        </slot>
+                                                        <slot name="generateWithAi"></slot>
+                                                    </div>
+                                                </v-card-text>
                                             </div>
-                                            <v-row class="pa-0 ma-0" align="center">
-                                                <div class="panel-title">Basic Info</div>
-                                                <slot name="md-level-btn"></slot>
-                                                <slot name="md-title-side"></slot>
-                                            </v-row>
-                                        </slot>
+                                        </v-list>
+                                    </slot>
+
+                                    <slot name="bottom">
+                                        <slot name="bo-top"></slot>
+                                        <slot name="bo-md"></slot>
+                                        <slot name="bo-bo"></slot>
+                                    </slot>
+
+                                    <slot name="sub">
+                                        <slot name="element"></slot>
+                                    </slot>
+                                </slot>
+                            </v-tab-item>
+
+                            <v-tab-item v-if="isShowGenAITab">
+                                <slot name="gen-ai">
+                                    <v-list class="pt-0" dense flat>
+                                        <v-divider></v-divider>
                                         <div>
-                                            <slot name="md-name-panel">
-                                                <v-text-field
-                                                    v-model="value.name"
-                                                    :error="value.name == ''"
-                                                    id="elementName"
-                                                    class="delete-input-detail"
-                                                    :disabled="isReadOnly"
-                                                    label="Name"
-                                                    autofocus
-                                                >
-                                                </v-text-field>
-                                                <!-- <detail-component
-                                                    :title="nameExample"
-                                                /> -->
-                                                <v-text-field
-                                                    v-model="value.displayName"
-                                                    :disabled="isReadOnly"
-                                                    label="Display Name"
-                                                    class="delete-input-detail"
-                                                >
-                                                </v-text-field>
-                                                <detail-component
-                                                    :title="$t('CommonPanel.nameInfoTitle')"
-                                                    :details="nameInfoDetails"
-                                                />
-                                            </slot>
-
-                                            <slot name="md-name-panel-translate">
-                                                <v-card style="margin-bottom: 10px;" class="recommendWord-style" outlined v-if="translateObj.usedTranslate"
-                                                        :disabled="isReadOnly">
-                                                    <v-card-text id="suggested-words" @click="changeTranslate()">
-                                                        {{$t('word.recommendWord')}} : {{ translateObj.translateText }}
-                                                    </v-card-text>
-                                                    <v-card-text>
-                                                        {{$t('word.recommendWordDetail')}}
-                                                    </v-card-text>
-                                                </v-card>
-                                            </slot>
-
-                                            <slot name="md-description">
-                                                <v-textarea
-                                                        v-model="value.description"
-                                                        label="Description"
-                                                        :disabled="isReadOnly"
+                                            <v-card-text class="pb-0">
+                                                <v-textarea class="delete-input-detail"
+                                                            v-model="value.generateDescription"
+                                                            label="Description to generate"
+                                                            :disabled="isReadOnly"
+                                                            outlined
+                                                            auto-grow
                                                 ></v-textarea>
-                                                <!-- <RuleExampleDialog v-if="openExample" v-model="value" @closeExampleDialog="closeExampleDialog()" />
-                                                <v-btn 
-                                                    v-if="value._type == 'org.uengine.modeling.model.Command' || value._type == 'org.uengine.modeling.model.Policy'" 
-                                                    @click="openExampleDialog()">
-                                                    Example
-                                                </v-btn> -->
-                                            </slot>
-                                            <slot name="generateWithAi"></slot>
+
+                                                <div>
+                                                    <span>
+                                                        <v-row class="ma-0 pa-0">
+                                                            <v-spacer></v-spacer>
+                                                            <v-btn 
+                                                                v-if="genAIDto.isGenerateWithDescriptionDone" 
+                                                                :disabled="!value.generateDescription || isReadOnly" 
+                                                                class="auto-modeling-btn" color="primary" 
+                                                                @click="$emit('generateWithDescription', value)">
+                                                                <v-icon>mdi-auto-fix</v-icon>Generate
+                                                            </v-btn>
+
+                                                            <v-btn 
+                                                                v-else class="auto-modeling-btn" color="primary" 
+                                                                @click="$emit('onClickStopGenerateWithDescription')">
+                                                                <v-icon>mdi-auto-fix</v-icon>Stop Generation
+                                                            </v-btn>
+                                                        </v-row>
+                                                    </span>
+                                                </div>
+                                            </v-card-text>
                                         </div>
-                                    </v-card-text>
-                                </div>
-                            </v-list>
-                        </slot>
-
-                        <slot name="bottom">
-                            <slot name="bo-top"></slot>
-                            <slot name="bo-md"></slot>
-                            <slot name="bo-bo"></slot>
-                        </slot>
-                    </slot>
-
-
-                    <slot name="sub">
-                        <slot name="element"></slot>
+                                    </v-list>
+                                </slot>
+                            </v-tab-item>
+                        </v-tabs-items>
                     </slot>
                 </div>
             </slot>
@@ -236,6 +288,20 @@
                     return {'usedTranslate': false, 'translateText': ''}
                 }
             },
+            isShowGenAITab: {
+                type: Boolean,
+                default: function () {
+                    return false
+                }
+            },
+            genAIDto: {
+                type: Object,
+                default: function () {
+                    return {
+                        isGenerateWithDescriptionDone: false
+                    }
+                }
+            }
         },
         data: function () {
             return {
@@ -256,6 +322,7 @@
                         title: "CommonPanel.nameInfoDetail1"
                     },
                 ],
+                activeTab: null
             }
         },
         beforeDestroy(){
@@ -364,7 +431,7 @@
                 if(this.relatedUrl){
                     this.relatedUrlDialog = true
                 }
-            },
+            }
         }
     }
 </script>

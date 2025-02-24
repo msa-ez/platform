@@ -22,7 +22,7 @@
                         <v-text-field
                                 v-model="value.name"
                                 :error="value.name == ''"
-                                label="Name"
+                                :label="$t('labelText.name')"
                                 autofocus
                                 :disabled="isReadOnly"
                         ></v-text-field>

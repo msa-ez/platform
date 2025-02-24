@@ -11,33 +11,79 @@ class OpenAPIToPBC {
         if(!options) options={}
     }
 
-    async call(value){
-        let yaml = value;
-        if(value.startsWith('https://') || value.startsWith('http://') ){
-            this.git = null;
-
+    async call(url){
+        let value;
+        if(url.startsWith('https://') || url.startsWith('http://') ){
             this.gitAPI = new GitAPI();
 
             const githubRegex = /^https?:\/\/github\.com\/([^/]+)\/([^/]+)\/blob\/main\/(.+)$/;
-            const match = value.match(githubRegex);
+            const match = url.match(githubRegex);
             if (match) {
                 // Extracted values
                 const owner = match[1];
                 const repository = match[2];
                 const filePath = match[3];
                 let response = await this.gitAPI.getFile(owner, repository, filePath)
-                yaml = response.data
+                value = response.data
             } else {
                 alert('Invalid GitHub URL format.')
                 console.log('Invalid GitHub URL format');
                 return null;
             }
         }
-        //string, object
-        return await this.convert(yaml);
+        if(url.endsWith('.json')){
+            return await this.convertModel(value); //model.json
+        } else {
+            return await this.convertOpenAPI(value); //openapi.yaml
+        }
+       
+    }
+    convertModel(model){
+        // model.json
+        if(!model) return null;
+        if(typeof model == 'string') model = JSON.parse(model);
+        
+        let result = {
+            isModel: true,
+            info: null,
+            views: [],
+            events: [],
+            commands: [],
+            boundedContextes: [],
+            aggregates: [],
+            relations: []
+        }
+
+        result.info = model
+        // setting Elements
+        Object.values(model.elements).forEach(function (element) {
+            if (element) {
+                var copyEl = JSON.parse(JSON.stringify(element));
+                if (element._type.endsWith("Event")) {
+                    result.events.push(copyEl);
+                } else if (element._type.endsWith("Command")) {
+                    result.commands.push(copyEl);
+                } else if (element._type.endsWith("BoundedContext")) {
+                    result.boundedContextes.push(copyEl);
+                } else if (element._type.endsWith("Aggregate")) {
+                    result.aggregates.push(copyEl);
+                } else if (element._type.endsWith("View")) {
+                    result.views.push(copyEl);
+                }
+            }
+        });
+        // setting Relation
+        Object.values(model.relations).forEach(function (relation) {
+            if (relation) {
+                var copyRe = JSON.parse(JSON.stringify(relation));
+                result.relations.push(copyRe);
+            }
+        });
+
+        return result;
     }
 
-    async convert(yaml){
+    async convertOpenAPI(yaml){
         try{
             const parser = yamlParser.load(yaml); // testYaml
             // const parser = await swagger.parse(yaml);
@@ -46,6 +92,7 @@ class OpenAPIToPBC {
                     info: null,
                     read: [],
                     command: [],
+                    events: [],
                     schemas: {}
                 };
 
@@ -66,7 +113,7 @@ class OpenAPIToPBC {
 
                             if (method == 'get') {
                                 result.read.push(extractedInfo);
-                            }  else {
+                            } else {
                                 result.command.push(extractedInfo);
                             }
                         }

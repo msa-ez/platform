@@ -541,6 +541,11 @@
                 if (me.projectId) {
                     var information = await me.list(`db://definitions/${me.projectId}/information`);
 
+                    // 없는 경우, 재탐색
+                    if(!information) {
+                        information = await me.list(`db://definitions/${me.userInfo.providerUid}_project_${me.projectId}/information`);
+                    }
+
                     me.$EventBus.$emit('progressValue', true)
                     if (information) {
                         me.isServer = true;

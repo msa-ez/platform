@@ -1,8 +1,8 @@
 const ESValueSummarizeUtil = require('./ESValueSummarizeUtil')
 
 /**
- * @deprecated 이 클래스는 레거시 코드입니다. 대신 ESValueSummarizeWithFilterUtil 클래스를 사용해주세요.
- * 새로운 기능과 개선된 성능을 위해 ESValueSummarizeWithFilterUtil로 마이그레이션을 권장합니다.
+ * @deprecated 이 클래스는 레거시 코드입니다. 대신 ESValueSummarizeWithFilter 클래스를 사용해주세요.
+ * 새로운 기능과 개선된 성능을 위해 ESValueSummarizeWithFilter로 마이그레이션을 권장합니다.
 */
 class ESValueSummarizeUtil_WithProperties {
     /**
@@ -39,8 +39,7 @@ The approximate structure is as follows.
                         
                         // "<propertyType>" must belong to one of the following three categories:
                         // 1. You can use well-known Java class names. In this case, write only the class name without the full package path. (e.g., java.lang.String > String)
-                        // 2. You can use one of the following values: Address, Portrait, Rating, Money, Email
-                        // 3. If there's a name defined in enumerations or valueObjects, you can use that name.
+                        // 2. If there's a name defined in enumerations or valueObjects, you can use that name.
                         ["type": "<propertyType>"], // If the type is String, do not specify the type.
                         ["isKey": true] // Indicates whether it's a primary key. Only one of the properties should have isKey set to true.
                     }

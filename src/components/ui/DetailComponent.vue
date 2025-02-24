@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div style="width:100%;">
         <v-alert
             color="#EEEEEE"
             variant="tonal"

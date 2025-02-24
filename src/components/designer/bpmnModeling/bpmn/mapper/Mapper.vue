@@ -151,7 +151,7 @@
 
             <div v-if="editingVariable" style="margin-top: 10px">
                 <v-text-field
-                        label="Name"
+                        :label="$t('labelText.name')"
                         v-model="editingVariable.name"
                 ></v-text-field>
                 <v-text-field

@@ -62,7 +62,7 @@
                         <v-card-title class="user-v-card-title">Name</v-card-title>
                         <v-text-field
                             class="edit-user-v-text-field"
-                            label="Name"
+                            :label="$t('labelText.name')"
                             outlined
                             v-model="Users.name"
                         >{{ Users.name }}

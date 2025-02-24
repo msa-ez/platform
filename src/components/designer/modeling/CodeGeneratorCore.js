@@ -62,7 +62,6 @@ class CodeGeneratorCore {
         }
         var selectedTemplate = []
         let elementByIds = {};
-        let relatedElementByIds = {};
 
         let elementValues = Object.values(JSON.parse(JSON.stringify(flatModel.elements)));
         let relationValues = Object.values(JSON.parse(JSON.stringify(flatModel.relations)));
@@ -100,8 +99,8 @@ class CodeGeneratorCore {
                 } else if (item._type == 'org.uengine.modeling.model.Event') {
                     modelForElements.Event.push(item)
                 } else if (item._type == 'org.uengine.modeling.model.Policy') {
-                    modelForElements.Policy.push(item)
                     item.relationEventInfo = null;
+                    modelForElements.Policy.push(item)
                 } else if (item._type == 'org.uengine.modeling.model.Command') {
                     modelForElements.Command.push(item)
                 } else if (item._type == 'org.uengine.modeling.model.Actor') {
@@ -134,12 +133,10 @@ class CodeGeneratorCore {
                     let getBcId = element.boundedContext ? element.boundedContext.id :null
                     if (getBcId && element.mirrorElement && attachedBcId === bc.elementView.id) {
                         element.preferredPlatform = bc.preferredPlatform && bc.preferredPlatform.includes("http") ? bc.preferredPlatform : me.defaultTemplate
-                    } else if (isAttached(bc, element)) {
+                    } else if (isAttached(bc, element) && !element.isPBCModel) {
                         element.boundedContext = bc;
                         element.preferredPlatform = bc.preferredPlatform && bc.preferredPlatform.includes("http") ? bc.preferredPlatform : me.defaultTemplate
                     }
-
-
                 }
             })
 
@@ -611,6 +608,10 @@ class CodeGeneratorCore {
             }
         })
 
+        /** 
+         * !!!PBC 의 내부 element는 relation의 연결된 정보를 가지고 코드를 생성.
+         * relation의 문제가 있을때는 PBC.vue에서 그려질때 내부 연결 정보를 확인.
+         * **/
         relationValues.forEach(item => {
             if(!me.canvas.validateRelationFormat(item)) return;
             if (item != null) {
@@ -618,9 +619,12 @@ class CodeGeneratorCore {
                     return
                 }
 
+                // !!!PBC 
                 var sourceElement = elementByIds[item.sourceElement.id ? item.sourceElement.id : item.sourceElement.elementView.id];
                 var targetElement = elementByIds[item.targetElement.id ? item.targetElement.id : item.targetElement.elementView.id];
-
+                if(!sourceElement && item.sourceElement.pbcId) sourceElement = item.sourceElement
+                if(!targetElement && item.targetElement.pbcId) targetElement = item.targetElement
+                
                 if(sourceElement && targetElement){
                     var boundedContext = sourceElement.boundedContext && sourceElement.boundedContext.id ? elementByIds[sourceElement.boundedContext.id] : sourceElement.boundedContext
                     var targetBoundedContext = targetElement.boundedContext && targetElement.boundedContext.id ? elementByIds[targetElement.boundedContext.id] : targetElement.boundedContext
@@ -648,348 +652,335 @@ class CodeGeneratorCore {
 
                 if (item.sourceElement._type == "org.uengine.modeling.model.Event" &&
                     item.targetElement._type == "org.uengine.modeling.model.Policy") {
-                    var eventId = item.sourceElement.elementView.id
-                    var policyId = item.targetElement.elementView.id
 
-                    if (eventByIds[eventId] && policyByIds[policyId]) {
-                        var relationEventInfo = {
-                            eventValue: eventByIds[item.sourceElement.elementView.id],
+                    // !!!PBC
+                    let srcElement = eventByIds[item.sourceElement.id ? item.sourceElement.id : item.sourceElement.elementView.id];
+                    let tarElement = policyByIds[item.targetElement.id ? item.targetElement.id : item.targetElement.elementView.id];
+                    if(!srcElement && item.sourceElement.pbcId) srcElement = item.sourceElement
+                    if(!tarElement && item.targetElement.pbcId) tarElement = item.targetElement
+
+                    if (srcElement && tarElement) {
+                        if (!tarElement.relationEventInfo) tarElement.relationEventInfo = [];
+                        if (!srcElement.outgoingPolicyRefs) srcElement.outgoingPolicyRefs = [];
+                        if (!tarElement.incomingEventRefs) tarElement.incomingEventRefs = [];
+                        
+                        srcElement.outgoingPolicyRefs.push({
+                            name: item && item.name ? item.name : '',
+                            value: tarElement
+                        });
+
+                        tarElement.incomingEventRefs.push({
+                            name: item && item.name ? item.name : '',
+                            value: srcElement
+                        });
+
+                     
+                        let relationEventInfo = {
+                            eventValue: srcElement,
                             relationId: item.relationView.id,
-                            boundedContext: policyByIds[item.targetElement.elementView.id].boundedContext,
+                            boundedContext: tarElement.boundedContext,
                             elementView: {
-                                id: eventByIds[item.sourceElement.elementView.id].id
+                                id: srcElement.id
                             }
                         }
-                        var inRefObj = {
-                            name: item && item.name ? item.name : '',
-                            value: eventByIds[eventId]
-                        }
-
-                        var outRefObj = {
-                            name: item && item.name ? item.name : '',
-                            value: policyByIds[policyId]
-                        }
-
                         // add preferredPlatform
-                        // var getPreferredPlatform = policyByIds[item.targetElement.elementView.id].preferredPlatform
-                        var getPreferredPlatform = relationEventInfo.boundedContext ? relationEventInfo.boundedContext.preferredPlatform : policyByIds[item.targetElement.elementView.id].preferredPlatform
+                        let getPreferredPlatform = relationEventInfo.boundedContext ? relationEventInfo.boundedContext.preferredPlatform : tarElement.preferredPlatform
                         relationEventInfo.preferredPlatform = getPreferredPlatform
 
-
-                        if (!policyByIds[policyId].relationEventInfo)
-                            policyByIds[policyId].relationEventInfo = [];
-                        policyByIds[policyId].relationEventInfo.push(relationEventInfo);
-
-
-                        // start of refs setting
-                        if (!policyByIds[policyId].incomingEventRefs)
-                            policyByIds[policyId].incomingEventRefs = [];
-                        policyByIds[policyId].incomingEventRefs.push(inRefObj);
-                        if (!eventByIds[eventId].outgoingPolicyRefs)
-                            eventByIds[eventId].outgoingPolicyRefs = [];
-                        eventByIds[eventId].outgoingPolicyRefs.push(outRefObj);
-                        // end of refs Setting
-
+                        tarElement.relationEventInfo.push(relationEventInfo);
                         modelForElements.RelationEventInfo.push(relationEventInfo);
-
                     }
                 } else if (item.sourceElement._type == "org.uengine.modeling.model.Policy" &&
                     item.targetElement._type == "org.uengine.modeling.model.Event") {
-                    var policyId = item.sourceElement.elementView.id
-                    var eventId = item.targetElement.elementView.id
+                   
+                    // !!!PBC
+                    let srcElement = policyByIds[item.sourceElement.id ? item.sourceElement.id : item.sourceElement.elementView.id];
+                    let tarElement = eventByIds[item.targetElement.id ? item.targetElement.id : item.targetElement.elementView.id];
+                    if(!srcElement && item.sourceElement.pbcId) srcElement = item.sourceElement
+                    if(!tarElement && item.targetElement.pbcId) tarElement = item.targetElement
 
-                    if (eventByIds[eventId] && policyByIds[policyId]) {
-                        var relationExampleEventInfo = {
-                            eventValue: eventByIds[item.targetElement.elementView.id],
-                            relationId: item.relationView.id,
-                            boundedContext: policyByIds[policyId].boundedContext,
-                        }
-                        var sourceOutRefObj = {
+                    if (srcElement && tarElement) {
+                        if (!srcElement.relationExampleEventInfo) srcElement.relationExampleEventInfo = [];
+                        if (!srcElement.outgoingEventRefs) srcElement.outgoingEventRefs = [];
+                        if (!tarElement.incomingPolicyRefs) tarElement.incomingPolicyRefs = [];
+                        
+                        srcElement.outgoingEventRefs.push({
                             name: item && item.name ? item.name : '',
-                            value: eventByIds[eventId]
-                        }
-                        var targetInRefObj = {
+                            value: tarElement
+                        });
+
+                        tarElement.incomingPolicyRefs.push({
                             name: item && item.name ? item.name : '',
-                            value: policyByIds[policyId]
-                        }
-
-
-                        if (!policyByIds[policyId].relationExampleEventInfo)
-                            policyByIds[policyId].relationExampleEventInfo = [];
-                        policyByIds[policyId].relationExampleEventInfo.push(relationExampleEventInfo);
-
-                        // start of refs setting
-                        if (!policyByIds[policyId].outgoingEventRefs)
-                            policyByIds[policyId].outgoingEventRefs = [];
-                        policyByIds[policyId].outgoingEventRefs.push(sourceOutRefObj);
-
-                        if (!eventByIds[eventId].incomingPolicyRefs)
-                            eventByIds[eventId].incomingPolicyRefs = [];
-                        eventByIds[eventId].incomingPolicyRefs.push(targetInRefObj);
+                            value: srcElement
+                        });
                         // end of refs Setting
+                        let relationExampleEventInfo = {
+                            eventValue: tarElement,
+                            relationId: item.relationView.id,
+                            boundedContext: srcElement.boundedContext,
+                        }
+                        srcElement.relationExampleEventInfo.push(relationExampleEventInfo);
 
                         modelForElements.RelationExampleEventInfo.push(relationExampleEventInfo);
                     }
                 } else if (item.sourceElement._type == "org.uengine.modeling.model.Command" &&
                     item.targetElement._type == "org.uengine.modeling.model.Event") {
-                    var commandId = item.sourceElement.elementView.id
-                    var eventId = item.targetElement.elementView.id
+                  
+                    // !!!PBC
+                    let srcElement = commandByIds[item.sourceElement.id ? item.sourceElement.id : item.sourceElement.elementView.id];
+                    let tarElement = eventByIds[item.targetElement.id ? item.targetElement.id : item.targetElement.elementView.id];
+                    if(!srcElement && item.sourceElement.pbcId) srcElement = item.sourceElement
+                    if(!tarElement && item.targetElement.pbcId) tarElement = item.targetElement
 
-                    if (commandByIds[commandId] && eventByIds[eventId]) {
-                        var triggerByCommand = {
-                            eventValue: eventByIds[eventId],
+                    if (srcElement && tarElement) {
+                        let triggerByCommand = {
+                            eventValue: tarElement,
                             relationsId: item.relationView.id,
-                            boundedContext: commandByIds[commandId].boundedContext,
+                            boundedContext: srcElement.boundedContext,
 
                             elementView: {
-                                id: eventByIds[eventId].id
+                                id: tarElement.id
                             }
                         }
 
-                        var inRefObj = {
-                            name: item && item.name ? item.name : '',
-                            value: commandByIds[commandId]
-                        }
-
-                        if (!commandByIds[commandId].triggerByCommand) {
-                            commandByIds[commandId].triggerByCommand = []
-
-
-                            if (eventByIds[eventId].triggerShouldExist == undefined) {
-                                if (commandByIds[commandId].isRestRepository) {
-                                    eventByIds[eventId].triggerShouldExist = true;
-                                } else {
-                                    eventByIds[eventId].triggerShouldExist = false;
-                                }
+                        if(!srcElement.triggerByCommand) srcElement.triggerByCommand = []
+                        if(!tarElement.incomingCommandRefs) tarElement.incomingCommandRefs = [];
+                        if(tarElement.triggerShouldExist) {
+                            if (!tarElement.triggerShouldExist && srcElement.isRestRepository) {
+                                tarElement.triggerShouldExist = true;
+                            }
+                        } else {
+                            if (srcElement.isRestRepository) {
+                                tarElement.triggerShouldExist = true;
                             } else {
-                                if (!eventByIds[eventId].triggerShouldExist && commandByIds[commandId].isRestRepository) {
-                                    eventByIds[eventId].triggerShouldExist = true;
-                                }
+                                tarElement.triggerShouldExist = false;
                             }
-
-                            if (!commandByIds[commandId].triggerByCommand) {
-                                commandByIds[commandId].triggerByCommand = []
-                            }
-
-                            commandByIds[commandId].triggerByCommand.push(triggerByCommand);
-
-                            if (!eventByIds[eventId].incomingCommandRefs)
-                                eventByIds[eventId].incomingCommandRefs = [];
-                            eventByIds[eventId].incomingCommandRefs.push(inRefObj);
-
                         }
+
+                        srcElement.triggerByCommand.push(triggerByCommand);
+                        tarElement.incomingCommandRefs.push( {
+                            name: item && item.name ? item.name : '',
+                            value: srcElement
+                        });
                     }
                 } else if (item.sourceElement._type == "org.uengine.modeling.model.Event" &&
                     item.targetElement._type == "org.uengine.modeling.model.Command") {
-                    var eventId = item.sourceElement.elementView.id
-                    var commandId = item.targetElement.elementView.id
 
-                    if ( eventByIds[eventId] && commandByIds[commandId] ) {
-                        var relationCommandInfo = {
-                            commandValue: commandByIds[commandId],
+                    // !!!PBC
+                    let srcElement = eventByIds[item.sourceElement.id ? item.sourceElement.id : item.sourceElement.elementView.id];
+                    let tarElement = commandByIds[item.targetElement.id ? item.targetElement.id : item.targetElement.elementView.id];
+                    if(!srcElement && item.sourceElement.pbcId) srcElement = item.sourceElement
+                    if(!tarElement && item.targetElement.pbcId) tarElement = item.targetElement
+
+                    if ( srcElement && tarElement ) {
+                        if (!srcElement.outgoingCommandRefs) srcElement.outgoingCommandRefs = [];
+
+                        let relationCommandInfo = {
+                            commandValue: tarElement,
                             relationId: item.relationView.id,
-                            boundedContext: eventByIds[eventId].boundedContext,
+                            boundedContext: srcElement.boundedContext,
                             elementView: {
-                                id: commandByIds[commandId].id
+                                id: tarElement.id
                             }
                         }
 
-                        var outRefObj = {
-                            name: item && item.name ? item.name : '',
-                            value: commandByIds[commandId]
-                        }
-
-                        // add preferredPlatform
-                        // var getPreferredPlatform = eventByIds[item.sourceElement.elementView.id].preferredPlatform
-                        var getPreferredPlatform = relationCommandInfo.boundedContext ? relationCommandInfo.boundedContext.preferredPlatform : eventByIds[eventId].preferredPlatform
+                        let getPreferredPlatform = relationCommandInfo.boundedContext ? relationCommandInfo.boundedContext.preferredPlatform : srcElement.preferredPlatform
                         relationCommandInfo.preferredPlatform = getPreferredPlatform
 
-                        eventByIds[eventId].relationCommandInfo = relationCommandInfo
-                        modelForElements.RelationCommandInfo.push(relationCommandInfo);
+                        srcElement.relationCommandInfo = relationCommandInfo
+                        srcElement.outgoingCommandRefs.push({
+                            name: item && item.name ? item.name : '',
+                            value: tarElement
+                        });
 
-                        if (!eventByIds[eventId].outgoingCommandRefs)
-                            eventByIds[eventId].outgoingCommandRefs = [];
-                        eventByIds[eventId].outgoingCommandRefs.push(outRefObj);
+                        modelForElements.RelationCommandInfo.push(relationCommandInfo);
                     }
                 } else if (item.sourceElement._type == "org.uengine.modeling.model.Command" &&
                     item.targetElement._type == "org.uengine.modeling.model.View") {
-                    var commandId = item.sourceElement.elementView.id
-                    var viewId = item.targetElement.elementView.id
 
-                    if (commandByIds[commandId] && viewByIds[viewId]) {
-
-
-                        var relationCommandInfo = {
-                            commandValue: commandByIds[commandId],
+                    // !!!PBC
+                    let srcElement = commandByIds[item.sourceElement.id ? item.sourceElement.id : item.sourceElement.elementView.id];
+                    let tarElement = viewByIds[item.targetElement.id ? item.targetElement.id : item.targetElement.elementView.id];
+                    if(!srcElement && item.sourceElement.pbcId) srcElement = item.sourceElement
+                    if(!tarElement && item.targetElement.pbcId) tarElement = item.targetElement
+    
+                    if (srcElement && tarElement) {
+                        let relationCommandInfo = {
+                            commandValue: srcElement,
                             relationId: item.relationView.id,
-                            boundedContext: commandByIds[commandId].boundedContext,
+                            boundedContext: srcElement.boundedContext,
                             elementView: {
-                                id: commandByIds[commandId].id
+                                id: srcElement.id
                             },
-                            targetAggregate: me.viewToAggregate(viewByIds[viewId]),
-                            targetBoundedContext: viewByIds[viewId].boundedContext,
+                            targetAggregate: me.viewToAggregate(tarElement),
+                            targetBoundedContext: tarElement.boundedContext,
                             getMethod: true
                         }
 
-                        commandByIds[commandId].boundedContext.circuitBreaker = item.circuitBreaker;
-                        commandByIds[commandId].boundedContext.fallback = item.fallback;
-                        commandByIds[commandId].relationCommandInfo = relationCommandInfo;
+                        srcElement.boundedContext.circuitBreaker = item.circuitBreaker;
+                        srcElement.boundedContext.fallback = item.fallback;
+                        srcElement.relationCommandInfo = relationCommandInfo;
 
                         // add preferredPlatform
-                        var getPreferredPlatform = relationCommandInfo.boundedContext ? relationCommandInfo.boundedContext.preferredPlatform : viewByIds[viewId].preferredPlatform
+                        let getPreferredPlatform = relationCommandInfo.boundedContext ? relationCommandInfo.boundedContext.preferredPlatform : tarElement.preferredPlatform
                         relationCommandInfo.preferredPlatform = getPreferredPlatform
 
                         modelForElements.RelationCommandInfo.push(relationCommandInfo);
                     }
                 } else if (item.sourceElement._type == "org.uengine.modeling.model.Command" &&
                     item.targetElement._type == "org.uengine.modeling.model.Aggregate") {
-                    var commandId = item.sourceElement.elementView.id
-                    var aggId = item.targetElement.elementView.id
 
-                    if (commandByIds[commandId] && aggregateByIds[aggId]) {
+                    // !!!PBC
+                    let srcElement = commandByIds[item.sourceElement.id ? item.sourceElement.id : item.sourceElement.elementView.id];
+                    let tarElement = aggregateByIds[item.targetElement.id ? item.targetElement.id : item.targetElement.elementView.id];
+                    if(!srcElement && item.sourceElement.pbcId) srcElement = item.sourceElement
+                    if(!tarElement && item.targetElement.pbcId) tarElement = item.targetElement
 
-                        var relationCommandInfo = {
-                            commandValue: commandByIds[commandId],
+                    if (srcElement && tarElement) {
+                        let relationCommandInfo = {
+                            commandValue: srcElement,
                             relationId: item.relationView.id,
-                            boundedContext: commandByIds[commandId].boundedContext,
+                            boundedContext: srcElement.boundedContext,
                             elementView: {
-                                id: commandByIds[commandId].id
+                                id: srcElement.id
                             },
-                            targetAggregate: aggregateByIds[aggId],
-                            targetBoundedContext: aggregateByIds[aggId].boundedContext,
+                            targetAggregate: tarElement,
+                            targetBoundedContext: tarElement.boundedContext,
                             method: "GET"
                         }
-                        commandByIds[commandId].relationCommandInfo = relationCommandInfo;
-                        commandByIds[commandId].boundedContext.circuitBreaker = item.circuitBreaker;  //dirty
-                        commandByIds[commandId].boundedContext.fallback = item.fallback;  //dirty
+                        srcElement.relationCommandInfo = relationCommandInfo;
+                        srcElement.boundedContext.circuitBreaker = item.circuitBreaker;  //dirty
+                        srcElement.boundedContext.fallback = item.fallback;  //dirty
 
                         // add preferredPlatform
-                        var getPreferredPlatform = relationCommandInfo.boundedContext ? relationCommandInfo.boundedContext.preferredPlatform : aggregateByIds[aggId].preferredPlatform
+                        let getPreferredPlatform = relationCommandInfo.boundedContext ? relationCommandInfo.boundedContext.preferredPlatform : tarElement.preferredPlatform
                         relationCommandInfo.preferredPlatform = getPreferredPlatform
 
                         modelForElements.RelationCommandInfo.push(relationCommandInfo);
                     }
                 } else if (item.sourceElement._type == "org.uengine.modeling.model.Policy" &&
                     item.targetElement._type == "org.uengine.modeling.model.Aggregate") {
-                    var policyId = item.sourceElement.elementView.id
-                    var aggId = item.targetElement.elementView.id
 
-                    if (policyByIds[policyId] && aggregateByIds[aggId]) {
-                        var relationAggregateInfo = {
-                            aggregateValue: aggregateByIds[aggId],
+                    // !!!PBC
+                    let srcElement = policyByIds[item.sourceElement.id ? item.sourceElement.id : item.sourceElement.elementView.id];
+                    let tarElement = aggregateByIds[item.targetElement.id ? item.targetElement.id : item.targetElement.elementView.id];
+                    if(!srcElement && item.sourceElement.pbcId) srcElement = item.sourceElement
+                    if(!tarElement && item.targetElement.pbcId) tarElement = item.targetElement
+
+                    if (srcElement && tarElement) {
+                        if (!srcElement.relationAggregateInfo) srcElement.relationAggregateInfo = [];
+                        if (!srcElement.outgoingAggregateRefs) srcElement.outgoingAggregateRefs = [];
+
+                        let relationCommandInfo = {
+                            commandValue: srcElement,   //////
                             relationId: item.relationView.id,
-                            boundedContext: aggregateByIds[aggId].boundedContext,
+                            boundedContext: srcElement.boundedContext,
                             elementView: {
-                                id: aggregateByIds[aggId].id
+                                id: tarElement.id
                             }
                         }
 
-                        var relationCommandInfo = {
-                            commandValue: policyByIds[policyId],   //////
-                            relationId: item.relationView.id,
-                            boundedContext: policyByIds[policyId].boundedContext,
-                            elementView: {
-                                id: aggregateByIds[aggId].id
-                            }
-                        }
-                        var refObj = {
-                            name: item && item.name ? item.name : '',
-                            value: aggregateByIds[aggId]
-                        }
-                        policyByIds[policyId].boundedContext.circuitBreaker = item.circuitBreaker;
-                        policyByIds[policyId].boundedContext.fallback = item.fallback;
-                        relationCommandInfo.targetBoundedContext = aggregateByIds[aggId].boundedContext;
-                        relationCommandInfo.targetAggregate = aggregateByIds[aggId]
+                        srcElement.boundedContext.circuitBreaker = item.circuitBreaker;
+                        srcElement.boundedContext.fallback = item.fallback;
+                        relationCommandInfo.targetBoundedContext = tarElement.boundedContext;
+                        relationCommandInfo.targetAggregate = tarElement
 
                         // add preferredPlatform
-                        // var getPreferredPlatform = aggregateByIds[item.targetElement.elementView.id].preferredPlatform
-                        var getPreferredPlatform = relationCommandInfo.boundedContext ? relationCommandInfo.boundedContext.preferredPlatform : aggregateByIds[aggId].preferredPlatform
+                        let getPreferredPlatform = relationCommandInfo.boundedContext ? relationCommandInfo.boundedContext.preferredPlatform : tarElement.preferredPlatform
                         relationCommandInfo.preferredPlatform = getPreferredPlatform
+                     
+                        srcElement.relationAggregateInfo.push({
+                            aggregateValue: tarElement,
+                            relationId: item.relationView.id,
+                            boundedContext: tarElement.boundedContext,
+                            elementView: {
+                                id: tarElement.id
+                            }
+                        });
+                       
+                        srcElement.outgoingAggregateRefs.push({
+                            name: item && item.name ? item.name : '',
+                            value: tarElement
+                        });
 
-                        if (!policyByIds[policyId].relationAggregateInfo)
-                            policyByIds[policyId].relationAggregateInfo = [];
-                        policyByIds[policyId].relationAggregateInfo.push(relationAggregateInfo);
                         modelForElements.RelationCommandInfo.push(relationCommandInfo);
-
-                        if (!policyByIds[policyId].outgoingAggregateRefs)
-                            policyByIds[policyId].outgoingAggregateRefs = [];
-                        policyByIds[policyId].outgoingAggregateRefs.push(refObj);
-
                     }
                 } else if (item.sourceElement._type == "org.uengine.modeling.model.Policy" &&
                     item.targetElement._type == "org.uengine.modeling.model.View") {
-                    var policyId = item.sourceElement.elementView.id
-                    var viewId = item.targetElement.elementView.id
+                    // !!!PBC
+                    let srcElement = policyByIds[item.sourceElement.id ? item.sourceElement.id : item.sourceElement.elementView.id];
+                    let tarElement = viewByIds[item.targetElement.id ? item.targetElement.id : item.targetElement.elementView.id];
+                    if(!srcElement && item.sourceElement.pbcId) srcElement = item.sourceElement
+                    if(!tarElement && item.targetElement.pbcId) tarElement = item.targetElement
 
-                    if (policyByIds[policyId] && viewByIds[viewId]) {
-                        var parseView = me.viewToAggregate(viewByIds[viewId])
-                        var relationAggregateInfo = {
-                            aggregateValue: parseView,
-                            relationId: item.relationView.id,
-                            boundedContext: parseView.boundedContext,
-                            elementView: {
-                                id: viewByIds[viewId].id
-                            }
-                        }
 
-                        var relationCommandInfo = {
+                    if (srcElement && tarElement) {
+                        if (!srcElement.relationAggregateInfo) srcElement.relationAggregateInfo = [];
+                        if (!srcElement.outgoingViewRefs) srcElement.outgoingViewRefs = [];
+
+                        let parseView = me.viewToAggregate(tarElement)
+                        let relationCommandInfo = {
                             commandValue: parseView,
                             relationId: item.relationView.id,
-                            boundedContext: policyByIds[policyId].boundedContext,
+                            boundedContext: srcElement.boundedContext,
                             elementView: {
                                 id: parseView.id
                             }
                         }
 
-                        var refObj = {
-                            name: item && item.name ? item.name : '',
-                            value: viewByIds[viewId]
-                        }
-
                         // add preferredPlatform
-                        // var getPreferredPlatform = viewByIds[item.targetElement.elementView.id].preferredPlatform
-                        var getPreferredPlatform = relationCommandInfo.boundedContext ? relationCommandInfo.boundedContext.preferredPlatform : viewByIds[viewId].preferredPlatform
+                        let getPreferredPlatform = relationCommandInfo.boundedContext ? relationCommandInfo.boundedContext.preferredPlatform : tarElement.preferredPlatform
                         relationCommandInfo.preferredPlatform = getPreferredPlatform
-                        if (!policyByIds[policyId].relationAggregateInfo)
-                            policyByIds[policyId].relationAggregateInfo = [];
-                        policyByIds[policyId].relationAggregateInfo.push(relationAggregateInfo);
+                      
+                        srcElement.relationAggregateInfo.push({
+                            aggregateValue: parseView,
+                            relationId: item.relationView.id,
+                            boundedContext: parseView.boundedContext,
+                            elementView: {
+                                id: tarElement.id
+                            }
+                        });
+                      
+                        srcElement.outgoingViewRefs.push({
+                            name: item && item.name ? item.name : '',
+                            value: tarElement
+                        });
+                      
                         modelForElements.RelationCommandInfo.push(relationCommandInfo);
-
-                        if (!policyByIds[policyId].outgoingViewRefs)
-                            policyByIds[policyId].outgoingViewRefs = [];
-                        policyByIds[policyId].outgoingViewRefs.push(refObj);
                     }
                 } else if (item.sourceElement._type == "org.uengine.modeling.model.Policy" &&
                     item.targetElement._type == "org.uengine.modeling.model.Command") {
-                    var policyId = item.sourceElement.elementView.id
-                    var commandId = item.targetElement.elementView.id
+                        
+                    // !!!PBC
+                    let srcElement = policyByIds[item.sourceElement.id ? item.sourceElement.id : item.sourceElement.elementView.id];
+                    let tarElement = commandByIds[item.targetElement.id ? item.targetElement.id : item.targetElement.elementView.id];
+                    if(!srcElement && item.sourceElement.pbcId) srcElement = item.sourceElement
+                    if(!tarElement && item.targetElement.pbcId) tarElement = item.targetElement
 
-                    if (policyByIds[policyId] && commandByIds[commandId]) {
-                        var outgoingCommandInfo = {
-                            commandValue: commandByIds[commandId],
+
+                    if (srcElement && tarElement) {
+                        if (!srcElement.outgoingCommandInfo) srcElement.outgoingCommandInfo = [];
+                        if (!srcElement.outgoingCommandRefs) srcElement.outgoingCommandRefs = [];
+
+                        srcElement.outgoingCommandRefs.push({
+                            name: item && item.name ? item.name : '',
+                            value: tarElement
+                        });
+
+                        let outgoingCommandInfo = {
+                            commandValue: tarElement,
                             relationId: item.relationView.id,
-                            boundedContext: policyByIds[policyId].boundedContext,
+                            boundedContext: srcElement.boundedContext,
                             elementView: {
-                                id: policyByIds[policyId].id
+                                id: srcElement.id
                             }
                         }
 
-                        var refObj = {
-                            name: item && item.name ? item.name : '',
-                            value: commandByIds[commandId]
-                        }
-
-                        var getPreferredPlatform = outgoingCommandInfo.boundedContext ? outgoingCommandInfo.boundedContext.preferredPlatform : commandByIds[commandId].preferredPlatform
+                        // add preferredPlatform
+                        let getPreferredPlatform = outgoingCommandInfo.boundedContext ? outgoingCommandInfo.boundedContext.preferredPlatform : tarElement.preferredPlatform
                         outgoingCommandInfo.preferredPlatform = getPreferredPlatform
 
-                        if (!policyByIds[policyId].outgoingCommandInfo)
-                            policyByIds[policyId].outgoingCommandInfo = [];
-                        policyByIds[policyId].outgoingCommandInfo.push(outgoingCommandInfo);
-
-                        if (!policyByIds[policyId].outgoingCommandRefs)
-                            policyByIds[policyId].outgoingCommandRefs = [];
-                        policyByIds[policyId].outgoingCommandRefs.push(refObj);
-
+                        srcElement.outgoingCommandInfo.push(outgoingCommandInfo);
                         //modelForElements.OutgoingCommandInfo.push(outgoingCommandInfo);
                     }
                 }

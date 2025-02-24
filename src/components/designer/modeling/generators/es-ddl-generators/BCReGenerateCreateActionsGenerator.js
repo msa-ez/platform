@@ -10,6 +10,7 @@ class BCReGenerateCreateActionsGenerator extends FormattedJSONAIGenerator{
     constructor(client){
         super(client);
 
+        this.generatorName = "BCReGenerateCreateActionsGenerator"
         this.checkInputParamsKeys = ["targetBoundedContext", "description", "draftOption", "esValue", "userInfo", "information", "isAccumulated"]
         this.progressCheckStrings = ["step1-requirementsAnalysis", "\"requirements\"", "step2-designPossibleActions", "step3-determineDependencies", "\"actions\"", "step4-generateActions", "step5-evaluateActions", "\"evaluationCriteria\"", "\"recommendedImprovements\""]
     }

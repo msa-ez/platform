@@ -146,10 +146,7 @@
                                     icon fab
                                     @click="onOffDesignPatterns()"
                             >
-                                <Icon :color="showDesignPatterns ? 'rgb(25,118,210)' : '' "
-                                        icon="mdi:file-document-check-outline"
-                                        size="22"
-                                />
+                                <Icons :icon="'document-check'" :size="22" :color="showDesignPatterns ? 'rgb(25,118,210)' : '' "/>
                             </v-btn>
                         </template>
                         <span>Design Patterns</span>
@@ -191,7 +188,7 @@
                             <v-btn v-on="on" class="code-preview-btn"
                                     icon fab @click="onDiffMode()"
                             >
-                                <Icon size="22" icon="codicon:diff" :color="diffMode ? 'rgb(25,118,210)' : '' "/>
+                                <Icons :icon="'diff'" :size="22" :color="diffMode ? 'rgb(25,118,210)' : '' "/>
                             </v-btn>
                         </template>
                         <span>Diff Mode</span>
@@ -913,28 +910,28 @@
                                                                                         @mouseleave="setHover()"
                                                                                 >
                                                                                     <div style="display:flex; align-items: center;" :style="editTemplateFrameWorkList[platform][template].isPushed ? 'color: darkgray;':''">
-                                                                                        <Icon v-if="editTemplateFrameWorkList[platform][template].isPushed"
-                                                                                              icon="mdi:file-document-arrow-right-outline" width="20" height="20"
+                                                                                        <Icons v-if="editTemplateFrameWorkList[platform][template].isPushed"
+                                                                                              :icon="'document-arrow-right'" :size="20"
                                                                                               style="color: darkgray;"
                                                                                         />
-                                                                                        <Icon v-else-if="editTemplateFrameWorkList[platform][template].isFixed"
-                                                                                              icon="mdi:file-document-check-outline" width="20" height="20"
+                                                                                        <Icons v-else-if="editTemplateFrameWorkList[platform][template].isFixed"
+                                                                                              :icon="'document-check'" :size="20"
                                                                                               style="color: green;"
                                                                                         />
-                                                                                        <Icon v-else-if="editTemplateFrameWorkList[platform][template].failedGenerate"
-                                                                                              icon="mdi:file-document-alert-outline" width="20" height="20"
+                                                                                        <Icons v-else-if="editTemplateFrameWorkList[platform][template].failedGenerate"
+                                                                                              :icon="'document-alert'" :size="20"
                                                                                               style="color: red;"
                                                                                         />
-                                                                                        <Icon v-else-if="editTemplateFrameWorkList[platform][template].isAdded"
-                                                                                              icon="mdi:file-document-plus-outline" width="20" height="20"
+                                                                                        <Icons v-else-if="editTemplateFrameWorkList[platform][template].isAdded"
+                                                                                              :icon="'document-plus'" :size="20"
                                                                                               style="color: #2278cf;"
                                                                                         />
-                                                                                        <Icon v-else-if="editTemplateFrameWorkList[platform][template].isDeleted"
-                                                                                              icon="mdi:file-document-minus-outline" width="20" height="20"
+                                                                                        <Icons v-else-if="editTemplateFrameWorkList[platform][template].isDeleted"
+                                                                                              :icon="'document-minus'" :size="20"
                                                                                               style="color: red;"
                                                                                         />
-                                                                                        <Icon v-else
-                                                                                              icon="mdi:file-document-edit-outline" width="20" height="20"
+                                                                                        <Icons v-else
+                                                                                              :icon="'document-edit'" :size="20"
                                                                                               style="color: #2278cf;"
                                                                                         />
                                                                                         <div>
@@ -2481,7 +2478,7 @@
                 }
             },
             alertReLogin() {
-                alert("You need to re-login because session is expired");
+                alert(this.$t('alertMessage.sessionExpired'));;
                 this.showLoginCard = true;
             },
             showTemplateListChip(obj) {
