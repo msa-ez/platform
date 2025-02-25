@@ -189,16 +189,16 @@ docker compose up -d
 
 ### 1. Initialize Gitea
 
-> 1. Access To http://127.0.0.1:3000/
-> 1. Set Gitea Initial Configuration
-> 1. **Administrator Account Setting**
-> 1. Install Gitea
+1. Access To http://127.0.0.1:3000/
+2. Set Gitea Initial Configuration
+3. **Administrator Account Setting**
+4. Install Gitea
 
 ![alt text](https://github.com/user-attachments/assets/46aae576-9418-4765-924f-6e37ef5e0881)
 
 ### 2. Setting Gitea Configuration
 
-> 1. Edit Gitea Configuration File
+1. Edit Gitea Configuration File
 
 ```ini
 # ./gitea/gitea/conf/app.ini
@@ -215,7 +215,7 @@ DOMAIN = gitea
 SSH_DOMAIN = gitea
 HTTP_PORT = 3000
 # Edit ROOT_URL http://127.0.0.1:3000/ - >http://gitea:3000/
-ROOT_URL = http://gitea:3000/ 
+ROOT_URL = http://gitea:3000/
 DISABLE_SSH = false
 SSH_PORT = 22
 SSH_LISTEN_PORT = 22
@@ -227,21 +227,21 @@ OFFLINE_MODE = true
 
 ### 3. Setting OAuth2 Application with Gitea
 
-> 1. Login to Gitea (Administrator)
-> 2. Click **Profile Icon** (top right)
-> 3. Click **Settings**
-> 4. Click **Applications**
-> 5. **Manage OAuth2 Applications**  
->    - Application Name : acebase  
->    - Redirect URIs. Please use a new line for every URI.: **http://localhost:5757/oauth2/mydb/signin**
-> 6. Click **Create Application**
-> 7. **Client ID & Client Secret** issued after the registration of Application is necessary for MSAez Install, so save them.
->    ![alt text](https://github.com/user-attachments/assets/5b6c5038-1f29-4bcc-b70f-ed7fe004ee97)
-> 8. Click **Save**
+1. Login to Gitea (Administrator)
+2. Click **Profile Icon** (top right)
+3. Click **Settings**
+4. Click **Applications**
+5. **Manage OAuth2 Applications**
+   - Application Name : acebase
+   - Redirect URIs. Please use a new line for every URI.: **http://localhost:5757/oauth2/mydb/signin**
+6. Click **Create Application**
+7. **Client ID & Client Secret** issued after the registration of Application is necessary for MSAez Install, so save them.
+   > ![alt text](https://github.com/user-attachments/assets/5b6c5038-1f29-4bcc-b70f-ed7fe004ee97)
+8. Click **Save**
 
 ### 4. Setting Docker Compose Options
 
-> 1.  Setting Acebase OAuth2 Client ID & Client Secret
+1.  Setting Acebase OAuth2 Client ID & Client Secret
 
 ```yml
 # ./docker-compose.yaml
@@ -267,9 +267,12 @@ acebase:
     GIT: "gitea:3000" # Git URL
     PROTOCOL: http
 ```
+
 ### 6. Add Hosts File
 
-```
+```text
+# /etc/hosts
+
 127.0.0.1 gitea
 ```
 
