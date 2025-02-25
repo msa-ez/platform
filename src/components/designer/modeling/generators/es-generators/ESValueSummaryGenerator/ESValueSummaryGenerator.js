@@ -265,7 +265,7 @@ Inference Guidelines:
 
 
     onCreateModelGenerating(returnObj){
-        returnObj.directMessage = `Summarizing EventStorming Model... (${returnObj.modelRawValue.length} characters generated)`
+        returnObj.directMessage = `Summarizing EventStorming Model... (${this.getTotalOutputTextLength(returnObj)} characters generated)`
     }
 
     onCreateModelFinished(returnObj){
@@ -286,7 +286,7 @@ Inference Guidelines:
             ...returnObj.modelValue,
             summary: summary,
         }
-        returnObj.directMessage = `Summarizing EventStorming Model... (${returnObj.modelRawValue.length} characters generated)`
+        returnObj.directMessage = `Summarizing EventStorming Model... (${this.getTotalOutputTextLength(returnObj)} characters generated)`
     }
 
     _resortWithPriority(summarizedESValue, sortedElementIds) {

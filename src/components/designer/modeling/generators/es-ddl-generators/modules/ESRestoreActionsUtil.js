@@ -32,6 +32,7 @@ class ESRestoreActionsUtil {
             ESRestoreActionsUtil._addAggregateInnerEntityIfAlreadyExists(actions, esValue)
             ESRestoreActionsUtil._addPropertyToAggregateRootIfNotExists(actions)
             ESRestoreActionsUtil._removeUselessValueObject(actions)
+            ESRestoreActionsUtil._removeInvalidPropertiesInAggregateAttachments(actions, esValue)
         }
 
         console.log("[*] 복구후 actions", JSON.parse(JSON.stringify(actions, null, 2)))
@@ -321,7 +322,7 @@ class ESRestoreActionsUtil {
 
             const pureType = this.__getPureType(property.type);
             if(this.__isDefaultJavaType(pureType)) continue;
-            if (this._isTypeExistsInActionsOrAggregate(pureType, action, actions, esValue)) continue;
+            if(this._isTypeExistsInActionsOrAggregate(pureType, action, actions, esValue)) continue;
 
             const found = this._findTypeInAggregates(
                 esValue,
@@ -342,32 +343,6 @@ class ESRestoreActionsUtil {
         }
 
         return newActions;
-    }
-
-    static _isTypeExistsInActionsOrAggregate(pureType, action, actions, esValue) {
-        const typeExistsInActions = actions.some(a => 
-            (a.type === 'create' && 
-             a.ids.aggregateId === action.ids.aggregateId && 
-             (a.args.valueObjectName === pureType || 
-              a.args.generalClassName === pureType || 
-              a.args.enumerationName === pureType))
-        );
-
-        if (typeExistsInActions) return true;
-
-        const targetAggregateId = action.ids.aggregateId;
-        if(targetAggregateId) {
-            const targetAggregate = esValue.elements[targetAggregateId];
-            if(targetAggregate && targetAggregate.aggregateRoot && 
-               targetAggregate.aggregateRoot.entities && 
-               targetAggregate.aggregateRoot.entities.elements) {
-                const found = Object.values(targetAggregate.aggregateRoot.entities.elements)
-                    .find(element => element && element.name === pureType);
-                if(found) return true;
-            }
-        }
-
-        return false;
     }
 
     static _findTypeInAggregates(esValue, typeName, referenceAggregateId = null) {
@@ -594,6 +569,61 @@ class ESRestoreActionsUtil {
         actions.push(...filteredActions);
     }
 
+    static _removeInvalidPropertiesInAggregateAttachments(actions, esValue) {
+        const ATTACHMENT_TYPES = ['Command', 'Event', 'ReadModel'];
+
+        for (const action of actions) {
+            if (!ATTACHMENT_TYPES.includes(action.objectType) || action.type !== 'create') continue;
+            this._removeInvalidPropertiesInAggregateAttachmentsForAction(action, actions, esValue)
+        }
+    }
+
+    static _removeInvalidPropertiesInAggregateAttachmentsForAction(action, actions, esValue) {
+        const properties = action.args.properties || action.args.queryParameters || [];
+        const propertiesToRemove = [];
+
+        for (let i = 0; i < properties.length; i++) {
+            const property = properties[i];
+            if(!property.type) continue;
+
+            const pureType = this.__getPureType(property.type);
+            if(this.__isDefaultJavaType(pureType)) continue;
+            if(this._isTypeExistsInActionsOrAggregate(pureType, action, actions, esValue)) continue;
+            
+            propertiesToRemove.push(i);
+        }
+
+        for (let i = propertiesToRemove.length - 1; i >= 0; i--) {
+            properties.splice(propertiesToRemove[i], 1);
+        }
+    }
+
+    
+    static _isTypeExistsInActionsOrAggregate(pureType, action, actions, esValue) {
+        const typeExistsInActions = actions.some(a => 
+            (a.type === 'create' && 
+             a.ids.aggregateId === action.ids.aggregateId && 
+             (a.args.valueObjectName === pureType || 
+              a.args.generalClassName === pureType || 
+              a.args.enumerationName === pureType))
+        );
+
+        if (typeExistsInActions) return true;
+
+        const targetAggregateId = action.ids.aggregateId;
+        if(targetAggregateId) {
+            const targetAggregate = esValue.elements[targetAggregateId];
+            if(targetAggregate && targetAggregate.aggregateRoot && 
+               targetAggregate.aggregateRoot.entities && 
+               targetAggregate.aggregateRoot.entities.elements) {
+                const found = Object.values(targetAggregate.aggregateRoot.entities.elements)
+                    .find(element => element && element.name === pureType);
+                if(found) return true;
+            }
+        }
+
+        return false;
+    }
 
     // 사용하는 클래스 타입을 명확하게 추출하기 위해 사용
     static __getPureType(type) {

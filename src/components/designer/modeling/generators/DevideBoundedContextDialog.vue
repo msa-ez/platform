@@ -47,6 +47,34 @@
             </v-card-subtitle>
 
             <v-card-text v-if="Object.keys(resultDevideBoundedContext).length > 0">
+                <div v-if="resultDevideBoundedContext[selectedAspect].cotThink">
+                    <v-card-title class="text-subtitle-1 pa-0 font-weight-bold d-flex align-center">
+                        <v-icon color="primary" class="mr-2">mdi-thought-bubble</v-icon>
+                        AI's Thought
+                    </v-card-title>
+                    <v-expansion-panels flat>
+                        <v-expansion-panel>
+                            <v-expansion-panel-header class="py-1">
+                                <template v-slot:default="{ open }">
+                                    <v-row no-gutters>
+                                        <v-col class="d-flex align-center">
+                                            <v-icon 
+                                                color="primary" 
+                                                class="mr-2"
+                                            >
+                                                {{ open ? 'mdi-chevron-down' : 'mdi-chevron-right' }}
+                                            </v-icon>
+                                            {{ open ? 'Hide details' : 'Show details' }}
+                                        </v-col>
+                                    </v-row>
+                                </template>
+                            </v-expansion-panel-header>
+                            <v-expansion-panel-content class="pa-4 grey lighten-4">
+                                {{ resultDevideBoundedContext[selectedAspect].cotThink }}
+                            </v-expansion-panel-content>
+                        </v-expansion-panel>
+                    </v-expansion-panels>
+                </div>
                 <div style="text-align: center;">
                     <vue-mermaid
                         :id="`mermaid-${messageId}-${renderKey}`"
@@ -491,10 +519,20 @@
                 mermaidNodes: {},
                 config: {
                     theme: 'default',
-                    startOnLoad: true,
+                    startOnLoad: false,
                     securityLevel: 'loose',
-                    flowChart:{
-                        useMaxWidth: false,
+                    flowchart: {
+                        htmlLabels: true,
+                        curve: 'basis',
+                        rankSpacing: 100,
+                        nodeSpacing: 100,
+                        padding: 15
+                    },
+                    themeVariables: {
+                        'groupBkgColor': '#fff',
+                        'groupBorderColor': '#666',
+                        'groupBorderWidth': '2px',
+                        'groupPadding': 20
                     }
                 },
                 selectedResultDevideBoundedContext: {},
@@ -577,15 +615,31 @@
                 const boundedContexts = result.boundedContexts || [];
                 const relations = result.relations || [];
                 
-                // 노드 생성
+                // 도메인 타입별로 그룹화
+                const domainGroups = {
+                    'Core Domain': [],
+                    'Supporting Domain': [],
+                    'Generic Domain': []
+                };
+
+                // 노드 생성 및 그룹화
                 boundedContexts.forEach((bc, index) => {
-                    nodes.push({
+                    const node = {
                         id: `BC${index}`,
                         text: bc.alias,
                         editable: true,
                         edgeType: 'stadium',
-                        style: this.getDomainStyle(bc.importance)
-                    });
+                        style: this.getDomainStyle(bc.importance),
+                        group: bc.importance || 'Generic Domain' // 그룹 지정
+                    };
+                    nodes.push(node);
+                    
+                    // 도메인 그룹에 추가
+                    if (bc.importance && domainGroups[bc.importance]) {
+                        domainGroups[bc.importance].push(node);
+                    } else {
+                        domainGroups['Generic Domain'].push(node);
+                    }
                 });
                 
                 // 관계 생성
@@ -594,7 +648,6 @@
                     const targetIndex = boundedContexts.findIndex(bc => bc.name === rel.downStream.name);
                     
                     if (sourceIndex !== -1 && targetIndex !== -1) {
-                        // 기존 노드에 next 속성 추가
                         const sourceNode = nodes.find(node => node.id === `BC${sourceIndex}`);
                         if (sourceNode) {
                             sourceNode.next = sourceNode.next || [];
@@ -604,7 +657,7 @@
                         }
                     }
                 });
-                
+
                 return nodes;
             },
 

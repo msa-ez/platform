@@ -21,6 +21,7 @@ import {
     ModelInfoHelperTest,
     TextParseHelperTest
 } from "../../modeling/generators/features/AIGenerator"
+import ESActionsUtilTest from "../../modeling/generators/es-ddl-generators/modules/ESActionsUtilTest";
 
 export default {
     name: "es-test-terminal",
@@ -63,7 +64,8 @@ export default {
                 CommandGWTGeneratorByFunctionsTest: {command: async () => { await CommandGWTGeneratorByFunctionsTest.test() }},
                 ModelInfoHelperTest: {command: async () => { await ModelInfoHelperTest.test() }},
                 TextParseHelperTest: {command: async () => { await TextParseHelperTest.test() }},
-                TextParseHelperTestError: {command: async () => { await TextParseHelperTest.testError() }}
+                TextParseHelperTestError: {command: async () => { await TextParseHelperTest.testError() }},
+                ESActionsUtilTest: {command: async () => { await ESActionsUtilTest.test() }}
             }
             
 

@@ -66,7 +66,7 @@
                     </v-tab-item>
 
                     <!-- DDL -->
-                    <v-tab-item>
+                    <!-- <v-tab-item>
                         <v-card-subtitle>{{$t('autoModeling.explanation.ddl')}}</v-card-subtitle>
                         <v-card-text class="auto-modling-textarea">
                             <v-textarea 
@@ -80,7 +80,85 @@
                             >
                             </v-textarea>
                         </v-card-text>
-                    </v-tab-item>
+                    </v-tab-item> -->
+
+                    <!-- Process Image -->
+                    <!-- <v-tab-item>
+                        <v-card-subtitle>{{$t('autoModeling.explanation.process')}}</v-card-subtitle>
+                        <v-card-text class="auto-modling-textarea">
+                            <v-file-input
+                                v-model="processImage"
+                                accept="image/*"
+                                :label="$t('autoModeling.processImageUpload')"
+                                prepend-icon="mdi-image"
+                                @change="handleImageUpload"
+                            ></v-file-input>
+                            <v-img
+                                v-if="processImagePreview"
+                                :src="processImagePreview"
+                                max-height="300"
+                                contain
+                            ></v-img>
+
+                            <div v-if="processAnalysisResult" class="process-analysis-result mt-4">
+                                <v-expansion-panels>
+                                    <v-expansion-panel>
+                                        <v-expansion-panel-header>
+                                            1. 도출된 업무 프로세스
+                                        </v-expansion-panel-header>
+                                        <v-expansion-panel-content>
+                                            <div v-for="(process, index) in processAnalysisResult.processes" :key="index">
+                                                <strong>프로세스 {{index + 1}}:</strong> {{process.name}}
+                                                <div class="ml-4">기능: {{process.functions.join(', ')}}</div>
+                                            </div>
+                                        </v-expansion-panel-content>
+                                    </v-expansion-panel>
+
+                                    <v-expansion-panel>
+                                        <v-expansion-panel-header>
+                                            2. 세부 프로세스 분석
+                                        </v-expansion-panel-header>
+                                        <v-expansion-panel-content>
+                                            <div v-for="(analysis, index) in processAnalysisResult.detailedAnalysis" :key="index">
+                                                <strong>프로세스 {{index + 1}}:</strong> {{analysis.name}}
+                                                <div class="ml-4">
+                                                    <div>관련부서: {{analysis.departments.join(', ')}}</div>
+                                                    <div>Input: {{analysis.input}}</div>
+                                                    <div>Process: {{analysis.process}}</div>
+                                                    <div>Output: {{analysis.output}}</div>
+                                                </div>
+                                            </div>
+                                        </v-expansion-panel-content>
+                                    </v-expansion-panel>
+
+                                    <v-expansion-panel>
+                                        <v-expansion-panel-header>
+                                            3. Context Mapping 제안
+                                        </v-expansion-panel-header>
+                                        <v-expansion-panel-content>
+                                            <div v-for="(context, index) in processAnalysisResult.contextMapping" :key="index">
+                                                <strong>Bounded Context {{index + 1}}:</strong> {{context.name}}
+                                                <div class="ml-4">
+                                                    <div>포함 프로세스: {{context.processes.join(', ')}}</div>
+                                                    <div>데이터 흐름: {{context.dataFlow}}</div>
+                                                </div>
+                                            </div>
+                                        </v-expansion-panel-content>
+                                    </v-expansion-panel>
+                                </v-expansion-panels>
+
+                                <v-btn
+                                    color="primary"
+                                    class="mt-4"
+                                    :loading="isAnalyzing"
+                                    :disabled="isAnalyzing"
+                                    @click="analyzeProcessImage"
+                                >
+                                    프로세스 분석 시작
+                                </v-btn>
+                            </div>
+                        </v-card-text>
+                    </v-tab-item> -->
                 </v-tabs-items>
                 <v-btn v-if="!done" @click="stop()" style="position: absolute; right:10px; top:10px;"><v-progress-circular class="auto-modeling-stop-loading-icon" indeterminate></v-progress-circular>Stop generating</v-btn>
                 <v-row v-if="done" class="ma-0 pa-4 button-row">
@@ -139,6 +217,7 @@
     import DevideBoundedContextGenerator from './DevideBoundedContextGenerator.js'
     import DevideBoundedContextDialog from './DevideBoundedContextDialog.vue'
     import BCGenerationOption from './BCGenerationOption.vue'
+    import ProcessAnalysisGenerator from './ProcessAnalysisGenerator.js'
     //import UserStoryGenerator from './UserStoryGenerator.js'
     // import StorageBase from "../StorageBase";
     import StorageBase from '../../../CommonStorageBase.vue';
@@ -283,8 +362,35 @@
                     )
                 },
 
-                onModelCreated: (returnObj) => {
+                onThink: (returnObj, thinkText) => {
                     clearThinkingUpdateInterval()
+
+                    this.workingMessages.AggregateDraftDialogDto.draftUIInfos.directMessage = returnObj.directMessage
+                    this.workingMessages.AggregateDraftDialogDto.draftUIInfos.progress = 0
+
+                    this.workingMessages.AggregateDraftDialogDto.draftOptions = [
+                        ...this.generators.PreProcessingFunctionsGenerator.preservedDraftOptions,
+                        {
+                            boundedContext: returnObj.inputParams.boundedContext.name,
+                            boundedContextAlias: returnObj.inputParams.boundedContext.displayName,
+                            description: returnObj.inputParams.description,
+                            options: [],
+                            conclusions: "",
+                            defaultOptionIndex: null,
+                            analysisResult: {
+                                inference: thinkText
+                            }
+                        }
+                    ]
+                },
+
+                onModelCreatedWithThinking: (returnObj) => {
+                    clearThinkingUpdateInterval()
+                    if(!returnObj.modelValue.analysisResult ||
+                       !returnObj.modelValue.analysisResult.inference ||
+                       !returnObj.modelValue.analysisResult.inference.length) return
+
+
                     const getXAIDtoDraftOptions = (analysisResult, targetBoundedContext, description) => {
                         return {
                             boundedContext: targetBoundedContext.name,
@@ -415,8 +521,32 @@
                     )
                 },
 
-                onModelCreated: (returnObj) => {
+                onThink: (returnObj, thinkText) => {
                     clearThinkingUpdateInterval()
+
+                    this.workingMessages.AggregateDraftDialogDto.draftUIInfos.directMessage = returnObj.directMessage
+                    this.workingMessages.AggregateDraftDialogDto.draftUIInfos.progress = 0
+
+                    this.workingMessages.AggregateDraftDialogDto.draftOptions = [
+                        ...this.generators.PreProcessingFunctionsGenerator.preservedDraftOptions,
+                        {
+                            boundedContext: returnObj.inputParams.boundedContext.name,
+                            boundedContextAlias: returnObj.inputParams.boundedContext.displayName,
+                            description: returnObj.inputParams.description,
+                            options: [],
+                            conclusions: "",
+                            defaultOptionIndex: null,
+                            analysisResult: returnObj.inputParams.analysisResult,
+                            inference: thinkText
+                        }
+                    ]
+                },
+
+                onModelCreatedWithThinking: (returnObj) => {
+                    clearThinkingUpdateInterval()
+                    if(!returnObj.modelValue.inference ||
+                       !returnObj.modelValue.inference.length) return
+
                     const getXAIDtoDraftOptions = (output, targetBoundedContext, description, analysisResult, inference) => {
                         return {
                             boundedContext: targetBoundedContext.name,
@@ -463,7 +593,6 @@
                             returnObj.inputParams.description,
                             returnObj.inputParams.analysisResult,
                             returnObj.modelValue.inference
-
                         )
                     ]
                 },
@@ -588,14 +717,17 @@
                 selectedAspect: "",
 
                 activeTab: null,
-                generatorInputTabs: ['UserStory', 'DDL'],
+                generatorInputTabs: ['UserStory'
+                                        // , 'DDL', "Process"
+                                    ],
                 inputDDL: '',
+                processImage: null,
+                processImagePreview: null,
                 pendingBCGeneration: false,
 
                 textChunker: null,
                 chunks: [],
                 currentChunkIndex: 0,
-                summarizedChunks: [],
                 summarizedResult: "",
                 isSummarizeStarted: false,
                 userStoryChunks: [],
@@ -606,6 +738,9 @@
                 currentProcessingBoundedContext: "",
                 reGenerateMessageId: null,
                 isGeneratingBoundedContext: false,
+
+                processAnalysisResult: null,
+                isAnalyzing: false,
 
                 bcGenerationOption: {},
                 
@@ -638,6 +773,8 @@
                         generateWithFeedback: (boundedContextInfo, feedback, draftOptions) => {}
                     }
                 },
+
+
             }
         },
         methods: {
@@ -691,6 +828,29 @@
 
                 if (me.state.generator === "RecursiveRequirementsSummarizer") {
                     me.generator.handleGenerationFinished(model);
+                    return;
+                }
+
+                if (me.state.generator === "ProcessAnalysisGenerator") {
+                    if (!model.validation.isValid) {
+                        this.processValidationResult = {
+                            isValid: false,
+                            message: model.validation.message,
+                            suggestions: model.validation.suggestions
+                        };
+                        return;
+                    }
+
+                    this.processAnalysisResult = model.processAnalysis;
+                    this.processValidationResult = {
+                        isValid: true,
+                        message: "프로세스 분석이 완료되었습니다."
+                    };
+
+                    // 분석 결과를 requirements에 추가
+                    if (this.input.requirements) {
+                        this.input.requirements.processAnalysis = model.processAnalysis;
+                    }
                     return;
                 }
 
@@ -933,7 +1093,7 @@
 
             generateDevideBoundedContext(feedback){
                 // 현재 요약본이 너무 길면 먼저 요약 진행
-                if (this.value.userStory.length > 6000 && this.summarizedResult.length == 0) {
+                if (this.value.userStory.length > 30000 && this.summarizedResult.length == 0) {
                     this.pendingBCGeneration = true;
                     this.summarizeRequirements();
                     return;
@@ -1137,6 +1297,41 @@
                     });
                 }
             },
+
+            handleImageUpload(file) {
+                if (!file) {
+                    this.processImagePreview = null;
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    this.processImagePreview = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            },
+
+            async analyzeProcessImage() {
+                const generator = new ProcessAnalysisGenerator(this);
+                this.state.generator = "ProcessAnalysisGenerator";
+                
+                // 이미지 컨텍스트 설정
+                this.input.imageContext = {
+                    processType: "Business Process",
+                    domainArea: "Your Domain",
+                    objectives: "Process Analysis and Context Mapping"
+                };
+                
+                try {
+                    const result = await generator.generate();
+                    this.processAnalysisResult = result.processAnalysis;
+                    
+                    // DevideBoundedContext 생성 시 이 결과를 활용
+                    this.input.processAnalysis = result.processAnalysis;
+                } catch (error) {
+                    console.error('Process analysis failed:', error);
+                }
+            }
         }
     }
 </script>

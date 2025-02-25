@@ -2,10 +2,8 @@ const JsonAIGenerator = require("./JsonAIGenerator");
 
 class RequirementsSummarizer extends JsonAIGenerator {
     constructor(client) {
-        super(client);
+        super(client,{},"simpleModel");
         
-        this.model = "gpt-4o";
-        this.temperature = 0.3;
         this.generatorName = 'RequirementsSummarizer';
     }
 

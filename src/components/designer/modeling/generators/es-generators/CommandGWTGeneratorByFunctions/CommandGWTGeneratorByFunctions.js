@@ -63,6 +63,16 @@ class CommandGWTGeneratorByFunctions extends FormattedJSONAIGenerator{
                     callbacks.onFirstResponse(returnObj)
             },
 
+            onThink: (returnObj, thinkText) => {
+                if(callbacks.onThink)
+                    callbacks.onThink(returnObj, thinkText)
+            },
+
+            onModelCreatedWithThinking: (returnObj) => {
+                if(callbacks.onModelCreatedWithThinking)
+                    callbacks.onModelCreatedWithThinking(returnObj)
+            },
+
             onModelCreated: (returnObj) => {
                 if(callbacks.onModelCreated)
                     callbacks.onModelCreated(returnObj)
@@ -579,8 +589,12 @@ Inference Guidelines:
     }
 
 
+    onThink(returnObj, thinkText){
+        returnObj.directMessage = `Creating GWTs for ${this.client.input.targetAggregateNames.join(", ")} Aggregates... (${this.getTotalOutputTextLength(returnObj)} characters generated)`
+    }
+
     onCreateModelGenerating(returnObj) {
-        returnObj.directMessage = `Creating GWTs for ${this.client.input.targetAggregateNames.join(", ")} Aggregates... (${returnObj.modelRawValue.length} characters generated)`
+        returnObj.directMessage = `Creating GWTs for ${this.client.input.targetAggregateNames.join(", ")} Aggregates... (${this.getTotalOutputTextLength(returnObj)} characters generated)`
     }
 
     onCreateModelFinished(returnObj) {
@@ -605,7 +619,7 @@ Inference Guidelines:
         console.log("[*] commandsToReplace", JSON.parse(JSON.stringify(commandsToReplace)))
 
 
-        returnObj.directMessage = `Creating GWTs for ${this.client.input.targetAggregateNames.join(", ")} Aggregates... (${returnObj.modelRawValue.length} characters generated)`
+        returnObj.directMessage = `Creating GWTs for ${this.client.input.targetAggregateNames.join(", ")} Aggregates... (${this.getTotalOutputTextLength(returnObj)} characters generated)`
     }
 
     _getExamples(gwts){
