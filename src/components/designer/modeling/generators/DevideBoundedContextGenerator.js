@@ -222,6 +222,7 @@ Important: In the "thoughts" section of your response, please explicitly explain
 
     createModel(text){
         try{
+            text = text.trim();
             if (text.startsWith('```json')) {
                 text = text.slice(7);
             }
@@ -244,6 +245,10 @@ Important: In the "thoughts" section of your response, please explicitly explain
                     model['boundedContexts'].forEach(boundedContext => {
                         boundedContext['requirements'] = []
                     })
+                }
+
+                if(this.parsedTexts.think){
+                    model['cotThink'] = this.parsedTexts.think
                 }
 
                 return model;

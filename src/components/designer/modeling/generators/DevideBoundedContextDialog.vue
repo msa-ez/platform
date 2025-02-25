@@ -47,6 +47,34 @@
             </v-card-subtitle>
 
             <v-card-text v-if="Object.keys(resultDevideBoundedContext).length > 0">
+                <div v-if="resultDevideBoundedContext[selectedAspect].cotThink">
+                    <v-card-title class="text-subtitle-1 pa-0 font-weight-bold d-flex align-center">
+                        <v-icon color="primary" class="mr-2">mdi-thought-bubble</v-icon>
+                        AI's Thought
+                    </v-card-title>
+                    <v-expansion-panels flat>
+                        <v-expansion-panel>
+                            <v-expansion-panel-header class="py-1">
+                                <template v-slot:default="{ open }">
+                                    <v-row no-gutters>
+                                        <v-col class="d-flex align-center">
+                                            <v-icon 
+                                                color="primary" 
+                                                class="mr-2"
+                                            >
+                                                {{ open ? 'mdi-chevron-down' : 'mdi-chevron-right' }}
+                                            </v-icon>
+                                            {{ open ? 'Hide details' : 'Show details' }}
+                                        </v-col>
+                                    </v-row>
+                                </template>
+                            </v-expansion-panel-header>
+                            <v-expansion-panel-content class="pa-4 grey lighten-4">
+                                {{ resultDevideBoundedContext[selectedAspect].cotThink }}
+                            </v-expansion-panel-content>
+                        </v-expansion-panel>
+                    </v-expansion-panels>
+                </div>
                 <div style="text-align: center;">
                     <vue-mermaid
                         :id="`mermaid-${messageId}-${renderKey}`"
