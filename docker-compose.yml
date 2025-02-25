@@ -1,30 +1,56 @@
-version: '2'
+version: "3"
+
+networks:
+  msaez:
+    external: false
 services:
   msaez:
-    image: ghcr.io/msa-ez/platform:v1.0.8 # MSAez Docker Image
+    image: ghcr.io/msa-ez/platform:v1.0.18 # MSAez Docker Image
+    networks:
+      - msaez
     ports:
       - 8080:8080
     environment:
-      VUE_APP_DB_HOST: ${DB_HOST} # DB Host Name
+      VUE_APP_DB_HOST: 127.0.0.1 # DB Host Name
       VUE_APP_DB_PORT: 5757 # DB Port
       VUE_APP_DB_NAME: mydb # DB NAME
       VUE_APP_MODE: onprem # MODE onprem or dev
-      VUE_APP_DB_HTTPS: 'false' # MODE onprem or dev
-      VUE_APP_GITLAB: # Gitlab URL
-      VUE_APP_GIT: github # Gitlab URL
-  acebase :
-    image: ghcr.io/msa-ez/acebase:v1.0.8 # Acebase Docker Image
+      VUE_APP_DB_HTTPS: "false" # MODE onprem or dev
+      VUE_APP_GIT: gitea # Git Provider (Gitea or Gitlab or Github)
+      VUE_APP_GIT_URL: http://localhost:3000 # Git Provider URL
+  acebase:
+    image: ghcr.io/msa-ez/acebase:v1.0.18 # Acebase Docker Image
+    # image: sanghoon01/acebase:v1.1 # Acebase Docker Image
     container_name: acebase
+    networks:
+      - msaez
     ports:
       - 5757:5757
     volumes:
-      - ~/mydb.acebase:/acebase
+      - ./acebase/mydb.acebase:/acebase
     environment:
-      DB_HOST: ${DB_HOST} # DB Host Name
+      DB_HOST: "0.0.0.0" # DB Host Name
       DB_NAME: mydb
       DB_PORT: 5757
-      DB_HTTPS: 'false'
-      CLIENT_ID: ${CLIENT_ID} # Application Key
-      CLIENT_SECRET: ${CLIENT_SECRET} # Application Secrets
-      PROVIDER: github
-      GITLAB: "" # Gitlab URL
+      DB_HTTPS: "false"
+      CLIENT_ID: 689a0fc9-a7af-4e67-8096-ad2d2b05db66 # Client ID
+      CLIENT_SECRET: gto_uwrnodpkfxajmppgmcyislv7vdcsk53lxyaifkmoxczqncqzyi6q # Client Secret
+      PROVIDER: gitea
+      GIT: "gitea:3000" # Gitlab URL
+      PROTOCOL: http
+  gitea:
+    image: gitea/gitea:1.22.3
+    container_name: gitea
+    networks:
+      - msaez
+    environment:
+      - USER_UID=1000
+      - USER_GID=1000
+    restart: always
+    volumes:
+      - ./gitea:/data
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - "3000:3000"
+      - "222:22"

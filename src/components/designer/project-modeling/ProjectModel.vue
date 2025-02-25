@@ -671,12 +671,14 @@
                 }
             },
             track() {
-                this.$gtag.pageview(
-                    {
-                        page_title: `Project 모델`,
-                        page_path: this.$route.path
-                    }
-                )
+                if(this.$gtag){
+                    this.$gtag.pageview(
+                        {
+                            page_title: `Project 모델`,
+                            page_path: this.$route.path
+                        }
+                    )
+                }
             },
 
             forceUpdateKey(){

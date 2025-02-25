@@ -17,7 +17,7 @@ class StorageBase {
         } 
         return new StorageBaseFireBase();
     }
-   
+    
     // GetCurrentUser
     async getCurrentUser(){
         let region = "KR" // default: KR

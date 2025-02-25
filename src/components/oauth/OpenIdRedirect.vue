@@ -45,7 +45,9 @@
                 //firebase DB input
                 me.writeUserData(uid, userName, userEmail, userProfile, 'dpg')
                 me.$router.push("/")
-                me.$gtag.event('login', {method: 'dpg'})
+                if(me.$gtag){
+                    me.$gtag.event('login', {method: 'dpg'})
+                }
             })
         },
         methods: {

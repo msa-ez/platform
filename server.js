@@ -68,7 +68,7 @@ app.post('/api/ollama/chat', async (req, res) => {
         buildFetchOptions: (req) => ({
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
+                'content-type': 'application/json',
             },
             body: JSON.stringify(req.body)
         }),
@@ -86,13 +86,32 @@ app.post('/api/anthropic/chat', async (req, res) => {
                     "content-type": req.headers["content-type"] || "application/json",
                     "anthropic-version": req.headers["anthropic-version"] || "2023-06-01",
                     "x-api-key": req.headers["x-api-key"],
-                    "User-Agent": req.headers["user-agent"] || "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
+                    "user-agent": req.headers["user-agent"] || "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
                 },
                 body: JSON.stringify(req.body),
                 agent: Util.createHttpsAgent(false)
             };
         },
         errorLabel: 'Anthropic'
+    });
+});
+
+app.post('/api/openai-compatibility/chat', async (req, res) => {
+    await Util.makeProxyStream(req, res, {
+        targetUrl: req.headers["ai-param-url"],
+        buildFetchOptions: (req) => {
+            return {
+                method: 'POST',
+                headers: {
+                    "content-type": req.headers["content-type"] || "application/json",
+                    "user-agent": req.headers["user-agent"] || "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36",
+                    "authorization": req.headers["authorization"]
+                },
+                body: JSON.stringify(req.body),
+                agent: Util.createHttpsAgent(false)
+            };
+        },
+        errorLabel: 'OpenAI Compatibility'
     });
 });
 
@@ -110,7 +129,10 @@ class Util {
      */
     static async makeProxyStream(req, res, options) {
         try {
-            console.log(`Received ${options.errorLabel} request:`, req.body);
+            console.log(`Received ${options.errorLabel} request:`, {
+                body: JSON.stringify(req.body),
+                headers: JSON.stringify(req.headers)
+            });
 
             if (options.healthCheckUrl) {
                 const checkResponse = await fetch(options.healthCheckUrl);
@@ -125,6 +147,12 @@ class Util {
                 ? options.buildFetchOptions(req)
                 : options.buildFetchOptions;
 
+            console.log(`Maked ${options.errorLabel} request:`, {
+                body: JSON.stringify(fetchOptions.body),
+                headers: JSON.stringify(fetchOptions.headers)
+            });
+
+
             const response = await fetch(options.targetUrl, fetchOptions);
             console.log(`${options.errorLabel} API status:`, response.status);
 
@@ -137,11 +165,11 @@ class Util {
 
 
             const defaultHeaders = {
-                'Content-Type': 'text/event-stream',
-                'Cache-Control': 'no-cache',
-                'Connection': 'keep-alive',
-                'Access-Control-Allow-Origin': 'https://www.msaez.io:8081',
-                'Access-Control-Allow-Credentials': 'true'
+                'content-type': 'text/event-stream',
+                'cache-control': 'no-cache',
+                'connection': 'keep-alive',
+                'access-control-allow-origin': 'https://www.msaez.io:8081',
+                'access-control-allow-credentials': 'true'
             };
 
             const streamHeaders = options.streamHeaders ? { ...defaultHeaders, ...options.streamHeaders } : defaultHeaders;
@@ -163,18 +191,20 @@ class Util {
 
     static setCorsHeaders(res) {
         const headersToAllow = [
-            "Origin",
-            "X-Requested-With",
-            "Content-Type",
-            "Accept",
+            "origin",
+            "x-requested-with",
+            "content-type",
+            "accept",
             "anthropic-version",
-            "x-api-key"
+            "x-api-key",
+            "ai-param-url",
+            "authorization"
         ]
 
-        res.header('Access-Control-Allow-Origin', 'https://www.msaez.io:8081');
-        res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-        res.header('Access-Control-Allow-Headers', headersToAllow.join(', '));
-        res.header('Access-Control-Allow-Credentials', 'true');
+        res.header('access-control-allow-origin', 'https://www.msaez.io:8081');
+        res.header('access-control-allow-methods', 'GET, POST, OPTIONS');
+        res.header('access-control-allow-headers', headersToAllow.join(', '));
+        res.header('access-control-allow-credentials', 'true');
     }
 
     static createHttpsAgent(rejectUnauthorized = false) {

@@ -26,7 +26,9 @@ class Gitea extends Git {
     }
 
     getBaseUrl() {
-        return "http://localhost:3000";
+        return window.GIT_URL
+      ? window.GIT_URL
+      : "http://localhost:3000";
     }
 
     getHeader() {
@@ -34,7 +36,7 @@ class Gitea extends Git {
         //     localStorage.setItem('giteaToken', '');
         // }
         return {
-            Authorization: 'token ' + localStorage.getItem('giteaToken')
+            Authorization: 'token ' + localStorage.getItem('gitToken')
         };
     }
 

@@ -530,15 +530,6 @@ ${JSON.stringify(exampleOutputs)}
                 }
             }
         }
-
-        if(returnObj.isStopped) 
-            return returnObj
-
-        if(!text) {
-            console.log("[*] 별도의 처리할 텍스트가 없음", { ...this._makeDebugObject(returnObj) })
-            return returnObj
-        }
-
         
         if(this.isFirstResponse) {
             this.prevPartialAiOutput = {}
@@ -550,7 +541,16 @@ ${JSON.stringify(exampleOutputs)}
         else
             returnObj.isFirstResponse = this.isFirstResponse
 
+        
+        if(returnObj.isStopped) 
+            return returnObj
 
+        if(!text) {
+            console.log("[*] 별도의 처리할 텍스트가 없음", { ...this._makeDebugObject(returnObj) })
+            return returnObj
+        }
+
+        
         if(this.progressCheckStrings.length > 0)
             returnObj.progress = this._getProcessPercentage(text)
 
