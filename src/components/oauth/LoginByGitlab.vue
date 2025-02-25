@@ -118,7 +118,7 @@
             async signInGitlab() {
                 var me = this
                 try {
-                    let origin = window.GITLAB ? window.GITLAB : window.location.hostname.replace("www.", "");
+                    let origin = window.GIT_URL ? window.GIT_URL : window.location.hostname.replace("www.", "");
                     window.open(`https://gitlab.${origin}/oauth/authorize?client_id=${window.OAUTH_ID}&redirect_uri=https%3A%2F%2F${encodeURIComponent(window.location.host)}%3Foauth%3Dgitlab&response_type=code&scope=api&state=devopssystem`,"_blank");
                 } catch (e) {
                     if(e.code == 'not_found'){

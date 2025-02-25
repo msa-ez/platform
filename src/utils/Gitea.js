@@ -26,7 +26,9 @@ class Gitea extends Git {
     }
 
     getBaseUrl() {
-        return "http://localhost:3000";
+        return window.GIT_URL
+      ? window.GIT_URL
+      : "http://localhost:3000";
     }
 
     getHeader() {

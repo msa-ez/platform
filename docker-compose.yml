@@ -5,7 +5,7 @@ networks:
     external: false
 services:
   msaez:
-    image: ghcr.io/msa-ez/platform:v1.0.17 # MSAez Docker Image
+    image: ghcr.io/msa-ez/platform:v1.0.18 # MSAez Docker Image
     networks:
       - msaez
     ports:
@@ -16,11 +16,11 @@ services:
       VUE_APP_DB_NAME: mydb # DB NAME
       VUE_APP_MODE: onprem # MODE onprem or dev
       VUE_APP_DB_HTTPS: "false" # MODE onprem or dev
-      VUE_APP_GITLAB: # Gitlab URL
-      VUE_APP_GIT: gitea # Gitlab URL
+      VUE_APP_GIT: gitea # Git Provider (Gitea or Gitlab or Github)
+      VUE_APP_GIT_URL: http://localhost:3000 # Git Provider URL
   acebase:
-    # image: ghcr.io/msa-ez/acebase:v1.0.13 # Acebase Docker Image
-    image: sanghoon01/acebase:v1.1 # Acebase Docker Image
+    image: ghcr.io/msa-ez/acebase:v1.0.18 # Acebase Docker Image
+    # image: sanghoon01/acebase:v1.1 # Acebase Docker Image
     container_name: acebase
     networks:
       - msaez
@@ -33,10 +33,10 @@ services:
       DB_NAME: mydb
       DB_PORT: 5757
       DB_HTTPS: "false"
-      CLIENT_ID: 689a0fc9-a7af-4e67-8096-ad2d2b05db66 # Application Key
-      CLIENT_SECRET: gto_uwrnodpkfxajmppgmcyislv7vdcsk53lxyaifkmoxczqncqzyi6q # Application Secrets
+      CLIENT_ID: 689a0fc9-a7af-4e67-8096-ad2d2b05db66 # Client ID
+      CLIENT_SECRET: gto_uwrnodpkfxajmppgmcyislv7vdcsk53lxyaifkmoxczqncqzyi6q # Client Secret
       PROVIDER: gitea
-      GIT: "gitea:3000" # Gitlab URL
+      GIT: "127.0.0.1:3000" # Gitlab URL
       PROTOCOL: http
   gitea:
     image: gitea/gitea:1.22.3

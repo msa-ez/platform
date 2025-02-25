@@ -167,7 +167,81 @@ Navigate to the Acebase admin portal:  localhost:5757
 ### Register Github App and Set the Open API tokens
 [Describe here]
 
+***
+# Install MSAez on Docker Compose with Gitea
 
+## Initialize MSAez
+```sh
+docker compose up -d
+```
+
+## Setting Gitea
+
+### 1. Initialize Gitea
+
+> 1. Access To http://127.0.0.1:3000/
+> 1. Set Gitea Initial Configuration 
+> 1. **Administrator Account Setting**
+> 1. Install Gitea
+
+![alt text](https://github.com/user-attachments/assets/46aae576-9418-4765-924f-6e37ef5e0881)
+
+### 2. Setting Gitea Configuration
+> 1. Added Gitea Configuration File
+```ini
+# ./gitea/gitea/conf/app.ini
+
+[cors]
+ENABLED = true
+ALLOW_DOMAIN = *
+```
+
+### 3. Setting OAuth2 Application with Gitea
+> 1. Login to Gitea (Administrator)
+> 2. Click **Profile Icon** (top right)
+> 3. Click **Settings**
+> 4. Click **Applications**
+> 5. **Manage OAuth2 Applications**  
+   Application Name :  acebase
+   Redirect URIs. Please use a new line for every URI.:  **http://localhost:5757/oauth2/mydb/signin**
+> 6. Click **Create Application**
+> 7. **Client ID & Client Secret** issued after the registration of Application is necessary for MSAez Install, so save them.
+> 8. Click **Save**
+![alt text](https://github.com/user-attachments/assets/5b6c5038-1f29-4bcc-b70f-ed7fe004ee97)
+
+### 4. Setting Docker Compose Options
+
+> 1.  Setting Acebase OAuth2 Client ID & Client Secret
+```yml
+# ./docker-compose.yaml
+...
+  acebase:
+    image: ghcr.io/msa-ez/acebase:v1.0.18 # Acebase Docker Image
+    # image: sanghoon01/acebase:v1.1 # Acebase Docker Image
+    container_name: acebase
+    networks:
+      - msaez
+    ports:
+      - 5757:5757
+    volumes:
+      - ./acebase/mydb.acebase:/acebase
+    environment:
+      DB_HOST: "0.0.0.0" # DB Host Name
+      DB_NAME: mydb
+      DB_PORT: 5757
+      DB_HTTPS: "false"
+      CLIENT_ID: 689a0fc9-a7af-4e67-8096-ad2d2b05db66 # Client ID
+      CLIENT_SECRET: gto_uwrnodpkfxajmppgmcyislv7vdcsk53lxyaifkmoxczqncqzyi6q # Client Secret
+      PROVIDER: gitea
+      GIT: "127.0.0.1:3000" # Gitlab URL
+      PROTOCOL: http
+```
+
+### 5. Restart MSAez
+```sh
+docker compose down
+docker compose up -d
+```
 
 ***
 # Install MSAez on Kubernetes with GitLab
