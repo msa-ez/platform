@@ -449,22 +449,30 @@ The 'Reservation Status' screen should show all booking history for guests. It s
         }
     }
 
+    
+    onThink(returnObj, thinkText){
+        returnObj.directMessage = `Analysing user requirements for ${this.client.input.boundedContextDisplayName} Bounded Context... (${this.getTotalOutputTextLength(returnObj)} characters generated)`
+    }
 
     onCreateModelGenerating(returnObj) {
         this._makeOutputs(returnObj)
-        returnObj.directMessage = `Analysing user requirements for ${this.client.input.boundedContextDisplayName} Bounded Context... (${returnObj.modelRawValue.length} characters generated)`
+        returnObj.directMessage = `Analysing user requirements for ${this.client.input.boundedContextDisplayName} Bounded Context... (${this.getTotalOutputTextLength(returnObj)} characters generated)`
     }
 
     onCreateModelFinished(returnObj) {
         this._makeOutputs(returnObj)
-        returnObj.directMessage = `Analysing user requirements for ${this.client.input.boundedContextDisplayName} Bounded Context... (${returnObj.modelRawValue.length} characters generated)`
+        returnObj.directMessage = `Analysing user requirements for ${this.client.input.boundedContextDisplayName} Bounded Context... (${this.getTotalOutputTextLength(returnObj)} characters generated)`
     }
 
     _makeOutputs(returnObj) {
         if(returnObj.modelValue.aiOutput.inference) {
-            returnObj.modelValue.inference = returnObj.modelValue.aiOutput.inference
+            if(returnObj.parsedTexts && returnObj.parsedTexts.think)
+                returnObj.modelValue.inference = returnObj.parsedTexts.think + "\n\n" + returnObj.modelValue.aiOutput.inference
+            else
+                returnObj.modelValue.inference = returnObj.modelValue.aiOutput.inference
+
             returnObj.modelValue.analysisResult = {
-                inference: returnObj.modelValue.aiOutput.inference
+                inference: returnObj.modelValue.inference
             }
         }
 

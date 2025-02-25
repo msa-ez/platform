@@ -362,8 +362,35 @@
                     )
                 },
 
-                onModelCreated: (returnObj) => {
+                onThink: (returnObj, thinkText) => {
                     clearThinkingUpdateInterval()
+
+                    this.workingMessages.AggregateDraftDialogDto.draftUIInfos.directMessage = returnObj.directMessage
+                    this.workingMessages.AggregateDraftDialogDto.draftUIInfos.progress = 0
+
+                    this.workingMessages.AggregateDraftDialogDto.draftOptions = [
+                        ...this.generators.PreProcessingFunctionsGenerator.preservedDraftOptions,
+                        {
+                            boundedContext: returnObj.inputParams.boundedContext.name,
+                            boundedContextAlias: returnObj.inputParams.boundedContext.displayName,
+                            description: returnObj.inputParams.description,
+                            options: [],
+                            conclusions: "",
+                            defaultOptionIndex: null,
+                            analysisResult: {
+                                inference: thinkText
+                            }
+                        }
+                    ]
+                },
+
+                onModelCreatedWithThinking: (returnObj) => {
+                    clearThinkingUpdateInterval()
+                    if(!returnObj.modelValue.analysisResult ||
+                       !returnObj.modelValue.analysisResult.inference ||
+                       !returnObj.modelValue.analysisResult.inference.length) return
+
+
                     const getXAIDtoDraftOptions = (analysisResult, targetBoundedContext, description) => {
                         return {
                             boundedContext: targetBoundedContext.name,
@@ -494,8 +521,32 @@
                     )
                 },
 
-                onModelCreated: (returnObj) => {
+                onThink: (returnObj, thinkText) => {
                     clearThinkingUpdateInterval()
+
+                    this.workingMessages.AggregateDraftDialogDto.draftUIInfos.directMessage = returnObj.directMessage
+                    this.workingMessages.AggregateDraftDialogDto.draftUIInfos.progress = 0
+
+                    this.workingMessages.AggregateDraftDialogDto.draftOptions = [
+                        ...this.generators.PreProcessingFunctionsGenerator.preservedDraftOptions,
+                        {
+                            boundedContext: returnObj.inputParams.boundedContext.name,
+                            boundedContextAlias: returnObj.inputParams.boundedContext.displayName,
+                            description: returnObj.inputParams.description,
+                            options: [],
+                            conclusions: "",
+                            defaultOptionIndex: null,
+                            analysisResult: returnObj.inputParams.analysisResult,
+                            inference: thinkText
+                        }
+                    ]
+                },
+
+                onModelCreatedWithThinking: (returnObj) => {
+                    clearThinkingUpdateInterval()
+                    if(!returnObj.modelValue.inference ||
+                       !returnObj.modelValue.inference.length) return
+
                     const getXAIDtoDraftOptions = (output, targetBoundedContext, description, analysisResult, inference) => {
                         return {
                             boundedContext: targetBoundedContext.name,
@@ -542,7 +593,6 @@
                             returnObj.inputParams.description,
                             returnObj.inputParams.analysisResult,
                             returnObj.modelValue.inference
-
                         )
                     ]
                 },

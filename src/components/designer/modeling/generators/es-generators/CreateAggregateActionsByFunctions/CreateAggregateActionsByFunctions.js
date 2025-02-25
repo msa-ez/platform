@@ -98,6 +98,16 @@ class CreateAggregateActionsByFunctions extends FormattedJSONAIGenerator{
                     callbacks.onFirstResponse(returnObj)
             },
 
+            onThink: (returnObj, thinkText) => {
+                if(callbacks.onThink)
+                    callbacks.onThink(returnObj, thinkText)
+            },
+
+            onModelCreatedWithThinking: (returnObj) => {
+                if(callbacks.onModelCreatedWithThinking)
+                    callbacks.onModelCreatedWithThinking(returnObj)
+            },
+
             onModelCreated: (returnObj) => {
                 if(callbacks.onModelCreated)
                     callbacks.onModelCreated(returnObj)
@@ -788,8 +798,12 @@ Inference Guidelines:
     }
 
 
+    onThink(returnObj, thinkText){
+        returnObj.directMessage = `Creating ${this.client.input.aggregateDisplayName} Aggregate... (${this.getTotalOutputTextLength(returnObj)} characters generated)`
+    }
+
     onCreateModelGenerating(returnObj){
-        returnObj.directMessage = `Creating ${this.client.input.aggregateDisplayName} Aggregate... (${returnObj.modelRawValue.length} characters generated)`
+        returnObj.directMessage = `Creating ${this.client.input.aggregateDisplayName} Aggregate... (${this.getTotalOutputTextLength(returnObj)} characters generated)`
 
         // 실시간으로 진행을 보여주기 위해서 가능한 경우, 부분적인 액션이라도 반환함
         const particalActions = returnObj.modelRawValue.match(/({"actionName".*?"objectType".*?"ids".*?"args".*?)(?=,{"actionName")/g)
@@ -819,9 +833,9 @@ Inference Guidelines:
 
     onCreateModelFinished(returnObj){
         let actions = [
-            ...returnObj.modelValue.aiOutput.result.aggregateActions,
-            ...returnObj.modelValue.aiOutput.result.valueObjectActions,
-            ...returnObj.modelValue.aiOutput.result.enumerationActions
+            ...(returnObj.modelValue.aiOutput.result.aggregateActions || []),
+            ...(returnObj.modelValue.aiOutput.result.valueObjectActions || []),
+            ...(returnObj.modelValue.aiOutput.result.enumerationActions || [])
         ]
         let {actions: appliedActions, createdESValue: createdESValue, removedElements: removedElements} = this._getActionAppliedESValue(actions, false)
 
@@ -831,7 +845,7 @@ Inference Guidelines:
             createdESValue: createdESValue,
             removedElements: removedElements
         }
-        returnObj.directMessage = `Creating ${this.client.input.aggregateDisplayName} Aggregate... (${returnObj.modelRawValue.length} characters generated)`
+        returnObj.directMessage = `Creating ${this.client.input.aggregateDisplayName} Aggregate... (${this.getTotalOutputTextLength(returnObj)} characters generated)`
     }
 
     _getActionAppliedESValue(actions, isAddFakeActions) {

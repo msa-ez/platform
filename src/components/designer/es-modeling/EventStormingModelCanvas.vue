@@ -2782,8 +2782,14 @@
                         }
                     }
                 },
-                
-                onModelCreated: (returnObj) => {
+
+                onThink: (returnObj, thinkText) => {
+                    clearThinkingUpdateInterval()
+                    this.generatorProgressDto.displayMessage = returnObj.directMessage
+                    this.generatorProgressDto.progress = 0
+                },
+
+                onModelCreatedWithThinking: (returnObj) => {
                     clearThinkingUpdateInterval()
                     this.generatorProgressDto.displayMessage = returnObj.directMessage
                     this.generatorProgressDto.progress = returnObj.progress
@@ -2791,7 +2797,8 @@
                     if(returnObj.modelValue && returnObj.modelValue.createdESValue) {
                         this.changedByMe = true
                         this.$set(this.value, "elements", returnObj.modelValue.createdESValue.elements)
-                        this.$set(this.value, "relations", returnObj.modelValue.createdESValue.relations) 
+                        this.$set(this.value, "relations", returnObj.modelValue.createdESValue.relations)
+                        this.forceRefreshCanvas() 
                     }
                 },
 
@@ -2807,7 +2814,8 @@
                     if(returnObj.modelValue && returnObj.modelValue.createdESValue) {
                         this.changedByMe = true
                         this.$set(this.value, "elements", returnObj.modelValue.createdESValue.elements)
-                        this.$set(this.value, "relations", returnObj.modelValue.createdESValue.relations) 
+                        this.$set(this.value, "relations", returnObj.modelValue.createdESValue.relations)
+                        this.forceRefreshCanvas()
                     }
                 },
 
@@ -2955,9 +2963,16 @@
                     this.changedByMe = true
                     this.$set(this.value, "elements", {})
                     this.$set(this.value, "relations", {})
+                    this.forceRefreshCanvas()
 
 
-                    this.generateAggregatesFromDraft(inputParams.draftOptions)
+                    // 이벤트 스토밍 정보 초기 로드시에 elements, relations가 초기화되는 큐 로직이 있으며,
+                    // 그 로직으로 인해서 BC 생성이 무효화되기 때문에 큐 로드를 기다린 다음에 수행하도록 임시 처리
+                    setTimeout(() => {
+                        this.$nextTick(() => {
+                            this.generateAggregatesFromDraft(inputParams.draftOptions)
+                        })
+                    }, 1000)
                     return {stop: true}
                 }
             }
@@ -4153,14 +4168,12 @@
             },
 
             _createBoundedContextsIfNotExists(draftOptions) {
-                let isBoundedContextCreated = false
                 for(const context of Object.values(draftOptions)) {
                     const bcNameToCheck = context.boundedContext.name
                     const isBoundedContextExists = Object.values(this.value.elements).some((element) => 
                         element && element._type === "org.uengine.modeling.model.BoundedContext" && element.name.toLowerCase() === bcNameToCheck.toLowerCase()
                     )
                     if(isBoundedContextExists) continue
-                    isBoundedContextCreated = true
 
                     const appliedESValue = ESActionsUtil.getActionAppliedESValue([
                         {
@@ -4184,7 +4197,7 @@
                     context.boundedContext = Object.values(this.value.elements).find(element => element && element._type === "org.uengine.modeling.model.BoundedContext" && element.name.toLowerCase() === context.boundedContext.name.toLowerCase())
                 }
 
-                if(isBoundedContextCreated) this.forceRefreshCanvas()
+                this.forceRefreshCanvas()
             },
 
 

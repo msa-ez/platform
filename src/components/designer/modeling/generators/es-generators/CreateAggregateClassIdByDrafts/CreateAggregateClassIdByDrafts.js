@@ -91,6 +91,16 @@ class CreateAggregateClassIdByDrafts extends FormattedJSONAIGenerator{
                     callbacks.onFirstResponse(returnObj)
             },
 
+            onThink: (returnObj, thinkText) => {
+                if(callbacks.onThink)
+                    callbacks.onThink(returnObj, thinkText)
+            },
+
+            onModelCreatedWithThinking: (returnObj) => {
+                if(callbacks.onModelCreatedWithThinking)
+                    callbacks.onModelCreatedWithThinking(returnObj)
+            },
+
             onModelCreated: (returnObj) => {
                 if(callbacks.onModelCreated)
                     callbacks.onModelCreated(returnObj)
@@ -576,8 +586,12 @@ CRITICAL RULES FOR REFERENCE GENERATION:
     }
 
 
+    onThink(returnObj, thinkText){
+        returnObj.directMessage = `Creating Class IDs... (${this.getTotalOutputTextLength(returnObj)} characters generated)`
+    }
+
     onCreateModelGenerating(returnObj){
-        returnObj.directMessage = `Creating Class IDs... (${returnObj.modelRawValue.length} characters generated)`
+        returnObj.directMessage = `Creating Class IDs... (${this.getTotalOutputTextLength(returnObj)} characters generated)`
     }
 
     onCreateModelFinished(returnObj){
@@ -606,7 +620,7 @@ CRITICAL RULES FOR REFERENCE GENERATION:
             actions: appliedActions,
             createdESValue: createdESValue
         }
-        returnObj.directMessage = `Creating Class IDs... (${returnObj.modelRawValue.length} characters generated)`
+        returnObj.directMessage = `Creating Class IDs... (${this.getTotalOutputTextLength(returnObj)} characters generated)`
     }
 
     _filterInvalidActions(actions){

@@ -16,7 +16,7 @@ const pusher = new Pusher({
 const app = express();
 app.use(bodyParser.json());
 app.use((req, res, next) => {
-    Util.setCorsHeaders(res);
+    Util.setCorsHeaders(req, res);
 
     if (req.method === 'OPTIONS')
         return res.status(200).end();
@@ -168,7 +168,6 @@ class Util {
                 'content-type': 'text/event-stream',
                 'cache-control': 'no-cache',
                 'connection': 'keep-alive',
-                'access-control-allow-origin': 'https://www.msaez.io:8081',
                 'access-control-allow-credentials': 'true'
             };
 
@@ -189,7 +188,7 @@ class Util {
         }
     }
 
-    static setCorsHeaders(res) {
+    static setCorsHeaders(req, res) {
         const headersToAllow = [
             "origin",
             "x-requested-with",
@@ -201,9 +200,19 @@ class Util {
             "authorization"
         ]
 
-        res.header('access-control-allow-origin', 'https://www.msaez.io:8081');
-        res.header('access-control-allow-methods', 'GET, POST, OPTIONS');
         res.header('access-control-allow-headers', headersToAllow.join(', '));
+
+
+        const allowedOrigins = ['http://www.msaez.io:8081', 'https://www.msaez.io:8081', 'http://localhost:8081'];
+        const origin = req.headers.origin
+
+        if (allowedOrigins.includes(origin))
+            res.header('access-control-allow-origin', origin);
+        else
+            res.header('access-control-allow-origin', 'http://www.msaez.io:8081');
+
+
+        res.header('access-control-allow-methods', 'GET, POST, OPTIONS');
         res.header('access-control-allow-credentials', 'true');
     }
 

@@ -105,14 +105,18 @@ class FormattedJSONAIGenerator extends AIGenerator {
         this.prevPartialAiOutput = {} // 중간에 부분 파싱이 실패 할 경우, 이전의 파싱 값을 반환하도록 만들어서 연속성 확보
     
         // onModelCreated가 없을 경우에는 onGenerationSucceeded가 구현되어도 제대로 동작하지 않기 때문에 디폴트 콜백을 작성함
-        if(!this.client.onModelCreated)
-            this.client.onModelCreated = (returnObj) => {
-                if(returnObj.modelValue)
-                    console.log(`[*] ${this.generatorName}에 대한 생성된 모델 정보 : `, {
-                        modelValue: returnObj.modelValue,
-                        parsedTexts: returnObj.parsedTexts
-                    })
-            }
+        if(!this.client.onModelCreated) {
+            if(this.client.onModelCreatedWithThinking) 
+                this.client.onModelCreated = () => {}
+            else
+                this.client.onModelCreated = (returnObj) => {
+                    if(returnObj.modelValue)
+                        console.log(`[*] ${this.generatorName}에 대한 생성된 모델 정보 : `, {
+                            modelValue: returnObj.modelValue,
+                            parsedTexts: returnObj.parsedTexts
+                        })
+                }
+        }
         
         this._addOnsendCallback()
 
@@ -510,6 +514,7 @@ ${JSON.stringify(exampleOutputs)}
             inputParams: this.client.input,
             modelRawValue: text,
             isFirstResponse: this.isFirstResponse,
+            isThinking: !text && this.parsedTexts && !!this.parsedTexts.think,
             leftRetryCount: this.leftRetryCount,
             leftNetworkRetryCount: this.leftNetworkRetryCount,
             isStopped: this.stopSignaled,
@@ -542,11 +547,25 @@ ${JSON.stringify(exampleOutputs)}
             returnObj.isFirstResponse = this.isFirstResponse
 
         
-        if(returnObj.isStopped) 
+        if(returnObj.isStopped) {
+            console.log(`[*] ${this.generatorName}에서 결과 생성 중지됨!`, { ...this._makeDebugObject(returnObj) })
+            returnObj.directMessage = `stopped!`
+            this.onStopped(returnObj)
+            if(this.client.onStopped) this.client.onStopped(returnObj)
+            
             return returnObj
+        }
 
         if(!text) {
-            console.log("[*] 별도의 처리할 텍스트가 없음", { ...this._makeDebugObject(returnObj) })
+            if(returnObj.parsedTexts && returnObj.parsedTexts.think) {
+                console.log("[*] 추론중...", { ...this._makeDebugObject(returnObj) })
+
+                this.onThink(returnObj, returnObj.parsedTexts.think)
+                if(this.client.onThink) this.client.onThink(returnObj, returnObj.parsedTexts.think)
+            }
+            else
+                console.log("[*] 별도의 처리할 텍스트가 없음", { ...this._makeDebugObject(returnObj) })
+
             return returnObj
         }
 
@@ -592,16 +611,6 @@ ${JSON.stringify(exampleOutputs)}
             }
         }
 
-
-        // 중지 상태에 대한 별도 처리를 하지 않으면 예외로 인식해서 재시도를 하기 때문에 반드시 있어야 함
-        if(returnObj.isStopped) {
-            console.log(`[*] ${this.generatorName}에서 결과 생성 중지됨!`, { ...this._makeDebugObject(returnObj) })
-            returnObj.directMessage = `stopped!`
-            this.onStopped(returnObj)
-            if(this.client.onStopped) this.client.onStopped(returnObj)
-            
-            return returnObj
-        }
         
         try {
 
@@ -618,6 +627,8 @@ ${JSON.stringify(exampleOutputs)}
                     console.error(e)
                 }
 
+                this.onModelCreatedWithThinking(returnObj)
+                if(this.client.onModelCreatedWithThinking) this.client.onModelCreatedWithThinking(returnObj)
                 return returnObj
             }
  
@@ -634,11 +645,13 @@ ${JSON.stringify(exampleOutputs)}
             if(this.client.onCreateModelFinished) this.client.onCreateModelFinished(returnObj)
             console.log(`[*] ${this.generatorName}에서 결과 파싱 완료!`, { ...this._makeDebugObject(returnObj) })
 
+            this.onModelCreatedWithThinking(returnObj)
+            if(this.client.onModelCreatedWithThinking) this.client.onModelCreatedWithThinking(returnObj)
+
             if(!returnObj.isStopped && !returnObj.isError) {
                 this.onGenerationSucceeded(returnObj)
                 if(this.client.onGenerationSucceeded) this.client.onGenerationSucceeded(returnObj)
             }
-
             return returnObj
 
         } catch(e) {
@@ -690,6 +703,10 @@ ${JSON.stringify(exampleOutputs)}
     onCreateModelFinished(returnObj){}
     // onGenerationFinished는 도중에 생성이 멈추거나 오류가 나도 실행되기 때문에 완전히 성공한 경우에만 호출되는 콜백 함수를 별도로 추가시켜서 공통적으로 이러한 체크 로직이 추가되는 것을 방지함
     onGenerationSucceeded(returnObj){}
+    // 추론 모델인 경우, Think 태그 내용을 별도로 처리할 수 있는 콜백 함수
+    onThink(returnObj, thinkText){}
+    // 추론 모델의 Think 태그 생성이 모두 완료된 경우에만 한정적으로 실행하기 위한 콜백 함수
+    onModelCreatedWithThinking(returnObj){}
 
     _getProcessPercentage(text){
         let foundCount = 0
@@ -753,6 +770,20 @@ ${JSON.stringify(exampleOutputs)}
         }
 
         return debugObj
+    }
+
+    getTotalOutputTextLength(returnObj){
+        let totalLength = 0
+
+        if(returnObj.modelRawValue) 
+            totalLength += returnObj.modelRawValue.length
+
+        if(returnObj.parsedTexts) {
+            for(const [key, value] of Object.entries(returnObj.parsedTexts))
+                if(value) totalLength += value.length
+        }
+        
+        return totalLength
     }
 }
 

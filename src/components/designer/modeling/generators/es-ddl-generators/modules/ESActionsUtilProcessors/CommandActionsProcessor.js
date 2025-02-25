@@ -55,7 +55,9 @@ class CommandActionsProcessor {
                 id: boundedContextId,
             },
             controllerInfo: {
-                method: api_verb
+                apiPath: name.toLowerCase(),
+                method: api_verb,
+                fullApiPath: ""
             },
             fieldDescriptors: [],
             description: null,
