@@ -448,7 +448,8 @@
     "chip2": "Food Delivery App",
     "chip3": "Fishery ERP",
     "chip4": "Internet Banking",
-    "editPersona": "Edit persona name and details"
+    "editPersona": "Edit persona name and details",
+    "processImageUpload": "Upload process & System configuration image"
   },
   "UIWizardDialoger": {
     "imageMessage": "Here are a logo for this service:",

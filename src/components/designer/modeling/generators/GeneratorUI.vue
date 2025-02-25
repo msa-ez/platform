@@ -110,8 +110,8 @@
                         <v-tab v-for="tab in tabs" :key="tab.component" :disabled="hasElements&&(!tab.isAlwaysActivated)" :style="(isExpanded|isGenerated) ? { display: 'none' } : { }" style="z-index:3;" 
                                @click="switchGenerator('tab', tab.isShowGenerateBtn, tab.isShowContinueBtn, tab.isShowStopBtn, tab.isShowRegenerateBtn)">{{tab.name}}</v-tab>
                         <v-tab v-show="(canvasType === 'event-storming-model-canvas' || canvasType === 'context-mapping-model-canvas') && !hasElements" :style="isExpanded ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator('DDL', false, false, false, false)">DDL</v-tab>
-                        <v-tab v-show="!isModelCreated" :style="(isExpanded|isGenerated) ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator('input', true, true, true, true)">Input</v-tab>
-                        <v-tab v-show="!isModelCreated" :style="(isExpanded|isGenerated) ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator('output', false, true, true, true)">Output</v-tab>
+                        <v-tab v-show="!hasElements" :style="(isExpanded|isGenerated) ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator('input', true, true, true, true)">Input</v-tab>
+                        <v-tab v-show="!hasElements" :style="(isExpanded|isGenerated) ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator('output', false, true, true, true)">Output</v-tab>
                         <v-tab :style="isExpanded ? { display: 'none' } : { }" style="z-index:3;" @click="switchGenerator('chat', false, false, false, false)">Chat</v-tab>
                     </v-tabs>
 
@@ -191,7 +191,7 @@
                                         </v-card>
                                     </v-tab-item>
 
-                                    <v-tab-item v-show="!isModelCreated">
+                                    <v-tab-item v-show="!hasElements">
                                         <v-card flat>
                                             <v-textarea v-if="input"
                                                 v-model="input.userStory"
@@ -202,7 +202,7 @@
                                         </v-card>
                                     </v-tab-item>
 
-                                    <v-tab-item v-show="!isModelCreated">
+                                    <v-tab-item v-show="!hasElements">
                                         <v-card flat>
                                             <v-textarea
                                                 v-model="displayResult"
