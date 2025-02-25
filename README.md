@@ -283,6 +283,10 @@ docker compose down
 docker compose up -d
 ```
 
+### 8. Connect MSAez
+
+> http://localhost:8080
+
 ---
 
 # Install MSAez on Kubernetes with GitLab
