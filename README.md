@@ -245,6 +245,7 @@ OFFLINE_MODE = true
 
 ```yml
 # ./docker-compose.yaml
+...
 ---
 acebase:
   image: ghcr.io/msa-ez/acebase:v1.0.18 # Acebase Docker Image
@@ -261,11 +262,12 @@ acebase:
     DB_NAME: mydb
     DB_PORT: 5757
     DB_HTTPS: "false"
-    CLIENT_ID: 689a0fc9-a7af-4e67-8096-ad2d2b05db66 # Client ID
-    CLIENT_SECRET: gto_uwrnodpkfxajmppgmcyislv7vdcsk53lxyaifkmoxczqncqzyi6q # Client Secret
+    CLIENT_ID: 689a0fc9-a7af-4e67-8096-ad2d2b05db66 # OAuth Client ID
+    CLIENT_SECRET: gto_uwrnodpkfxajmppgmcyislv7vdcsk53lxyaifkmoxczqncqzyi6q # OAuth Client Secret
     PROVIDER: gitea
     GIT: "gitea:3000" # Git URL
     PROTOCOL: http
+...
 ```
 
 ### 6. Add Hosts File
