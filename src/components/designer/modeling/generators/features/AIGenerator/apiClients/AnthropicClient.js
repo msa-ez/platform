@@ -19,7 +19,7 @@ class AnthropicClient extends BaseAPIClient {
       requestUrl: "http://localhost:4000/api/anthropic/chat",
       requestData: JSON.stringify(requestData),
       requestHeaders: {
-        "Content-type": "application/json",
+        "content-type": "application/json",
         "anthropic-version": "2023-06-01",
         "x-api-key": token
       }
