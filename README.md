@@ -245,7 +245,6 @@ OFFLINE_MODE = true
 
 ```yml
 # ./docker-compose.yaml
-...
 ---
 acebase:
   image: ghcr.io/msa-ez/acebase:v1.0.18 # Acebase Docker Image
@@ -267,7 +266,6 @@ acebase:
     PROVIDER: gitea
     GIT: "gitea:3000" # Git URL
     PROTOCOL: http
-...
 ```
 
 ### 6. Add Hosts File
@@ -278,7 +276,7 @@ acebase:
 127.0.0.1 gitea
 ```
 
-### 7. Restart MSAez
+### 7. Restart Docker Compose
 
 ```sh
 docker compose down
