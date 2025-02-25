@@ -35,7 +35,6 @@ class RequestUtil {
   static sendPostRequest(url, data, headers = {}, onProgress, onLoadEnd, onError, resolve, reject) {
     const xhr = new XMLHttpRequest();
     xhr.open("POST", url, true);
-    xhr.withCredentials = true;
 
     Object.keys(headers).forEach(header => {
       xhr.setRequestHeader(header, headers[header]);
