@@ -89,6 +89,16 @@ class CreateCommandActionsByFunctions extends FormattedJSONAIGenerator{
                     callbacks.onFirstResponse(returnObj)
             },
 
+            onThink: (returnObj, thinkText) => {
+                if(callbacks.onThink)
+                    callbacks.onThink(returnObj, thinkText)
+            },
+
+            onModelCreatedWithThinking: (returnObj) => {
+                if(callbacks.onModelCreatedWithThinking)
+                    callbacks.onModelCreatedWithThinking(returnObj)
+            },
+
             onModelCreated: (returnObj) => {
                 if(callbacks.onModelCreated)
                     callbacks.onModelCreated(returnObj)
@@ -1161,8 +1171,12 @@ Best Practices:
     }
 
 
+    onThink(returnObj, thinkText){
+        returnObj.directMessage = `Creating commands for ${this.client.input.aggregateDisplayName} Aggregate... (${this.getTotalOutputTextLength(returnObj)} characters generated)`
+    }
+
     onCreateModelGenerating(returnObj){
-        returnObj.directMessage = `Creating commands for ${this.client.input.aggregateDisplayName} Aggregate... (${returnObj.modelRawValue.length} characters generated)`
+        returnObj.directMessage = `Creating commands for ${this.client.input.aggregateDisplayName} Aggregate... (${this.getTotalOutputTextLength(returnObj)} characters generated)`
 
         // 실시간으로 진행을 보여주기 위해서 가능한 경우, 부분적인 액션이라도 반환함
         const particalActions = returnObj.modelRawValue.match(/({"actionName".*?"objectType".*?"ids".*?"args".*?)(?=,{"actionName")/g)
@@ -1191,9 +1205,9 @@ Best Practices:
 
     onCreateModelFinished(returnObj){
         let actions = [
-            ...returnObj.modelValue.aiOutput.result.commandActions,
-            ...returnObj.modelValue.aiOutput.result.eventActions,
-            ...returnObj.modelValue.aiOutput.result.readModelActions
+            ...(returnObj.modelValue.aiOutput.result.commandActions || []),
+            ...(returnObj.modelValue.aiOutput.result.eventActions || []),
+            ...(returnObj.modelValue.aiOutput.result.readModelActions || [])
         ]
         let {actions: appliedActions, createdESValue: createdESValue} = this._getActionAppliedESValue(actions, false)
 
@@ -1202,7 +1216,7 @@ Best Practices:
             actions: appliedActions,
             createdESValue: createdESValue
         }
-        returnObj.directMessage = `Creating commands for ${this.client.input.aggregateDisplayName} Aggregate... (${returnObj.modelRawValue.length} characters generated)`
+        returnObj.directMessage = `Creating commands for ${this.client.input.aggregateDisplayName} Aggregate... (${this.getTotalOutputTextLength(returnObj)} characters generated)`
     }
 
     _getActionAppliedESValue(actions, isAddFakeActions) {

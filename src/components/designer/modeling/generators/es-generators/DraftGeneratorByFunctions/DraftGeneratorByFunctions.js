@@ -182,7 +182,8 @@ Guidelines:
 
 5. Naming and Language Conventions  
    - Use English for all object names.  
-   - Utilize the user’s preferred language for aliases, descriptions, pros, cons, conclusions, and other descriptive elements to ensure clarity.
+   - Do not include type information in names or aliases (e.g., use "Book" instead of "BookAggregate", "PersonInfo" instead of "PersonInfoValueObject", "책" instead of "책 애그리거트").
+   - Utilize the user's preferred language for aliases, descriptions, pros, cons, conclusions, and other descriptive elements to ensure clarity.
 
 6. Reference Handling and Duplication Avoidance  
    - Before creating an Aggregate, check if an Aggregate with the same core concept already exists in either accumulated drafts or in other Bounded Contexts.  
@@ -577,9 +578,17 @@ ${this.client.input.feedback.feedbacks.join("\n")}`
     }
 
 
+    onThink(returnObj, thinkText){
+        returnObj.directMessage = `Generating options for ${this.client.input.boundedContextDisplayName} Bounded Context... (${this.getTotalOutputTextLength(returnObj)} characters generated)`
+    }
+
     onCreateModelGenerating(returnObj) {
         returnObj.modelValue.output = (returnObj.modelValue.aiOutput.result) ? returnObj.modelValue.aiOutput.result : {}
-        returnObj.modelValue.inference = returnObj.modelValue.aiOutput.inference ? returnObj.modelValue.aiOutput.inference : ""
+        returnObj.modelValue.inference = ""
+        if(this.parsedTexts && this.parsedTexts.think)
+            returnObj.modelValue.inference += this.parsedTexts.think
+        if(returnObj.modelValue.aiOutput.inference) 
+            returnObj.modelValue.inference += ("\n\n" + returnObj.modelValue.aiOutput.inference)
 
         if(returnObj.modelValue.output) {
             this._removeOptionsWithExistingAggregates(returnObj.modelValue.output)
@@ -588,16 +597,20 @@ ${this.client.input.feedback.feedbacks.join("\n")}`
         }
 
         if(this.client.input.feedback) {
-            returnObj.directMessage = `Re-generating options for ${this.client.input.boundedContextDisplayName} Bounded Context based on user feedback... (${returnObj.modelRawValue.length} characters generated)`
+            returnObj.directMessage = `Re-generating options for ${this.client.input.boundedContextDisplayName} Bounded Context based on user feedback... (${this.getTotalOutputTextLength(returnObj)} characters generated)`
             returnObj.isFeedbackBased = true
         } else {
-            returnObj.directMessage = `Generating options for ${this.client.input.boundedContextDisplayName} Bounded Context... (${returnObj.modelRawValue.length} characters generated)`
+            returnObj.directMessage = `Generating options for ${this.client.input.boundedContextDisplayName} Bounded Context... (${this.getTotalOutputTextLength(returnObj)} characters generated)`
         }
     }
 
     onCreateModelFinished(returnObj) {
         returnObj.modelValue.output = returnObj.modelValue.aiOutput.result
-        returnObj.modelValue.inference = returnObj.modelValue.aiOutput.inference ? returnObj.modelValue.aiOutput.inference : ""
+        returnObj.modelValue.inference = ""
+        if(this.parsedTexts && this.parsedTexts.think)
+            returnObj.modelValue.inference += this.parsedTexts.think
+        if(returnObj.modelValue.aiOutput.inference) 
+            returnObj.modelValue.inference += ("\n\n" + returnObj.modelValue.aiOutput.inference)
         returnObj.modelValue.output.defaultOptionIndex = returnObj.modelValue.output.defaultOptionIndex - 1
 
         this._removeOptionsWithExistingAggregates(returnObj.modelValue.output)
@@ -610,10 +623,10 @@ ${this.client.input.feedback.feedbacks.join("\n")}`
         this._markRecommendedOption(returnObj.modelValue.output)
 
         if(this.client.input.feedback) {
-            returnObj.directMessage = `Re-generating options for ${this.client.input.boundedContextDisplayName} Bounded Context based on user feedback... (${returnObj.modelRawValue.length} characters generated)`
+            returnObj.directMessage = `Re-generating options for ${this.client.input.boundedContextDisplayName} Bounded Context based on user feedback... (${this.getTotalOutputTextLength(returnObj)} characters generated)`
             returnObj.isFeedbackBased = true
         } else {
-            returnObj.directMessage = `Generating options for ${this.client.input.boundedContextDisplayName} Bounded Context... (${returnObj.modelRawValue.length} characters generated)`
+            returnObj.directMessage = `Generating options for ${this.client.input.boundedContextDisplayName} Bounded Context... (${this.getTotalOutputTextLength(returnObj)} characters generated)`
         }
     }
 

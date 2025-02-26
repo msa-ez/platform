@@ -1983,10 +1983,11 @@
 
           
         <!-- <gitAPIMenu></gitAPIMenu> -->
-        <div style="position:absolute; top:75px; right:35px; z-index:999;">
+        <div style="position:absolute; top:75px; right:35px; z-index:999; width: 50%;">
             <GeneratorProgress
             :generateDone="generatorProgressDto.generateDone"
             :displayMessage="generatorProgressDto.displayMessage"
+            :thinkMessage="generatorProgressDto.thinkMessage"
             :progress="generatorProgressDto.progress"
             @stopGeneration="generatorProgressDto.actions.stopGeneration"
             ></GeneratorProgress>
@@ -2540,6 +2541,8 @@
                 generatorProgressDto: {
                     generateDone: true,
                     displayMessage: '',
+                    thinkMessage: '',
+                    previousThinkingMessage: '',
                     progress: 0,
                     actions: {
                         stopGeneration: () => {}
@@ -2750,16 +2753,10 @@
                         isShow: false
                     }
 
-                    this.generatorProgressDto = {
-                        generateDone: false,
-                        displayMessage: "",
-                        progress: null,
-                        actions: {
-                            stopGeneration: () => {
-                                stopCallback()
-                            }
-                        }
-                    }
+                    this.generatorProgressDto.generateDone = false
+                    this.generatorProgressDto.displayMessage = ""
+                    this.generatorProgressDto.progress = null
+                    this.generatorProgressDto.actions.stopGeneration = stopCallback
 
                     createThinkingUpdateInterval(0, input.subjectText)
                 },
@@ -2771,19 +2768,20 @@
                         isShow: false
                     }
 
-                    this.generatorProgressDto = {
-                        generateDone: false,
-                        displayMessage: returnObj.directMessage,
-                        progress: 0,
-                        actions: {
-                            stopGeneration: () => {
-                                returnObj.actions.stopGeneration()
-                            }
-                        }
-                    }
+                    this.generatorProgressDto.generateDone = false
+                    this.generatorProgressDto.displayMessage = returnObj.directMessage
+                    this.generatorProgressDto.progress = 0
+                    this.generatorProgressDto.actions.stopGeneration = returnObj.actions.stopGeneration
                 },
-                
-                onModelCreated: (returnObj) => {
+
+                onThink: (returnObj, thinkText) => {
+                    clearThinkingUpdateInterval()
+                    this.generatorProgressDto.displayMessage = returnObj.directMessage
+                    this.generatorProgressDto.thinkMessage = this.generatorProgressDto.previousThinkingMessage + "\n" + thinkText
+                    this.generatorProgressDto.progress = 0
+                },
+
+                onModelCreatedWithThinking: (returnObj) => {
                     clearThinkingUpdateInterval()
                     this.generatorProgressDto.displayMessage = returnObj.directMessage
                     this.generatorProgressDto.progress = returnObj.progress
@@ -2791,12 +2789,15 @@
                     if(returnObj.modelValue && returnObj.modelValue.createdESValue) {
                         this.changedByMe = true
                         this.$set(this.value, "elements", returnObj.modelValue.createdESValue.elements)
-                        this.$set(this.value, "relations", returnObj.modelValue.createdESValue.relations) 
+                        this.$set(this.value, "relations", returnObj.modelValue.createdESValue.relations)
+                        this.forceRefreshCanvas() 
                     }
                 },
 
                 onGenerationSucceeded: (returnObj) => {
                     clearThinkingUpdateInterval()
+                    this.generatorProgressDto.previousThinkingMessage = this.generatorProgressDto.thinkMessage
+
                     if(returnObj.modelValue.removedElements && returnObj.modelValue.removedElements.length > 0) {
                         returnObj.modelValue.removedElements.forEach(element => {
                             if(this.value.elements[element.id])
@@ -2807,7 +2808,8 @@
                     if(returnObj.modelValue && returnObj.modelValue.createdESValue) {
                         this.changedByMe = true
                         this.$set(this.value, "elements", returnObj.modelValue.createdESValue.elements)
-                        this.$set(this.value, "relations", returnObj.modelValue.createdESValue.relations) 
+                        this.$set(this.value, "relations", returnObj.modelValue.createdESValue.relations)
+                        this.forceRefreshCanvas()
                     }
                 },
 
@@ -2822,7 +2824,7 @@
                         },
                         isGeneratorButtonEnabled: true
                     }
-                    this.generatorProgressDto.generateDone = tru
+                    this.generatorProgressDto.generateDone = true
                 },
 
                 onStopped: () => {
@@ -2955,9 +2957,16 @@
                     this.changedByMe = true
                     this.$set(this.value, "elements", {})
                     this.$set(this.value, "relations", {})
+                    this.forceRefreshCanvas()
 
 
-                    this.generateAggregatesFromDraft(inputParams.draftOptions)
+                    // 이벤트 스토밍 정보 초기 로드시에 elements, relations가 초기화되는 큐 로직이 있으며,
+                    // 그 로직으로 인해서 BC 생성이 무효화되기 때문에 큐 로드를 기다린 다음에 수행하도록 임시 처리
+                    setTimeout(() => {
+                        this.$nextTick(() => {
+                            this.generateAggregatesFromDraft(inputParams.draftOptions)
+                        })
+                    }, 1000)
                     return {stop: true}
                 }
             }
@@ -4114,6 +4123,9 @@
 
                 console.log("[*] 초안 전처리 완료", {afterDraftOptions: JSON.parse(JSON.stringify(draftOptions))})
 
+                this.generatorProgressDto.thinkMessage = ""
+                this.generatorProgressDto.previousThinkingMessage = ""
+
                 this.generators.CreateAggregateActionsByFunctions.generator.initInputs(
                     this.selectedDraftOptions,
                     this.value,
@@ -4153,14 +4165,12 @@
             },
 
             _createBoundedContextsIfNotExists(draftOptions) {
-                let isBoundedContextCreated = false
                 for(const context of Object.values(draftOptions)) {
                     const bcNameToCheck = context.boundedContext.name
                     const isBoundedContextExists = Object.values(this.value.elements).some((element) => 
                         element && element._type === "org.uengine.modeling.model.BoundedContext" && element.name.toLowerCase() === bcNameToCheck.toLowerCase()
                     )
                     if(isBoundedContextExists) continue
-                    isBoundedContextCreated = true
 
                     const appliedESValue = ESActionsUtil.getActionAppliedESValue([
                         {
@@ -4184,7 +4194,7 @@
                     context.boundedContext = Object.values(this.value.elements).find(element => element && element._type === "org.uengine.modeling.model.BoundedContext" && element.name.toLowerCase() === context.boundedContext.name.toLowerCase())
                 }
 
-                if(isBoundedContextCreated) this.forceRefreshCanvas()
+                this.forceRefreshCanvas()
             },
 
 

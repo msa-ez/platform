@@ -21,6 +21,8 @@ import {
     ModelInfoHelperTest,
     TextParseHelperTest
 } from "../../modeling/generators/features/AIGenerator"
+import ESActionsUtilTest from "../../modeling/generators/es-ddl-generators/modules/ESActionsUtilTest";
+import { mockedProgressDto, mockedProgressDtoUpdateCallback } from "./mocks"
 
 export default {
     name: "es-test-terminal",
@@ -44,6 +46,10 @@ export default {
                     command: () => this._directESGenerationByLibrary(),
                     description: "도서-대출 초안 선택을 넘기고 바로 이벤트 스토밍 생성"
                 },
+                mockProgressDto: {
+                    command: () => this._mockProgressDto(),
+                    description: "AI 진행 상황 UI에 대한 Mock 데이터 표시"
+                },
                 TempTest: {
                     command: () => this._TempTest(),
                     description: "임시 테스트"
@@ -63,7 +69,8 @@ export default {
                 CommandGWTGeneratorByFunctionsTest: {command: async () => { await CommandGWTGeneratorByFunctionsTest.test() }},
                 ModelInfoHelperTest: {command: async () => { await ModelInfoHelperTest.test() }},
                 TextParseHelperTest: {command: async () => { await TextParseHelperTest.test() }},
-                TextParseHelperTestError: {command: async () => { await TextParseHelperTest.testError() }}
+                TextParseHelperTestError: {command: async () => { await TextParseHelperTest.testError() }},
+                ESActionsUtilTest: {command: async () => { await ESActionsUtilTest.test() }}
             }
             
 
@@ -102,6 +109,11 @@ export default {
         
         _directESGenerationByLibrary() {
             this.generateAggregatesFromDraft(getEsDraft("libraryService"))
+        },
+
+        _mockProgressDto() {
+            this.generatorProgressDto = mockedProgressDto
+            mockedProgressDtoUpdateCallback(this.generatorProgressDto)
         },
 
         async _TempTest() {

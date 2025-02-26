@@ -441,6 +441,10 @@
                     "isSearchKey": item.isSearchKey || false
                 }
 
+                if (item.referenceClass) {
+                    tmpObject.referenceClass = item.referenceClass;
+                }
+
                 if(me.voList.includes(tmpObject['className'])) {
                     tmpObject['isVO'] = true;
                 }
