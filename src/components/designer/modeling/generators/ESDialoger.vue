@@ -774,7 +774,10 @@
                     }
                 },
 
-
+                collectedMockDatas: {
+                    aggregateDraftScenarios: {
+                    }
+                }
             }
         },
         methods: {
@@ -1135,6 +1138,7 @@
 
             generateAggregateDrafts(selectedStructureOption){
                 if(!selectedStructureOption) return
+                this.collectedMockDatas.aggregateDraftScenarios.selectedStructureOption = structuredClone(selectedStructureOption)
 
                 // 요약 결과가 있으면, BC별 원본 매핑 우선 진행
                 if(this.summarizedResult.length > 0){
@@ -1164,6 +1168,16 @@
 
             generateFromAggregateDrafts(draftOptions){
                 if(this.isServerProject) this.state.associatedProject = this.modelIds.projectId
+                this.collectedMockDatas.aggregateDraftScenarios.draftOptions = structuredClone(draftOptions)
+                this.collectedMockDatas.aggregateDraftScenarios.userStory = this.value.userStory
+                this.collectedMockDatas.aggregateDraftScenarios.state = structuredClone(this.state)
+                this.collectedMockDatas.aggregateDraftScenarios.messages = structuredClone(
+                    this.messages.map(message => ({
+                        ...message,
+                        actions: undefined
+                    }))
+                )
+                console.log("[*] 시나리오별 테스트를 위한 Mock 데이터 구축 완료", {collectedMockDatas: this.collectedMockDatas.aggregateDraftScenarios})
 
                 this.state = {
                     ...this.state,

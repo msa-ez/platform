@@ -182,8 +182,9 @@ Guidelines:
 
 5. Naming and Language Conventions  
    - Use English for all object names.  
-   - Do not include type information in names or aliases (e.g., use "Book" instead of "BookAggregate", "PersonInfo" instead of "PersonInfoValueObject", "책" instead of "책 애그리거트").
+   - Do not include type information in names or aliases (e.g., use "Book" instead of "BookAggregate", "PersonInfo" instead of "PersonInfoValueObject", "책" instead of "책 애그리거트", "카테고리" instead of "카테고리 열거형").
    - Utilize the user's preferred language for aliases, descriptions, pros, cons, conclusions, and other descriptive elements to ensure clarity.
+   - Within a single option, each name and alias must be unique to ensure clear identification and prevent ambiguity.
 
 6. Reference Handling and Duplication Avoidance  
    - Before creating an Aggregate, check if an Aggregate with the same core concept already exists in either accumulated drafts or in other Bounded Contexts.  
@@ -594,6 +595,7 @@ ${this.client.input.feedback.feedbacks.join("\n")}`
             this._removeOptionsWithExistingAggregates(returnObj.modelValue.output)
             this._linkValueObjectsToReferencedAggregates(returnObj.modelValue.output)
             this._enrichValueObjectsWithAggregateDetails(returnObj.modelValue.output)
+            this._removeInvalidAliases(returnObj.modelValue.output)
         }
 
         if(this.client.input.feedback) {
@@ -621,6 +623,7 @@ ${this.client.input.feedback.feedbacks.join("\n")}`
         this._linkValueObjectsToReferencedAggregates(returnObj.modelValue.output)
         this._enrichValueObjectsWithAggregateDetails(returnObj.modelValue.output)
         this._markRecommendedOption(returnObj.modelValue.output)
+        this._removeInvalidAliases(returnObj.modelValue.output)
 
         if(this.client.input.feedback) {
             returnObj.directMessage = `Re-generating options for ${this.client.input.boundedContextDisplayName} Bounded Context based on user feedback... (${this.getTotalOutputTextLength(returnObj)} characters generated)`
@@ -642,6 +645,14 @@ ${this.client.input.feedback.feedbacks.join("\n")}`
             for (const aggregateInfo of option.structure) {
                 if (!aggregateInfo.aggregate || !aggregateInfo.aggregate.name) continue;
                 if (this.client.input.existingAggregates.includes(aggregateInfo.aggregate.name)) continue
+
+                if (aggregateInfo.valueObjects && aggregateInfo.valueObjects.length > 0) {
+                    aggregateInfo.valueObjects = aggregateInfo.valueObjects.filter(valueObject => {
+                        return !valueObject.referencedAggregateName || 
+                               valueObject.referencedAggregateName !== aggregateInfo.aggregate.name;
+                    });
+                }
+
                 validAggregateInfos.push(aggregateInfo)
             }
             if(validAggregateInfos.length === 0) continue
@@ -714,6 +725,60 @@ ${this.client.input.feedback.feedbacks.join("\n")}`
                     }
 
                     delete valueObject.referencedAggregateName
+                }
+            }
+        }
+    }
+
+    _removeInvalidAliases(output) {
+        if(!output || !output.options) return
+    
+        const termsToRemove = [
+            /\baggregate\b/i,
+            /\bvalueobject\b/i,
+            /\benum(eration)?\b/i,
+            /\b열거형\b/,
+            /\b값객체\b/,
+            /\b애그리거트\b/,
+            /\b어그리거트\b/
+        ];
+    
+        const cleanAlias = (alias) => {
+            if (!alias) return alias;
+            
+            let cleanedAlias = alias;
+            for (const term of termsToRemove) {
+                cleanedAlias = cleanedAlias.replace(term, '');
+            }
+            return cleanedAlias.replace(/\s+/g, ' ').trim();
+        };
+    
+        for(const option of output.options) {
+            if(!option.structure) continue;
+            
+            for(const aggregateInfo of option.structure) {
+                if(aggregateInfo.aggregate && aggregateInfo.aggregate.alias) {
+                    aggregateInfo.aggregate.alias = cleanAlias(aggregateInfo.aggregate.alias);
+                }
+                
+                if(aggregateInfo.enumerations) {
+                    for(const enumeration of aggregateInfo.enumerations) {
+                        if(enumeration.alias) {
+                            enumeration.alias = cleanAlias(enumeration.alias);
+                        }
+                    }
+                }
+                
+                if(aggregateInfo.valueObjects) {
+                    for(const valueObject of aggregateInfo.valueObjects) {
+                        if(valueObject.alias) {
+                            valueObject.alias = cleanAlias(valueObject.alias);
+                        }
+                        
+                        if(valueObject.referencedAggregate && valueObject.referencedAggregate.alias) {
+                            valueObject.referencedAggregate.alias = cleanAlias(valueObject.referencedAggregate.alias);
+                        }
+                    }
                 }
             }
         }
