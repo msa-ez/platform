@@ -1983,10 +1983,11 @@
 
           
         <!-- <gitAPIMenu></gitAPIMenu> -->
-        <div style="position:absolute; top:75px; right:35px; z-index:999;">
+        <div style="position:absolute; top:75px; right:35px; z-index:999; width: 50%;">
             <GeneratorProgress
             :generateDone="generatorProgressDto.generateDone"
             :displayMessage="generatorProgressDto.displayMessage"
+            :thinkMessage="generatorProgressDto.thinkMessage"
             :progress="generatorProgressDto.progress"
             @stopGeneration="generatorProgressDto.actions.stopGeneration"
             ></GeneratorProgress>
@@ -2540,6 +2541,8 @@
                 generatorProgressDto: {
                     generateDone: true,
                     displayMessage: '',
+                    thinkMessage: '',
+                    previousThinkingMessage: '',
                     progress: 0,
                     actions: {
                         stopGeneration: () => {}
@@ -2750,16 +2753,10 @@
                         isShow: false
                     }
 
-                    this.generatorProgressDto = {
-                        generateDone: false,
-                        displayMessage: "",
-                        progress: null,
-                        actions: {
-                            stopGeneration: () => {
-                                stopCallback()
-                            }
-                        }
-                    }
+                    this.generatorProgressDto.generateDone = false
+                    this.generatorProgressDto.displayMessage = ""
+                    this.generatorProgressDto.progress = null
+                    this.generatorProgressDto.actions.stopGeneration = stopCallback
 
                     createThinkingUpdateInterval(0, input.subjectText)
                 },
@@ -2771,21 +2768,16 @@
                         isShow: false
                     }
 
-                    this.generatorProgressDto = {
-                        generateDone: false,
-                        displayMessage: returnObj.directMessage,
-                        progress: 0,
-                        actions: {
-                            stopGeneration: () => {
-                                returnObj.actions.stopGeneration()
-                            }
-                        }
-                    }
+                    this.generatorProgressDto.generateDone = false
+                    this.generatorProgressDto.displayMessage = returnObj.directMessage
+                    this.generatorProgressDto.progress = 0
+                    this.generatorProgressDto.actions.stopGeneration = returnObj.actions.stopGeneration
                 },
 
                 onThink: (returnObj, thinkText) => {
                     clearThinkingUpdateInterval()
                     this.generatorProgressDto.displayMessage = returnObj.directMessage
+                    this.generatorProgressDto.thinkMessage = this.generatorProgressDto.previousThinkingMessage + "\n" + thinkText
                     this.generatorProgressDto.progress = 0
                 },
 
@@ -2804,6 +2796,8 @@
 
                 onGenerationSucceeded: (returnObj) => {
                     clearThinkingUpdateInterval()
+                    this.generatorProgressDto.previousThinkingMessage = this.generatorProgressDto.thinkMessage
+
                     if(returnObj.modelValue.removedElements && returnObj.modelValue.removedElements.length > 0) {
                         returnObj.modelValue.removedElements.forEach(element => {
                             if(this.value.elements[element.id])
@@ -2830,7 +2824,7 @@
                         },
                         isGeneratorButtonEnabled: true
                     }
-                    this.generatorProgressDto.generateDone = tru
+                    this.generatorProgressDto.generateDone = true
                 },
 
                 onStopped: () => {
@@ -4128,6 +4122,9 @@
                 this._createBoundedContextsIfNotExists(draftOptions)
 
                 console.log("[*] 초안 전처리 완료", {afterDraftOptions: JSON.parse(JSON.stringify(draftOptions))})
+
+                this.generatorProgressDto.thinkMessage = ""
+                this.generatorProgressDto.previousThinkingMessage = ""
 
                 this.generators.CreateAggregateActionsByFunctions.generator.initInputs(
                     this.selectedDraftOptions,
