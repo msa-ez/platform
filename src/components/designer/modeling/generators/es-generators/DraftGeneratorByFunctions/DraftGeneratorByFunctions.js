@@ -182,7 +182,8 @@ Guidelines:
 
 5. Naming and Language Conventions  
    - Use English for all object names.  
-   - Utilize the user’s preferred language for aliases, descriptions, pros, cons, conclusions, and other descriptive elements to ensure clarity.
+   - Do not include type information in names or aliases (e.g., use "Book" instead of "BookAggregate", "PersonInfo" instead of "PersonInfoValueObject", "책" instead of "책 애그리거트").
+   - Utilize the user's preferred language for aliases, descriptions, pros, cons, conclusions, and other descriptive elements to ensure clarity.
 
 6. Reference Handling and Duplication Avoidance  
    - Before creating an Aggregate, check if an Aggregate with the same core concept already exists in either accumulated drafts or in other Bounded Contexts.  
