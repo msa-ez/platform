@@ -280,7 +280,7 @@ export default {
         getRelationTypeLabel() {
             return this.localOptions.isProtocolMode
                 ? 'Protocol Mode (Request/Response and Pub/Sub)'
-                : 'Classic Mode (Confirmist, Share Kernel, Anti-corruption, Seperate Ways, Customer-Supplier)';
+                : 'Classic Mode (Conformist, Shared Kernel, Anti-corruption, Seperate Ways, Customer-Supplier)';
         }
     }
 }

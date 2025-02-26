@@ -175,7 +175,7 @@ Must not be missing information that is required in the JSON format.
 2. For "relations" array, each object must have:
 {
     "name": "...",
-    "type": "Confirmist" || "Share Kernel" || "Anti-corruption" || "Seperate Ways" || "Customer-Supplier",
+    "type": "Conformist" || "Shared Kernel" || "Anti-corruption" || "Seperate Ways" || "Customer-Supplier",
     "upStream": {
         "name": "...",
         "alias": "..."
@@ -216,7 +216,7 @@ Important: In the "thoughts" section of your response, please explicitly explain
         if(this.client.input['generateOption']['isProtocolMode']){
             return `"Request/Response || Pub/Sub"`;
         }else{
-            return `"Confirmist" || "Share Kernel" || "Anti-corruption" || "Seperate Ways" || "Customer-Supplier"`;
+            return `"Conformist" || "Shared Kernel" || "Anti-corruption" || "Seperate Ways" || "Customer-Supplier"`;
         }
     }
 
@@ -247,6 +247,7 @@ Important: In the "thoughts" section of your response, please explicitly explain
                     })
                 }
 
+                // COT 추가
                 if(this.parsedTexts.think){
                     model['cotThink'] = this.parsedTexts.think
                 }
@@ -261,6 +262,12 @@ Important: In the "thoughts" section of your response, please explicitly explain
                         "explanations":[]
                     }
                 }
+
+                // COT 추가
+                if(this.parsedTexts.think){
+                    model[this.client.input['devisionAspect']]['cotThink'] = this.parsedTexts.think
+                }
+
                 return model
             }
         }catch(e){
