@@ -231,8 +231,8 @@ OFFLINE_MODE = true
 2. Click **Profile Icon** (top right)
 3. Click **Settings**
 4. Click **Applications**
-5. **Manage OAuth2 Applications**
-   - Application Name : acebase
+5. Input **Manage OAuth2 Applications**
+   - Application Name : **any name** ex) acebase
    - Redirect URIs. Please use a new line for every URI.: **http://localhost:5757/oauth2/mydb/signin**
 6. Click **Create Application**
 7. **Client ID & Client Secret** issued after the registration of Application is necessary for MSAez Install, so save them.
