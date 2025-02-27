@@ -2,7 +2,11 @@ const StorageBase = require('../../../../../../CommonStorageBase.vue').default;
 const { COUNTRY_CODE_LANG_MAP, DEFAULT_LANG, REQUEST_ARG_KEYS } = require("./contants");
 const { ModelInfoHelper } = require("../helpers")
 const { HashUtil, RequestUtil } = require("../utils")
+const { GeneratorLockKeyError } = require("../../../errors")
 
+
+let previousRequestInfos = []
+let previousResponseInfos = []
 /**
  * @description
  * AI Generator API의 공통 기능을 제공하기 위한 기본 클래스입니다.
@@ -69,7 +73,8 @@ class BaseAPIClient {
             })
         }
         g.originalLanguage = g.preferredLanguage.toLowerCase()
-        
+        if(!g.generatorID) g.generatorID = Date.now()
+        g.apiClientID = Date.now()
 
         g.extraOptions = {
             requestArgs: {}
@@ -150,7 +155,7 @@ class BaseAPIClient {
         const g = this.aiGenerator
     
         if(g.lockKey) {
-            return Promise.reject(new Error("현재 다른 요청이 진행 중입니다. 잠시 후 다시 시도해 주세요."));
+            return Promise.reject(new GeneratorLockKeyError());
         }
     
         g.lockKey = true;
@@ -191,14 +196,10 @@ class BaseAPIClient {
                 g.gptResponseId = null;
                 const requestParams = this._makeRequestParams(g.messages, g.modelInfo, g.token);
     
-                try {
-                    console.log("[*] 최종적으로 요청되는 정보", { 
-                        ...requestParams,
-                        requestData: requestParams.requestData ? JSON.parse(requestParams.requestData) : null
-                    });
-                } catch {
-                    console.log("[*] 최종적으로 요청되는 정보", { requestParams });
-                }
+                const requestInfo = this._makeRequestInfo(requestParams)
+                previousRequestInfos.push(requestInfo)
+                previousRequestInfos = previousRequestInfos.slice(-500)
+                console.log("[*] 최종적으로 요청되는 정보", { requestInfo, previousRequestInfos });
     
                 RequestUtil.sendPostRequest(
                     requestParams.requestUrl,
@@ -238,6 +239,41 @@ class BaseAPIClient {
             throw error;
         });
     }
+
+    _makeRequestInfo(requestParams){
+        const g = this.aiGenerator
+        let requestInfo = {}
+        
+        try {
+            requestInfo.requestData = requestParams.requestData ? JSON.parse(requestParams.requestData) : null
+        }catch{}
+
+        try {
+            if((g.client && g.client.input)) {
+                if(typeof g.client.input === "object")
+                    requestInfo.input = structuredClone(g.client.input)
+                else
+                    requestInfo.input = g.client.input
+            }
+            else
+                requestInfo.input = null
+        }catch{}
+
+        g.requestStartTime = new Date().getTime()
+        try {
+            requestInfo = {
+                ...requestInfo,
+                requestStartTime: g.requestStartTime,
+                generatorName: g.generatorName || "unknown",
+                generatorID: g.generatorID,
+                apiClientID: g.apiClientID,
+                networkRequestID: new Date().getTime()
+            }
+        }catch{}
+
+        return requestInfo
+    }
+
     /**
      * **상위 클래스에서 반드시 재정의해야하는 메소드**
      * 각 모델에 따라서 적절한 POST 요청 파라미터를 반환해야 함
@@ -337,6 +373,12 @@ class BaseAPIClient {
 
         g.state = 'end';
         let model = {};
+
+        const responseInfo = this._makeResponseInfo(g.modelJson)
+        previousResponseInfos.push(responseInfo)
+        previousResponseInfos = previousResponseInfos.slice(-500)
+        console.log("[*] AI 모델 생성이 완료됨", { responseInfo, previousResponseInfos })
+
         if(g.client.onModelCreated){
             model = g.createModel(g.modelJson)
             if(g.client.input && g.client.input.associatedProject) {
@@ -361,6 +403,42 @@ class BaseAPIClient {
         if(localStorage.getItem("useCache") === "true"){
             let hashKey = HashUtil.generateHashKey(JSON.stringify(g.messages))
             localStorage.setItem("cache-" + hashKey, g.modelJson)
+        }
+    }
+
+    _makeResponseInfo(modelJson) {
+        const g = this.aiGenerator
+
+        let inputData = null
+        try {
+            if((g.client && g.client.input)) {
+                if(typeof g.client.input === "object")
+                    inputData = structuredClone(g.client.input)
+                else
+                    inputData = g.client.input
+            }
+            else
+                inputData = null
+        }catch{}
+
+        let messages = null
+        try {
+            messages = structuredClone(g.previousMessages)
+        }catch{}
+
+        g.requestEndTime = new Date().getTime()
+        return {
+            generatorName: g.generatorName,
+            generatorID: g.generatorID,
+            apiClientID: g.apiClientID,
+            input: inputData,
+            messages: messages,
+            output: modelJson,
+            parsedTexts: g.parsedTexts,
+            requestStartTime: g.requestStartTime,
+            requestEndTime: g.requestEndTime,
+            totalSeconds: (g.requestEndTime - g.requestStartTime) / 1000,
+            state: g.state
         }
     }
 
@@ -397,13 +475,16 @@ class BaseAPIClient {
         if(createPromptWithRoles) {
             promptsToBuild.system = createPromptWithRoles.system
             promptsToBuild.user = createPromptWithRoles.user
-            if(promptsToBuild.user && promptsToBuild.user.length > 0)
+            if(promptsToBuild.user && promptsToBuild.user.length > 0 && !g.disableLanguageGuide)
                 promptsToBuild.user[promptsToBuild.user.length - 1] += contentToAppend
             
             promptsToBuild.assistant = createPromptWithRoles.assistant
         }
         else {
-            promptsToBuild.user = [g.createPrompt() + contentToAppend]
+            if(g.disableLanguageGuide)
+                promptsToBuild.user = [g.createPrompt()]
+            else
+                promptsToBuild.user = [g.createPrompt() + contentToAppend]
         }
 
 

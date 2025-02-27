@@ -9,4 +9,4 @@ export const { PreProcessingFunctionsGenerator, PreProcessingFunctionsGeneratorT
 export const { DraftGeneratorByFunctions, DraftGeneratorByFunctionsTest } = require("./DraftGeneratorByFunctions");
 export const { SanityCheckGenerator, SanityCheckGeneratorTest } = require("./SanityCheckGenerator");
 export const { AggregateDraftDialog } = require("./components");
-export const { getEsValue, getEsDraft, esConfigs } = require("./mocks");
+export const { getEsValue, getEsDraft, esConfigs, getAvailableServiceNames } = require("./mocks");
