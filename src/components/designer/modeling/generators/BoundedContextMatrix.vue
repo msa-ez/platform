@@ -38,12 +38,14 @@
     },
     methods: {
       getBcStyle(bc) {
-        // 좌표계 반전 (bottom은 위에서부터, left는 왼쪽에서부터 계산)
+        // 복잡도와 차별성이 비슷한 BC들을 구분하기 위한 오프셋 계산
+        const offset = this.calculateOffset(bc);
+        
         return {
           backgroundColor: this.getDomainColor(bc.importance),
           position: 'absolute',
-          left: `${bc.differentiation * 100}%`,
-          bottom: `${bc.complexity * 100}%`,
+          left: `${bc.differentiation * 100 + offset.x}%`,
+          bottom: `${bc.complexity * 100 + offset.y}%`,
           transform: 'translate(-50%, 50%)',
           cursor: 'pointer',
           minWidth: '100px'
@@ -56,7 +58,32 @@
           'Generic Domain': '#9e9e9e'
         }
         return colors[importance] || '#ddd'
-      }
+      },
+      calculateOffset(currentBc) {
+        const offsetStep = 2; // 오프셋 크기 (%)
+        let xOffset = 0;
+        let yOffset = 0;
+
+        // 다른 BC들과 위치 비교
+        this.boundedContexts.forEach(bc => {
+          if (bc !== currentBc) {
+            const complexityDiff = Math.abs(bc.complexity - currentBc.complexity);
+            const differentiationDiff = Math.abs(bc.differentiation - currentBc.differentiation);
+            
+            // 복잡도와 차별성이 매우 비슷한 경우 (임계값: 0.1)
+            if (complexityDiff < 0.1 && differentiationDiff < 0.1) {
+              // BC 이름의 첫 글자를 기준으로 일관된 오프셋 적용
+              const nameCompare = currentBc.name.localeCompare(bc.name);
+              if (nameCompare > 0) {
+                xOffset += offsetStep;
+                yOffset += offsetStep;
+              }
+            }
+          }
+        });
+
+        return { x: xOffset, y: yOffset };
+      },
     }
   }
   </script>
