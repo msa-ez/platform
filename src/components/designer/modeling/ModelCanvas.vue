@@ -433,6 +433,7 @@
                 isPauseQueue: false,
                 changedPauseQueue: false, // 변화 값 처리
                 pauseValue: null, // 시작 시점의 value 저장.
+                isModelDefinitionLoaded: false
             }
         },
         beforeDestroy: function () {
@@ -697,6 +698,8 @@
                             me.$EventBus.$emit('progressValue', false)
                         }
                     }
+
+                    me.isModelDefinitionLoaded = true
                 }
             })
         },

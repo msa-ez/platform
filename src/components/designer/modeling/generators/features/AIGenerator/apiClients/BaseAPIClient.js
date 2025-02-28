@@ -194,6 +194,8 @@ class BaseAPIClient {
                 }
         
                 g.gptResponseId = null;
+                g.firstResponseTime = null
+                g.requestStartTime = new Date().getTime()
                 const requestParams = this._makeRequestParams(g.messages, g.modelInfo, g.token);
     
                 const requestInfo = this._makeRequestInfo(requestParams)
@@ -259,7 +261,6 @@ class BaseAPIClient {
                 requestInfo.input = null
         }catch{}
 
-        g.requestStartTime = new Date().getTime()
         try {
             requestInfo = {
                 ...requestInfo,
@@ -304,6 +305,10 @@ class BaseAPIClient {
 
     _onProgress(event, resolve, reject) {
         const g = this.aiGenerator
+
+        if(!g.firstResponseTime)
+            g.firstResponseTime = new Date().getTime()
+
         if(g.stopSignaled || window.stopSignaled){
             event.target.abort();
             g.stopSignaled = false;
@@ -363,21 +368,22 @@ class BaseAPIClient {
 
     _onLoadEnd(event, resolve, reject) {
         const g = this.aiGenerator
-        console.log("End to Success - onloadend", event.target);
-        if(!g.client) return
-        if(g.finish_reason === 'length'){
-            console.log('max_token issue')
-            alert('max_token issue')
-        } 
-
 
         g.state = 'end';
         let model = {};
 
+        g.requestEndTime = new Date().getTime()
         const responseInfo = this._makeResponseInfo(g.modelJson)
         previousResponseInfos.push(responseInfo)
         previousResponseInfos = previousResponseInfos.slice(-500)
         console.log("[*] AI 모델 생성이 완료됨", { responseInfo, previousResponseInfos })
+
+        if(!g.client) return
+        if(g.finish_reason === 'length'){
+            console.log('max_token issue')
+            alert('max_token issue')
+        }
+
 
         if(g.client.onModelCreated){
             model = g.createModel(g.modelJson)
@@ -426,19 +432,23 @@ class BaseAPIClient {
             messages = structuredClone(g.previousMessages)
         }catch{}
 
-        g.requestEndTime = new Date().getTime()
         return {
             generatorName: g.generatorName,
             generatorID: g.generatorID,
             apiClientID: g.apiClientID,
+            networkRequestID: g.networkRequestID,
             input: inputData,
             messages: messages,
             output: modelJson,
             parsedTexts: g.parsedTexts,
             requestStartTime: g.requestStartTime,
+            firstResponseTime: g.firstResponseTime,
             requestEndTime: g.requestEndTime,
             totalSeconds: (g.requestEndTime - g.requestStartTime) / 1000,
-            state: g.state
+            responseDelaySeconds: (g.firstResponseTime - g.requestStartTime) / 1000,
+            tokenGenerateDelaySeconds: (g.requestEndTime - g.firstResponseTime) / 1000,
+            state: g.state,
+            finish_reason: g.finish_reason
         }
     }
 

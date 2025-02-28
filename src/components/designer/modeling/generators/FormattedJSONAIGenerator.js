@@ -126,8 +126,6 @@ class FormattedJSONAIGenerator extends AIGenerator {
         this.jsonOutputTextToRestore = undefined
         this.savedOnSendCallback = undefined
         this.createdPrompt = {}
-        
-        this.startTime = Date.now()
     }
 
     _addOnsendCallback(){
@@ -554,10 +552,14 @@ ${JSON.stringify(exampleOutputs)}
             createdPrompt: this.createdPrompt,
             modelInfo: this.modelInfo,
             parsedTexts: this.parsedTexts,
-            startTime: this.startTime,
-            currentTime: Date.now(),
-            passedSeconds: (Date.now() - this.startTime) / 1000,
+            requestStartTime: this.requestStartTime,
+            firstResponseTime: this.firstResponseTime,
+            requestEndTime: this.requestEndTime,
+            totalSeconds: (this.requestEndTime - this.requestStartTime) / 1000,
+            responseDelaySeconds: (this.firstResponseTime - this.requestStartTime) / 1000,
+            tokenGenerateDelaySeconds: (this.requestEndTime - this.firstResponseTime) / 1000,
             currentState: this.state,
+            finish_reason: this.finish_reason,
             actions: {
                 stopGeneration: () => {
                     this.stop()
