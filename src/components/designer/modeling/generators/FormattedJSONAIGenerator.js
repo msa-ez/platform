@@ -1,5 +1,6 @@
 const AIGenerator = require("./AIGenerator");
 const { TokenCounter, JsonParsingUtil } = require("./utils")
+const { GeneratorLockKeyError, GeneratorNetworkError } = require("./errors")
 
 const DEFAULT_CONFIG = {
     MAX_RETRY_COUNT: 3,
@@ -125,8 +126,6 @@ class FormattedJSONAIGenerator extends AIGenerator {
         this.jsonOutputTextToRestore = undefined
         this.savedOnSendCallback = undefined
         this.createdPrompt = {}
-        
-        this.startTime = Date.now()
     }
 
     _addOnsendCallback(){
@@ -168,18 +167,34 @@ class FormattedJSONAIGenerator extends AIGenerator {
 
         } catch(e) {
 
-            console.error(`[!] ${this.generatorName}에 대한 생성 도중 네트워크 의심 에러 발생!`, {inputParams: this.client.input, error:e})
+            const networkErrorReturnObj = {
+                generatorID: this.generatorID,
+                apiClientID: this.apiClientID,
+                networkRequestID: this.networkRequestID,
+                inputParams: this.client.input,
+                leftNetworkRetryCount: this.leftNetworkRetryCount,
+                error: e
+            }
+
+            // 세마포어로 인한 에러인 경우, 재요청을 할 경우, 오히려 문제를 발생시킬 수 있기 때문에 즉시 중단시킴
+            if(e instanceof GeneratorLockKeyError) {
+                console.error(`[!] LockKeyError 발생! 해당 요청을 즉시 중단함`, networkErrorReturnObj)
+                return
+            }
+
+
+            console.error(`[!] ${this.generatorName}에 대한 생성 도중 네트워크 의심 에러 발생!`, networkErrorReturnObj)
             console.error(e)
             
             this.leftNetworkRetryCount--
             if(this.leftNetworkRetryCount > 0) {
-                console.log(`[*] ${this.generatorName}에 대한 생성 도중 네트워크 의심 에러 발생! 재시도 중...`)
+                console.log(`[*] ${this.generatorName}에 대한 생성 도중 네트워크 의심 에러 발생! 재시도 중...`, networkErrorReturnObj)
                 await this.generate()
             }
             else {
-                console.error(`[!] ${this.generatorName}에 대한 생성 도중 네트워크 의심 에러 발생! 재시도 실패!`)
+                console.error(`[!] ${this.generatorName}에 대한 생성 도중 네트워크 의심 에러 발생! 재시도 실패!`, networkErrorReturnObj)
                 alert(`[!] A network error occurred during AI generation. Please try again later or review the relevant options. : ${e.message}`)
-                throw e
+                throw new GeneratorNetworkError(e.message, e)
             }
 
         }
@@ -190,13 +205,21 @@ class FormattedJSONAIGenerator extends AIGenerator {
     async onGenerateBefore(inputParams, generatorName){}
 
     createPromptWithRoles(){
+        const createPromptReturnObj = {
+            generatorName: this.generatorName,
+            generatorID: this.generatorID,
+            apiClientID: this.apiClientID,
+            networkRequestID: this.networkRequestID,
+            modelInfo: this.modelInfo
+        }
+
         if(this.useJsonRestoreStrategy && this.jsonOutputTextToRestore) {
             this.changeToSimpleModel()
 
             this.createdPrompt = this._getJsonRestorePrompt(this.jsonOutputTextToRestore)
             console.log("[*] Json 파싱에러가 난 데이터를 복구하는 전략으로 시도", {
+                ...createPromptReturnObj,
                 prompt: structuredClone(this.createdPrompt),
-                modelInfo: this.modelInfo
             })
 
             this.useJsonRestoreStrategy = false
@@ -213,9 +236,7 @@ class FormattedJSONAIGenerator extends AIGenerator {
             if(this.modelInfo.isInferenceModel && !this.client.onSend && this.savedOnSendCallback)
                 this.client.onSend = this.savedOnSendCallback
 
-            console.log("[*] 일반적인 프롬프트 생성 전략으로 시도", {
-                modelInfo: this.modelInfo
-            })
+            console.log("[*] 일반적인 프롬프트 생성 전략으로 시도", createPromptReturnObj)
         }
 
 
@@ -224,7 +245,10 @@ class FormattedJSONAIGenerator extends AIGenerator {
             this.createdPrompt = this._assembleRolePrompt()
 
             console.log(`[*] LLM에게 ${this.generatorName}에서 생성된 프롬프트 전달중...`, 
-                {prompt: structuredClone(this.createdPrompt)}
+                {
+                    ...createPromptReturnObj,
+                    prompt: structuredClone(this.createdPrompt),
+                }
             )
             this.isFirstResponse = true
 
@@ -232,7 +256,10 @@ class FormattedJSONAIGenerator extends AIGenerator {
 
         } catch(e) {
 
-            console.error(`[!] ${this.generatorName}에 대한 프롬프트 생성 도중에 오류 발생!`, {inputParams: this.client.input, error:e})
+            console.error(`[!] ${this.generatorName}에 대한 프롬프트 생성 도중에 오류 발생!`, {
+                ...createPromptReturnObj,
+                error:e
+            })
             console.error(e)
             throw e
 
@@ -511,6 +538,9 @@ ${JSON.stringify(exampleOutputs)}
     createModel(text){ 
         let returnObj = {
             generatorName: this.generatorName,
+            generatorID: this.generatorID,
+            apiClientID: this.apiClientID,
+            networkRequestID: this.networkRequestID,
             inputParams: this.client.input,
             modelRawValue: text,
             isFirstResponse: this.isFirstResponse,
@@ -522,10 +552,14 @@ ${JSON.stringify(exampleOutputs)}
             createdPrompt: this.createdPrompt,
             modelInfo: this.modelInfo,
             parsedTexts: this.parsedTexts,
-            startTime: this.startTime,
-            currentTime: Date.now(),
-            passedSeconds: (Date.now() - this.startTime) / 1000,
+            requestStartTime: this.requestStartTime,
+            firstResponseTime: this.firstResponseTime,
+            requestEndTime: this.requestEndTime,
+            totalSeconds: (this.requestEndTime - this.requestStartTime) / 1000,
+            responseDelaySeconds: (this.firstResponseTime - this.requestStartTime) / 1000,
+            tokenGenerateDelaySeconds: (this.requestEndTime - this.firstResponseTime) / 1000,
             currentState: this.state,
+            finish_reason: this.finish_reason,
             actions: {
                 stopGeneration: () => {
                     this.stop()

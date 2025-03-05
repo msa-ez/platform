@@ -602,6 +602,7 @@ Inference Guidelines:
         if(this.client.input.targetCommandAliases.length !== result.length)
             throw new Error("The number of target command IDs and the number of GWT scenarios do not match.")
 
+        
         let commandsToReplace = []
         for(const scenario of Object.values(result)){
             const targetCommandUUID = this.client.input.esAliasTransManager.aliasToUUIDDic[scenario.targetCommandId]
@@ -612,9 +613,15 @@ Inference Guidelines:
             targetCommand = JSON.parse(JSON.stringify(targetCommand))
 
             if(!scenario.gwts || scenario.gwts.length === 0) continue
-            targetCommand.examples = this._getExamples(scenario.gwts)
+            const examples = this._getExamples(scenario.gwts)
+            if(!examples || examples.length === 0) continue
+
+            targetCommand.examples = examples
             commandsToReplace.push(targetCommand)
         }
+        if(commandsToReplace.length === 0)
+            throw new Error("No GWT scenarios found for the target command IDs.")
+        
         returnObj.modelValue.commandsToReplace = commandsToReplace
         console.log("[*] commandsToReplace", JSON.parse(JSON.stringify(commandsToReplace)))
 

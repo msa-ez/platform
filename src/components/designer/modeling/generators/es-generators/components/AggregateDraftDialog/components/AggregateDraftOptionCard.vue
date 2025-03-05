@@ -219,7 +219,7 @@
                                 relationships.add(`    ${aggregateName} --> ${voName}`);
 
                                 if (vo.referencedAggregate && vo.referencedAggregate.alias) {
-                                    const refAggName = vo.referencedAggregate.alias;
+                                    const refAggName = getValidAlias(vo.referencedAggregate.alias);
                                     addClass(refAggName, "Aggregate Root");
                                     relationships.add(`    ${voName} --> ${refAggName}`);
                                 }

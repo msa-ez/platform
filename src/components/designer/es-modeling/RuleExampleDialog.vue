@@ -731,7 +731,7 @@
                         compareArray(obj1[0].then, obj2.then);
                 }
                 me.setExampleFrameWork();
-                if(me.value && me.value.examples 
+                if(me.value && me.value.examples && me.value.examples.length > 0
                 && me.value.examples[0].given && me.value.examples[0].given[0].value
                 && me.value.examples[0].when && me.value.examples[0].when[0].value
                 && me.value.examples[0].then && me.value.examples[0].then[me.value.examples[0].then.lastIndex].value)

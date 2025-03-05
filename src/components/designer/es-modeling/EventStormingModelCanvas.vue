@@ -2564,6 +2564,16 @@
                 },
 
                 selectedDraftOptions: [],
+                collectedMockDatas: {
+                    aggregateDraftScenarios: {
+                    }
+                },
+                collectedLogDatas: {
+                    aggregateDraftScenarios: {
+                        startTime: null,
+                        endTime: null
+                    }
+                },
 
                 processMode: true,
             };
@@ -2939,6 +2949,22 @@
                         for(const command of returnObj.modelValue.commandsToReplace)
                             this.$set(this.value.elements, command.id, command)
                     }
+                },
+
+                onGenerationDone: () => {
+                    this.collectedMockDatas.aggregateDraftScenarios.esValue = structuredClone(
+                        {
+                            elements: this.value.elements,
+                            relations: this.value.relations
+                        }
+                    )
+                    console.log("[*] 시나리오별 테스트를 위한 Mock 데이터 구축 완료", {collectedMockDatas: this.collectedMockDatas.aggregateDraftScenarios})
+
+                    this.collectedLogDatas.aggregateDraftScenarios.endTime = new Date().getTime()
+                    const totalSeconds = (this.collectedLogDatas.aggregateDraftScenarios.endTime - this.collectedLogDatas.aggregateDraftScenarios.startTime) / 1000
+                    console.log("[*] 최종 생성까지 걸린 총 시간(초)", totalSeconds) 
+                    
+                    byFunctionCallbacks.onGenerationDone()
                 }
             })
 
@@ -2948,25 +2974,29 @@
                 onInputParamsCheckBefore: (inputParams) => {
                     console.log("[*] 바로 이벤트 스토밍 생성 실행", {inputParams})
 
+                    const newGenerateFromDrafts = () => {
+                        setTimeout(() => {
+                            if(this.isModelDefinitionLoaded) {
+                                // 이벤트 스토밍 초안으로 부터 '이벤트 스토밍 생성' 버튼을 여러번 눌렀을 경우를 대비
+                                // 항상 완전히 초기화된 상태로부터 시작
+                                for(const element of Object.values(this.value.elements).filter(element => element))
+                                    this.removeElementAction(element)
 
-                    // 이벤트 스토밍 초안으로 부터 '이벤트 스토밍 생성' 버튼을 여러번 눌렀을 경우를 대비
-                    // 항상 완전히 초기화된 상태로부터 시작
-                    for(const element of Object.values(this.value.elements).filter(element => element))
-                        this.removeElementAction(element)
+                                this.changedByMe = true
+                                this.$set(this.value, "elements", {})
+                                this.$set(this.value, "relations", {})
+                                this.forceRefreshCanvas()
 
-                    this.changedByMe = true
-                    this.$set(this.value, "elements", {})
-                    this.$set(this.value, "relations", {})
-                    this.forceRefreshCanvas()
+                                this.generateAggregatesFromDraft(inputParams.draftOptions)
+                            }
+                            else {
+                                console.log("[*] 모델 정의 로드 대기 중")
+                                newGenerateFromDrafts()
+                            }
+                        }, 500)
+                    }
+                    newGenerateFromDrafts()
 
-
-                    // 이벤트 스토밍 정보 초기 로드시에 elements, relations가 초기화되는 큐 로직이 있으며,
-                    // 그 로직으로 인해서 BC 생성이 무효화되기 때문에 큐 로드를 기다린 다음에 수행하도록 임시 처리
-                    setTimeout(() => {
-                        this.$nextTick(() => {
-                            this.generateAggregatesFromDraft(inputParams.draftOptions)
-                        })
-                    }, 1000)
                     return {stop: true}
                 }
             }
@@ -4125,7 +4155,9 @@
 
                 this.generatorProgressDto.thinkMessage = ""
                 this.generatorProgressDto.previousThinkingMessage = ""
-
+                this.collectedMockDatas.aggregateDraftScenarios.draft = structuredClone(draftOptions)
+                this.collectedLogDatas.aggregateDraftScenarios.startTime = new Date().getTime()
+                
                 this.generators.CreateAggregateActionsByFunctions.generator.initInputs(
                     this.selectedDraftOptions,
                     this.value,

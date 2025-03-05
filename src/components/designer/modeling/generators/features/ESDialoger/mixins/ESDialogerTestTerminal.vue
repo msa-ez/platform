@@ -21,6 +21,7 @@ export default {
     methods: {
         handleKeyPress(event) {
             if (event.altKey && event.key.toLowerCase() === 't') {
+                this.__stopStoryGenerating()
                 this.promptCommand();
             }
         },
@@ -30,15 +31,15 @@ export default {
             const COMMANDS = {
                 directGenerateAggregateDrafts: {
                     command: () => this._directGenerateAggregateDrafts(),
-                    description: "민원신청발급 시나리오로 바로 애그리거트 초안 생성 실행"
+                    description: "특정한 시나리오로 바로 애그리거트 초안 생성 실행"
                 },
                 directGenerateFromAggregateDrafts: {
                     command: () => this._directGenerateFromAggregateDrafts(),
-                    description: "민원신청발급 초안으로 바로 이벤트 스토밍 생성 실행"
+                    description: "특정한 시나리오로 바로 이벤트 스토밍 생성 실행"
                 },
                 showAggregateDraftUI: {
                     command: () => this._showAggregateDraftUI(),
-                    description: "민원신청발급 시나리오 Mock 데이터로 애그리거트 초안 UI 표시"
+                    description: "특정한 시나리오 Mock 데이터로 애그리거트 초안 UI 표시"
                 },
                 TempTest: {
                     command: () => this._TempTest(),
@@ -85,24 +86,59 @@ export default {
 
 
         _directGenerateAggregateDrafts() {
-            this.generator.stop();
-            this.state.startTemplateGenerate = false
-            this.done = true;
-            this.generateAggregateDrafts(aggregateDraftScenarios.civilApplication.selectedStructureOption)
+            const selectedScenario = this.__getSelectedScenario()
+            this.generateAggregateDrafts(selectedScenario.selectedStructureOption)
         },
 
         _directGenerateFromAggregateDrafts() {
-            const civilApplicationScenario = aggregateDraftScenarios.civilApplication
-            this.value.userStory = civilApplicationScenario.userStory
-            this.state = civilApplicationScenario.state
-            this.generateFromAggregateDrafts(civilApplicationScenario.draftOptions)
+            const selectedScenario = this.__getSelectedScenario()
+            this.value.userStory = selectedScenario.userStory
+            this.state = selectedScenario.state
+            this.generateFromAggregateDrafts(selectedScenario.draftOptions)
         },
 
         _showAggregateDraftUI() {
-            this.messages = aggregateDraftScenarios.civilApplication.messages
+            const selectedScenario = this.__getSelectedScenario()
+            this.messages = selectedScenario.messages
         },
 
-        _TempTest() {}
+        _TempTest() {
+        },
+
+
+        __getSelectedScenario() {
+            const scenarioKeys = Object.keys(aggregateDraftScenarios);
+            const scenarioList = scenarioKeys.map((name, index) => 
+                `${index}. ${name}`
+            ).join('\n');
+            
+            const selectedInput = prompt(`시나리오 이름 또는 번호를 입력하세요:\n\n${scenarioList}`);
+            if(!selectedInput) return
+            
+
+            let selectedScenarioName = selectedInput;
+            
+            if(!isNaN(selectedInput)) {
+                const inputIndex = parseInt(selectedInput);
+                if(inputIndex >= 0 && inputIndex < scenarioKeys.length) {
+                    selectedScenarioName = scenarioKeys[inputIndex];
+                }
+            }
+            
+            if(!aggregateDraftScenarios[selectedScenarioName]) {
+                alert("유효하지 않은 시나리오 이름입니다.");
+                return;
+            }
+
+
+            return aggregateDraftScenarios[selectedScenarioName]
+        },
+
+        __stopStoryGenerating() {
+            this.generator.stop();
+            this.state.startTemplateGenerate = false
+            this.done = true;
+        }
     }
 }
 </script>

@@ -5,6 +5,7 @@
 <script>
 import { TokenCounterTest } from "../../modeling/generators/utils";
 import {
+    getAvailableServiceNames,
     getEsDraft,
     ESValueSummaryGeneratorTest,
     ESValueSummarizeWithFilterTest,
@@ -42,9 +43,9 @@ export default {
 
         promptCommand() {
             const COMMANDS = {
-                directESGenerationByLibrary: {
-                    command: () => this._directESGenerationByLibrary(),
-                    description: "도서-대출 초안 선택을 넘기고 바로 이벤트 스토밍 생성"
+                directESGeneration: {
+                    command: () => this._directESGeneration(),
+                    description: "특정 시나리오로 바로 이벤트 스토밍 생성"
                 },
                 mockProgressDto: {
                     command: () => this._mockProgressDto(),
@@ -59,9 +60,6 @@ export default {
                 TokenCounterTest: { command: () => {TokenCounterTest.test()} },
                 ESValueSummaryGeneratorTest: {command: async () => { await ESValueSummaryGeneratorTest.test() }},
                 ESValueSummarizeWithFilterTest: {command: async () => { await ESValueSummarizeWithFilterTest.test() }},
-                PreProcessingFunctionsGeneratorTest: {command: async () => { await PreProcessingFunctionsGeneratorTest.test() }},
-                DraftGeneratorByFunctionsTest: {command: async () => { await DraftGeneratorByFunctionsTest.test("draftGeneratorByFunctionsInputs") }},
-                DraftGeneratorByFunctionsTestWithFeedback: {command: async () => { await DraftGeneratorByFunctionsTest.test("draftGeneratorByFunctionsInputsWithFeedback") }},
                 CreateAggregateActionsByFunctionsTest: {command: async () => { await CreateAggregateActionsByFunctionsTest.test() }},
                 CreateAggregateClassIdByDraftsTest: {command: async () => { await CreateAggregateClassIdByDraftsTest.test() }},
                 CreateCommandActionsByFunctionsTest: {command: async () => { await CreateCommandActionsByFunctionsTest.test() }},
@@ -107,13 +105,42 @@ export default {
         },
 
         
-        _directESGenerationByLibrary() {
-            this.generateAggregatesFromDraft(getEsDraft("libraryService"))
+        _directESGeneration() {
+            const selectedScenarioName = this.__getSelectedScenarioName()
+            this.generateAggregatesFromDraft(getEsDraft(selectedScenarioName))
         },
 
         _mockProgressDto() {
             this.generatorProgressDto = mockedProgressDto
             mockedProgressDtoUpdateCallback(this.generatorProgressDto)
+        },
+
+        __getSelectedScenarioName() {
+            const scenarioKeys = getAvailableServiceNames();
+            const scenarioList = scenarioKeys.map((name, index) => 
+                `${index}. ${name}`
+            ).join('\n');
+            
+            const selectedInput = prompt(`시나리오 이름 또는 번호를 입력하세요:\n\n${scenarioList}`);
+            if(!selectedInput) return
+            
+
+            let selectedScenarioName = selectedInput;
+            
+            if(!isNaN(selectedInput)) {
+                const inputIndex = parseInt(selectedInput);
+                if(inputIndex >= 0 && inputIndex < scenarioKeys.length) {
+                    selectedScenarioName = scenarioKeys[inputIndex];
+                }
+            }
+            
+            if(!scenarioKeys.includes(selectedScenarioName)) {
+                alert("유효하지 않은 시나리오 이름입니다.");
+                throw new Error("유효하지 않은 시나리오 이름입니다.")
+            }
+
+
+            return selectedScenarioName
         },
 
         async _TempTest() {

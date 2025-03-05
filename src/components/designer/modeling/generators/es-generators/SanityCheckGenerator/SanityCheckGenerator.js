@@ -6,6 +6,7 @@ class SanityCheckGenerator extends FormattedJSONAIGenerator{
         super(client)
 
         this.generatorName = "SanityCheckGenerator"
+        this.disableLanguageGuide = true
     }
 
 
