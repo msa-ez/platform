@@ -63,6 +63,159 @@
                             <!--                    <v-btn x-small @click="jumpToModel(modelId)">{{ modelId }}</v-btn>    -->
                             <!--                </div>-->
                         </v-card-text>
+
+                        <!-- 요구사항 분석 결과 표시 -->
+                        <v-card v-if="showTestValidationButton" style="height: 400px;">
+                            <BpmnViewer
+                                ref="bpmnVue"
+                                :key="currentXML"
+                                :bpmn="currentXML"
+                                :options="options"
+                                :isViewMode="false"
+                                style="height: 100%;"
+                            ></BpmnViewer>
+                        </v-card>
+                        <v-card v-if="requirementsAnalysis" class="requirements-analysis-card ma-4">
+                            <v-card-title class="requirements-analysis-title">
+                                {{ requirementsAnalysis.type === 'ENHANCEMENT_GUIDE' ? '요구사항 보완 가이드' : '프로세스 분석 결과' }}
+                            </v-card-title>
+                            
+                            <!-- 보완 가이드 -->
+                            <v-card-text v-if="requirementsAnalysis.type === 'ENHANCEMENT_GUIDE'">
+                                <div class="missing-elements-section">
+                                    <h3>누락된 요소</h3>
+                                    <v-list dense>
+                                        <v-list-item v-for="(items, category) in requirementsAnalysis.content.missingElements" :key="category">
+                                            <v-list-item-content>
+                                                <v-list-item-title class="font-weight-bold">{{ category }}</v-list-item-title>
+                                                <v-list-item-subtitle v-for="item in items" :key="item">
+                                                    • {{ item }}
+                                                </v-list-item-subtitle>
+                                            </v-list-item-content>
+                                        </v-list-item>
+                                    </v-list>
+                                </div>
+                                
+                                <div class="recommendations-section mt-4">
+                                    <h3>권장 사항</h3>
+                                    <div class="immediate-actions">
+                                        <h4>즉시 조치사항</h4>
+                                        <ul>
+                                            <li v-for="action in requirementsAnalysis.content.recommendations.immediate" :key="action">
+                                                {{ action }}
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    <div class="questions mt-2">
+                                        <h4>이해관계자 질문</h4>
+                                        <ul>
+                                            <li v-for="question in requirementsAnalysis.content.recommendations.questions" :key="question">
+                                                {{ question }}
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </v-card-text>
+
+                            <!-- 분석 결과 -->
+                            <v-card-text v-else>
+                                <div class="processes-section">
+                                    <h3>비즈니스 프로세스</h3>
+                                    <v-expansion-panels>
+                                        <v-expansion-panel v-for="process in requirementsAnalysis.content.businessProcesses" :key="process.name">
+                                            <v-expansion-panel-header>
+                                                {{ process.name }}
+                                            </v-expansion-panel-header>
+                                            <v-expansion-panel-content>
+                                                <div class="process-details">
+                                                    <p><strong>설명:</strong> {{ process.description }}</p>
+                                                    <p><strong>관련 부서:</strong> {{ process.departments.join(', ') }}</p>
+                                                    
+                                                    <div v-if="process.subProcesses.length" class="sub-processes mt-2">
+                                                        <h4>서브 프로세스</h4>
+                                                        <v-list dense>
+                                                            <v-list-item v-for="subProcess in process.subProcesses" :key="subProcess.name">
+                                                                <v-list-item-content>
+                                                                    <v-list-item-title>{{ subProcess.name }}</v-list-item-title>
+                                                                    <v-list-item-subtitle>
+                                                                        <div><strong>관련 부서:</strong> {{ subProcess.involvedDepartments.join(', ') }}</div>
+                                                                        <div class="mt-1"><strong>입력:</strong></div>
+                                                                        <ul>
+                                                                            <li v-for="input in subProcess.inputs" :key="input.description">
+                                                                                {{ input.description }} (출처: {{ input.source }})
+                                                                            </li>
+                                                                        </ul>
+                                                                        <div class="mt-1"><strong>출력:</strong></div>
+                                                                        <ul>
+                                                                            <li v-for="output in subProcess.outputs" :key="output.description">
+                                                                                {{ output.description }} (목적지: {{ output.destination }})
+                                                                            </li>
+                                                                        </ul>
+                                                                    </v-list-item-subtitle>
+                                                                </v-list-item-content>
+                                                            </v-list-item>
+                                                        </v-list>
+                                                    </div>
+                                                </div>
+                                            </v-expansion-panel-content>
+                                        </v-expansion-panel>
+                                    </v-expansion-panels>
+                                </div>
+
+                                <div class="value-streams-section mt-4">
+                                    <h3>가치 흐름</h3>
+                                    <v-expansion-panels>
+                                        <v-expansion-panel v-for="stream in requirementsAnalysis.content.valueStreams" :key="stream.name">
+                                            <v-expansion-panel-header>
+                                                {{ stream.name }}
+                                            </v-expansion-panel-header>
+                                            <v-expansion-panel-content>
+                                                <v-timeline dense>
+                                                    <v-timeline-item v-for="step in stream.flow" :key="step.step">
+                                                        <template v-slot:opposite>
+                                                            <span>{{ step.department }}</span>
+                                                        </template>
+                                                        <v-card class="elevation-1">
+                                                            <v-card-title class="text-subtitle-1">{{ step.step }}</v-card-title>
+                                                            <v-card-text>
+                                                                <div><strong>입력:</strong> {{ step.input }}</div>
+                                                                <div><strong>프로세스:</strong> {{ step.process }}</div>
+                                                                <div><strong>출력:</strong> {{ step.output }}</div>
+                                                            </v-card-text>
+                                                        </v-card>
+                                                    </v-timeline-item>
+                                                </v-timeline>
+                                            </v-expansion-panel-content>
+                                        </v-expansion-panel>
+                                    </v-expansion-panels>
+                                </div>
+
+                                <div class="interactions-section mt-4">
+                                    <h3>부서간 상호작용</h3>
+                                    <v-simple-table>
+                                        <template v-slot:default>
+                                            <thead>
+                                                <tr>
+                                                    <th>출발 부서</th>
+                                                    <th>도착 부서</th>
+                                                    <th>상호작용</th>
+                                                    <th>데이터 흐름</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr v-for="interaction in requirementsAnalysis.content.crossDepartmentInteractions" 
+                                                    :key="`${interaction.sourceDepartment}-${interaction.targetDepartment}`">
+                                                    <td>{{ interaction.sourceDepartment }}</td>
+                                                    <td>{{ interaction.targetDepartment }}</td>
+                                                    <td>{{ interaction.interaction }}</td>
+                                                    <td>{{ interaction.dataFlow }}</td>
+                                                </tr>
+                                            </tbody>
+                                        </template>
+                                    </v-simple-table>
+                                </div>
+                            </v-card-text>
+                        </v-card>
                     </v-tab-item>
 
                     <!-- DDL -->
@@ -81,84 +234,6 @@
                             </v-textarea>
                         </v-card-text>
                     </v-tab-item> -->
-
-                    <!-- Process Image -->
-                    <!-- <v-tab-item>
-                        <v-card-subtitle>{{$t('autoModeling.explanation.process')}}</v-card-subtitle>
-                        <v-card-text class="auto-modling-textarea">
-                            <v-file-input
-                                v-model="processImage"
-                                accept="image/*"
-                                :label="$t('autoModeling.processImageUpload')"
-                                prepend-icon="mdi-image"
-                                @change="handleImageUpload"
-                            ></v-file-input>
-                            <v-img
-                                v-if="processImagePreview"
-                                :src="processImagePreview"
-                                max-height="300"
-                                contain
-                            ></v-img>
-
-                            <div v-if="processAnalysisResult" class="process-analysis-result mt-4">
-                                <v-expansion-panels>
-                                    <v-expansion-panel>
-                                        <v-expansion-panel-header>
-                                            1. 도출된 업무 프로세스
-                                        </v-expansion-panel-header>
-                                        <v-expansion-panel-content>
-                                            <div v-for="(process, index) in processAnalysisResult.processes" :key="index">
-                                                <strong>프로세스 {{index + 1}}:</strong> {{process.name}}
-                                                <div class="ml-4">기능: {{process.functions.join(', ')}}</div>
-                                            </div>
-                                        </v-expansion-panel-content>
-                                    </v-expansion-panel>
-
-                                    <v-expansion-panel>
-                                        <v-expansion-panel-header>
-                                            2. 세부 프로세스 분석
-                                        </v-expansion-panel-header>
-                                        <v-expansion-panel-content>
-                                            <div v-for="(analysis, index) in processAnalysisResult.detailedAnalysis" :key="index">
-                                                <strong>프로세스 {{index + 1}}:</strong> {{analysis.name}}
-                                                <div class="ml-4">
-                                                    <div>관련부서: {{analysis.departments.join(', ')}}</div>
-                                                    <div>Input: {{analysis.input}}</div>
-                                                    <div>Process: {{analysis.process}}</div>
-                                                    <div>Output: {{analysis.output}}</div>
-                                                </div>
-                                            </div>
-                                        </v-expansion-panel-content>
-                                    </v-expansion-panel>
-
-                                    <v-expansion-panel>
-                                        <v-expansion-panel-header>
-                                            3. Context Mapping 제안
-                                        </v-expansion-panel-header>
-                                        <v-expansion-panel-content>
-                                            <div v-for="(context, index) in processAnalysisResult.contextMapping" :key="index">
-                                                <strong>Bounded Context {{index + 1}}:</strong> {{context.name}}
-                                                <div class="ml-4">
-                                                    <div>포함 프로세스: {{context.processes.join(', ')}}</div>
-                                                    <div>데이터 흐름: {{context.dataFlow}}</div>
-                                                </div>
-                                            </div>
-                                        </v-expansion-panel-content>
-                                    </v-expansion-panel>
-                                </v-expansion-panels>
-
-                                <v-btn
-                                    color="primary"
-                                    class="mt-4"
-                                    :loading="isAnalyzing"
-                                    :disabled="isAnalyzing"
-                                    @click="analyzeProcessImage"
-                                >
-                                    프로세스 분석 시작
-                                </v-btn>
-                            </div>
-                        </v-card-text>
-                    </v-tab-item> -->
                 </v-tabs-items>
                 <v-btn v-if="!done" @click="stop()" style="position: absolute; right:10px; top:10px;"><v-progress-circular class="auto-modeling-stop-loading-icon" indeterminate></v-progress-circular>Stop generating</v-btn>
                 <v-row v-if="done" class="ma-0 pa-4 button-row">
@@ -169,6 +244,7 @@
                     <v-btn :disabled="isSummarizeStarted || isGeneratingBoundedContext || isStartMapping" class="auto-modeling-btn" color="primary" @click="showBCGenerationOption = !showBCGenerationOption">
                         {{ $t('ESDialoger.createBoundedContext') }}
                     </v-btn>
+                    <v-btn v-if="showTestValidationButton" class="auto-modeling-btn" @click="testValidation()">Test Validate</v-btn>
                 </v-row>
                 <div v-if="isSummarizeStarted" style="margin-left: 2%; margin-bottom: 1%;">
                     <span>{{ $t('ESDialoger.summarizing') }}</span>
@@ -217,7 +293,7 @@
     import DevideBoundedContextGenerator from './DevideBoundedContextGenerator.js'
     import DevideBoundedContextDialog from './DevideBoundedContextDialog.vue'
     import BCGenerationOption from './BCGenerationOption.vue'
-    import ProcessAnalysisGenerator from './ProcessAnalysisGenerator.js'
+    import RequirementsValidationGenerator from './RequirementsValidationGenerator.js'
     //import UserStoryGenerator from './UserStoryGenerator.js'
     // import StorageBase from "../StorageBase";
     import StorageBase from '../../../CommonStorageBase.vue';
@@ -233,8 +309,12 @@
         DraftGeneratorByFunctions 
     } from '../../modeling/generators/es-generators';
 
+    //Requirements Summarizer
     import RecursiveRequirementsSummarizer from './RecursiveRequirementsSummarizer.js';
     import RequirementsMappingGenerator from './RequirementsMappingGenerator.js';
+
+    //Bpmn
+    import BpmnViewer from '../../bpmnModeling/bpmn/BpmnUengineViewer.vue';
 
     import { 
         ESDialogerMessages,
@@ -262,7 +342,8 @@
             VueTypedJs,
             DevideBoundedContextDialog,
             BCGenerationOption,
-            ESDialogerMessages
+            ESDialogerMessages,
+            BpmnViewer
         },
         computed: {
             isForeign() {
@@ -687,6 +768,9 @@
             var me = this;
             me.setUIStyle(me.uiStyle);
             me.init();
+
+            //test
+            document.removeEventListener('keydown', this.handleKeyPress);
         },
         data() {
             return {
@@ -709,6 +793,20 @@
                     userStoryMapModel: this.cachedModels["UserStoryMapGenerator"],
                     personas: this.cachedModels["Personas"]
                 },
+
+                showTestValidationButton: false,
+                currentXML: '',
+
+                options: {
+                    keyboard: { bindTo: window },
+                    height: '100%',
+                    width: '100%',
+                    canvas:{
+                        drdPadding: 50
+                    }
+                },
+
+                requirementsAnalysis: null,
                 done: false,
                 generator: null,
                 generatorName: null,
@@ -826,31 +924,13 @@
                 var me = this;
                 me.done = true;
 
-                if (me.state.generator === "RecursiveRequirementsSummarizer") {
-                    me.generator.handleGenerationFinished(model);
-                    return;
+                if(me.state.generator === "RequirementsValidationGenerator"){
+                    console.log(JSON.stringify(model));
+                    me.requirementsAnalysis = model;
                 }
 
-                if (me.state.generator === "ProcessAnalysisGenerator") {
-                    if (!model.validation.isValid) {
-                        this.processValidationResult = {
-                            isValid: false,
-                            message: model.validation.message,
-                            suggestions: model.validation.suggestions
-                        };
-                        return;
-                    }
-
-                    this.processAnalysisResult = model.processAnalysis;
-                    this.processValidationResult = {
-                        isValid: true,
-                        message: "프로세스 분석이 완료되었습니다."
-                    };
-
-                    // 분석 결과를 requirements에 추가
-                    if (this.input.requirements) {
-                        this.input.requirements.processAnalysis = model.processAnalysis;
-                    }
+                if (me.state.generator === "RecursiveRequirementsSummarizer") {
+                    me.generator.handleGenerationFinished(model);
                     return;
                 }
 
@@ -1298,43 +1378,135 @@
                 }
             },
 
-            handleImageUpload(file) {
-                if (!file) {
-                    this.processImagePreview = null;
-                    return;
-                }
+            testValidation(){
+                this.currentXML = `<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                  id="Definitions_1"
+                  targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="Process_1" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1" name="시작">
+      <bpmn:outgoing>Flow_1</bpmn:outgoing>
+    </bpmn:startEvent>
+    
+    <bpmn:task id="Task_1" name="주문 접수">
+      <bpmn:incoming>Flow_1</bpmn:incoming>
+      <bpmn:outgoing>Flow_2</bpmn:outgoing>
+    </bpmn:task>
+    
+    <bpmn:task id="Task_2" name="결제 처리">
+      <bpmn:incoming>Flow_2</bpmn:incoming>
+      <bpmn:outgoing>Flow_3</bpmn:outgoing>
+    </bpmn:task>
+    
+    <bpmn:endEvent id="EndEvent_1" name="종료">
+      <bpmn:incoming>Flow_3</bpmn:incoming>
+    </bpmn:endEvent>
+    
+    <bpmn:sequenceFlow id="Flow_1" sourceRef="StartEvent_1" targetRef="Task_1" />
+    <bpmn:sequenceFlow id="Flow_2" sourceRef="Task_1" targetRef="Task_2" />
+    <bpmn:sequenceFlow id="Flow_3" sourceRef="Task_2" targetRef="EndEvent_1" />
+  </bpmn:process>
+  
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1">
+      <bpmndi:BPMNShape id="StartEvent_1_di" bpmnElement="StartEvent_1">
+        <dc:Bounds x="152" y="102" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="159" y="145" width="22" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      
+      <bpmndi:BPMNShape id="Task_1_di" bpmnElement="Task_1">
+        <dc:Bounds x="240" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      
+      <bpmndi:BPMNShape id="Task_2_di" bpmnElement="Task_2">
+        <dc:Bounds x="400" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      
+      <bpmndi:BPMNShape id="EndEvent_1_di" bpmnElement="EndEvent_1">
+        <dc:Bounds x="562" y="102" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="569" y="145" width="22" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      
+      <bpmndi:BPMNEdge id="Flow_1_di" bpmnElement="Flow_1">
+        <di:waypoint x="188" y="120" />
+        <di:waypoint x="240" y="120" />
+      </bpmndi:BPMNEdge>
+      
+      <bpmndi:BPMNEdge id="Flow_2_di" bpmnElement="Flow_2">
+        <di:waypoint x="340" y="120" />
+        <di:waypoint x="400" y="120" />
+      </bpmndi:BPMNEdge>
+      
+      <bpmndi:BPMNEdge id="Flow_3_di" bpmnElement="Flow_3">
+        <di:waypoint x="500" y="120" />
+        <di:waypoint x="562" y="120" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>`
 
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    this.processImagePreview = e.target.result;
+                this.generator = new RequirementsValidationGenerator(this);
+                this.state.generator = "RequirementsValidationGenerator";
+                this.generatorName = "RequirementsValidationGenerator";
+
+                this.input['requirements'] = {
+                    userStory: this.value.userStory,
+                    ddl: this.inputDDL
                 };
-                reader.readAsDataURL(file);
+
+                this.generator.generate();
             },
 
-            async analyzeProcessImage() {
-                const generator = new ProcessAnalysisGenerator(this);
-                this.state.generator = "ProcessAnalysisGenerator";
-                
-                // 이미지 컨텍스트 설정
-                this.input.imageContext = {
-                    processType: "Business Process",
-                    domainArea: "Your Domain",
-                    objectives: "Process Analysis and Context Mapping"
-                };
-                
-                try {
-                    const result = await generator.generate();
-                    this.processAnalysisResult = result.processAnalysis;
-                    
-                    // DevideBoundedContext 생성 시 이 결과를 활용
-                    this.input.processAnalysis = result.processAnalysis;
-                } catch (error) {
-                    console.error('Process analysis failed:', error);
+            handleKeyPress(event) {
+                if (event.ctrlKey && event.key === 't') {
+                    event.preventDefault(); // Prevent default browser behavior
+                    this.showTestValidationButton = !this.showTestValidationButton;
                 }
-            }
+            },
         }
     }
 </script>
 
 <style scoped>
+.requirements-analysis-card {
+    background-color: #f8f9fa;
+}
+
+.requirements-analysis-title {
+    background-color: #e9ecef;
+    font-size: 1.2em;
+}
+
+.missing-elements-section,
+.recommendations-section,
+.processes-section,
+.value-streams-section,
+.interactions-section {
+    margin-bottom: 20px;
+}
+
+h3 {
+    color: #2c3e50;
+    margin-bottom: 15px;
+}
+
+h4 {
+    color: #495057;
+    margin: 10px 0;
+}
+
+.process-details {
+    padding: 10px;
+}
+
+.sub-processes {
+    margin-left: 15px;
+}
 </style>

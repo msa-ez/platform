@@ -24,7 +24,7 @@ module.exports = {
         devServer: {
             port: '8080',
             // historyApiFallback: true,
-            // https: true,
+            https: true,
             disableHostCheck: true,
         },
         plugins: [
