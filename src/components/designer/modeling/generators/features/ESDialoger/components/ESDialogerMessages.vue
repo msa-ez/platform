@@ -44,6 +44,18 @@
                 ></DevideBoundedContextDialog>
             </v-card>
 
+            <v-card 
+                v-if="message.type === 'processAnalysis'" 
+                :key="index" 
+                class="auto-modeling-user-story-card" 
+                style="margin-top: 30px !important;"
+            >
+                <RequirementAnaysis 
+                    :analysisResult="message.content"
+                    :isGenerating="message.isGenerating"
+                />
+            </v-card>
+
             <div v-if="message.type === 'botMessage'" :key="index" style="margin-top: 30px !important;">
                 <v-col class="auto-modeling-message-box">
                     <v-card class="auto-modeling-message-card">
@@ -70,7 +82,7 @@
 <script>
 import { AggregateDraftDialog } from '../../../es-generators'
 import DevideBoundedContextDialog from '../../../../generators/DevideBoundedContextDialog.vue'
-
+import RequirementAnaysis from '../../../../generators/RequirementAnaysis.vue'
 export default {
     name: "es-dialoger-messages",
     props: {
@@ -82,7 +94,8 @@ export default {
     },
     components: {
         AggregateDraftDialog,
-        DevideBoundedContextDialog
+        DevideBoundedContextDialog,
+        RequirementAnaysis
     },
     methods: {
         generateFromDraft(draftOptions) {

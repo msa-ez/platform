@@ -50,58 +50,25 @@ IF requirements are complete:
 {
     "type": "ANALYSIS_RESULT",
     "content": {
-        "businessProcesses": [
+        "processes": [
             {
                 "name": "string",
+                "explanation": "string",
+                "department": "string",
                 "description": "string",
-                "departments": ["string"],
-                "subProcesses": [
-                    {
-                        "name": "string",
-                        "involvedDepartments": ["string"],
-                        "inputs": [
-                            {
-                                "description": "string",
-                                "source": "string"
-                            }
-                        ],
-                        "outputs": [
-                            {
-                                "description": "string",
-                                "destination": "string"
-                            }
-                        ]
-                    }
-                ]
-            }
-        ],
-        "valueStreams": [
-            {
-                "name": "string",
-                "flow": [
-                    {
-                        "step": "string",
-                        "department": "string",
-                        "input": "string",
-                        "process": "string",
-                        "output": "string"
-                    }
-                ]
-            }
-        ],
-        "crossDepartmentInteractions": [
-            {
-                "sourceDepartment": "string",
-                "targetDepartment": "string",
-                "interaction": "string",
-                "dataFlow": "string"
+                "inputs": ["string"],    // Required inputs for this process
+                "outputs": ["string"],   // Outputs produced by this process
+                "nextProcesses": ["string"]  // Names of the next processes in flow
             }
         ]
     }
 }
 
-Note: Only provide ANALYSIS_RESULT if ALL aspects can be fully mapped.
-Otherwise, provide ENHANCEMENT_GUIDE with specific missing elements and recommendations.
+Note: 
+1. Each process should clearly indicate its inputs and outputs
+2. Process flow should be indicated through nextProcesses
+3. Only provide ANALYSIS_RESULT if all processes can be clearly identified
+4. Otherwise, provide ENHANCEMENT_GUIDE with specific missing elements
 `
     }
 
@@ -119,10 +86,12 @@ ${this.client.input['requirements']['ddl']}`;
             let model = super.createModel(text);
             
             // 응답 타입에 따라 다른 처리
-            if (model.type === "ANALYSIS_RESULT") {
-                console.log("[*] 요구사항이 충분하여 프로세스 분석 결과를 생성했습니다.");
-            } else if (model.type === "ENHANCEMENT_GUIDE") {
-                console.log("[*] 요구사항이 불충분하여 개선 가이드를 생성했습니다.");
+            if(model){
+                if (model.type === "ANALYSIS_RESULT") {
+                    console.log("[*] 요구사항이 충분하여 프로세스 분석 결과를 생성했습니다.");
+                } else if (model.type === "ENHANCEMENT_GUIDE") {
+                    console.log("[*] 요구사항이 불충분하여 개선 가이드를 생성했습니다.");
+                }
             }
 
             return model;
