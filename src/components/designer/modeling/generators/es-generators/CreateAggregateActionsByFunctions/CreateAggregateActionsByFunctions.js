@@ -15,6 +15,76 @@ class CreateAggregateActionsByFunctions extends FormattedJSONAIGenerator{
         this.generatorName = "CreateAggregateActionsByFunctions"
         this.checkInputParamsKeys = ["targetBoundedContext", "description", "draftOption", "esValue", "userInfo", "information", "isAccumulated"]
         this.progressCheckStrings = ["inference", "aggregateActions", "valueObjectActions", "enumerationActions"]
+
+        this.initialResponseFormat = zodResponseFormat(
+            z.object({
+                inference: z.string(),
+                result: z.object({
+                    aggregateActions: z.array(
+                        z.object({
+                            actionName: z.string(),
+                            objectType: z.literal("Aggregate"),
+                            ids: z.object({
+                                aggregateId: z.string(),
+                            }).strict(),
+                            args: z.object({
+                                aggregateName: z.string(),
+                                aggregateAlias: z.string(),
+                                properties: z.array(
+                                    z.object({
+                                        name: z.string(),
+                                        type: z.string(),
+                                        isKey: z.boolean(),
+                                    }).strict()
+                                ),
+                            }).strict(),
+                        }).strict()
+                    ),
+                    valueObjectActions: z.array(
+                        z.object({
+                            actionName: z.string(),
+                            objectType: z.literal("ValueObject"),
+                            ids: z.object({
+                                aggregateId: z.string(),
+                                valueObjectId: z.string(),
+                            }).strict(),
+                            args: z.object({
+                                valueObjectName: z.string(),
+                                valueObjectAlias: z.string(),
+                                properties: z.array(
+                                    z.object({
+                                        name: z.string(),
+                                        type: z.string(),
+                                        isKey: z.boolean(),
+                                        isForeignProperty: z.boolean(),
+                                    }).strict()
+                                ),
+                            }).strict(),
+                        }).strict()
+                    ),
+                    enumerationActions: z.array(
+                        z.object({
+                            actionName: z.string(),
+                            objectType: z.literal("Enumeration"),
+                            ids: z.object({
+                                aggregateId: z.string(),
+                                enumerationId: z.string(),
+                            }).strict(),
+                            args: z.object({
+                                enumerationName: z.string(),
+                                enumerationAlias: z.string(),
+                                properties: z.array(
+                                    z.object({
+                                        name: z.string(),
+                                    }).strict()
+                                ),
+                            }).strict(),
+                        }).strict()
+                    ),
+                }).strict()
+            }).strict(),
+            "instruction"
+        )
     }
 
     /**
@@ -165,78 +235,6 @@ class CreateAggregateActionsByFunctions extends FormattedJSONAIGenerator{
         }
 
         return generator
-    }
-
-    onApiClientChanged(){
-        this.modelInfo.requestArgs.response_format = zodResponseFormat(
-            z.object({
-                inference: z.string(),
-                result: z.object({
-                    aggregateActions: z.array(
-                        z.object({
-                            actionName: z.string(),
-                            objectType: z.literal("Aggregate"),
-                            ids: z.object({
-                                aggregateId: z.string(),
-                            }).strict(),
-                            args: z.object({
-                                aggregateName: z.string(),
-                                aggregateAlias: z.string(),
-                                properties: z.array(
-                                    z.object({
-                                        name: z.string(),
-                                        type: z.string(),
-                                        isKey: z.boolean(),
-                                    }).strict()
-                                ),
-                            }).strict(),
-                        }).strict()
-                    ),
-                    valueObjectActions: z.array(
-                        z.object({
-                            actionName: z.string(),
-                            objectType: z.literal("ValueObject"),
-                            ids: z.object({
-                                aggregateId: z.string(),
-                                valueObjectId: z.string(),
-                            }).strict(),
-                            args: z.object({
-                                valueObjectName: z.string(),
-                                valueObjectAlias: z.string(),
-                                properties: z.array(
-                                    z.object({
-                                        name: z.string(),
-                                        type: z.string(),
-                                        isKey: z.boolean(),
-                                        isForeignProperty: z.boolean(),
-                                    }).strict()
-                                ),
-                            }).strict(),
-                        }).strict()
-                    ),
-                    enumerationActions: z.array(
-                        z.object({
-                            actionName: z.string(),
-                            objectType: z.literal("Enumeration"),
-                            ids: z.object({
-                                aggregateId: z.string(),
-                                enumerationId: z.string(),
-                            }).strict(),
-                            args: z.object({
-                                enumerationName: z.string(),
-                                enumerationAlias: z.string(),
-                                properties: z.array(
-                                    z.object({
-                                        name: z.string(),
-                                    }).strict()
-                                ),
-                            }).strict(),
-                        }).strict()
-                    ),
-                }).strict()
-            }).strict(),
-            "instruction"
-        )
     }
 
     async onGenerateBefore(inputParams){
@@ -802,42 +800,19 @@ Inference Guidelines:
         returnObj.directMessage = `Creating ${this.client.input.aggregateDisplayName} Aggregate... (${this.getTotalOutputTextLength(returnObj)} characters generated)`
     }
 
-    onCreateModelGenerating(returnObj){
+    onModelCreatedWithThinking(returnObj){
         returnObj.directMessage = `Creating ${this.client.input.aggregateDisplayName} Aggregate... (${this.getTotalOutputTextLength(returnObj)} characters generated)`
-
-        // 실시간으로 진행을 보여주기 위해서 가능한 경우, 부분적인 액션이라도 반환함
-        const particalActions = returnObj.modelRawValue.match(/({"actionName".*?"objectType".*?"ids".*?"args".*?)(?=,{"actionName")/g)
-        if(!particalActions || particalActions.length === 0) return
-
-
-        let actions = []
-        for(let action of particalActions) {
-            try {
-                const actionObj = this._parseToJson(action)
-                actions.push(actionObj)
-            } catch(e) {}
-        }
-        if(actions.length === 0) return
-
-
-        let {actions: appliedActions, createdESValue: createdESValue, removedElements: removedElements} = this._getActionAppliedESValue(actions, true)
-
-        returnObj.modelValue = {
-            ...returnObj.modelValue,
-            actions: appliedActions,
-            createdESValue: createdESValue,
-            removedElements: removedElements
-        }
-        console.log(`[*] 스트리밍 중에 ${this.generatorName}에서 부분적 결과 파싱 완료!`, {returnObj})
-    }
-
-    onCreateModelFinished(returnObj){
+        if(!returnObj.modelValue.aiOutput.result) return
+        
         let actions = [
             ...(returnObj.modelValue.aiOutput.result.aggregateActions || []),
             ...(returnObj.modelValue.aiOutput.result.valueObjectActions || []),
             ...(returnObj.modelValue.aiOutput.result.enumerationActions || [])
         ]
-        let {actions: appliedActions, createdESValue: createdESValue, removedElements: removedElements} = this._getActionAppliedESValue(actions, false)
+        if(actions.length === 0) return
+        console.log("[*] 파싱된 액션 목록: ", {actions: structuredClone(actions)})
+
+        let {actions: appliedActions, createdESValue: createdESValue, removedElements: removedElements} = this._getActionAppliedESValue(actions, !returnObj.isFinished)
 
         returnObj.modelValue = {
             ...returnObj.modelValue,
@@ -845,24 +820,25 @@ Inference Guidelines:
             createdESValue: createdESValue,
             removedElements: removedElements
         }
-        returnObj.directMessage = `Creating ${this.client.input.aggregateDisplayName} Aggregate... (${this.getTotalOutputTextLength(returnObj)} characters generated)`
     }
 
     _getActionAppliedESValue(actions, isAddFakeActions) {
+        actions = this._filterValidPropertyActions(actions)
         actions = this.client.input.esAliasTransManager.transToUUIDInActions(actions)
+
         this._restoreActions(actions, this.client.input.esValue, this.client.input.targetBoundedContext.name)
-        actions = this._filterActions(actions)
+        actions = this._filterValidAggregateIDActions(actions)
         
+        // 부분적인 결과를 반환시에는 가짜 액션을 추가해서 버그를 방지하기 위해서
         let esValueToModify = JSON.parse(JSON.stringify(this.client.input.esValue))
+        if(isAddFakeActions)
+            actions = ESFakeActionsUtil.addFakeActions(actions, esValueToModify)
+        actions = ESActionsUtil.addDefaultProperties(actions)
 
         // Aggregate별로 분리해서 요청시에는 이전에 생성한 Aggregate 정보를 포함시켜서 요청하기 위해서
         let removedElements = []
         if(!this.client.input.isAccumulated)
             removedElements = this._removePrevBoundedContextRelatedElements(this.client.input.targetBoundedContext.name, esValueToModify)
-
-        // 부분적인 결과를 반환시에는 가짜 액션을 추가해서 버그를 방지하기 위해서
-        if(isAddFakeActions)
-            actions = ESFakeActionsUtil.addFakeActions(actions, esValueToModify)
 
         let createdESValue = ESActionsUtil.getActionAppliedESValue(actions, this.client.input.userInfo, this.client.input.information, esValueToModify)
 
@@ -927,11 +903,30 @@ Inference Guidelines:
         }
     }
 
-    _filterActions(actions){
+    _filterValidPropertyActions(actions){
+        actions = actions.filter(action => action.actionName && action.objectType && action.ids && action.ids.aggregateId)
+        actions = actions.filter(action => 
+            (action.objectType === "Aggregate") ||
+            (action.objectType === "ValueObject" && action.ids && action.ids.valueObjectId) ||
+            (action.objectType === "Enumeration" && action.ids && action.ids.enumerationId)
+        )
+        
+        for(let action of actions){
+            if(action.args && action.args.properties){
+                action.args.properties = action.args.properties.filter(property => property.name)
+            }
+        }
+
+        return actions
+    }
+
+    _filterValidAggregateIDActions(actions){
         const targetAggregateName = this.client.input.targetAggregate.name.toLowerCase()
         const validAggregateIds = actions
             .filter(action => 
                 action.objectType === "Aggregate" && 
+                action.args &&
+                action.args.aggregateName &&
                 action.args.aggregateName.toLowerCase() === targetAggregateName
             )
             .map(action => action.ids.aggregateId)
@@ -941,7 +936,6 @@ Inference Guidelines:
             validAggregateIds.includes(action.ids.aggregateId)
         )
 
-        
         return actions
     }
     

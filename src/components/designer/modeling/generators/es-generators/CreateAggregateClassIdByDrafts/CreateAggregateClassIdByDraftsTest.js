@@ -5,7 +5,8 @@ const { getEsValue, getEsDraft, esConfigs } = require("../mocks")
 
 class CreateAggregateClassIdByDraftsTest {
     static async test() {
-        const esValue = getEsValue("libraryService", ["remainOnlyAggregate", "classId"]);
+        const serviceName = "libraryService"
+        const esValue = getEsValue(serviceName, ["remainOnlyAggregate", "classId"]);
 
 
         console.log("[*] 기존 이벤트 스토밍 정보: ", ESValueSummarizeWithFilter.getSummarizedESValue(
@@ -33,7 +34,7 @@ class CreateAggregateClassIdByDraftsTest {
 
 
         generator.initInputs(
-            getEsDraft("civilApplication"),
+            getEsDraft(serviceName),
             esValue,
             esConfigs.userInfo,
             esConfigs.information

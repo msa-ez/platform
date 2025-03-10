@@ -257,7 +257,7 @@ class ESRestoreActionsUtil {
                     // 클래스 ID인 경우에는 반드시 Aggregate 이름 + Id를 가지기 때문에 이 부분을 예외로 처리함
                     if(!(action.args.valueObjectName && action.args.valueObjectName.toLowerCase().endsWith("id"))) {
                         isAggregateIdProperty = Array.from(aggregateNames).some(aggName => 
-                            (property.name.toLowerCase() === (aggName.toLowerCase() + "id")) && 
+                            (property.name && (property.name.toLowerCase() === (aggName.toLowerCase() + "id"))) && 
                             ESRestoreActionsUtil.__isDefaultJavaType(property.type)
                         );
                     }

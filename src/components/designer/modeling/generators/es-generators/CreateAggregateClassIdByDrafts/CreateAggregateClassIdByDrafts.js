@@ -15,6 +15,36 @@ class CreateAggregateClassIdByDrafts extends FormattedJSONAIGenerator{
         this.generatorName = "CreateAggregateClassIdByDrafts"
         this.checkInputParamsKeys = ["draftOption", "targetReferences", "esValue", "userInfo", "information"]
         this.progressCheckStrings = ["inference", "actions"]
+
+        this.initialResponseFormat = zodResponseFormat(
+            z.object({
+                inference: z.string(),
+                result: z.object({
+                    actions: z.array(
+                        z.object({
+                            objectType: z.literal("ValueObject"),
+                            ids: z.object({
+                                boundedContextId: z.string(),
+                                aggregateId: z.string(),
+                                valueObjectId: z.string()
+                            }).strict(),
+                            args: z.object({
+                                valueObjectName: z.string(),
+                                referenceClass: z.string(),
+                                properties: z.array(
+                                    z.object({
+                                        name: z.string(),
+                                        type: z.string(),
+                                        isKey: z.boolean()
+                                    }).strict()
+                                )
+                            }).strict()
+                        }).strict()
+                    )
+                }).strict()
+            }).strict(),
+            "instruction"
+        )
     }
 
     /**
@@ -197,39 +227,6 @@ class CreateAggregateClassIdByDrafts extends FormattedJSONAIGenerator{
         return generator
     }
 
-
-    onApiClientChanged(){
-        this.modelInfo.requestArgs.response_format = zodResponseFormat(
-            z.object({
-                inference: z.string(),
-                result: z.object({
-                    actions: z.array(
-                        z.object({
-                            objectType: z.literal("ValueObject"),
-                            ids: z.object({
-                                boundedContextId: z.string(),
-                                aggregateId: z.string(),
-                                valueObjectId: z.string()
-                            }).strict(),
-                            args: z.object({
-                                valueObjectName: z.string(),
-                                referenceClass: z.string(),
-                                properties: z.array(
-                                    z.object({
-                                        name: z.string(),
-                                        type: z.string(),
-                                        isKey: z.boolean()
-                                    }).strict()
-                                )
-                            }).strict()
-                        }).strict()
-                    )
-                }).strict()
-            }).strict(),
-            "instruction"
-        )
-    }
-
     async onGenerateBefore(inputParams){
         inputParams.esValue = JSON.parse(JSON.stringify(inputParams.esValue))
         inputParams.esAliasTransManager = new ESAliasTransManager(inputParams.esValue)
@@ -238,7 +235,7 @@ class CreateAggregateClassIdByDrafts extends FormattedJSONAIGenerator{
             inputParams.esAliasTransManager
         )
 
-        inputParams.subjectText = `Creating Class IDs for ${inputParams.targetReferences.join(', ')}`
+        inputParams.subjectText = `Creating ID Classes for ${inputParams.targetReferences.join(', ')}`
         if(!this.isCreatedPromptWithinTokenLimit()) {
             const leftTokenCount = this.getCreatePromptLeftTokenCount({summarizedESValue: {}})
             if(leftTokenCount <= 100)
@@ -281,7 +278,7 @@ class CreateAggregateClassIdByDrafts extends FormattedJSONAIGenerator{
         .filter(rel => inputParams.targetReferences.includes(rel.reference))
         .map(rel => `${rel.from} -> ${rel.to} (via ${rel.reference})`);
 
-    return `Analyzing aggregate relationships for creating class IDs:
+    return `Analyzing aggregate relationships for creating ID Classes:
 ${relationshipDescriptions.join('\n')}
 
 Focus on elements related to these aggregates and their relationships, particularly for implementing the following references: ${inputParams.targetReferences.join(', ')}.
@@ -587,11 +584,11 @@ CRITICAL RULES FOR REFERENCE GENERATION:
 
 
     onThink(returnObj, thinkText){
-        returnObj.directMessage = `Creating Class IDs... (${this.getTotalOutputTextLength(returnObj)} characters generated)`
+        returnObj.directMessage = `Creating ID Classes... (${this.getTotalOutputTextLength(returnObj)} characters generated)`
     }
 
     onCreateModelGenerating(returnObj){
-        returnObj.directMessage = `Creating Class IDs... (${this.getTotalOutputTextLength(returnObj)} characters generated)`
+        returnObj.directMessage = `Creating ID Classes... (${this.getTotalOutputTextLength(returnObj)} characters generated)`
     }
 
     onCreateModelFinished(returnObj){
@@ -620,7 +617,7 @@ CRITICAL RULES FOR REFERENCE GENERATION:
             actions: appliedActions,
             createdESValue: createdESValue
         }
-        returnObj.directMessage = `Creating Class IDs... (${this.getTotalOutputTextLength(returnObj)} characters generated)`
+        returnObj.directMessage = `Creating ID Classes... (${this.getTotalOutputTextLength(returnObj)} characters generated)`
     }
 
     _filterInvalidActions(actions){

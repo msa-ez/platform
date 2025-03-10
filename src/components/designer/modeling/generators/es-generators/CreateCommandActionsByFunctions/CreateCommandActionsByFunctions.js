@@ -14,6 +14,83 @@ class CreateCommandActionsByFunctions extends FormattedJSONAIGenerator{
         this.generatorName = "CreateCommandActionsByFunctions"
         this.checkInputParamsKeys = ["targetBoundedContext", "targetAggregate", "description", "esValue", "userInfo", "information"]
         this.progressCheckStrings = ["inference", "commandActions", "eventActions", "readModelActions"]
+
+        this.initialResponseFormat = zodResponseFormat(
+            z.object({
+                inference: z.string(),
+                result: z.object({
+                    commandActions: z.array(
+                        z.object({
+                            actionName: z.string(),
+                            objectType: z.literal("Command"),
+                            ids: z.object({
+                                aggregateId: z.string(),
+                                commandId: z.string()
+                            }),
+                            args: z.object({
+                                commandName: z.string(),
+                                commandAlias: z.string(),
+                                api_verb: z.enum(["POST", "PUT", "PATCH", "DELETE"]),
+                                properties: z.array(
+                                    z.object({
+                                        name: z.string(),
+                                        type: z.string(),
+                                        isKey: z.boolean()
+                                    })
+                                ),
+                                outputEventIds: z.array(z.string()),
+                                actor: z.string()
+                            })
+                        })
+                    ),
+                    eventActions: z.array(
+                        z.object({
+                            actionName: z.string(),
+                            objectType: z.literal("Event"),
+                            ids: z.object({
+                                aggregateId: z.string(),
+                                eventId: z.string()
+                            }),
+                            args: z.object({
+                                eventName: z.string(),
+                                eventAlias: z.string(),
+                                properties: z.array(
+                                    z.object({
+                                        name: z.string(),
+                                        type: z.string(),
+                                        isKey: z.boolean()
+                                    })
+                                )
+                            })
+                        })
+                    ),
+                    readModelActions: z.array(
+                        z.object({
+                            actionName: z.string(),
+                            objectType: z.literal("ReadModel"),
+                            ids: z.object({
+                                aggregateId: z.string(),
+                                readModelId: z.string()
+                            }),
+                            args: z.object({
+                                readModelName: z.string(),
+                                readModelAlias: z.string(),
+                                isMultipleResult: z.boolean(),
+                                queryParameters: z.array(
+                                    z.object({
+                                        name: z.string(),
+                                        type: z.string(),
+                                        isKey: z.boolean()
+                                    })
+                                ),
+                                actor: z.string()
+                            })
+                        })
+                    )
+                }).strict()
+            }).strict(),
+            "instruction"
+        )
     }
 
     /**
@@ -159,86 +236,6 @@ class CreateCommandActionsByFunctions extends FormattedJSONAIGenerator{
         }
 
         return generator
-    }
-
-
-    onApiClientChanged(){
-        this.modelInfo.requestArgs.response_format = zodResponseFormat(
-            z.object({
-                inference: z.string(),
-                result: z.object({
-                    commandActions: z.array(
-                        z.object({
-                            actionName: z.string(),
-                            objectType: z.literal("Command"),
-                            ids: z.object({
-                                aggregateId: z.string(),
-                                commandId: z.string()
-                            }),
-                            args: z.object({
-                                commandName: z.string(),
-                                commandAlias: z.string(),
-                                api_verb: z.enum(["POST", "PUT", "PATCH", "DELETE"]),
-                                properties: z.array(
-                                    z.object({
-                                        name: z.string(),
-                                        type: z.string(),
-                                        isKey: z.boolean()
-                                    })
-                                ),
-                                outputEventIds: z.array(z.string()),
-                                actor: z.string()
-                            })
-                        })
-                    ),
-                    eventActions: z.array(
-                        z.object({
-                            actionName: z.string(),
-                            objectType: z.literal("Event"),
-                            ids: z.object({
-                                aggregateId: z.string(),
-                                eventId: z.string()
-                            }),
-                            args: z.object({
-                                eventName: z.string(),
-                                eventAlias: z.string(),
-                                properties: z.array(
-                                    z.object({
-                                        name: z.string(),
-                                        type: z.string(),
-                                        isKey: z.boolean()
-                                    })
-                                )
-                            })
-                        })
-                    ),
-                    readModelActions: z.array(
-                        z.object({
-                            actionName: z.string(),
-                            objectType: z.literal("ReadModel"),
-                            ids: z.object({
-                                aggregateId: z.string(),
-                                readModelId: z.string()
-                            }),
-                            args: z.object({
-                                readModelName: z.string(),
-                                readModelAlias: z.string(),
-                                isMultipleResult: z.boolean(),
-                                queryParameters: z.array(
-                                    z.object({
-                                        name: z.string(),
-                                        type: z.string(),
-                                        isKey: z.boolean()
-                                    })
-                                ),
-                                actor: z.string()
-                            })
-                        })
-                    )
-                }).strict()
-            }).strict(),
-            "instruction"
-        )
     }
 
     async onGenerateBefore(inputParams){
@@ -1175,41 +1172,16 @@ Best Practices:
         returnObj.directMessage = `Creating commands for ${this.client.input.aggregateDisplayName} Aggregate... (${this.getTotalOutputTextLength(returnObj)} characters generated)`
     }
 
-    onCreateModelGenerating(returnObj){
+    onModelCreatedWithThinking(returnObj){
         returnObj.directMessage = `Creating commands for ${this.client.input.aggregateDisplayName} Aggregate... (${this.getTotalOutputTextLength(returnObj)} characters generated)`
+        if(!returnObj.modelValue.aiOutput.result) return
 
-        // 실시간으로 진행을 보여주기 위해서 가능한 경우, 부분적인 액션이라도 반환함
-        const particalActions = returnObj.modelRawValue.match(/({"actionName".*?"objectType".*?"ids".*?"args".*?)(?=,{"actionName")/g)
-        if(!particalActions || particalActions.length === 0) return
-
-
-        let actions = []
-        for(let action of particalActions) {
-            try {
-                const actionObj = this._parseToJson(action)
-                actions.push(actionObj)
-            } catch(e) {}
-        }
-        if(actions.length === 0) return
-
-
-        let {actions: appliedActions, createdESValue: createdESValue} = this._getActionAppliedESValue(actions, true)
-
-        returnObj.modelValue = {
-            ...returnObj.modelValue,
-            actions: appliedActions,
-            createdESValue: createdESValue
-        }
-        console.log(`[*] 스트리밍 중에 ${this.generatorName}에서 부분적 결과 파싱 완료!`, {returnObj})
-    }
-
-    onCreateModelFinished(returnObj){
         let actions = [
             ...(returnObj.modelValue.aiOutput.result.commandActions || []),
             ...(returnObj.modelValue.aiOutput.result.eventActions || []),
             ...(returnObj.modelValue.aiOutput.result.readModelActions || [])
         ]
-        let {actions: appliedActions, createdESValue: createdESValue} = this._getActionAppliedESValue(actions, false)
+        let {actions: appliedActions, createdESValue: createdESValue} = this._getActionAppliedESValue(actions, !returnObj.isFinished)
 
         returnObj.modelValue = {
             ...returnObj.modelValue,
@@ -1220,16 +1192,18 @@ Best Practices:
     }
 
     _getActionAppliedESValue(actions, isAddFakeActions) {
+        actions = this._filterValidPropertyActions(actions)
         actions = this.client.input.esAliasTransManager.transToUUIDInActions(actions)
+
         this._restoreActions(actions, this.client.input.esValue, this.client.input.targetBoundedContext.name)
         actions = this._filterActions(actions)
         this._removeEventOutputCommandIdsProperty(actions)
         
-        let esValueToModify = JSON.parse(JSON.stringify(this.client.input.esValue))
-
         // 부분적인 결과를 반환시에는 가짜 액션을 추가해서 버그를 방지하기 위해서
+        let esValueToModify = JSON.parse(JSON.stringify(this.client.input.esValue))
         if(isAddFakeActions)
             actions = ESFakeActionsUtil.addFakeActions(actions, esValueToModify)
+        actions = ESActionsUtil.addDefaultProperties(actions)
 
         let createdESValue = ESActionsUtil.getActionAppliedESValue(actions, this.client.input.userInfo, this.client.input.information, esValueToModify)
 
@@ -1246,6 +1220,7 @@ Best Practices:
                         boundedContextId: targetBoundedContext.id,
                         ...action.ids
                     }
+                    if(!action.args) action.args = {}
                     action.args.isRestRepository = false
                     break
 
@@ -1254,6 +1229,7 @@ Best Practices:
                         boundedContextId: targetBoundedContext.id,
                         ...action.ids
                     }
+                    if(!action.args) action.args = {}
                     break
                 
                 case "ReadModel": {
@@ -1261,6 +1237,7 @@ Best Practices:
                         boundedContextId: targetBoundedContext.id,
                         ...action.ids
                     }
+                    if(!action.args) action.args = {}
                     action.args.properties = action.args.queryParameters
                     break
                 }
@@ -1313,7 +1290,7 @@ Best Practices:
         // 아무도 호출하지 않는 이벤트를 제외시키기 위해서
         const outputEventIds = []
         for(let action of actions) {
-            if(action.objectType === "Command")
+            if(action.objectType === "Command" && action.args && action.args.outputEventIds)
                 outputEventIds.push(...action.args.outputEventIds)
         }
 
@@ -1332,6 +1309,29 @@ Best Practices:
             if(action.objectType === "Event" && action.args && action.args.outputCommandIds)
                 delete action.args.outputCommandIds
         }
+    }
+
+    _filterValidPropertyActions(actions){
+        actions = actions.filter(action => action.actionName && action.objectType && action.ids && action.ids.aggregateId)
+        actions = actions.filter(action => 
+            (action.objectType === "Command" && action.ids && action.ids.commandId && 
+             action.args && action.args.commandName && action.args.commandAlias) ||
+            (action.objectType === "Event" && action.ids && action.ids.eventId &&
+             action.args && action.args.eventName && action.args.eventAlias) ||
+            (action.objectType === "ReadModel" && action.ids && action.ids.readModelId &&
+             action.args && action.args.readModelName && action.args.readModelAlias)
+        )
+        
+        for(let action of actions){
+            if(action.args && action.args.properties){
+                action.args.properties = action.args.properties.filter(property => property.name)
+            }
+            if(action.args && action.args.queryParameters){
+                action.args.queryParameters = action.args.queryParameters.filter(parameter => parameter.name)
+            }
+        }
+
+        return actions
     }
 
     __getIdByNameInEsValue(name, actions, esValue){

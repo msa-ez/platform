@@ -21,7 +21,7 @@ class ValueObjectActionsProcessor {
             const valueObject = ValueObjectActionsProcessor.__getValueObjectBase(
                 action.args.valueObjectName, 
                 action.args.valueObjectAlias ? action.args.valueObjectAlias : "",
-                ValueObjectActionsProcessor.__getFileDescriptors(action.args.properties),
+                action.args.properties ? ValueObjectActionsProcessor.__getFileDescriptors(action.args.properties) : [],
                 0, 0, action.ids.valueObjectId
             )
 

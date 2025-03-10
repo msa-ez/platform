@@ -10,6 +10,60 @@ class DraftGeneratorByFunctions extends FormattedJSONAIGenerator{
         this.generatorName = "DraftGeneratorByFunctions"
         this.checkInputParamsKeys = ["description", "boundedContext", "accumulatedDrafts"] // Optional ["feedback"]
         this.progressCheckStrings = ["inference", "options", "analysis", "defaultOptionIndex"]
+
+        this.initialResponseFormat = zodResponseFormat(
+            z.object({
+                inference: z.string(),
+                result: z.object({
+                    options: z.array(
+                        z.object({
+                            structure: z.array(
+                                z.object({
+                                    aggregate: z.object({
+                                        name: z.string(),
+                                        alias: z.string()
+                                    }).strict(),
+                                    enumerations: z.array(
+                                        z.object({
+                                            name: z.string(),
+                                            alias: z.string()
+                                        }).strict()
+                                    ),
+                                    valueObjects: z.array(
+                                        z.object({
+                                            name: z.string(),
+                                            alias: z.string(),
+                                            referencedAggregateName: z.string()
+                                        }).strict()
+                                    )
+                                }).strict()
+                            ),
+                            pros: z.object({
+                                cohesion: z.string(),
+                                coupling: z.string(),
+                                consistency: z.string(),
+                                encapsulation: z.string(),
+                                complexity: z.string(),
+                                independence: z.string(),
+                                performance: z.string()
+                            }).strict(),
+                            cons: z.object({
+                                cohesion: z.string(),
+                                coupling: z.string(),
+                                consistency: z.string(),
+                                encapsulation: z.string(),
+                                complexity: z.string(),
+                                independence: z.string(),
+                                performance: z.string()
+                            }).strict()
+                        }).strict()
+                    ),
+                    defaultOptionIndex: z.number(),
+                    conclusions: z.string()
+                }).strict()
+            }).strict(),
+            "instruction"
+        )
     }
 
     static outputToAccumulatedDrafts(output, targetBoundedContext){
@@ -60,64 +114,6 @@ class DraftGeneratorByFunctions extends FormattedJSONAIGenerator{
         }
 
         return accumulatedDrafts
-    }
-
-
-    onApiClientChanged(){
-        this.modelInfo.requestArgs.response_format = zodResponseFormat(
-            z.object({
-                inference: z.string(),
-                result: z.object({
-
-                    options: z.array(
-                        z.object({
-                            structure: z.array(
-                                z.object({
-                                    aggregate: z.object({
-                                        name: z.string(),
-                                        alias: z.string()
-                                    }).strict(),
-                                    enumerations: z.array(
-                                        z.object({
-                                            name: z.string(),
-                                            alias: z.string()
-                                        }).strict()
-                                    ),
-                                    valueObjects: z.array(
-                                        z.object({
-                                            name: z.string(),
-                                            alias: z.string(),
-                                            referencedAggregateName: z.string()
-                                        }).strict()
-                                    )
-                                }).strict()
-                            ),
-                            pros: z.object({
-                                cohesion: z.string(),
-                                coupling: z.string(),
-                                consistency: z.string(),
-                                encapsulation: z.string(),
-                                complexity: z.string(),
-                                independence: z.string(),
-                                performance: z.string()
-                            }).strict(),
-                            cons: z.object({
-                                cohesion: z.string(),
-                                coupling: z.string(),
-                                consistency: z.string(),
-                                encapsulation: z.string(),
-                                complexity: z.string(),
-                                independence: z.string(),
-                                performance: z.string()
-                            }).strict()
-                        }).strict()
-                    ),
-                    defaultOptionIndex: z.number(),
-                    conclusions: z.string()
-                }).strict()
-            }).strict(),
-            "instruction"
-        )
     }
     
     onGenerateBefore(inputParams){

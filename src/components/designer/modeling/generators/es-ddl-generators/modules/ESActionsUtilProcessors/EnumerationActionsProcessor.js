@@ -21,7 +21,7 @@ class EnumerationActionsProcessor {
             const enumObject = EnumerationActionsProcessor.__getEnumerationBase(
                 action.args.enumerationName, 
                 action.args.enumerationAlias ? action.args.enumerationAlias : "",
-                action.args.properties.map(property => {return {"value": property.name}}),
+                action.args.properties ? action.args.properties.map(property => {return {"value": property.name}}) : [],
                 0, 0,
                 action.ids.enumerationId
             )

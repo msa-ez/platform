@@ -5,7 +5,8 @@ const { getEsValue, getEsDraft, esConfigs } = require("../mocks")
 
 class CreatePolicyActionsByFunctionsTest {
     static async test() {
-        const esValue = getEsValue("libraryService", ["policy"]);
+        const serviceName = "libraryService"
+        const esValue = getEsValue(serviceName, ["policy"]);
 
 
         console.log("[*] 기존 이벤트 스토밍 정보: ", ESValueSummarizeWithFilter.getSummarizedESValue(
@@ -33,7 +34,7 @@ class CreatePolicyActionsByFunctionsTest {
 
 
         generator.initInputs(
-            getEsDraft("libraryService"),
+            getEsDraft(serviceName),
             esValue,
             esConfigs.userInfo,
             esConfigs.information

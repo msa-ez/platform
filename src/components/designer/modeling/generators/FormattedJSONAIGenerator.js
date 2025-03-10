@@ -126,6 +126,9 @@ class FormattedJSONAIGenerator extends AIGenerator {
         this.jsonOutputTextToRestore = undefined
         this.savedOnSendCallback = undefined
         this.createdPrompt = {}
+
+        this.isUseResponseFormat = true
+        this.initialResponseFormat = undefined
     }
 
     _addOnsendCallback(){
@@ -136,6 +139,13 @@ class FormattedJSONAIGenerator extends AIGenerator {
                 else
                     console.log(`[*] ${this.modelInfo.requestModelName} 모델이 추론중...`)
             }
+    }
+
+    onApiClientChanged(){
+        if(this.initialResponseFormat && this.isUseResponseFormat)
+            this.modelInfo.requestArgs.response_format = this.initialResponseFormat
+        else
+            this.modelInfo.requestArgs.response_format = undefined
     }
 
 
@@ -156,6 +166,7 @@ class FormattedJSONAIGenerator extends AIGenerator {
         })
 
         this.leftRetryCount = this.MAX_RETRY_COUNT
+        this.isUseResponseFormat = true
 
 
         await this.onGenerateBefore(this.client.input, this.generatorName)
@@ -560,6 +571,7 @@ ${JSON.stringify(exampleOutputs)}
             tokenGenerateDelaySeconds: (this.requestEndTime - this.firstResponseTime) / 1000,
             currentState: this.state,
             finish_reason: this.finish_reason,
+            isFinished: this.state === 'end',
             actions: {
                 stopGeneration: () => {
                     this.stop()
@@ -656,13 +668,13 @@ ${JSON.stringify(exampleOutputs)}
                 try {
                     this.onCreateModelGenerating(returnObj)
                     if(this.client.onCreateModelGenerating) this.client.onCreateModelGenerating(returnObj)
+
+                    this.onModelCreatedWithThinking(returnObj)
+                    if(this.client.onModelCreatedWithThinking) this.client.onModelCreatedWithThinking(returnObj)
                 } catch(e) {
                     console.error(`[!] ${this.generatorName}에서 부분적인 결과 처리중에 오류 발생!`, {text, error:e})
                     console.error(e)
                 }
-
-                this.onModelCreatedWithThinking(returnObj)
-                if(this.client.onModelCreatedWithThinking) this.client.onModelCreatedWithThinking(returnObj)
                 return returnObj
             }
  
@@ -787,6 +799,7 @@ ${JSON.stringify(exampleOutputs)}
     _retryByError(){
         // 일부 경우에는 response_format이 정의되어 있어서 끝없이 동일한 예외가 발생하는 경우가 있기 때문에 재시도시에는 제거해서 재시도 하도록 함
         this.modelInfo.requestArgs.response_format = undefined
+        this.isUseResponseFormat = false
         super.generate()
     }
 
