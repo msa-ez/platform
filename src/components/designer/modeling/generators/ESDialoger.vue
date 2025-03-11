@@ -768,9 +768,6 @@
             var me = this;
             me.setUIStyle(me.uiStyle);
             me.init();
-
-            //test
-            document.removeEventListener('keydown', this.handleKeyPress);
         },
         data() {
             return {

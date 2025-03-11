@@ -323,7 +323,7 @@ Rules:
      */
     isCreatedPromptWithinTokenLimit(){
         return TokenCounter.isWithinTokenLimit(
-            this.createPrompt(), this.modelInfo.requestModelName, this.modelInfo.inputTokenLimit
+            this._extractAllTextFromInputPrompt(), this.modelInfo.requestModelName, this.modelInfo.inputTokenLimit
         )
     }
 
@@ -366,7 +366,7 @@ Rules:
      */
     getCreatedPromptTokenCount(tempInputParams={}){
         if (Object.keys(tempInputParams).length === 0) {
-            return TokenCounter.getTokenCount(this.createPrompt(), this.modelInfo.requestModelName);
+            return TokenCounter.getTokenCount(this._extractAllTextFromInputPrompt(), this.modelInfo.requestModelName);
         }
 
         const changedValues = {};
@@ -376,7 +376,7 @@ Rules:
         });
 
         try {
-            return TokenCounter.getTokenCount(this.createPrompt(), this.modelInfo.requestModelName);
+            return TokenCounter.getTokenCount(this._extractAllTextFromInputPrompt(), this.modelInfo.requestModelName);
         } finally {
             Object.keys(changedValues).forEach(key => {
                 if (changedValues[key] === undefined) {
@@ -419,6 +419,15 @@ Rules:
      */
     getCreatePromptLeftTokenCount(tempInputParams={}){
         return this.modelInfo.inputTokenLimit - this.getCreatedPromptTokenCount(tempInputParams)
+    }
+
+    _extractAllTextFromInputPrompt() {
+        const inputPrompt = this.createPromptWithRoles()
+        return [
+            inputPrompt.system, 
+            ...(inputPrompt.user || []), 
+            ...(inputPrompt.assistant || [])
+        ].filter(Boolean).join("")
     }
 
     _assembleRolePrompt(){

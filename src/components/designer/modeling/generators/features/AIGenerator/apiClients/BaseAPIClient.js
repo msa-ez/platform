@@ -198,7 +198,7 @@ class BaseAPIClient {
                 g.requestStartTime = new Date().getTime()
                 const requestParams = this._makeRequestParams(g.messages, g.modelInfo, g.token);
     
-                const requestInfo = this._makeRequestInfo(requestParams)
+                const requestInfo = this._makeRequestInfo(requestParams, g.messages)
                 previousRequestInfos.push(requestInfo)
                 previousRequestInfos = previousRequestInfos.slice(-500)
                 console.log("[*] 최종적으로 요청되는 정보", { requestInfo, previousRequestInfos });
@@ -242,12 +242,13 @@ class BaseAPIClient {
         });
     }
 
-    _makeRequestInfo(requestParams){
+    _makeRequestInfo(requestParams, messages){
         const g = this.aiGenerator
         let requestInfo = {}
         
         try {
             requestInfo.requestData = requestParams.requestData ? JSON.parse(requestParams.requestData) : null
+            requestInfo.singleMessage = messages.map((m) => m.content).join("\n\n---\n\n") + "\n\n---\n\n"
         }catch{}
 
         try {

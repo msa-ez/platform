@@ -13,13 +13,13 @@ import {
 export default {
     name: "es-dialoger-test-terminal",
     mounted() {
-        window.addEventListener('keydown', this.handleKeyPress);
+        window.addEventListener('keydown', this.handleKeyPressForTestTerminal);
     },
     beforeDestroy() {
-        window.removeEventListener('keydown', this.handleKeyPress);
+        window.removeEventListener('keydown', this.handleKeyPressForTestTerminal);
     },
     methods: {
-        handleKeyPress(event) {
+        handleKeyPressForTestTerminal(event) {
             if (event.altKey && event.key.toLowerCase() === 't') {
                 this.__stopStoryGenerating()
                 this.promptCommand();
@@ -40,6 +40,10 @@ export default {
                 showAggregateDraftUI: {
                     command: () => this._showAggregateDraftUI(),
                     description: "특정한 시나리오 Mock 데이터로 애그리거트 초안 UI 표시"
+                },
+                mermaidStringTest: {
+                    command: () => this._mermaidStringTest(),
+                    description: "Mermaid 문자열 테스트"
                 },
                 TempTest: {
                     command: () => this._TempTest(),
@@ -100,6 +104,14 @@ export default {
         _showAggregateDraftUI() {
             const selectedScenario = this.__getSelectedScenario()
             this.messages = selectedScenario.messages
+        },
+
+        _mermaidStringTest() {
+            this.messages = [
+                {
+                    type: 'mermaidStringTest'
+                }
+            ]
         },
 
         _TempTest() {

@@ -17,6 +17,7 @@ export const openaiModelInfos = {
         vendor: "openai",
         contextWindowTokenLimit: 200000,
         outputTokenLimit: 100000,
+        outputTokenLimitReasoningMargin: 25000,
         isInferenceModel: true,
         requestArgs: {
             reasoningEffort: "medium",

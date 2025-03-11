@@ -9,13 +9,13 @@ import DDLManager from "../../modeling/generators/es-ddl-generators/managers/DDL
 export default {
     name: "test-by-using-command",
     mounted() {
-        window.addEventListener('keydown', this.handleKeyPress);
+        window.addEventListener('keydown', this.handleKeyPressForTestTerminal);
     },
     beforeDestroy() {
-        window.removeEventListener('keydown', this.handleKeyPress);
+        window.removeEventListener('keydown', this.handleKeyPressForTestTerminal);
     },
     methods: {
-        handleKeyPress(event) {
+        handleKeyPressForTestTerminal(event) {
             if (event.altKey && event.key.toLowerCase() === 't') {
                 this.promptCommand();
             }

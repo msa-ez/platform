@@ -609,7 +609,6 @@ ${this.client.input.feedback.feedbacks.join("\n")}`
             returnObj.modelValue.inference += this.parsedTexts.think
         if(returnObj.modelValue.aiOutput.inference) 
             returnObj.modelValue.inference += ("\n\n" + returnObj.modelValue.aiOutput.inference)
-        returnObj.modelValue.output.defaultOptionIndex = returnObj.modelValue.output.defaultOptionIndex - 1
 
         this._removeOptionsWithExistingAggregates(returnObj.modelValue.output)
         returnObj.modelValue.output.defaultOptionIndex = Math.min(returnObj.modelValue.output.defaultOptionIndex, returnObj.modelValue.output.options.length - 1)
@@ -637,6 +636,37 @@ ${this.client.input.feedback.feedbacks.join("\n")}`
         for (const option of structuredClone(output.options)) {
             if (!option.structure) continue;
 
+
+            let hasDuplicateNames = false;
+            for (const aggregateInfo of option.structure) {
+                if (!aggregateInfo.aggregate || !aggregateInfo.aggregate.name) continue;
+                
+                const aggregateName = aggregateInfo.aggregate.name;
+                const aggregateAlias = aggregateInfo.aggregate.alias;
+                
+                if (aggregateInfo.enumerations && aggregateInfo.enumerations.length > 0) {
+                    for (const enumeration of aggregateInfo.enumerations) {
+                        if (enumeration.name === aggregateName || enumeration.alias === aggregateAlias) {
+                            hasDuplicateNames = true;
+                            break;
+                        }
+                    }
+                }
+                
+                if (!hasDuplicateNames && aggregateInfo.valueObjects && aggregateInfo.valueObjects.length > 0) {
+                    for (const valueObject of aggregateInfo.valueObjects) {
+                        if (valueObject.name === aggregateName || valueObject.alias === aggregateAlias) {
+                            hasDuplicateNames = true;
+                            break;
+                        }
+                    }
+                }
+                
+                if (hasDuplicateNames) break;
+            }
+            if (hasDuplicateNames) continue;
+
+
             let validAggregateInfos = []
             for (const aggregateInfo of option.structure) {
                 if (!aggregateInfo.aggregate || !aggregateInfo.aggregate.name) continue;
@@ -652,6 +682,7 @@ ${this.client.input.feedback.feedbacks.join("\n")}`
                 validAggregateInfos.push(aggregateInfo)
             }
             if(validAggregateInfos.length === 0) continue
+
 
             option.structure = validAggregateInfos
             filteredOptions.push(option)
@@ -736,7 +767,8 @@ ${this.client.input.feedback.feedbacks.join("\n")}`
             /\b열거형\b/,
             /\b값객체\b/,
             /\b애그리거트\b/,
-            /\b어그리거트\b/
+            /\b어그리거트\b/,
+            /\b구조체\b/
         ];
     
         const cleanAlias = (alias) => {

@@ -43,6 +43,7 @@ const defaultModelInfos = {
     contextWindowTokenLimit: 16385, // 토큰 제한 수를 알 수 없을 경우, GPT-3.5 Turbo의 제한 수를 활용
     outputTokenLimit: 4096,
     inputTokenLimitMargin: 1000,
+    outputTokenLimitReasoningMargin: 0,
     isInferenceModel: false,
     requestArgs: {},
     transforms: {}
@@ -59,6 +60,9 @@ Object.values(modelInfos).forEach((modelInfo) => {
 
     if(!modelInfo.inputTokenLimit)
         modelInfo.inputTokenLimit = modelInfo.contextWindowTokenLimit - modelInfo.outputTokenLimit - modelInfo.inputTokenLimitMargin
+
+    if(modelInfo.isInferenceModel)
+        modelInfo.outputTokenLimit = modelInfo.outputTokenLimit - modelInfo.outputTokenLimitReasoningMargin
 })
 
 module.exports = modelInfos;

@@ -45,7 +45,6 @@
                             :optionIndex="index"
                             :optionInfo="option"
                             :isSelectedCard="isSelectedCard(activeContext, index)"
-                            :isDisabled="!isGeneratorButtonEnabled || draftUIInfos.leftBoundedContextCount > 0 || (!selectedOptionItem || Object.keys(selectedOptionItem).length !== draftOptions.length)"
                             @onCardSelected="selectedCard"
                         ></AggregateDraftOptionCard>
                     </v-col>
@@ -142,7 +141,6 @@
         },
         props: {
             draftOptions: {
-
                 type: Array,
                 default: () => ([]),
                 required: false
@@ -242,7 +240,11 @@
             },
 
             generateFromDraft(){
-                this.$emit('generateFromDraft', this.selectedOptionItem);                
+                let optionsToReturn = {}
+                this.draftOptions.map(option => {
+                    optionsToReturn[option.boundedContext] = this.selectedOptionItem[option.boundedContext]
+                })
+                this.$emit('generateFromDraft', optionsToReturn);                
             },
 
 
@@ -270,14 +272,14 @@
             },
 
             updateSelectionByDraftOptions(draftOptions) {      
-                this.selectedCardIndex = {}
-                this.selectedOptionItem = {}
-                
                 if(draftOptions && draftOptions.length > 0) {
                     draftOptions.map(option => {  
-                        if(!option.boundedContext || option.defaultOptionIndex === undefined) return
-                        this.selectedCardIndex[option.boundedContext] = option.defaultOptionIndex
-                        this.selectedOptionItem[option.boundedContext] = option.options[option.defaultOptionIndex]                        
+                        if(!option.boundedContext || option.defaultOptionIndex == null) return
+                        
+                        if(this.selectedCardIndex[option.boundedContext] == null)
+                            this.selectedCardIndex[option.boundedContext] = option.defaultOptionIndex
+                        if(this.selectedOptionItem[option.boundedContext] == null)
+                            this.selectedOptionItem[option.boundedContext] = option.options[option.defaultOptionIndex]                        
                     })
                 }
             }
