@@ -6,7 +6,8 @@ export const ollamaModelInfos = {
         outputTokenLimit: 2048,
         requestArgs: {
             temperature: 0.7
-        }
+        },
+        useThinkParseStrategy: true
     },
 
     // 가능한 설정 옵션들: deepseek-r1:14b
@@ -16,6 +17,7 @@ export const ollamaModelInfos = {
         outputTokenLimit: 8192,
         requestArgs: {
             temperature: 0.7
-        }
+        },
+        useThinkParseStrategy: true
     }
 }

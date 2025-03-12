@@ -44,7 +44,7 @@ class RunpodClient extends BaseAPIClient {
       }
     })
 
-    if(this.aiGenerator.modelInfo.requestModelName.toLowerCase().includes("deepseek-r1")) {
+    if(this.aiGenerator.modelInfo.useThinkParseStrategy) {
       // 이유는 알 수 없으나, 몇몇 모델들은 <think> 태그로 시작하지 않으면서, </think> 태그로 끝나는 응답을 보내는 경우가 있음
       if(!result.joinedText.startsWith("<think>")) {
         result.joinedText = "<think>" + result.joinedText  

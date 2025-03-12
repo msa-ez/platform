@@ -46,7 +46,7 @@ class OllamaClient extends BaseAPIClient {
       }
     })
     
-    if(this.aiGenerator.modelInfo.requestModelName.startsWith("deepseek-r1")) {
+    if(this.aiGenerator.modelInfo.useThinkParseStrategy) {
       const tagParsedContents = TextParseHelper.parseFrontTagContents(result.joinedText, "think");
       result.joinedText = tagParsedContents.restText;
       this.aiGenerator.parsedTexts.think = tagParsedContents.tagContents;

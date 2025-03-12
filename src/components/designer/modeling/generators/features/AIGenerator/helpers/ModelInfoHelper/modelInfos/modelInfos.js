@@ -46,7 +46,8 @@ const defaultModelInfos = {
     outputTokenLimitReasoningMargin: 0,
     isInferenceModel: false,
     requestArgs: {},
-    transforms: {}
+    transforms: {},
+    useThinkParseStrategy: false // True인 경우, "<think>" 태그로 시작하는 응답을 파싱
 }
 
 Object.values(modelInfos).forEach((modelInfo) => {
@@ -55,7 +56,7 @@ Object.values(modelInfos).forEach((modelInfo) => {
         modelInfo.outputTokenLimit = modelInfo.contextWindowTokenLimit * 0.20
 
     for(const key of Object.keys(defaultModelInfos)){
-        if(!modelInfo[key]) modelInfo[key] = defaultModelInfos[key]
+        if(modelInfo[key] == null) modelInfo[key] = defaultModelInfos[key]
     }
 
     if(!modelInfo.inputTokenLimit)
