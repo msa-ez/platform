@@ -20,9 +20,10 @@ export const runpodModelInfos = {
         useThinkParseStrategy: true
     },
 
+    // 가능한 설정 옵션들: Qwen/QwQ-32B, Qwen/QwQ-32B-AWQ
     "Qwen/QwQ-32B": {
         vendor: "runpod",
-        contextWindowTokenLimit: 131072,
+        contextWindowTokenLimit: 40096,
         outputTokenLimit: 8192,
         requestArgs: {
             maxTokens: 8192
