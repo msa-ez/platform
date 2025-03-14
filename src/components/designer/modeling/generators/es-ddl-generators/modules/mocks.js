@@ -1,10 +1,5 @@
 export const esActionUtilMocks = [
     {
-        "currentESValue": {
-            "elements": {},
-            "relations": {}
-        },
-
         "actions": [
             {
                 "objectType": "BoundedContext",
@@ -38,78 +33,52 @@ export const esActionUtilMocks = [
                         {
                             "name": "bookTitle",
                             "type": "String"
-                        },
-                        {
-                            "name": "bookAuthorInfo",
-                            "type": "BookAuthorInfo"
-                        },
-                        {
-                            "name": "bookStatus",
-                            "type": "BookStatus"
-                        },
-                        {
-                            "name": "InvalidValueObjectName",
-                            "type": "InvalidValueObject"
-                        },
-                        {
-                            "name": "InvalidEnumName",
-                            "type": "InvalidEnum"
                         }
                     ]
                 }
             },
 
             {
-                "objectType": "ValueObject",
+                "objectType": "BoundedContext",
+                "type": "create",
                 "ids": {
-                    "boundedContextId": "bc-bookManagement",
-                    "aggregateId": "agg-book",
-                    "valueObjectId": "vo-bookAuthorInfo"
+                    "boundedContextId": `bc-userManagement`
                 },
                 "args": {
-                    "valueObjectName": "BookAuthorInfo",
-                    "valueObjectAlias": "Book Author Info",
+                    "boundedContextName": "UserManagement",
+                    "boundedContextAlias": "User Management",
+                    "description": "User Management Description"
+                }
+            },
+
+            {
+                "objectType": "Aggregate",
+                "ids": {
+                    "boundedContextId": "bc-userManagement",
+                    "aggregateId": "agg-user"
+                },
+                "args": {
+                    "aggregateName": "User",
+                    "aggregateAlias": "User",
 
                     "properties": [
                         {
-                            "name": "authorName",
+                            "name": "userId",
                             "type": "String",
                             "isKey": true
                         },
                         {
-                            "name": "authorEmail",
+                            "name": "userName",
                             "type": "String"
-                        },
-                        {
-                            "name": "InvalidEnumName",
-                            "type": "InvalidEnum"
                         }
                     ]
                 }
             },
+        ]
+    },
 
-            {
-                "objectType": "Enumeration",
-                "ids": {
-                    "boundedContextId": "bc-bookManagement",
-                    "aggregateId": "agg-book",
-                    "enumerationId": "enum-bookStatus"
-                },
-                "args": {
-                    "enumerationName": "BookStatus",
-                    "enumerationAlias": "Book Status",
-                    
-                    "properties": [
-                        {
-                            "name": "available"
-                        },
-                        {
-                            "name": "unavailable"
-                        }
-                    ]
-                }
-            },
-
+    {
+        "actions": [
             {
                 "objectType": "Command",
                 "ids": {
@@ -131,22 +100,6 @@ export const esActionUtilMocks = [
                         {
                             "name": "bookTitle",
                             "type": "String"
-                        },
-                        {
-                            "name": "bookAuthorInfo",
-                            "type": "BookAuthorInfo"
-                        },
-                        {
-                            "name": "bookStatus",
-                            "type": "BookStatus"
-                        },
-                        {
-                            "name": "InvalidValueObjectName",
-                            "type": "InvalidValueObject"
-                        },
-                        {
-                            "name": "InvalidEnumName",
-                            "type": "InvalidEnum"
                         }
                     ],
 
@@ -175,68 +128,84 @@ export const esActionUtilMocks = [
                         {
                             "name": "bookTitle",
                             "type": "String"
-                        },
-                        {
-                            "name": "bookAuthorInfo",
-                            "type": "BookAuthorInfo"
-                        },
-                        {
-                            "name": "bookStatus",
-                            "type": "BookStatus"
-                        },
-                        {
-                            "name": "InvalidValueObjectName",
-                            "type": "InvalidValueObject"
-                        },
-                        {
-                            "name": "InvalidEnumName",
-                            "type": "InvalidEnum"
                         }
                     ]
                 }
             },
 
             {
-                "objectType": "ReadModel",
+                "objectType": "Command",
                 "ids": {
-                    "boundedContextId": "bc-bookManagement",
-                    "aggregateId": "agg-book",
-                    "readModelId": "rm-bookList"
+                    "boundedContextId": "bc-userManagement",
+                    "aggregateId": "agg-user",
+                    "commandId": "cmd-registerUser"
                 },
                 "args": {
-                    "readModelName": "BookList",
-                    "readModelAlias": "Book List",
-                    "isMultipleResult": true,
+                    "commandName": "RegisterUser",
+                    "commandAlias": "Register User",
+                    "api_verb": "POST",
 
-                    "queryParameters": [
+                    "properties": [
                         {
-                            "name": "bookId",
+                            "name": "userId",
                             "type": "String",
                             "isKey": true
                         },
                         {
-                            "name": "bookTitle",
+                            "name": "userName",
                             "type": "String"
-                        },
-                        {
-                            "name": "bookAuthorInfo",
-                            "type": "BookAuthorInfo"
-                        },
-                        {
-                            "name": "bookStatus",
-                            "type": "BookStatus"
-                        },
-                        {
-                            "name": "InvalidValueObjectName",
-                            "type": "InvalidValueObject"
-                        },
-                        {
-                            "name": "InvalidEnumName",
-                            "type": "InvalidEnum"
                         }
                     ],
 
+                    "outputEventIds": ["evt-userRegistered"],
                     "actor": "User"
+                }
+            },
+
+            {
+                "objectType": "Event",
+                "ids": {
+                    "boundedContextId": "bc-userManagement",
+                    "aggregateId": "agg-user",
+                    "eventId": "evt-userRegistered"
+                },
+                "args": {
+                    "eventName": "UserRegistered",
+                    "eventAlias": "User Registered",
+
+                    "properties": [
+                        {
+                            "name": "userId",
+                            "type": "String",
+                            "isKey": true
+                        },
+                        {
+                            "name": "userName",
+                            "type": "String"
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+
+    {
+        "actions": [
+            {
+                "objectType": "Event",
+                "type": "update",
+                "ids": {
+                    "boundedContextId": "bc-bookManagement",
+                    "aggregateId": "agg-book",
+                    "eventId": "evt-bookLoaned"
+                },
+                "args": {
+                    "outputCommandIds": [{
+                        "commandId": "cmd-registerUser",
+                        "reason": "Mocked",
+                        "name": "Register User",
+                        "alias": "Register User"
+                    }]
                 }
             }
         ]
@@ -266,4 +235,9 @@ export const esConfigs = {
         "projectId": "testProjectId",
         "type": "es"
     }
+}
+
+export const initialESValue = {
+    "elements": {},
+    "relations": {}
 }

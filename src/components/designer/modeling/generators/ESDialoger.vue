@@ -514,15 +514,26 @@
                 }
             })
             this.generators.PreProcessingFunctionsGenerator.buildInitialInputs = (selectedStructureOption) => {
+                const getDescription = (requirements) => {
+                    if (!requirements || !Array.isArray(requirements) || requirements.length === 0) {
+                        return "Requirements have not been specified."
+                    }
+                    let markdownOutput = "# Requirements\n\n"
+                    requirements.forEach((req) => {
+                        markdownOutput += `## ${req.type}\n\n${req.text}\n\n`
+                    })
+                    return markdownOutput.trim();
+                }
+
                 const passedGeneratorInputs = selectedStructureOption.boundedContexts.map(bc => ({
                     boundedContext: {
                         name: bc.name,
                         alias: bc.alias,
                         displayName: bc.alias,
-                        description: JSON.stringify(bc.requirements),
+                        description: getDescription(bc.requirements),
                         aggregates: bc.aggregates
                     },
-                    description: JSON.stringify(bc.requirements)
+                    description: getDescription(bc.requirements)
                 }))
 
                 this.generators.PreProcessingFunctionsGenerator.initialInputs = structuredClone(passedGeneratorInputs)
@@ -1298,7 +1309,7 @@
                             }
                         }
 
-                        this.generateFromDraftWithXAI(draftOptions)
+                        this.generateFromAggregateDrafts(draftOptions)
                     }
 
                 }

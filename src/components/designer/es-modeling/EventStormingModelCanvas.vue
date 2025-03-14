@@ -1983,12 +1983,13 @@
 
           
         <!-- <gitAPIMenu></gitAPIMenu> -->
-        <div style="position:absolute; top:75px; right:35px; z-index:999; width: 50%;">
+        <div style="position:absolute; top:90px; right:35px; z-index:999; width: 50%;">
             <GeneratorProgress
             :generateDone="generatorProgressDto.generateDone"
             :displayMessage="generatorProgressDto.displayMessage"
             :thinkMessage="generatorProgressDto.thinkMessage"
             :progress="generatorProgressDto.progress"
+            :globalProgress="generatorProgressDto.globalProgress"
             @stopGeneration="generatorProgressDto.actions.stopGeneration"
             ></GeneratorProgress>
         </div>
@@ -2544,6 +2545,9 @@
                     thinkMessage: '',
                     previousThinkingMessage: '',
                     progress: 0,
+                    globalProgress: 0,
+                    totalGlobalProgressCount: 0,
+                    currentGlobalProgressCount: 0,
                     actions: {
                         stopGeneration: () => {}
                     }
@@ -2755,6 +2759,10 @@
                     thinkingUpdateInterval = undefined
                 }
             }
+            const addGlobalProgressCount = () => {
+                this.generatorProgressDto.currentGlobalProgressCount += 1
+                this.generatorProgressDto.globalProgress = Math.min(100, Math.round(this.generatorProgressDto.currentGlobalProgressCount / this.generatorProgressDto.totalGlobalProgressCount * 100))
+            }
 
             const byFunctionCallbacks = {
                 onSend: (input, stopCallback) => {
@@ -2800,7 +2808,6 @@
                         this.changedByMe = true
                         this.$set(this.value, "elements", returnObj.modelValue.createdESValue.elements)
                         this.$set(this.value, "relations", returnObj.modelValue.createdESValue.relations)
-                        this.forceRefreshCanvas() 
                     }
                 },
 
@@ -2815,11 +2822,11 @@
                         })
                     }
 
+                    addGlobalProgressCount()
                     if(returnObj.modelValue && returnObj.modelValue.createdESValue) {
                         this.changedByMe = true
                         this.$set(this.value, "elements", returnObj.modelValue.createdESValue.elements)
                         this.$set(this.value, "relations", returnObj.modelValue.createdESValue.relations)
-                        this.forceRefreshCanvas()
                     }
                 },
 
@@ -2835,11 +2842,13 @@
                         isGeneratorButtonEnabled: true
                     }
                     this.generatorProgressDto.generateDone = true
+                    this.isEditable = true
                 },
 
                 onStopped: () => {
                     clearThinkingUpdateInterval()
                     this.generatorProgressDto.generateDone = true
+                    this.isEditable = true
                 },
 
                 onGenerationDone: () => {
@@ -2944,6 +2953,7 @@
             this.generators.CommandGWTGeneratorByFunctions.generator = CommandGWTGeneratorByFunctions.createGeneratorByDraftOptions({
                 ...byFunctionCallbacks,
                 onGenerationSucceeded: (returnObj) => {
+                    addGlobalProgressCount()
                     if(returnObj.modelValue && returnObj.modelValue.commandsToReplace) {
                         this.changedByMe = true
                         for(const command of returnObj.modelValue.commandsToReplace)
@@ -2965,6 +2975,7 @@
                     console.log("[*] 최종 생성까지 걸린 총 시간(초)", totalSeconds) 
                     
                     byFunctionCallbacks.onGenerationDone()
+                    this.isEditable = true
                 }
             })
 
@@ -4153,11 +4164,17 @@
 
                 console.log("[*] 초안 전처리 완료", {afterDraftOptions: JSON.parse(JSON.stringify(draftOptions))})
 
+                this.generatorProgressDto.totalGlobalProgressCount = this._getTotalGlobalProgressCount(draftOptions)
+                this.generatorProgressDto.currentGlobalProgressCount = 0
+
                 this.generatorProgressDto.thinkMessage = ""
                 this.generatorProgressDto.previousThinkingMessage = ""
                 this.collectedMockDatas.aggregateDraftScenarios.draft = structuredClone(draftOptions)
                 this.collectedLogDatas.aggregateDraftScenarios.startTime = new Date().getTime()
                 
+                // AI 생성 중에는 수정을 불가능하도록 만듬
+                this.isEditable = false
+
                 this.generators.CreateAggregateActionsByFunctions.generator.initInputs(
                     this.selectedDraftOptions,
                     this.value,
@@ -4225,8 +4242,25 @@
                     
                     context.boundedContext = Object.values(this.value.elements).find(element => element && element._type === "org.uengine.modeling.model.BoundedContext" && element.name.toLowerCase() === context.boundedContext.name.toLowerCase())
                 }
+            },
 
-                this.forceRefreshCanvas()
+            _getTotalGlobalProgressCount(draftOptions) {
+                let boundedContextCount = Object.values(draftOptions).length
+
+                let aggregateCount = 0
+                for(const context of Object.values(draftOptions))
+                    aggregateCount += context.structure.length
+
+                let aggregateClassIDCount = 0
+                this.generators.CreateAggregateClassIdByDrafts.generator.initInputs(
+                    draftOptions,
+                    this.value,
+                    this.userInfo,
+                    this.information
+                )
+                aggregateClassIDCount = this.generators.CreateAggregateClassIdByDrafts.generator.inputs.length
+
+                return boundedContextCount + aggregateCount*3 + aggregateClassIDCount
             },
 
 

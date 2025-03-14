@@ -3,6 +3,7 @@ export const mockedProgressDto = {
     displayMessage: "Mock Message",
     thinkMessage: "Mock Think Message\n",
     progress: 50,
+    globalProgress: 25,
     actions: {
         stopGeneration: () => {
             alert("stopGeneration 호출")

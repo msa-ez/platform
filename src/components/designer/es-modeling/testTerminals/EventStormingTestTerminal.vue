@@ -68,7 +68,14 @@ export default {
                 ModelInfoHelperTest: {command: async () => { await ModelInfoHelperTest.test() }},
                 TextParseHelperTest: {command: async () => { await TextParseHelperTest.test() }},
                 TextParseHelperTestError: {command: async () => { await TextParseHelperTest.testError() }},
-                ESActionsUtilTest: {command: async () => { await ESActionsUtilTest.test() }}
+                ESActionsUtilTest: {command: async () => { 
+                    await ESActionsUtilTest.test((createdESValue) => {
+                        this.changedByMe = true
+                        this.$set(this.value, "elements", createdESValue.elements)
+                        this.$set(this.value, "relations", createdESValue.relations)
+                        this.forceRefreshCanvas() 
+                    })
+                }}
             }
             
 

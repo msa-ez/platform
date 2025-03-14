@@ -193,7 +193,22 @@ Guidelines:
    - Avoid bidirectional references: ensure that references remain unidirectional by carefully determining which Aggregate owns the reference based on ownership and lifecycle dependencies.  
    - All Value Objects and Enumerations must be directly related to an Aggregate and should not be used to define or wrap additional independent Value Objects.
 
-8. Output Requirements  
+8. High-Quality Evaluation of Options
+   - For each design option, provide specific and concrete pros and cons that go beyond generic statements.
+   - Evaluate options based on design quality attributes with specific consequences and examples:
+     * Cohesion: Assess how focused each aggregate is on a single responsibility or business capability
+     * Coupling: Analyze dependencies between aggregates and their impact on system flexibility
+     * Consistency: Evaluate how well business invariants are protected within transaction boundaries
+     * Encapsulation: Consider how effectively domain rules are hidden and implementation details are protected
+     * Complexity: Assess cognitive load for developers working with the design and its implementation difficulty
+     * Independence: Evaluate how autonomously each aggregate can evolve without affecting others
+     * Performance: Consider query efficiency, memory usage, and operational characteristics
+   - Ensure pros and cons are meaningfully different between options and don't contradict each other
+   - For pros, focus on genuine strengths with specific domain-relevant benefits
+   - For cons, identify actual limitations and trade-offs with real consequences for implementation
+   - Avoid vague statements like "moderate" or "high" without explaining why; instead explain the specific impact
+
+9. Output Requirements  
    - The final JSON output must not include any inline comments.  
    - Maintain clarity and conciseness in the JSON structure.
 
@@ -453,22 +468,22 @@ Inference Guidelines:
                             }
                         ],
                         "pros": {
-                            "cohesion": "Very High: Consolidates order and payment data into one unit.",
-                            "coupling": "Very Low: Eliminates inter-aggregate dependencies.",
-                            "consistency": "Very High: Guarantees transactional integrity within a single aggregate.",
-                            "encapsulation": "High: Simplifies domain boundaries and data access.",
-                            "complexity": "Moderate: Larger aggregate, but simpler data model.",
-                            "independence": "High: Operates atomically within a unified structure.",
-                            "performance": "High: Faster operations due to reduced join operations."
+                            "cohesion": "All order and payment data are managed within a single transaction boundary, ensuring that critical business processes like order placement with payment are handled atomically.",
+                            "coupling": "Eliminates inter-aggregate communications for order-payment operations, removing the need for eventual consistency patterns or distributed transactions.",
+                            "consistency": "Business rules that span both order and payment (like 'payment must be verified before order confirmation') are enforced within a single transaction.",
+                            "encapsulation": "Payment verification logic and order state transitions are encapsulated together, ensuring payment rules are applied before order status changes.",
+                            "complexity": "Simplifies the domain model by merging related concepts, reducing the need for coordination mechanisms between separate aggregates.",
+                            "independence": "Changes to order or payment processing can be made in one place without coordinating changes across multiple aggregates.",
+                            "performance": "Eliminates the need for multiple database queries when accessing both order and payment data, improving read operation performance."
                         },
                         "cons": {
-                            "cohesion": "Moderate: A unified aggregate may grow too large over time.",
-                            "coupling": "Low: Limits modular reuse of payment components in other contexts.",
-                            "consistency": "Moderate: Potential bottleneck if aggregate becomes too large.",
-                            "encapsulation": "Moderate: Requires careful management of internal boundaries.",
-                            "complexity": "Moderate: Less flexibility for independent evolution of order and payment.",
-                            "independence": "Moderate: Single point of failure may impact the entire transaction.",
-                            "performance": "Moderate: Increased data payload may affect certain operations."
+                            "cohesion": "Dilutes the single responsibility principle by forcing the aggregate to handle both order management and payment processing concerns.",
+                            "coupling": "Changes to payment processing requirements will impact the entire OrderWithPayment aggregate, potentially affecting order functionality.",
+                            "consistency": "As the aggregate grows, transaction timeouts become more likely, especially with high-volume order processing.",
+                            "encapsulation": "Different teams handling order vs. payment concerns must coordinate changes to the same aggregate, creating organizational friction.",
+                            "complexity": "The aggregate will grow larger over time, making it harder to understand all the business rules contained within it.",
+                            "independence": "Cannot scale order and payment operations independently since they share the same resource constraints.",
+                            "performance": "Write operations may suffer from contention, as concurrent modifications to different aspects (order vs. payment) target the same aggregate."
                         }
                     },
                     {
@@ -516,22 +531,22 @@ Inference Guidelines:
                             }
                         ],
                         "pros": {
-                            "cohesion": "High: Clearly dedicated aggregates for orders and payments.",
-                            "coupling": "Low: Minimal inter-dependency except for necessary references.",
-                            "consistency": "High: Transactional boundaries are well established.",
-                            "encapsulation": "Moderate: Payment is referenced externally.",
-                            "complexity": "Moderate: Managing two aggregates increases overall system complexity.",
-                            "independence": "High: Aggregates can scale independently.",
-                            "performance": "Moderate: Extra join for payment reference may add slight overhead."
+                            "cohesion": "Each aggregate focuses on a single responsibility - Order handles order management while Payment handles payment processing exclusively.",
+                            "coupling": "Changes to payment processing (like adding new payment methods) can be made without touching the Order aggregate.",
+                            "consistency": "Each aggregate maintains its own smaller, more manageable transaction boundary, reducing the risk of long-running transactions.",
+                            "encapsulation": "Payment processing details remain hidden from Order, following interface segregation principles and protecting internal implementation.",
+                            "complexity": "Domain concepts are divided into smaller, more comprehensible units that align with specific business capabilities.",
+                            "independence": "Order and Payment can be developed, tested, and deployed independently, allowing specialized teams to work in parallel.",
+                            "performance": "Enables independent scaling of order and payment operations based on their different resource requirements and usage patterns."
                         },
                         "cons": {
-                            "cohesion": "Moderate: Cross-aggregate references may require additional handling.",
-                            "coupling": "Moderate: Requires careful integration between Order and Payment.",
-                            "consistency": "Moderate: Ensuring data consistency across aggregates can be challenging.",
-                            "encapsulation": "Moderate: Clear boundaries may sometimes restrict data sharing.",
-                            "complexity": "Moderate: Increases design and maintenance overhead.",
-                            "independence": "Moderate: Coordination needed for transactions spanning both aggregates.",
-                            "performance": "Low: Potential latency due to cross-aggregate communication."
+                            "cohesion": "Business processes spanning both order and payment require coordination across aggregate boundaries, complicating process flows.",
+                            "coupling": "Orders depend on Payments through references, necessitating careful handling of foreign key relationships across aggregates.",
+                            "consistency": "Ensuring that order state always reflects payment state requires eventual consistency patterns, increasing system complexity.",
+                            "encapsulation": "Cross-aggregate business rules (like 'only paid orders can be shipped') must be implemented outside the aggregates in application services.",
+                            "complexity": "Additional orchestration logic is needed to coordinate the two aggregates during order placement and payment processing.",
+                            "independence": "Changes to the interaction between orders and payments require coordinated updates across both aggregates.",
+                            "performance": "Retrieving complete order information with payment details requires joining data across aggregates, adding query complexity."
                         }
                     }
                 ],
