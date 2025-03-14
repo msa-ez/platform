@@ -1,6 +1,6 @@
 const AIGenerator = require("./AIGenerator");
 const { TokenCounter, JsonParsingUtil } = require("./utils")
-const { GeneratorLockKeyError, GeneratorNetworkError } = require("./errors")
+const { GeneratorLockKeyError, GeneratorNetworkError, TokenNotInputedError } = require("./errors")
 
 const DEFAULT_CONFIG = {
     MAX_RETRY_COUNT: 3,
@@ -190,6 +190,11 @@ class FormattedJSONAIGenerator extends AIGenerator {
             // 세마포어로 인한 에러인 경우, 재요청을 할 경우, 오히려 문제를 발생시킬 수 있기 때문에 즉시 중단시킴
             if(e instanceof GeneratorLockKeyError) {
                 console.error(`[!] LockKeyError 발생! 해당 요청을 즉시 중단함`, networkErrorReturnObj)
+                return
+            }
+
+            if(e instanceof TokenNotInputedError) {
+                console.error(`[!] 토큰 입력이 필요합니다.`, networkErrorReturnObj)
                 return
             }
 

@@ -2,6 +2,7 @@ const { openaiModelInfos } = require("./openaiModelInfos");
 const { ollamaModelInfos } = require("./ollamaModelInfos");
 const { anthropicModelInfos } = require("./anthropicModelInfos");
 const { runpodModelInfos } = require("./runpodModelInfos");
+const { googleModelInfos } = require("./googleModelInfos");
 
 /**
  * @description 특정 모델에 대한 API 요청시에 활용되는 기반 정보
@@ -35,7 +36,8 @@ const modelInfos = {
     ...openaiModelInfos,
     ...ollamaModelInfos,
     ...anthropicModelInfos,
-    ...runpodModelInfos
+    ...runpodModelInfos,
+    ...googleModelInfos
 }
 
 const defaultModelInfos = {
@@ -58,12 +60,6 @@ Object.values(modelInfos).forEach((modelInfo) => {
     for(const key of Object.keys(defaultModelInfos)){
         if(modelInfo[key] == null) modelInfo[key] = defaultModelInfos[key]
     }
-
-    if(!modelInfo.inputTokenLimit)
-        modelInfo.inputTokenLimit = modelInfo.contextWindowTokenLimit - modelInfo.outputTokenLimit - modelInfo.inputTokenLimitMargin
-
-    if(modelInfo.isInferenceModel)
-        modelInfo.outputTokenLimit = modelInfo.outputTokenLimit - modelInfo.outputTokenLimitReasoningMargin
 })
 
 module.exports = modelInfos;

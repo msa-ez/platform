@@ -69,6 +69,17 @@ class TextParseHelperTest {
                 extractFunction: (parsedEvents) => {
                     if(parsedEvents.type !== "content_block_delta") return {}
 
+                    if(parsedEvents.delta &&
+                       parsedEvents.delta.type === "thinking_delta" &&
+                       parsedEvents.delta.thinking
+                    )
+                        return {
+                            thinkContent: parsedEvents.delta.thinking,
+                            id: "Anthropic",
+                            finish_reason: parsedEvents.delta && parsedEvents.delta.stop_reason ? parsedEvents.delta.stop_reason : null,
+                            error: parsedEvents.error || null
+                        }
+
                     return {
                         content: (parsedEvents.delta && 
                                   parsedEvents.delta.type === "text_delta" && 
@@ -76,6 +87,34 @@ class TextParseHelperTest {
                         id: "Anthropic",
                         finish_reason: parsedEvents.delta && parsedEvents.delta.stop_reason ? parsedEvents.delta.stop_reason : null,
                         error: parsedEvents.error || null
+                    }
+                }
+            })
+        );
+
+        console.log("### Google Response ###");
+        console.log(
+            TextParseHelper.parseResponseText(reponseTexts.google, {
+                splitFunction: (text) => {
+                    const regex = /\{\s*"candidates"\s*:\s*\[[\s\S]*?\]\s*,\s*"usageMetadata"\s*:\s*\{[\s\S]*?\}\s*,\s*"modelVersion"\s*:\s*"[^"]*"\s*\}/g
+                    return text.match(regex)
+                },
+                extractFunction: (parsed) => {
+                    return {
+                        content: parsed.candidates && 
+                                 parsed.candidates[0] && 
+                                 parsed.candidates[0].content && 
+                                 parsed.candidates[0].content.parts && 
+                                 parsed.candidates[0].content.parts[0] && 
+                                 parsed.candidates[0].content.parts[0].text ? 
+                                 parsed.candidates[0].content.parts[0].text : "",
+                        id: "Google",
+                        finish_reason: parsed.candidates &&
+                                       parsed.candidates[0] && 
+                                       parsed.candidates[0].finishReason &&
+                                       parsed.candidates[0].finishReason !== "STOP" ? 
+                                       parsed.candidates[0].finishReason : null,
+                        error: parsed.error || null
                     }
                 }
             })

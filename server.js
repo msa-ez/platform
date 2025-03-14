@@ -115,6 +115,27 @@ app.post('/api/openai-compatibility/chat', async (req, res) => {
     });
 });
 
+app.post('/api/google/chat', async (req, res) => {
+    const apiKey = req.headers["ai-param-api-key"]
+    const modelName = req.headers["ai-param-model-name"]
+    const stream = (req.headers["ai-param-stream"] === "true") ? "streamGenerateContent" : "generateContent"
+
+    await Util.makeProxyStream(req, res, {
+        targetUrl: `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:${stream}?key=${apiKey}`,
+        buildFetchOptions: (req) => {
+            return {
+                method: 'POST',
+                headers: {
+                    "content-type": req.headers["content-type"] || "application/json",
+                    "User-Agent": req.headers["user-agent"] || "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
+                },
+                body: JSON.stringify(req.body),
+                agent: Util.createHttpsAgent(false)
+            };
+        },
+        errorLabel: 'Google'
+    });
+});
 
 class Util {
     /**
@@ -196,8 +217,11 @@ class Util {
             "accept",
             "anthropic-version",
             "x-api-key",
+            "authorization",
             "ai-param-url",
-            "authorization"
+            "ai-param-api-key",
+            "ai-param-model-name",
+            "ai-param-stream"
         ]
 
         res.header('access-control-allow-headers', headersToAllow.join(', '));

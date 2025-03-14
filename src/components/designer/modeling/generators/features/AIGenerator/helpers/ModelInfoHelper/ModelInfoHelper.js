@@ -60,6 +60,14 @@ class ModelInfoHelper {
         modelInfo.requestModelName = baseKey + remainder;
         this._updateModelInfo(modelInfo, overrideOptions);
 
+
+        if(!modelInfo.inputTokenLimit)
+            modelInfo.inputTokenLimit = modelInfo.contextWindowTokenLimit - modelInfo.outputTokenLimit - modelInfo.inputTokenLimitMargin
+    
+        if(modelInfo.isInferenceModel)
+            modelInfo.outputTokenLimit = modelInfo.outputTokenLimit - modelInfo.outputTokenLimitReasoningMargin
+
+
         return modelInfo;
     }
 
