@@ -2976,6 +2976,10 @@
                     
                     byFunctionCallbacks.onGenerationDone()
                     this.isEditable = true
+
+                    this.$nextTick(() => {
+                        this.$router.go(0)
+                    })
                 }
             })
 
