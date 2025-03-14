@@ -123,6 +123,7 @@ class FormattedJSONAIGenerator extends AIGenerator {
 
         // 이것이 true인 경우, AI의 기존 응답에서 Json 파싱 문제가 일어난 부분을 복원하는 프롬프트로 전환시킴
         this.useJsonRestoreStrategy = false
+        this.isUseJsonRestoreStrategyUsed = false
         this.jsonOutputTextToRestore = undefined
         this.savedOnSendCallback = undefined
         this.createdPrompt = {}
@@ -167,6 +168,8 @@ class FormattedJSONAIGenerator extends AIGenerator {
 
         this.leftRetryCount = this.MAX_RETRY_COUNT
         this.isUseResponseFormat = true
+        this.useJsonRestoreStrategy = false
+        this.isUseJsonRestoreStrategyUsed = false
 
 
         await this.onGenerateBefore(this.client.input, this.generatorName)
@@ -251,6 +254,9 @@ class FormattedJSONAIGenerator extends AIGenerator {
 
             if(this.modelInfo.isInferenceModel && !this.client.onSend && this.savedOnSendCallback)
                 this.client.onSend = this.savedOnSendCallback
+
+            this.useJsonRestoreStrategy = false
+            this.isUseJsonRestoreStrategyUsed = false
 
             console.log("[*] 일반적인 프롬프트 생성 전략으로 시도", createPromptReturnObj)
         }
@@ -742,7 +748,14 @@ ${JSON.stringify(exampleOutputs)}
         
             if(returnObj.isJsonParsingError) {
                 this.jsonOutputTextToRestore = returnObj.modelRawValue
-                this.useJsonRestoreStrategy = true
+
+                if(!this.isUseJsonRestoreStrategyUsed) {
+                    this.useJsonRestoreStrategy = true
+                    this.isUseJsonRestoreStrategyUsed = true
+                }
+                else
+                    this.useJsonRestoreStrategy = false
+
                 this._retryByError()
             }
             else if(this.leftRetryCount > 0) {
