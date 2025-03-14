@@ -7,16 +7,21 @@ class GoogleClient extends BaseAPIClient {
   }
   
   _makeRequestParams(messages, modelInfo, token){
-    console.log(messages)
-
     const googleRequestData = this._convertToGoogleContents(messages)
+
     let requestData = {
-      systemInstruction: googleRequestData[0],
-      contents: googleRequestData.slice(1),
       generationConfig: {
         temperature: modelInfo.requestArgs.temperature
       }
     }
+
+    if(messages[0].role === "system"){
+      requestData.systemInstruction = googleRequestData[0]
+      requestData.contents = googleRequestData.slice(1)
+    }
+    else
+      requestData.contents = googleRequestData
+
 
     return {
       requestUrl: "http://localhost:4000/api/google/chat",

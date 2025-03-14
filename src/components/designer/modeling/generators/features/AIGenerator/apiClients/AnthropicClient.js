@@ -9,18 +9,26 @@ class AnthropicClient extends BaseAPIClient {
   _makeRequestParams(messages, modelInfo, token){
     let requestData = {
       model: modelInfo.requestModelName,
-      system: messages[0].content,
-      messages: messages.slice(1),
       temperature: modelInfo.requestArgs.temperature,
       max_tokens: modelInfo.requestArgs.maxTokens,
       stream: true
     }
+
+    if(messages[0].role === "system"){
+      requestData.system = messages[0].content
+      requestData.messages = messages.slice(1)
+    }
+    else
+      requestData.messages = messages
+
+
     if(modelInfo.requestArgs.budgetTokens)
       requestData.thinking = {
         type: "enabled",
         budget_tokens: modelInfo.requestArgs.budgetTokens
       }
 
+    
     return {
       requestUrl: "http://localhost:4000/api/anthropic/chat",
       requestData: JSON.stringify(requestData),
