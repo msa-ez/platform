@@ -1295,16 +1295,11 @@
                     console.log("[*] 생성 준비를 위한 입력값 구축과정에서 에러 발생", {error: e, state: this.state})
 
                     if(e.name=="QuotaExceededError"){
-                        var keys = Object.keys(localStorage);
-                        var values = keys.map(function(key) {
-                            return localStorage.getItem(key);
-                        });
+                        let keys = Object.keys(localStorage);
 
-                        for (var i = 0; i < keys.length; i++) {
-                            var key = keys[i];
-                            var value = values[i];
-
-                            if(value.includes('elements') && value.includes('relations')){
+                        for (let i = 0; i < keys.length; i++) {
+                            let key = keys[i];
+                            if(key.includes('image_')) {
                                 localStorage.removeItem(key);
                             }
                         }
