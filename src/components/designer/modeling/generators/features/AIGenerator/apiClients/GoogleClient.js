@@ -23,16 +23,22 @@ class GoogleClient extends BaseAPIClient {
       requestData.contents = googleRequestData
 
 
-    return {
-      requestUrl: "http://localhost:4000/api/google/chat",
-      requestData: JSON.stringify(requestData),
-      requestHeaders: {
-        "Content-type": "application/json",
-        "ai-param-api-key": token,
-        "ai-param-model-name": modelInfo.requestModelName,
-        "ai-param-stream": "true"
+      return {
+        requestUrl: "http://localhost:4000/proxy/stream",
+        requestData: JSON.stringify(requestData),
+        requestHeaders: {
+          "content-type": "application/json",
+          "param-url": `https://generativelanguage.googleapis.com/v1beta/models/${modelInfo.requestModelName}:streamGenerateContent?key=${token}`,
+          "param-error-label": "Google",
+          "param-reject-unauthorized": "false",
+          "param-is-use-agent": "true",
+          "param-method": "POST",
+          "param-headers": JSON.stringify({
+            "content-type": "application/json",
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+          })
+        }
       }
-    }
   }
 
   _convertToGoogleContents(messages){

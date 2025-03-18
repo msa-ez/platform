@@ -3155,5 +3155,2290 @@ Conway의 원칙(조직 구조가 시스템 아키텍처에 영향을 미친다�
                 }
             }
         ]
+    },
+
+    "civilApplication_v2": {
+        "selectedStructureOption": {
+            "boundedContexts": [
+                {
+                    "name": "ApplicationManagement",
+                    "alias": "민원 신청 관리",
+                    "importance": "Core Domain",
+                    "complexity": "0.8",
+                    "differentiation": "0.8",
+                    "implementationStrategy": "Rich Domain Model",
+                    "aggregates": [
+                        {
+                            "name": "Application",
+                            "alias": "민원 신청"
+                        },
+                        {
+                            "name": "Applicant",
+                            "alias": "신청자"
+                        }
+                    ],
+                    "requirements": [
+                        {
+                            "type": "userStory",
+                            "text": "# 민원신청발급 시스템 요구사항 정의서\n\n## 1. Epic: 민원 신청 프로세스\n### Feature 1.1: 서비스 신청\n#### Description\n- 통합창구포털을 통한 민원 서비스 신청 기능\n- 사용자 친화적인 UI/UX 제공\n- 단계별 신청 프로세스 구현\n\n#### Acceptance Criteria\n- 사용자는 통합창구포털에서 민원 서비스를 선택하고 신청할 수 있어야 함\n- 신청 양식의 모든 필수 필드가 검증되어야 함\n- 첨부 파일 업로드 시 파일 형식 및 크기 제한 검증\n- 임시 저장 및 불러오기 기능 제공\n- 신청 진행 상태 실시간 표시\n\n#### Input Parameters\n##### 신청자 정보\n- 이름 (한글 2-50자)\n- 주민등록번호 (13자리, 유효성 검증 포함)\n- 휴대전화번호 (10-11자리)\n- 이메일 주소 (이메일 형식 검증)\n- 주소 (도로명/지번 주소 지원)\n\n##### 민원 정보\n- 민원 종류 (코드테이블 연계)\n- 신청 사유 (최대 1000자)\n- 처리 희망일자\n- 수령 방법 (방문/우편/온라인)\n\n##### 첨부 서류\n- 파일 형식: PDF, JPG, PNG\n- 개별 파일 크기: 최대 10MB\n- 총 첨부 크기: 최대 50MB\n- 필수 서류 항목 검증\n\n#### Technical Details\n- RESTful API 엔드포인트 구조\n- 파일 업로드 처리 방식\n- 데이터 유효성 검증 규칙\n- 세션 관리 방식"
+                        },
+                        {
+                            "type": "userStory",
+                            "text": "### Feature 2.2: 신청서 작성\n#### Description\n- 자동 신청서 작성\n- 데이터 검증 및 보정\n- 전자서명 처리\n\n#### Acceptance Criteria\n- 모든 필요 정보가 신청서에 정확히 반영\n- 작성된 신청서의 유효성 검증\n- 전자서명 검증\n- 임시저장 기능\n- 작성 이력 관리\n\n#### Input Parameters\n##### 신청서 구성 정보\n- 템플릿 코드\n- 서명 위치\n- 첨부파일 목록\n- 보안등급\n\n##### 검증 규칙\n- 필수항목 검증\n- 형식 검증\n- 논리 검증\n- 결재선 검증\n\n#### Technical Details\n- 템플릿 엔진 사양\n- 전자서명 모듈 스펙\n- 문서 보안 정책\n- 저장소 구조"
+                        }
+                    ]
+                },
+                {
+                    "name": "VerificationService",
+                    "alias": "자격 검증 서비스",
+                    "importance": "Supporting Domain",
+                    "complexity": "0.7",
+                    "differentiation": "0.6",
+                    "implementationStrategy": "Transaction Script",
+                    "aggregates": [
+                        {
+                            "name": "Qualification",
+                            "alias": "자격"
+                        },
+                        {
+                            "name": "VerificationHistory",
+                            "alias": "검증 이력"
+                        }
+                    ],
+                    "requirements": [
+                        {
+                            "type": "userStory",
+                            "text": "### Feature 1.2: 자격 조회\n#### Description\n- 신청된 민원에 대한 자격 조회 및 검증\n- 실시간 자격 확인 시스템 연계\n- 다중 자격 조건 처리\n\n#### Acceptance Criteria\n- 신청자의 자격 요건이 자동으로 확인되어야 함\n- 자격 조회 결과가 실시간으로 반환되어야 함\n- 자격 불충족 시 상세 사유 제공\n- 조회 이력 저장 및 관리\n- 재조회 기능 제공\n\n#### Input Parameters\n##### 자격 조회 정보\n- 신청자 식별정보\n  - 주민등록번호 (암호화 전송)\n  - 외국인등록번호 (해당 시)\n- 자격 조회 항목\n  - 주민등록 진위확인\n  - 결격사유 조회\n  - 수급자격 확인\n- 조회 목적 코드\n\n##### API 인증 정보\n- API Key\n- 인증토큰\n- IP 접근제한\n- 전자서명 값\n\n#### Technical Details\n- 자격검증 API 스펙\n- 암호화 알고리즘\n- 에러 핸들링 방식\n- 타임아웃 설정"
+                        },
+                        {
+                            "type": "userStory",
+                            "text": "### Feature 2.1: 추가 데이터 조회\n#### Description\n- 연계 시스템 데이터 수집\n- 데이터 정합성 검증\n- 실시간/배치 조회 처리\n\n#### Acceptance Criteria\n- 연계 시스템으로부터 필요 데이터를 자동으로 수집\n- 수집된 데이터의 무결성 검증\n- 누락 데이터 재조회 처리\n- 데이터 변환 및 정제\n- 조회 이력 관리\n\n#### Input Parameters\n##### 조회 조건\n- 조회 대상 시스템\n- 조회 항목 정의\n- 조회 기간\n- 우선순위\n\n##### 데이터 처리 규칙\n- 데이터 변환 규칙\n- 정합성 검증 규칙\n- 예외처리 기준\n- 재처리 규칙\n\n#### Technical Details\n- 연계 시스템별 API 스펙\n- 데이터 동기화 방식\n- 에러 복구 전략\n- 모니터링 방안"
+                        }
+                    ]
+                },
+                {
+                    "name": "DocumentManagement",
+                    "alias": "문서 관리",
+                    "importance": "Supporting Domain",
+                    "complexity": "0.6",
+                    "differentiation": "0.5",
+                    "implementationStrategy": "Transaction Script",
+                    "aggregates": [
+                        {
+                            "name": "Form",
+                            "alias": "서식"
+                        },
+                        {
+                            "name": "Document",
+                            "alias": "문서"
+                        }
+                    ],
+                    "requirements": [
+                        {
+                            "type": "userStory",
+                            "text": "### Feature 1.3: 서식 조회\n#### Description\n- 민원 종류별 서식 관리 및 조회\n- 서식 버전 관리\n- 데이터 매핑 규칙 정의\n\n#### Acceptance Criteria\n- 해당 민원에 맞는 서식이 자동으로 조회되어야 함\n- 사용자 입력 데이터가 서식에 자동 매핑되어야 함\n- 서식 미리보기 제공\n- 이전 버전 서식 호환성 보장\n- 서식 오류 시 대체 서식 제공\n\n#### Input Parameters\n##### 서식 정보\n- 서식 코드\n- 서식 버전\n- 유효기간\n- 서식 종류 (일반/특수)\n\n##### 매핑 규칙\n- 필드 매핑 정의\n- 데이터 변환 규칙\n- 계산식 정의\n- 유효성 검증 규칙\n\n#### Technical Details\n- 서식 저장소 구조\n- 버전 관리 체계\n- 템플릿 엔진 스펙\n- 캐싱 전략"
+                        },
+                        {
+                            "type": "userStory",
+                            "text": "### Feature 3.1: EDMS 연계\n#### Description\n- EDMS 시스템 연계\n- 문서 등록 및 관리\n- 이력 관리\n\n#### Acceptance Criteria\n- 신청서가 EDMS에 자동 등록\n- EDMS 처리 상태 실시간 조회\n- 문서 분류체계 적용\n- 접근권한 관리\n- 문서 이관 처리\n\n#### Input Parameters\n##### EDMS 연계 정보\n- 시스템 연계 정보\n- 문서분류 체계\n- 보안등급 정의\n- 보존기간 정의\n\n##### 문서 속성\n- 문서번호 체계\n- 색인 정보\n- 문서 유형\n- 관리 부서\n\n#### Technical Details\n- EDMS API 스펙\n- 문서 변환 규칙\n- 보안 정책\n- 백업 정책"
+                        },
+                        {
+                            "type": "userStory",
+                            "text": "### Feature 3.2: 발급문서 처리\n#### Description\n- PDF 문서 생성\n- 전자서명 처리\n- 보안 워터마크 적용\n\n#### Acceptance Criteria\n- PDF 문서 정확한 생성\n- 전자서명 포함\n- 문서 위변조 방지\n- 보안 워터마크 적용\n- 출력 제어\n\n#### Input Parameters\n##### PDF 생성 정보\n- 템플릿 정보\n- 폰트 설정\n- 여백 설정\n- 해상도 설정\n\n##### 보안 설정\n- 암호화 수준\n- 출력 제어\n- 워터마크 위치\n- 보안 레벨\n\n#### Technical Details\n- PDF 라이브러리 스펙\n- 암호화 알고리즘\n- 디지털 서명 규격\n- 성능 최적화 방안"
+                        }
+                    ]
+                }
+            ],
+            "relations": [
+                {
+                    "name": "ApplicationVerification",
+                    "type": "Request/Response",
+                    "upStream": {
+                        "name": "ApplicationManagement",
+                        "alias": "민원 신청 관리"
+                    },
+                    "downStream": {
+                        "name": "VerificationService",
+                        "alias": "자격 검증 서비스"
+                    }
+                },
+                {
+                    "name": "ApplicationDocument",
+                    "type": "Request/Response",
+                    "upStream": {
+                        "name": "ApplicationManagement",
+                        "alias": "민원 신청 관리"
+                    },
+                    "downStream": {
+                        "name": "DocumentManagement",
+                        "alias": "문서 관리"
+                    }
+                }
+            ],
+            "thoughts": "민원신청발급 시스템은 크게 세 가지 bounded context로 나눌 수 있습니다.\n\n1.  **ApplicationManagement (민원 신청 관리):** 민원 신청 접수 및 관리, 신청서 작성 등 핵심적인 민원 신청 프로세스를 담당합니다. 사용자 인터페이스, 신청 데이터 관리, 신청 상태 추적 등의 기능을 포함합니다. 이는 핵심 도메인으로 분류됩니다.\n2.  **VerificationService (자격 검증 서비스):** 신청자의 자격 요건을 확인하고 외부 시스템과의 연계를 통해 추가 데이터를 조회하는 역할을 합니다. 이는 신청 프로세스의 중요한 부분을 차지하지만, 자체적인 비즈니스 로직보다는 외부 시스템에 의존하는 부분이 많으므로 지원 도메인으로 분류됩니다.\n3.  **DocumentManagement (문서 관리):** 민원 종류별 서식 관리, EDMS 연계, 발급 문서 생성 및 보안 처리 등 문서 관련 기능을 담당합니다. 이는 신청 프로세스를 지원하는 역할을 하며, 자체적인 비즈니스 로직보다는 문서 생성 및 관리에 집중하므로 지원 도메인으로 분류됩니다.\n\n**영향을 미친 조직 및 인프라 요구사항:**\n\n*   **성능 요구사항:** 각 bounded context는 성능 요구사항(응답 시간, 처리 용량)을 충족해야 합니다. 특히, 자격 검증 서비스는 실시간 연계를 통해 빠른 응답 시간을 보장해야 하므로, 별도의 bounded context로 분리하여 최적화하는 것이 효율적입니다.\n*   **보안 요구사항:** 개인정보 암호화, 접근 이력 관리 등 보안 요구사항은 모든 bounded context에 적용되지만, 특히 자격 검증 서비스는 민감한 개인정보를 다루므로 더욱 강화된 보안 정책이 필요합니다. 따라서, 별도의 bounded context로 분리하여 보안 관리를 집중하는 것이 좋습니다.\n*   **외부 시스템 연계:** 각 bounded context는 외부 시스템(통합창구포털, EDMS, 자격검증 시스템)과 연계되어야 합니다. 특히, 문서 관리 bounded context는 EDMS와의 실시간 연계를 통해 문서 등록 및 관리를 자동화해야 하므로, 별도의 bounded context로 분리하여 연계 기능을 구현하는 것이 효율적입니다.\n*   **확장성:** 각 bounded context는 수평적 확장이 가능해야 합니다. 민원 신청량 증가에 따라 각 bounded context의 트래픽이 증가할 수 있으므로, 독립적으로 확장할 수 있도록 bounded context를 분리하는 것이 중요합니다.",
+            "explanations": [
+                {
+                    "sourceContext": "민원 신청 관리",
+                    "targetContext": "자격 검증 서비스",
+                    "relationType": "Request/Response",
+                    "reason": "민원 신청 시 신청자의 자격 요건을 확인하기 위해 자격 검증 서비스에 요청하고, 결과를 받아 신청 프로세스를 진행합니다.",
+                    "interactionPattern": "REST API를 통해 동기적으로 자격 검증을 요청하고 응답을 받습니다."
+                },
+                {
+                    "sourceContext": "민원 신청 관리",
+                    "targetContext": "문서 관리",
+                    "relationType": "Request/Response",
+                    "reason": "민원 신청 완료 후 신청서 및 관련 문서를 생성하고 EDMS에 등록하기 위해 문서 관리 서비스에 요청합니다.",
+                    "interactionPattern": "REST API를 통해 동기적으로 문서 생성을 요청하고, 생성된 문서를 EDMS에 등록합니다."
+                }
+            ],
+            "devisionAspect": "도메인 복잡도 분리"
+        },
+        "draftOptions": {
+            "ApplicationManagement": {
+                "structure": [
+                    {
+                        "aggregate": {
+                            "name": "ApplicationWithApplicant",
+                            "alias": "민원 신청 및 신청자 정보"
+                        },
+                        "enumerations": [
+                            {
+                                "name": "ApplicationStatus",
+                                "alias": "신청 상태"
+                            },
+                            {
+                                "name": "ReceivingMethod",
+                                "alias": "수령 방법"
+                            }
+                        ],
+                        "valueObjects": [
+                            {
+                                "name": "ApplicantInfo",
+                                "alias": "신청자 정보"
+                            },
+                            {
+                                "name": "CivilPetitionInfo",
+                                "alias": "민원 정보"
+                            },
+                            {
+                                "name": "FormReference",
+                                "alias": "서식 참조",
+                                "referencedAggregate": {
+                                    "name": "Form",
+                                    "alias": "서식"
+                                }
+                            },
+                            {
+                                "name": "DocumentReference",
+                                "alias": "문서 참조",
+                                "referencedAggregate": {
+                                    "name": "Document",
+                                    "alias": "문서"
+                                }
+                            }
+                        ]
+                    }
+                ],
+                "pros": {
+                    "cohesion": "민원 신청과 신청자 정보를 하나의 Aggregate에서 관리하므로, 관련된 모든 정보를 한 번에 조회할 수 있습니다.",
+                    "coupling": "Aggregate 내부에서 모든 정보가 관리되므로, Aggregate 간의 결합도가 낮습니다.",
+                    "consistency": "Aggregate 내부에서 트랜잭션이 관리되므로, 데이터 일관성을 유지하기 쉽습니다.",
+                    "encapsulation": "Aggregate 내부 구현을 숨기고 필요한 정보만 제공하여 캡슐화가 잘 되어 있습니다.",
+                    "complexity": "Aggregate가 하나로 통합되어 있어 도메인 모델이 단순하고 이해하기 쉽습니다.",
+                    "independence": "Aggregate가 하나이므로, 독립적으로 개발, 테스트 및 배포가 가능합니다.",
+                    "performance": "모든 정보가 하나의 Aggregate에 있으므로, 쿼리 성능이 향상됩니다."
+                },
+                "cons": {
+                    "cohesion": "Aggregate가 여러 책임을 가지므로, 응집도가 낮아질 수 있습니다.",
+                    "coupling": "Aggregate 내부의 변경이 다른 기능에 영향을 줄 수 있습니다.",
+                    "consistency": "Aggregate가 커질수록 트랜잭션 관리가 복잡해질 수 있습니다.",
+                    "encapsulation": "Aggregate 내부의 정보가 많아질수록 캡슐화가 어려워질 수 있습니다.",
+                    "complexity": "Aggregate가 커질수록 도메인 모델이 복잡해질 수 있습니다.",
+                    "independence": "Aggregate 내부의 기능들이 서로 의존적이므로, 독립적인 개발, 테스트 및 배포가 어려울 수 있습니다.",
+                    "performance": "Aggregate가 커질수록 쿼리 성능이 저하될 수 있습니다."
+                },
+                "boundedContext": {
+                    "name": "ApplicationManagement",
+                    "alias": "민원 신청 관리",
+                    "displayName": "민원 신청 관리",
+                    "description": "# Requirements\n\n## userStory\n\n# 민원신청발급 시스템 요구사항 정의서\n\n## 1. Epic: 민원 신청 프로세스\n### Feature 1.1: 서비스 신청\n#### Description\n- 통합창구포털을 통한 민원 서비스 신청 기능\n- 사용자 친화적인 UI/UX 제공\n- 단계별 신청 프로세스 구현\n\n#### Acceptance Criteria\n- 사용자는 통합창구포털에서 민원 서비스를 선택하고 신청할 수 있어야 함\n- 신청 양식의 모든 필수 필드가 검증되어야 함\n- 첨부 파일 업로드 시 파일 형식 및 크기 제한 검증\n- 임시 저장 및 불러오기 기능 제공\n- 신청 진행 상태 실시간 표시\n\n#### Input Parameters\n##### 신청자 정보\n- 이름 (한글 2-50자)\n- 주민등록번호 (13자리, 유효성 검증 포함)\n- 휴대전화번호 (10-11자리)\n- 이메일 주소 (이메일 형식 검증)\n- 주소 (도로명/지번 주소 지원)\n\n##### 민원 정보\n- 민원 종류 (코드테이블 연계)\n- 신청 사유 (최대 1000자)\n- 처리 희망일자\n- 수령 방법 (방문/우편/온라인)\n\n##### 첨부 서류\n- 파일 형식: PDF, JPG, PNG\n- 개별 파일 크기: 최대 10MB\n- 총 첨부 크기: 최대 50MB\n- 필수 서류 항목 검증\n\n#### Technical Details\n- RESTful API 엔드포인트 구조\n- 파일 업로드 처리 방식\n- 데이터 유효성 검증 규칙\n- 세션 관리 방식\n\n## userStory\n\n### Feature 2.2: 신청서 작성\n#### Description\n- 자동 신청서 작성\n- 데이터 검증 및 보정\n- 전자서명 처리\n\n#### Acceptance Criteria\n- 모든 필요 정보가 신청서에 정확히 반영\n- 작성된 신청서의 유효성 검증\n- 전자서명 검증\n- 임시저장 기능\n- 작성 이력 관리\n\n#### Input Parameters\n##### 신청서 구성 정보\n- 템플릿 코드\n- 서명 위치\n- 첨부파일 목록\n- 보안등급\n\n##### 검증 규칙\n- 필수항목 검증\n- 형식 검증\n- 논리 검증\n- 결재선 검증\n\n#### Technical Details\n- 템플릿 엔진 사양\n- 전자서명 모듈 스펙\n- 문서 보안 정책\n- 저장소 구조",
+                    "aggregates": [
+                        {
+                            "name": "Application",
+                            "alias": "민원 신청"
+                        },
+                        {
+                            "name": "Applicant",
+                            "alias": "신청자"
+                        }
+                    ]
+                },
+                "description": "{\"userStories\":[{\"title\":\"서비스 신청\",\"description\":\"사용자는 통합창구포털을 통해 민원 서비스를 신청할 수 있어야 합니다.\",\"acceptance\":[\"통합창구포털에서 민원 서비스를 선택하고 신청할 수 있어야 함\",\"신청 양식의 모든 필수 필드가 검증되어야 함\",\"첨부 파일 업로드 시 파일 형식 및 크기 제한 검증\",\"임시 저장 및 불러오기 기능 제공\",\"신청 진행 상태 실시간 표시\"]},{\"title\":\"신청서 작성\",\"description\":\"사용자는 민원 신청서를 자동으로 작성하고, 데이터 검증 및 전자서명을 처리할 수 있어야 합니다.\",\"acceptance\":[\"모든 필요 정보가 신청서에 정확히 반영\",\"작성된 신청서의 유효성 검증\",\"전자서명 검증\",\"임시저장 기능\",\"작성 이력 관리\"]}],\"entities\":{\"ApplicantInfo\":{\"properties\":[{\"name\":\"name\",\"type\":\"String\",\"required?\":true},{\"name\":\"residentRegistrationNumber\",\"type\":\"String\",\"required?\":true},{\"name\":\"phoneNumber\",\"type\":\"String\",\"required?\":true},{\"name\":\"emailAddress\",\"type\":\"String\",\"required?\":true},{\"name\":\"address\",\"type\":\"String\",\"required?\":true}]},\"CivilPetitionInfo\":{\"properties\":[{\"name\":\"petitionType\",\"type\":\"String\",\"required?\":true},{\"name\":\"reasonForApplication\",\"type\":\"String\",\"required?\":true},{\"name\":\"desiredProcessingDate\",\"type\":\"Date\",\"required?\":false},{\"name\":\"receivingMethod\",\"type\":\"enum\",\"required?\":true,\"values?\":[\"방문\",\"우편\",\"온라인\"]}]},\"Attachment\":{\"properties\":[{\"name\":\"fileName\",\"type\":\"String\",\"required?\":true},{\"name\":\"fileType\",\"type\":\"enum\",\"required?\":true,\"values?\":[\"PDF\",\"JPG\",\"PNG\"]},{\"name\":\"fileSize\",\"type\":\"Long\",\"required?\":true},{\"name\":\"isRequired\",\"type\":\"Boolean\",\"required?\":true}]},\"ApplicationForm\":{\"properties\":[{\"name\":\"templateCode\",\"type\":\"String\",\"required?\":true},{\"name\":\"signaturePosition\",\"type\":\"String\",\"required?\":true},{\"name\":\"attachmentList\",\"type\":\"String\",\"required?\":true},{\"name\":\"securityLevel\",\"type\":\"String\",\"required?\":true}]}},\"businessRules\":[{\"name\":\"필수 입력 항목 검증\",\"description\":\"신청자 정보 및 민원 정보의 필수 입력 항목은 반드시 입력되어야 합니다.\"},{\"name\":\"주민등록번호 유효성 검증\",\"description\":\"신청자의 주민등록번호는 13자리여야 하며, 유효성 검증을 통과해야 합니다.\"},{\"name\":\"휴대전화번호 유효성 검증\",\"description\":\"신청자의 휴대전화번호는 10-11자리여야 합니다.\"},{\"name\":\"이메일 형식 검증\",\"description\":\"신청자의 이메일 주소는 이메일 형식에 맞아야 합니다.\"},{\"name\":\"첨부 파일 형식 및 크기 제한\",\"description\":\"첨부 파일은 PDF, JPG, PNG 형식만 허용하며, 개별 파일 크기는 최대 10MB, 총 첨부 크기는 최대 50MB를 초과할 수 없습니다.\"}],\"interfaces\":{\"ServiceApplication\":{\"sections\":[{\"name\":\"신청자 정보\",\"type\":\"form\",\"fields\":[{\"name\":\"name\",\"type\":\"text\",\"required?\":true},{\"name\":\"residentRegistrationNumber\",\"type\":\"text\",\"required?\":true},{\"name\":\"phoneNumber\",\"type\":\"text\",\"required?\":true},{\"name\":\"emailAddress\",\"type\":\"text\",\"required?\":true},{\"name\":\"address\",\"type\":\"text\",\"required?\":true}],\"actions\":[],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}},{\"name\":\"민원 정보\",\"type\":\"form\",\"fields\":[{\"name\":\"petitionType\",\"type\":\"select\",\"required?\":true},{\"name\":\"reasonForApplication\",\"type\":\"textarea\",\"required?\":true},{\"name\":\"desiredProcessingDate\",\"type\":\"date\",\"required?\":false},{\"name\":\"receivingMethod\",\"type\":\"select\",\"required?\":true}],\"actions\":[\"신청\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}},{\"name\":\"첨부 서류\",\"type\":\"form\",\"fields\":[{\"name\":\"attachment\",\"type\":\"file\",\"required?\":true}],\"actions\":[],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}}]},\"ApplicationFormCreation\":{\"sections\":[{\"name\":\"신청서 구성 정보\",\"type\":\"form\",\"fields\":[{\"name\":\"templateCode\",\"type\":\"text\",\"required?\":true},{\"name\":\"signaturePosition\",\"type\":\"text\",\"required?\":true},{\"name\":\"attachmentList\",\"type\":\"text\",\"required?\":true},{\"name\":\"securityLevel\",\"type\":\"text\",\"required?\":true}],\"actions\":[\"저장\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}}]}}}"
+            },
+            "VerificationService": {
+                "structure": [
+                    {
+                        "aggregate": {
+                            "name": "QualificationVerification",
+                            "alias": "자격 조회 및 검증"
+                        },
+                        "enumerations": [],
+                        "valueObjects": [
+                            {
+                                "name": "ApplicantInfo",
+                                "alias": "신청자 정보"
+                            },
+                            {
+                                "name": "VerificationItem",
+                                "alias": "자격 조회 항목"
+                            },
+                            {
+                                "name": "APIAuthenticationInfo",
+                                "alias": "API 인증 정보"
+                            },
+                            {
+                                "name": "InquiryCondition",
+                                "alias": "조회 조건"
+                            },
+                            {
+                                "name": "ApplicationWithApplicantReference",
+                                "alias": "민원 신청 및 신청자 정보 참조",
+                                "referencedAggregate": {
+                                    "name": "ApplicationWithApplicant",
+                                    "alias": "민원 신청 및 신청자 정보"
+                                }
+                            }
+                        ]
+                    }
+                ],
+                "pros": {
+                    "cohesion": "자격 조회 및 검증 관련 모든 데이터를 하나의 트랜잭션 경계 내에서 관리하여 자격 확인 프로세스의 원자성을 보장합니다.",
+                    "coupling": "자격 조회 및 검증 작업에 대한 애그리거트 간 통신을 제거하여 최종 일관성 패턴이나 분산 트랜잭션의 필요성을 줄입니다.",
+                    "consistency": "신청자 자격 요건 확인과 관련된 비즈니스 규칙을 단일 트랜잭션 내에서 적용합니다.",
+                    "encapsulation": "자격 확인 로직과 검증 이력 상태 전환을 함께 캡슐화하여 자격 규칙이 자격 상태 변경 전에 적용되도록 합니다.",
+                    "complexity": "관련 개념을 병합하여 도메인 모델을 단순화하고, 별도의 애그리거트 간 조정 메커니즘의 필요성을 줄입니다.",
+                    "independence": "자격 조회 또는 검증 프로세스에 대한 변경 사항을 여러 애그리거트 간 변경 사항 조정 없이 한 곳에서 수행할 수 있습니다.",
+                    "performance": "자격 조회 및 검증 데이터에 접근할 때 여러 데이터베이스 쿼리의 필요성을 제거하여 읽기 작업 성능을 향상시킵니다."
+                },
+                "cons": {
+                    "cohesion": "애그리거트가 자격 관리와 검증 이력 처리 모두를 담당하게 되어 단일 책임 원칙이 희석됩니다.",
+                    "coupling": "자격 검증 요구 사항 변경이 전체 QualificationVerification 애그리거트에 영향을 미칠 수 있으며, 잠재적으로 자격 기능에 영향을 줄 수 있습니다.",
+                    "consistency": "애그리거트가 커짐에 따라 트랜잭션 제한 시간이 발생할 가능성이 높아집니다.",
+                    "encapsulation": "자격과 검증 이력을 처리하는 여러 팀이 동일한 애그리거트에 대한 변경 사항을 조정해야 하므로 조직적 마찰이 발생합니다.",
+                    "complexity": "애그리거트는 시간이 지남에 따라 커져서 내부에 포함된 모든 비즈니스 규칙을 이해하기가 더 어려워집니다.",
+                    "independence": "자격 및 검증 작업이 동일한 리소스 제약 조건을 공유하므로 독립적으로 확장할 수 없습니다.",
+                    "performance": "동시 수정이 동일한 애그리거트를 대상으로 하므로 쓰기 작업이 경합으로 인해 어려움을 겪을 수 있습니다."
+                },
+                "isAIRecommended": false,
+                "boundedContext": {
+                    "name": "VerificationService",
+                    "alias": "자격 검증 서비스",
+                    "displayName": "자격 검증 서비스",
+                    "description": "# Requirements\n\n## userStory\n\n### Feature 1.2: 자격 조회\n#### Description\n- 신청된 민원에 대한 자격 조회 및 검증\n- 실시간 자격 확인 시스템 연계\n- 다중 자격 조건 처리\n\n#### Acceptance Criteria\n- 신청자의 자격 요건이 자동으로 확인되어야 함\n- 자격 조회 결과가 실시간으로 반환되어야 함\n- 자격 불충족 시 상세 사유 제공\n- 조회 이력 저장 및 관리\n- 재조회 기능 제공\n\n#### Input Parameters\n##### 자격 조회 정보\n- 신청자 식별정보\n  - 주민등록번호 (암호화 전송)\n  - 외국인등록번호 (해당 시)\n- 자격 조회 항목\n  - 주민등록 진위확인\n  - 결격사유 조회\n  - 수급자격 확인\n- 조회 목적 코드\n\n##### API 인증 정보\n- API Key\n- 인증토큰\n- IP 접근제한\n- 전자서명 값\n\n#### Technical Details\n- 자격검증 API 스펙\n- 암호화 알고리즘\n- 에러 핸들링 방식\n- 타임아웃 설정\n\n## userStory\n\n### Feature 2.1: 추가 데이터 조회\n#### Description\n- 연계 시스템 데이터 수집\n- 데이터 정합성 검증\n- 실시간/배치 조회 처리\n\n#### Acceptance Criteria\n- 연계 시스템으로부터 필요 데이터를 자동으로 수집\n- 수집된 데이터의 무결성 검증\n- 누락 데이터 재조회 처리\n- 데이터 변환 및 정제\n- 조회 이력 관리\n\n#### Input Parameters\n##### 조회 조건\n- 조회 대상 시스템\n- 조회 항목 정의\n- 조회 기간\n- 우선순위\n\n##### 데이터 처리 규칙\n- 데이터 변환 규칙\n- 정합성 검증 규칙\n- 예외처리 기준\n- 재처리 규칙\n\n#### Technical Details\n- 연계 시스템별 API 스펙\n- 데이터 동기화 방식\n- 에러 복구 전략\n- 모니터링 방안",
+                    "aggregates": [
+                        {
+                            "name": "Qualification",
+                            "alias": "자격"
+                        },
+                        {
+                            "name": "VerificationHistory",
+                            "alias": "검증 이력"
+                        }
+                    ]
+                },
+                "description": "{\"userStories\":[{\"title\":\"자격 조회\",\"description\":\"신청된 민원에 대한 자격 조회 및 검증을 통해 신청자의 자격 요건을 자동으로 확인하고 실시간으로 결과를 반환받아 민원 처리의 정확성을 높이고자 합니다.\",\"acceptance\":[\"신청자의 자격 요건이 자동으로 확인되어야 함\",\"자격 조회 결과가 실시간으로 반환되어야 함\",\"자격 불충족 시 상세 사유 제공\",\"조회 이력 저장 및 관리\",\"재조회 기능 제공\"]},{\"title\":\"추가 데이터 조회\",\"description\":\"연계 시스템 데이터 수집 및 데이터 정합성 검증을 통해 필요한 데이터를 자동으로 수집하고 데이터의 무결성을 검증하여 민원 처리의 효율성을 높이고자 합니다.\",\"acceptance\":[\"연계 시스템으로부터 필요 데이터를 자동으로 수집\",\"수집된 데이터의 무결성 검증\",\"누락 데이터 재조회 처리\",\"데이터 변환 및 정제\",\"조회 이력 관리\"]}],\"entities\":{\"자격조회정보\":{\"properties\":[{\"name\":\"applicantId\",\"type\":\"String\",\"required?\":true,\"description\":\"신청자 식별정보 (주민등록번호 암호화 전송 or 외국인등록번호)\"},{\"name\":\"residentRegistrationNumber\",\"type\":\"String\",\"required?\":false,\"description\":\"주민등록번호 (암호화 전송)\"},{\"name\":\"foreignerRegistrationNumber\",\"type\":\"String\",\"required?\":false,\"description\":\"외국인등록번호 (해당 시)\"},{\"name\":\"verificationItems\",\"type\":\"Array\",\"required?\":true,\"description\":\"자격 조회 항목 (주민등록 진위확인, 결격사유 조회, 수급자격 확인 등)\"},{\"name\":\"inquiryPurposeCode\",\"type\":\"String\",\"required?\":true,\"description\":\"조회 목적 코드\"}]},\"API인증정보\":{\"properties\":[{\"name\":\"apiKey\",\"type\":\"String\",\"required?\":true,\"description\":\"API Key\"},{\"name\":\"authToken\",\"type\":\"String\",\"required?\":true,\"description\":\"인증토큰\"},{\"name\":\"ipAccessRestriction\",\"type\":\"String\",\"required?\":true,\"description\":\"IP 접근제한\"},{\"name\":\"electronicSignature\",\"type\":\"String\",\"required?\":true,\"description\":\"전자서명 값\"}]},\"조회조건\":{\"properties\":[{\"name\":\"targetSystem\",\"type\":\"String\",\"required?\":true,\"description\":\"조회 대상 시스템\"},{\"name\":\"inquiryItems\",\"type\":\"Array\",\"required?\":true,\"description\":\"조회 항목 정의\"},{\"name\":\"inquiryPeriod\",\"type\":\"String\",\"required?\":true,\"description\":\"조회 기간\"},{\"name\":\"priority\",\"type\":\"Integer\",\"required?\":true,\"description\":\"우선순위\"}]},\"데이터처리규칙\":{\"properties\":[{\"name\":\"dataConversionRules\",\"type\":\"String\",\"required?\":true,\"description\":\"데이터 변환 규칙\"},{\"name\":\"integrityVerificationRules\",\"type\":\"String\",\"required?\":true,\"description\":\"정합성 검증 규칙\"},{\"name\":\"exceptionHandlingCriteria\",\"type\":\"String\",\"required?\":true,\"description\":\"예외처리 기준\"},{\"name\":\"retryRules\",\"type\":\"String\",\"required?\":true,\"description\":\"재처리 규칙\"}]}},\"businessRules\":[{\"name\":\"자격 요건 자동 확인\",\"description\":\"신청자의 자격 요건은 실시간 자격 확인 시스템 연계를 통해 자동으로 확인되어야 한다.\"},{\"name\":\"자격 불충족 시 사유 제공\",\"description\":\"자격 요건이 충족되지 않을 경우, 상세 사유를 제공해야 한다.\"},{\"name\":\"데이터 무결성 검증\",\"description\":\"연계 시스템으로부터 수집된 데이터는 무결성 검증을 거쳐야 한다.\"}],\"interfaces\":{\"자격조회화면\":{\"sections\":[{\"name\":\"자격 조회 정보 입력\",\"type\":\"form\",\"fields\":[{\"name\":\"residentRegistrationNumber\",\"type\":\"text\",\"required?\":false,\"description\":\"주민등록번호 (암호화 전송)\"},{\"name\":\"foreignerRegistrationNumber\",\"type\":\"text\",\"required?\":false,\"description\":\"외국인등록번호\"},{\"name\":\"inquiryPurposeCode\",\"type\":\"select\",\"required?\":true,\"description\":\"조회 목적 코드\"}],\"actions\":[\"자격 조회\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}},{\"name\":\"자격 조회 결과\",\"type\":\"table\",\"fields\":[],\"actions\":[],\"filters\":[],\"resultTable\":{\"columns\":[\"신청자 식별정보\",\"자격 조회 항목\",\"조회 결과\",\"상세 사유\"],\"actions\":[\"재조회\"]}}]},\"추가데이터조회화면\":{\"sections\":[{\"name\":\"조회 조건 입력\",\"type\":\"form\",\"fields\":[{\"name\":\"targetSystem\",\"type\":\"select\",\"required?\":true,\"description\":\"조회 대상 시스템\"},{\"name\":\"inquiryItems\",\"type\":\"text\",\"required?\":true,\"description\":\"조회 항목 정의\"},{\"name\":\"inquiryPeriod\",\"type\":\"date\",\"required?\":true,\"description\":\"조회 기간\"},{\"name\":\"priority\",\"type\":\"number\",\"required?\":true,\"description\":\"우선순위\"}],\"actions\":[\"데이터 조회\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}},{\"name\":\"조회 결과\",\"type\":\"table\",\"fields\":[],\"actions\":[],\"filters\":[],\"resultTable\":{\"columns\":[\"조회 대상 시스템\",\"조회 항목\",\"수집된 데이터\",\"검증 결과\"],\"actions\":[\"데이터 재조회\"]}}]}}}"
+            },
+            "DocumentManagement": {
+                "structure": [
+                    {
+                        "aggregate": {
+                            "name": "FormDocument",
+                            "alias": "서식 및 문서"
+                        },
+                        "enumerations": [
+                            {
+                                "name": "FormatType",
+                                "alias": "서식 유형"
+                            }
+                        ],
+                        "valueObjects": [
+                            {
+                                "name": "FormatInformation",
+                                "alias": "서식 정보"
+                            },
+                            {
+                                "name": "MappingRule",
+                                "alias": "매핑 규칙"
+                            },
+                            {
+                                "name": "EDMSConnectionInformation",
+                                "alias": "EDMS 연계 정보"
+                            },
+                            {
+                                "name": "DocumentAttributes",
+                                "alias": "문서 속성"
+                            },
+                            {
+                                "name": "PDFGenerationInformation",
+                                "alias": "PDF 생성 정보"
+                            },
+                            {
+                                "name": "SecuritySettings",
+                                "alias": "보안 설정"
+                            }
+                        ]
+                    }
+                ],
+                "pros": {
+                    "cohesion": "모든 서식 및 문서 데이터는 단일 애그리거트 내에서 관리되므로 밀접하게 관련된 작업에 대한 일관성을 보장합니다.",
+                    "coupling": "서식 및 문서 작업에 대한 애그리거트 간 통신이 필요하지 않아 최종 일관성 패턴 또는 분산 트랜잭션의 필요성이 줄어듭니다.",
+                    "consistency": "서식 및 문서 규칙을 포괄하는 비즈니스 규칙(예: '서식 유효성 검사는 문서 처리 전에 수행해야 함')은 단일 트랜잭션 내에서 적용됩니다.",
+                    "encapsulation": "서식 유효성 검사 논리 및 문서 상태 전환이 함께 캡슐화되어 서식 규칙이 문서 상태 변경 전에 적용되도록 보장합니다.",
+                    "complexity": "관련 개념을 병합하여 도메인 모델을 단순화하여 별도의 애그리거트 간의 조율 메커니즘의 필요성을 줄입니다.",
+                    "independence": "서식 또는 문서 처리에 대한 변경은 여러 애그리거트에 대한 변경을 조율하지 않고 한 곳에서 수행할 수 있습니다.",
+                    "performance": "서식 및 문서 데이터에 모두 액세스할 때 여러 데이터베이스 쿼리가 필요하지 않아 읽기 작업 성능이 향상됩니다."
+                },
+                "cons": {
+                    "cohesion": "애그리거트는 서식 관리 및 문서 처리 문제를 모두 처리해야 하므로 단일 책임 원칙이 희석됩니다.",
+                    "coupling": "문서 처리 요구 사항에 대한 변경은 전체 FormDocument 애그리거트에 영향을 미쳐 서식 기능에 영향을 미칠 수 있습니다.",
+                    "consistency": "애그리거트가 커질수록 트랜잭션 시간 초과 가능성이 높아집니다.",
+                    "encapsulation": "서식과 문서 문제를 처리하는 다른 팀은 동일한 애그리거트에 대한 변경 사항을 조율해야 하므로 조직 마찰이 발생합니다.",
+                    "complexity": "애그리거트는 시간이 지남에 따라 커져서 그 안에 포함된 모든 비즈니스 규칙을 이해하기가 더 어려워집니다.",
+                    "independence": "동일한 리소스 제약 조건을 공유하므로 서식 및 문서 작업을 독립적으로 확장할 수 없습니다.",
+                    "performance": "동시 수정이 동일한 애그리거트를 대상으로 하므로 쓰기 작업이 경합으로 인해 어려움을 겪을 수 있습니다(서식 대 문서)."
+                },
+                "isAIRecommended": true,
+                "boundedContext": {
+                    "name": "DocumentManagement",
+                    "alias": "문서 관리",
+                    "displayName": "문서 관리",
+                    "description": "# Requirements\n\n## userStory\n\n### Feature 1.3: 서식 조회\n#### Description\n- 민원 종류별 서식 관리 및 조회\n- 서식 버전 관리\n- 데이터 매핑 규칙 정의\n\n#### Acceptance Criteria\n- 해당 민원에 맞는 서식이 자동으로 조회되어야 함\n- 사용자 입력 데이터가 서식에 자동 매핑되어야 함\n- 서식 미리보기 제공\n- 이전 버전 서식 호환성 보장\n- 서식 오류 시 대체 서식 제공\n\n#### Input Parameters\n##### 서식 정보\n- 서식 코드\n- 서식 버전\n- 유효기간\n- 서식 종류 (일반/특수)\n\n##### 매핑 규칙\n- 필드 매핑 정의\n- 데이터 변환 규칙\n- 계산식 정의\n- 유효성 검증 규칙\n\n#### Technical Details\n- 서식 저장소 구조\n- 버전 관리 체계\n- 템플릿 엔진 스펙\n- 캐싱 전략\n\n## userStory\n\n### Feature 3.1: EDMS 연계\n#### Description\n- EDMS 시스템 연계\n- 문서 등록 및 관리\n- 이력 관리\n\n#### Acceptance Criteria\n- 신청서가 EDMS에 자동 등록\n- EDMS 처리 상태 실시간 조회\n- 문서 분류체계 적용\n- 접근권한 관리\n- 문서 이관 처리\n\n#### Input Parameters\n##### EDMS 연계 정보\n- 시스템 연계 정보\n- 문서분류 체계\n- 보안등급 정의\n- 보존기간 정의\n\n##### 문서 속성\n- 문서번호 체계\n- 색인 정보\n- 문서 유형\n- 관리 부서\n\n#### Technical Details\n- EDMS API 스펙\n- 문서 변환 규칙\n- 보안 정책\n- 백업 정책\n\n## userStory\n\n### Feature 3.2: 발급문서 처리\n#### Description\n- PDF 문서 생성\n- 전자서명 처리\n- 보안 워터마크 적용\n\n#### Acceptance Criteria\n- PDF 문서 정확한 생성\n- 전자서명 포함\n- 문서 위변조 방지\n- 보안 워터마크 적용\n- 출력 제어\n\n#### Input Parameters\n##### PDF 생성 정보\n- 템플릿 정보\n- 폰트 설정\n- 여백 설정\n- 해상도 설정\n\n##### 보안 설정\n- 암호화 수준\n- 출력 제어\n- 워터마크 위치\n- 보안 레벨\n\n#### Technical Details\n- PDF 라이브러리 스펙\n- 암호화 알고리즘\n- 디지털 서명 규격\n- 성능 최적화 방안",
+                    "aggregates": [
+                        {
+                            "name": "Form",
+                            "alias": "서식"
+                        },
+                        {
+                            "name": "Document",
+                            "alias": "문서"
+                        }
+                    ]
+                },
+                "description": "{\"userStories\":[{\"title\":\"서식 조회\",\"description\":\"사용자는 민원 종류별 서식을 조회하고 관리할 수 있어야 합니다.\",\"acceptance\":[\"해당 민원에 맞는 서식이 자동으로 조회되어야 합니다.\",\"사용자 입력 데이터가 서식에 자동 매핑되어야 합니다.\",\"서식 미리보기가 제공되어야 합니다.\",\"이전 버전 서식과의 호환성이 보장되어야 합니다.\",\"서식 오류 시 대체 서식이 제공되어야 합니다.\"]},{\"title\":\"EDMS 연계\",\"description\":\"사용자는 EDMS 시스템과 연계하여 문서를 등록, 관리하고 이력을 추적할 수 있어야 합니다.\",\"acceptance\":[\"신청서가 EDMS에 자동 등록되어야 합니다.\",\"EDMS 처리 상태를 실시간으로 조회할 수 있어야 합니다.\",\"문서 분류체계가 적용되어야 합니다.\",\"접근 권한이 관리되어야 합니다.\",\"문서 이관 처리가 가능해야 합니다.\"]},{\"title\":\"발급문서 처리\",\"description\":\"사용자는 PDF 문서를 생성하고 전자 서명 및 보안 워터마크를 적용하여 문서의 보안성을 강화할 수 있어야 합니다.\",\"acceptance\":[\"PDF 문서가 정확하게 생성되어야 합니다.\",\"전자 서명이 포함되어야 합니다.\",\"문서 위변조 방지 기능이 제공되어야 합니다.\",\"보안 워터마크가 적용되어야 합니다.\",\"출력 제어가 가능해야 합니다.\"]}],\"entities\":{\"FormatInformation\":{\"properties\":[{\"name\":\"formatCode\",\"type\":\"String\",\"required?\":true,\"isPrimaryKey?\":true},{\"name\":\"formatVersion\",\"type\":\"String\",\"required?\":true},{\"name\":\"validityPeriod\",\"type\":\"Date\",\"required?\":true},{\"name\":\"formatType\",\"type\":\"enum\",\"required?\":true,\"values?\":[\"general\",\"special\"]}]},\"MappingRule\":{\"properties\":[{\"name\":\"fieldMappingDefinition\",\"type\":\"String\",\"required?\":true},{\"name\":\"dataConversionRules\",\"type\":\"String\",\"required?\":true},{\"name\":\"calculationFormula\",\"type\":\"String\",\"required?\":false},{\"name\":\"validationRules\",\"type\":\"String\",\"required?\":false}]},\"EDMSConnectionInformation\":{\"properties\":[{\"name\":\"systemConnectionInformation\",\"type\":\"String\",\"required?\":true},{\"name\":\"documentClassificationSystem\",\"type\":\"String\",\"required?\":true},{\"name\":\"securityLevelDefinition\",\"type\":\"String\",\"required?\":true},{\"name\":\"retentionPeriodDefinition\",\"type\":\"String\",\"required?\":true}]},\"DocumentAttributes\":{\"properties\":[{\"name\":\"documentNumberingSystem\",\"type\":\"String\",\"required?\":true},{\"name\":\"indexingInformation\",\"type\":\"String\",\"required?\":true},{\"name\":\"documentType\",\"type\":\"String\",\"required?\":true},{\"name\":\"managingDepartment\",\"type\":\"String\",\"required?\":true}]},\"PDFGenerationInformation\":{\"properties\":[{\"name\":\"templateInformation\",\"type\":\"String\",\"required?\":true},{\"name\":\"fontSettings\",\"type\":\"String\",\"required?\":true},{\"name\":\"marginSettings\",\"type\":\"String\",\"required?\":true},{\"name\":\"resolutionSettings\",\"type\":\"String\",\"required?\":true}]},\"SecuritySettings\":{\"properties\":[{\"name\":\"encryptionLevel\",\"type\":\"String\",\"required?\":true},{\"name\":\"outputControl\",\"type\":\"String\",\"required?\":true},{\"name\":\"watermarkPosition\",\"type\":\"String\",\"required?\":true},{\"name\":\"securityLevel\",\"type\":\"String\",\"required?\":true}]}},\"businessRules\":[{\"name\":\"FormatCompatibility\",\"description\":\"이전 버전의 서식과 호환성을 유지해야 합니다.\"},{\"name\":\"AutomaticFormatRetrieval\",\"description\":\"해당 민원에 맞는 서식이 자동으로 조회되어야 합니다.\"},{\"name\":\"EDMSAutomaticRegistration\",\"description\":\"신청서는 EDMS에 자동 등록되어야 합니다.\"},{\"name\":\"PDFDocumentIntegrity\",\"description\":\"생성된 PDF 문서에 전자 서명이 포함되어야 합니다.\"}],\"interfaces\":{\"FormatInquiry\":{\"sections\":[{\"name\":\"FormatSearch\",\"type\":\"form\",\"fields\":[{\"name\":\"formatCode\",\"type\":\"text\",\"required?\":false},{\"name\":\"formatType\",\"type\":\"select\",\"required?\":false,\"values?\":[\"general\",\"special\"]}],\"actions\":[\"Search\",\"Preview\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}}]},\"EDMSIntegration\":{\"sections\":[{\"name\":\"DocumentRegistration\",\"type\":\"form\",\"fields\":[{\"name\":\"documentNumber\",\"type\":\"text\",\"required?\":false},{\"name\":\"documentType\",\"type\":\"select\",\"required?\":false}],\"actions\":[\"Register\",\"ViewStatus\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}}]},\"IssuedDocumentProcessing\":{\"sections\":[{\"name\":\"PDFGeneration\",\"type\":\"form\",\"fields\":[{\"name\":\"template\",\"type\":\"select\",\"required?\":true},{\"name\":\"font\",\"type\":\"text\",\"required?\":true}],\"actions\":[\"GeneratePDF\",\"ApplySignature\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}}]}}}"
+            }
+        },
+        "userStory": "사용한 유저시나리오:\n\n# 민원신청발급 시스템 요구사항 정의서\n\n## 1. Epic: 민원 신청 프로세스\n### Feature 1.1: 서비스 신청\n#### Description\n- 통합창구포털을 통한 민원 서비스 신청 기능\n- 사용자 친화적인 UI/UX 제공\n- 단계별 신청 프로세스 구현\n\n#### Acceptance Criteria\n- 사용자는 통합창구포털에서 민원 서비스를 선택하고 신청할 수 있어야 함\n- 신청 양식의 모든 필수 필드가 검증되어야 함\n- 첨부 파일 업로드 시 파일 형식 및 크기 제한 검증\n- 임시 저장 및 불러오기 기능 제공\n- 신청 진행 상태 실시간 표시\n\n#### Input Parameters\n##### 신청자 정보\n- 이름 (한글 2-50자)\n- 주민등록번호 (13자리, 유효성 검증 포함)\n- 휴대전화번호 (10-11자리)\n- 이메일 주소 (이메일 형식 검증)\n- 주소 (도로명/지번 주소 지원)\n\n##### 민원 정보\n- 민원 종류 (코드테이블 연계)\n- 신청 사유 (최대 1000자)\n- 처리 희망일자\n- 수령 방법 (방문/우편/온라인)\n\n##### 첨부 서류\n- 파일 형식: PDF, JPG, PNG\n- 개별 파일 크기: 최대 10MB\n- 총 첨부 크기: 최대 50MB\n- 필수 서류 항목 검증\n\n#### Technical Details\n- RESTful API 엔드포인트 구조\n- 파일 업로드 처리 방식\n- 데이터 유효성 검증 규칙\n- 세션 관리 방식\n\n### Feature 1.2: 자격 조회\n#### Description\n- 신청된 민원에 대한 자격 조회 및 검증\n- 실시간 자격 확인 시스템 연계\n- 다중 자격 조건 처리\n\n#### Acceptance Criteria\n- 신청자의 자격 요건이 자동으로 확인되어야 함\n- 자격 조회 결과가 실시간으로 반환되어야 함\n- 자격 불충족 시 상세 사유 제공\n- 조회 이력 저장 및 관리\n- 재조회 기능 제공\n\n#### Input Parameters\n##### 자격 조회 정보\n- 신청자 식별정보\n  - 주민등록번호 (암호화 전송)\n  - 외국인등록번호 (해당 시)\n- 자격 조회 항목\n  - 주민등록 진위확인\n  - 결격사유 조회\n  - 수급자격 확인\n- 조회 목적 코드\n\n##### API 인증 정보\n- API Key\n- 인증토큰\n- IP 접근제한\n- 전자서명 값\n\n#### Technical Details\n- 자격검증 API 스펙\n- 암호화 알고리즘\n- 에러 핸들링 방식\n- 타임아웃 설정\n\n### Feature 1.3: 서식 조회\n#### Description\n- 민원 종류별 서식 관리 및 조회\n- 서식 버전 관리\n- 데이터 매핑 규칙 정의\n\n#### Acceptance Criteria\n- 해당 민원에 맞는 서식이 자동으로 조회되어야 함\n- 사용자 입력 데이터가 서식에 자동 매핑되어야 함\n- 서식 미리보기 제공\n- 이전 버전 서식 호환성 보장\n- 서식 오류 시 대체 서식 제공\n\n#### Input Parameters\n##### 서식 정보\n- 서식 코드\n- 서식 버전\n- 유효기간\n- 서식 종류 (일반/특수)\n\n##### 매핑 규칙\n- 필드 매핑 정의\n- 데이터 변환 규칙\n- 계산식 정의\n- 유효성 검증 규칙\n\n#### Technical Details\n- 서식 저장소 구조\n- 버전 관리 체계\n- 템플릿 엔진 스펙\n- 캐싱 전략\n\n## 2. Epic: 추가 정보 수집\n### Feature 2.1: 추가 데이터 조회\n#### Description\n- 연계 시스템 데이터 수집\n- 데이터 정합성 검증\n- 실시간/배치 조회 처리\n\n#### Acceptance Criteria\n- 연계 시스템으로부터 필요 데이터를 자동으로 수집\n- 수집된 데이터의 무결성 검증\n- 누락 데이터 재조회 처리\n- 데이터 변환 및 정제\n- 조회 이력 관리\n\n#### Input Parameters\n##### 조회 조건\n- 조회 대상 시스템\n- 조회 항목 정의\n- 조회 기간\n- 우선순위\n\n##### 데이터 처리 규칙\n- 데이터 변환 규칙\n- 정합성 검증 규칙\n- 예외처리 기준\n- 재처리 규칙\n\n#### Technical Details\n- 연계 시스템별 API 스펙\n- 데이터 동기화 방식\n- 에러 복구 전략\n- 모니터링 방안\n\n### Feature 2.2: 신청서 작성\n#### Description\n- 자동 신청서 작성\n- 데이터 검증 및 보정\n- 전자서명 처리\n\n#### Acceptance Criteria\n- 모든 필요 정보가 신청서에 정확히 반영\n- 작성된 신청서의 유효성 검증\n- 전자서명 검증\n- 임시저장 기능\n- 작성 이력 관리\n\n#### Input Parameters\n##### 신청서 구성 정보\n- 템플릿 코드\n- 서명 위치\n- 첨부파일 목록\n- 보안등급\n\n##### 검증 규칙\n- 필수항목 검증\n- 형식 검증\n- 논리 검증\n- 결재선 검증\n\n#### Technical Details\n- 템플릿 엔진 사양\n- 전자서명 모듈 스펙\n- 문서 보안 정책\n- 저장소 구조\n\n## 3. Epic: 발급 처리\n### Feature 3.1: EDMS 연계\n#### Description\n- EDMS 시스템 연계\n- 문서 등록 및 관리\n- 이력 관리\n\n#### Acceptance Criteria\n- 신청서가 EDMS에 자동 등록\n- EDMS 처리 상태 실시간 조회\n- 문서 분류체계 적용\n- 접근권한 관리\n- 문서 이관 처리\n\n#### Input Parameters\n##### EDMS 연계 정보\n- 시스템 연계 정보\n- 문서분류 체계\n- 보안등급 정의\n- 보존기간 정의\n\n##### 문서 속성\n- 문서번호 체계\n- 색인 정보\n- 문서 유형\n- 관리 부서\n\n#### Technical Details\n- EDMS API 스펙\n- 문서 변환 규칙\n- 보안 정책\n- 백업 정책\n\n### Feature 3.2: 발급문서 처리\n#### Description\n- PDF 문서 생성\n- 전자서명 처리\n- 보안 워터마크 적용\n\n#### Acceptance Criteria\n- PDF 문서 정확한 생성\n- 전자서명 포함\n- 문서 위변조 방지\n- 보안 워터마크 적용\n- 출력 제어\n\n#### Input Parameters\n##### PDF 생성 정보\n- 템플릿 정보\n- 폰트 설정\n- 여백 설정\n- 해상도 설정\n\n##### 보안 설정\n- 암호화 수준\n- 출력 제어\n- 워터마크 위치\n- 보안 레벨\n\n#### Technical Details\n- PDF 라이브러리 스펙\n- 암호화 알고리즘\n- 디지털 서명 규격\n- 성능 최적화 방안\n\n## 4. 비기능적 요구사항\n### 4.1 성능 요구사항\n#### 응답 시간\n- 화면 렌더링: 2초 이내\n- API 응답: 1초 이내\n- 파일 업로드: 5초 이내\n- 문서 생성: 3초 이내\n\n#### 처리 용량\n- 동시 사용자: 1000명\n- 일일 처리건수: 10만건\n- 초당 트랜잭션: 100TPS\n- 저장소 용량: 연간 10TB\n\n#### 확장성\n- 수평적 확장 가능\n- 자동 스케일링 지원\n- 무중단 배포 지원\n- 서비스 분리 용이성\n\n### 4.2 보안 요구사항\n#### 사용자 인증\n- 공동인증서 지원\n- 금융인증서 지원\n- 생체인증 지원\n- SSO 연계\n\n#### 데이터 보안\n- 중요정보 암호화\n- 통신구간 암호화\n- 접근 이력 관리\n- 개인정보 보호\n\n#### 보안 감사\n- 보안 로그 기록\n- 접근 통제\n- 취약점 점검\n- 보안 패치 관리\n\n### 4.3 가용성 요구사항\n#### 시스템 가용성\n- 가용률: 99.9%\n- 24x7 운영\n- 재해복구 계획\n- 백업 정책\n\n#### 장애 대응\n- 장애 감지\n- 자동 복구\n- 알림 체계\n- 비상 계획\n\n#### 유지보수\n- 패치 관리\n- 정기 점검\n- 모니터링\n- 기술 지원\n\n## 5. 인터페이스 요구사항\n### 5.1 외부 시스템 연계\n#### 통합창구포털 연계\n- REST API 기반\n- JWT 인증\n- SSL/TLS 적용\n- 에러 처리\n\n#### EDMS 연계\n- 실시간 연계\n- 상태 동기화\n- 문서 관리\n- 이력 관리\n\n#### 자격검증 시스템\n- 실시간 검증\n- 결과 회신\n- 재검증\n- 이상 감지\n\n### 5.2 데이터 연계\n#### 데이터 포맷\n- JSON/XML 지원",
+        "state": {
+            "generator": "DevideBoundedContextGenerator",
+            "firstMessageIsTyping": false,
+            "secondMessageIsTyping": false,
+            "userStory": "",
+            "communicationStyle": "Choreography",
+            "aggregateDetail": false,
+            "uiStyle": null,
+            "startTemplateGenerate": false
+        },
+        "messages": [
+            {
+                "uniqueId": "04af87db0b727b3c36af9b7caa7c84ec",
+                "type": "boundedContextResult",
+                "result": {
+                    "도메인 복잡도 분리": {
+                        "boundedContexts": [
+                            {
+                                "name": "ApplicationManagement",
+                                "alias": "민원 신청 관리",
+                                "importance": "Core Domain",
+                                "complexity": "0.8",
+                                "differentiation": "0.8",
+                                "implementationStrategy": "Rich Domain Model",
+                                "aggregates": [
+                                    {
+                                        "name": "Application",
+                                        "alias": "민원 신청"
+                                    },
+                                    {
+                                        "name": "Applicant",
+                                        "alias": "신청자"
+                                    }
+                                ],
+                                "requirements": [
+                                    {
+                                        "type": "userStory",
+                                        "text": "# 민원신청발급 시스템 요구사항 정의서\n\n## 1. Epic: 민원 신청 프로세스\n### Feature 1.1: 서비스 신청\n#### Description\n- 통합창구포털을 통한 민원 서비스 신청 기능\n- 사용자 친화적인 UI/UX 제공\n- 단계별 신청 프로세스 구현\n\n#### Acceptance Criteria\n- 사용자는 통합창구포털에서 민원 서비스를 선택하고 신청할 수 있어야 함\n- 신청 양식의 모든 필수 필드가 검증되어야 함\n- 첨부 파일 업로드 시 파일 형식 및 크기 제한 검증\n- 임시 저장 및 불러오기 기능 제공\n- 신청 진행 상태 실시간 표시\n\n#### Input Parameters\n##### 신청자 정보\n- 이름 (한글 2-50자)\n- 주민등록번호 (13자리, 유효성 검증 포함)\n- 휴대전화번호 (10-11자리)\n- 이메일 주소 (이메일 형식 검증)\n- 주소 (도로명/지번 주소 지원)\n\n##### 민원 정보\n- 민원 종류 (코드테이블 연계)\n- 신청 사유 (최대 1000자)\n- 처리 희망일자\n- 수령 방법 (방문/우편/온라인)\n\n##### 첨부 서류\n- 파일 형식: PDF, JPG, PNG\n- 개별 파일 크기: 최대 10MB\n- 총 첨부 크기: 최대 50MB\n- 필수 서류 항목 검증\n\n#### Technical Details\n- RESTful API 엔드포인트 구조\n- 파일 업로드 처리 방식\n- 데이터 유효성 검증 규칙\n- 세션 관리 방식"
+                                    },
+                                    {
+                                        "type": "userStory",
+                                        "text": "### Feature 2.2: 신청서 작성\n#### Description\n- 자동 신청서 작성\n- 데이터 검증 및 보정\n- 전자서명 처리\n\n#### Acceptance Criteria\n- 모든 필요 정보가 신청서에 정확히 반영\n- 작성된 신청서의 유효성 검증\n- 전자서명 검증\n- 임시저장 기능\n- 작성 이력 관리\n\n#### Input Parameters\n##### 신청서 구성 정보\n- 템플릿 코드\n- 서명 위치\n- 첨부파일 목록\n- 보안등급\n\n##### 검증 규칙\n- 필수항목 검증\n- 형식 검증\n- 논리 검증\n- 결재선 검증\n\n#### Technical Details\n- 템플릿 엔진 사양\n- 전자서명 모듈 스펙\n- 문서 보안 정책\n- 저장소 구조"
+                                    }
+                                ]
+                            },
+                            {
+                                "name": "VerificationService",
+                                "alias": "자격 검증 서비스",
+                                "importance": "Supporting Domain",
+                                "complexity": "0.7",
+                                "differentiation": "0.6",
+                                "implementationStrategy": "Transaction Script",
+                                "aggregates": [
+                                    {
+                                        "name": "Qualification",
+                                        "alias": "자격"
+                                    },
+                                    {
+                                        "name": "VerificationHistory",
+                                        "alias": "검증 이력"
+                                    }
+                                ],
+                                "requirements": [
+                                    {
+                                        "type": "userStory",
+                                        "text": "### Feature 1.2: 자격 조회\n#### Description\n- 신청된 민원에 대한 자격 조회 및 검증\n- 실시간 자격 확인 시스템 연계\n- 다중 자격 조건 처리\n\n#### Acceptance Criteria\n- 신청자의 자격 요건이 자동으로 확인되어야 함\n- 자격 조회 결과가 실시간으로 반환되어야 함\n- 자격 불충족 시 상세 사유 제공\n- 조회 이력 저장 및 관리\n- 재조회 기능 제공\n\n#### Input Parameters\n##### 자격 조회 정보\n- 신청자 식별정보\n  - 주민등록번호 (암호화 전송)\n  - 외국인등록번호 (해당 시)\n- 자격 조회 항목\n  - 주민등록 진위확인\n  - 결격사유 조회\n  - 수급자격 확인\n- 조회 목적 코드\n\n##### API 인증 정보\n- API Key\n- 인증토큰\n- IP 접근제한\n- 전자서명 값\n\n#### Technical Details\n- 자격검증 API 스펙\n- 암호화 알고리즘\n- 에러 핸들링 방식\n- 타임아웃 설정"
+                                    },
+                                    {
+                                        "type": "userStory",
+                                        "text": "### Feature 2.1: 추가 데이터 조회\n#### Description\n- 연계 시스템 데이터 수집\n- 데이터 정합성 검증\n- 실시간/배치 조회 처리\n\n#### Acceptance Criteria\n- 연계 시스템으로부터 필요 데이터를 자동으로 수집\n- 수집된 데이터의 무결성 검증\n- 누락 데이터 재조회 처리\n- 데이터 변환 및 정제\n- 조회 이력 관리\n\n#### Input Parameters\n##### 조회 조건\n- 조회 대상 시스템\n- 조회 항목 정의\n- 조회 기간\n- 우선순위\n\n##### 데이터 처리 규칙\n- 데이터 변환 규칙\n- 정합성 검증 규칙\n- 예외처리 기준\n- 재처리 규칙\n\n#### Technical Details\n- 연계 시스템별 API 스펙\n- 데이터 동기화 방식\n- 에러 복구 전략\n- 모니터링 방안"
+                                    }
+                                ]
+                            },
+                            {
+                                "name": "DocumentManagement",
+                                "alias": "문서 관리",
+                                "importance": "Supporting Domain",
+                                "complexity": "0.6",
+                                "differentiation": "0.5",
+                                "implementationStrategy": "Transaction Script",
+                                "aggregates": [
+                                    {
+                                        "name": "Form",
+                                        "alias": "서식"
+                                    },
+                                    {
+                                        "name": "Document",
+                                        "alias": "문서"
+                                    }
+                                ],
+                                "requirements": [
+                                    {
+                                        "type": "userStory",
+                                        "text": "### Feature 1.3: 서식 조회\n#### Description\n- 민원 종류별 서식 관리 및 조회\n- 서식 버전 관리\n- 데이터 매핑 규칙 정의\n\n#### Acceptance Criteria\n- 해당 민원에 맞는 서식이 자동으로 조회되어야 함\n- 사용자 입력 데이터가 서식에 자동 매핑되어야 함\n- 서식 미리보기 제공\n- 이전 버전 서식 호환성 보장\n- 서식 오류 시 대체 서식 제공\n\n#### Input Parameters\n##### 서식 정보\n- 서식 코드\n- 서식 버전\n- 유효기간\n- 서식 종류 (일반/특수)\n\n##### 매핑 규칙\n- 필드 매핑 정의\n- 데이터 변환 규칙\n- 계산식 정의\n- 유효성 검증 규칙\n\n#### Technical Details\n- 서식 저장소 구조\n- 버전 관리 체계\n- 템플릿 엔진 스펙\n- 캐싱 전략"
+                                    },
+                                    {
+                                        "type": "userStory",
+                                        "text": "### Feature 3.1: EDMS 연계\n#### Description\n- EDMS 시스템 연계\n- 문서 등록 및 관리\n- 이력 관리\n\n#### Acceptance Criteria\n- 신청서가 EDMS에 자동 등록\n- EDMS 처리 상태 실시간 조회\n- 문서 분류체계 적용\n- 접근권한 관리\n- 문서 이관 처리\n\n#### Input Parameters\n##### EDMS 연계 정보\n- 시스템 연계 정보\n- 문서분류 체계\n- 보안등급 정의\n- 보존기간 정의\n\n##### 문서 속성\n- 문서번호 체계\n- 색인 정보\n- 문서 유형\n- 관리 부서\n\n#### Technical Details\n- EDMS API 스펙\n- 문서 변환 규칙\n- 보안 정책\n- 백업 정책"
+                                    },
+                                    {
+                                        "type": "userStory",
+                                        "text": "### Feature 3.2: 발급문서 처리\n#### Description\n- PDF 문서 생성\n- 전자서명 처리\n- 보안 워터마크 적용\n\n#### Acceptance Criteria\n- PDF 문서 정확한 생성\n- 전자서명 포함\n- 문서 위변조 방지\n- 보안 워터마크 적용\n- 출력 제어\n\n#### Input Parameters\n##### PDF 생성 정보\n- 템플릿 정보\n- 폰트 설정\n- 여백 설정\n- 해상도 설정\n\n##### 보안 설정\n- 암호화 수준\n- 출력 제어\n- 워터마크 위치\n- 보안 레벨\n\n#### Technical Details\n- PDF 라이브러리 스펙\n- 암호화 알고리즘\n- 디지털 서명 규격\n- 성능 최적화 방안"
+                                    }
+                                ]
+                            }
+                        ],
+                        "relations": [
+                            {
+                                "name": "ApplicationVerification",
+                                "type": "Request/Response",
+                                "upStream": {
+                                    "name": "ApplicationManagement",
+                                    "alias": "민원 신청 관리"
+                                },
+                                "downStream": {
+                                    "name": "VerificationService",
+                                    "alias": "자격 검증 서비스"
+                                }
+                            },
+                            {
+                                "name": "ApplicationDocument",
+                                "type": "Request/Response",
+                                "upStream": {
+                                    "name": "ApplicationManagement",
+                                    "alias": "민원 신청 관리"
+                                },
+                                "downStream": {
+                                    "name": "DocumentManagement",
+                                    "alias": "문서 관리"
+                                }
+                            }
+                        ],
+                        "thoughts": "민원신청발급 시스템은 크게 세 가지 bounded context로 나눌 수 있습니다.\n\n1.  **ApplicationManagement (민원 신청 관리):** 민원 신청 접수 및 관리, 신청서 작성 등 핵심적인 민원 신청 프로세스를 담당합니다. 사용자 인터페이스, 신청 데이터 관리, 신청 상태 추적 등의 기능을 포함합니다. 이는 핵심 도메인으로 분류됩니다.\n2.  **VerificationService (자격 검증 서비스):** 신청자의 자격 요건을 확인하고 외부 시스템과의 연계를 통해 추가 데이터를 조회하는 역할을 합니다. 이는 신청 프로세스의 중요한 부분을 차지하지만, 자체적인 비즈니스 로직보다는 외부 시스템에 의존하는 부분이 많으므로 지원 도메인으로 분류됩니다.\n3.  **DocumentManagement (문서 관리):** 민원 종류별 서식 관리, EDMS 연계, 발급 문서 생성 및 보안 처리 등 문서 관련 기능을 담당합니다. 이는 신청 프로세스를 지원하는 역할을 하며, 자체적인 비즈니스 로직보다는 문서 생성 및 관리에 집중하므로 지원 도메인으로 분류됩니다.\n\n**영향을 미친 조직 및 인프라 요구사항:**\n\n*   **성능 요구사항:** 각 bounded context는 성능 요구사항(응답 시간, 처리 용량)을 충족해야 합니다. 특히, 자격 검증 서비스는 실시간 연계를 통해 빠른 응답 시간을 보장해야 하므로, 별도의 bounded context로 분리하여 최적화하는 것이 효율적입니다.\n*   **보안 요구사항:** 개인정보 암호화, 접근 이력 관리 등 보안 요구사항은 모든 bounded context에 적용되지만, 특히 자격 검증 서비스는 민감한 개인정보를 다루므로 더욱 강화된 보안 정책이 필요합니다. 따라서, 별도의 bounded context로 분리하여 보안 관리를 집중하는 것이 좋습니다.\n*   **외부 시스템 연계:** 각 bounded context는 외부 시스템(통합창구포털, EDMS, 자격검증 시스템)과 연계되어야 합니다. 특히, 문서 관리 bounded context는 EDMS와의 실시간 연계를 통해 문서 등록 및 관리를 자동화해야 하므로, 별도의 bounded context로 분리하여 연계 기능을 구현하는 것이 효율적입니다.\n*   **확장성:** 각 bounded context는 수평적 확장이 가능해야 합니다. 민원 신청량 증가에 따라 각 bounded context의 트래픽이 증가할 수 있으므로, 독립적으로 확장할 수 있도록 bounded context를 분리하는 것이 중요합니다.",
+                        "explanations": [
+                            {
+                                "sourceContext": "민원 신청 관리",
+                                "targetContext": "자격 검증 서비스",
+                                "relationType": "Request/Response",
+                                "reason": "민원 신청 시 신청자의 자격 요건을 확인하기 위해 자격 검증 서비스에 요청하고, 결과를 받아 신청 프로세스를 진행합니다.",
+                                "interactionPattern": "REST API를 통해 동기적으로 자격 검증을 요청하고 응답을 받습니다."
+                            },
+                            {
+                                "sourceContext": "민원 신청 관리",
+                                "targetContext": "문서 관리",
+                                "relationType": "Request/Response",
+                                "reason": "민원 신청 완료 후 신청서 및 관련 문서를 생성하고 EDMS에 등록하기 위해 문서 관리 서비스에 요청합니다.",
+                                "interactionPattern": "REST API를 통해 동기적으로 문서 생성을 요청하고, 생성된 문서를 EDMS에 등록합니다."
+                            }
+                        ],
+                        "devisionAspect": "도메인 복잡도 분리"
+                    }
+                },
+                "isStartMapping": false,
+                "isGeneratingBoundedContext": false,
+                "processingRate": 0,
+                "currentProcessingBoundedContext": "",
+                "selectedAspect": "도메인 복잡도 분리",
+                "summarizedResult": "",
+                "timestamp": "2025-03-17T03:14:24.369Z"
+            },
+            {
+                "type": "aggregateDraftDialogDto",
+                "uniqueId": "1742181283233",
+                "isShow": true,
+                "draftOptions": [
+                    {
+                        "boundedContext": "ApplicationManagement",
+                        "boundedContextAlias": "민원 신청 관리",
+                        "description": "{\"userStories\":[{\"title\":\"서비스 신청\",\"description\":\"사용자는 통합창구포털을 통해 민원 서비스를 신청할 수 있어야 합니다.\",\"acceptance\":[\"통합창구포털에서 민원 서비스를 선택하고 신청할 수 있어야 함\",\"신청 양식의 모든 필수 필드가 검증되어야 함\",\"첨부 파일 업로드 시 파일 형식 및 크기 제한 검증\",\"임시 저장 및 불러오기 기능 제공\",\"신청 진행 상태 실시간 표시\"]},{\"title\":\"신청서 작성\",\"description\":\"사용자는 민원 신청서를 자동으로 작성하고, 데이터 검증 및 전자서명을 처리할 수 있어야 합니다.\",\"acceptance\":[\"모든 필요 정보가 신청서에 정확히 반영\",\"작성된 신청서의 유효성 검증\",\"전자서명 검증\",\"임시저장 기능\",\"작성 이력 관리\"]}],\"entities\":{\"ApplicantInfo\":{\"properties\":[{\"name\":\"name\",\"type\":\"String\",\"required?\":true},{\"name\":\"residentRegistrationNumber\",\"type\":\"String\",\"required?\":true},{\"name\":\"phoneNumber\",\"type\":\"String\",\"required?\":true},{\"name\":\"emailAddress\",\"type\":\"String\",\"required?\":true},{\"name\":\"address\",\"type\":\"String\",\"required?\":true}]},\"CivilPetitionInfo\":{\"properties\":[{\"name\":\"petitionType\",\"type\":\"String\",\"required?\":true},{\"name\":\"reasonForApplication\",\"type\":\"String\",\"required?\":true},{\"name\":\"desiredProcessingDate\",\"type\":\"Date\",\"required?\":false},{\"name\":\"receivingMethod\",\"type\":\"enum\",\"required?\":true,\"values?\":[\"방문\",\"우편\",\"온라인\"]}]},\"Attachment\":{\"properties\":[{\"name\":\"fileName\",\"type\":\"String\",\"required?\":true},{\"name\":\"fileType\",\"type\":\"enum\",\"required?\":true,\"values?\":[\"PDF\",\"JPG\",\"PNG\"]},{\"name\":\"fileSize\",\"type\":\"Long\",\"required?\":true},{\"name\":\"isRequired\",\"type\":\"Boolean\",\"required?\":true}]},\"ApplicationForm\":{\"properties\":[{\"name\":\"templateCode\",\"type\":\"String\",\"required?\":true},{\"name\":\"signaturePosition\",\"type\":\"String\",\"required?\":true},{\"name\":\"attachmentList\",\"type\":\"String\",\"required?\":true},{\"name\":\"securityLevel\",\"type\":\"String\",\"required?\":true}]}},\"businessRules\":[{\"name\":\"필수 입력 항목 검증\",\"description\":\"신청자 정보 및 민원 정보의 필수 입력 항목은 반드시 입력되어야 합니다.\"},{\"name\":\"주민등록번호 유효성 검증\",\"description\":\"신청자의 주민등록번호는 13자리여야 하며, 유효성 검증을 통과해야 합니다.\"},{\"name\":\"휴대전화번호 유효성 검증\",\"description\":\"신청자의 휴대전화번호는 10-11자리여야 합니다.\"},{\"name\":\"이메일 형식 검증\",\"description\":\"신청자의 이메일 주소는 이메일 형식에 맞아야 합니다.\"},{\"name\":\"첨부 파일 형식 및 크기 제한\",\"description\":\"첨부 파일은 PDF, JPG, PNG 형식만 허용하며, 개별 파일 크기는 최대 10MB, 총 첨부 크기는 최대 50MB를 초과할 수 없습니다.\"}],\"interfaces\":{\"ServiceApplication\":{\"sections\":[{\"name\":\"신청자 정보\",\"type\":\"form\",\"fields\":[{\"name\":\"name\",\"type\":\"text\",\"required?\":true},{\"name\":\"residentRegistrationNumber\",\"type\":\"text\",\"required?\":true},{\"name\":\"phoneNumber\",\"type\":\"text\",\"required?\":true},{\"name\":\"emailAddress\",\"type\":\"text\",\"required?\":true},{\"name\":\"address\",\"type\":\"text\",\"required?\":true}],\"actions\":[],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}},{\"name\":\"민원 정보\",\"type\":\"form\",\"fields\":[{\"name\":\"petitionType\",\"type\":\"select\",\"required?\":true},{\"name\":\"reasonForApplication\",\"type\":\"textarea\",\"required?\":true},{\"name\":\"desiredProcessingDate\",\"type\":\"date\",\"required?\":false},{\"name\":\"receivingMethod\",\"type\":\"select\",\"required?\":true}],\"actions\":[\"신청\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}},{\"name\":\"첨부 서류\",\"type\":\"form\",\"fields\":[{\"name\":\"attachment\",\"type\":\"file\",\"required?\":true}],\"actions\":[],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}}]},\"ApplicationFormCreation\":{\"sections\":[{\"name\":\"신청서 구성 정보\",\"type\":\"form\",\"fields\":[{\"name\":\"templateCode\",\"type\":\"text\",\"required?\":true},{\"name\":\"signaturePosition\",\"type\":\"text\",\"required?\":true},{\"name\":\"attachmentList\",\"type\":\"text\",\"required?\":true},{\"name\":\"securityLevel\",\"type\":\"text\",\"required?\":true}],\"actions\":[\"저장\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}}]}}}",
+                        "options": [
+                            {
+                                "structure": [
+                                    {
+                                        "aggregate": {
+                                            "name": "Application",
+                                            "alias": "민원 신청"
+                                        },
+                                        "enumerations": [
+                                            {
+                                                "name": "ApplicationStatus",
+                                                "alias": "신청 상태"
+                                            },
+                                            {
+                                                "name": "ReceivingMethod",
+                                                "alias": "수령 방법"
+                                            }
+                                        ],
+                                        "valueObjects": [
+                                            {
+                                                "name": "CivilPetitionInfo",
+                                                "alias": "민원 정보"
+                                            },
+                                            {
+                                                "name": "ApplicantReference",
+                                                "alias": "신청자 참조",
+                                                "referencedAggregate": {
+                                                    "name": "Applicant",
+                                                    "alias": "신청자"
+                                                }
+                                            },
+                                            {
+                                                "name": "FormReference",
+                                                "alias": "서식 참조",
+                                                "referencedAggregate": {
+                                                    "name": "Form",
+                                                    "alias": "서식"
+                                                }
+                                            },
+                                            {
+                                                "name": "DocumentReference",
+                                                "alias": "문서 참조",
+                                                "referencedAggregate": {
+                                                    "name": "Document",
+                                                    "alias": "문서"
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "aggregate": {
+                                            "name": "Applicant",
+                                            "alias": "신청자"
+                                        },
+                                        "enumerations": [],
+                                        "valueObjects": [
+                                            {
+                                                "name": "ApplicantInfo",
+                                                "alias": "신청자 정보"
+                                            }
+                                        ]
+                                    }
+                                ],
+                                "pros": {
+                                    "cohesion": "Application Aggregate는 민원 신청 자체에 집중하고, Applicant Aggregate는 신청자 정보 관리에 집중하여 응집도가 높습니다.",
+                                    "coupling": "Application과 Applicant는 참조를 통해 연결되므로, Aggregate 간의 결합도가 낮아 유연성이 높습니다.",
+                                    "consistency": "각 Aggregate가 자체적인 일관성을 유지하므로, 트랜잭션 관리가 용이합니다.",
+                                    "encapsulation": "각 Aggregate는 내부 구현을 숨기고 필요한 정보만 Value Object를 통해 제공하여 캡슐화가 잘 되어 있습니다.",
+                                    "complexity": "Aggregate가 분리되어 있어 도메인 모델이 단순하고 이해하기 쉽습니다.",
+                                    "independence": "Application과 Applicant는 독립적으로 개발, 테스트 및 배포가 가능합니다.",
+                                    "performance": "각 Aggregate에 대한 쿼리 성능이 향상됩니다."
+                                },
+                                "cons": {
+                                    "cohesion": "민원 신청과 관련된 모든 정보를 한 번에 조회하려면 여러 Aggregate를 조회해야 합니다.",
+                                    "coupling": "Application이 Applicant를 참조하므로, Applicant Aggregate에 변경이 발생하면 Application Aggregate에도 영향을 줄 수 있습니다.",
+                                    "consistency": "Application과 Applicant 간의 데이터 일관성을 유지하기 위해 추가적인 조정이 필요할 수 있습니다.",
+                                    "encapsulation": "Aggregate 간의 통신을 위해 Value Object를 사용해야 하므로, 추가적인 코드가 필요합니다.",
+                                    "complexity": "Aggregate가 분리되어 있어 전체적인 시스템의 복잡성이 증가할 수 있습니다.",
+                                    "independence": "Application과 Applicant 간의 상호 작용을 테스트하기 위해 추가적인 노력이 필요합니다.",
+                                    "performance": "여러 Aggregate를 조인하여 데이터를 조회해야 하므로, 쿼리 성능이 저하될 수 있습니다."
+                                },
+                                "isAIRecommended": false,
+                                "boundedContext": {
+                                    "name": "ApplicationManagement",
+                                    "alias": "민원 신청 관리",
+                                    "displayName": "민원 신청 관리",
+                                    "description": "# Requirements\n\n## userStory\n\n# 민원신청발급 시스템 요구사항 정의서\n\n## 1. Epic: 민원 신청 프로세스\n### Feature 1.1: 서비스 신청\n#### Description\n- 통합창구포털을 통한 민원 서비스 신청 기능\n- 사용자 친화적인 UI/UX 제공\n- 단계별 신청 프로세스 구현\n\n#### Acceptance Criteria\n- 사용자는 통합창구포털에서 민원 서비스를 선택하고 신청할 수 있어야 함\n- 신청 양식의 모든 필수 필드가 검증되어야 함\n- 첨부 파일 업로드 시 파일 형식 및 크기 제한 검증\n- 임시 저장 및 불러오기 기능 제공\n- 신청 진행 상태 실시간 표시\n\n#### Input Parameters\n##### 신청자 정보\n- 이름 (한글 2-50자)\n- 주민등록번호 (13자리, 유효성 검증 포함)\n- 휴대전화번호 (10-11자리)\n- 이메일 주소 (이메일 형식 검증)\n- 주소 (도로명/지번 주소 지원)\n\n##### 민원 정보\n- 민원 종류 (코드테이블 연계)\n- 신청 사유 (최대 1000자)\n- 처리 희망일자\n- 수령 방법 (방문/우편/온라인)\n\n##### 첨부 서류\n- 파일 형식: PDF, JPG, PNG\n- 개별 파일 크기: 최대 10MB\n- 총 첨부 크기: 최대 50MB\n- 필수 서류 항목 검증\n\n#### Technical Details\n- RESTful API 엔드포인트 구조\n- 파일 업로드 처리 방식\n- 데이터 유효성 검증 규칙\n- 세션 관리 방식\n\n## userStory\n\n### Feature 2.2: 신청서 작성\n#### Description\n- 자동 신청서 작성\n- 데이터 검증 및 보정\n- 전자서명 처리\n\n#### Acceptance Criteria\n- 모든 필요 정보가 신청서에 정확히 반영\n- 작성된 신청서의 유효성 검증\n- 전자서명 검증\n- 임시저장 기능\n- 작성 이력 관리\n\n#### Input Parameters\n##### 신청서 구성 정보\n- 템플릿 코드\n- 서명 위치\n- 첨부파일 목록\n- 보안등급\n\n##### 검증 규칙\n- 필수항목 검증\n- 형식 검증\n- 논리 검증\n- 결재선 검증\n\n#### Technical Details\n- 템플릿 엔진 사양\n- 전자서명 모듈 스펙\n- 문서 보안 정책\n- 저장소 구조",
+                                    "aggregates": [
+                                        {
+                                            "name": "Application",
+                                            "alias": "민원 신청"
+                                        },
+                                        {
+                                            "name": "Applicant",
+                                            "alias": "신청자"
+                                        }
+                                    ]
+                                },
+                                "description": "{\"userStories\":[{\"title\":\"서비스 신청\",\"description\":\"사용자는 통합창구포털을 통해 민원 서비스를 신청할 수 있어야 합니다.\",\"acceptance\":[\"통합창구포털에서 민원 서비스를 선택하고 신청할 수 있어야 함\",\"신청 양식의 모든 필수 필드가 검증되어야 함\",\"첨부 파일 업로드 시 파일 형식 및 크기 제한 검증\",\"임시 저장 및 불러오기 기능 제공\",\"신청 진행 상태 실시간 표시\"]},{\"title\":\"신청서 작성\",\"description\":\"사용자는 민원 신청서를 자동으로 작성하고, 데이터 검증 및 전자서명을 처리할 수 있어야 합니다.\",\"acceptance\":[\"모든 필요 정보가 신청서에 정확히 반영\",\"작성된 신청서의 유효성 검증\",\"전자서명 검증\",\"임시저장 기능\",\"작성 이력 관리\"]}],\"entities\":{\"ApplicantInfo\":{\"properties\":[{\"name\":\"name\",\"type\":\"String\",\"required?\":true},{\"name\":\"residentRegistrationNumber\",\"type\":\"String\",\"required?\":true},{\"name\":\"phoneNumber\",\"type\":\"String\",\"required?\":true},{\"name\":\"emailAddress\",\"type\":\"String\",\"required?\":true},{\"name\":\"address\",\"type\":\"String\",\"required?\":true}]},\"CivilPetitionInfo\":{\"properties\":[{\"name\":\"petitionType\",\"type\":\"String\",\"required?\":true},{\"name\":\"reasonForApplication\",\"type\":\"String\",\"required?\":true},{\"name\":\"desiredProcessingDate\",\"type\":\"Date\",\"required?\":false},{\"name\":\"receivingMethod\",\"type\":\"enum\",\"required?\":true,\"values?\":[\"방문\",\"우편\",\"온라인\"]}]},\"Attachment\":{\"properties\":[{\"name\":\"fileName\",\"type\":\"String\",\"required?\":true},{\"name\":\"fileType\",\"type\":\"enum\",\"required?\":true,\"values?\":[\"PDF\",\"JPG\",\"PNG\"]},{\"name\":\"fileSize\",\"type\":\"Long\",\"required?\":true},{\"name\":\"isRequired\",\"type\":\"Boolean\",\"required?\":true}]},\"ApplicationForm\":{\"properties\":[{\"name\":\"templateCode\",\"type\":\"String\",\"required?\":true},{\"name\":\"signaturePosition\",\"type\":\"String\",\"required?\":true},{\"name\":\"attachmentList\",\"type\":\"String\",\"required?\":true},{\"name\":\"securityLevel\",\"type\":\"String\",\"required?\":true}]}},\"businessRules\":[{\"name\":\"필수 입력 항목 검증\",\"description\":\"신청자 정보 및 민원 정보의 필수 입력 항목은 반드시 입력되어야 합니다.\"},{\"name\":\"주민등록번호 유효성 검증\",\"description\":\"신청자의 주민등록번호는 13자리여야 하며, 유효성 검증을 통과해야 합니다.\"},{\"name\":\"휴대전화번호 유효성 검증\",\"description\":\"신청자의 휴대전화번호는 10-11자리여야 합니다.\"},{\"name\":\"이메일 형식 검증\",\"description\":\"신청자의 이메일 주소는 이메일 형식에 맞아야 합니다.\"},{\"name\":\"첨부 파일 형식 및 크기 제한\",\"description\":\"첨부 파일은 PDF, JPG, PNG 형식만 허용하며, 개별 파일 크기는 최대 10MB, 총 첨부 크기는 최대 50MB를 초과할 수 없습니다.\"}],\"interfaces\":{\"ServiceApplication\":{\"sections\":[{\"name\":\"신청자 정보\",\"type\":\"form\",\"fields\":[{\"name\":\"name\",\"type\":\"text\",\"required?\":true},{\"name\":\"residentRegistrationNumber\",\"type\":\"text\",\"required?\":true},{\"name\":\"phoneNumber\",\"type\":\"text\",\"required?\":true},{\"name\":\"emailAddress\",\"type\":\"text\",\"required?\":true},{\"name\":\"address\",\"type\":\"text\",\"required?\":true}],\"actions\":[],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}},{\"name\":\"민원 정보\",\"type\":\"form\",\"fields\":[{\"name\":\"petitionType\",\"type\":\"select\",\"required?\":true},{\"name\":\"reasonForApplication\",\"type\":\"textarea\",\"required?\":true},{\"name\":\"desiredProcessingDate\",\"type\":\"date\",\"required?\":false},{\"name\":\"receivingMethod\",\"type\":\"select\",\"required?\":true}],\"actions\":[\"신청\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}},{\"name\":\"첨부 서류\",\"type\":\"form\",\"fields\":[{\"name\":\"attachment\",\"type\":\"file\",\"required?\":true}],\"actions\":[],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}}]},\"ApplicationFormCreation\":{\"sections\":[{\"name\":\"신청서 구성 정보\",\"type\":\"form\",\"fields\":[{\"name\":\"templateCode\",\"type\":\"text\",\"required?\":true},{\"name\":\"signaturePosition\",\"type\":\"text\",\"required?\":true},{\"name\":\"attachmentList\",\"type\":\"text\",\"required?\":true},{\"name\":\"securityLevel\",\"type\":\"text\",\"required?\":true}],\"actions\":[\"저장\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}}]}}}"
+                            },
+                            {
+                                "structure": [
+                                    {
+                                        "aggregate": {
+                                            "name": "ApplicationWithApplicant",
+                                            "alias": "민원 신청 및 신청자 정보"
+                                        },
+                                        "enumerations": [
+                                            {
+                                                "name": "ApplicationStatus",
+                                                "alias": "신청 상태"
+                                            },
+                                            {
+                                                "name": "ReceivingMethod",
+                                                "alias": "수령 방법"
+                                            }
+                                        ],
+                                        "valueObjects": [
+                                            {
+                                                "name": "ApplicantInfo",
+                                                "alias": "신청자 정보"
+                                            },
+                                            {
+                                                "name": "CivilPetitionInfo",
+                                                "alias": "민원 정보"
+                                            },
+                                            {
+                                                "name": "FormReference",
+                                                "alias": "서식 참조",
+                                                "referencedAggregate": {
+                                                    "name": "Form",
+                                                    "alias": "서식"
+                                                }
+                                            },
+                                            {
+                                                "name": "DocumentReference",
+                                                "alias": "문서 참조",
+                                                "referencedAggregate": {
+                                                    "name": "Document",
+                                                    "alias": "문서"
+                                                }
+                                            }
+                                        ]
+                                    }
+                                ],
+                                "pros": {
+                                    "cohesion": "민원 신청과 신청자 정보를 하나의 Aggregate에서 관리하므로, 관련된 모든 정보를 한 번에 조회할 수 있습니다.",
+                                    "coupling": "Aggregate 내부에서 모든 정보가 관리되므로, Aggregate 간의 결합도가 낮습니다.",
+                                    "consistency": "Aggregate 내부에서 트랜잭션이 관리되므로, 데이터 일관성을 유지하기 쉽습니다.",
+                                    "encapsulation": "Aggregate 내부 구현을 숨기고 필요한 정보만 제공하여 캡슐화가 잘 되어 있습니다.",
+                                    "complexity": "Aggregate가 하나로 통합되어 있어 도메인 모델이 단순하고 이해하기 쉽습니다.",
+                                    "independence": "Aggregate가 하나이므로, 독립적으로 개발, 테스트 및 배포가 가능합니다.",
+                                    "performance": "모든 정보가 하나의 Aggregate에 있으므로, 쿼리 성능이 향상됩니다."
+                                },
+                                "cons": {
+                                    "cohesion": "Aggregate가 여러 책임을 가지므로, 응집도가 낮아질 수 있습니다.",
+                                    "coupling": "Aggregate 내부의 변경이 다른 기능에 영향을 줄 수 있습니다.",
+                                    "consistency": "Aggregate가 커질수록 트랜잭션 관리가 복잡해질 수 있습니다.",
+                                    "encapsulation": "Aggregate 내부의 정보가 많아질수록 캡슐화가 어려워질 수 있습니다.",
+                                    "complexity": "Aggregate가 커질수록 도메인 모델이 복잡해질 수 있습니다.",
+                                    "independence": "Aggregate 내부의 기능들이 서로 의존적이므로, 독립적인 개발, 테스트 및 배포가 어려울 수 있습니다.",
+                                    "performance": "Aggregate가 커질수록 쿼리 성능이 저하될 수 있습니다."
+                                },
+                                "isAIRecommended": true,
+                                "boundedContext": {
+                                    "name": "ApplicationManagement",
+                                    "alias": "민원 신청 관리",
+                                    "displayName": "민원 신청 관리",
+                                    "description": "# Requirements\n\n## userStory\n\n# 민원신청발급 시스템 요구사항 정의서\n\n## 1. Epic: 민원 신청 프로세스\n### Feature 1.1: 서비스 신청\n#### Description\n- 통합창구포털을 통한 민원 서비스 신청 기능\n- 사용자 친화적인 UI/UX 제공\n- 단계별 신청 프로세스 구현\n\n#### Acceptance Criteria\n- 사용자는 통합창구포털에서 민원 서비스를 선택하고 신청할 수 있어야 함\n- 신청 양식의 모든 필수 필드가 검증되어야 함\n- 첨부 파일 업로드 시 파일 형식 및 크기 제한 검증\n- 임시 저장 및 불러오기 기능 제공\n- 신청 진행 상태 실시간 표시\n\n#### Input Parameters\n##### 신청자 정보\n- 이름 (한글 2-50자)\n- 주민등록번호 (13자리, 유효성 검증 포함)\n- 휴대전화번호 (10-11자리)\n- 이메일 주소 (이메일 형식 검증)\n- 주소 (도로명/지번 주소 지원)\n\n##### 민원 정보\n- 민원 종류 (코드테이블 연계)\n- 신청 사유 (최대 1000자)\n- 처리 희망일자\n- 수령 방법 (방문/우편/온라인)\n\n##### 첨부 서류\n- 파일 형식: PDF, JPG, PNG\n- 개별 파일 크기: 최대 10MB\n- 총 첨부 크기: 최대 50MB\n- 필수 서류 항목 검증\n\n#### Technical Details\n- RESTful API 엔드포인트 구조\n- 파일 업로드 처리 방식\n- 데이터 유효성 검증 규칙\n- 세션 관리 방식\n\n## userStory\n\n### Feature 2.2: 신청서 작성\n#### Description\n- 자동 신청서 작성\n- 데이터 검증 및 보정\n- 전자서명 처리\n\n#### Acceptance Criteria\n- 모든 필요 정보가 신청서에 정확히 반영\n- 작성된 신청서의 유효성 검증\n- 전자서명 검증\n- 임시저장 기능\n- 작성 이력 관리\n\n#### Input Parameters\n##### 신청서 구성 정보\n- 템플릿 코드\n- 서명 위치\n- 첨부파일 목록\n- 보안등급\n\n##### 검증 규칙\n- 필수항목 검증\n- 형식 검증\n- 논리 검증\n- 결재선 검증\n\n#### Technical Details\n- 템플릿 엔진 사양\n- 전자서명 모듈 스펙\n- 문서 보안 정책\n- 저장소 구조",
+                                    "aggregates": [
+                                        {
+                                            "name": "Application",
+                                            "alias": "민원 신청"
+                                        },
+                                        {
+                                            "name": "Applicant",
+                                            "alias": "신청자"
+                                        }
+                                    ]
+                                },
+                                "description": "{\"userStories\":[{\"title\":\"서비스 신청\",\"description\":\"사용자는 통합창구포털을 통해 민원 서비스를 신청할 수 있어야 합니다.\",\"acceptance\":[\"통합창구포털에서 민원 서비스를 선택하고 신청할 수 있어야 함\",\"신청 양식의 모든 필수 필드가 검증되어야 함\",\"첨부 파일 업로드 시 파일 형식 및 크기 제한 검증\",\"임시 저장 및 불러오기 기능 제공\",\"신청 진행 상태 실시간 표시\"]},{\"title\":\"신청서 작성\",\"description\":\"사용자는 민원 신청서를 자동으로 작성하고, 데이터 검증 및 전자서명을 처리할 수 있어야 합니다.\",\"acceptance\":[\"모든 필요 정보가 신청서에 정확히 반영\",\"작성된 신청서의 유효성 검증\",\"전자서명 검증\",\"임시저장 기능\",\"작성 이력 관리\"]}],\"entities\":{\"ApplicantInfo\":{\"properties\":[{\"name\":\"name\",\"type\":\"String\",\"required?\":true},{\"name\":\"residentRegistrationNumber\",\"type\":\"String\",\"required?\":true},{\"name\":\"phoneNumber\",\"type\":\"String\",\"required?\":true},{\"name\":\"emailAddress\",\"type\":\"String\",\"required?\":true},{\"name\":\"address\",\"type\":\"String\",\"required?\":true}]},\"CivilPetitionInfo\":{\"properties\":[{\"name\":\"petitionType\",\"type\":\"String\",\"required?\":true},{\"name\":\"reasonForApplication\",\"type\":\"String\",\"required?\":true},{\"name\":\"desiredProcessingDate\",\"type\":\"Date\",\"required?\":false},{\"name\":\"receivingMethod\",\"type\":\"enum\",\"required?\":true,\"values?\":[\"방문\",\"우편\",\"온라인\"]}]},\"Attachment\":{\"properties\":[{\"name\":\"fileName\",\"type\":\"String\",\"required?\":true},{\"name\":\"fileType\",\"type\":\"enum\",\"required?\":true,\"values?\":[\"PDF\",\"JPG\",\"PNG\"]},{\"name\":\"fileSize\",\"type\":\"Long\",\"required?\":true},{\"name\":\"isRequired\",\"type\":\"Boolean\",\"required?\":true}]},\"ApplicationForm\":{\"properties\":[{\"name\":\"templateCode\",\"type\":\"String\",\"required?\":true},{\"name\":\"signaturePosition\",\"type\":\"String\",\"required?\":true},{\"name\":\"attachmentList\",\"type\":\"String\",\"required?\":true},{\"name\":\"securityLevel\",\"type\":\"String\",\"required?\":true}]}},\"businessRules\":[{\"name\":\"필수 입력 항목 검증\",\"description\":\"신청자 정보 및 민원 정보의 필수 입력 항목은 반드시 입력되어야 합니다.\"},{\"name\":\"주민등록번호 유효성 검증\",\"description\":\"신청자의 주민등록번호는 13자리여야 하며, 유효성 검증을 통과해야 합니다.\"},{\"name\":\"휴대전화번호 유효성 검증\",\"description\":\"신청자의 휴대전화번호는 10-11자리여야 합니다.\"},{\"name\":\"이메일 형식 검증\",\"description\":\"신청자의 이메일 주소는 이메일 형식에 맞아야 합니다.\"},{\"name\":\"첨부 파일 형식 및 크기 제한\",\"description\":\"첨부 파일은 PDF, JPG, PNG 형식만 허용하며, 개별 파일 크기는 최대 10MB, 총 첨부 크기는 최대 50MB를 초과할 수 없습니다.\"}],\"interfaces\":{\"ServiceApplication\":{\"sections\":[{\"name\":\"신청자 정보\",\"type\":\"form\",\"fields\":[{\"name\":\"name\",\"type\":\"text\",\"required?\":true},{\"name\":\"residentRegistrationNumber\",\"type\":\"text\",\"required?\":true},{\"name\":\"phoneNumber\",\"type\":\"text\",\"required?\":true},{\"name\":\"emailAddress\",\"type\":\"text\",\"required?\":true},{\"name\":\"address\",\"type\":\"text\",\"required?\":true}],\"actions\":[],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}},{\"name\":\"민원 정보\",\"type\":\"form\",\"fields\":[{\"name\":\"petitionType\",\"type\":\"select\",\"required?\":true},{\"name\":\"reasonForApplication\",\"type\":\"textarea\",\"required?\":true},{\"name\":\"desiredProcessingDate\",\"type\":\"date\",\"required?\":false},{\"name\":\"receivingMethod\",\"type\":\"select\",\"required?\":true}],\"actions\":[\"신청\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}},{\"name\":\"첨부 서류\",\"type\":\"form\",\"fields\":[{\"name\":\"attachment\",\"type\":\"file\",\"required?\":true}],\"actions\":[],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}}]},\"ApplicationFormCreation\":{\"sections\":[{\"name\":\"신청서 구성 정보\",\"type\":\"form\",\"fields\":[{\"name\":\"templateCode\",\"type\":\"text\",\"required?\":true},{\"name\":\"signaturePosition\",\"type\":\"text\",\"required?\":true},{\"name\":\"attachmentList\",\"type\":\"text\",\"required?\":true},{\"name\":\"securityLevel\",\"type\":\"text\",\"required?\":true}],\"actions\":[\"저장\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}}]}}}"
+                            },
+                            {
+                                "structure": [
+                                    {
+                                        "aggregate": {
+                                            "name": "Application",
+                                            "alias": "민원 신청"
+                                        },
+                                        "enumerations": [
+                                            {
+                                                "name": "ApplicationStatus",
+                                                "alias": "신청 상태"
+                                            },
+                                            {
+                                                "name": "ReceivingMethod",
+                                                "alias": "수령 방법"
+                                            }
+                                        ],
+                                        "valueObjects": [
+                                            {
+                                                "name": "CivilPetitionInfo",
+                                                "alias": "민원 정보"
+                                            },
+                                            {
+                                                "name": "ApplicantReference",
+                                                "alias": "신청자 참조",
+                                                "referencedAggregate": {
+                                                    "name": "Applicant",
+                                                    "alias": "신청자"
+                                                }
+                                            },
+                                            {
+                                                "name": "FormReference",
+                                                "alias": "서식 참조",
+                                                "referencedAggregate": {
+                                                    "name": "Form",
+                                                    "alias": "서식"
+                                                }
+                                            },
+                                            {
+                                                "name": "DocumentReference",
+                                                "alias": "문서 참조",
+                                                "referencedAggregate": {
+                                                    "name": "Document",
+                                                    "alias": "문서"
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "aggregate": {
+                                            "name": "Applicant",
+                                            "alias": "신청자"
+                                        },
+                                        "enumerations": [],
+                                        "valueObjects": [
+                                            {
+                                                "name": "ApplicantInfo",
+                                                "alias": "신청자 정보"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "aggregate": {
+                                            "name": "Attachment",
+                                            "alias": "첨부 파일"
+                                        },
+                                        "enumerations": [
+                                            {
+                                                "name": "FileType",
+                                                "alias": "파일 형식"
+                                            }
+                                        ],
+                                        "valueObjects": []
+                                    }
+                                ],
+                                "pros": {
+                                    "cohesion": "Application, Applicant, Attachment Aggregate는 각자 고유한 책임을 가지며 응집도가 높습니다.",
+                                    "coupling": "Aggregate 간의 결합도가 낮아 유연성이 높습니다.",
+                                    "consistency": "각 Aggregate가 자체적인 일관성을 유지하므로, 트랜잭션 관리가 용이합니다.",
+                                    "encapsulation": "각 Aggregate는 내부 구현을 숨기고 필요한 정보만 Value Object를 통해 제공하여 캡슐화가 잘 되어 있습니다.",
+                                    "complexity": "Aggregate가 분리되어 있어 도메인 모델이 단순하고 이해하기 쉽습니다.",
+                                    "independence": "Application, Applicant, Attachment는 독립적으로 개발, 테스트 및 배포가 가능합니다.",
+                                    "performance": "각 Aggregate에 대한 쿼리 성능이 향상됩니다."
+                                },
+                                "cons": {
+                                    "cohesion": "민원 신청과 관련된 모든 정보를 한 번에 조회하려면 여러 Aggregate를 조회해야 합니다.",
+                                    "coupling": "Aggregate 간의 참조가 많아질 수록, Aggregate 변경 시 다른 Aggregate에 영향을 줄 수 있습니다.",
+                                    "consistency": "Aggregate 간의 데이터 일관성을 유지하기 위해 추가적인 조정이 필요할 수 있습니다.",
+                                    "encapsulation": "Aggregate 간의 통신을 위해 Value Object를 사용해야 하므로, 추가적인 코드가 필요합니다.",
+                                    "complexity": "Aggregate가 분리되어 있어 전체적인 시스템의 복잡성이 증가할 수 있습니다.",
+                                    "independence": "Application, Applicant, Attachment 간의 상호 작용을 테스트하기 위해 추가적인 노력이 필요합니다.",
+                                    "performance": "여러 Aggregate를 조인하여 데이터를 조회해야 하므로, 쿼리 성능이 저하될 수 있습니다."
+                                },
+                                "isAIRecommended": false,
+                                "boundedContext": {
+                                    "name": "ApplicationManagement",
+                                    "alias": "민원 신청 관리",
+                                    "displayName": "민원 신청 관리",
+                                    "description": "# Requirements\n\n## userStory\n\n# 민원신청발급 시스템 요구사항 정의서\n\n## 1. Epic: 민원 신청 프로세스\n### Feature 1.1: 서비스 신청\n#### Description\n- 통합창구포털을 통한 민원 서비스 신청 기능\n- 사용자 친화적인 UI/UX 제공\n- 단계별 신청 프로세스 구현\n\n#### Acceptance Criteria\n- 사용자는 통합창구포털에서 민원 서비스를 선택하고 신청할 수 있어야 함\n- 신청 양식의 모든 필수 필드가 검증되어야 함\n- 첨부 파일 업로드 시 파일 형식 및 크기 제한 검증\n- 임시 저장 및 불러오기 기능 제공\n- 신청 진행 상태 실시간 표시\n\n#### Input Parameters\n##### 신청자 정보\n- 이름 (한글 2-50자)\n- 주민등록번호 (13자리, 유효성 검증 포함)\n- 휴대전화번호 (10-11자리)\n- 이메일 주소 (이메일 형식 검증)\n- 주소 (도로명/지번 주소 지원)\n\n##### 민원 정보\n- 민원 종류 (코드테이블 연계)\n- 신청 사유 (최대 1000자)\n- 처리 희망일자\n- 수령 방법 (방문/우편/온라인)\n\n##### 첨부 서류\n- 파일 형식: PDF, JPG, PNG\n- 개별 파일 크기: 최대 10MB\n- 총 첨부 크기: 최대 50MB\n- 필수 서류 항목 검증\n\n#### Technical Details\n- RESTful API 엔드포인트 구조\n- 파일 업로드 처리 방식\n- 데이터 유효성 검증 규칙\n- 세션 관리 방식\n\n## userStory\n\n### Feature 2.2: 신청서 작성\n#### Description\n- 자동 신청서 작성\n- 데이터 검증 및 보정\n- 전자서명 처리\n\n#### Acceptance Criteria\n- 모든 필요 정보가 신청서에 정확히 반영\n- 작성된 신청서의 유효성 검증\n- 전자서명 검증\n- 임시저장 기능\n- 작성 이력 관리\n\n#### Input Parameters\n##### 신청서 구성 정보\n- 템플릿 코드\n- 서명 위치\n- 첨부파일 목록\n- 보안등급\n\n##### 검증 규칙\n- 필수항목 검증\n- 형식 검증\n- 논리 검증\n- 결재선 검증\n\n#### Technical Details\n- 템플릿 엔진 사양\n- 전자서명 모듈 스펙\n- 문서 보안 정책\n- 저장소 구조",
+                                    "aggregates": [
+                                        {
+                                            "name": "Application",
+                                            "alias": "민원 신청"
+                                        },
+                                        {
+                                            "name": "Applicant",
+                                            "alias": "신청자"
+                                        }
+                                    ]
+                                },
+                                "description": "{\"userStories\":[{\"title\":\"서비스 신청\",\"description\":\"사용자는 통합창구포털을 통해 민원 서비스를 신청할 수 있어야 합니다.\",\"acceptance\":[\"통합창구포털에서 민원 서비스를 선택하고 신청할 수 있어야 함\",\"신청 양식의 모든 필수 필드가 검증되어야 함\",\"첨부 파일 업로드 시 파일 형식 및 크기 제한 검증\",\"임시 저장 및 불러오기 기능 제공\",\"신청 진행 상태 실시간 표시\"]},{\"title\":\"신청서 작성\",\"description\":\"사용자는 민원 신청서를 자동으로 작성하고, 데이터 검증 및 전자서명을 처리할 수 있어야 합니다.\",\"acceptance\":[\"모든 필요 정보가 신청서에 정확히 반영\",\"작성된 신청서의 유효성 검증\",\"전자서명 검증\",\"임시저장 기능\",\"작성 이력 관리\"]}],\"entities\":{\"ApplicantInfo\":{\"properties\":[{\"name\":\"name\",\"type\":\"String\",\"required?\":true},{\"name\":\"residentRegistrationNumber\",\"type\":\"String\",\"required?\":true},{\"name\":\"phoneNumber\",\"type\":\"String\",\"required?\":true},{\"name\":\"emailAddress\",\"type\":\"String\",\"required?\":true},{\"name\":\"address\",\"type\":\"String\",\"required?\":true}]},\"CivilPetitionInfo\":{\"properties\":[{\"name\":\"petitionType\",\"type\":\"String\",\"required?\":true},{\"name\":\"reasonForApplication\",\"type\":\"String\",\"required?\":true},{\"name\":\"desiredProcessingDate\",\"type\":\"Date\",\"required?\":false},{\"name\":\"receivingMethod\",\"type\":\"enum\",\"required?\":true,\"values?\":[\"방문\",\"우편\",\"온라인\"]}]},\"Attachment\":{\"properties\":[{\"name\":\"fileName\",\"type\":\"String\",\"required?\":true},{\"name\":\"fileType\",\"type\":\"enum\",\"required?\":true,\"values?\":[\"PDF\",\"JPG\",\"PNG\"]},{\"name\":\"fileSize\",\"type\":\"Long\",\"required?\":true},{\"name\":\"isRequired\",\"type\":\"Boolean\",\"required?\":true}]},\"ApplicationForm\":{\"properties\":[{\"name\":\"templateCode\",\"type\":\"String\",\"required?\":true},{\"name\":\"signaturePosition\",\"type\":\"String\",\"required?\":true},{\"name\":\"attachmentList\",\"type\":\"String\",\"required?\":true},{\"name\":\"securityLevel\",\"type\":\"String\",\"required?\":true}]}},\"businessRules\":[{\"name\":\"필수 입력 항목 검증\",\"description\":\"신청자 정보 및 민원 정보의 필수 입력 항목은 반드시 입력되어야 합니다.\"},{\"name\":\"주민등록번호 유효성 검증\",\"description\":\"신청자의 주민등록번호는 13자리여야 하며, 유효성 검증을 통과해야 합니다.\"},{\"name\":\"휴대전화번호 유효성 검증\",\"description\":\"신청자의 휴대전화번호는 10-11자리여야 합니다.\"},{\"name\":\"이메일 형식 검증\",\"description\":\"신청자의 이메일 주소는 이메일 형식에 맞아야 합니다.\"},{\"name\":\"첨부 파일 형식 및 크기 제한\",\"description\":\"첨부 파일은 PDF, JPG, PNG 형식만 허용하며, 개별 파일 크기는 최대 10MB, 총 첨부 크기는 최대 50MB를 초과할 수 없습니다.\"}],\"interfaces\":{\"ServiceApplication\":{\"sections\":[{\"name\":\"신청자 정보\",\"type\":\"form\",\"fields\":[{\"name\":\"name\",\"type\":\"text\",\"required?\":true},{\"name\":\"residentRegistrationNumber\",\"type\":\"text\",\"required?\":true},{\"name\":\"phoneNumber\",\"type\":\"text\",\"required?\":true},{\"name\":\"emailAddress\",\"type\":\"text\",\"required?\":true},{\"name\":\"address\",\"type\":\"text\",\"required?\":true}],\"actions\":[],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}},{\"name\":\"민원 정보\",\"type\":\"form\",\"fields\":[{\"name\":\"petitionType\",\"type\":\"select\",\"required?\":true},{\"name\":\"reasonForApplication\",\"type\":\"textarea\",\"required?\":true},{\"name\":\"desiredProcessingDate\",\"type\":\"date\",\"required?\":false},{\"name\":\"receivingMethod\",\"type\":\"select\",\"required?\":true}],\"actions\":[\"신청\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}},{\"name\":\"첨부 서류\",\"type\":\"form\",\"fields\":[{\"name\":\"attachment\",\"type\":\"file\",\"required?\":true}],\"actions\":[],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}}]},\"ApplicationFormCreation\":{\"sections\":[{\"name\":\"신청서 구성 정보\",\"type\":\"form\",\"fields\":[{\"name\":\"templateCode\",\"type\":\"text\",\"required?\":true},{\"name\":\"signaturePosition\",\"type\":\"text\",\"required?\":true},{\"name\":\"attachmentList\",\"type\":\"text\",\"required?\":true},{\"name\":\"securityLevel\",\"type\":\"text\",\"required?\":true}],\"actions\":[\"저장\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}}]}}}"
+                            }
+                        ],
+                        "conclusions": "옵션 1은 Application과 Applicant를 분리하여 관리하므로, 각 도메인 개념에 집중하고 유연성을 높일 수 있습니다. 옵션 2는 Application과 Applicant를 통합하여 관리하므로, 트랜잭션 일관성을 강화하고 데이터 관리를 단순화할 수 있습니다. 옵션 3은 Application, Applicant, Attachment를 분리하여 관리하므로, 각 도메인 개념에 집중하고 첨부 파일 관리를 용이하게 할 수 있습니다.",
+                        "defaultOptionIndex": 1,
+                        "analysisResult": {
+                            "userStories": [
+                                {
+                                    "title": "서비스 신청",
+                                    "description": "사용자는 통합창구포털을 통해 민원 서비스를 신청할 수 있어야 합니다.",
+                                    "acceptance": [
+                                        "통합창구포털에서 민원 서비스를 선택하고 신청할 수 있어야 함",
+                                        "신청 양식의 모든 필수 필드가 검증되어야 함",
+                                        "첨부 파일 업로드 시 파일 형식 및 크기 제한 검증",
+                                        "임시 저장 및 불러오기 기능 제공",
+                                        "신청 진행 상태 실시간 표시"
+                                    ]
+                                },
+                                {
+                                    "title": "신청서 작성",
+                                    "description": "사용자는 민원 신청서를 자동으로 작성하고, 데이터 검증 및 전자서명을 처리할 수 있어야 합니다.",
+                                    "acceptance": [
+                                        "모든 필요 정보가 신청서에 정확히 반영",
+                                        "작성된 신청서의 유효성 검증",
+                                        "전자서명 검증",
+                                        "임시저장 기능",
+                                        "작성 이력 관리"
+                                    ]
+                                }
+                            ],
+                            "entities": {
+                                "ApplicantInfo": {
+                                    "properties": [
+                                        {
+                                            "name": "name",
+                                            "type": "String",
+                                            "required?": true
+                                        },
+                                        {
+                                            "name": "residentRegistrationNumber",
+                                            "type": "String",
+                                            "required?": true
+                                        },
+                                        {
+                                            "name": "phoneNumber",
+                                            "type": "String",
+                                            "required?": true
+                                        },
+                                        {
+                                            "name": "emailAddress",
+                                            "type": "String",
+                                            "required?": true
+                                        },
+                                        {
+                                            "name": "address",
+                                            "type": "String",
+                                            "required?": true
+                                        }
+                                    ]
+                                },
+                                "CivilPetitionInfo": {
+                                    "properties": [
+                                        {
+                                            "name": "petitionType",
+                                            "type": "String",
+                                            "required?": true
+                                        },
+                                        {
+                                            "name": "reasonForApplication",
+                                            "type": "String",
+                                            "required?": true
+                                        },
+                                        {
+                                            "name": "desiredProcessingDate",
+                                            "type": "Date",
+                                            "required?": false
+                                        },
+                                        {
+                                            "name": "receivingMethod",
+                                            "type": "enum",
+                                            "required?": true,
+                                            "values?": [
+                                                "방문",
+                                                "우편",
+                                                "온라인"
+                                            ]
+                                        }
+                                    ]
+                                },
+                                "Attachment": {
+                                    "properties": [
+                                        {
+                                            "name": "fileName",
+                                            "type": "String",
+                                            "required?": true
+                                        },
+                                        {
+                                            "name": "fileType",
+                                            "type": "enum",
+                                            "required?": true,
+                                            "values?": [
+                                                "PDF",
+                                                "JPG",
+                                                "PNG"
+                                            ]
+                                        },
+                                        {
+                                            "name": "fileSize",
+                                            "type": "Long",
+                                            "required?": true
+                                        },
+                                        {
+                                            "name": "isRequired",
+                                            "type": "Boolean",
+                                            "required?": true
+                                        }
+                                    ]
+                                },
+                                "ApplicationForm": {
+                                    "properties": [
+                                        {
+                                            "name": "templateCode",
+                                            "type": "String",
+                                            "required?": true
+                                        },
+                                        {
+                                            "name": "signaturePosition",
+                                            "type": "String",
+                                            "required?": true
+                                        },
+                                        {
+                                            "name": "attachmentList",
+                                            "type": "String",
+                                            "required?": true
+                                        },
+                                        {
+                                            "name": "securityLevel",
+                                            "type": "String",
+                                            "required?": true
+                                        }
+                                    ]
+                                }
+                            },
+                            "businessRules": [
+                                {
+                                    "name": "필수 입력 항목 검증",
+                                    "description": "신청자 정보 및 민원 정보의 필수 입력 항목은 반드시 입력되어야 합니다."
+                                },
+                                {
+                                    "name": "주민등록번호 유효성 검증",
+                                    "description": "신청자의 주민등록번호는 13자리여야 하며, 유효성 검증을 통과해야 합니다."
+                                },
+                                {
+                                    "name": "휴대전화번호 유효성 검증",
+                                    "description": "신청자의 휴대전화번호는 10-11자리여야 합니다."
+                                },
+                                {
+                                    "name": "이메일 형식 검증",
+                                    "description": "신청자의 이메일 주소는 이메일 형식에 맞아야 합니다."
+                                },
+                                {
+                                    "name": "첨부 파일 형식 및 크기 제한",
+                                    "description": "첨부 파일은 PDF, JPG, PNG 형식만 허용하며, 개별 파일 크기는 최대 10MB, 총 첨부 크기는 최대 50MB를 초과할 수 없습니다."
+                                }
+                            ],
+                            "interfaces": {
+                                "ServiceApplication": {
+                                    "sections": [
+                                        {
+                                            "name": "신청자 정보",
+                                            "type": "form",
+                                            "fields": [
+                                                {
+                                                    "name": "name",
+                                                    "type": "text",
+                                                    "required?": true
+                                                },
+                                                {
+                                                    "name": "residentRegistrationNumber",
+                                                    "type": "text",
+                                                    "required?": true
+                                                },
+                                                {
+                                                    "name": "phoneNumber",
+                                                    "type": "text",
+                                                    "required?": true
+                                                },
+                                                {
+                                                    "name": "emailAddress",
+                                                    "type": "text",
+                                                    "required?": true
+                                                },
+                                                {
+                                                    "name": "address",
+                                                    "type": "text",
+                                                    "required?": true
+                                                }
+                                            ],
+                                            "actions": [],
+                                            "filters": [],
+                                            "resultTable": {
+                                                "columns": [],
+                                                "actions": []
+                                            }
+                                        },
+                                        {
+                                            "name": "민원 정보",
+                                            "type": "form",
+                                            "fields": [
+                                                {
+                                                    "name": "petitionType",
+                                                    "type": "select",
+                                                    "required?": true
+                                                },
+                                                {
+                                                    "name": "reasonForApplication",
+                                                    "type": "textarea",
+                                                    "required?": true
+                                                },
+                                                {
+                                                    "name": "desiredProcessingDate",
+                                                    "type": "date",
+                                                    "required?": false
+                                                },
+                                                {
+                                                    "name": "receivingMethod",
+                                                    "type": "select",
+                                                    "required?": true
+                                                }
+                                            ],
+                                            "actions": [
+                                                "신청"
+                                            ],
+                                            "filters": [],
+                                            "resultTable": {
+                                                "columns": [],
+                                                "actions": []
+                                            }
+                                        },
+                                        {
+                                            "name": "첨부 서류",
+                                            "type": "form",
+                                            "fields": [
+                                                {
+                                                    "name": "attachment",
+                                                    "type": "file",
+                                                    "required?": true
+                                                }
+                                            ],
+                                            "actions": [],
+                                            "filters": [],
+                                            "resultTable": {
+                                                "columns": [],
+                                                "actions": []
+                                            }
+                                        }
+                                    ]
+                                },
+                                "ApplicationFormCreation": {
+                                    "sections": [
+                                        {
+                                            "name": "신청서 구성 정보",
+                                            "type": "form",
+                                            "fields": [
+                                                {
+                                                    "name": "templateCode",
+                                                    "type": "text",
+                                                    "required?": true
+                                                },
+                                                {
+                                                    "name": "signaturePosition",
+                                                    "type": "text",
+                                                    "required?": true
+                                                },
+                                                {
+                                                    "name": "attachmentList",
+                                                    "type": "text",
+                                                    "required?": true
+                                                },
+                                                {
+                                                    "name": "securityLevel",
+                                                    "type": "text",
+                                                    "required?": true
+                                                }
+                                            ],
+                                            "actions": [
+                                                "저장"
+                                            ],
+                                            "filters": [],
+                                            "resultTable": {
+                                                "columns": [],
+                                                "actions": []
+                                            }
+                                        }
+                                    ]
+                                }
+                            },
+                            "inference": "제공된 민원신청발급 시스템 요구사항 정의서를 기반으로, 민원 신청 프로세스와 관련된 사용자 스토리, 엔티티, 비즈니스 규칙 및 인터페이스를 정의합니다. 특히, 서비스 신청 및 신청서 작성 기능에 초점을 맞춰 상세 요구사항을 반영합니다."
+                        },
+                        "inference": "\n\n기능 요구 사항 및 기존 초안을 분석한 후, 세 가지 디자인 옵션을 생성했습니다. 첫 번째 옵션은 Application 및 Applicant를 별도의 Aggregate로 분리하여 각 도메인 개념에 집중합니다. 두 번째 옵션은 Application과 Applicant를 하나의 Aggregate로 통합하여 트랜잭션 일관성을 강화합니다. 세 번째 옵션은 Application, Applicant 외 Attachment를 Aggregate로 구성하여 신청 관련 모든 정보를 통합 관리합니다."
+                    },
+                    {
+                        "boundedContext": "VerificationService",
+                        "boundedContextAlias": "자격 검증 서비스",
+                        "description": "{\"userStories\":[{\"title\":\"자격 조회\",\"description\":\"신청된 민원에 대한 자격 조회 및 검증을 통해 신청자의 자격 요건을 자동으로 확인하고 실시간으로 결과를 반환받아 민원 처리의 정확성을 높이고자 합니다.\",\"acceptance\":[\"신청자의 자격 요건이 자동으로 확인되어야 함\",\"자격 조회 결과가 실시간으로 반환되어야 함\",\"자격 불충족 시 상세 사유 제공\",\"조회 이력 저장 및 관리\",\"재조회 기능 제공\"]},{\"title\":\"추가 데이터 조회\",\"description\":\"연계 시스템 데이터 수집 및 데이터 정합성 검증을 통해 필요한 데이터를 자동으로 수집하고 데이터의 무결성을 검증하여 민원 처리의 효율성을 높이고자 합니다.\",\"acceptance\":[\"연계 시스템으로부터 필요 데이터를 자동으로 수집\",\"수집된 데이터의 무결성 검증\",\"누락 데이터 재조회 처리\",\"데이터 변환 및 정제\",\"조회 이력 관리\"]}],\"entities\":{\"자격조회정보\":{\"properties\":[{\"name\":\"applicantId\",\"type\":\"String\",\"required?\":true,\"description\":\"신청자 식별정보 (주민등록번호 암호화 전송 or 외국인등록번호)\"},{\"name\":\"residentRegistrationNumber\",\"type\":\"String\",\"required?\":false,\"description\":\"주민등록번호 (암호화 전송)\"},{\"name\":\"foreignerRegistrationNumber\",\"type\":\"String\",\"required?\":false,\"description\":\"외국인등록번호 (해당 시)\"},{\"name\":\"verificationItems\",\"type\":\"Array\",\"required?\":true,\"description\":\"자격 조회 항목 (주민등록 진위확인, 결격사유 조회, 수급자격 확인 등)\"},{\"name\":\"inquiryPurposeCode\",\"type\":\"String\",\"required?\":true,\"description\":\"조회 목적 코드\"}]},\"API인증정보\":{\"properties\":[{\"name\":\"apiKey\",\"type\":\"String\",\"required?\":true,\"description\":\"API Key\"},{\"name\":\"authToken\",\"type\":\"String\",\"required?\":true,\"description\":\"인증토큰\"},{\"name\":\"ipAccessRestriction\",\"type\":\"String\",\"required?\":true,\"description\":\"IP 접근제한\"},{\"name\":\"electronicSignature\",\"type\":\"String\",\"required?\":true,\"description\":\"전자서명 값\"}]},\"조회조건\":{\"properties\":[{\"name\":\"targetSystem\",\"type\":\"String\",\"required?\":true,\"description\":\"조회 대상 시스템\"},{\"name\":\"inquiryItems\",\"type\":\"Array\",\"required?\":true,\"description\":\"조회 항목 정의\"},{\"name\":\"inquiryPeriod\",\"type\":\"String\",\"required?\":true,\"description\":\"조회 기간\"},{\"name\":\"priority\",\"type\":\"Integer\",\"required?\":true,\"description\":\"우선순위\"}]},\"데이터처리규칙\":{\"properties\":[{\"name\":\"dataConversionRules\",\"type\":\"String\",\"required?\":true,\"description\":\"데이터 변환 규칙\"},{\"name\":\"integrityVerificationRules\",\"type\":\"String\",\"required?\":true,\"description\":\"정합성 검증 규칙\"},{\"name\":\"exceptionHandlingCriteria\",\"type\":\"String\",\"required?\":true,\"description\":\"예외처리 기준\"},{\"name\":\"retryRules\",\"type\":\"String\",\"required?\":true,\"description\":\"재처리 규칙\"}]}},\"businessRules\":[{\"name\":\"자격 요건 자동 확인\",\"description\":\"신청자의 자격 요건은 실시간 자격 확인 시스템 연계를 통해 자동으로 확인되어야 한다.\"},{\"name\":\"자격 불충족 시 사유 제공\",\"description\":\"자격 요건이 충족되지 않을 경우, 상세 사유를 제공해야 한다.\"},{\"name\":\"데이터 무결성 검증\",\"description\":\"연계 시스템으로부터 수집된 데이터는 무결성 검증을 거쳐야 한다.\"}],\"interfaces\":{\"자격조회화면\":{\"sections\":[{\"name\":\"자격 조회 정보 입력\",\"type\":\"form\",\"fields\":[{\"name\":\"residentRegistrationNumber\",\"type\":\"text\",\"required?\":false,\"description\":\"주민등록번호 (암호화 전송)\"},{\"name\":\"foreignerRegistrationNumber\",\"type\":\"text\",\"required?\":false,\"description\":\"외국인등록번호\"},{\"name\":\"inquiryPurposeCode\",\"type\":\"select\",\"required?\":true,\"description\":\"조회 목적 코드\"}],\"actions\":[\"자격 조회\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}},{\"name\":\"자격 조회 결과\",\"type\":\"table\",\"fields\":[],\"actions\":[],\"filters\":[],\"resultTable\":{\"columns\":[\"신청자 식별정보\",\"자격 조회 항목\",\"조회 결과\",\"상세 사유\"],\"actions\":[\"재조회\"]}}]},\"추가데이터조회화면\":{\"sections\":[{\"name\":\"조회 조건 입력\",\"type\":\"form\",\"fields\":[{\"name\":\"targetSystem\",\"type\":\"select\",\"required?\":true,\"description\":\"조회 대상 시스템\"},{\"name\":\"inquiryItems\",\"type\":\"text\",\"required?\":true,\"description\":\"조회 항목 정의\"},{\"name\":\"inquiryPeriod\",\"type\":\"date\",\"required?\":true,\"description\":\"조회 기간\"},{\"name\":\"priority\",\"type\":\"number\",\"required?\":true,\"description\":\"우선순위\"}],\"actions\":[\"데이터 조회\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}},{\"name\":\"조회 결과\",\"type\":\"table\",\"fields\":[],\"actions\":[],\"filters\":[],\"resultTable\":{\"columns\":[\"조회 대상 시스템\",\"조회 항목\",\"수집된 데이터\",\"검증 결과\"],\"actions\":[\"데이터 재조회\"]}}]}}}",
+                        "options": [
+                            {
+                                "structure": [
+                                    {
+                                        "aggregate": {
+                                            "name": "QualificationVerification",
+                                            "alias": "자격 조회 및 검증"
+                                        },
+                                        "enumerations": [],
+                                        "valueObjects": [
+                                            {
+                                                "name": "ApplicantInfo",
+                                                "alias": "신청자 정보"
+                                            },
+                                            {
+                                                "name": "VerificationItem",
+                                                "alias": "자격 조회 항목"
+                                            },
+                                            {
+                                                "name": "APIAuthenticationInfo",
+                                                "alias": "API 인증 정보"
+                                            },
+                                            {
+                                                "name": "InquiryCondition",
+                                                "alias": "조회 조건"
+                                            },
+                                            {
+                                                "name": "ApplicationWithApplicantReference",
+                                                "alias": "민원 신청 및 신청자 정보 참조",
+                                                "referencedAggregate": {
+                                                    "name": "ApplicationWithApplicant",
+                                                    "alias": "민원 신청 및 신청자 정보"
+                                                }
+                                            }
+                                        ]
+                                    }
+                                ],
+                                "pros": {
+                                    "cohesion": "자격 조회 및 검증 관련 모든 데이터를 하나의 트랜잭션 경계 내에서 관리하여 자격 확인 프로세스의 원자성을 보장합니다.",
+                                    "coupling": "자격 조회 및 검증 작업에 대한 애그리거트 간 통신을 제거하여 최종 일관성 패턴이나 분산 트랜잭션의 필요성을 줄입니다.",
+                                    "consistency": "신청자 자격 요건 확인과 관련된 비즈니스 규칙을 단일 트랜잭션 내에서 적용합니다.",
+                                    "encapsulation": "자격 확인 로직과 검증 이력 상태 전환을 함께 캡슐화하여 자격 규칙이 자격 상태 변경 전에 적용되도록 합니다.",
+                                    "complexity": "관련 개념을 병합하여 도메인 모델을 단순화하고, 별도의 애그리거트 간 조정 메커니즘의 필요성을 줄입니다.",
+                                    "independence": "자격 조회 또는 검증 프로세스에 대한 변경 사항을 여러 애그리거트 간 변경 사항 조정 없이 한 곳에서 수행할 수 있습니다.",
+                                    "performance": "자격 조회 및 검증 데이터에 접근할 때 여러 데이터베이스 쿼리의 필요성을 제거하여 읽기 작업 성능을 향상시킵니다."
+                                },
+                                "cons": {
+                                    "cohesion": "애그리거트가 자격 관리와 검증 이력 처리 모두를 담당하게 되어 단일 책임 원칙이 희석됩니다.",
+                                    "coupling": "자격 검증 요구 사항 변경이 전체 QualificationVerification 애그리거트에 영향을 미칠 수 있으며, 잠재적으로 자격 기능에 영향을 줄 수 있습니다.",
+                                    "consistency": "애그리거트가 커짐에 따라 트랜잭션 제한 시간이 발생할 가능성이 높아집니다.",
+                                    "encapsulation": "자격과 검증 이력을 처리하는 여러 팀이 동일한 애그리거트에 대한 변경 사항을 조정해야 하므로 조직적 마찰이 발생합니다.",
+                                    "complexity": "애그리거트는 시간이 지남에 따라 커져서 내부에 포함된 모든 비즈니스 규칙을 이해하기가 더 어려워집니다.",
+                                    "independence": "자격 및 검증 작업이 동일한 리소스 제약 조건을 공유하므로 독립적으로 확장할 수 없습니다.",
+                                    "performance": "동시 수정이 동일한 애그리거트를 대상으로 하므로 쓰기 작업이 경합으로 인해 어려움을 겪을 수 있습니다."
+                                },
+                                "isAIRecommended": false,
+                                "boundedContext": {
+                                    "name": "VerificationService",
+                                    "alias": "자격 검증 서비스",
+                                    "displayName": "자격 검증 서비스",
+                                    "description": "# Requirements\n\n## userStory\n\n### Feature 1.2: 자격 조회\n#### Description\n- 신청된 민원에 대한 자격 조회 및 검증\n- 실시간 자격 확인 시스템 연계\n- 다중 자격 조건 처리\n\n#### Acceptance Criteria\n- 신청자의 자격 요건이 자동으로 확인되어야 함\n- 자격 조회 결과가 실시간으로 반환되어야 함\n- 자격 불충족 시 상세 사유 제공\n- 조회 이력 저장 및 관리\n- 재조회 기능 제공\n\n#### Input Parameters\n##### 자격 조회 정보\n- 신청자 식별정보\n  - 주민등록번호 (암호화 전송)\n  - 외국인등록번호 (해당 시)\n- 자격 조회 항목\n  - 주민등록 진위확인\n  - 결격사유 조회\n  - 수급자격 확인\n- 조회 목적 코드\n\n##### API 인증 정보\n- API Key\n- 인증토큰\n- IP 접근제한\n- 전자서명 값\n\n#### Technical Details\n- 자격검증 API 스펙\n- 암호화 알고리즘\n- 에러 핸들링 방식\n- 타임아웃 설정\n\n## userStory\n\n### Feature 2.1: 추가 데이터 조회\n#### Description\n- 연계 시스템 데이터 수집\n- 데이터 정합성 검증\n- 실시간/배치 조회 처리\n\n#### Acceptance Criteria\n- 연계 시스템으로부터 필요 데이터를 자동으로 수집\n- 수집된 데이터의 무결성 검증\n- 누락 데이터 재조회 처리\n- 데이터 변환 및 정제\n- 조회 이력 관리\n\n#### Input Parameters\n##### 조회 조건\n- 조회 대상 시스템\n- 조회 항목 정의\n- 조회 기간\n- 우선순위\n\n##### 데이터 처리 규칙\n- 데이터 변환 규칙\n- 정합성 검증 규칙\n- 예외처리 기준\n- 재처리 규칙\n\n#### Technical Details\n- 연계 시스템별 API 스펙\n- 데이터 동기화 방식\n- 에러 복구 전략\n- 모니터링 방안",
+                                    "aggregates": [
+                                        {
+                                            "name": "Qualification",
+                                            "alias": "자격"
+                                        },
+                                        {
+                                            "name": "VerificationHistory",
+                                            "alias": "검증 이력"
+                                        }
+                                    ]
+                                },
+                                "description": "{\"userStories\":[{\"title\":\"자격 조회\",\"description\":\"신청된 민원에 대한 자격 조회 및 검증을 통해 신청자의 자격 요건을 자동으로 확인하고 실시간으로 결과를 반환받아 민원 처리의 정확성을 높이고자 합니다.\",\"acceptance\":[\"신청자의 자격 요건이 자동으로 확인되어야 함\",\"자격 조회 결과가 실시간으로 반환되어야 함\",\"자격 불충족 시 상세 사유 제공\",\"조회 이력 저장 및 관리\",\"재조회 기능 제공\"]},{\"title\":\"추가 데이터 조회\",\"description\":\"연계 시스템 데이터 수집 및 데이터 정합성 검증을 통해 필요한 데이터를 자동으로 수집하고 데이터의 무결성을 검증하여 민원 처리의 효율성을 높이고자 합니다.\",\"acceptance\":[\"연계 시스템으로부터 필요 데이터를 자동으로 수집\",\"수집된 데이터의 무결성 검증\",\"누락 데이터 재조회 처리\",\"데이터 변환 및 정제\",\"조회 이력 관리\"]}],\"entities\":{\"자격조회정보\":{\"properties\":[{\"name\":\"applicantId\",\"type\":\"String\",\"required?\":true,\"description\":\"신청자 식별정보 (주민등록번호 암호화 전송 or 외국인등록번호)\"},{\"name\":\"residentRegistrationNumber\",\"type\":\"String\",\"required?\":false,\"description\":\"주민등록번호 (암호화 전송)\"},{\"name\":\"foreignerRegistrationNumber\",\"type\":\"String\",\"required?\":false,\"description\":\"외국인등록번호 (해당 시)\"},{\"name\":\"verificationItems\",\"type\":\"Array\",\"required?\":true,\"description\":\"자격 조회 항목 (주민등록 진위확인, 결격사유 조회, 수급자격 확인 등)\"},{\"name\":\"inquiryPurposeCode\",\"type\":\"String\",\"required?\":true,\"description\":\"조회 목적 코드\"}]},\"API인증정보\":{\"properties\":[{\"name\":\"apiKey\",\"type\":\"String\",\"required?\":true,\"description\":\"API Key\"},{\"name\":\"authToken\",\"type\":\"String\",\"required?\":true,\"description\":\"인증토큰\"},{\"name\":\"ipAccessRestriction\",\"type\":\"String\",\"required?\":true,\"description\":\"IP 접근제한\"},{\"name\":\"electronicSignature\",\"type\":\"String\",\"required?\":true,\"description\":\"전자서명 값\"}]},\"조회조건\":{\"properties\":[{\"name\":\"targetSystem\",\"type\":\"String\",\"required?\":true,\"description\":\"조회 대상 시스템\"},{\"name\":\"inquiryItems\",\"type\":\"Array\",\"required?\":true,\"description\":\"조회 항목 정의\"},{\"name\":\"inquiryPeriod\",\"type\":\"String\",\"required?\":true,\"description\":\"조회 기간\"},{\"name\":\"priority\",\"type\":\"Integer\",\"required?\":true,\"description\":\"우선순위\"}]},\"데이터처리규칙\":{\"properties\":[{\"name\":\"dataConversionRules\",\"type\":\"String\",\"required?\":true,\"description\":\"데이터 변환 규칙\"},{\"name\":\"integrityVerificationRules\",\"type\":\"String\",\"required?\":true,\"description\":\"정합성 검증 규칙\"},{\"name\":\"exceptionHandlingCriteria\",\"type\":\"String\",\"required?\":true,\"description\":\"예외처리 기준\"},{\"name\":\"retryRules\",\"type\":\"String\",\"required?\":true,\"description\":\"재처리 규칙\"}]}},\"businessRules\":[{\"name\":\"자격 요건 자동 확인\",\"description\":\"신청자의 자격 요건은 실시간 자격 확인 시스템 연계를 통해 자동으로 확인되어야 한다.\"},{\"name\":\"자격 불충족 시 사유 제공\",\"description\":\"자격 요건이 충족되지 않을 경우, 상세 사유를 제공해야 한다.\"},{\"name\":\"데이터 무결성 검증\",\"description\":\"연계 시스템으로부터 수집된 데이터는 무결성 검증을 거쳐야 한다.\"}],\"interfaces\":{\"자격조회화면\":{\"sections\":[{\"name\":\"자격 조회 정보 입력\",\"type\":\"form\",\"fields\":[{\"name\":\"residentRegistrationNumber\",\"type\":\"text\",\"required?\":false,\"description\":\"주민등록번호 (암호화 전송)\"},{\"name\":\"foreignerRegistrationNumber\",\"type\":\"text\",\"required?\":false,\"description\":\"외국인등록번호\"},{\"name\":\"inquiryPurposeCode\",\"type\":\"select\",\"required?\":true,\"description\":\"조회 목적 코드\"}],\"actions\":[\"자격 조회\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}},{\"name\":\"자격 조회 결과\",\"type\":\"table\",\"fields\":[],\"actions\":[],\"filters\":[],\"resultTable\":{\"columns\":[\"신청자 식별정보\",\"자격 조회 항목\",\"조회 결과\",\"상세 사유\"],\"actions\":[\"재조회\"]}}]},\"추가데이터조회화면\":{\"sections\":[{\"name\":\"조회 조건 입력\",\"type\":\"form\",\"fields\":[{\"name\":\"targetSystem\",\"type\":\"select\",\"required?\":true,\"description\":\"조회 대상 시스템\"},{\"name\":\"inquiryItems\",\"type\":\"text\",\"required?\":true,\"description\":\"조회 항목 정의\"},{\"name\":\"inquiryPeriod\",\"type\":\"date\",\"required?\":true,\"description\":\"조회 기간\"},{\"name\":\"priority\",\"type\":\"number\",\"required?\":true,\"description\":\"우선순위\"}],\"actions\":[\"데이터 조회\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}},{\"name\":\"조회 결과\",\"type\":\"table\",\"fields\":[],\"actions\":[],\"filters\":[],\"resultTable\":{\"columns\":[\"조회 대상 시스템\",\"조회 항목\",\"수집된 데이터\",\"검증 결과\"],\"actions\":[\"데이터 재조회\"]}}]}}}"
+                            },
+                            {
+                                "structure": [
+                                    {
+                                        "aggregate": {
+                                            "name": "Qualification",
+                                            "alias": "자격"
+                                        },
+                                        "enumerations": [],
+                                        "valueObjects": [
+                                            {
+                                                "name": "ApplicantInfo",
+                                                "alias": "신청자 정보"
+                                            },
+                                            {
+                                                "name": "VerificationItem",
+                                                "alias": "자격 조회 항목"
+                                            },
+                                            {
+                                                "name": "ApplicationWithApplicantReference",
+                                                "alias": "민원 신청 및 신청자 정보 참조",
+                                                "referencedAggregate": {
+                                                    "name": "ApplicationWithApplicant",
+                                                    "alias": "민원 신청 및 신청자 정보"
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "aggregate": {
+                                            "name": "VerificationHistory",
+                                            "alias": "검증 이력"
+                                        },
+                                        "enumerations": [],
+                                        "valueObjects": [
+                                            {
+                                                "name": "APIAuthenticationInfo",
+                                                "alias": "API 인증 정보"
+                                            },
+                                            {
+                                                "name": "InquiryCondition",
+                                                "alias": "조회 조건"
+                                            }
+                                        ]
+                                    }
+                                ],
+                                "pros": {
+                                    "cohesion": "각 애그리거트는 단일 책임에 집중합니다. Qualification은 자격 관리를, VerificationHistory는 검증 이력 관리를 전담합니다.",
+                                    "coupling": "자격 조회 로직 변경이 VerificationHistory 애그리거트를 건드리지 않고 수행될 수 있습니다.",
+                                    "consistency": "각 애그리거트는 자체적으로 더 작고 관리하기 쉬운 트랜잭션 경계를 유지하여 장기 실행 트랜잭션의 위험을 줄입니다.",
+                                    "encapsulation": "자격 처리 세부 정보는 VerificationHistory에서 숨겨져 인터페이스 분리 원칙을 따르고 내부 구현을 보호합니다.",
+                                    "complexity": "도메인 개념이 특정 비즈니스 기능에 맞는 더 작고 이해하기 쉬운 단위로 나뉩니다.",
+                                    "independence": "Qualification 및 VerificationHistory는 독립적으로 개발, 테스트 및 배포할 수 있으므로 전문 팀이 병렬로 작업할 수 있습니다.",
+                                    "performance": "자체 리소스 요구 사항 및 사용 패턴에 따라 자격 및 검증 작업을 독립적으로 확장할 수 있습니다."
+                                },
+                                "cons": {
+                                    "cohesion": "자격 및 검증 이력에 걸쳐 있는 비즈니스 프로세스는 애그리거트 경계를 넘어 조정을 요구하므로 프로세스 흐름이 복잡해집니다.",
+                                    "coupling": "Qualification은 참조를 통해 VerificationHistory에 의존하므로 애그리거트 간 외래 키 관계를 신중하게 처리해야 합니다.",
+                                    "consistency": "자격 상태가 항상 검증 이력 상태를 반영하도록 하려면 최종 일관성 패턴이 필요하며 시스템 복잡성이 증가합니다.",
+                                    "encapsulation": "'자격이 있는 신청자만 검증 가능'과 같은 교차 애그리거트 비즈니스 규칙은 애그리거트 외부의 애플리케이션 서비스에서 구현되어야 합니다.",
+                                    "complexity": "자격 조회 및 검증 프로세스 중에 두 애그리거트를 조정하는 데 추가 오케스트레이션 로직이 필요합니다.",
+                                    "independence": "자격과 검증 이력 간의 상호 작용에 대한 변경 사항은 두 애그리거트 모두에서 조정된 업데이트가 필요합니다.",
+                                    "performance": "검증 세부 정보가 포함된 완전한 자격 정보를 검색하려면 애그리거트 간에 데이터를 조인해야 하므로 쿼리 복잡성이 추가됩니다."
+                                },
+                                "isAIRecommended": false,
+                                "boundedContext": {
+                                    "name": "VerificationService",
+                                    "alias": "자격 검증 서비스",
+                                    "displayName": "자격 검증 서비스",
+                                    "description": "# Requirements\n\n## userStory\n\n### Feature 1.2: 자격 조회\n#### Description\n- 신청된 민원에 대한 자격 조회 및 검증\n- 실시간 자격 확인 시스템 연계\n- 다중 자격 조건 처리\n\n#### Acceptance Criteria\n- 신청자의 자격 요건이 자동으로 확인되어야 함\n- 자격 조회 결과가 실시간으로 반환되어야 함\n- 자격 불충족 시 상세 사유 제공\n- 조회 이력 저장 및 관리\n- 재조회 기능 제공\n\n#### Input Parameters\n##### 자격 조회 정보\n- 신청자 식별정보\n  - 주민등록번호 (암호화 전송)\n  - 외국인등록번호 (해당 시)\n- 자격 조회 항목\n  - 주민등록 진위확인\n  - 결격사유 조회\n  - 수급자격 확인\n- 조회 목적 코드\n\n##### API 인증 정보\n- API Key\n- 인증토큰\n- IP 접근제한\n- 전자서명 값\n\n#### Technical Details\n- 자격검증 API 스펙\n- 암호화 알고리즘\n- 에러 핸들링 방식\n- 타임아웃 설정\n\n## userStory\n\n### Feature 2.1: 추가 데이터 조회\n#### Description\n- 연계 시스템 데이터 수집\n- 데이터 정합성 검증\n- 실시간/배치 조회 처리\n\n#### Acceptance Criteria\n- 연계 시스템으로부터 필요 데이터를 자동으로 수집\n- 수집된 데이터의 무결성 검증\n- 누락 데이터 재조회 처리\n- 데이터 변환 및 정제\n- 조회 이력 관리\n\n#### Input Parameters\n##### 조회 조건\n- 조회 대상 시스템\n- 조회 항목 정의\n- 조회 기간\n- 우선순위\n\n##### 데이터 처리 규칙\n- 데이터 변환 규칙\n- 정합성 검증 규칙\n- 예외처리 기준\n- 재처리 규칙\n\n#### Technical Details\n- 연계 시스템별 API 스펙\n- 데이터 동기화 방식\n- 에러 복구 전략\n- 모니터링 방안",
+                                    "aggregates": [
+                                        {
+                                            "name": "Qualification",
+                                            "alias": "자격"
+                                        },
+                                        {
+                                            "name": "VerificationHistory",
+                                            "alias": "검증 이력"
+                                        }
+                                    ]
+                                },
+                                "description": "{\"userStories\":[{\"title\":\"자격 조회\",\"description\":\"신청된 민원에 대한 자격 조회 및 검증을 통해 신청자의 자격 요건을 자동으로 확인하고 실시간으로 결과를 반환받아 민원 처리의 정확성을 높이고자 합니다.\",\"acceptance\":[\"신청자의 자격 요건이 자동으로 확인되어야 함\",\"자격 조회 결과가 실시간으로 반환되어야 함\",\"자격 불충족 시 상세 사유 제공\",\"조회 이력 저장 및 관리\",\"재조회 기능 제공\"]},{\"title\":\"추가 데이터 조회\",\"description\":\"연계 시스템 데이터 수집 및 데이터 정합성 검증을 통해 필요한 데이터를 자동으로 수집하고 데이터의 무결성을 검증하여 민원 처리의 효율성을 높이고자 합니다.\",\"acceptance\":[\"연계 시스템으로부터 필요 데이터를 자동으로 수집\",\"수집된 데이터의 무결성 검증\",\"누락 데이터 재조회 처리\",\"데이터 변환 및 정제\",\"조회 이력 관리\"]}],\"entities\":{\"자격조회정보\":{\"properties\":[{\"name\":\"applicantId\",\"type\":\"String\",\"required?\":true,\"description\":\"신청자 식별정보 (주민등록번호 암호화 전송 or 외국인등록번호)\"},{\"name\":\"residentRegistrationNumber\",\"type\":\"String\",\"required?\":false,\"description\":\"주민등록번호 (암호화 전송)\"},{\"name\":\"foreignerRegistrationNumber\",\"type\":\"String\",\"required?\":false,\"description\":\"외국인등록번호 (해당 시)\"},{\"name\":\"verificationItems\",\"type\":\"Array\",\"required?\":true,\"description\":\"자격 조회 항목 (주민등록 진위확인, 결격사유 조회, 수급자격 확인 등)\"},{\"name\":\"inquiryPurposeCode\",\"type\":\"String\",\"required?\":true,\"description\":\"조회 목적 코드\"}]},\"API인증정보\":{\"properties\":[{\"name\":\"apiKey\",\"type\":\"String\",\"required?\":true,\"description\":\"API Key\"},{\"name\":\"authToken\",\"type\":\"String\",\"required?\":true,\"description\":\"인증토큰\"},{\"name\":\"ipAccessRestriction\",\"type\":\"String\",\"required?\":true,\"description\":\"IP 접근제한\"},{\"name\":\"electronicSignature\",\"type\":\"String\",\"required?\":true,\"description\":\"전자서명 값\"}]},\"조회조건\":{\"properties\":[{\"name\":\"targetSystem\",\"type\":\"String\",\"required?\":true,\"description\":\"조회 대상 시스템\"},{\"name\":\"inquiryItems\",\"type\":\"Array\",\"required?\":true,\"description\":\"조회 항목 정의\"},{\"name\":\"inquiryPeriod\",\"type\":\"String\",\"required?\":true,\"description\":\"조회 기간\"},{\"name\":\"priority\",\"type\":\"Integer\",\"required?\":true,\"description\":\"우선순위\"}]},\"데이터처리규칙\":{\"properties\":[{\"name\":\"dataConversionRules\",\"type\":\"String\",\"required?\":true,\"description\":\"데이터 변환 규칙\"},{\"name\":\"integrityVerificationRules\",\"type\":\"String\",\"required?\":true,\"description\":\"정합성 검증 규칙\"},{\"name\":\"exceptionHandlingCriteria\",\"type\":\"String\",\"required?\":true,\"description\":\"예외처리 기준\"},{\"name\":\"retryRules\",\"type\":\"String\",\"required?\":true,\"description\":\"재처리 규칙\"}]}},\"businessRules\":[{\"name\":\"자격 요건 자동 확인\",\"description\":\"신청자의 자격 요건은 실시간 자격 확인 시스템 연계를 통해 자동으로 확인되어야 한다.\"},{\"name\":\"자격 불충족 시 사유 제공\",\"description\":\"자격 요건이 충족되지 않을 경우, 상세 사유를 제공해야 한다.\"},{\"name\":\"데이터 무결성 검증\",\"description\":\"연계 시스템으로부터 수집된 데이터는 무결성 검증을 거쳐야 한다.\"}],\"interfaces\":{\"자격조회화면\":{\"sections\":[{\"name\":\"자격 조회 정보 입력\",\"type\":\"form\",\"fields\":[{\"name\":\"residentRegistrationNumber\",\"type\":\"text\",\"required?\":false,\"description\":\"주민등록번호 (암호화 전송)\"},{\"name\":\"foreignerRegistrationNumber\",\"type\":\"text\",\"required?\":false,\"description\":\"외국인등록번호\"},{\"name\":\"inquiryPurposeCode\",\"type\":\"select\",\"required?\":true,\"description\":\"조회 목적 코드\"}],\"actions\":[\"자격 조회\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}},{\"name\":\"자격 조회 결과\",\"type\":\"table\",\"fields\":[],\"actions\":[],\"filters\":[],\"resultTable\":{\"columns\":[\"신청자 식별정보\",\"자격 조회 항목\",\"조회 결과\",\"상세 사유\"],\"actions\":[\"재조회\"]}}]},\"추가데이터조회화면\":{\"sections\":[{\"name\":\"조회 조건 입력\",\"type\":\"form\",\"fields\":[{\"name\":\"targetSystem\",\"type\":\"select\",\"required?\":true,\"description\":\"조회 대상 시스템\"},{\"name\":\"inquiryItems\",\"type\":\"text\",\"required?\":true,\"description\":\"조회 항목 정의\"},{\"name\":\"inquiryPeriod\",\"type\":\"date\",\"required?\":true,\"description\":\"조회 기간\"},{\"name\":\"priority\",\"type\":\"number\",\"required?\":true,\"description\":\"우선순위\"}],\"actions\":[\"데이터 조회\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}},{\"name\":\"조회 결과\",\"type\":\"table\",\"fields\":[],\"actions\":[],\"filters\":[],\"resultTable\":{\"columns\":[\"조회 대상 시스템\",\"조회 항목\",\"수집된 데이터\",\"검증 결과\"],\"actions\":[\"데이터 재조회\"]}}]}}}"
+                            },
+                            {
+                                "structure": [
+                                    {
+                                        "aggregate": {
+                                            "name": "Qualification",
+                                            "alias": "자격"
+                                        },
+                                        "enumerations": [],
+                                        "valueObjects": [
+                                            {
+                                                "name": "ApplicantInfo",
+                                                "alias": "신청자 정보"
+                                            },
+                                            {
+                                                "name": "VerificationItem",
+                                                "alias": "자격 조회 항목"
+                                            },
+                                            {
+                                                "name": "ApplicationWithApplicantReference",
+                                                "alias": "민원 신청 및 신청자 정보 참조",
+                                                "referencedAggregate": {
+                                                    "name": "ApplicationWithApplicant",
+                                                    "alias": "민원 신청 및 신청자 정보"
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "aggregate": {
+                                            "name": "APIAuthentication",
+                                            "alias": "API 인증"
+                                        },
+                                        "enumerations": [],
+                                        "valueObjects": []
+                                    },
+                                    {
+                                        "aggregate": {
+                                            "name": "InquiryConditionAggregate",
+                                            "alias": "조회 조건"
+                                        },
+                                        "enumerations": [],
+                                        "valueObjects": []
+                                    },
+                                    {
+                                        "aggregate": {
+                                            "name": "VerificationHistory",
+                                            "alias": "검증 이력"
+                                        },
+                                        "enumerations": [],
+                                        "valueObjects": [
+                                            {
+                                                "name": "APIAuthenticationReference",
+                                                "alias": "API 인증 정보 참조",
+                                                "referencedAggregate": {
+                                                    "name": "APIAuthentication",
+                                                    "alias": "API 인증"
+                                                }
+                                            },
+                                            {
+                                                "name": "InquiryConditionReference",
+                                                "alias": "조회 조건 참조",
+                                                "referencedAggregate": {
+                                                    "name": "InquiryConditionAggregate",
+                                                    "alias": "조회 조건"
+                                                }
+                                            }
+                                        ]
+                                    }
+                                ],
+                                "pros": {
+                                    "cohesion": "각 애그리거트는 자격, API 인증, 조회 조건 및 검증 이력과 같은 특정 비즈니스 기능을 캡슐화하여 높은 응집도를 제공합니다.",
+                                    "coupling": "애그리거트 간의 낮은 결합도는 한 애그리거트의 변경 사항이 다른 애그리거트에 미치는 영향을 최소화합니다.",
+                                    "consistency": "각 애그리거트는 자체 일관성을 유지하며, 이는 더 복잡한 트랜잭션이 필요하지 않음을 의미합니다.",
+                                    "encapsulation": "각 애그리거트는 자체 데이터와 동작을 캡슐화하여 다른 애그리거트의 구현 세부 정보가 노출되지 않도록 합니다.",
+                                    "complexity": "시스템이 여러 개의 작은 애그리거트로 분할되어 있어 각 부분을 이해하고 유지 관리하기가 더 쉽습니다.",
+                                    "independence": "각 애그리거트는 독립적으로 배포할 수 있으며, 이는 개발 팀이 서로의 작업에 영향을 주지 않고 병렬로 작업할 수 있음을 의미합니다.",
+                                    "performance": "각 애그리거트는 특정 기능에 맞게 최적화할 수 있으며, 이는 전반적인 시스템 성능을 향상시킬 수 있습니다."
+                                },
+                                "cons": {
+                                    "cohesion": "자격 조회 프로세스는 여러 애그리거트에 걸쳐 있으므로 코디네이션이 필요하며, 이는 복잡성을 증가시킬 수 있습니다.",
+                                    "coupling": "자격 조회 프로세스 중에 여러 애그리거트를 함께 연결해야 하므로 시스템의 유연성이 감소할 수 있습니다.",
+                                    "consistency": "API 인증 및 조회 조건이 변경되면 여러 애그리거트가 업데이트되어야 하므로 데이터 일관성을 유지하기가 더 어렵습니다.",
+                                    "encapsulation": "자격 조회 프로세스는 여러 애그리거트의 데이터에 액세스해야 하므로 캡슐화가 손상될 수 있습니다.",
+                                    "complexity": "시스템에 더 많은 애그리거트가 있으므로 전체 아키텍처를 이해하고 유지 관리하기가 더 어렵습니다.",
+                                    "independence": "자격 조회 프로세스 중에 여러 애그리거트가 함께 연결되어 있으므로 애그리거트의 독립성이 감소할 수 있습니다.",
+                                    "performance": "자격 조회 프로세스 중에 여러 애그리거트를 쿼리해야 하므로 응답 시간이 길어질 수 있습니다."
+                                },
+                                "isAIRecommended": true,
+                                "boundedContext": {
+                                    "name": "VerificationService",
+                                    "alias": "자격 검증 서비스",
+                                    "displayName": "자격 검증 서비스",
+                                    "description": "# Requirements\n\n## userStory\n\n### Feature 1.2: 자격 조회\n#### Description\n- 신청된 민원에 대한 자격 조회 및 검증\n- 실시간 자격 확인 시스템 연계\n- 다중 자격 조건 처리\n\n#### Acceptance Criteria\n- 신청자의 자격 요건이 자동으로 확인되어야 함\n- 자격 조회 결과가 실시간으로 반환되어야 함\n- 자격 불충족 시 상세 사유 제공\n- 조회 이력 저장 및 관리\n- 재조회 기능 제공\n\n#### Input Parameters\n##### 자격 조회 정보\n- 신청자 식별정보\n  - 주민등록번호 (암호화 전송)\n  - 외국인등록번호 (해당 시)\n- 자격 조회 항목\n  - 주민등록 진위확인\n  - 결격사유 조회\n  - 수급자격 확인\n- 조회 목적 코드\n\n##### API 인증 정보\n- API Key\n- 인증토큰\n- IP 접근제한\n- 전자서명 값\n\n#### Technical Details\n- 자격검증 API 스펙\n- 암호화 알고리즘\n- 에러 핸들링 방식\n- 타임아웃 설정\n\n## userStory\n\n### Feature 2.1: 추가 데이터 조회\n#### Description\n- 연계 시스템 데이터 수집\n- 데이터 정합성 검증\n- 실시간/배치 조회 처리\n\n#### Acceptance Criteria\n- 연계 시스템으로부터 필요 데이터를 자동으로 수집\n- 수집된 데이터의 무결성 검증\n- 누락 데이터 재조회 처리\n- 데이터 변환 및 정제\n- 조회 이력 관리\n\n#### Input Parameters\n##### 조회 조건\n- 조회 대상 시스템\n- 조회 항목 정의\n- 조회 기간\n- 우선순위\n\n##### 데이터 처리 규칙\n- 데이터 변환 규칙\n- 정합성 검증 규칙\n- 예외처리 기준\n- 재처리 규칙\n\n#### Technical Details\n- 연계 시스템별 API 스펙\n- 데이터 동기화 방식\n- 에러 복구 전략\n- 모니터링 방안",
+                                    "aggregates": [
+                                        {
+                                            "name": "Qualification",
+                                            "alias": "자격"
+                                        },
+                                        {
+                                            "name": "VerificationHistory",
+                                            "alias": "검증 이력"
+                                        }
+                                    ]
+                                },
+                                "description": "{\"userStories\":[{\"title\":\"자격 조회\",\"description\":\"신청된 민원에 대한 자격 조회 및 검증을 통해 신청자의 자격 요건을 자동으로 확인하고 실시간으로 결과를 반환받아 민원 처리의 정확성을 높이고자 합니다.\",\"acceptance\":[\"신청자의 자격 요건이 자동으로 확인되어야 함\",\"자격 조회 결과가 실시간으로 반환되어야 함\",\"자격 불충족 시 상세 사유 제공\",\"조회 이력 저장 및 관리\",\"재조회 기능 제공\"]},{\"title\":\"추가 데이터 조회\",\"description\":\"연계 시스템 데이터 수집 및 데이터 정합성 검증을 통해 필요한 데이터를 자동으로 수집하고 데이터의 무결성을 검증하여 민원 처리의 효율성을 높이고자 합니다.\",\"acceptance\":[\"연계 시스템으로부터 필요 데이터를 자동으로 수집\",\"수집된 데이터의 무결성 검증\",\"누락 데이터 재조회 처리\",\"데이터 변환 및 정제\",\"조회 이력 관리\"]}],\"entities\":{\"자격조회정보\":{\"properties\":[{\"name\":\"applicantId\",\"type\":\"String\",\"required?\":true,\"description\":\"신청자 식별정보 (주민등록번호 암호화 전송 or 외국인등록번호)\"},{\"name\":\"residentRegistrationNumber\",\"type\":\"String\",\"required?\":false,\"description\":\"주민등록번호 (암호화 전송)\"},{\"name\":\"foreignerRegistrationNumber\",\"type\":\"String\",\"required?\":false,\"description\":\"외국인등록번호 (해당 시)\"},{\"name\":\"verificationItems\",\"type\":\"Array\",\"required?\":true,\"description\":\"자격 조회 항목 (주민등록 진위확인, 결격사유 조회, 수급자격 확인 등)\"},{\"name\":\"inquiryPurposeCode\",\"type\":\"String\",\"required?\":true,\"description\":\"조회 목적 코드\"}]},\"API인증정보\":{\"properties\":[{\"name\":\"apiKey\",\"type\":\"String\",\"required?\":true,\"description\":\"API Key\"},{\"name\":\"authToken\",\"type\":\"String\",\"required?\":true,\"description\":\"인증토큰\"},{\"name\":\"ipAccessRestriction\",\"type\":\"String\",\"required?\":true,\"description\":\"IP 접근제한\"},{\"name\":\"electronicSignature\",\"type\":\"String\",\"required?\":true,\"description\":\"전자서명 값\"}]},\"조회조건\":{\"properties\":[{\"name\":\"targetSystem\",\"type\":\"String\",\"required?\":true,\"description\":\"조회 대상 시스템\"},{\"name\":\"inquiryItems\",\"type\":\"Array\",\"required?\":true,\"description\":\"조회 항목 정의\"},{\"name\":\"inquiryPeriod\",\"type\":\"String\",\"required?\":true,\"description\":\"조회 기간\"},{\"name\":\"priority\",\"type\":\"Integer\",\"required?\":true,\"description\":\"우선순위\"}]},\"데이터처리규칙\":{\"properties\":[{\"name\":\"dataConversionRules\",\"type\":\"String\",\"required?\":true,\"description\":\"데이터 변환 규칙\"},{\"name\":\"integrityVerificationRules\",\"type\":\"String\",\"required?\":true,\"description\":\"정합성 검증 규칙\"},{\"name\":\"exceptionHandlingCriteria\",\"type\":\"String\",\"required?\":true,\"description\":\"예외처리 기준\"},{\"name\":\"retryRules\",\"type\":\"String\",\"required?\":true,\"description\":\"재처리 규칙\"}]}},\"businessRules\":[{\"name\":\"자격 요건 자동 확인\",\"description\":\"신청자의 자격 요건은 실시간 자격 확인 시스템 연계를 통해 자동으로 확인되어야 한다.\"},{\"name\":\"자격 불충족 시 사유 제공\",\"description\":\"자격 요건이 충족되지 않을 경우, 상세 사유를 제공해야 한다.\"},{\"name\":\"데이터 무결성 검증\",\"description\":\"연계 시스템으로부터 수집된 데이터는 무결성 검증을 거쳐야 한다.\"}],\"interfaces\":{\"자격조회화면\":{\"sections\":[{\"name\":\"자격 조회 정보 입력\",\"type\":\"form\",\"fields\":[{\"name\":\"residentRegistrationNumber\",\"type\":\"text\",\"required?\":false,\"description\":\"주민등록번호 (암호화 전송)\"},{\"name\":\"foreignerRegistrationNumber\",\"type\":\"text\",\"required?\":false,\"description\":\"외국인등록번호\"},{\"name\":\"inquiryPurposeCode\",\"type\":\"select\",\"required?\":true,\"description\":\"조회 목적 코드\"}],\"actions\":[\"자격 조회\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}},{\"name\":\"자격 조회 결과\",\"type\":\"table\",\"fields\":[],\"actions\":[],\"filters\":[],\"resultTable\":{\"columns\":[\"신청자 식별정보\",\"자격 조회 항목\",\"조회 결과\",\"상세 사유\"],\"actions\":[\"재조회\"]}}]},\"추가데이터조회화면\":{\"sections\":[{\"name\":\"조회 조건 입력\",\"type\":\"form\",\"fields\":[{\"name\":\"targetSystem\",\"type\":\"select\",\"required?\":true,\"description\":\"조회 대상 시스템\"},{\"name\":\"inquiryItems\",\"type\":\"text\",\"required?\":true,\"description\":\"조회 항목 정의\"},{\"name\":\"inquiryPeriod\",\"type\":\"date\",\"required?\":true,\"description\":\"조회 기간\"},{\"name\":\"priority\",\"type\":\"number\",\"required?\":true,\"description\":\"우선순위\"}],\"actions\":[\"데이터 조회\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}},{\"name\":\"조회 결과\",\"type\":\"table\",\"fields\":[],\"actions\":[],\"filters\":[],\"resultTable\":{\"columns\":[\"조회 대상 시스템\",\"조회 항목\",\"수집된 데이터\",\"검증 결과\"],\"actions\":[\"데이터 재조회\"]}}]}}}"
+                            }
+                        ],
+                        "conclusions": "옵션 1은 트랜잭션 일관성과 단순화된 데이터 관리가 우선시될 때 권장됩니다. 옵션 2는 모듈식 분리 및 자격 조회 프로세스의 독립적인 확장성이 선호되는 경우에 선택할 수 있습니다. 옵션 3은 각 기능의 독립성을 극대화해야 할 때 선택할 수 있습니다.",
+                        "defaultOptionIndex": 2,
+                        "analysisResult": {
+                            "userStories": [
+                                {
+                                    "title": "자격 조회",
+                                    "description": "신청된 민원에 대한 자격 조회 및 검증을 통해 신청자의 자격 요건을 자동으로 확인하고 실시간으로 결과를 반환받아 민원 처리의 정확성을 높이고자 합니다.",
+                                    "acceptance": [
+                                        "신청자의 자격 요건이 자동으로 확인되어야 함",
+                                        "자격 조회 결과가 실시간으로 반환되어야 함",
+                                        "자격 불충족 시 상세 사유 제공",
+                                        "조회 이력 저장 및 관리",
+                                        "재조회 기능 제공"
+                                    ]
+                                },
+                                {
+                                    "title": "추가 데이터 조회",
+                                    "description": "연계 시스템 데이터 수집 및 데이터 정합성 검증을 통해 필요한 데이터를 자동으로 수집하고 데이터의 무결성을 검증하여 민원 처리의 효율성을 높이고자 합니다.",
+                                    "acceptance": [
+                                        "연계 시스템으로부터 필요 데이터를 자동으로 수집",
+                                        "수집된 데이터의 무결성 검증",
+                                        "누락 데이터 재조회 처리",
+                                        "데이터 변환 및 정제",
+                                        "조회 이력 관리"
+                                    ]
+                                }
+                            ],
+                            "entities": {
+                                "자격조회정보": {
+                                    "properties": [
+                                        {
+                                            "name": "applicantId",
+                                            "type": "String",
+                                            "required?": true,
+                                            "description": "신청자 식별정보 (주민등록번호 암호화 전송 or 외국인등록번호)"
+                                        },
+                                        {
+                                            "name": "residentRegistrationNumber",
+                                            "type": "String",
+                                            "required?": false,
+                                            "description": "주민등록번호 (암호화 전송)"
+                                        },
+                                        {
+                                            "name": "foreignerRegistrationNumber",
+                                            "type": "String",
+                                            "required?": false,
+                                            "description": "외국인등록번호 (해당 시)"
+                                        },
+                                        {
+                                            "name": "verificationItems",
+                                            "type": "Array",
+                                            "required?": true,
+                                            "description": "자격 조회 항목 (주민등록 진위확인, 결격사유 조회, 수급자격 확인 등)"
+                                        },
+                                        {
+                                            "name": "inquiryPurposeCode",
+                                            "type": "String",
+                                            "required?": true,
+                                            "description": "조회 목적 코드"
+                                        }
+                                    ]
+                                },
+                                "API인증정보": {
+                                    "properties": [
+                                        {
+                                            "name": "apiKey",
+                                            "type": "String",
+                                            "required?": true,
+                                            "description": "API Key"
+                                        },
+                                        {
+                                            "name": "authToken",
+                                            "type": "String",
+                                            "required?": true,
+                                            "description": "인증토큰"
+                                        },
+                                        {
+                                            "name": "ipAccessRestriction",
+                                            "type": "String",
+                                            "required?": true,
+                                            "description": "IP 접근제한"
+                                        },
+                                        {
+                                            "name": "electronicSignature",
+                                            "type": "String",
+                                            "required?": true,
+                                            "description": "전자서명 값"
+                                        }
+                                    ]
+                                },
+                                "조회조건": {
+                                    "properties": [
+                                        {
+                                            "name": "targetSystem",
+                                            "type": "String",
+                                            "required?": true,
+                                            "description": "조회 대상 시스템"
+                                        },
+                                        {
+                                            "name": "inquiryItems",
+                                            "type": "Array",
+                                            "required?": true,
+                                            "description": "조회 항목 정의"
+                                        },
+                                        {
+                                            "name": "inquiryPeriod",
+                                            "type": "String",
+                                            "required?": true,
+                                            "description": "조회 기간"
+                                        },
+                                        {
+                                            "name": "priority",
+                                            "type": "Integer",
+                                            "required?": true,
+                                            "description": "우선순위"
+                                        }
+                                    ]
+                                },
+                                "데이터처리규칙": {
+                                    "properties": [
+                                        {
+                                            "name": "dataConversionRules",
+                                            "type": "String",
+                                            "required?": true,
+                                            "description": "데이터 변환 규칙"
+                                        },
+                                        {
+                                            "name": "integrityVerificationRules",
+                                            "type": "String",
+                                            "required?": true,
+                                            "description": "정합성 검증 규칙"
+                                        },
+                                        {
+                                            "name": "exceptionHandlingCriteria",
+                                            "type": "String",
+                                            "required?": true,
+                                            "description": "예외처리 기준"
+                                        },
+                                        {
+                                            "name": "retryRules",
+                                            "type": "String",
+                                            "required?": true,
+                                            "description": "재처리 규칙"
+                                        }
+                                    ]
+                                }
+                            },
+                            "businessRules": [
+                                {
+                                    "name": "자격 요건 자동 확인",
+                                    "description": "신청자의 자격 요건은 실시간 자격 확인 시스템 연계를 통해 자동으로 확인되어야 한다."
+                                },
+                                {
+                                    "name": "자격 불충족 시 사유 제공",
+                                    "description": "자격 요건이 충족되지 않을 경우, 상세 사유를 제공해야 한다."
+                                },
+                                {
+                                    "name": "데이터 무결성 검증",
+                                    "description": "연계 시스템으로부터 수집된 데이터는 무결성 검증을 거쳐야 한다."
+                                }
+                            ],
+                            "interfaces": {
+                                "자격조회화면": {
+                                    "sections": [
+                                        {
+                                            "name": "자격 조회 정보 입력",
+                                            "type": "form",
+                                            "fields": [
+                                                {
+                                                    "name": "residentRegistrationNumber",
+                                                    "type": "text",
+                                                    "required?": false,
+                                                    "description": "주민등록번호 (암호화 전송)"
+                                                },
+                                                {
+                                                    "name": "foreignerRegistrationNumber",
+                                                    "type": "text",
+                                                    "required?": false,
+                                                    "description": "외국인등록번호"
+                                                },
+                                                {
+                                                    "name": "inquiryPurposeCode",
+                                                    "type": "select",
+                                                    "required?": true,
+                                                    "description": "조회 목적 코드"
+                                                }
+                                            ],
+                                            "actions": [
+                                                "자격 조회"
+                                            ],
+                                            "filters": [],
+                                            "resultTable": {
+                                                "columns": [],
+                                                "actions": []
+                                            }
+                                        },
+                                        {
+                                            "name": "자격 조회 결과",
+                                            "type": "table",
+                                            "fields": [],
+                                            "actions": [],
+                                            "filters": [],
+                                            "resultTable": {
+                                                "columns": [
+                                                    "신청자 식별정보",
+                                                    "자격 조회 항목",
+                                                    "조회 결과",
+                                                    "상세 사유"
+                                                ],
+                                                "actions": [
+                                                    "재조회"
+                                                ]
+                                            }
+                                        }
+                                    ]
+                                },
+                                "추가데이터조회화면": {
+                                    "sections": [
+                                        {
+                                            "name": "조회 조건 입력",
+                                            "type": "form",
+                                            "fields": [
+                                                {
+                                                    "name": "targetSystem",
+                                                    "type": "select",
+                                                    "required?": true,
+                                                    "description": "조회 대상 시스템"
+                                                },
+                                                {
+                                                    "name": "inquiryItems",
+                                                    "type": "text",
+                                                    "required?": true,
+                                                    "description": "조회 항목 정의"
+                                                },
+                                                {
+                                                    "name": "inquiryPeriod",
+                                                    "type": "date",
+                                                    "required?": true,
+                                                    "description": "조회 기간"
+                                                },
+                                                {
+                                                    "name": "priority",
+                                                    "type": "number",
+                                                    "required?": true,
+                                                    "description": "우선순위"
+                                                }
+                                            ],
+                                            "actions": [
+                                                "데이터 조회"
+                                            ],
+                                            "filters": [],
+                                            "resultTable": {
+                                                "columns": [],
+                                                "actions": []
+                                            }
+                                        },
+                                        {
+                                            "name": "조회 결과",
+                                            "type": "table",
+                                            "fields": [],
+                                            "actions": [],
+                                            "filters": [],
+                                            "resultTable": {
+                                                "columns": [
+                                                    "조회 대상 시스템",
+                                                    "조회 항목",
+                                                    "수집된 데이터",
+                                                    "검증 결과"
+                                                ],
+                                                "actions": [
+                                                    "데이터 재조회"
+                                                ]
+                                            }
+                                        }
+                                    ]
+                                }
+                            },
+                            "inference": "제공된 요구 사항을 기반으로 자격 조회 및 추가 데이터 조회에 대한 사용자 스토리를 분석했습니다. 자격 조회는 신청자의 자격을 실시간으로 확인하고, 자격 불충족 시 상세 사유를 제공하는 기능을 포함합니다. 추가 데이터 조회는 연계 시스템으로부터 데이터를 수집하고, 데이터 정합성을 검증하는 기능을 포함합니다. 이러한 기능들은 민원 처리의 효율성을 높이고, 데이터의 신뢰성을 보장하는 데 중요한 역할을 합니다."
+                        },
+                        "inference": "\n\n기능 요구사항과 기존 초안을 분석한 후, 세 가지 설계 옵션을 생성했습니다. 첫 번째 옵션은 자격 조회와 검증 이력을 하나의 애그리거트로 통합하여 트랜잭션 일관성을 높이고 상호 작용을 단순화합니다. 두 번째 옵션은 자격과 검증 이력을 분리된 애그리거트로 나누어 각 도메인 관심사에 집중하도록 합니다. 세 번째 옵션은 자격, API 인증 정보, 조회 조건을 개별 애그리거트로 분리하여 각 기능의 독립성을 극대화합니다."
+                    },
+                    {
+                        "boundedContext": "DocumentManagement",
+                        "boundedContextAlias": "문서 관리",
+                        "description": "{\"userStories\":[{\"title\":\"서식 조회\",\"description\":\"사용자는 민원 종류별 서식을 조회하고 관리할 수 있어야 합니다.\",\"acceptance\":[\"해당 민원에 맞는 서식이 자동으로 조회되어야 합니다.\",\"사용자 입력 데이터가 서식에 자동 매핑되어야 합니다.\",\"서식 미리보기가 제공되어야 합니다.\",\"이전 버전 서식과의 호환성이 보장되어야 합니다.\",\"서식 오류 시 대체 서식이 제공되어야 합니다.\"]},{\"title\":\"EDMS 연계\",\"description\":\"사용자는 EDMS 시스템과 연계하여 문서를 등록, 관리하고 이력을 추적할 수 있어야 합니다.\",\"acceptance\":[\"신청서가 EDMS에 자동 등록되어야 합니다.\",\"EDMS 처리 상태를 실시간으로 조회할 수 있어야 합니다.\",\"문서 분류체계가 적용되어야 합니다.\",\"접근 권한이 관리되어야 합니다.\",\"문서 이관 처리가 가능해야 합니다.\"]},{\"title\":\"발급문서 처리\",\"description\":\"사용자는 PDF 문서를 생성하고 전자 서명 및 보안 워터마크를 적용하여 문서의 보안성을 강화할 수 있어야 합니다.\",\"acceptance\":[\"PDF 문서가 정확하게 생성되어야 합니다.\",\"전자 서명이 포함되어야 합니다.\",\"문서 위변조 방지 기능이 제공되어야 합니다.\",\"보안 워터마크가 적용되어야 합니다.\",\"출력 제어가 가능해야 합니다.\"]}],\"entities\":{\"FormatInformation\":{\"properties\":[{\"name\":\"formatCode\",\"type\":\"String\",\"required?\":true,\"isPrimaryKey?\":true},{\"name\":\"formatVersion\",\"type\":\"String\",\"required?\":true},{\"name\":\"validityPeriod\",\"type\":\"Date\",\"required?\":true},{\"name\":\"formatType\",\"type\":\"enum\",\"required?\":true,\"values?\":[\"general\",\"special\"]}]},\"MappingRule\":{\"properties\":[{\"name\":\"fieldMappingDefinition\",\"type\":\"String\",\"required?\":true},{\"name\":\"dataConversionRules\",\"type\":\"String\",\"required?\":true},{\"name\":\"calculationFormula\",\"type\":\"String\",\"required?\":false},{\"name\":\"validationRules\",\"type\":\"String\",\"required?\":false}]},\"EDMSConnectionInformation\":{\"properties\":[{\"name\":\"systemConnectionInformation\",\"type\":\"String\",\"required?\":true},{\"name\":\"documentClassificationSystem\",\"type\":\"String\",\"required?\":true},{\"name\":\"securityLevelDefinition\",\"type\":\"String\",\"required?\":true},{\"name\":\"retentionPeriodDefinition\",\"type\":\"String\",\"required?\":true}]},\"DocumentAttributes\":{\"properties\":[{\"name\":\"documentNumberingSystem\",\"type\":\"String\",\"required?\":true},{\"name\":\"indexingInformation\",\"type\":\"String\",\"required?\":true},{\"name\":\"documentType\",\"type\":\"String\",\"required?\":true},{\"name\":\"managingDepartment\",\"type\":\"String\",\"required?\":true}]},\"PDFGenerationInformation\":{\"properties\":[{\"name\":\"templateInformation\",\"type\":\"String\",\"required?\":true},{\"name\":\"fontSettings\",\"type\":\"String\",\"required?\":true},{\"name\":\"marginSettings\",\"type\":\"String\",\"required?\":true},{\"name\":\"resolutionSettings\",\"type\":\"String\",\"required?\":true}]},\"SecuritySettings\":{\"properties\":[{\"name\":\"encryptionLevel\",\"type\":\"String\",\"required?\":true},{\"name\":\"outputControl\",\"type\":\"String\",\"required?\":true},{\"name\":\"watermarkPosition\",\"type\":\"String\",\"required?\":true},{\"name\":\"securityLevel\",\"type\":\"String\",\"required?\":true}]}},\"businessRules\":[{\"name\":\"FormatCompatibility\",\"description\":\"이전 버전의 서식과 호환성을 유지해야 합니다.\"},{\"name\":\"AutomaticFormatRetrieval\",\"description\":\"해당 민원에 맞는 서식이 자동으로 조회되어야 합니다.\"},{\"name\":\"EDMSAutomaticRegistration\",\"description\":\"신청서는 EDMS에 자동 등록되어야 합니다.\"},{\"name\":\"PDFDocumentIntegrity\",\"description\":\"생성된 PDF 문서에 전자 서명이 포함되어야 합니다.\"}],\"interfaces\":{\"FormatInquiry\":{\"sections\":[{\"name\":\"FormatSearch\",\"type\":\"form\",\"fields\":[{\"name\":\"formatCode\",\"type\":\"text\",\"required?\":false},{\"name\":\"formatType\",\"type\":\"select\",\"required?\":false,\"values?\":[\"general\",\"special\"]}],\"actions\":[\"Search\",\"Preview\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}}]},\"EDMSIntegration\":{\"sections\":[{\"name\":\"DocumentRegistration\",\"type\":\"form\",\"fields\":[{\"name\":\"documentNumber\",\"type\":\"text\",\"required?\":false},{\"name\":\"documentType\",\"type\":\"select\",\"required?\":false}],\"actions\":[\"Register\",\"ViewStatus\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}}]},\"IssuedDocumentProcessing\":{\"sections\":[{\"name\":\"PDFGeneration\",\"type\":\"form\",\"fields\":[{\"name\":\"template\",\"type\":\"select\",\"required?\":true},{\"name\":\"font\",\"type\":\"text\",\"required?\":true}],\"actions\":[\"GeneratePDF\",\"ApplySignature\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}}]}}}",
+                        "options": [
+                            {
+                                "structure": [
+                                    {
+                                        "aggregate": {
+                                            "name": "Form",
+                                            "alias": "서식"
+                                        },
+                                        "enumerations": [
+                                            {
+                                                "name": "FormatType",
+                                                "alias": "서식 유형"
+                                            }
+                                        ],
+                                        "valueObjects": [
+                                            {
+                                                "name": "FormatInformation",
+                                                "alias": "서식 정보"
+                                            },
+                                            {
+                                                "name": "MappingRule",
+                                                "alias": "매핑 규칙"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "aggregate": {
+                                            "name": "Document",
+                                            "alias": "문서"
+                                        },
+                                        "enumerations": [],
+                                        "valueObjects": [
+                                            {
+                                                "name": "EDMSConnectionInformation",
+                                                "alias": "EDMS 연계 정보"
+                                            },
+                                            {
+                                                "name": "DocumentAttributes",
+                                                "alias": "문서 속성"
+                                            },
+                                            {
+                                                "name": "PDFGenerationInformation",
+                                                "alias": "PDF 생성 정보"
+                                            },
+                                            {
+                                                "name": "SecuritySettings",
+                                                "alias": "보안 설정"
+                                            }
+                                        ]
+                                    }
+                                ],
+                                "pros": {
+                                    "cohesion": "각 애그리거트는 단일 책임 원칙을 준수하여 서식 관리 또는 문서 관리에만 집중합니다.",
+                                    "coupling": "Form과 Document는 느슨하게 결합되어 있어 한 애그리거트의 변경이 다른 애그리거트에 미치는 영향을 최소화합니다.",
+                                    "consistency": "각 애그리거트는 자체 일관성 규칙을 유지하므로 데이터 무결성을 보장합니다.",
+                                    "encapsulation": "각 애그리거트는 내부 구현 세부 사항을 숨겨 다른 애그리거트가 내부 상태에 직접 액세스하는 것을 방지합니다.",
+                                    "complexity": "도메인 모델은 더 작고 이해하기 쉬운 단위로 나뉩니다.",
+                                    "independence": "Form과 Document는 독립적으로 개발, 테스트 및 배포할 수 있습니다.",
+                                    "performance": "독립적인 확장 및 특정 요구 사항에 따라 최적화가 가능합니다."
+                                },
+                                "cons": {
+                                    "cohesion": "서식과 문서 모두를 포함하는 비즈니스 프로세스에는 애그리거트 경계를 넘나드는 조율이 필요하여 프로세스 흐름이 복잡해집니다.",
+                                    "coupling": "Form과 Document 간의 관계는 데이터 일관성을 유지하기 위해 추가 메커니즘이 필요합니다.",
+                                    "consistency": "애그리거트 간의 데이터 동기화에는 최종 일관성 패턴이 필요할 수 있으며 시스템 복잡성이 증가합니다.",
+                                    "encapsulation": "애그리거트 간의 비즈니스 규칙은 애플리케이션 서비스에서 구현해야 합니다.",
+                                    "complexity": "서식 조회 및 문서 처리와 같은 작업을 위해 두 애그리거트를 조율하려면 추가 오케스트레이션 논리가 필요합니다.",
+                                    "independence": "Form과 Document 간의 상호 작용에 대한 변경에는 두 애그리거트에 대한 조율된 업데이트가 필요합니다.",
+                                    "performance": "서식 및 문서 정보를 검색하려면 애그리거트 간의 데이터 조인이 필요하여 쿼리 복잡성이 증가할 수 있습니다."
+                                },
+                                "isAIRecommended": false,
+                                "boundedContext": {
+                                    "name": "DocumentManagement",
+                                    "alias": "문서 관리",
+                                    "displayName": "문서 관리",
+                                    "description": "# Requirements\n\n## userStory\n\n### Feature 1.3: 서식 조회\n#### Description\n- 민원 종류별 서식 관리 및 조회\n- 서식 버전 관리\n- 데이터 매핑 규칙 정의\n\n#### Acceptance Criteria\n- 해당 민원에 맞는 서식이 자동으로 조회되어야 함\n- 사용자 입력 데이터가 서식에 자동 매핑되어야 함\n- 서식 미리보기 제공\n- 이전 버전 서식 호환성 보장\n- 서식 오류 시 대체 서식 제공\n\n#### Input Parameters\n##### 서식 정보\n- 서식 코드\n- 서식 버전\n- 유효기간\n- 서식 종류 (일반/특수)\n\n##### 매핑 규칙\n- 필드 매핑 정의\n- 데이터 변환 규칙\n- 계산식 정의\n- 유효성 검증 규칙\n\n#### Technical Details\n- 서식 저장소 구조\n- 버전 관리 체계\n- 템플릿 엔진 스펙\n- 캐싱 전략\n\n## userStory\n\n### Feature 3.1: EDMS 연계\n#### Description\n- EDMS 시스템 연계\n- 문서 등록 및 관리\n- 이력 관리\n\n#### Acceptance Criteria\n- 신청서가 EDMS에 자동 등록\n- EDMS 처리 상태 실시간 조회\n- 문서 분류체계 적용\n- 접근권한 관리\n- 문서 이관 처리\n\n#### Input Parameters\n##### EDMS 연계 정보\n- 시스템 연계 정보\n- 문서분류 체계\n- 보안등급 정의\n- 보존기간 정의\n\n##### 문서 속성\n- 문서번호 체계\n- 색인 정보\n- 문서 유형\n- 관리 부서\n\n#### Technical Details\n- EDMS API 스펙\n- 문서 변환 규칙\n- 보안 정책\n- 백업 정책\n\n## userStory\n\n### Feature 3.2: 발급문서 처리\n#### Description\n- PDF 문서 생성\n- 전자서명 처리\n- 보안 워터마크 적용\n\n#### Acceptance Criteria\n- PDF 문서 정확한 생성\n- 전자서명 포함\n- 문서 위변조 방지\n- 보안 워터마크 적용\n- 출력 제어\n\n#### Input Parameters\n##### PDF 생성 정보\n- 템플릿 정보\n- 폰트 설정\n- 여백 설정\n- 해상도 설정\n\n##### 보안 설정\n- 암호화 수준\n- 출력 제어\n- 워터마크 위치\n- 보안 레벨\n\n#### Technical Details\n- PDF 라이브러리 스펙\n- 암호화 알고리즘\n- 디지털 서명 규격\n- 성능 최적화 방안",
+                                    "aggregates": [
+                                        {
+                                            "name": "Form",
+                                            "alias": "서식"
+                                        },
+                                        {
+                                            "name": "Document",
+                                            "alias": "문서"
+                                        }
+                                    ]
+                                },
+                                "description": "{\"userStories\":[{\"title\":\"서식 조회\",\"description\":\"사용자는 민원 종류별 서식을 조회하고 관리할 수 있어야 합니다.\",\"acceptance\":[\"해당 민원에 맞는 서식이 자동으로 조회되어야 합니다.\",\"사용자 입력 데이터가 서식에 자동 매핑되어야 합니다.\",\"서식 미리보기가 제공되어야 합니다.\",\"이전 버전 서식과의 호환성이 보장되어야 합니다.\",\"서식 오류 시 대체 서식이 제공되어야 합니다.\"]},{\"title\":\"EDMS 연계\",\"description\":\"사용자는 EDMS 시스템과 연계하여 문서를 등록, 관리하고 이력을 추적할 수 있어야 합니다.\",\"acceptance\":[\"신청서가 EDMS에 자동 등록되어야 합니다.\",\"EDMS 처리 상태를 실시간으로 조회할 수 있어야 합니다.\",\"문서 분류체계가 적용되어야 합니다.\",\"접근 권한이 관리되어야 합니다.\",\"문서 이관 처리가 가능해야 합니다.\"]},{\"title\":\"발급문서 처리\",\"description\":\"사용자는 PDF 문서를 생성하고 전자 서명 및 보안 워터마크를 적용하여 문서의 보안성을 강화할 수 있어야 합니다.\",\"acceptance\":[\"PDF 문서가 정확하게 생성되어야 합니다.\",\"전자 서명이 포함되어야 합니다.\",\"문서 위변조 방지 기능이 제공되어야 합니다.\",\"보안 워터마크가 적용되어야 합니다.\",\"출력 제어가 가능해야 합니다.\"]}],\"entities\":{\"FormatInformation\":{\"properties\":[{\"name\":\"formatCode\",\"type\":\"String\",\"required?\":true,\"isPrimaryKey?\":true},{\"name\":\"formatVersion\",\"type\":\"String\",\"required?\":true},{\"name\":\"validityPeriod\",\"type\":\"Date\",\"required?\":true},{\"name\":\"formatType\",\"type\":\"enum\",\"required?\":true,\"values?\":[\"general\",\"special\"]}]},\"MappingRule\":{\"properties\":[{\"name\":\"fieldMappingDefinition\",\"type\":\"String\",\"required?\":true},{\"name\":\"dataConversionRules\",\"type\":\"String\",\"required?\":true},{\"name\":\"calculationFormula\",\"type\":\"String\",\"required?\":false},{\"name\":\"validationRules\",\"type\":\"String\",\"required?\":false}]},\"EDMSConnectionInformation\":{\"properties\":[{\"name\":\"systemConnectionInformation\",\"type\":\"String\",\"required?\":true},{\"name\":\"documentClassificationSystem\",\"type\":\"String\",\"required?\":true},{\"name\":\"securityLevelDefinition\",\"type\":\"String\",\"required?\":true},{\"name\":\"retentionPeriodDefinition\",\"type\":\"String\",\"required?\":true}]},\"DocumentAttributes\":{\"properties\":[{\"name\":\"documentNumberingSystem\",\"type\":\"String\",\"required?\":true},{\"name\":\"indexingInformation\",\"type\":\"String\",\"required?\":true},{\"name\":\"documentType\",\"type\":\"String\",\"required?\":true},{\"name\":\"managingDepartment\",\"type\":\"String\",\"required?\":true}]},\"PDFGenerationInformation\":{\"properties\":[{\"name\":\"templateInformation\",\"type\":\"String\",\"required?\":true},{\"name\":\"fontSettings\",\"type\":\"String\",\"required?\":true},{\"name\":\"marginSettings\",\"type\":\"String\",\"required?\":true},{\"name\":\"resolutionSettings\",\"type\":\"String\",\"required?\":true}]},\"SecuritySettings\":{\"properties\":[{\"name\":\"encryptionLevel\",\"type\":\"String\",\"required?\":true},{\"name\":\"outputControl\",\"type\":\"String\",\"required?\":true},{\"name\":\"watermarkPosition\",\"type\":\"String\",\"required?\":true},{\"name\":\"securityLevel\",\"type\":\"String\",\"required?\":true}]}},\"businessRules\":[{\"name\":\"FormatCompatibility\",\"description\":\"이전 버전의 서식과 호환성을 유지해야 합니다.\"},{\"name\":\"AutomaticFormatRetrieval\",\"description\":\"해당 민원에 맞는 서식이 자동으로 조회되어야 합니다.\"},{\"name\":\"EDMSAutomaticRegistration\",\"description\":\"신청서는 EDMS에 자동 등록되어야 합니다.\"},{\"name\":\"PDFDocumentIntegrity\",\"description\":\"생성된 PDF 문서에 전자 서명이 포함되어야 합니다.\"}],\"interfaces\":{\"FormatInquiry\":{\"sections\":[{\"name\":\"FormatSearch\",\"type\":\"form\",\"fields\":[{\"name\":\"formatCode\",\"type\":\"text\",\"required?\":false},{\"name\":\"formatType\",\"type\":\"select\",\"required?\":false,\"values?\":[\"general\",\"special\"]}],\"actions\":[\"Search\",\"Preview\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}}]},\"EDMSIntegration\":{\"sections\":[{\"name\":\"DocumentRegistration\",\"type\":\"form\",\"fields\":[{\"name\":\"documentNumber\",\"type\":\"text\",\"required?\":false},{\"name\":\"documentType\",\"type\":\"select\",\"required?\":false}],\"actions\":[\"Register\",\"ViewStatus\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}}]},\"IssuedDocumentProcessing\":{\"sections\":[{\"name\":\"PDFGeneration\",\"type\":\"form\",\"fields\":[{\"name\":\"template\",\"type\":\"select\",\"required?\":true},{\"name\":\"font\",\"type\":\"text\",\"required?\":true}],\"actions\":[\"GeneratePDF\",\"ApplySignature\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}}]}}}"
+                            },
+                            {
+                                "structure": [
+                                    {
+                                        "aggregate": {
+                                            "name": "FormDocument",
+                                            "alias": "서식 및 문서"
+                                        },
+                                        "enumerations": [
+                                            {
+                                                "name": "FormatType",
+                                                "alias": "서식 유형"
+                                            }
+                                        ],
+                                        "valueObjects": [
+                                            {
+                                                "name": "FormatInformation",
+                                                "alias": "서식 정보"
+                                            },
+                                            {
+                                                "name": "MappingRule",
+                                                "alias": "매핑 규칙"
+                                            },
+                                            {
+                                                "name": "EDMSConnectionInformation",
+                                                "alias": "EDMS 연계 정보"
+                                            },
+                                            {
+                                                "name": "DocumentAttributes",
+                                                "alias": "문서 속성"
+                                            },
+                                            {
+                                                "name": "PDFGenerationInformation",
+                                                "alias": "PDF 생성 정보"
+                                            },
+                                            {
+                                                "name": "SecuritySettings",
+                                                "alias": "보안 설정"
+                                            }
+                                        ]
+                                    }
+                                ],
+                                "pros": {
+                                    "cohesion": "모든 서식 및 문서 데이터는 단일 애그리거트 내에서 관리되므로 밀접하게 관련된 작업에 대한 일관성을 보장합니다.",
+                                    "coupling": "서식 및 문서 작업에 대한 애그리거트 간 통신이 필요하지 않아 최종 일관성 패턴 또는 분산 트랜잭션의 필요성이 줄어듭니다.",
+                                    "consistency": "서식 및 문서 규칙을 포괄하는 비즈니스 규칙(예: '서식 유효성 검사는 문서 처리 전에 수행해야 함')은 단일 트랜잭션 내에서 적용됩니다.",
+                                    "encapsulation": "서식 유효성 검사 논리 및 문서 상태 전환이 함께 캡슐화되어 서식 규칙이 문서 상태 변경 전에 적용되도록 보장합니다.",
+                                    "complexity": "관련 개념을 병합하여 도메인 모델을 단순화하여 별도의 애그리거트 간의 조율 메커니즘의 필요성을 줄입니다.",
+                                    "independence": "서식 또는 문서 처리에 대한 변경은 여러 애그리거트에 대한 변경을 조율하지 않고 한 곳에서 수행할 수 있습니다.",
+                                    "performance": "서식 및 문서 데이터에 모두 액세스할 때 여러 데이터베이스 쿼리가 필요하지 않아 읽기 작업 성능이 향상됩니다."
+                                },
+                                "cons": {
+                                    "cohesion": "애그리거트는 서식 관리 및 문서 처리 문제를 모두 처리해야 하므로 단일 책임 원칙이 희석됩니다.",
+                                    "coupling": "문서 처리 요구 사항에 대한 변경은 전체 FormDocument 애그리거트에 영향을 미쳐 서식 기능에 영향을 미칠 수 있습니다.",
+                                    "consistency": "애그리거트가 커질수록 트랜잭션 시간 초과 가능성이 높아집니다.",
+                                    "encapsulation": "서식과 문서 문제를 처리하는 다른 팀은 동일한 애그리거트에 대한 변경 사항을 조율해야 하므로 조직 마찰이 발생합니다.",
+                                    "complexity": "애그리거트는 시간이 지남에 따라 커져서 그 안에 포함된 모든 비즈니스 규칙을 이해하기가 더 어려워집니다.",
+                                    "independence": "동일한 리소스 제약 조건을 공유하므로 서식 및 문서 작업을 독립적으로 확장할 수 없습니다.",
+                                    "performance": "동시 수정이 동일한 애그리거트를 대상으로 하므로 쓰기 작업이 경합으로 인해 어려움을 겪을 수 있습니다(서식 대 문서)."
+                                },
+                                "isAIRecommended": true,
+                                "boundedContext": {
+                                    "name": "DocumentManagement",
+                                    "alias": "문서 관리",
+                                    "displayName": "문서 관리",
+                                    "description": "# Requirements\n\n## userStory\n\n### Feature 1.3: 서식 조회\n#### Description\n- 민원 종류별 서식 관리 및 조회\n- 서식 버전 관리\n- 데이터 매핑 규칙 정의\n\n#### Acceptance Criteria\n- 해당 민원에 맞는 서식이 자동으로 조회되어야 함\n- 사용자 입력 데이터가 서식에 자동 매핑되어야 함\n- 서식 미리보기 제공\n- 이전 버전 서식 호환성 보장\n- 서식 오류 시 대체 서식 제공\n\n#### Input Parameters\n##### 서식 정보\n- 서식 코드\n- 서식 버전\n- 유효기간\n- 서식 종류 (일반/특수)\n\n##### 매핑 규칙\n- 필드 매핑 정의\n- 데이터 변환 규칙\n- 계산식 정의\n- 유효성 검증 규칙\n\n#### Technical Details\n- 서식 저장소 구조\n- 버전 관리 체계\n- 템플릿 엔진 스펙\n- 캐싱 전략\n\n## userStory\n\n### Feature 3.1: EDMS 연계\n#### Description\n- EDMS 시스템 연계\n- 문서 등록 및 관리\n- 이력 관리\n\n#### Acceptance Criteria\n- 신청서가 EDMS에 자동 등록\n- EDMS 처리 상태 실시간 조회\n- 문서 분류체계 적용\n- 접근권한 관리\n- 문서 이관 처리\n\n#### Input Parameters\n##### EDMS 연계 정보\n- 시스템 연계 정보\n- 문서분류 체계\n- 보안등급 정의\n- 보존기간 정의\n\n##### 문서 속성\n- 문서번호 체계\n- 색인 정보\n- 문서 유형\n- 관리 부서\n\n#### Technical Details\n- EDMS API 스펙\n- 문서 변환 규칙\n- 보안 정책\n- 백업 정책\n\n## userStory\n\n### Feature 3.2: 발급문서 처리\n#### Description\n- PDF 문서 생성\n- 전자서명 처리\n- 보안 워터마크 적용\n\n#### Acceptance Criteria\n- PDF 문서 정확한 생성\n- 전자서명 포함\n- 문서 위변조 방지\n- 보안 워터마크 적용\n- 출력 제어\n\n#### Input Parameters\n##### PDF 생성 정보\n- 템플릿 정보\n- 폰트 설정\n- 여백 설정\n- 해상도 설정\n\n##### 보안 설정\n- 암호화 수준\n- 출력 제어\n- 워터마크 위치\n- 보안 레벨\n\n#### Technical Details\n- PDF 라이브러리 스펙\n- 암호화 알고리즘\n- 디지털 서명 규격\n- 성능 최적화 방안",
+                                    "aggregates": [
+                                        {
+                                            "name": "Form",
+                                            "alias": "서식"
+                                        },
+                                        {
+                                            "name": "Document",
+                                            "alias": "문서"
+                                        }
+                                    ]
+                                },
+                                "description": "{\"userStories\":[{\"title\":\"서식 조회\",\"description\":\"사용자는 민원 종류별 서식을 조회하고 관리할 수 있어야 합니다.\",\"acceptance\":[\"해당 민원에 맞는 서식이 자동으로 조회되어야 합니다.\",\"사용자 입력 데이터가 서식에 자동 매핑되어야 합니다.\",\"서식 미리보기가 제공되어야 합니다.\",\"이전 버전 서식과의 호환성이 보장되어야 합니다.\",\"서식 오류 시 대체 서식이 제공되어야 합니다.\"]},{\"title\":\"EDMS 연계\",\"description\":\"사용자는 EDMS 시스템과 연계하여 문서를 등록, 관리하고 이력을 추적할 수 있어야 합니다.\",\"acceptance\":[\"신청서가 EDMS에 자동 등록되어야 합니다.\",\"EDMS 처리 상태를 실시간으로 조회할 수 있어야 합니다.\",\"문서 분류체계가 적용되어야 합니다.\",\"접근 권한이 관리되어야 합니다.\",\"문서 이관 처리가 가능해야 합니다.\"]},{\"title\":\"발급문서 처리\",\"description\":\"사용자는 PDF 문서를 생성하고 전자 서명 및 보안 워터마크를 적용하여 문서의 보안성을 강화할 수 있어야 합니다.\",\"acceptance\":[\"PDF 문서가 정확하게 생성되어야 합니다.\",\"전자 서명이 포함되어야 합니다.\",\"문서 위변조 방지 기능이 제공되어야 합니다.\",\"보안 워터마크가 적용되어야 합니다.\",\"출력 제어가 가능해야 합니다.\"]}],\"entities\":{\"FormatInformation\":{\"properties\":[{\"name\":\"formatCode\",\"type\":\"String\",\"required?\":true,\"isPrimaryKey?\":true},{\"name\":\"formatVersion\",\"type\":\"String\",\"required?\":true},{\"name\":\"validityPeriod\",\"type\":\"Date\",\"required?\":true},{\"name\":\"formatType\",\"type\":\"enum\",\"required?\":true,\"values?\":[\"general\",\"special\"]}]},\"MappingRule\":{\"properties\":[{\"name\":\"fieldMappingDefinition\",\"type\":\"String\",\"required?\":true},{\"name\":\"dataConversionRules\",\"type\":\"String\",\"required?\":true},{\"name\":\"calculationFormula\",\"type\":\"String\",\"required?\":false},{\"name\":\"validationRules\",\"type\":\"String\",\"required?\":false}]},\"EDMSConnectionInformation\":{\"properties\":[{\"name\":\"systemConnectionInformation\",\"type\":\"String\",\"required?\":true},{\"name\":\"documentClassificationSystem\",\"type\":\"String\",\"required?\":true},{\"name\":\"securityLevelDefinition\",\"type\":\"String\",\"required?\":true},{\"name\":\"retentionPeriodDefinition\",\"type\":\"String\",\"required?\":true}]},\"DocumentAttributes\":{\"properties\":[{\"name\":\"documentNumberingSystem\",\"type\":\"String\",\"required?\":true},{\"name\":\"indexingInformation\",\"type\":\"String\",\"required?\":true},{\"name\":\"documentType\",\"type\":\"String\",\"required?\":true},{\"name\":\"managingDepartment\",\"type\":\"String\",\"required?\":true}]},\"PDFGenerationInformation\":{\"properties\":[{\"name\":\"templateInformation\",\"type\":\"String\",\"required?\":true},{\"name\":\"fontSettings\",\"type\":\"String\",\"required?\":true},{\"name\":\"marginSettings\",\"type\":\"String\",\"required?\":true},{\"name\":\"resolutionSettings\",\"type\":\"String\",\"required?\":true}]},\"SecuritySettings\":{\"properties\":[{\"name\":\"encryptionLevel\",\"type\":\"String\",\"required?\":true},{\"name\":\"outputControl\",\"type\":\"String\",\"required?\":true},{\"name\":\"watermarkPosition\",\"type\":\"String\",\"required?\":true},{\"name\":\"securityLevel\",\"type\":\"String\",\"required?\":true}]}},\"businessRules\":[{\"name\":\"FormatCompatibility\",\"description\":\"이전 버전의 서식과 호환성을 유지해야 합니다.\"},{\"name\":\"AutomaticFormatRetrieval\",\"description\":\"해당 민원에 맞는 서식이 자동으로 조회되어야 합니다.\"},{\"name\":\"EDMSAutomaticRegistration\",\"description\":\"신청서는 EDMS에 자동 등록되어야 합니다.\"},{\"name\":\"PDFDocumentIntegrity\",\"description\":\"생성된 PDF 문서에 전자 서명이 포함되어야 합니다.\"}],\"interfaces\":{\"FormatInquiry\":{\"sections\":[{\"name\":\"FormatSearch\",\"type\":\"form\",\"fields\":[{\"name\":\"formatCode\",\"type\":\"text\",\"required?\":false},{\"name\":\"formatType\",\"type\":\"select\",\"required?\":false,\"values?\":[\"general\",\"special\"]}],\"actions\":[\"Search\",\"Preview\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}}]},\"EDMSIntegration\":{\"sections\":[{\"name\":\"DocumentRegistration\",\"type\":\"form\",\"fields\":[{\"name\":\"documentNumber\",\"type\":\"text\",\"required?\":false},{\"name\":\"documentType\",\"type\":\"select\",\"required?\":false}],\"actions\":[\"Register\",\"ViewStatus\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}}]},\"IssuedDocumentProcessing\":{\"sections\":[{\"name\":\"PDFGeneration\",\"type\":\"form\",\"fields\":[{\"name\":\"template\",\"type\":\"select\",\"required?\":true},{\"name\":\"font\",\"type\":\"text\",\"required?\":true}],\"actions\":[\"GeneratePDF\",\"ApplySignature\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}}]}}}"
+                            }
+                        ],
+                        "conclusions": "옵션 1은 각 도메인 개념에 대한 명확한 분리가 필요한 경우에 권장됩니다. 옵션 2는 서식 및 문서 관리를 단순화하기 위해 통합된 접근 방식이 필요한 경우에 가장 적합합니다.",
+                        "defaultOptionIndex": 1,
+                        "analysisResult": {
+                            "userStories": [
+                                {
+                                    "title": "서식 조회",
+                                    "description": "사용자는 민원 종류별 서식을 조회하고 관리할 수 있어야 합니다.",
+                                    "acceptance": [
+                                        "해당 민원에 맞는 서식이 자동으로 조회되어야 합니다.",
+                                        "사용자 입력 데이터가 서식에 자동 매핑되어야 합니다.",
+                                        "서식 미리보기가 제공되어야 합니다.",
+                                        "이전 버전 서식과의 호환성이 보장되어야 합니다.",
+                                        "서식 오류 시 대체 서식이 제공되어야 합니다."
+                                    ]
+                                },
+                                {
+                                    "title": "EDMS 연계",
+                                    "description": "사용자는 EDMS 시스템과 연계하여 문서를 등록, 관리하고 이력을 추적할 수 있어야 합니다.",
+                                    "acceptance": [
+                                        "신청서가 EDMS에 자동 등록되어야 합니다.",
+                                        "EDMS 처리 상태를 실시간으로 조회할 수 있어야 합니다.",
+                                        "문서 분류체계가 적용되어야 합니다.",
+                                        "접근 권한이 관리되어야 합니다.",
+                                        "문서 이관 처리가 가능해야 합니다."
+                                    ]
+                                },
+                                {
+                                    "title": "발급문서 처리",
+                                    "description": "사용자는 PDF 문서를 생성하고 전자 서명 및 보안 워터마크를 적용하여 문서의 보안성을 강화할 수 있어야 합니다.",
+                                    "acceptance": [
+                                        "PDF 문서가 정확하게 생성되어야 합니다.",
+                                        "전자 서명이 포함되어야 합니다.",
+                                        "문서 위변조 방지 기능이 제공되어야 합니다.",
+                                        "보안 워터마크가 적용되어야 합니다.",
+                                        "출력 제어가 가능해야 합니다."
+                                    ]
+                                }
+                            ],
+                            "entities": {
+                                "FormatInformation": {
+                                    "properties": [
+                                        {
+                                            "name": "formatCode",
+                                            "type": "String",
+                                            "required?": true,
+                                            "isPrimaryKey?": true
+                                        },
+                                        {
+                                            "name": "formatVersion",
+                                            "type": "String",
+                                            "required?": true
+                                        },
+                                        {
+                                            "name": "validityPeriod",
+                                            "type": "Date",
+                                            "required?": true
+                                        },
+                                        {
+                                            "name": "formatType",
+                                            "type": "enum",
+                                            "required?": true,
+                                            "values?": [
+                                                "general",
+                                                "special"
+                                            ]
+                                        }
+                                    ]
+                                },
+                                "MappingRule": {
+                                    "properties": [
+                                        {
+                                            "name": "fieldMappingDefinition",
+                                            "type": "String",
+                                            "required?": true
+                                        },
+                                        {
+                                            "name": "dataConversionRules",
+                                            "type": "String",
+                                            "required?": true
+                                        },
+                                        {
+                                            "name": "calculationFormula",
+                                            "type": "String",
+                                            "required?": false
+                                        },
+                                        {
+                                            "name": "validationRules",
+                                            "type": "String",
+                                            "required?": false
+                                        }
+                                    ]
+                                },
+                                "EDMSConnectionInformation": {
+                                    "properties": [
+                                        {
+                                            "name": "systemConnectionInformation",
+                                            "type": "String",
+                                            "required?": true
+                                        },
+                                        {
+                                            "name": "documentClassificationSystem",
+                                            "type": "String",
+                                            "required?": true
+                                        },
+                                        {
+                                            "name": "securityLevelDefinition",
+                                            "type": "String",
+                                            "required?": true
+                                        },
+                                        {
+                                            "name": "retentionPeriodDefinition",
+                                            "type": "String",
+                                            "required?": true
+                                        }
+                                    ]
+                                },
+                                "DocumentAttributes": {
+                                    "properties": [
+                                        {
+                                            "name": "documentNumberingSystem",
+                                            "type": "String",
+                                            "required?": true
+                                        },
+                                        {
+                                            "name": "indexingInformation",
+                                            "type": "String",
+                                            "required?": true
+                                        },
+                                        {
+                                            "name": "documentType",
+                                            "type": "String",
+                                            "required?": true
+                                        },
+                                        {
+                                            "name": "managingDepartment",
+                                            "type": "String",
+                                            "required?": true
+                                        }
+                                    ]
+                                },
+                                "PDFGenerationInformation": {
+                                    "properties": [
+                                        {
+                                            "name": "templateInformation",
+                                            "type": "String",
+                                            "required?": true
+                                        },
+                                        {
+                                            "name": "fontSettings",
+                                            "type": "String",
+                                            "required?": true
+                                        },
+                                        {
+                                            "name": "marginSettings",
+                                            "type": "String",
+                                            "required?": true
+                                        },
+                                        {
+                                            "name": "resolutionSettings",
+                                            "type": "String",
+                                            "required?": true
+                                        }
+                                    ]
+                                },
+                                "SecuritySettings": {
+                                    "properties": [
+                                        {
+                                            "name": "encryptionLevel",
+                                            "type": "String",
+                                            "required?": true
+                                        },
+                                        {
+                                            "name": "outputControl",
+                                            "type": "String",
+                                            "required?": true
+                                        },
+                                        {
+                                            "name": "watermarkPosition",
+                                            "type": "String",
+                                            "required?": true
+                                        },
+                                        {
+                                            "name": "securityLevel",
+                                            "type": "String",
+                                            "required?": true
+                                        }
+                                    ]
+                                }
+                            },
+                            "businessRules": [
+                                {
+                                    "name": "FormatCompatibility",
+                                    "description": "이전 버전의 서식과 호환성을 유지해야 합니다."
+                                },
+                                {
+                                    "name": "AutomaticFormatRetrieval",
+                                    "description": "해당 민원에 맞는 서식이 자동으로 조회되어야 합니다."
+                                },
+                                {
+                                    "name": "EDMSAutomaticRegistration",
+                                    "description": "신청서는 EDMS에 자동 등록되어야 합니다."
+                                },
+                                {
+                                    "name": "PDFDocumentIntegrity",
+                                    "description": "생성된 PDF 문서에 전자 서명이 포함되어야 합니다."
+                                }
+                            ],
+                            "interfaces": {
+                                "FormatInquiry": {
+                                    "sections": [
+                                        {
+                                            "name": "FormatSearch",
+                                            "type": "form",
+                                            "fields": [
+                                                {
+                                                    "name": "formatCode",
+                                                    "type": "text",
+                                                    "required?": false
+                                                },
+                                                {
+                                                    "name": "formatType",
+                                                    "type": "select",
+                                                    "required?": false,
+                                                    "values?": [
+                                                        "general",
+                                                        "special"
+                                                    ]
+                                                }
+                                            ],
+                                            "actions": [
+                                                "Search",
+                                                "Preview"
+                                            ],
+                                            "filters": [],
+                                            "resultTable": {
+                                                "columns": [],
+                                                "actions": []
+                                            }
+                                        }
+                                    ]
+                                },
+                                "EDMSIntegration": {
+                                    "sections": [
+                                        {
+                                            "name": "DocumentRegistration",
+                                            "type": "form",
+                                            "fields": [
+                                                {
+                                                    "name": "documentNumber",
+                                                    "type": "text",
+                                                    "required?": false
+                                                },
+                                                {
+                                                    "name": "documentType",
+                                                    "type": "select",
+                                                    "required?": false
+                                                }
+                                            ],
+                                            "actions": [
+                                                "Register",
+                                                "ViewStatus"
+                                            ],
+                                            "filters": [],
+                                            "resultTable": {
+                                                "columns": [],
+                                                "actions": []
+                                            }
+                                        }
+                                    ]
+                                },
+                                "IssuedDocumentProcessing": {
+                                    "sections": [
+                                        {
+                                            "name": "PDFGeneration",
+                                            "type": "form",
+                                            "fields": [
+                                                {
+                                                    "name": "template",
+                                                    "type": "select",
+                                                    "required?": true
+                                                },
+                                                {
+                                                    "name": "font",
+                                                    "type": "text",
+                                                    "required?": true
+                                                }
+                                            ],
+                                            "actions": [
+                                                "GeneratePDF",
+                                                "ApplySignature"
+                                            ],
+                                            "filters": [],
+                                            "resultTable": {
+                                                "columns": [],
+                                                "actions": []
+                                            }
+                                        }
+                                    ]
+                                }
+                            },
+                            "inference": "요구 사항 분석 결과, 세 가지 주요 기능이 필요합니다: 서식 조회, EDMS 연계, 그리고 발급문서 처리. 각 기능은 사용자 스토리, 인수 조건, 입력 파라미터, 기술 세부 사항을 포함하고 있습니다. 서식 조회는 민원 종류에 맞는 서식을 관리하고 조회하는 기능을 제공하며, EDMS 연계는 신청서를 EDMS 시스템에 등록하고 관리하는 기능을 제공합니다. 마지막으로, 발급문서 처리는 PDF 문서를 생성하고 보안 기능을 적용하는 기능을 제공합니다."
+                        },
+                        "inference": "\n\n기능 요구 사항 및 기존 초안을 분석한 후 두 가지 설계 옵션을 생성했습니다. 첫 번째 옵션은 Form 및 Document를 개별 애그리거트로 유지하여 각 도메인 개념에 대한 명확한 분리를 보장합니다. 두 번째 옵션은 Form과 Document를 단일 애그리거트로 결합하여 서식 및 문서 관리를 통합하여 상호 작용을 단순화합니다."
+                    }
+                ],
+                "draftUIInfos": {
+                    "leftBoundedContextCount": 0,
+                    "directMessage": "Generating options for 문서 관리 Bounded Context... (6810 characters generated)",
+                    "progress": 100
+                },
+                "isGeneratorButtonEnabled": true,
+                "retryInputs": {
+                    "initialInputs": [
+                        {
+                            "boundedContext": {
+                                "name": "ApplicationManagement",
+                                "alias": "민원 신청 관리",
+                                "displayName": "민원 신청 관리",
+                                "description": "# Requirements\n\n## userStory\n\n# 민원신청발급 시스템 요구사항 정의서\n\n## 1. Epic: 민원 신청 프로세스\n### Feature 1.1: 서비스 신청\n#### Description\n- 통합창구포털을 통한 민원 서비스 신청 기능\n- 사용자 친화적인 UI/UX 제공\n- 단계별 신청 프로세스 구현\n\n#### Acceptance Criteria\n- 사용자는 통합창구포털에서 민원 서비스를 선택하고 신청할 수 있어야 함\n- 신청 양식의 모든 필수 필드가 검증되어야 함\n- 첨부 파일 업로드 시 파일 형식 및 크기 제한 검증\n- 임시 저장 및 불러오기 기능 제공\n- 신청 진행 상태 실시간 표시\n\n#### Input Parameters\n##### 신청자 정보\n- 이름 (한글 2-50자)\n- 주민등록번호 (13자리, 유효성 검증 포함)\n- 휴대전화번호 (10-11자리)\n- 이메일 주소 (이메일 형식 검증)\n- 주소 (도로명/지번 주소 지원)\n\n##### 민원 정보\n- 민원 종류 (코드테이블 연계)\n- 신청 사유 (최대 1000자)\n- 처리 희망일자\n- 수령 방법 (방문/우편/온라인)\n\n##### 첨부 서류\n- 파일 형식: PDF, JPG, PNG\n- 개별 파일 크기: 최대 10MB\n- 총 첨부 크기: 최대 50MB\n- 필수 서류 항목 검증\n\n#### Technical Details\n- RESTful API 엔드포인트 구조\n- 파일 업로드 처리 방식\n- 데이터 유효성 검증 규칙\n- 세션 관리 방식\n\n## userStory\n\n### Feature 2.2: 신청서 작성\n#### Description\n- 자동 신청서 작성\n- 데이터 검증 및 보정\n- 전자서명 처리\n\n#### Acceptance Criteria\n- 모든 필요 정보가 신청서에 정확히 반영\n- 작성된 신청서의 유효성 검증\n- 전자서명 검증\n- 임시저장 기능\n- 작성 이력 관리\n\n#### Input Parameters\n##### 신청서 구성 정보\n- 템플릿 코드\n- 서명 위치\n- 첨부파일 목록\n- 보안등급\n\n##### 검증 규칙\n- 필수항목 검증\n- 형식 검증\n- 논리 검증\n- 결재선 검증\n\n#### Technical Details\n- 템플릿 엔진 사양\n- 전자서명 모듈 스펙\n- 문서 보안 정책\n- 저장소 구조",
+                                "aggregates": [
+                                    {
+                                        "name": "Application",
+                                        "alias": "민원 신청"
+                                    },
+                                    {
+                                        "name": "Applicant",
+                                        "alias": "신청자"
+                                    }
+                                ]
+                            },
+                            "description": "# Requirements\n\n## userStory\n\n# 민원신청발급 시스템 요구사항 정의서\n\n## 1. Epic: 민원 신청 프로세스\n### Feature 1.1: 서비스 신청\n#### Description\n- 통합창구포털을 통한 민원 서비스 신청 기능\n- 사용자 친화적인 UI/UX 제공\n- 단계별 신청 프로세스 구현\n\n#### Acceptance Criteria\n- 사용자는 통합창구포털에서 민원 서비스를 선택하고 신청할 수 있어야 함\n- 신청 양식의 모든 필수 필드가 검증되어야 함\n- 첨부 파일 업로드 시 파일 형식 및 크기 제한 검증\n- 임시 저장 및 불러오기 기능 제공\n- 신청 진행 상태 실시간 표시\n\n#### Input Parameters\n##### 신청자 정보\n- 이름 (한글 2-50자)\n- 주민등록번호 (13자리, 유효성 검증 포함)\n- 휴대전화번호 (10-11자리)\n- 이메일 주소 (이메일 형식 검증)\n- 주소 (도로명/지번 주소 지원)\n\n##### 민원 정보\n- 민원 종류 (코드테이블 연계)\n- 신청 사유 (최대 1000자)\n- 처리 희망일자\n- 수령 방법 (방문/우편/온라인)\n\n##### 첨부 서류\n- 파일 형식: PDF, JPG, PNG\n- 개별 파일 크기: 최대 10MB\n- 총 첨부 크기: 최대 50MB\n- 필수 서류 항목 검증\n\n#### Technical Details\n- RESTful API 엔드포인트 구조\n- 파일 업로드 처리 방식\n- 데이터 유효성 검증 규칙\n- 세션 관리 방식\n\n## userStory\n\n### Feature 2.2: 신청서 작성\n#### Description\n- 자동 신청서 작성\n- 데이터 검증 및 보정\n- 전자서명 처리\n\n#### Acceptance Criteria\n- 모든 필요 정보가 신청서에 정확히 반영\n- 작성된 신청서의 유효성 검증\n- 전자서명 검증\n- 임시저장 기능\n- 작성 이력 관리\n\n#### Input Parameters\n##### 신청서 구성 정보\n- 템플릿 코드\n- 서명 위치\n- 첨부파일 목록\n- 보안등급\n\n##### 검증 규칙\n- 필수항목 검증\n- 형식 검증\n- 논리 검증\n- 결재선 검증\n\n#### Technical Details\n- 템플릿 엔진 사양\n- 전자서명 모듈 스펙\n- 문서 보안 정책\n- 저장소 구조"
+                        },
+                        {
+                            "boundedContext": {
+                                "name": "VerificationService",
+                                "alias": "자격 검증 서비스",
+                                "displayName": "자격 검증 서비스",
+                                "description": "# Requirements\n\n## userStory\n\n### Feature 1.2: 자격 조회\n#### Description\n- 신청된 민원에 대한 자격 조회 및 검증\n- 실시간 자격 확인 시스템 연계\n- 다중 자격 조건 처리\n\n#### Acceptance Criteria\n- 신청자의 자격 요건이 자동으로 확인되어야 함\n- 자격 조회 결과가 실시간으로 반환되어야 함\n- 자격 불충족 시 상세 사유 제공\n- 조회 이력 저장 및 관리\n- 재조회 기능 제공\n\n#### Input Parameters\n##### 자격 조회 정보\n- 신청자 식별정보\n  - 주민등록번호 (암호화 전송)\n  - 외국인등록번호 (해당 시)\n- 자격 조회 항목\n  - 주민등록 진위확인\n  - 결격사유 조회\n  - 수급자격 확인\n- 조회 목적 코드\n\n##### API 인증 정보\n- API Key\n- 인증토큰\n- IP 접근제한\n- 전자서명 값\n\n#### Technical Details\n- 자격검증 API 스펙\n- 암호화 알고리즘\n- 에러 핸들링 방식\n- 타임아웃 설정\n\n## userStory\n\n### Feature 2.1: 추가 데이터 조회\n#### Description\n- 연계 시스템 데이터 수집\n- 데이터 정합성 검증\n- 실시간/배치 조회 처리\n\n#### Acceptance Criteria\n- 연계 시스템으로부터 필요 데이터를 자동으로 수집\n- 수집된 데이터의 무결성 검증\n- 누락 데이터 재조회 처리\n- 데이터 변환 및 정제\n- 조회 이력 관리\n\n#### Input Parameters\n##### 조회 조건\n- 조회 대상 시스템\n- 조회 항목 정의\n- 조회 기간\n- 우선순위\n\n##### 데이터 처리 규칙\n- 데이터 변환 규칙\n- 정합성 검증 규칙\n- 예외처리 기준\n- 재처리 규칙\n\n#### Technical Details\n- 연계 시스템별 API 스펙\n- 데이터 동기화 방식\n- 에러 복구 전략\n- 모니터링 방안",
+                                "aggregates": [
+                                    {
+                                        "name": "Qualification",
+                                        "alias": "자격"
+                                    },
+                                    {
+                                        "name": "VerificationHistory",
+                                        "alias": "검증 이력"
+                                    }
+                                ]
+                            },
+                            "description": "# Requirements\n\n## userStory\n\n### Feature 1.2: 자격 조회\n#### Description\n- 신청된 민원에 대한 자격 조회 및 검증\n- 실시간 자격 확인 시스템 연계\n- 다중 자격 조건 처리\n\n#### Acceptance Criteria\n- 신청자의 자격 요건이 자동으로 확인되어야 함\n- 자격 조회 결과가 실시간으로 반환되어야 함\n- 자격 불충족 시 상세 사유 제공\n- 조회 이력 저장 및 관리\n- 재조회 기능 제공\n\n#### Input Parameters\n##### 자격 조회 정보\n- 신청자 식별정보\n  - 주민등록번호 (암호화 전송)\n  - 외국인등록번호 (해당 시)\n- 자격 조회 항목\n  - 주민등록 진위확인\n  - 결격사유 조회\n  - 수급자격 확인\n- 조회 목적 코드\n\n##### API 인증 정보\n- API Key\n- 인증토큰\n- IP 접근제한\n- 전자서명 값\n\n#### Technical Details\n- 자격검증 API 스펙\n- 암호화 알고리즘\n- 에러 핸들링 방식\n- 타임아웃 설정\n\n## userStory\n\n### Feature 2.1: 추가 데이터 조회\n#### Description\n- 연계 시스템 데이터 수집\n- 데이터 정합성 검증\n- 실시간/배치 조회 처리\n\n#### Acceptance Criteria\n- 연계 시스템으로부터 필요 데이터를 자동으로 수집\n- 수집된 데이터의 무결성 검증\n- 누락 데이터 재조회 처리\n- 데이터 변환 및 정제\n- 조회 이력 관리\n\n#### Input Parameters\n##### 조회 조건\n- 조회 대상 시스템\n- 조회 항목 정의\n- 조회 기간\n- 우선순위\n\n##### 데이터 처리 규칙\n- 데이터 변환 규칙\n- 정합성 검증 규칙\n- 예외처리 기준\n- 재처리 규칙\n\n#### Technical Details\n- 연계 시스템별 API 스펙\n- 데이터 동기화 방식\n- 에러 복구 전략\n- 모니터링 방안"
+                        },
+                        {
+                            "boundedContext": {
+                                "name": "DocumentManagement",
+                                "alias": "문서 관리",
+                                "displayName": "문서 관리",
+                                "description": "# Requirements\n\n## userStory\n\n### Feature 1.3: 서식 조회\n#### Description\n- 민원 종류별 서식 관리 및 조회\n- 서식 버전 관리\n- 데이터 매핑 규칙 정의\n\n#### Acceptance Criteria\n- 해당 민원에 맞는 서식이 자동으로 조회되어야 함\n- 사용자 입력 데이터가 서식에 자동 매핑되어야 함\n- 서식 미리보기 제공\n- 이전 버전 서식 호환성 보장\n- 서식 오류 시 대체 서식 제공\n\n#### Input Parameters\n##### 서식 정보\n- 서식 코드\n- 서식 버전\n- 유효기간\n- 서식 종류 (일반/특수)\n\n##### 매핑 규칙\n- 필드 매핑 정의\n- 데이터 변환 규칙\n- 계산식 정의\n- 유효성 검증 규칙\n\n#### Technical Details\n- 서식 저장소 구조\n- 버전 관리 체계\n- 템플릿 엔진 스펙\n- 캐싱 전략\n\n## userStory\n\n### Feature 3.1: EDMS 연계\n#### Description\n- EDMS 시스템 연계\n- 문서 등록 및 관리\n- 이력 관리\n\n#### Acceptance Criteria\n- 신청서가 EDMS에 자동 등록\n- EDMS 처리 상태 실시간 조회\n- 문서 분류체계 적용\n- 접근권한 관리\n- 문서 이관 처리\n\n#### Input Parameters\n##### EDMS 연계 정보\n- 시스템 연계 정보\n- 문서분류 체계\n- 보안등급 정의\n- 보존기간 정의\n\n##### 문서 속성\n- 문서번호 체계\n- 색인 정보\n- 문서 유형\n- 관리 부서\n\n#### Technical Details\n- EDMS API 스펙\n- 문서 변환 규칙\n- 보안 정책\n- 백업 정책\n\n## userStory\n\n### Feature 3.2: 발급문서 처리\n#### Description\n- PDF 문서 생성\n- 전자서명 처리\n- 보안 워터마크 적용\n\n#### Acceptance Criteria\n- PDF 문서 정확한 생성\n- 전자서명 포함\n- 문서 위변조 방지\n- 보안 워터마크 적용\n- 출력 제어\n\n#### Input Parameters\n##### PDF 생성 정보\n- 템플릿 정보\n- 폰트 설정\n- 여백 설정\n- 해상도 설정\n\n##### 보안 설정\n- 암호화 수준\n- 출력 제어\n- 워터마크 위치\n- 보안 레벨\n\n#### Technical Details\n- PDF 라이브러리 스펙\n- 암호화 알고리즘\n- 디지털 서명 규격\n- 성능 최적화 방안",
+                                "aggregates": [
+                                    {
+                                        "name": "Form",
+                                        "alias": "서식"
+                                    },
+                                    {
+                                        "name": "Document",
+                                        "alias": "문서"
+                                    }
+                                ]
+                            },
+                            "description": "# Requirements\n\n## userStory\n\n### Feature 1.3: 서식 조회\n#### Description\n- 민원 종류별 서식 관리 및 조회\n- 서식 버전 관리\n- 데이터 매핑 규칙 정의\n\n#### Acceptance Criteria\n- 해당 민원에 맞는 서식이 자동으로 조회되어야 함\n- 사용자 입력 데이터가 서식에 자동 매핑되어야 함\n- 서식 미리보기 제공\n- 이전 버전 서식 호환성 보장\n- 서식 오류 시 대체 서식 제공\n\n#### Input Parameters\n##### 서식 정보\n- 서식 코드\n- 서식 버전\n- 유효기간\n- 서식 종류 (일반/특수)\n\n##### 매핑 규칙\n- 필드 매핑 정의\n- 데이터 변환 규칙\n- 계산식 정의\n- 유효성 검증 규칙\n\n#### Technical Details\n- 서식 저장소 구조\n- 버전 관리 체계\n- 템플릿 엔진 스펙\n- 캐싱 전략\n\n## userStory\n\n### Feature 3.1: EDMS 연계\n#### Description\n- EDMS 시스템 연계\n- 문서 등록 및 관리\n- 이력 관리\n\n#### Acceptance Criteria\n- 신청서가 EDMS에 자동 등록\n- EDMS 처리 상태 실시간 조회\n- 문서 분류체계 적용\n- 접근권한 관리\n- 문서 이관 처리\n\n#### Input Parameters\n##### EDMS 연계 정보\n- 시스템 연계 정보\n- 문서분류 체계\n- 보안등급 정의\n- 보존기간 정의\n\n##### 문서 속성\n- 문서번호 체계\n- 색인 정보\n- 문서 유형\n- 관리 부서\n\n#### Technical Details\n- EDMS API 스펙\n- 문서 변환 규칙\n- 보안 정책\n- 백업 정책\n\n## userStory\n\n### Feature 3.2: 발급문서 처리\n#### Description\n- PDF 문서 생성\n- 전자서명 처리\n- 보안 워터마크 적용\n\n#### Acceptance Criteria\n- PDF 문서 정확한 생성\n- 전자서명 포함\n- 문서 위변조 방지\n- 보안 워터마크 적용\n- 출력 제어\n\n#### Input Parameters\n##### PDF 생성 정보\n- 템플릿 정보\n- 폰트 설정\n- 여백 설정\n- 해상도 설정\n\n##### 보안 설정\n- 암호화 수준\n- 출력 제어\n- 워터마크 위치\n- 보안 레벨\n\n#### Technical Details\n- PDF 라이브러리 스펙\n- 암호화 알고리즘\n- 디지털 서명 규격\n- 성능 최적화 방안"
+                        }
+                    ],
+                    "initialAccumulatedDrafts": {
+                        "ApplicationManagement": [
+                            {
+                                "aggregate": {
+                                    "name": "Application",
+                                    "alias": "민원 신청"
+                                },
+                                "enumerations": [],
+                                "valueObjects": []
+                            },
+                            {
+                                "aggregate": {
+                                    "name": "Applicant",
+                                    "alias": "신청자"
+                                },
+                                "enumerations": [],
+                                "valueObjects": []
+                            }
+                        ],
+                        "VerificationService": [
+                            {
+                                "aggregate": {
+                                    "name": "Qualification",
+                                    "alias": "자격"
+                                },
+                                "enumerations": [],
+                                "valueObjects": []
+                            },
+                            {
+                                "aggregate": {
+                                    "name": "VerificationHistory",
+                                    "alias": "검증 이력"
+                                },
+                                "enumerations": [],
+                                "valueObjects": []
+                            }
+                        ],
+                        "DocumentManagement": [
+                            {
+                                "aggregate": {
+                                    "name": "Form",
+                                    "alias": "서식"
+                                },
+                                "enumerations": [],
+                                "valueObjects": []
+                            },
+                            {
+                                "aggregate": {
+                                    "name": "Document",
+                                    "alias": "문서"
+                                },
+                                "enumerations": [],
+                                "valueObjects": []
+                            }
+                        ]
+                    }
+                }
+            }
+        ]
     }
 }

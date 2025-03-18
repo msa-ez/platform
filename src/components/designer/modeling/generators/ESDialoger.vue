@@ -5,6 +5,26 @@
                 <v-card class="auto-modeling-message-card">
                     <v-card-text class="auto-modeling-message">
                         <vue-typed-js
+                                :strings="[$t('autoModeling.isModelSelectMessage')]"
+                                :typeSpeed="10"
+                                :showCursor="false"
+                                @onComplete="state.AIModelSelectMessageIsTyping = false"
+                        >
+                            <span class="typing"></span>
+                        </vue-typed-js>
+                    </v-card-text>
+                </v-card>
+            </v-col>
+        </div>
+        <div style="display: flex; flex-direction: column;" v-if="!state.AIModelSelectMessageIsTyping">
+            <AIModelSetting @onConfirm="state.isAIModelSelected = true; generateUserStory();" />
+        </div>
+        
+        <div>
+            <v-col class="auto-modeling-message-box" style="margin-top: 20px;">
+                <v-card v-if="state.isAIModelSelected" class="auto-modeling-message-card">
+                    <v-card-text class="auto-modeling-message">
+                        <vue-typed-js
                                 :strings="[$t('autoModeling.selectMessage1')]"
                                 :typeSpeed="10"
                                 :showCursor="false"
@@ -30,7 +50,7 @@
                 </v-card>
             </v-col>
         </div>
-        <v-tabs v-model="activeTab">
+        <v-tabs v-model="activeTab" v-if="!state.secondMessageIsTyping">
             <v-tab 
                 v-for="input in generatorInputTabs" 
                 :key="input"
@@ -320,6 +340,7 @@
         ESDialogerMessages,
         ESDialogerTestTerminal,
         MessageFactory,
+        AIModelSetting
     } from './features/ESDialoger';
 
     export default {
@@ -343,7 +364,8 @@
             DevideBoundedContextDialog,
             BCGenerationOption,
             ESDialogerMessages,
-            BpmnViewer
+            BpmnViewer,
+            AIModelSetting
         },
         computed: {
             isForeign() {
@@ -786,6 +808,8 @@
                 autoModel: null,
                 state:{
                     generator: "EventOnlyESGenerator", // EventOnlyESGenerator
+                    AIModelSelectMessageIsTyping: true,
+                    isAIModelSelected: false,
                     firstMessageIsTyping: true,
                     secondMessageIsTyping: true,
                     userStory: '',
@@ -905,14 +929,6 @@
             init(){
                 var me = this 
                 if(!me.modelIds.ESDefinitionId) me.modelIds.ESDefinitionId = me.uuid();
-                if(!me.value){
-                    me.value = {
-                        userStory: ''
-                    }
-                    me.generate();
-                } else {
-                    me.done = true;
-                }
             },
 
             onReceived(content){
@@ -1028,6 +1044,17 @@
                 me.$emit("change", 'eventStorming');
                 
             },  
+
+            generateUserStory(){
+                if(!this.value){
+                    this.value = {
+                        userStory: ''
+                    }
+                    this.generate();
+                } else {
+                    this.done = true;
+                }
+            },
 
             async generate(){
                 let issuedTimeStamp = Date.now()
