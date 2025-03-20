@@ -22,7 +22,7 @@ jobs:
       - name: Install additional packages
         run: npm install zod-to-json-schema@3.9.4
       - name: Install additional packages
-        run: npm install sql-formatter
+        run: firebase-tools@13.34.0
       
       - name: Build project
         env:
