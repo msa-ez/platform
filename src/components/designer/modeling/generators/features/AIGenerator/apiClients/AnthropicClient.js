@@ -30,12 +30,21 @@ class AnthropicClient extends BaseAPIClient {
 
     
     return {
-      requestUrl: "http://localhost:4000/api/anthropic/chat",
+      requestUrl: "http://localhost:4000/proxy/stream",
       requestData: JSON.stringify(requestData),
       requestHeaders: {
         "content-type": "application/json",
-        "anthropic-version": "2023-06-01",
-        "x-api-key": token
+        "param-url": "https://api.anthropic.com/v1/messages",
+        "param-error-label": "Anthropic",
+        "param-reject-unauthorized": "false",
+        "param-is-use-agent": "true",
+        "param-method": "POST",
+        "param-headers": JSON.stringify({
+          "content-type": "application/json",
+          "anthropic-version": "2023-06-01",
+          "x-api-key": token,
+          "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        })
       }
     }
   }

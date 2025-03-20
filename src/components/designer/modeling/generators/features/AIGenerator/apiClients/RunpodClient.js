@@ -13,13 +13,26 @@ class RunpodClient extends BaseAPIClient {
       stream: true
     }
 
+
+    const runpodUrl = localStorage.getItem("runpodUrl")
+    if(!runpodUrl)
+      throw new Error("Runpod URL has not been set. Please configure it in the settings page.")
+
     return {
-      requestUrl: "http://localhost:4000/api/openai-compatibility/chat",
+      requestUrl: "http://localhost:4000/proxy/stream",
       requestData: JSON.stringify(requestData),
       requestHeaders: {
         "content-type": "application/json",
-        "authorization": "Bearer " + token,
-        "ai-param-url": localStorage.getItem("runpodUrl") || "https://dkkzpbvvh17k7v-8000.proxy.runpod.net/v1/chat/completions",
+        "param-url": `${runpodUrl}/v1/chat/completions`,
+        "param-error-label": "Runpod",
+        "param-reject-unauthorized": "false",
+        "param-is-use-agent": "true",
+        "param-method": "POST",
+        "param-headers": JSON.stringify({
+          "content-type": "application/json",
+          "authorization": "Bearer " + token,
+          "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        })
       }
     }
   }

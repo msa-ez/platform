@@ -1,0 +1,1 @@
+export const AIModelSetting = require("./AIModelSetting.vue").default;

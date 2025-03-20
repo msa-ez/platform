@@ -27,6 +27,12 @@ class ModelInfoHelperTest {
                 contextWindowTokenLimit: 1000
             })
         )
+
+        console.log("### getSelectableOptions 테스트 ###")
+        console.log(ModelInfoHelper.getSelectableOptions())
+
+        console.log("### getSelectedOptions 테스트 ###")
+        console.log(ModelInfoHelper.getSelectedOptions())
     }
 }
 

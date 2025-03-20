@@ -1,4 +1,6 @@
 const { modelInfos } = require("./modelInfos");
+const getDefaultOptions = require("../../apiClients/getDefaultOptions");
+const { vendorInputOptions } = require("./vendorInputOptions");
 
 class ModelInfoHelper {
     
@@ -99,7 +101,68 @@ class ModelInfoHelper {
         }
     }
 
+    static getSelectableOptions() {
+        let options = [];
+        
+        Object.entries(this.modelInfos).forEach(([modelKey, modelInfo]) => {
+            if (modelInfo.transforms && typeof modelInfo.transforms === 'object') {
+                Object.entries(modelInfo.transforms).forEach(([transformKey, transformInfo]) => {
+                    options.push({
+                        label: transformInfo.label,
+                        defaultValue: transformInfo.defaultValue,
+                        vendor: modelInfo.vendor
+                    });
+                });
+            }
+
+            options.push({
+                label: modelInfo.label,
+                defaultValue: modelInfo.defaultValue,
+                vendor: modelInfo.vendor
+            });
+        });
+        // 이미 Low, Medium, High 옵션이 있으므로 제외함
+        options = options.filter(option => option.label !== "O3-Mini");
+        
+        const vendorOrder = ['openai', 'anthropic', 'google', 'ollama', 'runpod'];
+        options.sort((a, b) => {
+            const indexA = vendorOrder.indexOf(a.vendor);
+            const indexB = vendorOrder.indexOf(b.vendor);
+            
+            const priorityA = indexA === -1 ? Number.MAX_SAFE_INTEGER : indexA;
+            const priorityB = indexB === -1 ? Number.MAX_SAFE_INTEGER : indexB;
+            
+            return priorityA - priorityB;
+        });
+
+        return structuredClone(options);
+    }
+
+    static getSelectedOptions() {
+        const defaultOptions = getDefaultOptions();
+
+        let selectedOptions = {}
+        for(const key of Object.keys(defaultOptions)) {
+            const modelName = defaultOptions[key];
+            selectedOptions[key] = this.getModelInfo(modelName);
+        }
+
+        return structuredClone(selectedOptions);
+    }
+
+    static setSelectedOptions(modelType, modelName) {
+        if(modelType !== "complexModel" && modelType !== "standardModel" && modelType !== "simpleModel")
+            throw new Error(`Invalid model type: ${modelType}`);
+        this.getModelInfo(modelName); // 모델 정상 로드 여부 확인인
+
+        localStorage.setItem(modelType, modelName);
+    }
+
+    static getVendorInputOptions() {
+        return this.vendorInputOptions;
+    }
 }
 ModelInfoHelper.modelInfos = modelInfos;
+ModelInfoHelper.vendorInputOptions = vendorInputOptions;
 
 module.exports = ModelInfoHelper

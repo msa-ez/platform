@@ -34,21 +34,20 @@
                     <CoTToggle :inference="activeContext.inference"/>
                 </div>
 
-                <v-row class="ma-0 pa-0">
-                    <v-col v-for="(option, index) in activeContext.options" 
-                        :key="`${selectedCardKey}_${index}`"
-                        class="ma-0 pa-4 pr-4 d-flex"
-                    >
-                        <AggregateDraftOptionCard 
-                            class="flex-grow-1"
-                            :boundedContextInfo="activeContext"
-                            :optionIndex="index"
-                            :optionInfo="option"
-                            :isSelectedCard="isSelectedCard(activeContext, index)"
-                            @onCardSelected="selectedCard"
-                        ></AggregateDraftOptionCard>
-                    </v-col>
-                </v-row>
+                <v-card v-for="(option, index) in activeContext.options" 
+                    :key="`${selectedCardKey}_${index}`"
+                    class="ma-0 pa-4"
+                    style="width: 100%;"
+                >
+                    <AggregateDraftOptionCard 
+                        class="flex-grow-1"
+                        :boundedContextInfo="activeContext"
+                        :optionIndex="index"
+                        :optionInfo="option"
+                        :isSelectedCard="isSelectedCard(activeContext, index)"
+                        @onCardSelected="selectedCard"
+                    ></AggregateDraftOptionCard>
+                </v-card>
 
                 <div v-if="activeContext.conclusions" class="mt-4 pl-4 pr-4">
                     <h4>{{ $t('ModelDraftDialogForDistribution.conclusions') }}</h4>
