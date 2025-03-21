@@ -5,6 +5,26 @@
                 <v-card class="auto-modeling-message-card">
                     <v-card-text class="auto-modeling-message">
                         <vue-typed-js
+                                :strings="[$t('autoModeling.isModelSelectMessage')]"
+                                :typeSpeed="10"
+                                :showCursor="false"
+                                @onComplete="state.AIModelSelectMessageIsTyping = false"
+                        >
+                            <span class="typing"></span>
+                        </vue-typed-js>
+                    </v-card-text>
+                </v-card>
+            </v-col>
+        </div>
+        <div style="display: flex; flex-direction: column;" v-if="!state.AIModelSelectMessageIsTyping">
+            <AIModelSetting @onConfirm="state.isAIModelSelected = true; generateUserStory();" />
+        </div>
+        
+        <div>
+            <v-col class="auto-modeling-message-box" style="margin-top: 20px;">
+                <v-card v-if="state.isAIModelSelected" class="auto-modeling-message-card">
+                    <v-card-text class="auto-modeling-message">
+                        <vue-typed-js
                                 :strings="[$t('autoModeling.selectMessage1')]"
                                 :typeSpeed="10"
                                 :showCursor="false"
@@ -30,7 +50,7 @@
                 </v-card>
             </v-col>
         </div>
-        <v-tabs v-model="activeTab">
+        <v-tabs v-model="activeTab" v-if="!state.secondMessageIsTyping">
             <v-tab 
                 v-for="input in generatorInputTabs" 
                 :key="input"
@@ -150,6 +170,7 @@
         ESDialogerMessages,
         ESDialogerTestTerminal,
         MessageFactory,
+        AIModelSetting
     } from './features/ESDialoger';
 
     export default {
@@ -170,7 +191,8 @@
         },
         components: {
             VueTypedJs,
-            ESDialogerMessages
+            ESDialogerMessages,
+            AIModelSetting
         },
         computed: {
             isForeign() {
@@ -337,15 +359,26 @@
                 }
             })
             this.generators.PreProcessingFunctionsGenerator.buildInitialInputs = (selectedStructureOption) => {
+                const getDescription = (requirements) => {
+                    if (!requirements || !Array.isArray(requirements) || requirements.length === 0) {
+                        return "Requirements have not been specified."
+                    }
+                    let markdownOutput = "# Requirements\n\n"
+                    requirements.forEach((req) => {
+                        markdownOutput += `## ${req.type}\n\n${req.text}\n\n`
+                    })
+                    return markdownOutput.trim();
+                }
+
                 const passedGeneratorInputs = selectedStructureOption.boundedContexts.map(bc => ({
                     boundedContext: {
                         name: bc.name,
                         alias: bc.alias,
                         displayName: bc.alias,
-                        description: JSON.stringify(bc.requirements),
+                        description: getDescription(bc.requirements),
                         aggregates: bc.aggregates
                     },
-                    description: JSON.stringify(bc.requirements)
+                    description: getDescription(bc.requirements)
                 }))
 
                 this.generators.PreProcessingFunctionsGenerator.initialInputs = structuredClone(passedGeneratorInputs)
@@ -617,6 +650,8 @@
                 autoModel: null,
                 state:{
                     generator: "EventOnlyESGenerator", // EventOnlyESGenerator
+                    AIModelSelectMessageIsTyping: true,
+                    isAIModelSelected: false,
                     firstMessageIsTyping: true,
                     secondMessageIsTyping: true,
                     userStory: '',
@@ -733,14 +768,6 @@
             init(){
                 var me = this 
                 if(!me.modelIds.ESDefinitionId) me.modelIds.ESDefinitionId = me.uuid();
-                if(!me.value){
-                    me.value = {
-                        userStory: ''
-                    }
-                    me.generate();
-                } else {
-                    me.done = true;
-                }
             },
 
             onReceived(content){
@@ -887,6 +914,17 @@
                 me.$emit("change", 'eventStorming');
                 
             },  
+
+            generateUserStory(){
+                if(!this.value){
+                    this.value = {
+                        userStory: ''
+                    }
+                    this.generate();
+                } else {
+                    this.done = true;
+                }
+            },
 
             async generate(){
                 let issuedTimeStamp = Date.now()
@@ -1155,21 +1193,16 @@
                     console.log("[*] 생성 준비를 위한 입력값 구축과정에서 에러 발생", {error: e, state: this.state})
 
                     if(e.name=="QuotaExceededError"){
-                        var keys = Object.keys(localStorage);
-                        var values = keys.map(function(key) {
-                            return localStorage.getItem(key);
-                        });
+                        let keys = Object.keys(localStorage);
 
-                        for (var i = 0; i < keys.length; i++) {
-                            var key = keys[i];
-                            var value = values[i];
-
-                            if(value.includes('elements') && value.includes('relations')){
+                        for (let i = 0; i < keys.length; i++) {
+                            let key = keys[i];
+                            if(key.includes('image_')) {
                                 localStorage.removeItem(key);
                             }
                         }
 
-                        this.generateFromDraftWithXAI(draftOptions)
+                        this.generateFromAggregateDrafts(draftOptions)
                     }
 
                 }

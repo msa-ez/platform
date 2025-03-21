@@ -5,7 +5,8 @@ const { getEsValue, getEsDraft } = require("../mocks")
 
 class CommandGWTGeneratorByFunctionsTest {
     static async test() {
-        const esValue = getEsValue("libraryService", []);
+        const serviceName = "libraryService"
+        const esValue = getEsValue(serviceName, []);
 
 
         console.log("[*] 기존 이벤트 스토밍 정보: ", ESValueSummarizeWithFilter.getSummarizedESValue(
@@ -33,7 +34,7 @@ class CommandGWTGeneratorByFunctionsTest {
 
 
         generator.initInputs(
-            getEsDraft("libraryService"),
+            getEsDraft(serviceName),
             esValue
         )
         generator.generateIfInputsExist()

@@ -108,6 +108,7 @@ class TextParseHelper {
     let error = null;
     let responseId = "";
     let finishReason = null;
+    let thinkContent = ""
 
     const texts = jsonBlocks.map(jsonStr => {
       let parsed;
@@ -121,6 +122,7 @@ class TextParseHelper {
       if (extraction.error) error = extraction.error;
       if (extraction.id) responseId = extraction.id;
       if (extraction.finish_reason) finishReason = extraction.finish_reason;
+      if (extraction.thinkContent) thinkContent += extraction.thinkContent
       
       return extraction.content || "";
     });
@@ -140,7 +142,8 @@ class TextParseHelper {
       error,
       id: responseId,
       finish_reason: finishReason,
-      joinedText
+      joinedText,
+      thinkContent
     };
   }
 

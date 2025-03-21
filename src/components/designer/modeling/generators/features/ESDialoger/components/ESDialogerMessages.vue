@@ -98,6 +98,10 @@
                     </v-card>
                 </v-col>
             </div>
+
+            <div v-if="message.type === 'mermaidStringTest'" :key="index" style="margin-top: 30px !important;">
+                <VueMermaidStringTest/>
+            </div>
         </template>
     </div>
 </template>
@@ -107,6 +111,8 @@ import { AggregateDraftDialog } from '../../../es-generators'
 import DevideBoundedContextDialog from '../../../../generators/DevideBoundedContextDialog.vue'
 import RequirementAnalysis from '../../../../generators/RequirementAnalysis.vue'
 import BCGenerationOption from '../../../../generators/BCGenerationOption.vue'
+import VueMermaidStringTest from './VueMermaidStringTest.vue'
+
 export default {
     name: "es-dialoger-messages",
     props: {
@@ -120,7 +126,8 @@ export default {
         AggregateDraftDialog,
         DevideBoundedContextDialog,
         RequirementAnalysis,
-        BCGenerationOption
+        BCGenerationOption,
+        VueMermaidStringTest
     },
     methods: {
         generateFromDraft(draftOptions) {

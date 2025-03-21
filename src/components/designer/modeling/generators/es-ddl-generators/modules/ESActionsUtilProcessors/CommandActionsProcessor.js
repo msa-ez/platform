@@ -108,6 +108,8 @@ class CommandActionsProcessor {
 
     static __makeCommandToEventRelation(commandObject, action, callbacks) {
         callbacks.afterAllObjectAppliedCallBacks.push((esValue) => {
+            if(!action.args.outputEventIds || action.args.outputEventIds.length <= 0) return
+            
             action.args.outputEventIds.forEach(eventId => {
                 const eventObject = esValue.elements[eventId]
                 if(!commandObject || !eventObject) return

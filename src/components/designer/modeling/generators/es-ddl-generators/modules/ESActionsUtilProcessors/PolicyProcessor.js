@@ -24,6 +24,8 @@ class PolicyProcessor {
         const VALID_POSITION = PolicyProcessor._getValidPosition(esValue, commandObject.aggregate.id, policyObject)
         policyObject.elementView.x = VALID_POSITION.x
         policyObject.elementView.y = VALID_POSITION.y
+
+        PolicyProcessor._removeRelatedActors(esValue, policyObject)
     }
 
     static _getPolicyBase(userInfo, name, displayName, boundedContextId, updateReason, x, y, elementUUID) {
@@ -98,6 +100,19 @@ class PolicyProcessor {
             return {
                 x: minX - Math.round(policyObject.elementView.width/2) - Math.round(maxYCommand.elementView.width/2) - 19,
                 y: maxY
+            }
+        }
+    }
+
+    static _removeRelatedActors(esValue, policyObject) {
+        for(const element of Object.values(esValue.elements)) {
+            if(element && element._type === "org.uengine.modeling.model.Actor" && 
+                element.boundedContext.id === policyObject.boundedContext.id &&
+                (policyObject.elementView.y - policyObject.elementView.height/2) <= element.elementView.y &&
+                (policyObject.elementView.y + policyObject.elementView.height/2) >= element.elementView.y &&
+                (policyObject.elementView.x - policyObject.elementView.width/2) <= element.elementView.x &&
+                (policyObject.elementView.x + policyObject.elementView.width/2 + 30) >= element.elementView.x) {
+                delete esValue.elements[element.id]
             }
         }
     }

@@ -2,6 +2,7 @@ const { openaiModelInfos } = require("./openaiModelInfos");
 const { ollamaModelInfos } = require("./ollamaModelInfos");
 const { anthropicModelInfos } = require("./anthropicModelInfos");
 const { runpodModelInfos } = require("./runpodModelInfos");
+const { googleModelInfos } = require("./googleModelInfos");
 
 /**
  * @description 특정 모델에 대한 API 요청시에 활용되는 기반 정보
@@ -35,7 +36,8 @@ const modelInfos = {
     ...openaiModelInfos,
     ...ollamaModelInfos,
     ...anthropicModelInfos,
-    ...runpodModelInfos
+    ...runpodModelInfos,
+    ...googleModelInfos
 }
 
 const defaultModelInfos = {
@@ -43,9 +45,11 @@ const defaultModelInfos = {
     contextWindowTokenLimit: 16385, // 토큰 제한 수를 알 수 없을 경우, GPT-3.5 Turbo의 제한 수를 활용
     outputTokenLimit: 4096,
     inputTokenLimitMargin: 1000,
+    outputTokenLimitReasoningMargin: 0,
     isInferenceModel: false,
     requestArgs: {},
-    transforms: {}
+    transforms: {},
+    useThinkParseStrategy: false // True인 경우, "<think>" 태그로 시작하는 응답을 파싱
 }
 
 Object.values(modelInfos).forEach((modelInfo) => {
@@ -54,11 +58,8 @@ Object.values(modelInfos).forEach((modelInfo) => {
         modelInfo.outputTokenLimit = modelInfo.contextWindowTokenLimit * 0.20
 
     for(const key of Object.keys(defaultModelInfos)){
-        if(!modelInfo[key]) modelInfo[key] = defaultModelInfos[key]
+        if(modelInfo[key] == null) modelInfo[key] = defaultModelInfos[key]
     }
-
-    if(!modelInfo.inputTokenLimit)
-        modelInfo.inputTokenLimit = modelInfo.contextWindowTokenLimit - modelInfo.outputTokenLimit - modelInfo.inputTokenLimitMargin
 })
 
 module.exports = modelInfos;

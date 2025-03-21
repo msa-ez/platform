@@ -59,62 +59,88 @@ app.post('/payments/complete', async (req, res) => {
 });
 
 
-// ### AI 모델 서버 통신용 프록시 엔드 포인트들 ###
+// ### 프록시 연결을 구축하기 위한 엔드포인트들 ###
 
-app.post('/api/ollama/chat', async (req, res) => {
-    await Util.makeProxyStream(req, res, {
-        healthCheckUrl: 'http://127.0.0.1:11434/api/tags',
-        targetUrl: 'http://127.0.0.1:11434/api/chat',
-        buildFetchOptions: (req) => ({
-            method: 'POST',
-            headers: {
-                'content-type': 'application/json',
+app.post('/proxy/stream', async (req, res) => {
+    try {
+        const targetUrl = req.headers["param-url"];
+        if (!targetUrl) {
+            return res.status(400).json({ error: "param-url 헤더가 필요합니다" });
+        }
+
+        let customHeaders = {};
+        if (req.headers["param-headers"]) {
+            try {
+                customHeaders = JSON.parse(req.headers["param-headers"]);
+            } catch (e) {
+                return res.status(400).json({ error: "param-headers는 유효한 JSON 형식이어야 합니다" });
+            }
+        }
+
+        const healthCheckUrl = req.headers["param-health-check-url"];
+        const errorLabel = req.headers["param-error-label"] || "Generic Proxy";
+        const rejectUnauthorized = req.headers["param-reject-unauthorized"] !== "false";
+        const isUseAgent = req.headers["param-is-use-agent"] !== "false";
+        const method = req.headers["param-method"] || "POST";
+
+        await Util.makeProxyStream(req, res, {
+            healthCheckUrl: healthCheckUrl,
+            targetUrl: targetUrl,
+            buildFetchOptions: (req) => {
+                return {
+                    method: method,
+                    headers: customHeaders,
+                    body: (method === "GET") ? undefined : JSON.stringify(req.body),
+                    agent: isUseAgent ? Util.createHttpsAgent(rejectUnauthorized) : undefined
+                };
             },
-            body: JSON.stringify(req.body)
-        }),
-        errorLabel: 'Ollama'
-    })
-});
+            errorLabel: errorLabel
+        });
+    } catch (error) {
+        console.error('Proxy stream error:', error);
+        res.status(500).json({ error: error.message });
+    }
+})
 
-app.post('/api/anthropic/chat', async (req, res) => {
-    await Util.makeProxyStream(req, res, {
-        targetUrl: 'https://api.anthropic.com/v1/messages',
-        buildFetchOptions: (req) => {
-            return {
-                method: 'POST',
-                headers: {
-                    "content-type": req.headers["content-type"] || "application/json",
-                    "anthropic-version": req.headers["anthropic-version"] || "2023-06-01",
-                    "x-api-key": req.headers["x-api-key"],
-                    "user-agent": req.headers["user-agent"] || "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
-                },
-                body: JSON.stringify(req.body),
-                agent: Util.createHttpsAgent(false)
-            };
-        },
-        errorLabel: 'Anthropic'
-    });
-});
+app.post('/proxy/request', async (req, res) => {
+    try {
+        const targetUrl = req.headers["param-url"];
+        if (!targetUrl) {
+            return res.status(400).json({ error: "param-url 헤더가 필요합니다" });
+        }
 
-app.post('/api/openai-compatibility/chat', async (req, res) => {
-    await Util.makeProxyStream(req, res, {
-        targetUrl: req.headers["ai-param-url"],
-        buildFetchOptions: (req) => {
-            return {
-                method: 'POST',
-                headers: {
-                    "content-type": req.headers["content-type"] || "application/json",
-                    "user-agent": req.headers["user-agent"] || "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36",
-                    "authorization": req.headers["authorization"]
-                },
-                body: JSON.stringify(req.body),
-                agent: Util.createHttpsAgent(false)
-            };
-        },
-        errorLabel: 'OpenAI Compatibility'
-    });
-});
+        let customHeaders = {};
+        if (req.headers["param-headers"]) {
+            try {
+                customHeaders = JSON.parse(req.headers["param-headers"]);
+            } catch (e) {
+                return res.status(400).json({ error: "param-headers는 유효한 JSON 형식이어야 합니다" });
+            }
+        }
 
+        const healthCheckUrl = req.headers["param-health-check-url"];
+        const errorLabel = req.headers["param-error-label"] || "Generic Proxy";
+        const rejectUnauthorized = req.headers["param-reject-unauthorized"] !== "false";
+        const isUseAgent = req.headers["param-is-use-agent"] !== "false";
+        const method = req.headers["param-method"] || "POST";
+        await Util.makeProxyRequest(req, res, {
+            healthCheckUrl: healthCheckUrl,
+            targetUrl: targetUrl,
+            buildFetchOptions: (req) => {
+                return {
+                    method: method,
+                    headers: customHeaders,
+                    body: (method === "GET") ? undefined : JSON.stringify(req.body),
+                    agent: isUseAgent ? Util.createHttpsAgent(rejectUnauthorized) : undefined
+                };
+            },
+            errorLabel: errorLabel
+        });
+    } catch (error) {
+        console.error('Proxy request error:', error);
+        res.status(500).json({ error: error.message });
+    }
+})
 
 class Util {
     /**
@@ -188,16 +214,77 @@ class Util {
         }
     }
 
+    /**
+     * @param {Object} req - Express 요청 객체
+     * @param {Object} res - Express 응답 객체
+     * @param {Object} options - 추가 옵션
+     *        options.healthCheckUrl {String} (선택): 프록시 전 health check URL
+     *        options.targetUrl {String} (필수): 최종 호출 대상 URL
+     *        options.buildFetchOptions {Function}: 요청 시 사용할 fetch 옵션을 반환하는 콜백 (req를 인자로 받음)
+     *        options.errorLabel {String} (필수): 로그나 에러 메시지에 사용할 엔드포인트 구분자 (예: "Ollama", "Anthropic")
+     */
+    static async makeProxyRequest(req, res, options) {
+        try {
+            console.log(`Received ${options.errorLabel} request:`, {
+                body: JSON.stringify(req.body),
+                headers: JSON.stringify(req.headers)
+            });
+
+            if (options.healthCheckUrl) {
+                const checkResponse = await fetch(options.healthCheckUrl);
+                console.log(`${options.errorLabel} health check status:`, checkResponse.status);
+                if (!checkResponse.ok) {
+                    throw new Error(`${options.errorLabel} server check failed with status: ${checkResponse.status}`);
+                }
+            }
+
+            const fetchOptions = typeof options.buildFetchOptions === 'function'
+                ? options.buildFetchOptions(req)
+                : options.buildFetchOptions;
+
+            console.log(`Making ${options.errorLabel} request:`, {
+                body: JSON.stringify(fetchOptions.body),
+                headers: JSON.stringify(fetchOptions.headers)
+            });
+
+            const response = await fetch(options.targetUrl, fetchOptions);
+            console.log(`${options.errorLabel} API status:`, response.status);
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error(`${options.errorLabel} error:`, errorText);
+                throw new Error(`${options.errorLabel} responded with status: ${response.status}`);
+            }
+
+            const responseData = await response.text();
+            
+            for (const [key, value] of response.headers.entries()) {
+                res.setHeader(key, value);
+            }
+            
+            Util.setCorsHeaders(req, res);
+            
+            res.status(response.status).send(responseData);
+        } catch (error) {
+            console.error(`${options.errorLabel} proxy error:`, error);
+            res.status(500).json({ error: error.message });
+        }
+    }
+
     static setCorsHeaders(req, res) {
         const headersToAllow = [
             "origin",
             "x-requested-with",
             "content-type",
             "accept",
-            "anthropic-version",
-            "x-api-key",
-            "ai-param-url",
-            "authorization"
+            "authorization",
+            "param-url",
+            "param-headers",
+            "param-health-check-url",
+            "param-error-label",
+            "param-reject-unauthorized",
+            "param-is-use-agent",
+            "param-method"
         ]
 
         res.header('access-control-allow-headers', headersToAllow.join(', '));

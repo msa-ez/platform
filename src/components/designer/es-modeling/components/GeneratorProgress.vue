@@ -2,6 +2,15 @@
     <v-row v-if="!generateDone" 
            class="generator-progress">
         <v-card elevation="2" class="pa-2" width="100%">
+            <v-progress-linear
+                v-if="globalProgress !== null"
+                :value="globalProgress"
+                color="primary"
+                height="4"
+                class="mt-n2 mx-n2"
+                style="position: absolute; top: 0; left: 8px; width: 100%;"
+            ></v-progress-linear>
+
             <div class="d-flex align-center">
                 <div class="progress-container">
                     <v-progress-circular
@@ -72,6 +81,10 @@
                 default: ''
             },
             progress: {
+                type: Number,
+                default: null
+            }, 
+            globalProgress: {
                 type: Number,
                 default: null
             }

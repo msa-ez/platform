@@ -9,10 +9,8 @@ class PreProcessingFunctionsGenerator extends FormattedJSONAIGenerator{
         this.generatorName = "PreProcessingFunctionsGenerator"
         this.checkInputParamsKeys = ["description", "boundedContext"]
         this.progressCheckStrings = ["inference", "userStories", "entities", "businessRules", "interfaces"]
-    }
 
-    onApiClientChanged(){
-        this.modelInfo.requestArgs.response_format = zodResponseFormat(
+        this.initialResponseFormat = zodResponseFormat(
             z.object({
                 inference: z.string(),
                 result: z.object({

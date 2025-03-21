@@ -34,22 +34,20 @@
                     <CoTToggle :inference="activeContext.inference"/>
                 </div>
 
-                <v-row class="ma-0 pa-0">
-                    <v-col v-for="(option, index) in activeContext.options" 
-                        :key="`${selectedCardKey}_${index}`"
-                        class="ma-0 pa-4 pr-4 d-flex"
-                    >
-                        <AggregateDraftOptionCard 
-                            class="flex-grow-1"
-                            :boundedContextInfo="activeContext"
-                            :optionIndex="index"
-                            :optionInfo="option"
-                            :isSelectedCard="isSelectedCard(activeContext, index)"
-                            :isDisabled="!isGeneratorButtonEnabled || draftUIInfos.leftBoundedContextCount > 0 || (!selectedOptionItem || Object.keys(selectedOptionItem).length !== draftOptions.length)"
-                            @onCardSelected="selectedCard"
-                        ></AggregateDraftOptionCard>
-                    </v-col>
-                </v-row>
+                <v-card v-for="(option, index) in activeContext.options" 
+                    :key="`${selectedCardKey}_${index}`"
+                    class="ma-0 pa-4"
+                    style="width: 100%;"
+                >
+                    <AggregateDraftOptionCard 
+                        class="flex-grow-1"
+                        :boundedContextInfo="activeContext"
+                        :optionIndex="index"
+                        :optionInfo="option"
+                        :isSelectedCard="isSelectedCard(activeContext, index)"
+                        @onCardSelected="selectedCard"
+                    ></AggregateDraftOptionCard>
+                </v-card>
 
                 <div v-if="activeContext.conclusions" class="mt-4 pl-4 pr-4">
                     <h4>{{ $t('ModelDraftDialogForDistribution.conclusions') }}</h4>
@@ -142,7 +140,6 @@
         },
         props: {
             draftOptions: {
-
                 type: Array,
                 default: () => ([]),
                 required: false
@@ -242,7 +239,11 @@
             },
 
             generateFromDraft(){
-                this.$emit('generateFromDraft', this.selectedOptionItem);                
+                let optionsToReturn = {}
+                this.draftOptions.map(option => {
+                    optionsToReturn[option.boundedContext] = this.selectedOptionItem[option.boundedContext]
+                })
+                this.$emit('generateFromDraft', optionsToReturn);                
             },
 
 
@@ -270,14 +271,14 @@
             },
 
             updateSelectionByDraftOptions(draftOptions) {      
-                this.selectedCardIndex = {}
-                this.selectedOptionItem = {}
-                
                 if(draftOptions && draftOptions.length > 0) {
                     draftOptions.map(option => {  
-                        if(!option.boundedContext || option.defaultOptionIndex === undefined) return
-                        this.selectedCardIndex[option.boundedContext] = option.defaultOptionIndex
-                        this.selectedOptionItem[option.boundedContext] = option.options[option.defaultOptionIndex]                        
+                        if(!option.boundedContext || option.defaultOptionIndex == null) return
+                        
+                        if(this.selectedCardIndex[option.boundedContext] == null)
+                            this.selectedCardIndex[option.boundedContext] = option.defaultOptionIndex
+                        if(this.selectedOptionItem[option.boundedContext] == null)
+                            this.selectedOptionItem[option.boundedContext] = option.options[option.defaultOptionIndex]                        
                     })
                 }
             }

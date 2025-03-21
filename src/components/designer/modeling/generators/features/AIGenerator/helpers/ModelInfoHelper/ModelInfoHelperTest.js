@@ -3,12 +3,10 @@ const ModelInfoHelper = require("./ModelInfoHelper");
 class ModelInfoHelperTest {
     static test() {
         const modelNamesToTest = [
-            "unknown-model-name",
-            "gpt-4o-2024-08-06",
-            "o3-mini-2025-01-31",
-            "o3-mini-2025-01-31-high",
-            "deepseek-r1:1.5b",
-            "deepseek-r1:14b"
+            "claude-3-7-sonnet-20240620",
+            "claude-3-7-sonnet-20240620-thinking-simple",
+            "claude-3-7-sonnet-20240620-thinking-medium",
+            "claude-3-7-sonnet-20240620-thinking-complex"
         ]
 
         for(const modelName of modelNamesToTest) {
@@ -29,6 +27,12 @@ class ModelInfoHelperTest {
                 contextWindowTokenLimit: 1000
             })
         )
+
+        console.log("### getSelectableOptions 테스트 ###")
+        console.log(ModelInfoHelper.getSelectableOptions())
+
+        console.log("### getSelectedOptions 테스트 ###")
+        console.log(ModelInfoHelper.getSelectedOptions())
     }
 }
 

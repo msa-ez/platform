@@ -1,6 +1,6 @@
 const AIGenerator = require("./AIGenerator");
 const { TokenCounter, JsonParsingUtil } = require("./utils")
-const { GeneratorLockKeyError, GeneratorNetworkError } = require("./errors")
+const { GeneratorLockKeyError, GeneratorNetworkError, TokenNotInputedError } = require("./errors")
 
 const DEFAULT_CONFIG = {
     MAX_RETRY_COUNT: 3,
@@ -123,9 +123,13 @@ class FormattedJSONAIGenerator extends AIGenerator {
 
         // 이것이 true인 경우, AI의 기존 응답에서 Json 파싱 문제가 일어난 부분을 복원하는 프롬프트로 전환시킴
         this.useJsonRestoreStrategy = false
+        this.isUseJsonRestoreStrategyUsed = false
         this.jsonOutputTextToRestore = undefined
         this.savedOnSendCallback = undefined
         this.createdPrompt = {}
+
+        this.isUseResponseFormat = true
+        this.initialResponseFormat = undefined
     }
 
     _addOnsendCallback(){
@@ -136,6 +140,13 @@ class FormattedJSONAIGenerator extends AIGenerator {
                 else
                     console.log(`[*] ${this.modelInfo.requestModelName} 모델이 추론중...`)
             }
+    }
+
+    onApiClientChanged(){
+        if(this.initialResponseFormat && this.isUseResponseFormat)
+            this.modelInfo.requestArgs.response_format = this.initialResponseFormat
+        else
+            this.modelInfo.requestArgs.response_format = undefined
     }
 
 
@@ -156,6 +167,9 @@ class FormattedJSONAIGenerator extends AIGenerator {
         })
 
         this.leftRetryCount = this.MAX_RETRY_COUNT
+        this.isUseResponseFormat = true
+        this.useJsonRestoreStrategy = false
+        this.isUseJsonRestoreStrategyUsed = false
 
 
         await this.onGenerateBefore(this.client.input, this.generatorName)
@@ -179,6 +193,11 @@ class FormattedJSONAIGenerator extends AIGenerator {
             // 세마포어로 인한 에러인 경우, 재요청을 할 경우, 오히려 문제를 발생시킬 수 있기 때문에 즉시 중단시킴
             if(e instanceof GeneratorLockKeyError) {
                 console.error(`[!] LockKeyError 발생! 해당 요청을 즉시 중단함`, networkErrorReturnObj)
+                return
+            }
+
+            if(e instanceof TokenNotInputedError) {
+                console.error(`[!] 토큰 입력이 필요합니다.`, networkErrorReturnObj)
                 return
             }
 
@@ -235,6 +254,9 @@ class FormattedJSONAIGenerator extends AIGenerator {
 
             if(this.modelInfo.isInferenceModel && !this.client.onSend && this.savedOnSendCallback)
                 this.client.onSend = this.savedOnSendCallback
+
+            this.useJsonRestoreStrategy = false
+            this.isUseJsonRestoreStrategyUsed = false
 
             console.log("[*] 일반적인 프롬프트 생성 전략으로 시도", createPromptReturnObj)
         }
@@ -312,7 +334,7 @@ Rules:
      */
     isCreatedPromptWithinTokenLimit(){
         return TokenCounter.isWithinTokenLimit(
-            this.createPrompt(), this.modelInfo.requestModelName, this.modelInfo.inputTokenLimit
+            this._extractAllTextFromInputPrompt(), this.modelInfo.requestModelName, this.modelInfo.inputTokenLimit
         )
     }
 
@@ -355,7 +377,7 @@ Rules:
      */
     getCreatedPromptTokenCount(tempInputParams={}){
         if (Object.keys(tempInputParams).length === 0) {
-            return TokenCounter.getTokenCount(this.createPrompt(), this.modelInfo.requestModelName);
+            return TokenCounter.getTokenCount(this._extractAllTextFromInputPrompt(), this.modelInfo.requestModelName);
         }
 
         const changedValues = {};
@@ -365,7 +387,7 @@ Rules:
         });
 
         try {
-            return TokenCounter.getTokenCount(this.createPrompt(), this.modelInfo.requestModelName);
+            return TokenCounter.getTokenCount(this._extractAllTextFromInputPrompt(), this.modelInfo.requestModelName);
         } finally {
             Object.keys(changedValues).forEach(key => {
                 if (changedValues[key] === undefined) {
@@ -408,6 +430,15 @@ Rules:
      */
     getCreatePromptLeftTokenCount(tempInputParams={}){
         return this.modelInfo.inputTokenLimit - this.getCreatedPromptTokenCount(tempInputParams)
+    }
+
+    _extractAllTextFromInputPrompt() {
+        const inputPrompt = this.createPromptWithRoles()
+        return [
+            inputPrompt.system, 
+            ...(inputPrompt.user || []), 
+            ...(inputPrompt.assistant || [])
+        ].filter(Boolean).join("")
     }
 
     _assembleRolePrompt(){
@@ -560,6 +591,7 @@ ${JSON.stringify(exampleOutputs)}
             tokenGenerateDelaySeconds: (this.requestEndTime - this.firstResponseTime) / 1000,
             currentState: this.state,
             finish_reason: this.finish_reason,
+            isFinished: this.state === 'end',
             actions: {
                 stopGeneration: () => {
                     this.stop()
@@ -656,13 +688,13 @@ ${JSON.stringify(exampleOutputs)}
                 try {
                     this.onCreateModelGenerating(returnObj)
                     if(this.client.onCreateModelGenerating) this.client.onCreateModelGenerating(returnObj)
+
+                    this.onModelCreatedWithThinking(returnObj)
+                    if(this.client.onModelCreatedWithThinking) this.client.onModelCreatedWithThinking(returnObj)
                 } catch(e) {
                     console.error(`[!] ${this.generatorName}에서 부분적인 결과 처리중에 오류 발생!`, {text, error:e})
                     console.error(e)
                 }
-
-                this.onModelCreatedWithThinking(returnObj)
-                if(this.client.onModelCreatedWithThinking) this.client.onModelCreatedWithThinking(returnObj)
                 return returnObj
             }
  
@@ -716,7 +748,14 @@ ${JSON.stringify(exampleOutputs)}
         
             if(returnObj.isJsonParsingError) {
                 this.jsonOutputTextToRestore = returnObj.modelRawValue
-                this.useJsonRestoreStrategy = true
+
+                if(!this.isUseJsonRestoreStrategyUsed) {
+                    this.useJsonRestoreStrategy = true
+                    this.isUseJsonRestoreStrategyUsed = true
+                }
+                else
+                    this.useJsonRestoreStrategy = false
+
                 this._retryByError()
             }
             else if(this.leftRetryCount > 0) {
@@ -787,6 +826,7 @@ ${JSON.stringify(exampleOutputs)}
     _retryByError(){
         // 일부 경우에는 response_format이 정의되어 있어서 끝없이 동일한 예외가 발생하는 경우가 있기 때문에 재시도시에는 제거해서 재시도 하도록 함
         this.modelInfo.requestArgs.response_format = undefined
+        this.isUseResponseFormat = false
         super.generate()
     }
 

@@ -2144,7 +2144,7 @@
                 }
                 if(window && window.document) window.document.title = me.projectId
 
-                if(me.params.providerUid && me.userInfo.providerUid){
+                if(me.params.providerUid){
                     me.projectId = `${me.params.providerUid}_${me.canvasType}_${me.projectId}`
                 } 
 

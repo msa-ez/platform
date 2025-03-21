@@ -13,6 +13,24 @@ class CreatePolicyActionsByFunctions extends FormattedJSONAIGenerator{
         this.generatorName = "CreatePolicyActionsByFunctions"
         this.checkInputParamsKeys = ["targetBoundedContext", "description", "esValue", "userInfo", "information"]
         this.progressCheckStrings = ["inference", "extractedPolicies"]
+
+        this.initialResponseFormat = zodResponseFormat(
+            z.object({
+                inference: z.string(),
+                result: z.object({
+                    extractedPolicies: z.array(
+                        z.object({
+                            name: z.string(),
+                            alias: z.string(),
+                            reason: z.string(),
+                            fromEventId: z.string(),
+                            toCommandId: z.string()
+                        }).strict()
+                    )
+                }).strict()
+            }).strict(),
+            "instruction"
+        )
     }
 
     /** 
@@ -150,27 +168,6 @@ class CreatePolicyActionsByFunctions extends FormattedJSONAIGenerator{
         }
 
         return generator
-    }
-
-
-    onApiClientChanged(){
-        this.modelInfo.requestArgs.response_format = zodResponseFormat(
-            z.object({
-                inference: z.string(),
-                result: z.object({
-                    extractedPolicies: z.array(
-                        z.object({
-                            name: z.string(),
-                            alias: z.string(),
-                            reason: z.string(),
-                            fromEventId: z.string(),
-                            toCommandId: z.string()
-                        }).strict()
-                    )
-                }).strict()
-            }).strict(),
-            "instruction"
-        )
     }
 
     async onGenerateBefore(inputParams){

@@ -2,6 +2,7 @@ const OpenAIClient = require('./OpenAIClient');
 const OllamaClient = require('./OllamaClient');
 const AnthropicClient = require('./AnthropicClient');
 const RunpodClient = require('./RunpodClient');
+const GoogleClient = require('./GoogleClient');
 const { ModelInfoHelper } = require('../helpers');
 const getDefaultOptions = require('./getDefaultOptions');
 
@@ -25,7 +26,8 @@ APIClientFactory.vendorApiClientMap = {
     "openai": OpenAIClient,
     "ollama": OllamaClient,
     "anthropic": AnthropicClient,
-    "runpod": RunpodClient
+    "runpod": RunpodClient,
+    "google": GoogleClient
 }
 
 module.exports = APIClientFactory;

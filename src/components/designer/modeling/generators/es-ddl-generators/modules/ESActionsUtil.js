@@ -130,6 +130,10 @@ class ESActionsUtil {
     }
 
     static __getOrCreateUUID(id, idToUUIDDic, esValue) {
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (uuidRegex.test(id))
+            return id
+
         if(esValue && esValue.elements && esValue.elements[id])
             return id
 
@@ -165,6 +169,58 @@ class ESActionsUtil {
                 ReadModelActionsProcessor.getActionAppliedESValue(action, userInfo, esValue, callbacks);
                 break
         }
+    }
+
+
+    static addDefaultProperties(actions) {
+        for(let action of actions){
+            switch(action.objectType) {
+                case "Aggregate":
+                    if(!action.args) action.args = {}
+                    if(!action.args.aggregateName) action.args.aggregateName = "Aggregate " + action.ids.aggregateId.slice(0, 4)
+                    if(!action.args.properties || action.args.properties.length === 0)
+                        action.args.properties = [
+                            {
+                                "name": "id",
+                                "type": "Long",
+                                "isKey": true
+                            }
+                        ]
+                    break
+                
+                case "ValueObject":
+                    if(!action.args) action.args = {}
+                    if(!action.args.valueObjectName) action.args.valueObjectName = "ValueObject " + action.ids.valueObjectId.slice(0, 4)
+                    if(!action.args.properties) action.args.properties = []
+                    break
+                    
+                case "Enumeration":
+                    if(!action.args) action.args = {}
+                    if(!action.args.enumerationName) action.args.enumerationName = "Enumeration " + action.ids.enumerationId.slice(0, 4)
+                    if(!action.args.properties) action.args.properties = []
+                    break
+                
+                case "Event":
+                    if(!action.args) action.args = {}
+                    if(!action.args.eventName) action.args.eventName = "Event " + action.ids.eventId.slice(0, 4)
+                    if(!action.args.properties) action.args.properties = []
+                    break
+
+                case "Command":
+                    if(!action.args) action.args = {}
+                    if(!action.args.commandName) action.args.commandName = "Command " + action.ids.commandId.slice(0, 4)
+                    if(!action.args.properties) action.args.properties = []
+                    if(!action.args.outputEventIds) action.args.outputEventIds = []
+                    break
+                
+                case "ReadModel":
+                    if(!action.args) action.args = {}
+                    if(!action.args.readModelName) action.args.readModelName = "ReadModel " + action.ids.readModelId.slice(0, 4)
+                    if(!action.args.queryParameters) action.args.queryParameters = []
+                    break
+            }
+        }
+        return actions
     }
 }
 

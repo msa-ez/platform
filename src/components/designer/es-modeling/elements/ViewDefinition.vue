@@ -286,6 +286,9 @@
                 return null
             },
             getQueryParameterDescriptors() {
+                if(this.value.dataProjection == 'cqrs'){
+                    return
+                }
                 if (this.value.queryParameters) {
                     if (this.value.queryParameters.length == 1
                         && this.value.queryParameters[0].name == 'id') {

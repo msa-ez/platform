@@ -28,13 +28,13 @@ import { mockedProgressDto, mockedProgressDtoUpdateCallback } from "./mocks"
 export default {
     name: "es-test-terminal",
     mounted() {
-        window.addEventListener('keydown', this.handleKeyPress);
+        window.addEventListener('keydown', this.handleKeyPressForTestTerminal);
     },
     beforeDestroy() {
-        window.removeEventListener('keydown', this.handleKeyPress);
+        window.removeEventListener('keydown', this.handleKeyPressForTestTerminal);
     },
     methods: {
-        handleKeyPress(event) {
+        handleKeyPressForTestTerminal(event) {
             if (event.altKey && event.key.toLowerCase() === 't') {
                 this.promptCommand();
             }
@@ -68,7 +68,14 @@ export default {
                 ModelInfoHelperTest: {command: async () => { await ModelInfoHelperTest.test() }},
                 TextParseHelperTest: {command: async () => { await TextParseHelperTest.test() }},
                 TextParseHelperTestError: {command: async () => { await TextParseHelperTest.testError() }},
-                ESActionsUtilTest: {command: async () => { await ESActionsUtilTest.test() }}
+                ESActionsUtilTest: {command: async () => { 
+                    await ESActionsUtilTest.test((createdESValue) => {
+                        this.changedByMe = true
+                        this.$set(this.value, "elements", createdESValue.elements)
+                        this.$set(this.value, "relations", createdESValue.relations)
+                        this.forceRefreshCanvas() 
+                    })
+                }}
             }
             
 

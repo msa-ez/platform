@@ -79,7 +79,7 @@ class ESFakeActionsUtil {
                 "boundedContextId": boundedContextId
             },
             "args": {
-                "boundedContextName": "BoundedContext " + ID_TO_CHECK.slice(0, 4)
+                "boundedContextName": "BoundedContext " + boundedContextId.slice(0, 4)
             }
         }
     }

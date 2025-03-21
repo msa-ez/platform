@@ -21,11 +21,21 @@ class OllamaClient extends BaseAPIClient {
       }
     }
 
+    const ollamaUrl = localStorage.getItem("ollamaUrl") || "http://127.0.0.1:11434"
     return {
-      requestUrl: "http://localhost:4000/api/ollama/chat",
+      requestUrl: "http://localhost:4000/proxy/stream",
       requestData: JSON.stringify(requestData),
       requestHeaders: {
-        "content-type": "application/json"
+        "content-type": "application/json",
+        "param-health-check-url": `${ollamaUrl}/api/tags`,
+        "param-url": `${ollamaUrl}/api/chat`,
+        "param-error-label": "Ollama",
+        "param-reject-unauthorized": "false",
+        "param-is-use-agent": "false",
+        "param-method": "POST",
+        "param-headers": JSON.stringify({
+          "content-type": "application/json"
+        })
       }
     }
   }
@@ -46,7 +56,7 @@ class OllamaClient extends BaseAPIClient {
       }
     })
     
-    if(this.aiGenerator.modelInfo.requestModelName.startsWith("deepseek-r1")) {
+    if(this.aiGenerator.modelInfo.useThinkParseStrategy) {
       const tagParsedContents = TextParseHelper.parseFrontTagContents(result.joinedText, "think");
       result.joinedText = tagParsedContents.restText;
       this.aiGenerator.parsedTexts.think = tagParsedContents.tagContents;

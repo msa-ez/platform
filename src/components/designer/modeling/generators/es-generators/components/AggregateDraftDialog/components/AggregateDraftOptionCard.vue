@@ -4,7 +4,6 @@
         :class="isSelectedCard ? 'model-draft-dialog-selected-card': ''"
     >
         <v-card-title 
-            :class="{ 'no-pointer': isDisabled }"
             class="d-flex justify-space-between align-center pa-4 option-title pointer"
             @click="handleCardClick"
         >
@@ -39,7 +38,6 @@
         <v-card-text class="pa-0 flex-grow-1 d-flex flex-column">
             <div 
                 v-if="optionInfo.structure" 
-                :class="{ 'no-pointer': isDisabled }"
                 class="mb-4 flex-grow-1 pointer" 
                 style="text-align: center;"
                 @click="handleCardClick"
@@ -124,12 +122,6 @@
                 type: Boolean,
                 default: false,
                 required: false
-            },
-
-            isDisabled: {
-                type: Boolean,
-                default: false,
-                required: false
             }
         },
         data(){
@@ -157,7 +149,6 @@
         },
         methods: {
             handleCardClick() {
-                if (this.isDisabled) return
                 this.selectedCard(this.optionIndex, this.optionInfo, this.boundedContextInfo.boundedContext);
             },
             selectedCard(optionIndex, optionInfo, boundedContextName){
@@ -168,76 +159,82 @@
                 const initConfig = {
                     theme: "default",
                     themeVariables: {
-                        fontSize: "14px",
-                        classFontSize: "14px",
-                        classBoxPadding: 10
+                        fontSize: "14px"
                     }
                 };
                 let config = "%%{init: " + JSON.stringify(initConfig) + "}%%\n";
-                let mermaidString = config + "classDiagram\n";
+                let mermaidString = config + "graph TD\n";
                 if (!structure || !Array.isArray(structure)) {
-                    mermaidString += "    class None {\n    }\n";
+                    mermaidString += "    None[None]\n";
                     return mermaidString;
                 }
                 
-
-                const classes = {};
-                const addClass = (className, role) => {
-                    if (!className) return;
-                    if (!classes[className]) {
-                        classes[className] = role;
-                    } else if(role === "Aggregate Root" && classes[className] !== "Aggregate Root"){
-                        classes[className] = role;
-                    }
-                };
-
+                
+                const groups = {}; 
+                const relSet = new Set(); 
+                
                 const getValidAlias = (alias) => {
                     return alias.replace(/[^a-zA-Z0-9가-힣_]/g, '');
                 }
-
-                const relationships = new Set();
+                
+                const addClassToGroup = (groupKey, classId, label, role) => {
+                    if (!groups[groupKey]) {
+                        groups[groupKey] = { id: groupKey, label: label, classes: {} };
+                    }
+                    if (!groups[groupKey].classes[classId]) {
+                        groups[groupKey].classes[classId] = { id: classId, label: label, role: role };
+                    } else if (role === "Aggregate Root" && groups[groupKey].classes[classId].role !== "Aggregate Root") {
+                        groups[groupKey].classes[classId].role = "Aggregate Root";
+                    }
+                };
+                
 
                 structure.forEach(item => {
                     if (item.aggregate && item.aggregate.alias) {
-                        const aggregateName = getValidAlias(item.aggregate.alias);
-                        addClass(aggregateName, "Aggregate Root");
-
+                        const aggAlias = item.aggregate.alias;
+                        const aggKey = getValidAlias(aggAlias);
+                        addClassToGroup(aggKey, aggKey, aggAlias, "Aggregate Root");
+                        
                         if (Array.isArray(item.enumerations)) {
                             item.enumerations.forEach(enumeration => {
                                 if (!enumeration.alias) return;
-                                const enumerationName = getValidAlias(enumeration.alias);
-                                addClass(enumerationName, "Enumeration");
-                                relationships.add(`    ${aggregateName} --> ${enumerationName}`);
-                            })
+                                const enumKey = getValidAlias(enumeration.alias);
+                                addClassToGroup(aggKey, enumKey, enumeration.alias, "Enumeration");   
+                                relSet.add(`    ${aggKey} --> ${enumKey}`);
+                            });
                         }
-
+                        
                         if (Array.isArray(item.valueObjects)) {
                             item.valueObjects.forEach(vo => {
                                 if (!vo.alias) return;
-                                const voName = getValidAlias(vo.alias);
-                                addClass(voName, "Value Object");
-                                relationships.add(`    ${aggregateName} --> ${voName}`);
-
+                                const voKey = getValidAlias(vo.alias);
+                                addClassToGroup(aggKey, voKey, vo.alias, "Value Object");
+                                relSet.add(`    ${aggKey} --> ${voKey}`);
+                                
                                 if (vo.referencedAggregate && vo.referencedAggregate.alias) {
-                                    const refAggName = getValidAlias(vo.referencedAggregate.alias);
-                                    addClass(refAggName, "Aggregate Root");
-                                    relationships.add(`    ${voName} --> ${refAggName}`);
+                                    const refAggAlias = vo.referencedAggregate.alias;
+                                    const refAggKey = getValidAlias(refAggAlias);
+                                    addClassToGroup(refAggKey, refAggKey, refAggAlias, "Aggregate Root");
+                                    
+                                    if (aggKey !== refAggKey)
+                                        relSet.add(`    ${voKey} --> ${refAggKey}`);
                                 }
                             });
                         }
                     }
                 });
-
-
-                let classesStr = "";
-                Object.entries(classes).forEach(([className, role]) => {
-                    classesStr += `    class ${className} {\n`;
-                    classesStr += `        <<${role}>>\n`;
-                    classesStr += `    }\n\n`;
+                
+                
+                Object.values(groups).forEach(group => {
+                    mermaidString += `subgraph ${group.id} \n`;
+                    Object.values(group.classes).forEach(cls => {
+                        mermaidString += `${cls.id}[-${cls.role}-<br/>${cls.id}]\n`
+                    });
+                    mermaidString += `end\n`;
                 });
-
-                mermaidString += classesStr;
-                relationships.forEach(rel => {
+                
+                
+                relSet.forEach(rel => {
                     mermaidString += rel + "\n";
                 });
 
