@@ -23,9 +23,7 @@ jobs:
         run: npm install zod-to-json-schema@3.9.4
 
       - name: Install Node.js 18.17.0
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18.17.0'
+        run: nvm install 18.17.0
         
       - name: Install additional packages
         run: npm install firebase-tools@13.34.0
@@ -48,6 +46,11 @@ jobs:
           VUE_APP_IAMPORT_ImpKey: ${{ secrets.VUE_APP_IAMPORT_IMPKEY }}
           VUE_APP_TRANSLATE_KEY: ${{ secrets.VUE_APP_TRANSLATE_KEY }}
         run: npm run build
+
+      - name: Install Node.js 18.17.0
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18.17.0'
 
       - name: Deploy to Firebase
         uses: FirebaseExtended/action-hosting-deploy@v0
