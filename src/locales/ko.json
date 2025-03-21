@@ -219,7 +219,9 @@
     "arrangeGuidanceOn": "화면 라인 가이드 : on",
     "arrangeGuidanceOff": "화면 라인 가이드 : off",
     "processModeOn": "디자인 레벨 : on",
-    "processModeOff": "디자인 레벨 : off"
+    "processModeOff": "디자인 레벨 : off",
+    "highlightingOn" : "연결선 추적 : on",
+    "highlightingOff" : "연결선 추적 : off"
   },
   "ModelDraftDialogForDistribution": {
     "pros": "장점",

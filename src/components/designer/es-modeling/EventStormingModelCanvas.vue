@@ -946,17 +946,27 @@
                                 class="tools"
                                 style="top: 100px; text-align: center"
                             >
+                                <v-tooltip right>
+                                    <template v-slot:activator="{ on, attrs }">
+                                        <span v-on="on" v-bind="attrs" @click="toggleHighlighting" style="cursor: pointer;">
+                                            <Icons v-if="!highlightingEnabled" :icon="'tracking'" style="margin: 7px;" />
+                                            <Icons v-else :icon="'tracking'" :color="'#1976D2'" style="margin: 7px;" />
+                                        </span>
+                                    </template>
+                                    <span v-if="highlightingEnabled">{{ $t('modelingPanelTool.highlightingOn') }}</span>
+                                    <span v-else>{{ $t('modelingPanelTool.highlightingOff') }}</span>
+                                </v-tooltip>
 
-                            <v-tooltip right>
-                                <template v-slot:activator="{ on, attrs }">
-                                    <span v-on="on" v-bind="attrs" @click="toggleVisibility" style="cursor: pointer;">
-                                        <v-icon v-if="processMode">mdi-eye</v-icon>
-                                        <v-icon v-else color="primary">mdi-eye-off</v-icon>
-                                    </span>
-                                </template>
-                                <span v-if="processMode">{{ $t('modelingPanelTool.processModeOn') }}</span>
-                                <span v-else>{{ $t('modelingPanelTool.processModeOff') }}</span>
-                            </v-tooltip>
+                                <v-tooltip right>
+                                    <template v-slot:activator="{ on, attrs }">
+                                        <span v-on="on" v-bind="attrs" @click="toggleVisibility" style="cursor: pointer;">
+                                            <v-icon v-if="processMode">mdi-eye</v-icon>
+                                            <v-icon v-else color="primary">mdi-eye-off</v-icon>
+                                        </span>
+                                    </template>
+                                    <span v-if="processMode">{{ $t('modelingPanelTool.processModeOn') }}</span>
+                                    <span v-else>{{ $t('modelingPanelTool.processModeOff') }}</span>
+                                </v-tooltip>
 
                                 <v-tooltip right>
                                     <template v-slot:activator="{ on, attrs }">
@@ -2125,6 +2135,8 @@
         },
         data() {
             return {
+                // 스티커에 연결된 선 추적
+                highlightingEnabled: false,
                 //monitoring
                 monitoringDialog: false,
                 monitoringTab: 0,
@@ -3086,6 +3098,11 @@
             me.$EventBus.$on('repairBoundedContext', function (boundedContext) {
                 me.repairBoundedContext(boundedContext)
             });
+
+            const storedHighlighting = localStorage.getItem('highlightingEnabled');
+            if (storedHighlighting !== null) {
+                this.highlightingEnabled = storedHighlighting === 'true';
+            }
         },
         beforeDestroy() {
             if (this.fetchEventInterval) {
@@ -3174,6 +3191,11 @@
 
         },
         methods: {
+            toggleHighlighting() {
+                this.highlightingEnabled = !this.highlightingEnabled;
+                // 연결선 하이라이팅 상태를 localStorage에 저장
+                localStorage.setItem('highlightingEnabled', this.highlightingEnabled);
+            },
             toggleVisibility() {
                 this.processMode = !this.processMode;
                 localStorage.setItem('processMode', this.processMode); // processMode 값을 localStorage에 저장

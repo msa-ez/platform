@@ -60,10 +60,24 @@
                 name: '',
                 oldName: '',
                 isView: false,
+                isHighlighted: false,
             }
         },
         created: function () {
             // this.image ='https://raw.githubusercontent.com/kimsanghoon1/k8s-UI/master/public/static/image/event/relation.png'
+            var me = this
+
+            me.$EventBus.$on('selectedStickerConnections', function (relations) {
+                relations.forEach(function (relation) {
+                    if (relation.id === me.value.relationView.id) {
+                        me.isHighlighted = true; // 상태 업데이트
+                    }
+                });
+            });
+
+            me.$EventBus.$on('deselectedStickerConnections', function () {
+                me.isHighlighted = false; // 선택 해제 시 상태 초기화
+            });
         },
         computed: {
             defaultStyle() {
@@ -143,6 +157,14 @@
                 } else {
                     style['stroke'] = 'grey';
                     style['stroke-width'] = 1.4;
+                }
+
+                if (!this.isProgress && this.isHighlighted) {
+                    style['stroke'] = '#1976D2'; // vuetify2의 기본 primary 색상
+                    style['stroke-width'] = 2.5;
+                    style['stroke-opacity'] = 1;
+                } else {
+                    style['stroke'] = 'grey';
                 }
 
                 return style
