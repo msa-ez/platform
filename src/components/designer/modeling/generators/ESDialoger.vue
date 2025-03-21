@@ -138,6 +138,35 @@
                 </div>
             </v-col>
         </div>
+
+        <v-dialog v-model="generateUserStoryDialog" max-width="600">
+            <v-card>
+                <v-card-title class="headline">
+                    유저스토리
+                </v-card-title>
+                
+                <v-card-text>
+                    유저스토리를 자동 생성하시겠습니까?
+                </v-card-text>
+                
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn
+                        color="primary"
+                        @click="generate(); generateUserStoryDialog = false"
+                    >
+                        AI 자동 생성
+                    </v-btn>
+                    <v-btn
+                        color="grey darken-1"
+                        text
+                        @click="generateUserStoryDialog = false; done = true"
+                    >
+                        직접 입력
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
     </div>
 
 </template>
@@ -677,6 +706,8 @@
                     }
                 },
 
+                generateUserStoryDialog: false,
+
                 done: false,
                 generator: null,
                 generatorName: null,
@@ -920,7 +951,7 @@
                     this.value = {
                         userStory: ''
                     }
-                    this.generate();
+                    this.generateUserStoryDialog = !this.generateUserStoryDialog;
                 } else {
                     this.done = true;
                 }
