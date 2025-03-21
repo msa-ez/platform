@@ -66,7 +66,7 @@
                     </v-tab-item>
 
                     <!-- DDL -->
-                    <!-- <v-tab-item>
+                    <v-tab-item>
                         <v-card-subtitle>{{$t('autoModeling.explanation.ddl')}}</v-card-subtitle>
                         <v-card-text class="auto-modling-textarea">
                             <v-textarea 
@@ -80,43 +80,31 @@
                             >
                             </v-textarea>
                         </v-card-text>
-                    </v-tab-item> -->
+                    </v-tab-item>
                 </v-tabs-items>
                 <v-btn v-if="!done" @click="stop()" style="position: absolute; right:10px; top:10px;"><v-progress-circular class="auto-modeling-stop-loading-icon" indeterminate></v-progress-circular>Stop generating</v-btn>
                 <v-row v-if="done" class="ma-0 pa-4 button-row">
                     <v-spacer></v-spacer>
-                    <v-btn :disabled="isSummarizeStarted || isGeneratingBoundedContext || isStartMapping" class="auto-modeling-btn" @click="generate()">
+                    <v-btn v-if="requirementsValidationResult" :disabled="getDisabledGenerateBtn()" class="auto-modeling-btn" @click="generate()">
                         <v-icon class="auto-modeling-btn-icon">mdi-refresh</v-icon>{{ $t('ESDialoger.tryAgain') }}
                     </v-btn>
-                    <v-btn :disabled="isSummarizeStarted || isGeneratingBoundedContext || isStartMapping" class="auto-modeling-btn" color="primary" @click="showBCGenerationOption = !showBCGenerationOption">
-                        {{ $t('ESDialoger.createBoundedContext') }}
+                    <v-btn :disabled="getDisabledGenerateBtn()" class="auto-modeling-btn" color="primary" @click="validateRequirements()">
+                        {{ $t('ESDialoger.validateRequirements') }}
                     </v-btn>
-                    <v-btn class="auto-modeling-btn" @click="testValidation()">Test Validate</v-btn>
                 </v-row>
-                <div v-if="isSummarizeStarted" style="margin-left: 2%; margin-bottom: 1%;">
-                    <span>{{ $t('ESDialoger.summarizing') }}</span>
-                    <v-progress-circular color="primary" indeterminate></v-progress-circular>
-                </div>
-            </v-card>
-
-            <v-card v-if="showBCGenerationOption" class="auto-modeling-user-story-card" style="margin-top: 30px !important;">
-                <BCGenerationOption
-                    :isSummarizeStarted="isSummarizeStarted"
-                    :isGeneratingBoundedContext="isGeneratingBoundedContext"
-                    :isStartMapping="isStartMapping"
-                    @setGenerateOption="setGenerateOption"
-                ></BCGenerationOption>
             </v-card>
 
             <ESDialogerMessages 
                 :messages="messages"
                 @generateFromAggregateDrafts="generateFromAggregateDrafts"
                 @feedbackFromAggregateDrafts="feedbackFromAggregateDrafts"
+                @showBCGenerationOption="onShowBCGenerationOption"
                 @createModel="generateAggregateDrafts"
                 @stop="stop"
                 @reGenerate="reGenerate"
                 @reGenerateWithFeedback="reGenerateWithFeedback"
                 @mappingRequirements="mappingRequirements"
+                @setGenerateOption="setGenerateOption"
             ></ESDialogerMessages>
         </div>
         <div
@@ -137,27 +125,26 @@
 <script>
     import { VueTypedJs } from 'vue-typed-js'
     import Generator from './UserStoryGenerator.js'
-    import DevideBoundedContextGenerator from './DevideBoundedContextGenerator.js'
-    import DevideBoundedContextDialog from './DevideBoundedContextDialog.vue'
-    import BCGenerationOption from './BCGenerationOption.vue'
-    import RequirementsValidationGenerator from './RequirementsValidationGenerator.js'
     //import UserStoryGenerator from './UserStoryGenerator.js'
     // import StorageBase from "../StorageBase";
     import StorageBase from '../../../CommonStorageBase.vue';
     import getParent from '../../../../utils/getParent'
     import Usage from '../../../../utils/Usage'
-
-    // Requirements Summarizer
-    import RequirementsSummarizer from './RequirementsSummarizer.js';
-
+    
     import { 
         PreProcessingFunctionsGenerator,
         DraftGeneratorByFunctions 
     } from '../../modeling/generators/es-generators';
+    
+    import DevideBoundedContextGenerator from './DevideBoundedContextGenerator.js'
 
     //Requirements Summarizer
     import RecursiveRequirementsSummarizer from './RecursiveRequirementsSummarizer.js';
     import RequirementsMappingGenerator from './RequirementsMappingGenerator.js';
+    
+    // Requirements Validation Generator
+    import RequirementsValidationGenerator from './RequirementsValidationGenerator.js'
+    import RecursiveRequirementsValidationGenerator from './RecursiveRequirementsValidationGenerator.js';
 
     import { 
         ESDialogerMessages,
@@ -183,9 +170,7 @@
         },
         components: {
             VueTypedJs,
-            DevideBoundedContextDialog,
-            BCGenerationOption,
-            ESDialogerMessages,
+            ESDialogerMessages
         },
         computed: {
             isForeign() {
@@ -600,6 +585,25 @@
                         this.isCreatedModel = false
                     }
                 },1000)
+            },
+            'processingState': {
+                deep: true,
+                handler(newState) {
+                if (!Array.isArray(this.messages)) return;
+                
+                this.messages.forEach(message => {
+                    if (!message || !message.type || !message.uniqueId) return;
+                    
+                    if (['boundedContextResult', 'processAnalysis', 'bcGenerationOption'].includes(message.type)) {
+                        this.updateMessageState(message.uniqueId, {
+                            isSummarizeStarted: newState.isSummarizeStarted,
+                            isGeneratingBoundedContext: newState.isGeneratingBoundedContext,
+                            isStartMapping: newState.isStartMapping,
+                            isAnalizing: newState.isAnalizing
+                        });
+                    }
+                });
+            }
             }
         },
         mounted(){
@@ -629,8 +633,6 @@
                     personas: this.cachedModels["Personas"]
                 },
 
-                currentXML: '',
-
                 options: {
                     keyboard: { bindTo: window },
                     height: '100%',
@@ -648,7 +650,7 @@
                 selectedAspect: "",
 
                 activeTab: null,
-                generatorInputTabs: ['UserStory'
+                generatorInputTabs: ['UserStory','DDL'
                                         // , 'DDL', "Process"
                                     ],
                 inputDDL: '',
@@ -659,12 +661,18 @@
                 userStoryChunksIndex: 0,
                 bcInAspectIndex: 0,
                 processingRate: 0,
-                currentProcessingBoundedContext: "",
-                isSummarizeStarted: false,
-                isStartMapping: false,
-                isAnalizing: false,
+                currentProcessingBoundedContext: "Bounded Context",
+                processingState: {
+                    isSummarizeStarted: false,
+                    isStartMapping: false,
+                    isAnalizing: false,
+                    isGeneratingBoundedContext: false,
+                },
+                isAnalizeResultSetted: false,
                 
                 reGenerateMessageId: null,
+
+                requirementsValidationResult: null,
                 
                 pendingBCGeneration: false,
                 isGeneratingBoundedContext: false,
@@ -755,14 +763,44 @@
                 var me = this;
                 me.done = true;
 
-                if (me.state.generator === "RequirementsValidationGenerator") {
-                    if(model){
-                        const currentMessage = me.messages[me.messages.length-1];
-                        this.isAnalizing = false;
-                        me.updateMessageState(currentMessage.uniqueId, {
-                            content: model,
-                            isGenerating: this.isAnalizing
-                        });
+                if (this.state.generator === "RequirementsValidationGenerator" || 
+                    this.state.generator === "RecursiveRequirementsValidationGenerator") {
+                    
+                    const currentMessage = this.messages[this.messages.length-1];
+                    
+                    if (this.state.generator === "RecursiveRequirementsValidationGenerator") {
+                        // 현재 청크의 인덱스가 마지막 청크의 인덱스보다 작은 경우
+                        if (this.generator.currentChunkIndex < this.generator.currentChunks.length - 1) {
+                            this.generator.handleGenerationFinished(model);
+                            this.processingState.isAnalizing = true;
+                            this.processingRate = Math.round((this.generator.currentChunkIndex + 1) / 
+                                                            this.generator.currentChunks.length * 100)
+                            this.updateMessageState(currentMessage.uniqueId, {
+                                content: this.generator.accumulatedResults,
+                                processingRate: this.processingRate
+                            });
+                            
+                        } else {
+                            this.generator.handleGenerationFinished(model);
+                            this.processingState.isAnalizing = false;
+                            this.processingRate = 0;
+                            this.updateMessageState(currentMessage.uniqueId, {
+                                content: this.generator.accumulatedResults,
+                                processingRate: this.processingRate
+                            });
+                            this.requirementsValidationResult = this.generator.accumulatedResults;
+                        }
+                    } else {
+                        // 일반 검증인 경우 (기존 로직)
+                        if (model) {
+                            this.processingState.isAnalizing = false;
+                            this.processingRate = 0;
+                            this.updateMessageState(currentMessage.uniqueId, {
+                                content: model,
+                                processingRate: this.processingRate
+                            });
+                            this.requirementsValidationResult = model;
+                        }
                     }
                 }
 
@@ -773,7 +811,7 @@
 
                 if(this.state.generator === "DevideBoundedContextGenerator"){
                     me.devisionAspectIndex = 0;
-                    me.isGeneratingBoundedContext = false;
+                    me.processingState.isGeneratingBoundedContext = false;
                     
                     // 현재 메시지의 result를 깊은 복사로 가져옴
                     const currentMessage = me.messages[me.messages.length-1];
@@ -794,8 +832,6 @@
                     // 메시지 상태 업데이트
                     me.updateMessageState(currentMessage.uniqueId, {
                         result: newResult,
-                        isGeneratingBoundedContext: me.isGeneratingBoundedContext,
-                        isStartMapping: me.isStartMapping,
                         processingRate: me.processingRate,
                         currentProcessingBoundedContext: me.currentProcessingBoundedContext
                     });
@@ -836,10 +872,7 @@
                             me.userStoryChunksIndex = 0;
                             me.processingRate = 0;
                             me.currentProcessingBoundedContext = "";
-                            me.isStartMapping = false;
-                            me.updateMessageState(me.messages[me.messages.length-1].uniqueId, {
-                                isStartMapping: me.isStartMapping
-                            });
+                            me.processingState.isStartMapping = false;
 
                             me.generateAggregateDrafts(me.resultDevideBoundedContext[me.selectedAspect]);
                             return;
@@ -900,15 +933,13 @@
                 if (!targetMessage) return;
 
                 // 피드백 기반 재생성 시작
-                this.isGeneratingBoundedContext = true;
-                this.isStartMapping = false;
+                this.processingState.isGeneratingBoundedContext = true;
+                this.processingState.isStartMapping = false;
                 this.processingRate = 0;
                 this.currentProcessingBoundedContext = '';
 
                 // 기존 메시지의 상태 업데이트
                 this.updateMessageState(obj.messageId, {
-                    isGeneratingBoundedContext: this.isGeneratingBoundedContext,
-                    isStartMapping: this.isStartMapping,
                     processingRate: this.processingRate,
                     currentProcessingBoundedContext: this.currentProcessingBoundedContext
                 });
@@ -939,10 +970,7 @@
                         const targetMessage = this.messages[messageIndex];
                         
                         // 기존 메시지를 사용하여 새로운 선택지 생성
-                        this.isGeneratingBoundedContext = true;
-                        this.updateMessageState(targetMessage.uniqueId, {
-                            isGeneratingBoundedContext: this.isGeneratingBoundedContext
-                        });
+                        this.processingState.isGeneratingBoundedContext = true;
 
                         this.generator = new DevideBoundedContextGenerator(this);
                         this.state.generator = "DevideBoundedContextGenerator";
@@ -954,7 +982,6 @@
                         this.input['requirements'] = {
                             userStory: this.value.userStory,
                             summarizedResult: this.summarizedResult,
-                            ddl: this.inputDDL
                         };
 
                         this.generator.generate();
@@ -971,17 +998,17 @@
                 this.state.generator = "RecursiveRequirementsSummarizer";
                 this.generatorName = "RecursiveRequirementsSummarizer";
 
-                this.isSummarizeStarted = true;
+                this.processingState.isSummarizeStarted = true;
 
                 try {
-                    const summarizedText = await this.generator.summarizeRecursively(this.value.userStory);
+                    const summarizedText = await this.generator.summarizeRecursively(this.value.userStory + "\n" + this.inputDDL);
                     // 요약 결과 저장
                     this.userStoryChunks = this.generator.currentChunks;
                     this.userStoryChunksIndex = 0;
                     this.summarizedResult = summarizedText;
                     console.log("최종 요약 결과: ", this.summarizedResult);
 
-                    this.isSummarizeStarted = false;
+                    this.processingState.isSummarizeStarted = false;
 
                     // BC 생성이 대기 중이었다면 진행
                     if (this.pendingBCGeneration) {
@@ -992,16 +1019,23 @@
                 }
             },
 
-            mappingRequirements(aspect){
+            mappingRequirements(){
                 // 요약 > 생성된 bc의 requirements 매핑
-                this.isStartMapping = true;
-                this.updateMessageState(this.messages[this.messages.length-1].uniqueId, {
-                    isStartMapping: this.isStartMapping
-                });
+                this.processingState.isStartMapping = true;
 
                 this.generator = new RequirementsMappingGenerator(this);
                 this.state.generator = "RequirementsMappingGenerator";
                 this.generatorName = "RequirementsMappingGenerator";
+
+                // 요약 결과가 없어도 원본 매핑 진행을 위해 원본 요구사항을 청크로 넣어줌
+                if(this.userStoryChunks.length == 0){
+                    this.userStoryChunks.push(this.value.userStory);
+                }
+
+                if(this.requirementsValidationResult.analysisResult && this.userStoryChunksIndex == 0 && !this.isAnalizeResultSetted){
+                    this.userStoryChunks.push(this.requirementsValidationResult.analysisResult)
+                    this.isAnalizeResultSetted = true;
+                }
 
                 this.input['boundedContext'] = this.resultDevideBoundedContext[this.selectedAspect].boundedContexts[this.bcInAspectIndex];
                 this.input['requirementChunk'] = this.userStoryChunks[this.userStoryChunksIndex];
@@ -1010,7 +1044,7 @@
 
             generateDevideBoundedContext(feedback){
                 // 현재 요약본이 너무 길면 먼저 요약 진행
-                if (this.value.userStory.length > 30000 && this.summarizedResult.length == 0) {
+                if (this.value.userStory.length + this.inputDDL.length > 25000 && this.summarizedResult.length == 0) {
                     this.pendingBCGeneration = true;
                     this.summarizeRequirements();
                     return;
@@ -1029,14 +1063,11 @@
                 this.input['requirements'] = {
                     userStory: this.value.userStory,
                     summarizedResult: this.summarizedResult,
-                    ddl: this.inputDDL
+                    analysisResult: this.requirementsValidationResult.analysisResult,
                 };
 
                 this.generator.generate();
-                this.isGeneratingBoundedContext = true;
-                this.updateMessageState(this.messages[this.messages.length-1].uniqueId, {
-                    isGeneratingBoundedContext: this.isGeneratingBoundedContext
-                });
+                this.processingState.isGeneratingBoundedContext = true;
             },
 
             uuid: function () {
@@ -1054,20 +1085,23 @@
                 if(!selectedStructureOption) return
                 this.collectedMockDatas.aggregateDraftScenarios.selectedStructureOption = structuredClone(selectedStructureOption)
 
-                // 요약 결과가 있으면, BC별 원본 매핑 우선 진행
-                if(this.summarizedResult.length > 0){
+                // 요약 결과가 없어도, 상세한 매핑을 위해 원본 매핑 진행
+                // if(this.summarizedResult.length > 0){
+                if(!this.isAnalizeResultSetted){
                     let aspect = selectedStructureOption.devisionAspect
-                    let boundedContexts = this.resultDevideBoundedContext[aspect].boundedContexts
+                    this.resultDevideBoundedContext[aspect].boundedContexts
 
-                    // 모든 BC의 requirements가 비어있으면 원본 매핑 진행
-                    let allRequirementsEmpty = boundedContexts.every(bc => 
-                        !bc.requirements || bc.requirements.length === 0
-                    )
+                    // 모든 BC의 requirements를 비우고 원본 매핑 진행
+                    this.resultDevideBoundedContext[aspect].boundedContexts.forEach(bc => {
+                        bc.requirements = [];
+                    });
+                    this.mappingRequirements();
+                    return;
 
-                    if(allRequirementsEmpty) {
-                        this.mappingRequirements(aspect);
-                        return;
-                    }
+                    // if(allRequirementsEmpty) {
+                    //     this.mappingRequirements();
+                    //     return;
+                    // }
                 }
 
                 console.log("[*] 선택된 BC 구성 옵션을 기반으로 생성이 시도됨", {selectedStructureOption})
@@ -1197,9 +1231,11 @@
                     return {
                         uniqueId: this.uuid(),
                         type: type,
-                        result: result || {}, // 빈 객체로 초기화하여 생성 중 표시가 보이도록 함
-                        isStartMapping: this.isStartMapping,
-                        isGeneratingBoundedContext: true, // 새 메시지 생성 시 true로 설정
+                        result: result || {},
+                        isStartMapping: this.processingState.isStartMapping,
+                        isGeneratingBoundedContext: this.processingState.isGeneratingBoundedContext,
+                        isSummarizeStarted: this.processingState.isSummarizeStarted,
+                        isAnalizing: this.processingState.isAnalizing,
                         processingRate: this.processingRate,
                         currentProcessingBoundedContext: this.currentProcessingBoundedContext,
                         selectedAspect: this.selectedAspect,
@@ -1217,8 +1253,22 @@
                     return {
                         uniqueId: this.uuid(),
                         type: type,
-                        isGenerating: this.isAnalizing,
+                        isAnalizing: this.processingState.isAnalizing,
+                        isSummarizeStarted: this.processingState.isSummarizeStarted,
+                        isGeneratingBoundedContext: this.processingState.isGeneratingBoundedContext,
+                        isStartMapping: this.processingState.isStartMapping,
+                        processingRate: this.processingRate,
                         content: result,
+                        timestamp: new Date()
+                    };
+                } else if(type === "bcGenerationOption") {
+                    return {
+                        uniqueId: this.uuid(),
+                        type: type,
+                        isSummarizeStarted: this.processingState.isSummarizeStarted,
+                        isGeneratingBoundedContext: this.processingState.isGeneratingBoundedContext,
+                        isStartMapping: this.processingState.isStartMapping,
+                        isAnalizing: this.processingState.isAnalizing,
                         timestamp: new Date()
                     };
                 }
@@ -1234,22 +1284,42 @@
                 }
             },
 
-            testValidation(){
-                this.generator = new RequirementsValidationGenerator(this);
-                this.state.generator = "RequirementsValidationGenerator";
-                this.generatorName = "RequirementsValidationGenerator";
+            validateRequirements() {
+                const requirements = this.value.userStory;
+                this.processingState.isAnalizing = true;
+                
+                if (requirements.length > 25000) {
+                    this.generator = new RecursiveRequirementsValidationGenerator(this);
+                    this.state.generator = "RecursiveRequirementsValidationGenerator";
+                    this.generatorName = "RecursiveRequirementsValidationGenerator";
 
-                this.isAnalizing = true;
+                    this.messages.push(this.generateMessage("processAnalysis", {}));
+                    this.generator.validateRecursively(requirements);
+                } else {
+                    this.generator = new RequirementsValidationGenerator(this);
+                    this.state.generator = "RequirementsValidationGenerator";
+                    this.generatorName = "RequirementsValidationGenerator";
 
-                this.input['requirements'] = {
-                    userStory: this.value.userStory,
-                    ddl: this.inputDDL
-                };
+                    this.input['requirements'] = {
+                        userStory: requirements,
+                    };
 
-                this.messages.push(this.generateMessage("processAnalysis", {}));
+                    this.messages.push(this.generateMessage("processAnalysis", {}));
+                    this.generator.generate();
+                }
+            },
 
-                this.generator.generate();
+            onShowBCGenerationOption(){
+                if(this.messages.every(message => message.type != "bcGenerationOption")){
+                    this.messages.push(this.generateMessage("bcGenerationOption", {}))
+                }
+            },
+
+            getDisabledGenerateBtn(){
+                return this.processingState.isSummarizeStarted || this.processingState.isGeneratingBoundedContext || this.processingState.isStartMapping || this.processingState.isAnalizing
             }
+            
+            
         }
     }
 </script>

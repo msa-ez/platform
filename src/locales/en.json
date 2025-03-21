@@ -83,6 +83,7 @@
   },
   "ESDialoger" : {
     "tryAgain": "Try Again",
+    "validateRequirements": "Validate Requirements",
     "createBoundedContext": "Create Bounded Context",
     "summarizing": "Analyzing and summarizing requirements..."
   },

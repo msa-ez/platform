@@ -103,6 +103,10 @@
             
                 <v-row class="ma-0 pa-4 pt-0">
                     <v-spacer></v-spacer>
+                    <div v-if="isSummarizeStarted" style="margin-left: 2%; margin-bottom: 1%;">
+                        <span>{{ $t('ESDialoger.summarizing') }}</span>
+                        <v-progress-circular color="primary" indeterminate></v-progress-circular>
+                    </div>
                     <v-btn @click="onConfirm"
                         color="primary"
                         :disabled="generateBtnDisabled"
@@ -120,18 +124,10 @@ export default {
     name: 'bc-generation-options-dialog',
     
     props: {
-        isSummarizeStarted: {
-            type: Boolean,
-            default: false
-        },
-        isGeneratingBoundedContext: {
-            type: Boolean,
-            default: false
-        },
-        isStartMapping: {
-            type: Boolean,
-            default: false
-        }
+        isSummarizeStarted: Boolean,
+        isGeneratingBoundedContext: Boolean,
+        isStartMapping: Boolean,
+        isAnalizing: Boolean,
     },
 
     data() {
@@ -175,6 +171,7 @@ export default {
                this.isSummarizeStarted || 
                this.isGeneratingBoundedContext || 
                this.isStartMapping || 
+               this.isAnalizing ||
                this.localOptions.numberOfBCs > 15;
         },
     },

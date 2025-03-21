@@ -33,11 +33,8 @@
                     <div v-if="isGeneratingBoundedContext">
                         <p class="mb-0">{{ $t('DevideBoundedContextDialog.lodingMessage') }}</p>
                     </div>
-                    <div v-if="isStartMapping">
-                        <p class="mb-0">{{ currentProcessingBoundedContext }} - {{ $t('DevideBoundedContextDialog.mappingMessage') }} ({{ processingRate }}%)</p>
-                    </div>
                     <v-progress-circular
-                        v-if="isGeneratingBoundedContext || isStartMapping"
+                        v-if="isGeneratingBoundedContext"
                         color="primary"
                         indeterminate
                         size="24"
@@ -268,6 +265,16 @@
                     >
                         <v-icon class="auto-modeling-btn-icon">mdi-refresh</v-icon>{{ $t('DevideBoundedContextDialog.reGenerate') }}
                     </v-btn> -->
+                    <div v-if="isStartMapping">
+                        <p class="mb-0">{{ currentProcessingBoundedContext }} - {{ $t('DevideBoundedContextDialog.mappingMessage') }} ({{ processingRate }}%)</p>
+                    </div>
+                    <v-progress-circular
+                        v-if="isStartMapping"
+                        color="primary"
+                        indeterminate
+                        size="24"
+                        class="ml-2"
+                    ></v-progress-circular>
                     <v-btn 
                         :disabled="isGeneratingBoundedContext || isStartMapping" 
                         class="auto-modeling-btn" 
@@ -301,11 +308,8 @@
                         <div v-if="isGeneratingBoundedContext">
                             <p class="mb-0">{{ $t('DevideBoundedContextDialog.lodingMessage') }}</p>
                         </div>
-                        <div v-if="isStartMapping">
-                            <p class="mb-0">{{ currentProcessingBoundedContext }} - {{ $t('DevideBoundedContextDialog.mappingMessage') }} ({{ processingRate }}%)</p>
-                        </div>
                         <v-progress-circular
-                            v-if="isGeneratingBoundedContext || isStartMapping"
+                            v-if="isGeneratingBoundedContext"
                             color="primary"
                             indeterminate
                             size="24"
@@ -477,8 +481,18 @@
                         >
                             <v-icon class="auto-modeling-btn-icon">mdi-refresh</v-icon>{{ $t('DevideBoundedContextDialog.reGenerate') }}
                         </v-btn> -->
+                        <div v-if="isStartMapping">
+                            <p class="mb-0">{{ currentProcessingBoundedContext }} - {{ $t('DevideBoundedContextDialog.mappingMessage') }} ({{ processingRate }}%)</p>
+                        </div>
+                        <v-progress-circular
+                            v-if="isStartMapping"
+                            color="primary"
+                            indeterminate
+                            size="24"
+                            class="ml-2"
+                        ></v-progress-circular>
                         <v-btn 
-                            :disabled="isGeneratingBoundedContext || isStartMapping" 
+                            :disabled="isGeneratingBoundedContext || isStartMapping || isAnalizing || isSummarizeStarted" 
                             class="auto-modeling-btn" 
                             color="primary" 
                             @click="createModel(aspect)"
@@ -510,6 +524,16 @@
                 required: false
             },
             isGeneratingBoundedContext: {
+                type: Boolean,
+                default: () => false,
+                required: false
+            },
+            isAnalizing: {
+                type: Boolean,
+                default: () => false,
+                required: false
+            },
+            isSummarizeStarted: {
                 type: Boolean,
                 default: () => false,
                 required: false

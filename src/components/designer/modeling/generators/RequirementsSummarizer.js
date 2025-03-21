@@ -15,6 +15,8 @@ Keep the functional requirements and important keywords of the original text as 
 
 Summary is allowed up to half of the original text.
 
+If ddl is provided, it should be ignored and not included in the summary.
+
 Requirements:
 - userStory: ${this.client.input['requirements']['userStory']}
 

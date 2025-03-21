@@ -5,7 +5,7 @@ class RecursiveRequirementsSummarizer extends RequirementsSummarizer {
     constructor(client) {
         super(client);
         this.textChunker = new TextChunker({
-            chunkSize: 30000,
+            chunkSize: 25000,
             spareSize: 2000
         });
         this.maxIterations = 3;
