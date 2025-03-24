@@ -15,7 +15,7 @@ class ESValueSummaryGeneratorTest {
             esValue, [], esAliasTransManager
         )
         console.log(summariezedESValue)
-        console.log("[*] 전체 ESValue 토큰 수 :", TokenCounter.getTokenCount(JSON.stringify(summariezedESValue), "gpt-4o"))
+        console.log("[*] 전체 ESValue 토큰 수 :", await TokenCounter.getTokenCount(JSON.stringify(summariezedESValue), "gpt-4o"))
 
 
         const summary = await ESValueSummaryGenerator.getSummarizedESValueWithMaxTokenSummarize(
@@ -27,7 +27,7 @@ class ESValueSummaryGeneratorTest {
             esAliasTransManager
         )
         console.log("[*] 요약된 ESValue :", summary)
-        console.log("[*] 요약된 ESValue 토큰 수 :", TokenCounter.getTokenCount(JSON.stringify(summary), "gpt-4o"))
+        console.log("[*] 요약된 ESValue 토큰 수 :", await TokenCounter.getTokenCount(JSON.stringify(summary), "gpt-4o"))
     }
 }
 

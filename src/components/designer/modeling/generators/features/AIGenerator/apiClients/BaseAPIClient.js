@@ -1,7 +1,6 @@
-const StorageBase = require('../../../../../../CommonStorageBase.vue').default;
 const { COUNTRY_CODE_LANG_MAP, DEFAULT_LANG, REQUEST_ARG_KEYS } = require("./contants");
 const { ModelInfoHelper } = require("../helpers")
-const { HashUtil, RequestUtil } = require("../utils")
+const { HashUtil, RequestUtil, TokenUtil } = require("../utils")
 const { GeneratorLockKeyError, TokenNotInputedError } = require("../../../errors")
 
 
@@ -116,38 +115,9 @@ class BaseAPIClient {
         this.aiGenerator.stopSignaled = true;
     }
     
-    /**
-     * @description 각 vendoer마다 유효한 토큰을 localStorage > DB(Firebase) > 사용자 입력 순으로 조회
-     * @example OpenAI 토큰 조회
-     * const token = await client.getToken("openai")
-     * console.log(token)
-     */
     async getToken(vendor) {
-        const g = this.aiGenerator
-
-        g.token = localStorage.getItem(`api_key_${vendor}`);
-        if(g.token === "null") {
-            g.token = null
-            localStorage.removeItem(`api_key_${vendor}`)
-        }
-        if(g.token) return g.token
-
-        const storage = new Vue(StorageBase)
-        g.token = await storage.getString(`db://tokens/${vendor}`)
-        if(g.token) {
-            g.token = atob(g.token)
-            return g.token
-        }
-
-        g.token = prompt(`No token available. Please enter a token for ${vendor}.`);
-        if(!g.token || g.token === "null") {
-            const errorMessage = `AI generation has been stopped due to no input tokens.`;
-            alert(errorMessage)
-            throw new Error(errorMessage);
-        }
-
-        localStorage.setItem(`api_key_${vendor}`, g.token);
-        return g.token;
+        this.aiGenerator.token = await TokenUtil.getToken(vendor);
+        return this.aiGenerator.token;
     }
 
 

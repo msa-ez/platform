@@ -6,6 +6,7 @@ export const anthropicModelInfos = {
         vendor: "anthropic",
         contextWindowTokenLimit: 204800,
         outputTokenLimit: 8192,
+        defaultTokenizerWeight: 1.20,
         requestArgs: {
             temperature: 0.7,
             maxTokens: 8192
@@ -76,6 +77,7 @@ export const anthropicModelInfos = {
         vendor: "anthropic",
         contextWindowTokenLimit: 204800,
         outputTokenLimit: 8192,
+        defaultTokenizerWeight: 1.20,
         requestArgs: {
             temperature: 0.7,
             maxTokens: 8192
@@ -89,6 +91,7 @@ export const anthropicModelInfos = {
         vendor: "anthropic",
         contextWindowTokenLimit: 204800,
         outputTokenLimit: 8192,
+        defaultTokenizerWeight: 1.20,
         requestArgs: {
             temperature: 0.7,
             maxTokens: 8192

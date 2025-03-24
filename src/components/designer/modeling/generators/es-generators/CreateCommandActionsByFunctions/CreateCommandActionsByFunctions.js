@@ -247,8 +247,8 @@ class CreateCommandActionsByFunctions extends FormattedJSONAIGenerator{
             inputParams.esValue, [], inputParams.esAliasTransManager
         )
         inputParams.subjectText = `Creating commands for ${inputParams.aggregateDisplayName} Aggregate`
-        if(!this.isCreatedPromptWithinTokenLimit()) {
-            const leftTokenCount = this.getCreatePromptLeftTokenCount({summarizedESValue: {}})
+        if(!(await this.isCreatedPromptWithinTokenLimit())) {
+            const leftTokenCount = await this.getCreatePromptLeftTokenCount({summarizedESValue: {}})
             if(leftTokenCount <= 100)
                 throw new Error("[!] The size of the draft being passed is too large to process.")
 
