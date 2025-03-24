@@ -107,7 +107,7 @@
 
                             <v-flex v-if="!embedded" style="min-width:100%;">
                                 <v-row class="ma-0 pa-0" justify="center" align="center" >
-                                    <div style="z-index: 1; display: flex; align-items: center;">
+                                    <div class="kube-home-project-name delete-input-detail">
                                         <router-link to="/">
                                             <v-icon>mdi-home</v-icon>
                                         </router-link>
@@ -1316,7 +1316,7 @@
             <MouseCursorComponent :mouseEvent="otherMouseEvent" :email="email" />
         </div>
 
-        <GeneratorUI v-if="projectId" ref="generatorUI" :isGenerated="embedded" :projectId="projectId" :modelValue="value" @createModel="createModel" :defaultInputData="defaultGeneratorUiInputData" @clearModelValue="clearModelValue" @modificateModel="modificateModel"></GeneratorUI>
+        <GeneratorUI class="kube-generator" v-if="projectId" ref="generatorUI" :isGenerated="embedded" :projectId="projectId" :modelValue="value" @createModel="createModel" :defaultInputData="defaultGeneratorUiInputData" @clearModelValue="clearModelValue" @modificateModel="modificateModel"></GeneratorUI>
     </div>
 </template>
 
@@ -5870,6 +5870,12 @@ ${error}
 </script>
 
 <style scoped lang="scss" rel="stylesheet/scss">
+    .kube-home-project-name {
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        margin: 25px 0 0 0px !important;
+    }
     .kubernetes-mobile-home-button {
         display:none;
     }
@@ -6163,6 +6169,10 @@ ${error}
     }
 
     @media only screen and (max-width:600px){ 
+        .kube-home-project-name {
+            max-width: 120px !important;
+            margin: 25px 0 0 70px !important;
+        }
 
         .kubernetes-mobile-home-button {
             display:block;

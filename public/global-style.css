@@ -877,7 +877,11 @@ code[class*=language-]:nth-child(1) {
     display: none !important;
 }
 
-
+.kube-generator .generator-ui-btn {
+    position: absolute !important;
+    bottom: 50px !important;
+    right: 100px !important;
+}
 
 .button-row {
     display: flex;
