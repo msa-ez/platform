@@ -21,6 +21,10 @@ jobs:
         run: npm install zod@3.24.1
       - name: Install additional packages
         run: npm install zod-to-json-schema@3.9.4
+
+      - name: Install Node.js 18.17.0
+        run: nvm install 18.17.0
+        
       - name: Install additional packages
         run: npm install firebase-tools@13.34.0
       
@@ -47,7 +51,7 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '18.17.0'
-      
+
       - name: Deploy to Firebase
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:

@@ -26,7 +26,9 @@ ${this.client.input['generateOption']['additionalOptions']}
 
 Requirements:
 ${this.summaryRequirements()}
-${this.ddlPrompt()}
+
+Actors and Events:
+${JSON.stringify(this.client.input['requirements']['analysisResult'], null, 2)}
 
 ${this.client.input['feedback'] ? this.feedbackPrompt() : ''}
 
@@ -34,6 +36,8 @@ Key principles:
 - High cohesion, low coupling
 - Group related behaviors and data together
 - Minimize inter-context dependencies
+- Seize event's action range to create bounded context
+- Seize relation between events to create flow
 
 Scoring Instructions:
 - complexity: Score from 0.0 to 1.0 indicating the technical and business complexity
@@ -117,15 +121,6 @@ ${this.client.input['feedback']}
 `
     }
 
-    ddlPrompt(){
-        if(this.client.input['requirements']['ddl']!=""){
-            return `
-- ddl: ${this.client.input['requirements']['ddl']}`;
-        }else{
-            return '';
-        }
-    }
-
     summaryRequirements(){
         if(this.client.input['requirements']['summarizedResult']!=""){
             return `
@@ -135,7 +130,7 @@ Should be used all of the Bounded Contexts.
             `;
         }else{
             return `
-- userStory: ${this.client.input['requirements']['userStory']}
+- userStory: ${JSON.stringify(this.client.input['requirements']['userStory'], null, 2)}
             `;
         }
     }
@@ -145,10 +140,6 @@ Should be used all of the Bounded Contexts.
             return `"requirements":[ // Use all of the requirements(userStory, DDL) context that are relevant to this Bounded Context.
                     {
                         "type":"userStory",
-                        "text":"Original requirements text, containing all of the problem domain relevant to this Bounded Context, copied verbatim"
-                    },
-                    {
-                        "type":"ddl",
                         "text":"Original requirements text, containing all of the problem domain relevant to this Bounded Context, copied verbatim"
                     }
             ]`;

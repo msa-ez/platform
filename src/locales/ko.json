@@ -83,6 +83,7 @@
   },
   "ESDialoger" : {
     "tryAgain": "재생성",
+    "validateRequirements": "요구사항 검증",
     "createBoundedContext": "Bounded Context 생성",
     "summarizing": "요구사항을 분석 및 요약하고 있습니다..."
   },

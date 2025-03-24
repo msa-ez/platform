@@ -83,163 +83,10 @@
                             <!--                    <v-btn x-small @click="jumpToModel(modelId)">{{ modelId }}</v-btn>    -->
                             <!--                </div>-->
                         </v-card-text>
-
-                        <!-- 요구사항 분석 결과 표시 -->
-                        <v-card v-if="showTestValidationButton" style="height: 400px;">
-                            <BpmnViewer
-                                ref="bpmnVue"
-                                :key="currentXML"
-                                :bpmn="currentXML"
-                                :options="options"
-                                :isViewMode="false"
-                                style="height: 100%;"
-                            ></BpmnViewer>
-                        </v-card>
-                        <v-card v-if="requirementsAnalysis" class="requirements-analysis-card ma-4">
-                            <v-card-title class="requirements-analysis-title">
-                                {{ requirementsAnalysis.type === 'ENHANCEMENT_GUIDE' ? '요구사항 보완 가이드' : '프로세스 분석 결과' }}
-                            </v-card-title>
-                            
-                            <!-- 보완 가이드 -->
-                            <v-card-text v-if="requirementsAnalysis.type === 'ENHANCEMENT_GUIDE'">
-                                <div class="missing-elements-section">
-                                    <h3>누락된 요소</h3>
-                                    <v-list dense>
-                                        <v-list-item v-for="(items, category) in requirementsAnalysis.content.missingElements" :key="category">
-                                            <v-list-item-content>
-                                                <v-list-item-title class="font-weight-bold">{{ category }}</v-list-item-title>
-                                                <v-list-item-subtitle v-for="item in items" :key="item">
-                                                    • {{ item }}
-                                                </v-list-item-subtitle>
-                                            </v-list-item-content>
-                                        </v-list-item>
-                                    </v-list>
-                                </div>
-                                
-                                <div class="recommendations-section mt-4">
-                                    <h3>권장 사항</h3>
-                                    <div class="immediate-actions">
-                                        <h4>즉시 조치사항</h4>
-                                        <ul>
-                                            <li v-for="action in requirementsAnalysis.content.recommendations.immediate" :key="action">
-                                                {{ action }}
-                                            </li>
-                                        </ul>
-                                    </div>
-                                    <div class="questions mt-2">
-                                        <h4>이해관계자 질문</h4>
-                                        <ul>
-                                            <li v-for="question in requirementsAnalysis.content.recommendations.questions" :key="question">
-                                                {{ question }}
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </v-card-text>
-
-                            <!-- 분석 결과 -->
-                            <v-card-text v-else>
-                                <div class="processes-section">
-                                    <h3>비즈니스 프로세스</h3>
-                                    <v-expansion-panels>
-                                        <v-expansion-panel v-for="process in requirementsAnalysis.content.businessProcesses" :key="process.name">
-                                            <v-expansion-panel-header>
-                                                {{ process.name }}
-                                            </v-expansion-panel-header>
-                                            <v-expansion-panel-content>
-                                                <div class="process-details">
-                                                    <p><strong>설명:</strong> {{ process.description }}</p>
-                                                    <p><strong>관련 부서:</strong> {{ process.departments.join(', ') }}</p>
-                                                    
-                                                    <div v-if="process.subProcesses.length" class="sub-processes mt-2">
-                                                        <h4>서브 프로세스</h4>
-                                                        <v-list dense>
-                                                            <v-list-item v-for="subProcess in process.subProcesses" :key="subProcess.name">
-                                                                <v-list-item-content>
-                                                                    <v-list-item-title>{{ subProcess.name }}</v-list-item-title>
-                                                                    <v-list-item-subtitle>
-                                                                        <div><strong>관련 부서:</strong> {{ subProcess.involvedDepartments.join(', ') }}</div>
-                                                                        <div class="mt-1"><strong>입력:</strong></div>
-                                                                        <ul>
-                                                                            <li v-for="input in subProcess.inputs" :key="input.description">
-                                                                                {{ input.description }} (출처: {{ input.source }})
-                                                                            </li>
-                                                                        </ul>
-                                                                        <div class="mt-1"><strong>출력:</strong></div>
-                                                                        <ul>
-                                                                            <li v-for="output in subProcess.outputs" :key="output.description">
-                                                                                {{ output.description }} (목적지: {{ output.destination }})
-                                                                            </li>
-                                                                        </ul>
-                                                                    </v-list-item-subtitle>
-                                                                </v-list-item-content>
-                                                            </v-list-item>
-                                                        </v-list>
-                                                    </div>
-                                                </div>
-                                            </v-expansion-panel-content>
-                                        </v-expansion-panel>
-                                    </v-expansion-panels>
-                                </div>
-
-                                <div class="value-streams-section mt-4">
-                                    <h3>가치 흐름</h3>
-                                    <v-expansion-panels>
-                                        <v-expansion-panel v-for="stream in requirementsAnalysis.content.valueStreams" :key="stream.name">
-                                            <v-expansion-panel-header>
-                                                {{ stream.name }}
-                                            </v-expansion-panel-header>
-                                            <v-expansion-panel-content>
-                                                <v-timeline dense>
-                                                    <v-timeline-item v-for="step in stream.flow" :key="step.step">
-                                                        <template v-slot:opposite>
-                                                            <span>{{ step.department }}</span>
-                                                        </template>
-                                                        <v-card class="elevation-1">
-                                                            <v-card-title class="text-subtitle-1">{{ step.step }}</v-card-title>
-                                                            <v-card-text>
-                                                                <div><strong>입력:</strong> {{ step.input }}</div>
-                                                                <div><strong>프로세스:</strong> {{ step.process }}</div>
-                                                                <div><strong>출력:</strong> {{ step.output }}</div>
-                                                            </v-card-text>
-                                                        </v-card>
-                                                    </v-timeline-item>
-                                                </v-timeline>
-                                            </v-expansion-panel-content>
-                                        </v-expansion-panel>
-                                    </v-expansion-panels>
-                                </div>
-
-                                <div class="interactions-section mt-4">
-                                    <h3>부서간 상호작용</h3>
-                                    <v-simple-table>
-                                        <template v-slot:default>
-                                            <thead>
-                                                <tr>
-                                                    <th>출발 부서</th>
-                                                    <th>도착 부서</th>
-                                                    <th>상호작용</th>
-                                                    <th>데이터 흐름</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <tr v-for="interaction in requirementsAnalysis.content.crossDepartmentInteractions" 
-                                                    :key="`${interaction.sourceDepartment}-${interaction.targetDepartment}`">
-                                                    <td>{{ interaction.sourceDepartment }}</td>
-                                                    <td>{{ interaction.targetDepartment }}</td>
-                                                    <td>{{ interaction.interaction }}</td>
-                                                    <td>{{ interaction.dataFlow }}</td>
-                                                </tr>
-                                            </tbody>
-                                        </template>
-                                    </v-simple-table>
-                                </div>
-                            </v-card-text>
-                        </v-card>
                     </v-tab-item>
 
                     <!-- DDL -->
-                    <!-- <v-tab-item>
+                    <v-tab-item>
                         <v-card-subtitle>{{$t('autoModeling.explanation.ddl')}}</v-card-subtitle>
                         <v-card-text class="auto-modling-textarea">
                             <v-textarea 
@@ -253,43 +100,31 @@
                             >
                             </v-textarea>
                         </v-card-text>
-                    </v-tab-item> -->
+                    </v-tab-item>
                 </v-tabs-items>
                 <v-btn v-if="!done" @click="stop()" style="position: absolute; right:10px; top:10px;"><v-progress-circular class="auto-modeling-stop-loading-icon" indeterminate></v-progress-circular>Stop generating</v-btn>
                 <v-row v-if="done" class="ma-0 pa-4 button-row">
                     <v-spacer></v-spacer>
-                    <v-btn :disabled="isSummarizeStarted || isGeneratingBoundedContext || isStartMapping" class="auto-modeling-btn" @click="generate()">
+                    <v-btn v-if="requirementsValidationResult" :disabled="getDisabledGenerateBtn()" class="auto-modeling-btn" @click="generate()">
                         <v-icon class="auto-modeling-btn-icon">mdi-refresh</v-icon>{{ $t('ESDialoger.tryAgain') }}
                     </v-btn>
-                    <v-btn :disabled="isSummarizeStarted || isGeneratingBoundedContext || isStartMapping" class="auto-modeling-btn" color="primary" @click="showBCGenerationOption = !showBCGenerationOption">
-                        {{ $t('ESDialoger.createBoundedContext') }}
+                    <v-btn :disabled="getDisabledGenerateBtn()" class="auto-modeling-btn" color="primary" @click="validateRequirements()">
+                        {{ $t('ESDialoger.validateRequirements') }}
                     </v-btn>
-                    <v-btn v-if="showTestValidationButton" class="auto-modeling-btn" @click="testValidation()">Test Validate</v-btn>
                 </v-row>
-                <div v-if="isSummarizeStarted" style="margin-left: 2%; margin-bottom: 1%;">
-                    <span>{{ $t('ESDialoger.summarizing') }}</span>
-                    <v-progress-circular color="primary" indeterminate></v-progress-circular>
-                </div>
-            </v-card>
-
-            <v-card v-if="showBCGenerationOption" class="auto-modeling-user-story-card" style="margin-top: 30px !important;">
-                <BCGenerationOption
-                    :isSummarizeStarted="isSummarizeStarted"
-                    :isGeneratingBoundedContext="isGeneratingBoundedContext"
-                    :isStartMapping="isStartMapping"
-                    @setGenerateOption="setGenerateOption"
-                ></BCGenerationOption>
             </v-card>
 
             <ESDialogerMessages 
                 :messages="messages"
                 @generateFromAggregateDrafts="generateFromAggregateDrafts"
                 @feedbackFromAggregateDrafts="feedbackFromAggregateDrafts"
+                @showBCGenerationOption="onShowBCGenerationOption"
                 @createModel="generateAggregateDrafts"
                 @stop="stop"
                 @reGenerate="reGenerate"
                 @reGenerateWithFeedback="reGenerateWithFeedback"
                 @mappingRequirements="mappingRequirements"
+                @setGenerateOption="setGenerateOption"
             ></ESDialogerMessages>
         </div>
         <div
@@ -303,6 +138,35 @@
                 </div>
             </v-col>
         </div>
+
+        <v-dialog v-model="generateUserStoryDialog" max-width="600">
+            <v-card>
+                <v-card-title class="headline">
+                    유저스토리
+                </v-card-title>
+                
+                <v-card-text>
+                    유저스토리를 자동 생성하시겠습니까?
+                </v-card-text>
+                
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn
+                        color="primary"
+                        @click="generate(); generateUserStoryDialog = false"
+                    >
+                        AI 자동 생성
+                    </v-btn>
+                    <v-btn
+                        color="grey darken-1"
+                        text
+                        @click="generateUserStoryDialog = false; done = true"
+                    >
+                        직접 입력
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
     </div>
 
 </template>
@@ -310,31 +174,26 @@
 <script>
     import { VueTypedJs } from 'vue-typed-js'
     import Generator from './UserStoryGenerator.js'
-    import DevideBoundedContextGenerator from './DevideBoundedContextGenerator.js'
-    import DevideBoundedContextDialog from './DevideBoundedContextDialog.vue'
-    import BCGenerationOption from './BCGenerationOption.vue'
-    import RequirementsValidationGenerator from './RequirementsValidationGenerator.js'
     //import UserStoryGenerator from './UserStoryGenerator.js'
     // import StorageBase from "../StorageBase";
     import StorageBase from '../../../CommonStorageBase.vue';
     import getParent from '../../../../utils/getParent'
     import Usage from '../../../../utils/Usage'
-
-    // Requirements Summarizer
-    import RequirementsSummarizer from './RequirementsSummarizer.js';
-    import TextChunker from './TextChunker.js';
-
+    
     import { 
         PreProcessingFunctionsGenerator,
         DraftGeneratorByFunctions 
     } from '../../modeling/generators/es-generators';
+    
+    import DevideBoundedContextGenerator from './DevideBoundedContextGenerator.js'
 
     //Requirements Summarizer
     import RecursiveRequirementsSummarizer from './RecursiveRequirementsSummarizer.js';
     import RequirementsMappingGenerator from './RequirementsMappingGenerator.js';
-
-    //Bpmn
-    import BpmnViewer from '../../bpmnModeling/bpmn/BpmnUengineViewer.vue';
+    
+    // Requirements Validation Generator
+    import RequirementsValidationGenerator from './RequirementsValidationGenerator.js'
+    import RecursiveRequirementsValidationGenerator from './RecursiveRequirementsValidationGenerator.js';
 
     import { 
         ESDialogerMessages,
@@ -361,10 +220,7 @@
         },
         components: {
             VueTypedJs,
-            DevideBoundedContextDialog,
-            BCGenerationOption,
             ESDialogerMessages,
-            BpmnViewer,
             AIModelSetting
         },
         computed: {
@@ -383,10 +239,6 @@
             await this.setUserInfo()
             this.initESDialoger();
             this.autoModel = getParent(this.$parent, 'auto-modeling-dialog');
-            this.textChunker = new TextChunker({
-                chunkSize: 2000,  // GPT-4 컨텍스트 크기를 고려한 설정
-                overlapSize: 100  // 문맥 유지를 위한 오버랩
-            });
 
 
             let thinkingUpdateInterval = undefined
@@ -795,6 +647,25 @@
                         this.isCreatedModel = false
                     }
                 },1000)
+            },
+            'processingState': {
+                deep: true,
+                handler(newState) {
+                if (!Array.isArray(this.messages)) return;
+                
+                this.messages.forEach(message => {
+                    if (!message || !message.type || !message.uniqueId) return;
+                    
+                    if (['boundedContextResult', 'processAnalysis', 'bcGenerationOption'].includes(message.type)) {
+                        this.updateMessageState(message.uniqueId, {
+                            isSummarizeStarted: newState.isSummarizeStarted,
+                            isGeneratingBoundedContext: newState.isGeneratingBoundedContext,
+                            isStartMapping: newState.isStartMapping,
+                            isAnalizing: newState.isAnalizing
+                        });
+                    }
+                });
+            }
             }
         },
         mounted(){
@@ -826,9 +697,6 @@
                     personas: this.cachedModels["Personas"]
                 },
 
-                showTestValidationButton: false,
-                currentXML: '',
-
                 options: {
                     keyboard: { bindTo: window },
                     height: '100%',
@@ -838,7 +706,8 @@
                     }
                 },
 
-                requirementsAnalysis: null,
+                generateUserStoryDialog: false,
+
                 done: false,
                 generator: null,
                 generatorName: null,
@@ -847,31 +716,32 @@
                 selectedAspect: "",
 
                 activeTab: null,
-                generatorInputTabs: ['UserStory'
+                generatorInputTabs: ['UserStory','DDL'
                                         // , 'DDL', "Process"
                                     ],
                 inputDDL: '',
-                processImage: null,
-                processImagePreview: null,
-                pendingBCGeneration: false,
-
-                textChunker: null,
+                
                 chunks: [],
-                currentChunkIndex: 0,
                 summarizedResult: "",
-                isSummarizeStarted: false,
                 userStoryChunks: [],
                 userStoryChunksIndex: 0,
                 bcInAspectIndex: 0,
-                isStartMapping: false,
                 processingRate: 0,
-                currentProcessingBoundedContext: "",
+                currentProcessingBoundedContext: "Bounded Context",
+                processingState: {
+                    isSummarizeStarted: false,
+                    isStartMapping: false,
+                    isAnalizing: false,
+                    isGeneratingBoundedContext: false,
+                },
+                isAnalizeResultSetted: false,
+                
                 reGenerateMessageId: null,
+
+                requirementsValidationResult: null,
+                
+                pendingBCGeneration: false,
                 isGeneratingBoundedContext: false,
-
-                processAnalysisResult: null,
-                isAnalyzing: false,
-
                 bcGenerationOption: {},
                 
                 messages: [
@@ -951,9 +821,45 @@
                 var me = this;
                 me.done = true;
 
-                if(me.state.generator === "RequirementsValidationGenerator"){
-                    console.log(JSON.stringify(model));
-                    me.requirementsAnalysis = model;
+                if (this.state.generator === "RequirementsValidationGenerator" || 
+                    this.state.generator === "RecursiveRequirementsValidationGenerator") {
+                    
+                    const currentMessage = this.messages[this.messages.length-1];
+                    
+                    if (this.state.generator === "RecursiveRequirementsValidationGenerator") {
+                        // 현재 청크의 인덱스가 마지막 청크의 인덱스보다 작은 경우
+                        if (this.generator.currentChunkIndex < this.generator.currentChunks.length - 1) {
+                            this.generator.handleGenerationFinished(model);
+                            this.processingState.isAnalizing = true;
+                            this.processingRate = Math.round((this.generator.currentChunkIndex + 1) / 
+                                                            this.generator.currentChunks.length * 100)
+                            this.updateMessageState(currentMessage.uniqueId, {
+                                content: this.generator.accumulatedResults,
+                                processingRate: this.processingRate
+                            });
+                            
+                        } else {
+                            this.generator.handleGenerationFinished(model);
+                            this.processingState.isAnalizing = false;
+                            this.processingRate = 0;
+                            this.updateMessageState(currentMessage.uniqueId, {
+                                content: this.generator.accumulatedResults,
+                                processingRate: this.processingRate
+                            });
+                            this.requirementsValidationResult = this.generator.accumulatedResults;
+                        }
+                    } else {
+                        // 일반 검증인 경우 (기존 로직)
+                        if (model) {
+                            this.processingState.isAnalizing = false;
+                            this.processingRate = 0;
+                            this.updateMessageState(currentMessage.uniqueId, {
+                                content: model,
+                                processingRate: this.processingRate
+                            });
+                            this.requirementsValidationResult = model;
+                        }
+                    }
                 }
 
                 if (me.state.generator === "RecursiveRequirementsSummarizer") {
@@ -963,7 +869,7 @@
 
                 if(this.state.generator === "DevideBoundedContextGenerator"){
                     me.devisionAspectIndex = 0;
-                    me.isGeneratingBoundedContext = false;
+                    me.processingState.isGeneratingBoundedContext = false;
                     
                     // 현재 메시지의 result를 깊은 복사로 가져옴
                     const currentMessage = me.messages[me.messages.length-1];
@@ -984,8 +890,6 @@
                     // 메시지 상태 업데이트
                     me.updateMessageState(currentMessage.uniqueId, {
                         result: newResult,
-                        isGeneratingBoundedContext: me.isGeneratingBoundedContext,
-                        isStartMapping: me.isStartMapping,
                         processingRate: me.processingRate,
                         currentProcessingBoundedContext: me.currentProcessingBoundedContext
                     });
@@ -1026,10 +930,7 @@
                             me.userStoryChunksIndex = 0;
                             me.processingRate = 0;
                             me.currentProcessingBoundedContext = "";
-                            me.isStartMapping = false;
-                            me.updateMessageState(me.messages[me.messages.length-1].uniqueId, {
-                                isStartMapping: me.isStartMapping
-                            });
+                            me.processingState.isStartMapping = false;
 
                             me.generateAggregateDrafts(me.resultDevideBoundedContext[me.selectedAspect]);
                             return;
@@ -1050,7 +951,7 @@
                     this.value = {
                         userStory: ''
                     }
-                    this.generate();
+                    this.generateUserStoryDialog = !this.generateUserStoryDialog;
                 } else {
                     this.done = true;
                 }
@@ -1101,15 +1002,13 @@
                 if (!targetMessage) return;
 
                 // 피드백 기반 재생성 시작
-                this.isGeneratingBoundedContext = true;
-                this.isStartMapping = false;
+                this.processingState.isGeneratingBoundedContext = true;
+                this.processingState.isStartMapping = false;
                 this.processingRate = 0;
                 this.currentProcessingBoundedContext = '';
 
                 // 기존 메시지의 상태 업데이트
                 this.updateMessageState(obj.messageId, {
-                    isGeneratingBoundedContext: this.isGeneratingBoundedContext,
-                    isStartMapping: this.isStartMapping,
                     processingRate: this.processingRate,
                     currentProcessingBoundedContext: this.currentProcessingBoundedContext
                 });
@@ -1140,10 +1039,7 @@
                         const targetMessage = this.messages[messageIndex];
                         
                         // 기존 메시지를 사용하여 새로운 선택지 생성
-                        this.isGeneratingBoundedContext = true;
-                        this.updateMessageState(targetMessage.uniqueId, {
-                            isGeneratingBoundedContext: this.isGeneratingBoundedContext
-                        });
+                        this.processingState.isGeneratingBoundedContext = true;
 
                         this.generator = new DevideBoundedContextGenerator(this);
                         this.state.generator = "DevideBoundedContextGenerator";
@@ -1155,7 +1051,6 @@
                         this.input['requirements'] = {
                             userStory: this.value.userStory,
                             summarizedResult: this.summarizedResult,
-                            ddl: this.inputDDL
                         };
 
                         this.generator.generate();
@@ -1172,17 +1067,17 @@
                 this.state.generator = "RecursiveRequirementsSummarizer";
                 this.generatorName = "RecursiveRequirementsSummarizer";
 
-                this.isSummarizeStarted = true;
+                this.processingState.isSummarizeStarted = true;
 
                 try {
-                    const summarizedText = await this.generator.summarizeRecursively(this.value.userStory);
+                    const summarizedText = await this.generator.summarizeRecursively(this.value.userStory + "\n" + this.inputDDL);
                     // 요약 결과 저장
                     this.userStoryChunks = this.generator.currentChunks;
                     this.userStoryChunksIndex = 0;
                     this.summarizedResult = summarizedText;
                     console.log("최종 요약 결과: ", this.summarizedResult);
 
-                    this.isSummarizeStarted = false;
+                    this.processingState.isSummarizeStarted = false;
 
                     // BC 생성이 대기 중이었다면 진행
                     if (this.pendingBCGeneration) {
@@ -1193,16 +1088,23 @@
                 }
             },
 
-            mappingRequirements(aspect){
+            mappingRequirements(){
                 // 요약 > 생성된 bc의 requirements 매핑
-                this.isStartMapping = true;
-                this.updateMessageState(this.messages[this.messages.length-1].uniqueId, {
-                    isStartMapping: this.isStartMapping
-                });
+                this.processingState.isStartMapping = true;
 
                 this.generator = new RequirementsMappingGenerator(this);
                 this.state.generator = "RequirementsMappingGenerator";
                 this.generatorName = "RequirementsMappingGenerator";
+
+                // 요약 결과가 없어도 원본 매핑 진행을 위해 원본 요구사항을 청크로 넣어줌
+                if(this.userStoryChunks.length == 0){
+                    this.userStoryChunks.push(this.value.userStory);
+                }
+
+                if(this.requirementsValidationResult.analysisResult && this.userStoryChunksIndex == 0 && !this.isAnalizeResultSetted){
+                    this.userStoryChunks.push(this.requirementsValidationResult.analysisResult)
+                    this.isAnalizeResultSetted = true;
+                }
 
                 this.input['boundedContext'] = this.resultDevideBoundedContext[this.selectedAspect].boundedContexts[this.bcInAspectIndex];
                 this.input['requirementChunk'] = this.userStoryChunks[this.userStoryChunksIndex];
@@ -1211,7 +1113,7 @@
 
             generateDevideBoundedContext(feedback){
                 // 현재 요약본이 너무 길면 먼저 요약 진행
-                if (this.value.userStory.length > 30000 && this.summarizedResult.length == 0) {
+                if (this.value.userStory.length + this.inputDDL.length > 25000 && this.summarizedResult.length == 0) {
                     this.pendingBCGeneration = true;
                     this.summarizeRequirements();
                     return;
@@ -1230,14 +1132,11 @@
                 this.input['requirements'] = {
                     userStory: this.value.userStory,
                     summarizedResult: this.summarizedResult,
-                    ddl: this.inputDDL
+                    analysisResult: this.requirementsValidationResult.analysisResult,
                 };
 
                 this.generator.generate();
-                this.isGeneratingBoundedContext = true;
-                this.updateMessageState(this.messages[this.messages.length-1].uniqueId, {
-                    isGeneratingBoundedContext: this.isGeneratingBoundedContext
-                });
+                this.processingState.isGeneratingBoundedContext = true;
             },
 
             uuid: function () {
@@ -1255,20 +1154,23 @@
                 if(!selectedStructureOption) return
                 this.collectedMockDatas.aggregateDraftScenarios.selectedStructureOption = structuredClone(selectedStructureOption)
 
-                // 요약 결과가 있으면, BC별 원본 매핑 우선 진행
-                if(this.summarizedResult.length > 0){
+                // 요약 결과가 없어도, 상세한 매핑을 위해 원본 매핑 진행
+                // if(this.summarizedResult.length > 0){
+                if(!this.isAnalizeResultSetted){
                     let aspect = selectedStructureOption.devisionAspect
-                    let boundedContexts = this.resultDevideBoundedContext[aspect].boundedContexts
+                    this.resultDevideBoundedContext[aspect].boundedContexts
 
-                    // 모든 BC의 requirements가 비어있으면 원본 매핑 진행
-                    let allRequirementsEmpty = boundedContexts.every(bc => 
-                        !bc.requirements || bc.requirements.length === 0
-                    )
+                    // 모든 BC의 requirements를 비우고 원본 매핑 진행
+                    this.resultDevideBoundedContext[aspect].boundedContexts.forEach(bc => {
+                        bc.requirements = [];
+                    });
+                    this.mappingRequirements();
+                    return;
 
-                    if(allRequirementsEmpty) {
-                        this.mappingRequirements(aspect);
-                        return;
-                    }
+                    // if(allRequirementsEmpty) {
+                    //     this.mappingRequirements();
+                    //     return;
+                    // }
                 }
 
                 console.log("[*] 선택된 BC 구성 옵션을 기반으로 생성이 시도됨", {selectedStructureOption})
@@ -1393,20 +1295,44 @@
                     return {
                         uniqueId: this.uuid(),
                         type: type,
-                        result: result || {}, // 빈 객체로 초기화하여 생성 중 표시가 보이도록 함
-                        isStartMapping: this.isStartMapping,
-                        isGeneratingBoundedContext: true, // 새 메시지 생성 시 true로 설정
+                        result: result || {},
+                        isStartMapping: this.processingState.isStartMapping,
+                        isGeneratingBoundedContext: this.processingState.isGeneratingBoundedContext,
+                        isSummarizeStarted: this.processingState.isSummarizeStarted,
+                        isAnalizing: this.processingState.isAnalizing,
                         processingRate: this.processingRate,
                         currentProcessingBoundedContext: this.currentProcessingBoundedContext,
                         selectedAspect: this.selectedAspect,
                         summarizedResult: this.summarizedResult,
                         timestamp: new Date()
                     };
-                }else if(type === "userMessage"){
+                } else if(type === "userMessage"){
                     return {
                         uniqueId: this.uuid(),
                         type: type,
                         message: feedback,
+                        timestamp: new Date()
+                    };
+                } else if(type === "processAnalysis") { 
+                    return {
+                        uniqueId: this.uuid(),
+                        type: type,
+                        isAnalizing: this.processingState.isAnalizing,
+                        isSummarizeStarted: this.processingState.isSummarizeStarted,
+                        isGeneratingBoundedContext: this.processingState.isGeneratingBoundedContext,
+                        isStartMapping: this.processingState.isStartMapping,
+                        processingRate: this.processingRate,
+                        content: result,
+                        timestamp: new Date()
+                    };
+                } else if(type === "bcGenerationOption") {
+                    return {
+                        uniqueId: this.uuid(),
+                        type: type,
+                        isSummarizeStarted: this.processingState.isSummarizeStarted,
+                        isGeneratingBoundedContext: this.processingState.isGeneratingBoundedContext,
+                        isStartMapping: this.processingState.isStartMapping,
+                        isAnalizing: this.processingState.isAnalizing,
                         timestamp: new Date()
                     };
                 }
@@ -1422,135 +1348,46 @@
                 }
             },
 
-            testValidation(){
-                this.currentXML = `<?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
-                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
-                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
-                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
-                  id="Definitions_1"
-                  targetNamespace="http://bpmn.io/schema/bpmn">
-  <bpmn:process id="Process_1" isExecutable="true">
-    <bpmn:startEvent id="StartEvent_1" name="시작">
-      <bpmn:outgoing>Flow_1</bpmn:outgoing>
-    </bpmn:startEvent>
-    
-    <bpmn:task id="Task_1" name="주문 접수">
-      <bpmn:incoming>Flow_1</bpmn:incoming>
-      <bpmn:outgoing>Flow_2</bpmn:outgoing>
-    </bpmn:task>
-    
-    <bpmn:task id="Task_2" name="결제 처리">
-      <bpmn:incoming>Flow_2</bpmn:incoming>
-      <bpmn:outgoing>Flow_3</bpmn:outgoing>
-    </bpmn:task>
-    
-    <bpmn:endEvent id="EndEvent_1" name="종료">
-      <bpmn:incoming>Flow_3</bpmn:incoming>
-    </bpmn:endEvent>
-    
-    <bpmn:sequenceFlow id="Flow_1" sourceRef="StartEvent_1" targetRef="Task_1" />
-    <bpmn:sequenceFlow id="Flow_2" sourceRef="Task_1" targetRef="Task_2" />
-    <bpmn:sequenceFlow id="Flow_3" sourceRef="Task_2" targetRef="EndEvent_1" />
-  </bpmn:process>
-  
-  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
-    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1">
-      <bpmndi:BPMNShape id="StartEvent_1_di" bpmnElement="StartEvent_1">
-        <dc:Bounds x="152" y="102" width="36" height="36" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="159" y="145" width="22" height="14" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      
-      <bpmndi:BPMNShape id="Task_1_di" bpmnElement="Task_1">
-        <dc:Bounds x="240" y="80" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      
-      <bpmndi:BPMNShape id="Task_2_di" bpmnElement="Task_2">
-        <dc:Bounds x="400" y="80" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      
-      <bpmndi:BPMNShape id="EndEvent_1_di" bpmnElement="EndEvent_1">
-        <dc:Bounds x="562" y="102" width="36" height="36" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="569" y="145" width="22" height="14" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      
-      <bpmndi:BPMNEdge id="Flow_1_di" bpmnElement="Flow_1">
-        <di:waypoint x="188" y="120" />
-        <di:waypoint x="240" y="120" />
-      </bpmndi:BPMNEdge>
-      
-      <bpmndi:BPMNEdge id="Flow_2_di" bpmnElement="Flow_2">
-        <di:waypoint x="340" y="120" />
-        <di:waypoint x="400" y="120" />
-      </bpmndi:BPMNEdge>
-      
-      <bpmndi:BPMNEdge id="Flow_3_di" bpmnElement="Flow_3">
-        <di:waypoint x="500" y="120" />
-        <di:waypoint x="562" y="120" />
-      </bpmndi:BPMNEdge>
-    </bpmndi:BPMNPlane>
-  </bpmndi:BPMNDiagram>
-</bpmn:definitions>`
+            validateRequirements() {
+                const requirements = this.value.userStory;
+                this.processingState.isAnalizing = true;
+                
+                if (requirements.length > 25000) {
+                    this.generator = new RecursiveRequirementsValidationGenerator(this);
+                    this.state.generator = "RecursiveRequirementsValidationGenerator";
+                    this.generatorName = "RecursiveRequirementsValidationGenerator";
 
-                this.generator = new RequirementsValidationGenerator(this);
-                this.state.generator = "RequirementsValidationGenerator";
-                this.generatorName = "RequirementsValidationGenerator";
+                    this.messages.push(this.generateMessage("processAnalysis", {}));
+                    this.generator.validateRecursively(requirements);
+                } else {
+                    this.generator = new RequirementsValidationGenerator(this);
+                    this.state.generator = "RequirementsValidationGenerator";
+                    this.generatorName = "RequirementsValidationGenerator";
 
-                this.input['requirements'] = {
-                    userStory: this.value.userStory,
-                    ddl: this.inputDDL
-                };
+                    this.input['requirements'] = {
+                        userStory: requirements,
+                    };
 
-                this.generator.generate();
-            },
-
-            handleKeyPress(event) {
-                if (event.ctrlKey && event.key === 't') {
-                    event.preventDefault(); // Prevent default browser behavior
-                    this.showTestValidationButton = !this.showTestValidationButton;
+                    this.messages.push(this.generateMessage("processAnalysis", {}));
+                    this.generator.generate();
                 }
             },
+
+            onShowBCGenerationOption(){
+                if(this.messages.every(message => message.type != "bcGenerationOption")){
+                    this.messages.push(this.generateMessage("bcGenerationOption", {}))
+                }
+            },
+
+            getDisabledGenerateBtn(){
+                return this.processingState.isSummarizeStarted || this.processingState.isGeneratingBoundedContext || this.processingState.isStartMapping || this.processingState.isAnalizing
+            }
+            
+            
         }
     }
 </script>
 
 <style scoped>
-.requirements-analysis-card {
-    background-color: #f8f9fa;
-}
 
-.requirements-analysis-title {
-    background-color: #e9ecef;
-    font-size: 1.2em;
-}
-
-.missing-elements-section,
-.recommendations-section,
-.processes-section,
-.value-streams-section,
-.interactions-section {
-    margin-bottom: 20px;
-}
-
-h3 {
-    color: #2c3e50;
-    margin-bottom: 15px;
-}
-
-h4 {
-    color: #495057;
-    margin: 10px 0;
-}
-
-.process-details {
-    padding: 10px;
-}
-
-.sub-processes {
-    margin-left: 15px;
-}
 </style>

@@ -27,6 +27,8 @@
                     :resultDevideBoundedContext="deepCopy(message.result)"
                     :isStartMapping="message.isStartMapping"
                     :isGeneratingBoundedContext="message.isGeneratingBoundedContext"
+                    :isAnalizing="message.isAnalizing"
+                    :isSummarizeStarted="message.isSummarizeStarted"
                     :processingRate="message.processingRate"
                     :currentProcessingBoundedContext="message.currentProcessingBoundedContext"
                     :selectedAspect="message.selectedAspect"
@@ -43,6 +45,39 @@
                     @mappingRequirements="$emit('mappingRequirements', $event)"
                 ></DevideBoundedContextDialog>
             </v-card>
+
+            <v-card 
+                v-if="message.type === 'processAnalysis'" 
+                :key="index" 
+                class="auto-modeling-user-story-card" 
+                style="margin-top: 30px !important;"
+            >
+                <RequirementAnalysis 
+                    :analysisResult="message.content"
+                    :isAnalizing="message.isAnalizing"
+                    :isSummarizeStarted="message.isSummarizeStarted"
+                    :isGeneratingBoundedContext="message.isGeneratingBoundedContext"
+                    :isStartMapping="message.isStartMapping"
+                    :processingRate="message.processingRate"
+                    @showBCGenerationOption="emitShowBCGenerationOption"
+                />
+            </v-card>
+
+            <v-card 
+                v-if="message.type === 'bcGenerationOption'" 
+                :key="index" 
+                class="auto-modeling-user-story-card" 
+                style="margin-top: 30px !important;"
+            >
+                <BCGenerationOption
+                    :isSummarizeStarted="message.isSummarizeStarted"
+                    :isGeneratingBoundedContext="message.isGeneratingBoundedContext"
+                    :isStartMapping="message.isStartMapping"
+                    :isAnalizing="message.isAnalizing"
+                    @setGenerateOption="(option, boolean) => $emit('setGenerateOption', option, boolean)"
+                ></BCGenerationOption>
+            </v-card>
+            
 
             <div v-if="message.type === 'botMessage'" :key="index" style="margin-top: 30px !important;">
                 <v-col class="auto-modeling-message-box">
@@ -74,6 +109,8 @@
 <script>
 import { AggregateDraftDialog } from '../../../es-generators'
 import DevideBoundedContextDialog from '../../../../generators/DevideBoundedContextDialog.vue'
+import RequirementAnalysis from '../../../../generators/RequirementAnalysis.vue'
+import BCGenerationOption from '../../../../generators/BCGenerationOption.vue'
 import VueMermaidStringTest from './VueMermaidStringTest.vue'
 
 export default {
@@ -88,6 +125,8 @@ export default {
     components: {
         AggregateDraftDialog,
         DevideBoundedContextDialog,
+        RequirementAnalysis,
+        BCGenerationOption,
         VueMermaidStringTest
     },
     methods: {
@@ -101,6 +140,10 @@ export default {
 
         deepCopy(obj) {
             return JSON.parse(JSON.stringify(obj));
+        },
+
+        emitShowBCGenerationOption() {
+            this.$emit('showBCGenerationOption')
         }
     }
 }

@@ -10,31 +10,39 @@ class TextChunker {
      * @returns {Array<string>} 청크 배열
      */
     splitIntoChunks(text) {
-        // 문장 단위로 분할 (마침표, 느낌표, 물음표 기준)
-        const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+        // 문장 단위로 분할 (마침표, 느낌표, 물음표, 세미콜론 기준)
+        const segments = text.split(/(?<=;)|(?<=[.!?])/).map(s => s.trim()).filter(s => s);
         const chunks = [];
         let currentChunk = '';
-        let overlapText = '';  // 오버랩될 텍스트 저장
+        let overlapText = '';
+        let isCurrentlyDDL = false;
         
-        for (const sentence of sentences) {
-            // 현재 청크에 새 문장을 추가했을 때의 길이 확인
-            if ((currentChunk + sentence).length > this.chunkSize) {
+        for (const segment of segments) {
+            const isDDL = segment.trim().toUpperCase().startsWith('CREATE TABLE');
+            
+            // 시나리오에서 DDL로 전환되는 경우에만 청크 분리
+            if (isDDL && !isCurrentlyDDL && currentChunk) {
+                chunks.push(currentChunk.trim());
+                currentChunk = segment;
+                isCurrentlyDDL = true;
+                continue;
+            }
+            
+            // 청크 사이즈 체크
+            if ((currentChunk + segment).length > this.chunkSize) {
                 if (currentChunk) {
-                    // 현재 청크를 저장하고, 마지막 부분을 오버랩 텍스트로 저장
                     chunks.push(currentChunk.trim());
-                    
-                    // 마지막 문장들을 오버랩 텍스트로 설정
                     const lastSentences = this.getLastSentences(currentChunk, this.spareSize);
                     overlapText = lastSentences;
-                    
-                    // 새로운 청크는 오버랩 텍스트로 시작
-                    currentChunk = overlapText + ' ' + sentence;
+                    currentChunk = overlapText + ' ' + segment;
                 } else {
-                    currentChunk = sentence;
+                    currentChunk = segment;
                 }
             } else {
-                currentChunk += (currentChunk ? ' ' : '') + sentence;
+                currentChunk += (currentChunk ? ' ' : '') + segment;
             }
+            
+            isCurrentlyDDL = isDDL;
         }
         
         // 마지막 청크 처리
@@ -47,7 +55,7 @@ class TextChunker {
 
     // 지정된 크기만큼의 마지막 문장들을 가져오는 헬퍼 메서드
     getLastSentences(text, targetSize) {
-        const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+        const sentences = text.split(/(?<=;)|(?<=[.!?])/).map(s => s.trim()).filter(s => s);
         let result = '';
         
         for (let i = sentences.length - 1; i >= 0; i--) {
