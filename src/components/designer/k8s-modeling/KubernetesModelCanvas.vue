@@ -92,40 +92,33 @@
                                 </v-flex>
                             </v-layout>
                             
-                            <v-flex v-if="embedded" style="justify:end; align:start;">
-                                    <v-btn
-                                        style="position: absolute; top:26px; right: 60px;"
-                                        text
-                                        @click="openCommandViewer()"
-                                        v-on="on"
-                                        small
-                                    >
-                                        <v-icon>mdi-code-greater-than</v-icon>
-                                        <div>KUBECTL</div>
-                                    </v-btn>
-                                </v-row>
+                            <v-flex v-if="embedded" style="justify:end; align:start;">\
+                                <v-btn
+                                    style="position: absolute; top:26px; right: 60px;"
+                                    text
+                                    @click="openCommandViewer()"
+                                    v-on="on"
+                                    small
+                                >
+                                    <v-icon>mdi-code-greater-than</v-icon>
+                                    <div>KUBECTL</div>
+                                </v-btn>
                             </v-flex>
 
                             <v-flex v-if="!embedded" style="min-width:100%;">
-                                <v-row justify="center" align="center" >
-                                    <div class="kubernetes-mobile-home-button">
+                                <v-row class="ma-0 pa-0" justify="center" align="center" >
+                                    <div style="z-index: 1; display: flex; align-items: center;">
                                         <router-link to="/">
-                                            <v-icon
-                                                style="height: 24px;
-                                                margin-top: 38px;
-                                                margin-right: 5px;"
-                                            >
-                                                mdi-home
-                                            </v-icon>
+                                            <v-icon>mdi-home</v-icon>
                                         </router-link>
-                                    </div>
-                                    <v-text-field class="k8s-is-mobile-project-name"
-                                            style="margin-right: 5px; margin-top: 40px; max-width: 140px; z-index: 1;"
+                                        <v-text-field
                                             label="Project Name"
                                             v-model="projectName"
                                             :disabled="isReadOnly"
                                             dense
-                                    ></v-text-field>
+                                            style="margin-left: 10px;"
+                                        ></v-text-field>
+                                    </div>
                                     <!-- 웹페이지 버튼들 -->
                                     <div class="gs-model-z-index-1 k8s-is-not-mobile">
                                         <v-menu
@@ -6167,21 +6160,9 @@ ${error}
         .k8s-is-mobile {
             display: block !important;
         }
-        .k8s-is-mobile-project-name {
-            position: absolute !important;
-            right: 160px !important;
-            top: -15px
-        }
     }
 
     @media only screen and (max-width:600px){ 
-        .k8s-is-mobile-project-name {
-            position: absolute !important;
-            right: auto !important;
-            top: -5px;
-            left: 70px; 
-            max-width: 100px !important;
-        }
 
         .kubernetes-mobile-home-button {
             display:block;

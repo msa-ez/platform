@@ -2011,7 +2011,7 @@
         }
         .business-model-canvas-top-menu {
             position: absolute;
-            left:120px;
+            left:240px;
             top:5px;
         }
         .strategyzer-link {

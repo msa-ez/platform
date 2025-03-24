@@ -914,7 +914,7 @@
 .collapsed {
   width: 450px; /* 원하는 가로 길이로 조정 */
 }
-@media only screen and (max-width: 1093px) {
+@media only screen and (max-width: 1020px) {
     .generator-ui-btn {
         bottom:20px;
         right:85px;
@@ -922,8 +922,8 @@
 }
 @media only screen and (max-width: 600px) {
     .generator-ui-btn {
-        bottom:110px;
-        right:60px;
+        bottom:180px;
+        right:40px;
         width:40px !important;
         height:40px !important;
     }
