@@ -236,8 +236,8 @@ class CreateAggregateClassIdByDrafts extends FormattedJSONAIGenerator{
         )
 
         inputParams.subjectText = `Creating ID Classes for ${inputParams.targetReferences.join(', ')}`
-        if(!this.isCreatedPromptWithinTokenLimit()) {
-            const leftTokenCount = this.getCreatePromptLeftTokenCount({summarizedESValue: {}})
+        if(!(await this.isCreatedPromptWithinTokenLimit())) {
+            const leftTokenCount = await this.getCreatePromptLeftTokenCount({summarizedESValue: {}})
             if(leftTokenCount <= 100)
                 throw new Error("[!] The size of the draft being passed is too large to process.")
 

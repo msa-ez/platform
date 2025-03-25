@@ -253,8 +253,8 @@ class CreateAggregateActionsByFunctions extends FormattedJSONAIGenerator{
             ESValueSummarizeWithFilter.KEY_FILTER_TEMPLATES.aggregateOuterStickers, inputParams.esAliasTransManager)
 
         inputParams.subjectText = `Creating ${inputParams.aggregateDisplayName} Aggregate`
-        if(!this.isCreatedPromptWithinTokenLimit()) {
-            const leftTokenCount = this.getCreatePromptLeftTokenCount({summarizedESValue: {}})
+        if(!(await this.isCreatedPromptWithinTokenLimit())) {
+            const leftTokenCount = await this.getCreatePromptLeftTokenCount({summarizedESValue: {}})
             if(leftTokenCount <= 100)
                 throw new Error("[!] The size of the draft being passed is too large to process.")
 

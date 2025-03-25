@@ -6,6 +6,10 @@ const { TokenCounter } = require("../../utils")
 const { z } = require("zod")
 const { zodResponseFormat } = require("../../utils")
 
+/**
+ * [!] 이 Generator를 직접적으로 이용할 경우, 요약 결과는 반드시 onSummaryCreated에서 받아야 함
+ * - 이 Generator는 출력 결과를 처리할 때, 비동기 함수를 사용하는데, 이것때문에 onCreateModelFinished를 async로 바꾸려면 비용이 높기 때문에 그러기보다는 다른 콜백을 사용하도록 전환해놓음
+ */
 class ESValueSummaryGenerator extends FormattedJSONAIGenerator{
     constructor(client){
         super(client, {}, "simpleModel");
@@ -55,7 +59,7 @@ class ESValueSummaryGenerator extends FormattedJSONAIGenerator{
             esValue, keysToFilter, esAliasTransManager
         )
 
-        const tokenCount = TokenCounter.getTokenCount(JSON.stringify(summarizedESValue), tokenCalcModel)
+        const tokenCount = await TokenCounter.getTokenCount(JSON.stringify(summarizedESValue), tokenCalcModel)
         if(tokenCount <= maxTokens)
             return summarizedESValue
 
@@ -75,7 +79,7 @@ class ESValueSummaryGenerator extends FormattedJSONAIGenerator{
                     
                 },
     
-                onGenerationSucceeded: (returnObj) => {
+                onSummaryCreated: (returnObj) => {
                     resolve(returnObj.modelValue.summary)
                 },
 
@@ -272,17 +276,20 @@ Inference Guidelines:
         const reSortedElementIds = this._resortWithPriority(this.client.input.summarizedESValue, sortedElementIds)
         console.log("[*] 재정렬된 엘리먼트 Id 정렬 순서: ", JSON.parse(JSON.stringify(reSortedElementIds)))
 
-        const summary = this._getSummaryWithinTokenLimit(
+        this._getSummaryWithinTokenLimit(
             this.client.input.summarizedESValue,
             reSortedElementIds,
             this.client.input.maxTokens,
             this.client.input.tokenCalcModel
-        )
+        ).then(summary => {
+            returnObj.modelValue = {
+                ...returnObj.modelValue,
+                summary: summary
+            }
+            if(this.client.onSummaryCreated)
+                this.client.onSummaryCreated(returnObj)
+        })
 
-        returnObj.modelValue = {
-            ...returnObj.modelValue,
-            summary: summary,
-        }
         returnObj.directMessage = `Summarizing EventStorming Model... (${this.getTotalOutputTextLength(returnObj)} characters generated)`
     }
 
@@ -355,13 +362,13 @@ Inference Guidelines:
         return result;
     }
 
-    _getSummaryWithinTokenLimit(summarizedESValue, sortedElementIds, maxTokens, tokenCalcModel) {
+    async _getSummaryWithinTokenLimit(summarizedESValue, sortedElementIds, maxTokens, tokenCalcModel) {
         const elementIds = [...sortedElementIds];
-        let priorityIndex = elementIds.length;
-    
-        let result = JSON.parse(JSON.stringify(summarizedESValue));
+        let left = 0;
+        let right = elementIds.length;
+        let result = null;
         
-        const filterByPriority = (obj) => {
+        const filterByPriority = (obj, priorityIndex) => {
             if (Array.isArray(obj)) {
                 const filtered = obj
                     .filter(item => {
@@ -373,30 +380,35 @@ Inference Guidelines:
                         if (!a.id || !b.id) return 0;
                         return elementIds.indexOf(a.id) - elementIds.indexOf(b.id);
                     })
-                    .map(item => filterByPriority(item));
+                    .map(item => filterByPriority(item, priorityIndex));
                 return filtered;
             } else if (obj && typeof obj === 'object') {
                 const filtered = {};
                 for (const [key, value] of Object.entries(obj)) {
-                    filtered[key] = filterByPriority(value);
+                    filtered[key] = filterByPriority(value, priorityIndex);
                 }
                 return filtered;
             }
             return obj;
         };
-    
-        while (priorityIndex > 0) {
-            const filtered = filterByPriority(result);
+        
+        while (left <= right) {
+            const mid = Math.floor((left + right) / 2);
+            const filtered = filterByPriority(JSON.parse(JSON.stringify(summarizedESValue)), mid);
             const jsonString = JSON.stringify(filtered);
             
-            if (TokenCounter.isWithinTokenLimit(jsonString, tokenCalcModel, maxTokens)) {
-                return filtered;
+            if (await TokenCounter.isWithinTokenLimit(jsonString, tokenCalcModel, maxTokens)) {
+                result = filtered;
+                left = mid + 1;
+            } else {
+                right = mid - 1;
             }
-    
-            priorityIndex--;
         }
-    
-        return filterByPriority(result);
+        
+        if (!result)
+            throw new Error("[!] 토큰 제한을 초과하여 요약할 수 없습니다.")
+        
+        return result;
     }
 }
 
