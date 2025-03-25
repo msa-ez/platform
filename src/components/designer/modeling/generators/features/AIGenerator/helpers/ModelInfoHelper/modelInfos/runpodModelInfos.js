@@ -9,7 +9,8 @@ export const runpodModelInfos = {
         requestArgs: {
             maxTokens: 8192
         },
-        useThinkParseStrategy: true
+        useThinkParseStrategy: true,
+        isInferenceModel: true
     },
 
     // 가능한 설정 옵션들: deepseek-ai/DeepSeek-R1-Distill-Qwen-32B
@@ -22,7 +23,8 @@ export const runpodModelInfos = {
         requestArgs: {
             maxTokens: 8192
         },
-        useThinkParseStrategy: true
+        useThinkParseStrategy: true,
+        isInferenceModel: true
     },
 
     // 가능한 설정 옵션들: neuralmagic/DeepSeek-R1-Distill-Llama-70B-quantized.w8a8
@@ -35,6 +37,7 @@ export const runpodModelInfos = {
         requestArgs: {
             maxTokens: 2048
         },
-        useThinkParseStrategy: true
+        useThinkParseStrategy: true,
+        isInferenceModel: true
     }
 }

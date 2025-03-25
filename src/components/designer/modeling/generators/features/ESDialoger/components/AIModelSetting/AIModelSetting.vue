@@ -2,14 +2,27 @@
     <v-card class="auto-modeling-user-story-card">
         <v-card-title class="headline d-flex align-center">
             <v-icon class="mr-2">mdi-cog-outline</v-icon>
-            <div>AI 모델 설정</div>
+            <div>{{ $t('aiModelSetting.template.aiModelSettings') }}</div>
+
+            <v-spacer></v-spacer>
+            
+            <v-btn 
+                small 
+                outlined 
+                color="primary" 
+                @click="resetToDefaults"
+                class="reset-button"
+            >
+                <v-icon small left>mdi-refresh</v-icon>
+                {{ $t('aiModelSetting.template.resetToDefaults') }}
+            </v-btn>
         </v-card-title>
         
         <v-card-text>
             <v-sheet class="pa-4 mb-5 rounded" color="grey lighten-5" elevation="1">
                 <h3 class="mb-4 primary--text d-flex align-center">
                     <v-icon color="primary" class="mr-2">mdi-cube-outline</v-icon>
-                    <div>모델 선택</div>
+                    <div>{{ $t('aiModelSetting.template.selectModel') }}</div>
                 </h3>
                 
                 <div v-for="(modelInfo, modelType) in selectedModels" :key="modelType" class="mb-4">
@@ -21,11 +34,22 @@
                             </template>
                             <span>{{ getModelTypeDescription(modelType) }}</span>
                         </v-tooltip>
+                        <v-spacer></v-spacer>
+                        <v-switch
+                            v-model="modelEnabled[modelType]"
+                            hide-details
+                            class="mt-0 pt-0"
+                            dense
+                            @change="handleModelToggle(modelType)"
+                            :disabled="isLastEnabledModel(modelType)"
+                            color="primary"
+                        ></v-switch>
+                        <span class="ml-1 caption">{{ modelEnabled[modelType] ? $t('aiModelSetting.template.enabled') : $t('aiModelSetting.template.disabled') }}</span>
                     </div>
                     
                     <v-select
                         :value="modelInfo.defaultValue"
-                        :items="groupedSelectableOptions"
+                        :items="getGroupedSelectableOptions(modelType === 'thinkingModel')"
                         item-text="label"
                         item-value="defaultValue"
                         @change="(val) => handleModelSelect(modelType, val)"
@@ -34,6 +58,8 @@
                         dense
                         class="model-select"
                         :menu-props="{ maxHeight: '400px' }"
+                        :disabled="!modelEnabled[modelType]"
+                        :class="{'disabled-model': !modelEnabled[modelType]}"
                     >
                         <template v-slot:item="{ item }">
                             <div class="d-flex align-center">
@@ -57,7 +83,7 @@
             <v-sheet class="pa-4 rounded" color="grey lighten-5" elevation="1">
                 <h3 class="mb-4 primary--text d-flex align-center">
                     <v-icon color="primary" class="mr-2">mdi-key-variant</v-icon>
-                    <div>API 키 설정</div>
+                    <div>{{ $t('aiModelSetting.template.apiKeySettings') }}</div>
                 </h3>
                 
                 <div v-for="(inputFields, vendor) in requiredVendorInputs" :key="vendor" class="vendor-input-section mb-4">
@@ -87,7 +113,7 @@
                     <div class="d-flex justify-end mt-2">
                         <v-btn small text color="primary" @click="testApiKey(vendor)" :disabled="!canTestApiKey(vendor)" :loading="apiKeyTestLoading[vendor]">
                             <v-icon small left>mdi-connection</v-icon>
-                            연결 테스트
+                            {{ $t('aiModelSetting.template.connectionTest') }}
                         </v-btn>
                         <v-icon v-if="apiKeyTestStatus[vendor] === true" color="success" small class="ml-2">mdi-check-circle</v-icon>
                         <v-icon v-if="apiKeyTestStatus[vendor] === false" color="error" small class="ml-2">mdi-alert-circle</v-icon>
@@ -96,7 +122,7 @@
                 
                 <div v-if="Object.keys(requiredVendorInputs).length === 0" class="text-center pa-5 grey lighten-4 rounded">
                     <v-icon color="grey lighten-1" x-large>mdi-key-remove</v-icon>
-                    <p class="mt-3 grey--text text--darken-1">모델을 선택하면 필요한 API 키가 표시됩니다</p>
+                    <p class="mt-3 grey--text text--darken-1">{{ $t('aiModelSetting.template.vendorInputTip') }}</p>
                 </div>
             </v-sheet>
         </v-card-text>
@@ -105,7 +131,7 @@
             <v-spacer></v-spacer>
             <v-btn color="primary" class="auto-modeling-btn" @click="$emit('onConfirm')">
                 <v-icon left>mdi-check</v-icon>
-                확인
+                {{ $t('aiModelSetting.template.confirm') }}
             </v-btn>
         </v-card-actions>
 
@@ -122,7 +148,7 @@
                     v-bind="attrs"
                     @click="snackbar.show = false"
                 >
-                    닫기
+                    {{ $t('aiModelSetting.template.close') }}
                 </v-btn>
             </template>
         </v-snackbar>
@@ -150,38 +176,12 @@ export default {
                 show: false,
                 text: '',
                 color: 'info'
-            }
+            },
+            modelEnabled: {},
+            MODEL_FLAGS: {}
         }
     },
     computed: {
-        groupedSelectableOptions() {
-            const groups = [];
-            const vendorGroups = {};
-            
-            this.selectableOptions.forEach(option => {
-                if (!vendorGroups[option.vendor]) {
-                    const group = {
-                        header: this.getVendorLabel(option.vendor),
-                        divider: true,
-                        items: []
-                    };
-                    groups.push(group);
-                    vendorGroups[option.vendor] = group;
-                }
-                
-                vendorGroups[option.vendor].items.push(option);
-            });
-            
-            const result = [];
-            groups.forEach(group => {
-                result.push({ header: group.header, divider: true });
-                group.items.forEach(item => {
-                    result.push(item);
-                });
-            });
-            
-            return result;
-        },
         uniqueVendors() {
             const vendors = new Set();
             Object.values(this.selectedModels).forEach(model => {
@@ -195,12 +195,57 @@ export default {
     created() {
         this.loadData();
         this.loadSvgIcons();
+        this.initModelEnabledState();
     },
     methods: {
         loadData() {
             this.selectableOptions = ModelInfoHelper.getSelectableOptions();
             this.selectedModels = ModelInfoHelper.getSelectedOptions();
+            this.MODEL_FLAGS = ModelInfoHelper.getDefaultOptions().MODEL_FLAGS;
             this.updateRequiredVendorInputs();
+        },
+
+        initModelEnabledState() {
+            Object.keys(this.selectedModels).forEach(modelType => {
+                const isEnabled = this.selectedModels[modelType] !== this.MODEL_FLAGS.NOT_USED;
+                this.$set(this.modelEnabled, modelType, isEnabled);
+
+                if(this.selectedModels[modelType] && this.selectedModels[modelType] !== this.MODEL_FLAGS.NOT_USED)
+                    localStorage.setItem(`previous_${modelType}`, this.selectedModels[modelType].defaultValue);
+            });
+        },
+
+        handleModelToggle(modelType) {
+            if (!this.modelEnabled[modelType]) {
+                if (this.isLastEnabledModel(modelType)) {
+                    this.$set(this.modelEnabled, modelType, true);
+                    this.$alert(this.$t('aiModelSetting.template.cannotDisableAll'));
+                    return;
+                }
+                
+                ModelInfoHelper.setSelectedOptions(modelType, this.MODEL_FLAGS.NOT_USED);
+                this.selectedModels = ModelInfoHelper.getSelectedOptions();
+                this.updateRequiredVendorInputs();
+            } else {
+                let previousValue = localStorage.getItem(`previous_${modelType}`)
+                if(!previousValue || previousValue === this.MODEL_FLAGS.NOT_USED) {
+                    ModelInfoHelper.setSelectedOptions(modelType, "");
+                    previousValue = ModelInfoHelper.getDefaultOptions()[modelType];
+                }
+                
+                if (previousValue && previousValue !== this.MODEL_FLAGS.NOT_USED) {
+                    ModelInfoHelper.setSelectedOptions(modelType, previousValue);
+                    this.selectedModels = ModelInfoHelper.getSelectedOptions();
+                    this.updateRequiredVendorInputs();
+                }
+            }
+        },
+        
+        isLastEnabledModel(modelType) {
+            const enabledModelTypes = Object.keys(this.modelEnabled).filter(
+                type => this.modelEnabled[type] && type !== modelType
+            );
+            return enabledModelTypes.length === 0;
         },
 
         async loadSvgIcons() {
@@ -236,10 +281,10 @@ export default {
             if (!selectedOption || !selectedOption.defaultValue) return;
             
             ModelInfoHelper.setSelectedOptions(modelType, selectedOption.defaultValue);
+            localStorage.setItem(`previous_${modelType}`, selectedOption.defaultValue);
             this.selectedModels = ModelInfoHelper.getSelectedOptions();
             this.updateRequiredVendorInputs();
         },
-        
 
         getModelTypeLabel(modelType) {
             return this.$t('aiModelSetting.modelType.' + modelType) || modelType;
@@ -359,7 +404,61 @@ export default {
             } finally {
                 this.$set(this.apiKeyTestLoading, vendor, false);
             }
-        }
+        },
+
+        getGroupedSelectableOptions(isInferenceModel) {
+            const groups = [];
+            const vendorGroups = {};
+            
+            this.selectableOptions.forEach(option => {
+                if(isInferenceModel != null) {
+                    if(isInferenceModel && !option.isInferenceModel) return;
+                    if(!isInferenceModel && option.isInferenceModel) return;
+                }
+
+                if (!vendorGroups[option.vendor]) {
+                    const group = {
+                        header: this.getVendorLabel(option.vendor),
+                        divider: true,
+                        items: []
+                    };
+                    groups.push(group);
+                    vendorGroups[option.vendor] = group;
+                }
+                
+                vendorGroups[option.vendor].items.push(option);
+            });
+            
+            const result = [];
+            groups.forEach(group => {
+                result.push({ header: group.header, divider: true });
+                group.items.forEach(item => {
+                    result.push(item);
+                });
+            });
+            
+            return result;
+        },
+
+        resetToDefaults() {
+            if (!confirm(this.$t('aiModelSetting.alert.resetConfirm'))) {
+                return;
+            }
+            
+            ModelInfoHelper.resetToDefaults();
+            
+            this.loadData();
+            this.initModelEnabledState();
+            
+            this.apiKeyTestStatus = {};
+            this.inputValues = {};
+            
+            this.snackbar = {
+                show: true,
+                text: this.$t('aiModelSetting.snackbar.resetComplete'),
+                color: 'success'
+            };
+        },
     }
 }
 </script>
@@ -416,5 +515,20 @@ export default {
 
 .custom-snackbar >>> .v-snack__content {
     padding: 0 !important;
+}
+
+.disabled-model {
+    opacity: 0.7;
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
+.disabled-model :deep(.v-select__selection) {
+    color: #9e9e9e;
+    font-style: italic;
+}
+
+.reset-button {
+    height: 32px !important;
+    font-size: 0.85rem;
 }
 </style>

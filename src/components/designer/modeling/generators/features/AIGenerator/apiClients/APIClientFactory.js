@@ -8,11 +8,23 @@ const getDefaultOptions = require('./getDefaultOptions');
 
 class APIClientFactory {
   static createClient(client, options, modelType, aiGenerator) {
-    let model = ""
-    if(options.model) model = options.model
-    else if(aiGenerator.model) model = aiGenerator.model
-    else if(modelType) model = getDefaultOptions()[modelType]
-    else model = getDefaultOptions().standardModel
+    const defaultOptions = getDefaultOptions()
+    if(defaultOptions.thinkingModel === defaultOptions.MODEL_FLAGS.NOT_USED &&
+       defaultOptions.normalModel === defaultOptions.MODEL_FLAGS.NOT_USED
+    )
+      throw new Error("Cannot return appropriate models because all model types are set to 'Unused'. Please review the model settings.")
+
+
+    const getModelForType = (type) => {
+      return defaultOptions[type] !== defaultOptions.MODEL_FLAGS.NOT_USED ? defaultOptions[type]
+        : (type === 'thinkingModel' ? defaultOptions.normalModel : defaultOptions.thinkingModel);
+    }
+
+    const model = options.model || aiGenerator.model || 
+                 (modelType ? getModelForType(modelType) : 
+                  (defaultOptions.thinkingModel !== defaultOptions.MODEL_FLAGS.NOT_USED ? 
+                   defaultOptions.thinkingModel : defaultOptions.normalModel))
+
 
     const vendor = ModelInfoHelper.getModelInfo(model).vendor
     if(APIClientFactory.vendorApiClientMap[vendor])

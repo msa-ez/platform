@@ -506,14 +506,12 @@
   },
   "aiModelSetting": {
     "modelType": {
-      "complexModel": "복잡한 작업 모델",
-      "standardModel": "일반 작업 모델",
-      "simpleModel": "단순 작업 모델"
+      "thinkingModel": "추론 모델",
+      "normalModel": "일반 모델"
     },
     "modelTypeDescription": {
-      "complexModel": "일반적인 모델이 다루기 까다로운 문제 활용: 이벤트 스토밍 정책 생성 등",
-      "standardModel": "대부분의 일반적인 작업에 활용: 유저 요구사항 분석, 애그리거트 초안 생성 등",
-      "simpleModel": "입출력이 명확한 단순한 작업에 활용: 잘못된 JSON 형식의 데이터 복구 등"
+      "thinkingModel": "복잡한 추론이 필요한 작업에 활용: 이벤트 스토밍 생성, 애그리거트 초안 생성 등",
+      "normalModel": "입출력이 명확한 단순한 작업에 활용: 잘못된 JSON 데이터 복구 등"
     },
     "apiKeyHint": {
       "api_key_openai": "OpenAI 대시보드에서 API 키를 발급받으세요",
@@ -526,6 +524,25 @@
     "apiKeyTest": {
       "success": "{vendor} 연결 테스트 성공!",
       "fail": "{vendor} 연결 테스트 실패. API 키를 확인해주세요."
+    },
+    "template": {
+      "aiModelSettings": "AI 모델 설정",
+      "selectModel": "모델 선택",
+      "apiKeySettings": "API 키 설정",
+      "connectionTest": "연결 테스트",
+      "vendorInputTip": "모델을 선택하면 필요한 API 키가 표시됩니다",
+      "confirm": "확인",
+      "close": "닫기",
+      "enabled": "활성화됨",
+      "disabled": "비활성화됨",
+      "cannotDisableAll": "최소 하나의 모델은 활성화 상태여야 합니다.",
+      "resetToDefaults": "초기화"
+    },
+    "snackbar": {
+      "resetComplete": "모델 설정이 초기화되었습니다."
+    },
+    "alert": {
+      "resetConfirm": "정말로 모델 설정을 초기화하시겠습니까?"
     }
   }
 }

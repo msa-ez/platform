@@ -503,14 +503,12 @@
   },
   "aiModelSetting": {
     "modelType": {
-      "complexModel": "Complex Task Model",
-      "standardModel": "Standard Task Model",
-      "simpleModel": "Simple Task Model"
-    }, 
+      "thinkingModel": "Reasoning Model",
+      "normalModel": "Normal Model"
+    },
     "modelTypeDescription": {
-      "complexModel": "Utilizing LLMs for complex problems that are challenging for typical LLMs: Event storming policy generation, etc.",
-      "standardModel": "Using for most general tasks: User requirement analysis, aggregate draft creation, etc.",
-      "simpleModel": "Applying to simple tasks with clear inputs/outputs: Recovering malformed JSON data, etc."
+      "thinkingModel": "Used for tasks requiring complex reasoning: generating event storming, creating aggregate drafts, etc.",
+      "normalModel": "Used for simple tasks with clear input/output: recovering malformed JSON data, etc."
     },
     "apiKeyHint": {
       "api_key_openai": "Get your API key from the OpenAI dashboard",
@@ -523,6 +521,25 @@
     "apiKeyTest": {
       "success": "{vendor} connection test successful!",
       "fail": "{vendor} connection test failed. Please check your API key."
+    },
+    "template": {
+      "aiModelSettings": "AI Model Settings",
+      "selectModel": "Model Selection",
+      "apiKeySettings": "API Key Settings",
+      "connectionTest": "Connection Test",
+      "vendorInputTip": "Once you select a model, the required API key will be displayed",
+      "confirm": "Confirm",
+      "close": "Close",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "cannotDisableAll": "At least one model must remain enabled.",
+      "resetToDefaults": "Reset to Defaults"
+    },
+    "snackbar": {
+      "resetComplete": "Model settings have been reset."
+    },
+    "alert": {
+      "resetConfirm": "Are you sure you want to reset model settings?"
     }
   }
 }

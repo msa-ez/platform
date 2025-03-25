@@ -142,13 +142,13 @@ export default {
                 return;
             }
 
-
             return aggregateDraftScenarios[selectedScenarioName]
         },
 
         __stopStoryGenerating() {
-            this.generator.stop();
-            this.state.startTemplateGenerate = false
+            this.isAnalizeResultSetted = true
+            if(this.generator && this.generator.stop) this.generator.stop();
+            if(this.state) this.state.startTemplateGenerate = false
             this.done = true;
         }
     }

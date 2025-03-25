@@ -3,7 +3,7 @@ const JsonAIGenerator = require("./JsonAIGenerator");
 class DevideBoundedContextGenerator extends JsonAIGenerator {
 
     constructor(client){
-        super(client,{},"simpleModel");
+        super(client, {}, "normalModel");
 
         this.generatorName = 'DevideBoundedContextGenerator'
     }

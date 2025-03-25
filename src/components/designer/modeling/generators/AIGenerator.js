@@ -37,14 +37,11 @@ class AIGenerator {
         this.apiClientParams.modelType = modelType
         this.changeApiClient()
     }
-    changeToComplexModel(){
-        this.changeModel("complexModel")
+    changeToThinkingModel(){
+        this.changeModel("thinkingModel")
     }
-    changeToStandardModel(){
-        this.changeModel("standardModel")
-    }
-    changeToSimpleModel(){
-        this.changeModel("simpleModel")
+    changeToNormalModel(){
+        this.changeModel("normalModel")
     }
     
 
