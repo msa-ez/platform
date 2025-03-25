@@ -542,7 +542,7 @@
       "resetComplete": "모델 설정이 초기화되었습니다."
     },
     "alert": {
-      "resetConfirm": "정말로 모델 설정을 초기화하시겠습니까?"
+      "resetConfirm": "모델 설정을 초기화하시겠습니까?"
     }
   }
 }
