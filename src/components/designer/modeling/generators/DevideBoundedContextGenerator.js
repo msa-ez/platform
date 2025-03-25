@@ -24,6 +24,8 @@ ${this.client.input['generateOption']['numberOfBCs']}
 Additional requirements:
 ${this.client.input['generateOption']['additionalOptions']}
 
+${this.getPBCPrompt()}
+
 Requirements:
 ${this.summaryRequirements()}
 
@@ -69,7 +71,7 @@ The format must be as follows:
             "importance": "Core Domain" || "Supporting Domain" || "Generic Domain",
             "complexity": "score of complexity", // 0.0 ~ 1.0
             "differentiation": "score of differentiation", // 0.0 ~ 1.0
-            "implementationStrategy": "Event Sourcing" || "Rich Domain Model" || "Transaction Script" || "Active Record",
+            "implementationStrategy": "Event Sourcing" || "Rich Domain Model" || "Transaction Script" || "Active Record" || "PBC: (pbc-name)",
             "aggregates":[ // Aggregates that can be extracted from this Bounded Context.
                 {
                     "name":"name of Aggregate in PascalCase",
@@ -146,6 +148,22 @@ Should be used all of the Bounded Contexts.
         }else{
             return `"requirements":[ ] // must be empty`;
         }
+    }
+
+    getPBCPrompt(){
+        return `
+IMPORTANT - PBC MATCHING RULE:
+Before creating any bounded context, first check if the functionality already exists in the available PBCs.
+If a functionality matches with any available PBC, you MUST:
+1. Create it as a Generic Domain bounded context
+2. Set its implementation strategy to "PBC: [pbc-name]"
+3. Set both complexity and differentiation scores to 0.0-0.3 range
+This rule takes precedence over all other domain classification rules.
+
+Available Pre-Built Components (PBCs):
+The following PBCs are available for implementation strategies:
+${JSON.stringify(this.client.input['requirements']['pbcInfo'], null, 2)}
+        `
     }
 
     ollamaPrompt(){
