@@ -311,29 +311,14 @@ Rules:
      *   throw new Error("입력 데이터가 토큰 제한을 초과했습니다.");
      * }
      * 
-     * @example 토큰 제한 초과시 데이터 분할 처리
-     * // 대용량 데이터를 여러 번에 나누어 처리
-     * if (!generator.isCreatedPromptWithinTokenLimit()) {
-     *   // 1. 데이터를 더 작은 단위로 분할
-     *   const chunks = TokenCounter.splitByTokenLimit(inputData, this.modelInfo.requestModelName, this.modelInfo.inputTokenLimit);
-     *   
-     *   // 2. 각 청크별로 개별 처리
-     *   for (const chunk of chunks) {
-     *     generator.client.input = chunk;
-     *     if (generator.isCreatedPromptWithinTokenLimit()) {
-     *       await generator.generate();
-     *     }
-     *   }
-     * }
-     * 
      * @note
      * - TokenCounter.isWithinTokenLimit()를 내부적으로 사용하여 토큰 수를 계산합니다.
      * - createPrompt() 메서드로 생성된 전체 프롬프트를 기준으로 검사합니다.
      * - 토큰 제한 초과시 데이터를 분할하거나 축소하는 전략을 고려해야 합니다.
      * - 모델의 컨텍스트 크기에 따라 제한이 다르므로 사용 중인 모델의 특성을 고려해야 합니다.
      */
-    isCreatedPromptWithinTokenLimit(){
-        return TokenCounter.isWithinTokenLimit(
+    async isCreatedPromptWithinTokenLimit(){
+        return await TokenCounter.isWithinTokenLimit(
             this._extractAllTextFromInputPrompt(), this.modelInfo.requestModelName, this.modelInfo.inputTokenLimit
         )
     }
@@ -375,9 +360,9 @@ Rules:
      * - TokenCounter 유틸리티의 정확도에 따라 실제 토큰 수와 차이가 있을 수 있습니다.
      * - 대용량 입력 처리 전에 토큰 제한 검증용으로 활용하면 효과적입니다.
      */
-    getCreatedPromptTokenCount(tempInputParams={}){
+    async getCreatedPromptTokenCount(tempInputParams={}){
         if (Object.keys(tempInputParams).length === 0) {
-            return TokenCounter.getTokenCount(this._extractAllTextFromInputPrompt(), this.modelInfo.requestModelName);
+            return await TokenCounter.getTokenCount(this._extractAllTextFromInputPrompt(), this.modelInfo.requestModelName);
         }
 
         const changedValues = {};
@@ -387,7 +372,7 @@ Rules:
         });
 
         try {
-            return TokenCounter.getTokenCount(this._extractAllTextFromInputPrompt(), this.modelInfo.requestModelName);
+            return await TokenCounter.getTokenCount(this._extractAllTextFromInputPrompt(), this.modelInfo.requestModelName);
         } finally {
             Object.keys(changedValues).forEach(key => {
                 if (changedValues[key] === undefined) {
@@ -428,8 +413,8 @@ Rules:
      * - 대규모 입력 데이터 처리 전에 미리 확인하여 토큰 초과를 방지하는 것이 좋습니다
      * - getCreatedPromptTokenCount()와 함께 사용하여 더 정확한 토큰 관리가 가능합니다
      */
-    getCreatePromptLeftTokenCount(tempInputParams={}){
-        return this.modelInfo.inputTokenLimit - this.getCreatedPromptTokenCount(tempInputParams)
+    async getCreatePromptLeftTokenCount(tempInputParams={}){
+        return this.modelInfo.inputTokenLimit - (await this.getCreatedPromptTokenCount(tempInputParams))
     }
 
     _extractAllTextFromInputPrompt() {

@@ -1,7 +1,15 @@
-/**
- * @note encoderName: cl100k_base | o200k_base | p50k_base | p50k_edit | r50k_base
- */
+let encoderCache = new Map();
 export const getEncoder = (encoderName) => {
-    const encoder = require(`./${encoderName}.legacy`);
-    return encoder;
+    if (encoderCache.has(encoderName)) {
+        return encoderCache.get(encoderName);
+    }
+
+    try {
+        const encoder = require(`./${encoderName}.legacy`);
+        encoderCache.set(encoderName, encoder);
+        return encoder;
+    } catch (error) {
+        console.error(`Failed to load encoder ${encoderName}:`, error);
+        throw error;
+    }
 }

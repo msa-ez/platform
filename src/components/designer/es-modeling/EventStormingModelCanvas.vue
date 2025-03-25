@@ -271,7 +271,7 @@
                                     </v-tooltip>
                                 </v-row>
                             </div>
-                            <div style="margin: 0 auto">
+                            <div class="project-name-all-btn-box">
                                 <slot name="top">
                                     <v-row>
                                         <v-row
@@ -282,7 +282,7 @@
                                             background-color: transparent;"
                                         >
                                             <div class="eventstorming-mobile-home-button">
-                                                <router-link to="/">
+                                                <router-link class="model-canvas-mobile-home-button" to="/">
                                                     <v-icon
                                                         style="height: 24px; margin-top: 38px; margin-right: 5px;"
                                                         color="primary"
@@ -683,13 +683,14 @@
                                                             <div>
                                                                 <v-btn v-on="on"
                                                                         v-bind="attrs"
-                                                                        class="gs-model-z-index-1"
+                                                                        class="gs-model-z-index-1 es-hide-monitoring-btn"
                                                                         text
                                                                         style="margin-right: 5px;"
                                                                         :disabled="!initLoad"
                                                                         @click="toggleMonitoringDialog()"
                                                                 >
-                                                                    <v-icon>mdi-monitor</v-icon>MONITORING
+                                                                    <v-icon>mdi-monitor</v-icon>
+                                                                    <div class="es-hide-monitoring">MONITORING</div>
                                                                 </v-btn>
                                                             </div>
                                                         </template>
@@ -703,56 +704,36 @@
                                             class="mobile-action-btn"
                                             justify="center"
                                             align="start"
-                                            style="
-                                            display: flex;
-                                            margin-right: 50px;"
+                                            style="display: flex;"
                                         >
-                                            <v-menu
-                                                class="pa-2"
-                                                open-on-hover
-                                                offset-y
-                                                left
-                                            >
+                                            <v-menu open-on-hover offset-y>
                                                 <template
                                                     v-slot:activator="{ on }"
                                                 >
                                                     <div>
-                                                        <v-btn class="mobile-btn"
+                                                        <v-btn
+                                                            color="primary"
                                                             text
-                                                            :disabled="disableBtn"
-                                                            @click="openEmbeddedCanvas('Kubernetes')"
-                                                            style="margin-top: 2px;"
+                                                            class="mobile-btn cp-es-code-viewer-btn"
+                                                            @click="openCodeViewer()"
+                                                            v-on="on"
+                                                            small
                                                         >
-                                                            <v-icon>mdi-kubernetes</v-icon>
+                                                            <v-icon>{{icon.code}}</v-icon>
                                                         </v-btn>
                                                     </div>
                                                 </template>
+                                                <v-list>
+                                                    <v-list-item
+                                                        v-for="(item, index) in codeItems"
+                                                        :key="index"
+                                                        @click="functionSelect(item.title,index)"
+                                                    >
+                                                        <v-list-item-title>{{ item.title }}</v-list-item-title>
+                                                    </v-list-item>
+                                                </v-list>
                                             </v-menu>
 
-                                            <v-menu
-                                                    text
-                                                    v-if="isServerModel && !isClazzModeling"
-                                                    class="pa-2"
-                                                    open-on-hover
-                                                    offset-y
-                                            >
-                                                <template
-                                                        v-slot:activator="{ on }"
-                                                >
-                                                    <div>
-                                                        <v-btn
-                                                                dark
-                                                                @click="showReplay()"
-                                                                small
-                                                                class="mobile-btn"
-                                                                :disabled="disableBtn"
-                                                                text
-                                                        >
-                                                            <v-icon>mdi-restart</v-icon>
-                                                        </v-btn>
-                                                    </div>
-                                                </template>
-                                            </v-menu>
                                             <v-menu open-on-hover offset-y>
                                                 <template
                                                     v-slot:activator="{ on }"
@@ -761,7 +742,6 @@
                                                         text
                                                         v-if="isReadOnlyModel &&!projectVersion"
                                                         :color="joinRequestedText.show? 'primary': 'success'"
-                                                        dark
                                                         @click="requestInviteUser()"
                                                         small
                                                     >
@@ -805,47 +785,51 @@
                                                     </v-list-item>
                                                 </v-list>
                                             </v-menu>
+
                                             <v-menu
-                                                    v-if="isOwnModel && isServerModel && !isReadOnlyModel"
+                                                class="pa-2"
+                                                open-on-hover
+                                                offset-y
+                                                left
+                                            >
+                                                <template
+                                                    v-slot:activator="{ on }"
+                                                >
+                                                    <div>
+                                                        <v-btn class="mobile-btn"
+                                                            text
+                                                            small
+                                                            :disabled="disableBtn"
+                                                            @click="openEmbeddedCanvas('Kubernetes')"
+                                                        >
+                                                            <v-icon>mdi-kubernetes</v-icon>
+                                                        </v-btn>
+                                                    </div>
+                                                </template>
+                                            </v-menu>
+
+                                            <v-menu
+                                                    text
+                                                    v-if="isServerModel && !isClazzModeling"
                                                     class="pa-2"
-                                                    offset-y
                                                     open-on-hover
+                                                    offset-y
                                             >
                                                 <template
                                                         v-slot:activator="{ on }"
                                                 >
                                                     <div>
                                                         <v-btn
-                                                                text
-                                                                dark
-                                                                class="mobile-btn cp-es-share-btn"
-                                                                v-on="on"
-                                                                @click="openInviteUsers()"
+                                                                @click="showReplay()"
                                                                 small
+                                                                class="mobile-btn"
+                                                                :disabled="disableBtn"
+                                                                text
                                                         >
-                                                            <v-icon>{{ icon.share }}</v-icon>
-                                                            <v-avatar
-                                                                v-if="requestCount"
-                                                                size="25"
-                                                                color="red"
-                                                                style="margin-left: 2px;"
-                                                            >
-                                                                {{ requestCount }}
-                                                            </v-avatar>
+                                                            <v-icon>mdi-restart</v-icon>
                                                         </v-btn>
                                                     </div>
                                                 </template>
-                                                <v-list>
-                                                    <v-list-item
-                                                        v-for="( item, index ) in shareItems"
-                                                        :key="index"
-                                                        @click="functionSelect(item.title,index)"
-                                                    >
-                                                        <v-list-item-title
-                                                        >{{ item.title }}
-                                                        </v-list-item-title>
-                                                    </v-list-item>
-                                                </v-list>
                                             </v-menu>
                                             <v-menu
                                                 class="pa-2"
@@ -861,18 +845,17 @@
                                                             class="gs-model-z-index-1 mobile-btn"
                                                             v-if="isHexagonal"
                                                             text
-                                                            style="margin-top:2px;"
+                                                            small
                                                             @click="generateModel()"
                                                             :disabled="disableBtn"
                                                             v-on="on"
                                                         >
                                                             <v-icon>mdi-hexagon-outline</v-icon>
                                                         </v-btn>
-                                                        <v-btn
+                                                        <v-btn v-else
                                                             class="gs-model-z-index-1 mobile-btn"
-                                                            v-else
                                                             text
-                                                            style="margin-top:2px;"
+                                                            small
                                                             @click="generateHexagonal()"
                                                             :disabled="disableBtn"
                                                             v-on="on"
@@ -894,27 +877,35 @@
                                                 </v-list>
                                             </v-menu>
 
-                                            <v-menu open-on-hover offset-y>
-                                                <template
-                                                    v-slot:activator="{ on }"
-                                                >
+                                            <v-menu
+                                                    v-if="isOwnModel && isServerModel && !isReadOnlyModel"
+                                                    class="pa-2"
+                                                    offset-y
+                                                    open-on-hover
+                                            >
+                                                <template v-slot:activator="{ on }">
                                                     <div>
                                                         <v-btn
-                                                            color="primary"
                                                             text
-                                                            class="mobile-btn cp-es-code-viewer-btn"
-                                                            @click="openCodeViewer()"
+                                                            class="mobile-btn cp-es-share-btn"
                                                             v-on="on"
+                                                            @click="openInviteUsers()"
                                                             small
-                                                            style="margin-left:10px;"
                                                         >
-                                                            <v-icon>{{icon.code}}</v-icon>
+                                                            <v-icon>{{ icon.share }}</v-icon>
+                                                            <v-avatar
+                                                                v-if="requestCount"
+                                                                size="25"
+                                                                color="red"
+                                                                style="margin-left: 2px;"
+                                                            >
+                                                                {{ requestCount }}
+                                                            </v-avatar>
                                                         </v-btn>
                                                     </div>
                                                 </template>
                                                 <v-list>
-                                                    <v-list-item
-                                                        v-for="(item, index) in codeItems"
+                                                    <v-list-item v-for="( item, index ) in shareItems"
                                                         :key="index"
                                                         @click="functionSelect(item.title,index)"
                                                     >
@@ -929,6 +920,7 @@
                                                         <v-btn v-on="on"
                                                                 class="gs-model-z-index-1 mobile-btn"
                                                                 text
+                                                                small
                                                                 :disabled="!initLoad"
                                                                 @click="toggleMonitoringDialog()"
                                                         >
@@ -1212,7 +1204,7 @@
                     ></AutoModelingDialog> -->
                     <!-- @close="openAiMenu=false" -->
 
-                    <GeneratorUI
+                    <GeneratorUI class="event-storming-generator"
                             key="eventGenerator"
                             v-if="generatorStep === 'event' && projectId"
                             :projectId="projectId"
@@ -1292,9 +1284,7 @@
                     >
                         <v-card>
                             <v-toolbar dark color="primary">
-                                <v-toolbar-title
-                                >Manage Clusters</v-toolbar-title
-                                >
+                                <v-toolbar-title>Manage Clusters</v-toolbar-title>
                                 <v-spacer></v-spacer>
                                 <v-toolbar-items>
                                     <v-btn
@@ -8357,6 +8347,9 @@
 </script>
 
 <style scoped lang="scss" rel="stylesheet/scss">
+    .project-name-all-btn-box{
+        margin:0 auto;
+    }
     .eventstorming-mobile-home-button {
         display: none;
     }
@@ -8635,7 +8628,8 @@
     .es-hide-join,
     .es-hide-save,
     .es-hide-share,
-    .es-hide-code {
+    .es-hide-code,
+    .es-hide-monitoring {
         display: block;
     }
 
@@ -8668,7 +8662,8 @@
         .es-hide-join,
         .es-hide-save,
         .es-hide-share,
-        .es-hide-code {
+        .es-hide-code,
+        .es-hide-monitoring {
             display: none;
         }
         .es-hide-k8s-btn,
@@ -8678,6 +8673,7 @@
         .es-hide-join-btn,
         .es-hide-save-btn,
         .es-hide-share-btn,
+        .es-hide-monitoring-btn,
         .es-hide-code-btn {
             min-width: 10px !important;
             max-width: 10px !important;
@@ -8687,16 +8683,16 @@
     @media only screen and (max-width: 1020px) {
         .es-is-mobile {
             display: block !important;
-            margin-top: 100px;
-            min-width: 100%;
-            margin-left: 10%;
+            margin-top: 85px;
         }
         .es-is-not-mobile {
             display: none !important;
         }
         .es-is-mobile-project-name {
             position: absolute !important;
-            right: 120px !important;
+        }
+        .mobile-btn {
+            z-index: 1 !important;
         }
     }
     .mobile-first-sticker-tools {
@@ -8706,7 +8702,7 @@
         display: none;
     }
 
-    @media only screen and (max-width: 600px) {
+    @media only screen and (max-width: 800px) {
         .es-modeling-project-name {
             margin: 20px -60px 0px 5px !important;
             max-width: 110px !important;
@@ -8714,14 +8710,15 @@
 
         .es-is-mobile-project-name {
             position: absolute !important;
-            left: 10px !important;
-        }
-
-        .gs-modeling-undo-redo{
-            margin: 5px 0px 0px 15px !important;
+            left: 270px !important;
         }
         .tools {
             display: none;
+        }
+        
+        .es-is-mobile {
+            display: block !important;
+            min-width: 100%;
         }
 
         .mobile-first-sticker-tools {
@@ -8744,9 +8741,29 @@
             overflow: hidden;
             transform: translate(-50%, -50%);
         }
+    }
+
+    @media only screen and (max-width: 600px) {
         .eventstorming-mobile-home-button {
             display: block;
-            z-index:1;
+            z-index: 1;
+        }
+
+        .project-name-all-btn-box{
+            margin: 0;
+        }
+
+        .es-is-mobile-project-name {
+            position: absolute !important;
+            left: 145px !important;
+        }
+        .es-is-mobile {
+            margin-top: 92px;
+            margin-left: 6px;
+        }
+        .es-modeling-project-name {
+            margin: 20px -60px 0px 5px !important;
+            max-width: 90px !important;
         }
     }
 </style>

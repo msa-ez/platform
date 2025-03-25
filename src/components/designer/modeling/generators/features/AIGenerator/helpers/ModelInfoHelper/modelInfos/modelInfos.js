@@ -49,7 +49,9 @@ const defaultModelInfos = {
     isInferenceModel: false,
     requestArgs: {},
     transforms: {},
-    useThinkParseStrategy: false // True인 경우, "<think>" 태그로 시작하는 응답을 파싱
+    useThinkParseStrategy: false, // True인 경우, "<think>" 태그로 시작하는 응답을 파싱
+    defaultTokenizerWeight: 1.00, // 토큰 카운팅 로직 실패시에 사용하는 OpenAI 토큰 카운팅의 가중치치 
+    defaultEncoder: "cl100k_base"
 }
 
 Object.values(modelInfos).forEach((modelInfo) => {

@@ -164,8 +164,8 @@ class CommandGWTGeneratorByFunctions extends FormattedJSONAIGenerator{
             ]
         }
         inputParams.subjectText = `Creating GWTs for ${inputParams.targetAggregateNames.join(", ")} Aggregates`
-        if(!this.isCreatedPromptWithinTokenLimit()) {
-            const leftTokenCount = this.getCreatePromptLeftTokenCount({summarizedESValue: {}})
+        if(!(await this.isCreatedPromptWithinTokenLimit())) {
+            const leftTokenCount = await this.getCreatePromptLeftTokenCount({summarizedESValue: {}})
             if(leftTokenCount <= 100)
                 throw new Error("[!] The size of the draft being passed is too large to process.")
 

@@ -373,6 +373,21 @@ import { group } from "d3";
 
         },
         methods: {
+            updateConnectedStickers(connectedRelations) {
+                const highlightingEnabled = localStorage.getItem('highlightingEnabled') === 'true';
+                if (!highlightingEnabled) return;
+
+                connectedRelations.forEach(relation => {
+                    if(!relation) return;
+                    if(!relation.to) return;
+                    const targetSticker = document.getElementById(relation.to);
+                    if(!targetSticker) return;
+                    const pathElement = targetSticker.querySelector('path') || 
+                            Array.from(targetSticker.childNodes).find(node => node.tagName === 'path');
+                    if(!pathElement) return;
+                    pathElement.setAttribute('stroke', 'red');
+                });
+            },
             setElementCanvas(){
                 var me = this
                 try{
@@ -690,6 +705,7 @@ import { group } from "d3";
                     // 스티커를 클릭했을 때 연결된 모든 선의 정보를 이벤트 버스를 통해 전송
                     // 관련 코드 classRelation.vue 검색 -> if (!this.isProgress && this.isHighlighted)
                     me.$EventBus.$emit('selectedStickerConnections', connectedRelations);
+                    me.updateConnectedStickers(connectedRelations)
                 }
 
                 if (me.value) {

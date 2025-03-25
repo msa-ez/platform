@@ -51,7 +51,7 @@ export default {
 }
 </script>
 <style>
-@media only screen and (max-width:600px) {
+@media only screen and (max-width:700px) {
     .is-mobile {
         display:none;
     }

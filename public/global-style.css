@@ -71,8 +71,6 @@
 .gs-modeling-undo-redo {
     position:absolute;
     margin:12px 0 0 160px;
-    min-width:170px !important; 
-    max-width:170px !important;
 }
 
 .gs-info-bg {
@@ -625,6 +623,18 @@ code[class*=language-]:nth-child(1) {
     margin:0px -90px 0px -20px;
 }
 
+.v-toolbar__content {
+    height:64px !important;
+}
+.v-main {
+    padding: 64px 0px 0px !important;
+}
+
+.modeling-btn-box {
+    min-width:100%;
+    height:64px;
+}
+
 .gs-main-page-img-box {
     padding-right:120px;
 }
@@ -760,6 +770,14 @@ code[class*=language-]:nth-child(1) {
     font-weight: 400;
     color: rgb(116 115 114)!important;
 }
+.model-canvas-mobile-home-button {
+    display: none;
+}
+
+.modeling-home-project-box {
+    display: flex;
+    align-items: center;
+}
 
 .mouse-cursor {
     position: absolute;
@@ -879,7 +897,11 @@ code[class*=language-]:nth-child(1) {
     display: none !important;
 }
 
-
+.generator-ui-btn {
+    position: absolute !important;
+    bottom: 50px !important;
+    right: 100px !important;
+}
 
 .button-row {
     display: flex;
@@ -1050,6 +1072,13 @@ code[class*=language-]:nth-child(1) {
     }
 }
 
+@media only screen and (max-width:930px) {
+    .generator-ui-btn {
+        width: 40px !important;
+        height: 40px !important;
+    }
+}
+
 @media only screen and (max-width:897px) {
     .gs-main-page-top-box-mobile {
         min-height:460px;
@@ -1085,23 +1114,44 @@ code[class*=language-]:nth-child(1) {
 }
 
 
-@media only screen and (max-width:600px){
+@media only screen and (max-width:800px){
+    .gs-main-page-top-box-mobile {
+        min-height:320px;
+    }
+
+    .button-row {
+        flex-direction: column;
+        align-items: flex-end;
+    }
+    .auto-modeling-btn {
+        margin-bottom: 10px;
+    }
+    
+}
+
+@media only screen and (max-width:700px){
+    .modeling-home-project-box {
+        max-width: 140px;
+        position: absolute;
+        left: 150px;
+    }
+    .model-canvas-mobile-home-button {
+        display: block;
+    }
     .gs-main-page-top-box-mobile {
         min-height:320px;
     }
     .gs-window-width-610-under-zoom {
         position:fixed !important;
-        left: 180px !important;
+        left: 10px !important;
         top: 15px !important;
         margin-left:0px !important;
-        min-width:170px !important;
-        max-width:170px !important;
     }
     .gs-modeling-undo-redo {
         position: absolute !important;
-        left: 195px !important;
+        left: 50px !important;
         top: 10px !important;
-        margin:10px 0px 0px 0px !important;
+        margin: 0px !important;
     }
 
     .button-row {
