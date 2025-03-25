@@ -282,7 +282,7 @@
                                             background-color: transparent;"
                                         >
                                             <div class="eventstorming-mobile-home-button">
-                                                <router-link to="/">
+                                                <router-link class="model-canvas-mobile-home-button" to="/">
                                                     <v-icon
                                                         style="height: 24px; margin-top: 38px; margin-right: 5px;"
                                                         color="primary"
@@ -1204,7 +1204,7 @@
                     ></AutoModelingDialog> -->
                     <!-- @close="openAiMenu=false" -->
 
-                    <GeneratorUI
+                    <GeneratorUI class="event-storming-generator"
                             key="eventGenerator"
                             v-if="generatorStep === 'event' && projectId"
                             :projectId="projectId"

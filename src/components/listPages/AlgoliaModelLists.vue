@@ -2165,7 +2165,6 @@
         .main-nav-tabs-box {
             max-width: 450px;
             left: 46%;
-            margin-top: -70px;
         }
 
     }

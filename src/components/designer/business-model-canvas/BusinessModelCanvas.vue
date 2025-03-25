@@ -1969,9 +1969,6 @@
         top: 100px;
         text-align: center;
     }
-    .business-model-canvas-mobile-home-button {
-        display: none;
-    }
     .business-model-canvas-top-menu {
         position: absolute;
         left: 50%;
@@ -2016,10 +2013,6 @@
         }
         .strategyzer-link {
             left:35px;
-        }
-        .business-model-canvas-mobile-home-button {
-            display: block;
-            z-index:1;
         }
         .business-model-canvas-sticker {
             width: 330px !important;

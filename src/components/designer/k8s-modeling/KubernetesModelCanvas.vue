@@ -106,9 +106,9 @@
                             </v-flex>
 
                             <v-flex v-if="!embedded" style="min-width:100%;">
-                                <v-row class="ma-0 pa-0" justify="center" align="center" >
-                                    <div class="kube-home-project-name delete-input-detail">
-                                        <router-link to="/">
+                                <v-row class="ma-0 pa-0 mt-2 modeling-btn-box" justify="center" align="center" >
+                                    <div class="delete-input-detail gs-model-z-index-1 modeling-home-project-box mr-1">
+                                        <router-link class="model-canvas-mobile-home-button" to="/">
                                             <v-icon>mdi-home</v-icon>
                                         </router-link>
                                         <v-text-field
@@ -116,7 +116,7 @@
                                             v-model="projectName"
                                             :disabled="isReadOnly"
                                             dense
-                                            style="margin-left: 10px;"
+                                            style="margin-left: 10px; margin-right: 10px;"
                                         ></v-text-field>
                                     </div>
                                     <!-- 웹페이지 버튼들 -->
@@ -129,7 +129,6 @@
                                         >
                                             <template v-slot:activator="{ attrs, on }">
                                                 <v-btn text
-                                                        style="margin-right: 5px; margin-top: 15px;"
                                                         class="k8s-hide-cluster-btn"
                                                         v-bind="attrs"
                                                         v-on="on"
@@ -163,7 +162,6 @@
                                         >
                                             <template v-slot:activator="{ attrs, on }">
                                                 <v-btn text
-                                                        style="margin-right: 5px; margin-top: 15px;"
                                                         class="k8s-hide-reverse-btn"
                                                         v-bind="attrs"
                                                         v-on="on"
@@ -192,7 +190,6 @@
                                             <template v-slot:activator="{ on }">
                                                 <v-btn class="k8s-hide-gitops-btn"
                                                         text
-                                                        style="margin-right: 5px;margin-top: 15px;"
                                                         @click="openCodeViewer()"
                                                         v-on="on"
                                                 >
@@ -224,7 +221,6 @@
                                                 <v-btn class="k8s-hide-fork-btn"
                                                         text
                                                         v-if="isReadOnlyModel"
-                                                        style="margin-right: 5px; margin-top: 15px;"
                                                         @click="saveComposition('fork')"
                                                 >
                                                     <v-icon>{{icon.fork}}</v-icon>
@@ -233,7 +229,6 @@
                                                 <v-btn class="k8s-hide-save-btn"
                                                         text
                                                         v-else
-                                                        style="margin-right: 5px; margin-top: 15px;"
                                                         @click="saveComposition('save')"
                                                         v-on="on"
                                                 >
@@ -262,7 +257,6 @@
                                             <template v-slot:activator="{ on }">
                                                 <v-btn class="k8s-hide-share-btn"
                                                         text
-                                                        style="margin-right: 5px; margin-top: 15px;"
                                                         v-on="on"
                                                         @click="openInviteUsers()"
                                                 >
@@ -278,7 +272,6 @@
                                         >
                                             <template v-slot:activator="{ on }">
                                                 <v-btn class="k8s-hide-code-btn"
-                                                        style="margin-right: 5px;margin-top: 15px;"
                                                         @click="openCodeViewer()"
                                                         v-on="on"
                                                         color="primary"
@@ -305,7 +298,6 @@
                                             <template v-slot:activator="{ on }">
                                                 <v-btn
                                                     class="k8s-hide-code-btn"
-                                                    style="margin-right: 5px;margin-top: 15px;"
                                                     v-on="on"
                                                     :color="joinRequestedText.show ? 'primary': 'success'"
                                                     @click="requestInviteUser()"
@@ -384,7 +376,6 @@
                                                 </v-list>
                                             </v-menu>
                                             <!--                                    <v-btn-->
-                                            <!--                                            style="margin-right: 5px; margin-top: 15px;"-->
                                             <!--                                            color="cyan" dark-->
                                             <!--                                            @click="clusterDialog = true">-->
                                             <!--                                        <v-icon>settings</v-icon>-->
@@ -397,7 +388,6 @@
                                             >
                                                 <template v-slot:activator="{ attrs, on }">
                                                     <v-btn
-                                                        style="margin-right: 5px; margin-top: 15px;"
                                                         v-bind="attrs"
                                                         v-on="on"
                                                         small
@@ -424,7 +414,6 @@
                                                     open-on-hover offset-y>
                                                 <template v-slot:activator="{ on }">
                                                     <v-btn
-                                                            style="margin-right: 5px;margin-top: 15px;"
                                                             color="primary"
                                                             @click="openCodeViewer()"
                                                             v-on="on"
@@ -448,7 +437,6 @@
                                                     open-on-hover offset-y>
                                                 <template v-slot:activator="{ on }">
                                                     <v-btn
-                                                            style="margin-right: 5px;margin-top: 15px;"
                                                             text
                                                             @click="openCodeViewer()"
                                                             v-on="on"
@@ -481,7 +469,6 @@
                                                 <template v-slot:activator="{ on }">
                                                     <v-btn
                                                             v-if="isReadOnlyModel"
-                                                            style="margin-right: 5px; margin-top: 15px;"
                                                             @click="saveComposition('fork')"
                                                             small
                                                             text
@@ -491,7 +478,6 @@
                                                     </v-btn>
                                                     <v-btn
                                                             v-else
-                                                            style="margin-right: 5px; margin-top: 15px;"
                                                             @click="saveComposition('save')"
                                                             v-on="on"
                                                             small
@@ -524,7 +510,6 @@
                                                 <template v-slot:activator="{ on }">
                                                     <v-btn
                                                             text
-                                                            style="margin-right: 5px; margin-top: 15px;"
                                                             v-on="on"
                                                             @click="openInviteUsers()"
                                                     >
@@ -5870,15 +5855,6 @@ ${error}
 </script>
 
 <style scoped lang="scss" rel="stylesheet/scss">
-    .kube-home-project-name {
-        z-index: 1;
-        display: flex;
-        align-items: center;
-        margin: 25px 0 0 0px !important;
-    }
-    .kubernetes-mobile-home-button {
-        display:none;
-    }
     .embedded {
         position: absolute;
         width: 100%;
@@ -6137,7 +6113,7 @@ ${error}
         display: none;
     }
 
-    @media only screen and (max-width:1330px){
+    @media only screen and (max-width:1300px){
         .k8s-hide-cluster,
         .k8s-hide-reverse,
         .k8s-hide-gitops,
@@ -6154,8 +6130,9 @@ ${error}
         .k8s-hide-code-btn,
         .k8s-hide-fork-btn,
         .k8s-hide-share-btn {
-            min-width:10px !important;
-            max-width:10px !important;
+            min-width:12px !important;
+            max-width:12px !important;
+            margin-right: 4px !important;
         }
     }
 
@@ -6165,21 +6142,6 @@ ${error}
         }
         .k8s-is-mobile {
             display: block !important;
-        }
-    }
-
-    @media only screen and (max-width:600px){ 
-        .kube-home-project-name {
-            max-width: 120px !important;
-            margin: 25px 0 0 70px !important;
-        }
-
-        .kubernetes-mobile-home-button {
-            display:block;
-            z-index: 1;
-            position: absolute;
-            top:3px;
-            left:25px;
         }
     }
     

@@ -14,10 +14,10 @@
             elevation="0"
             app
             fixed
-            style="left:0px; background-color:transparent; z-index:1;"
+            style="left:0px; background-color:transparent; z-index:1; height: 64px;"
         >
 
-            <v-toolbar-title style="width: 360px;" class="ml-0 pl-3">
+            <v-toolbar-title class="ml-0 pl-3" style="height: 64px;">
                 <v-layout>
                     <div v-if="inSideRounge">
                         <v-icon @click="moveToCourses()" style="font-size: 30px; margin-top: 20px; margin-right: 10px;">mdi-arrow-left</v-icon>
