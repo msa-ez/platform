@@ -24,9 +24,11 @@ jobs:
         
       - name: Install additional packages
         run: npm install firebase-tools@13.34.0
-      
+
+
       - name: Build project
         env:
+          NODE_OPTIONS: --openssl-legacy-provider 
           VUE_APP_FIREBASE_apiKey: ${{ secrets.VUE_APP_FIREBASE_APIKEY }}
           VUE_APP_FIREBASE_authDomain: ${{ secrets.VUE_APP_FIREBASE_AUTHDOMAIN }}
           VUE_APP_FIREBASE_databaseURL: ${{ secrets.VUE_APP_FIREBASE_DATABASEURL }}
