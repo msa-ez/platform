@@ -9,10 +9,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Install Node.js 14.21.3
+      - name: Install Node.js 18.17.0
         uses: actions/setup-node@v3
         with:
-          node-version: '14.21.3'
+          node-version: '18.17.0'
       
       - name: Install dependencies
         run: npm install
@@ -21,9 +21,6 @@ jobs:
         run: npm install zod@3.24.1
       - name: Install additional packages
         run: npm install zod-to-json-schema@3.9.4
-
-      - name: Install Node.js 18.17.0
-        run: nvm install 18.17.0
         
       - name: Install additional packages
         run: npm install firebase-tools@13.34.0
