@@ -9,25 +9,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Node.js 18.0.0
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18.0.0'
-
-      # 의존성 설치
-      - name: Install dependencies
-        run: npm install
-
-      # 추가 패키지 설치
-      - name: Install additional packages
-        run: npm install zod@3.24.1 zod-to-json-schema@3.9.4
-
-      # Node.js 16.13.0 설치
       - name: Install Node.js 16.13.0
         uses: actions/setup-node@v3
         with:
           node-version: '16.13.0'
 
+      # 의존성 설치
       - name: Install dependencies
         run: npm install
 
