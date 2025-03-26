@@ -9,6 +9,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install Node.js 18.17.0
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18.17.0'
+     
+     
+      - name: Install additional packages
+        run: npm install firebase-tools@13.34.0
+
       - name: Install Node.js 16.13.0
         uses: actions/setup-node@v3
         with:
