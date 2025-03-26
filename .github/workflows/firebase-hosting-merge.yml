@@ -26,9 +26,6 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Run custom install script
-        run: sh -c "node ./script/install"
-
       # 프로젝트 빌드
       - name: Build project
         env:
@@ -48,6 +45,11 @@ jobs:
           VUE_APP_IAMPORT_ImpKey: ${{ secrets.VUE_APP_IAMPORT_IMPKEY }}
           VUE_APP_TRANSLATE_KEY: ${{ secrets.VUE_APP_TRANSLATE_KEY }}
         run: npm run build
+
+      - name: Install Node.js 18.0.0
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18.0.0'
 
       # Firebase에 배포
       - name: Deploy to Firebase
