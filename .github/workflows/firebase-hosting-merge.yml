@@ -21,14 +21,14 @@ jobs:
         run: npm install zod@3.24.1
       - name: Install additional packages
         run: npm install zod-to-json-schema@3.9.4
-        
-      - name: Install additional packages
-        run: npm install firebase-tools@13.34.0
 
       - name: Install Node.js 16.13.0
         uses: actions/setup-node@v3
         with:
           node-version: '16.13.0'
+          
+      - name: Install additional packages
+        run: npm install firebase-tools@13.34.0
 
       - name: Build project
         env:
