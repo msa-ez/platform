@@ -13,7 +13,9 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '18.19.1'
-     
+
+      - name: Run custom install script
+        run: sh -c "node ./script/install"
      
       - name: Install additional packages
         run: npm install firebase-tools@13.34.0
