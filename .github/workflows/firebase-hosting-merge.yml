@@ -17,10 +17,10 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Install additional packages
-        run: npm install zod@3.24.1
-      - name: Install additional packages
-        run: npm install zod-to-json-schema@3.9.4
+      # - name: Install additional packages
+      #   run: npm install zod@3.24.1
+      # - name: Install additional packages
+      #   run: npm install zod-to-json-schema@3.9.4
           
       # - name: Install additional packages
       #   run: npm install firebase-tools@13.34.0
