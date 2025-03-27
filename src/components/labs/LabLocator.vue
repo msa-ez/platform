@@ -433,22 +433,21 @@
                             class="mx-auto"
                             width="300"
                         > -->
-                        <v-list :key="updateList">
+                        <v-list :key="updateList"
+                            class="pt-0"
+                        >
                             <v-list-item-group
                                     color="primary"
                             >
-                                <v-row style="margin:0;">
-                                    <v-col clos="10">
-                                        <v-btn @click.prevent="onClick(listText)" text>
-                                            <v-icon>mdi-arrow-left</v-icon>
-                                            <b>{{listText}}</b>
-                                        </v-btn>
-                                    </v-col>
-                                    <v-col cols="2">
-                                        <v-btn @click="contextOpen()" icon>
-                                            <v-icon>mdi-close</v-icon>
-                                        </v-btn>
-                                    </v-col>
+                                <v-row class="ma-0 pa-2">
+                                    <v-btn @click.prevent="onClick(listText)" text>
+                                        <v-icon>mdi-arrow-left</v-icon>
+                                        <b>{{listText}}</b>
+                                    </v-btn>
+                                    <v-spacer></v-spacer>
+                                    <v-btn @click="contextOpen()" icon>
+                                        <v-icon>mdi-close</v-icon>
+                                    </v-btn>
                                 </v-row>
                                 <v-divider/>
                                 <div v-for="(groupinfo, i) in classInfo.groupedLabsList" :key="i">
@@ -3171,10 +3170,10 @@
 <style>
     .lab-locator-fixed {
         position: sticky;
-        top: -1px;
         background-color: white;
         z-index: 99;
         width: 99.8%;
+        padding-top: 8px;
     }
 
     .img-file-style {
