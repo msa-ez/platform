@@ -1,17 +1,17 @@
 class NodeUtil {
-    static checkNodeVersion(_currentVersion, _requiredNodeVersion) {
+    static checkNodeVersion(currentVersion, requiredNodeVersion) {
         const sanitizeInputs = (inputs) => {
-          if(inputs._currentVersion.startsWith('v'))
-            inputs._currentVersion = inputs._currentVersion.slice(1);
+          if(inputs.currentVersion.startsWith('v'))
+            inputs.currentVersion = inputs.currentVersion.slice(1);
 
-          if(inputs._requiredNodeVersion.startsWith('v'))
-            inputs._requiredNodeVersion = inputs._requiredNodeVersion.slice(1);
+          if(inputs.requiredNodeVersion.startsWith('v'))
+            inputs.requiredNodeVersion = inputs.requiredNodeVersion.slice(1);
           
           return inputs;
         }
-        const sanitized = sanitizeInputs({ _currentVersion, _requiredNodeVersion });
-        const currentVersion = sanitized._currentVersion;
-        const requiredNodeVersion = sanitized._requiredNodeVersion;
+        const sanitized = sanitizeInputs({ currentVersion, requiredNodeVersion });
+        currentVersion = sanitized.currentVersion;
+        requiredNodeVersion = sanitized.requiredNodeVersion;
       
         
         const current = currentVersion.split('.').map(Number);

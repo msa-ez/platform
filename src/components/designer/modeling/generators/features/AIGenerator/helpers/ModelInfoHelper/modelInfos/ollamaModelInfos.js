@@ -23,7 +23,8 @@ export const ollamaModelInfos = {
         requestArgs: {
             temperature: 0.7
         },
-        useThinkParseStrategy: true
+        useThinkParseStrategy: true,
+        isInferenceModel: true
     },
 
     // 가능한 설정 옵션들: deepseek-r1:1.5b
@@ -37,6 +38,7 @@ export const ollamaModelInfos = {
         requestArgs: {
             temperature: 0.7
         },
-        useThinkParseStrategy: true
+        useThinkParseStrategy: true,
+        isInferenceModel: true
     }
 }

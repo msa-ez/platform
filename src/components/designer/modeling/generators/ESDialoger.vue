@@ -195,6 +195,9 @@
     import RequirementsValidationGenerator from './RequirementsValidationGenerator.js'
     import RecursiveRequirementsValidationGenerator from './RecursiveRequirementsValidationGenerator.js';
 
+    const axios = require('axios');
+    import YAML from 'js-yaml';
+
     import { 
         ESDialogerMessages,
         ESDialogerTestTerminal,
@@ -672,6 +675,21 @@
             var me = this;
             me.setUIStyle(me.uiStyle);
             me.init();
+
+            me.$app.try({
+                context: me,
+                async action(me){
+                    if (localStorage.getItem("gitAccessToken")) {
+                        me.gitAccessToken = localStorage.getItem("gitAccessToken");
+                        me.githubHeaders = {
+                            Authorization: "token " + me.gitAccessToken,
+                            Accept: "application/vnd.github+json",
+                        };
+                    }
+                }
+            })
+            
+            me.loadAllRepoList()
         },
         data() {
             return {
@@ -777,7 +795,12 @@
                 collectedMockDatas: {
                     aggregateDraftScenarios: {
                     }
-                }
+                },
+
+                githubHeaders: null,
+                gitAccessToken: null,
+                allRepoList: [],
+                pbcLists: []
             }
         },
         methods: {
@@ -1103,6 +1126,7 @@
 
                 if(this.requirementsValidationResult.analysisResult && this.userStoryChunksIndex == 0 && !this.isAnalizeResultSetted){
                     this.userStoryChunks.push(this.requirementsValidationResult.analysisResult)
+                    this.userStoryChunks.push(this.inputDDL)
                     this.isAnalizeResultSetted = true;
                 }
 
@@ -1133,6 +1157,10 @@
                     userStory: this.value.userStory,
                     summarizedResult: this.summarizedResult,
                     analysisResult: this.requirementsValidationResult.analysisResult,
+                    pbcInfo: this.pbcLists.map(pbc => ({
+                        name: pbc.name,
+                        description: pbc.description
+                    }))
                 };
 
                 this.generator.generate();
@@ -1381,9 +1409,101 @@
 
             getDisabledGenerateBtn(){
                 return this.processingState.isSummarizeStarted || this.processingState.isGeneratingBoundedContext || this.processingState.isStartMapping || this.processingState.isAnalizing
+            },
+
+            async loadAllRepoList(){
+                try {
+                    const cachedData = localStorage.getItem('repoListCache');
+                    const cacheTimestamp = localStorage.getItem('repoListCacheTimestamp');
+                    const CACHE_DURATION = 1000 * 60 * 60;
+
+                    if (cachedData && cacheTimestamp && (Date.now() - parseInt(cacheTimestamp)) < CACHE_DURATION) {
+                        console.log('Using cached repository list');
+                        this.allRepoList = JSON.parse(cachedData);
+                        if (this.allRepoList.length > 0) {
+                            this.loadPBCInfo();
+                            return;
+                        }
+                    }
+
+                    var count = 1;
+                    this.allRepoList = [];
+                    while(count != 'stop'){
+                        var repoList = await axios.get(`https://api.github.com/orgs/msa-ez/repos?sort=updated&page=${count}&per_page=100`, { headers: this.githubHeaders})
+                        if(repoList && repoList.data && repoList.data.length > 0) {
+                            this.allRepoList = this.allRepoList.concat(repoList.data);
+                            count++;
+                        } else {
+                            count = 'stop';
+                        }
+                    }
+
+                    localStorage.setItem('repoListCache', JSON.stringify(this.allRepoList));
+                    localStorage.setItem('repoListCacheTimestamp', Date.now().toString());
+
+                    if(this.allRepoList.length > 0) {
+                        this.loadPBCInfo();
+                    }
+                } catch (error) {
+                    console.error('Failed to load repo list:', error);
+                    const cachedData = localStorage.getItem('repoListCache');
+                    if (cachedData) {
+                        this.allRepoList = JSON.parse(cachedData);
+                        this.loadPBCInfo();
+                    }
+                }
+            },
+
+            async loadPBCInfo(){
+                var me = this;
+                me.pbcLists = [];
+
+                const cachedPBCData = localStorage.getItem('pbcListCache');
+                const cachePBCTimestamp = localStorage.getItem('pbcListCacheTimestamp');
+                const CACHE_DURATION = 1000 * 60 * 60;
+
+                if (cachedPBCData && cachePBCTimestamp && (Date.now() - parseInt(cachePBCTimestamp)) < CACHE_DURATION) {
+                    me.pbcLists = JSON.parse(cachedPBCData);
+                    me.isPBCLoding = false;
+                    return;
+                }
+
+                for (let idx = 0; idx < me.allRepoList.length; idx++) {
+                    const pbcInfo = me.allRepoList[idx];
+                    if (pbcInfo.name.includes("pbc-") && !pbcInfo.name.includes("_pbc")) {
+                        try {
+                            var info = await axios.get(`https://api.github.com/repos/msa-ez/${pbcInfo.name}/contents/.template/metadata.yml`, { headers: me.githubHeaders });
+                            var mainTrees = await axios.get(`https://api.github.com/repos/msa-ez/${pbcInfo.name}/git/trees/main`, { headers: me.githubHeaders })
+                            if (info && info.data.content) {
+                                const modelTree = mainTrees.data.tree.find(tree => tree.path === 'model.json');
+                                const openApiTree = mainTrees.data.tree.find(tree => tree.path === 'openapi.yaml');
+                                const instruction = await axios.get(`https://api.github.com/repos/msa-ez/${pbcInfo.name}/contents/.template/instruction.md`, { headers: me.githubHeaders });
+                            
+                                let obj = YAML.load(decodeURIComponent(escape(atob(info.data.content))));
+
+                                obj.instruction = instruction ? decodeURIComponent(escape(atob(instruction.data.content))) : null;
+                                obj.id = idx;
+                                obj.pbcPath = modelTree 
+                                    ? `https://github.com/msa-ez/${pbcInfo.name}/blob/main/model.json` 
+                                    : (openApiTree ? `https://github.com/msa-ez/${pbcInfo.name}/blob/main/openapi.yaml` : null);
+                                if(!obj.pbcPath){
+                                    obj.reason = 'Model 및 OpenAPI 정보가 없습니다'
+                                }
+                                me.pbcLists.push(obj);
+                            }
+                        } catch (e) {
+                            console.error(`Error processing ${pbcInfo.name}:`, e);
+                        }
+                    }
+                }
+
+                if (me.pbcLists.length > 0) {
+                    localStorage.setItem('pbcListCache', JSON.stringify(me.pbcLists));
+                    localStorage.setItem('pbcListCacheTimestamp', Date.now().toString());
+                }
+
+                me.isPBCLoding = false;
             }
-            
-            
         }
     }
 </script>

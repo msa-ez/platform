@@ -2979,9 +2979,10 @@
                     byFunctionCallbacks.onGenerationDone()
                     this.isEditable = true
 
-                    this.$nextTick(() => {
-                        this.$router.go(0)
-                    })
+                    if(!localStorage.getItem("blockAutoRefresh"))
+                        this.$nextTick(() => {
+                            this.$router.go(0)
+                        })
                 }
             })
 

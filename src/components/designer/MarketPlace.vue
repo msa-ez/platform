@@ -568,9 +568,9 @@
                         <v-divider vertical />
                         <v-col cols="7" lg="9" md="8" sm="7">
                             <vue-markdown
-                                    v-if="selectedTemplate && selectedTemplate.instruction"
+                                    v-if="selectedPBC && selectedPBC.instruction"
                                     class="markdown-body marketplace-markdown"
-                                    :source="selectedTemplate.instruction"
+                                    :source="selectedPBC.instruction"
                             >
                             </vue-markdown>
                         </v-col>
