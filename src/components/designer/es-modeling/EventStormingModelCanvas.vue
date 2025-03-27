@@ -8758,7 +8758,7 @@
             left: 145px !important;
         }
         .es-is-mobile {
-            margin-top: 92px;
+            margin-top: 83px;
             margin-left: 6px;
         }
         .es-modeling-project-name {

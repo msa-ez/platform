@@ -160,8 +160,8 @@
                 }
 
                 if (!this.isProgress && this.isHighlighted) {
-                    style['stroke'] = '#1976D2'; // vuetify2의 기본 primary 색상
-                    style['stroke-width'] = 2.5;
+                    style['stroke'] = '#7B1E1E';
+                    style['stroke-width'] = 3;
                     style['stroke-opacity'] = 1;
                 } else {
                     style['stroke'] = 'grey';

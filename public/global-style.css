@@ -907,6 +907,17 @@ code[class*=language-]:nth-child(1) {
     display: flex;
     flex-direction: row;
 }
+
+/* 애니메이션  */
+@keyframes flow-stroke {
+    0% {
+      stroke-dashoffset: 0;
+    }
+    100% {
+      stroke-dashoffset: -20;
+    }
+}
+
 @media only screen and (max-width:1409px) and (min-width:1298px){
     .gs-main-page-top-title {
         font-size: 36px;

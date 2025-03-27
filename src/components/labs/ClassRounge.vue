@@ -3,11 +3,11 @@
         <!-- <v-container v-if="isLogin" -->
         <v-container 
             fluid
-            style = "position: fixed;
-            width :100%;
-            height:91.5vh; overflow-y:auto;"
+            style="position: fixed;
+            width: 100%;
+            padding: 0px;"
         >
-            <v-row no-gutters style="margin-top: -20px;"> 
+            <v-row no-gutters> 
                 <v-col
                     :cols="isMobile ? 0:3"
                 >
@@ -19,7 +19,7 @@
                         :fixed="true"
                         :temporary="isMobile"
                         hide-overlay
-                        style="height:calc(100vh - 65px);"
+                        style="height: calc(100vh - 65px);"
                     >
                         <v-list-item>
                             <v-tooltip bottom>
@@ -28,7 +28,7 @@
                                 </template>
                                 <span> Home </span>
                             </v-tooltip>
-                            <v-list-item-content v-if="classInfo && !isMobile">
+                            <v-list-item-content class="pt-2 pb-2" v-if="classInfo && !isMobile">
                                 <v-list-item-title><b>{{classInfo.className}}</b></v-list-item-title>
                                 <v-list-item-subtitle>{{classInfo.classId}}</v-list-item-subtitle>
                             </v-list-item-content>
@@ -49,7 +49,7 @@
 
                         <v-divider></v-divider>
                         
-                        <div style="padding-bottom: 200px;
+                        <div style="padding-bottom: 100px;
                             overflow-y: auto;
                             height:calc(100% - 65px);
                         ">
@@ -199,10 +199,9 @@
                 </v-col>
                 <v-col
                     :cols="isMobile ? 12:9"
-                    style="padding-bottom:100px;"
                 >
 
-                <div v-if="editModeController == 'selectedLabInfo'" :key="updateCard" class="pt-0 pl-2 pr-2 pt-3">
+                <div v-if="editModeController == 'selectedLabInfo'" :key="updateCard" class="pt-0 pl-2 pr-2">
                     <v-progress-circular
                         v-if="isLoadingLabInfo"
                         indeterminate
@@ -210,7 +209,7 @@
                         style="padding: 20px; margin: 15px;"
                     ></v-progress-circular>
                     <div v-else>
-                            <div v-if="selectedLabInfo" style="text-align:left;">
+                            <div v-if="selectedLabInfo" style="text-align: left;">
                                 <!-- <v-chip color="#9E9E9E" small style="margin-top:-30px; color:white; font-weight:300;"><b>{{selectedLabInfo.labId}}</b>
                                 </v-chip>
                                 <v-chip color="#9E9E9E" small style="margin-top:-30px; margin-left: 5px; color:white; font-weight:300;"><b>{{selectedLabInfo.tool}}</b>
@@ -240,13 +239,13 @@
                                 </v-icon> -->
                                 <v-col class="pa-0">
                                     <v-row class="pa-0 ma-0">
-                                            <h2>{{selectedLabInfo.labName}}</h2>
-                                            <!-- <v-tooltip right>
-                                                <template v-slot:activator="{ on }">
-                                                    <v-icon v-if="selectedLabInfo.video" v-on="on" color="grey" @click="openLabVideoDialog()" style="margin-left: 5px;">mdi-youtube</v-icon>
-                                                </template>
-                                                <span>참고영상 시청</span>
-                                            </v-tooltip> -->
+                                        <h2>{{selectedLabInfo.labName}}</h2>
+                                        <!-- <v-tooltip right>
+                                            <template v-slot:activator="{ on }">
+                                                <v-icon v-if="selectedLabInfo.video" v-on="on" color="grey" @click="openLabVideoDialog()" style="margin-left: 5px;">mdi-youtube</v-icon>
+                                            </template>
+                                            <span>참고영상 시청</span>
+                                        </v-tooltip> -->
                                         <v-spacer></v-spacer>
                                         <span>
                                             <v-icon v-if="selectedLabInfo.groupName == 'Ops'" @click="openGitpodIde()" size="20" style="margin-right:10px;">mdi-git</v-icon>
@@ -263,10 +262,15 @@
                                         </span>
                                     </v-row>
                                 </v-col>
+                                <v-divider class="my-2"></v-divider>
                             </div>
-                                <div style="margin: 5px 0 10px 0;">
-                                </div>
-                            <div style="text-align:left; margin-top: 0px; color:rgba(0, 0, 0, 0.6)">
+                            <div style="text-align:left; 
+                                margin-top: 4px;
+                                color:rgba(0, 0, 0, 0.6);
+                                height:calc(100vh - 140px);
+                                overflow: auto;
+                                padding:0px 0px 100px 0px;"
+                            >
                                 <h4 v-if="selectedLabInfo && selectedLabInfo.labScenario">{{selectedLabInfo.labScenario}}</h4>
                                 <!-- <div v-if="selectedLabInfo.video">
                                     <youtube-media
@@ -280,8 +284,8 @@
                                 <!-- + '/' + myId" -->
                                 
                                 <div v-if="selectedLabInfo.instructionMd" style="font-weight:700; margin-top: 40px;"> 
-                                    <b style="font-size: 17px;">Instruction </b>
-                                    <v-divider></v-divider>
+                                    <!-- <b style="font-size: 17px;">Instruction </b> -->
+                                    <!-- <v-divider></v-divider> -->
                                     <div>
                                         <vue-markdown
                                             class="markdown-body"

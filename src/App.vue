@@ -17,7 +17,7 @@
             style="left:0px; background-color:transparent; z-index:1; height: 64px;"
         >
 
-            <v-toolbar-title class="ml-0 pl-3" style="height: 64px;">
+            <v-toolbar-title class="ml-0 pl-3" style="height: 64px; width: 140px; overflow: visible;">
                 <v-layout>
                     <div v-if="inSideRounge">
                         <v-icon @click="moveToCourses()" style="font-size: 30px; margin-top: 20px; margin-right: 10px;">mdi-arrow-left</v-icon>
@@ -58,7 +58,7 @@
                 <v-icon style="margin-left: 5px;" @click="screenMinus()">mdi-minus</v-icon>
             </div>
             
-            <v-row style="width:100%; height:57px;" v-else-if="inCourse && !showNewButton" dense>
+            <v-row style="width:100%; height:57px; justify-content: center;" v-else-if="inCourse && !showNewButton" dense>
                 <v-text-field
                         class="learn-main-search"
                         v-model="search"

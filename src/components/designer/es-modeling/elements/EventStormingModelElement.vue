@@ -32,6 +32,7 @@ import { group } from "d3";
         },
         data() {
             return {
+                currentConnectedRelations: [],
                 // monitoring
                 isProgress: false,
                 progressColor: '#00C853',
@@ -385,7 +386,29 @@ import { group } from "d3";
                     const pathElement = targetSticker.querySelector('path') || 
                             Array.from(targetSticker.childNodes).find(node => node.tagName === 'path');
                     if(!pathElement) return;
-                    pathElement.setAttribute('stroke', 'red');
+                    // 기본 스타일 설정
+                    pathElement.setAttribute('stroke', '#7B1E1E');
+                    pathElement.setAttribute('stroke-width', '5');
+
+                    // dash 효과를 위한 속성
+                    pathElement.style.strokeDasharray = '10';
+                    pathElement.style.strokeDashoffset = '0';
+                    pathElement.style.animation = 'flow-stroke 1s linear infinite';
+                });
+            },
+
+            resetConnectedStickers(connectedRelations) {
+                if (!connectedRelations) return;
+                connectedRelations.forEach(relation => {
+                    if(!relation) return;
+                    if(!relation.to) return;
+                    const targetSticker = document.getElementById(relation.to);
+                    if(!targetSticker) return;
+                    const pathElement = targetSticker.querySelector('path') || 
+                            Array.from(targetSticker.childNodes).find(node => node.tagName === 'path');
+                    if(!pathElement) return;
+                    pathElement.setAttribute('stroke', 'none');
+                    pathElement.setAttribute('stroke-width', '1');
                 });
             },
             setElementCanvas(){
@@ -699,7 +722,7 @@ import { group } from "d3";
                             }
                         });
                     }
-
+                    me.currentConnectedRelations = connectedRelations
                     findConnectedRelations(me.value.id);
 
                     // 스티커를 클릭했을 때 연결된 모든 선의 정보를 이벤트 버스를 통해 전송
@@ -723,6 +746,7 @@ import { group } from "d3";
                     me.$EventBus.$emit('selectedElementObj', {selected: false, id: elementIds})
                     // 스티커를 클릭했을 때 연결된 선 색상 초기화
                     me.$EventBus.$emit('deselectedStickerConnections');
+                    me.resetConnectedStickers(me.currentConnectedRelations)
                 }
             },
             onRotateShape: function (element, angle) {
