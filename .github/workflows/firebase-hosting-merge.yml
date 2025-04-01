@@ -23,7 +23,13 @@ jobs:
         run: |
           npm install --ignore-scripts --no-optional
           npm install zod@3.24.1 zod-to-json-schema@3.9.4
-      
+
+      # Electron 제거 단계 추가
+      - name: Remove Electron
+        run: |
+          rm -rf node_modules/electron
+          npm uninstall electron electron-builder
+          
       - name: Build project
         env:
           VUE_APP_FIREBASE_apiKey: ${{ secrets.VUE_APP_FIREBASE_APIKEY }}
