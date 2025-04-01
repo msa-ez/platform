@@ -2,33 +2,43 @@ name: Deploy to Firebase Hosting on merge
 on:
   push:
     branches:
-      - master
+      - main
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Node.js 18.19.1
+      - name: Install Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18.19.1'
-     
-      - name: Install additional packages
-        run: npm install firebase-tools@13.34.0
+          node-version: '18'
 
+      - name: Install additional packages
+        run: npm install node-fetch@2
+
+      - name: Install additional packages
+        run: npm install onnxruntime-node --ignore-scripts
+
+      # - name: Install Node.js 18.19.1
+      #   uses: actions/setup-node@v3
+      #   with:
+      #     node-version: '18.19.1'
+     
+      # - name: Install additional packages
+      #   run: npm install firebase-tools@13.34.0
       - name: Install Node.js 16.13.0
         uses: actions/setup-node@v3
         with:
           node-version: '16.13.0'
+          
+      - name: Install dependencies
+        run: npm install
+        
       - name: Install additional packages
         run: npm install zod@3.24.1
       - name: Install additional packages
         run: npm install zod-to-json-schema@3.9.4
-
-      # 의존성 설치
-      - name: Install dependencies
-        run: npm install
 
       # 프로젝트 빌드
       - name: Build project
@@ -50,10 +60,10 @@ jobs:
           VUE_APP_TRANSLATE_KEY: ${{ secrets.VUE_APP_TRANSLATE_KEY }}
         run: npm run build
 
-      - name: Install Node.js 18.0.0
+      - name: Install Node.js 20.0.0
         uses: actions/setup-node@v3
         with:
-          node-version: '18.0.0'
+          node-version: '20'
 
       # Firebase에 배포
       - name: Deploy to Firebase
