@@ -16,7 +16,8 @@ jobs:
           
       - name: Create .npmrc
         run: |
-          echo "omit[]=@huggingface/transformers" >> .npmrc
+          echo "omit=@huggingface/transformers" > .npmrc
+          echo "ignore-scripts=true" >> .npmrc
 
       - name: Cache node modules
         uses: actions/cache@v3
@@ -28,7 +29,7 @@ jobs:
       
       - name: Install dependencies
         run: |
-          npm install --omit=@huggingface/transformers
+          npm install --ignore-scripts --omit=optional
           npm install zod@3.24.1
           npm install zod-to-json-schema@3.9.4
       
