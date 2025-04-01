@@ -14,14 +14,6 @@ jobs:
         with:
           node-version: '14.21.3'
 
-      - name: Cache node modules
-        uses: actions/cache@v3
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-
       # package.json에서 huggingface 패키지 제거
       - name: Remove huggingface from package.json
         run: |
@@ -31,13 +23,6 @@ jobs:
         run: |
           npm install --ignore-scripts --no-optional
           npm install zod@3.24.1 zod-to-json-schema@3.9.4
-          npm install electron --save-dev
-      
-      # Electron 관련 오류 해결을 위한 환경 변수 설정
-      - name: Set Electron environment variables
-        run: |
-          export ELECTRON_SKIP_BINARY_DOWNLOAD=1
-          export ELECTRON_BUILDER_SKIP_REBUILD=1
       
       - name: Build project
         env:
@@ -56,12 +41,7 @@ jobs:
           VUE_APP_FIREBASE_trackingId: ${{ secrets.VUE_APP_FIREBASE_TRACKINGID }}
           VUE_APP_IAMPORT_ImpKey: ${{ secrets.VUE_APP_IAMPORT_IMPKEY }}
           VUE_APP_TRANSLATE_KEY: ${{ secrets.VUE_APP_TRANSLATE_KEY }}
-        run: npm run build --skip-plugins electron-builder
-        
-      - name: Install Node.js 20.0.0
-        uses: actions/setup-node@v3
-        with:
-          node-version: '20'
+        run: npm run build
       
       - name: Deploy to Firebase
         uses: FirebaseExtended/action-hosting-deploy@v0
