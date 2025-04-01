@@ -49,6 +49,11 @@ jobs:
           VUE_APP_IAMPORT_ImpKey: ${{ secrets.VUE_APP_IAMPORT_IMPKEY }}
           VUE_APP_TRANSLATE_KEY: ${{ secrets.VUE_APP_TRANSLATE_KEY }}
         run: npm run build
+
+      - name: Install Node.js 20
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
       
       - name: Deploy to Firebase
         uses: FirebaseExtended/action-hosting-deploy@v0
