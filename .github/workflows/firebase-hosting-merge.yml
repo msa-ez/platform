@@ -12,7 +12,7 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '16.13.0'  # Node.js 버전을 16으로 고정
+          node-version: '16.13.0'
 
       # 기존 node_modules 삭제 및 캐시 정리
       - name: Clean install
@@ -21,17 +21,17 @@ jobs:
           rm -f package-lock.json
           npm cache clean --force
 
-      # 핵심 패키지들 먼저 설치
+      # Vue 2.7.14 버전으로 설치 (vue-material 호환성을 위해)
       - name: Install core packages
         run: |
-          npm install --save vue@2.6.12
-          npm install --save-dev vue-template-compiler@2.6.12
+          npm install --save vue@2.7.14
+          npm install --save-dev vue-template-compiler@2.7.14
           npm install --save node-fetch@2
           npm install --save-dev @vue/cli-service@4.5.19
 
-      # 전체 의존성 설치 (--force 옵션 사용)
+      # 전체 의존성 설치
       - name: Install dependencies
-        run: npm install --force
+        run: npm install --legacy-peer-deps
         
       # 추가 패키지 설치
       - name: Install additional packages
