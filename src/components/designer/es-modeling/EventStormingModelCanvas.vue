@@ -963,18 +963,17 @@
                                 <v-tooltip right>
                                     <template v-slot:activator="{ on, attrs }">
                                         <span
-                                            class="bpmn-icon-hand-tool"
-                                            v-bind:class="{ icons: !dragPageMovable, hands: dragPageMovable,}"
-                                            _width="30"
-                                            _height="30"
-                                            v-on:click="toggleGrip"
-                                            v-bind="attrs"
                                             v-on="on"
+                                            v-bind="attrs"
+                                            @click="toggleGrip"
+                                            style="cursor: pointer;"
                                         >
+                                            <Icons v-if="dragPageMovable" :icon="'drag-hand'" :color="'#1976D2'" style="margin: 7px;" />
+                                            <Icons v-else :icon="'drag-hand-off'" style="margin: 7px;" />
                                         </span>
                                     </template>
-                                    <span v-if="dragPageMovable == true">{{ $t('modelingPanelTool.draggableOn') }}</span>
-                                    <span v-if="dragPageMovable == false">{{ $t('modelingPanelTool.draggableOff') }}</span>
+                                    <span v-if="dragPageMovable">{{ $t('modelingPanelTool.draggableOn') }}</span>
+                                    <span v-else>{{ $t('modelingPanelTool.draggableOff') }}</span>
                                 </v-tooltip>
 
                                 <v-tooltip right v-if="!isReadOnlyModel">
