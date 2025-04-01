@@ -72,8 +72,7 @@
                                         @keydown="startGenHandleKeydown(genType)"
                                         auto-grow
                                     ></v-textarea>
-                                    <v-divider class="my-2 mt-0"></v-divider>
-                                    <v-row class="ma-0 pa-2 pt-0">
+                                    <v-row class="ma-0 pa-2">
                                         <v-spacer></v-spacer>
                                         <div @click="startGen(genType)"
                                             style="cursor: pointer;
