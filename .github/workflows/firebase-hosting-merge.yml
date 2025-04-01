@@ -49,14 +49,8 @@ jobs:
           VUE_APP_FIREBASE_trackingId: ${{ secrets.VUE_APP_FIREBASE_TRACKINGID }}
           VUE_APP_IAMPORT_ImpKey: ${{ secrets.VUE_APP_IAMPORT_IMPKEY }}
           VUE_APP_TRANSLATE_KEY: ${{ secrets.VUE_APP_TRANSLATE_KEY }}
-        run: |
-          node --max_old_space_size=8192 node_modules/@vue/cli-service/bin/vue-cli-service.js build --open
+        run: npm run build
         
-      - name: Create robots files if not exist
-        run: |
-          mkdir -p dist
-          touch robots-eventstorming.txt robots-labs.txt robots-prod.txt || true
-
       - name: Install Node.js 20.0.0
         uses: actions/setup-node@v3
         with:
