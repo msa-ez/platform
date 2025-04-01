@@ -24,11 +24,12 @@ jobs:
           npm install --ignore-scripts --no-optional
           npm install zod@3.24.1 zod-to-json-schema@3.9.4
 
-      # Electron 제거 단계 추가
-      - name: Remove Electron
+      # Electron 관련 패키지 제거
+      - name: Remove Electron related packages
         run: |
           rm -rf node_modules/electron
-          npm uninstall electron electron-builder
+          rm -rf node_modules/vue-cli-plugin-electron-builder
+          npm uninstall electron electron-builder vue-cli-plugin-electron-builder
           
       - name: Build project
         env:
