@@ -14,7 +14,10 @@ jobs:
         with:
           node-version: '14.21.3'
           
-      # 캐시 설정 추가
+      - name: Create .npmrc
+        run: |
+          echo "omit[]=@huggingface/transformers" >> .npmrc
+
       - name: Cache node modules
         uses: actions/cache@v3
         with:
@@ -23,10 +26,9 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-node-
       
-      # 나머지 패키지 설치 단계를 하나로 통합
       - name: Install dependencies
         run: |
-          npm install
+          npm install --omit=@huggingface/transformers
           npm install zod@3.24.1
           npm install zod-to-json-schema@3.9.4
       
