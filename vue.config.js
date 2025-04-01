@@ -43,16 +43,7 @@ module.exports = {
         //     statsFilename: 'bundle-stats.json' // 분석파일 json 이름
         // })]
     },
-    "runtimeCompiler": true,
-    // transpileDependencies: true,
-    configureWebpack: {
-        resolve: {
-        alias: {
-            '@vue/runtime-dom$': '@vue/runtime-dom/dist/runtime-dom.cjs.js',
-            '@vue/compiler-dom$': '@vue/compiler-dom/dist/compiler-dom.cjs.js'
-        }
-        }
-    }
+    "runtimeCompiler": true
 }
 
 // http
