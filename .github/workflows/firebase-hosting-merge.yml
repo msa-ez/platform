@@ -14,7 +14,6 @@ jobs:
         with:
           node-version: '14.21.3'
 
-      # Cache 설정 추가
       - name: Cache node modules
         uses: actions/cache@v3
         with:
@@ -23,11 +22,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-node-
 
-      # package.json 수정하여 huggingface 패키지 제외
-      - name: Remove huggingface from dependencies
+      # package.json에서 huggingface 패키지 제거
+      - name: Remove huggingface from package.json
         run: |
-          npm pkg delete dependencies.@huggingface/transformers
-
+          sed -i '/"@huggingface\/transformers"/d' package.json
+          
       - name: Install dependencies
         run: |
           npm install --ignore-scripts --no-optional
@@ -51,8 +50,7 @@ jobs:
           VUE_APP_IAMPORT_ImpKey: ${{ secrets.VUE_APP_IAMPORT_IMPKEY }}
           VUE_APP_TRANSLATE_KEY: ${{ secrets.VUE_APP_TRANSLATE_KEY }}
         run: |
-          npm run build
-          ls -la dist || true 
+          node --max_old_space_size=8192 node_modules/@vue/cli-service/bin/vue-cli-service.js build --open
         
       - name: Create robots files if not exist
         run: |
