@@ -935,13 +935,13 @@
                             </div>
 
                             <v-card
-                                class="tools"
+                            class="tools"
                                 style="top: 100px; text-align: center"
                             >
                                 <v-tooltip right>
                                     <template v-slot:activator="{ on, attrs }">
                                         <span v-on="on" v-bind="attrs" @click="toggleHighlighting" style="cursor: pointer;">
-                                            <Icons v-if="!highlightingEnabled" :icon="'tracking'" style="margin: 7px;" />
+                                            <Icons v-if="!highlightingEnabled" :icon="'tracking-off'" style="margin: 7px;" />
                                             <Icons v-else :icon="'tracking'" :color="'#1976D2'" style="margin: 7px;" />
                                         </span>
                                     </template>
