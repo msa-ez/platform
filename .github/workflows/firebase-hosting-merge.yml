@@ -14,11 +14,24 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Install additional packages
+      # 기존 node_modules 삭제 및 캐시 정리
+      - name: Clean install
+        run: |
+          rm -rf node_modules
+          rm -f package-lock.json
+          npm cache clean --force
+
+      # node-fetch 설치
+      - name: Install node-fetch
         run: npm install node-fetch@2
 
-      - name: Install additional packages
-        run: npm install onnxruntime-node --ignore-scripts
+      # Vue 2 관련 패키지들 명시적 설치
+      - name: Install Vue 2 packages
+        run: |
+          npm install vue@2.6.12
+          npm install vue-template-compiler@2.6.12
+          npm install @vue/cli-service@4.5.19
+          npm install @vue/cli-plugin-babel@4.5.19
 
       # - name: Install Node.js 18.19.1
       #   uses: actions/setup-node@v3
@@ -27,18 +40,20 @@ jobs:
      
       # - name: Install additional packages
       #   run: npm install firebase-tools@13.34.0
+
+      # 나머지 의존성 설치
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+        
       - name: Install Node.js 16.13.0
         uses: actions/setup-node@v3
         with:
           node-version: '16.13.0'
-          
-      - name: Install dependencies
-        run: npm install
         
       - name: Install additional packages
-        run: npm install zod@3.24.1
-      - name: Install additional packages
-        run: npm install zod-to-json-schema@3.9.4
+        run: |
+          npm install zod@3.24.1
+          npm install zod-to-json-schema@3.9.4
 
       # 프로젝트 빌드
       - name: Build project
