@@ -19,14 +19,6 @@ jobs:
           echo "omit=@huggingface/transformers" > .npmrc
           echo "ignore-scripts=true" >> .npmrc
 
-      - name: Cache node modules
-        uses: actions/cache@v3
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-      
       - name: Install dependencies
         run: |
           npm install --ignore-scripts --omit=optional
