@@ -103,12 +103,11 @@
             {{$t('making.title')}}
             </v-btn> -->
             <!-- 만들기 클릭했을 때 열리던 다이얼로그 -->
-            <v-dialog v-if="isRootPage"
-                v-model="makingDialog"
+            <v-dialog v-model="makingDialog"
                 max-width="90%"
             >
                 <!-- 만들기 버튼 -->
-                <template v-slot:activator="{ on, attrs }">
+                <!-- <template v-slot:activator="{ on, attrs }">
                     <v-btn class="making-main-nav-modeling-is-mobile cp-main-nav-modeling-is-mobile"
                         :class="isForeign ? 'isForeign-create-main-nav-is-mobile' : 'isForeign-not-create-main-nav-is-mobile'"
                         v-on="on"
@@ -119,7 +118,7 @@
                         <v-icon style="margin:0px 3px 0px 0px;" :size="26">mdi-file-plus</v-icon>
                         <div :style="isForeign ? { marginTop: '-2px' } : { marginTop: '2px' }">{{$t('making.title')}}</div>
                     </v-btn>
-                </template>
+                </template> -->
                 <v-card style="height:85vh; overflow:auto;">
                     <!-- 만들기 설계(design) -->
                     <div>
@@ -385,8 +384,10 @@
                 </v-card>
             </v-dialog>
 
-            <v-btn @click="navigateToSlack"
+            <v-btn
+                @click="navigateToSlack"
                 class="question-btn"
+                :class="isRootPage ? 'question-btn-hide' : ''"
                 text
                 elevation="0"
                 style="text-transform: none;"
@@ -2325,6 +2326,16 @@
     @media only screen and (max-width: 781px) {
         #textsize {
             font-size: 11px;
+        }
+    }
+
+    @media only screen and (max-width: 700px) {
+        #textsize {
+            font-size: 11px;
+        }
+        
+        .question-btn-hide {
+            display: none;
         }
     }
 

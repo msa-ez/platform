@@ -8744,7 +8744,7 @@
         }
     }
 
-    @media only screen and (max-width: 600px) {
+    @media only screen and (max-width: 700px) {
         .eventstorming-mobile-home-button {
             display: block;
             z-index: 1;

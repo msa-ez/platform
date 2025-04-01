@@ -1,5 +1,5 @@
 <template>
-    <div class="is-mobile" :style = "tenantLogoStyle" text style="width: 100px; height: 60px; margin-top: 9px; cursor: pointer;" @click="goHmoe()">
+    <div :class="!isRootUrl ? 'is-mobile-logo' : ''" :style="tenantLogoStyle" text style="width: 100px; height: 60px; margin-top: 9px; cursor: pointer;" @click="goHmoe()">
         <v-img v-if="tenantLogo" contain max-height=90% max-width=90% :src="tenantLogo"></v-img>
     </div>
 </template>
@@ -19,6 +19,9 @@ export default {
                 return 'margin-left:-40px;'
             }
         },
+        isRootUrl() {
+            return this.$route.path === '/';
+        }
     },
     created: async function () {
         var me = this
@@ -52,8 +55,8 @@ export default {
 </script>
 <style>
 @media only screen and (max-width:700px) {
-    .is-mobile {
-        display:none;
+    .is-mobile-logo {
+        display:none !important;
     }
 }
 </style>
