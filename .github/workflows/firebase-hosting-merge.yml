@@ -21,23 +21,23 @@ jobs:
           rm -f package-lock.json
           npm cache clean --force
 
-      # Vue 2.7.14 버전으로 설치 (vue-material 호환성을 위해)
-      - name: Install core packages
-        run: |
-          npm install --save vue@2.7.14
-          npm install --save-dev vue-template-compiler@2.7.14
-          npm install --save node-fetch@2
-          npm install --save-dev @vue/cli-service@4.5.19
+      # core-js 최신 버전 설치
+      - name: Install core-js
+        run: npm install core-js@latest
 
-      # 전체 의존성 설치
+      # 의존성 설치 (onnxruntime-node 제외)
       - name: Install dependencies
-        run: npm install --legacy-peer-deps
-        
+        run: |
+          npm install --save vue@2.7.14 --legacy-peer-deps
+          npm install --save-dev vue-template-compiler@2.7.14 --legacy-peer-deps
+          npm install --save node-fetch@2 --legacy-peer-deps
+          npm install --ignore-scripts --legacy-peer-deps
+
       # 추가 패키지 설치
       - name: Install additional packages
         run: |
-          npm install zod@3.24.1
-          npm install zod-to-json-schema@3.9.4
+          npm install zod@3.24.1 --legacy-peer-deps
+          npm install zod-to-json-schema@3.9.4 --legacy-peer-deps
 
       # 프로젝트 빌드
       - name: Build project
