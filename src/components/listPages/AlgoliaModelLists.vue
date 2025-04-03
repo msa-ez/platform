@@ -3,25 +3,169 @@
         <v-container style="max-width: 1500px;">
             <slot name="body">
                 <div>
-                    <div :class="isForeign ? 'isForeign-main-nav-tabs-box' : 'main-nav-tabs-box' ">
-                        <v-tabs class="main-nav-tabs" background-color="transparent" show-arrows color="none">
-                            <v-tab to="/" class="main-nav-tab main-nav-tab-home">
-                                <v-icon style="margin-top:10px;">mdi-home</v-icon>
-                            </v-tab>
-                            <!-- v-for를 사용하여 중복된 탭 요소를 간결하게 렌더링 -->
-                            <v-tab
-                                v-for="navTab in navigationTabs"
-                                :key="navTab.key"
-                                @click="navTab.action"
-                                class="main-nav-tab"
+                    <v-row :class="isForeign ? 'isForeign-main-nav-tabs-box' : 'main-nav-tabs-box'">
+                        <v-tab to="/" class="main-nav-tab main-nav-tab-home"
+                            style="min-width: 36px;"
+                        >
+                            <v-icon>mdi-home</v-icon>
+                        </v-tab>
+                        <v-icon @click="searchOpen = !searchOpen" class="main-nav-tab pl-1 pr-1">
+                            mdi-magnify
+                        </v-icon>
+                        <v-tab
+                            v-for="navTab in navigationTabs"
+                            :key="navTab.key"
+                            @click="navTab.action"
+                            class="main-nav-tab pl-1 pr-1"
+                        >
+                            {{ $t(navTab.label) }}
+                        </v-tab>
+                        <v-hover v-slot="{ hover }">
+                            <v-list-group class="main-nav-storage"
+                                :value="hover"
+                                :append-icon="null"
                             >
-                                {{$t(navTab.label)}}
-                            </v-tab>
-                            <v-icon @click="searchOpen = !searchOpen" class="main-nav-tab" style="margin-left:10px;">
-                                mdi-magnify
-                            </v-icon>
-                        </v-tabs>
+                                <template v-slot:activator>
+                                    <v-tab class="main-nav-tab">
+                                        {{$t('mainNav.Storage')}}
+                                    </v-tab>
+                                </template>
+                                <v-card
+                                    class="mx-auto pt-2 pb-2"
+                                    max-width="300"
+                                >
+                                    <v-list-item
+                                        v-for="(tabObj, tabIndex) in filterTabLists"
+                                        v-if="tabObj.id !== 'home' && tabObj.show"
+                                        :key="tabObj.id"
+                                        link
+                                        @click="tabId = tabObj.id"
+                                    >
+                                        <v-list-item-icon>
+                                            <v-icon color="black">mdi-folder-outline</v-icon>
+                                        </v-list-item-icon>
+                                        <v-list-item-content>
+                                            <v-list-item-title>{{ tabObj.display }}</v-list-item-title>
+                                        </v-list-item-content>
+                                        <v-list-item-avatar
+                                            v-if="tabObj.totalCount != null"
+                                            color="green lighten-5"
+                                            size="24"
+                                            style="font-size: 9px;"
+                                        >
+                                            {{ tabObj.totalCount == null ? '...' : (tabObj.totalCount == 0 ? '0' : tabObj.totalCount) }}
+                                        </v-list-item-avatar>
+                                    </v-list-item>
+                                </v-card>
+                            </v-list-group>
+                        </v-hover>
+                    </v-row>
+                    <div class="main-nav-sidebar-container">
+                        <!-- 사이드바 토글 버튼 -->
+                        <v-btn
+                            @click="sidebarOpen = !sidebarOpen"
+                            color="black"
+                            icon
+                            text
+                            class="sidebar-toggle-btn"
+                        >
+                            <v-icon>{{ sidebarOpen ? 'mdi-close' : 'mdi-menu' }}</v-icon>
+                        </v-btn>
+
+                        <!-- 사이드바 -->
+                        <v-navigation-drawer
+                            v-model="sidebarOpen"
+                            fixed
+                            left
+                            class="sidebar-drawer"
+                            width="100%"
+                            :scrim="false"
+                        >
+                            <div class="sidebar-header">
+                                <v-row class="sidebar-header ma-0 pa-0">
+                                    <LogoView class="pl-4" />
+                                    <v-spacer></v-spacer>
+                                    <div class="pa-2">
+                                        <v-btn @click="sidebarOpen = false" icon>
+                                            <v-icon>mdi-close</v-icon>
+                                        </v-btn>
+                                    </div>
+                                </v-row>
+                            </div>
+                            <div class="sidebar-content">
+                                <v-list dense>
+                                    <v-list-item @click="searchOpen = !searchOpen" link>
+                                        <v-list-item-icon>
+                                            <v-icon color="black">mdi-magnify</v-icon>
+                                        </v-list-item-icon>
+                                        <v-list-item-content>
+                                            <v-list-item-title>검색</v-list-item-title>
+                                        </v-list-item-content>
+                                    </v-list-item>
+                                    <v-list-item @click="navigateToSlack" link>
+                                        <v-list-item-icon>
+                                            <Icons :icon="'question'" />
+                                        </v-list-item-icon>
+                                        <v-list-item-content>
+                                            <v-list-item-title>{{ $t('inquiry.title') }}</v-list-item-title>
+                                        </v-list-item-content>
+                                    </v-list-item>
+                                    <!-- 네비게이션 탭 메뉴들 -->
+                                    <v-list-item
+                                        v-for="navTab in navigationTabs"
+                                        :key="navTab.key"
+                                        @click="navTab.action"
+                                        link
+                                    >
+                                        <v-list-item-icon>
+                                            <v-icon color="black">{{ navTab.icon }}</v-icon>
+                                        </v-list-item-icon>
+                                        <v-list-item-content>
+                                            <v-list-item-title>{{ $t(navTab.label) }}</v-list-item-title>
+                                        </v-list-item-content>
+                                    </v-list-item>
+
+                                    <!-- Storage 메뉴 -->
+                                    <v-list-group>
+                                        <template v-slot:activator>
+                                            <v-list-item-icon>
+                                                <v-icon color="black">mdi-folder</v-icon>
+                                            </v-list-item-icon>
+                                            <v-list-item-content>
+                                                <v-list-item-title>{{ $t('mainNav.Storage') }}</v-list-item-title>
+                                            </v-list-item-content>
+                                        </template>
+
+                                        <v-list-item
+                                            v-for="tabObj in filterTabLists"
+                                            v-if="tabObj.id !== 'home' && tabObj.show"
+                                            :key="tabObj.id"
+                                            @click="tabId = tabObj.id"
+                                            link
+                                            style="padding-left: 48px;"
+                                        >
+                                            <v-list-item-icon>
+                                                <v-icon color="black">mdi-folder-outline</v-icon>
+                                            </v-list-item-icon>
+                                            <v-list-item-content>
+                                                <v-list-item-title>{{ tabObj.display }}</v-list-item-title>
+                                            </v-list-item-content>
+                                            <v-list-item-avatar
+                                                v-if="tabObj.totalCount != null"
+                                                color="green lighten-5"
+                                                size="24"
+                                                style="font-size: 9px;"
+                                            >
+                                                {{ tabObj.totalCount == null ? '...' : (tabObj.totalCount == 0 ? '0' : tabObj.totalCount) }}
+                                            </v-list-item-avatar>
+                                        </v-list-item>
+                                    </v-list-group>
+                                </v-list>
+                            </div>
+                        </v-navigation-drawer>
                     </div>
+
+                    <!-- 기존 저장소 hover list
                     <v-hover v-slot="{ hover }">
                         <v-list-group class="nav-storage-list"
                             :value="hover"
@@ -56,7 +200,7 @@
                                 </v-list-item>
                             </v-card>
                         </v-list-group>
-                    </v-hover>
+                    </v-hover> -->
 
                     
 
@@ -213,8 +357,7 @@
                     <v-alert
                             v-if="searchOpen"
                             elevation="2"
-                            style="position:fixed; top:50px; z-index:2; width:40%; left: 50%; transform: translate(-50%, 0%);"
-                            class="ma-0 pa-2"
+                            class="ma-0 pa-2 main-nav-search"
                     >
                         <div>
                             <v-row class="ma-0 pa-0">
@@ -403,13 +546,13 @@
                                     </v-card>
                                 </v-col>
                             </v-row>
-                            <div style="margin-top:30px;">
+                            <!-- <div style="margin-top:30px;">
                                 <carousel :perPageCustom="[[0, 1], [576, 2], [768, 3], [992, 4], [1200, 5]]">
                                     <slide v-for="(logo, index) in logos" :key="index">
                                         <img :src="logo.url" :alt="logo.alt">
                                     </slide>
                                 </carousel>
-                            </div>
+                            </div> -->
                         </v-tab-item>
                         <v-tab-item v-else-if="0 < selectedTabIndex && selectedTabIndex < 4" :value="selectedTabIndex" :key="selectedTabIndex">
                             <!-- MINE, SHARE,PUBLIC -->
@@ -610,6 +753,7 @@
     import AutoModelingDialog from '../designer/modeling/AutoModelingDialog.vue';
     import { Carousel, Slide } from 'vue-carousel';
     import ProvisionIndication from '../../components/payment/ProvisionIndication.vue'
+    import LogoView from '../oauth/Logo.vue';
     // import VueCookies from "vue-cookies";
     var _ = require('lodash');
 
@@ -623,10 +767,12 @@
             AutoModelingDialog,
             Carousel,
             Slide,
-            ProvisionIndication
+            ProvisionIndication,
+            LogoView
         },
         data() {
             return {
+                sidebarOpen: false,
                 navLectureTab: null,
                 wikiOpenUrl: [
                     {
@@ -808,7 +954,26 @@
                 ],
                 navigationTabs: [
                     //제품소개
-                    { key: 'introduction', label: 'mainNav.introduction', action: () => this.wikiOpen('introduction') },
+                    { 
+                        key: 'introduction', 
+                        label: 'mainNav.introduction', 
+                        action: () => this.wikiOpen('introduction'),
+                        icon: 'mdi-information'
+                    },
+                    // 만들기
+                    { 
+                        key: 'making', 
+                        label: 'making.title', 
+                        action: this.openMakingDialog,
+                        icon: 'mdi-plus-circle'
+                    },
+                    //학습하기
+                    { 
+                        key: 'learn', 
+                        label: 'mainNav.learn', 
+                        action: this.nationLearnNavDialog,
+                        icon: 'mdi-school'
+                    },
                     //사용기업
                     // { key: 'company', label: 'mainNav.company', action: () => this.wikiOpen('company') },
                     //가격정책
@@ -816,7 +981,6 @@
                     //파트너십  
                     // { key: 'partnership', label: 'mainNav.partnership', action: () => this.wikiOpen('partnership') },
                     //학습하기
-                    { key: 'learn', label: 'mainNav.learn', action: this.nationLearnNavDialog }
                 ],
 
                 learnNavDialog: false,
@@ -1014,19 +1178,13 @@
                     }, 300
                 ),
             },
-
-            // "search":
-            //     _.debounce(
-            //         function () {
-            //             var me = this
-            //             if (me.search) {
-            //                 me.settingSearchPage()
-            //             } else {
-            //                 me.settingFirstPage(true)
-            //             }
-            //
-            //         }, 300
-            //     ),
+            "searchOpen": {
+                handler(newVal) {
+                    if (newVal) {
+                        this.sidebarOpen = false;
+                    }
+                }
+            }
         },
         computed: {
             selectedMode(){
@@ -1880,12 +2038,35 @@
 
                 return s4() + s4() + s4() + s4() + s4() + s4() + s4() + s4();
             },
+            navigateToSlack() {
+                window.open("https://join.slack.com/t/uenginehq/shared_invite/zt-2qh7j779f-UWwa~p~OvAla7s8pjikWRw", "_blank");
+            }
         },
 
     }
 </script>
 
 <style>
+    .main-nav-search {
+        position:fixed;
+        top:50px;
+        z-index:2;
+        width:90%;
+        left: 50%;
+        transform: translate(-50%, 0%);
+    }
+    .menu-list-card {
+        min-width: 200px;
+        margin-top: 8px;
+        width: max-content;    /* 내부 콘텐츠에 맞게 너비 조정 */
+        white-space: nowrap;   /* 텍스트가 줄바꿈되지 않도록 설정 */
+    }
+    .main-nav-storage .v-list-group__header {
+        padding: 0px !important;
+    }
+    .main-nav-storage .v-list-group__items {
+        position: absolute;
+    }
     .public-model-card:hover {
         background-color: #F5F5F5 !important;  /* 이미지의 회색과 동일한 색상 */
     }
@@ -1898,35 +2079,32 @@
         font-size:14px;
     }
     .main-nav-tab-home {
-        display:none;
+        display: none;
     }
     .main-nav-tabs-box {
         margin-top:-78px;
         margin-bottom:10px;
-        position:absolute;
+        position:fixed;
         max-width:60%;
         min-width:10%;
         z-index:1;
-        left: 46%;
+        left: 50%;
         transform: translate(-50%, 0%);
     }
     .isForeign-main-nav-tabs-box {
         margin-top:-78px;
         margin-bottom:10px;
-        position:absolute;
+        position:fixed;
         max-width:60%;
         min-width:10%;
         z-index:1;
-        left: 43%;
+        left: 50%;
         transform: translate(-50%, 0%);
     }
     .main-nav-tab {
-        height:45px;
         font-size:16px;
         color:#898989 !important;
         font-weight: 700;
-        margin-right:10px;
-        margin-top:2px;
     }
     .main-nav-tabs {
         cursor: pointer !important;
@@ -1980,6 +2158,22 @@
 </style>
 
 <style scoped>
+    .main-nav-sidebar-container {
+        position: relative;
+        display: none;
+    }
+
+    .sidebar-toggle-btn {
+        position: absolute;
+        top: -72px;
+        left: 130px;
+        z-index: 999;  
+    }
+
+    .sidebar-drawer {
+        z-index: 999;
+        width: 100vw !important;
+    }
     .nav-dialog {
         margin:0px;
     }
@@ -2173,39 +2367,50 @@
         .main-search {
             width: 50%;
         }
-
     }
 
-    @media only screen and (max-width: 750px) {
-        .main-nav-tabs-box {
-            max-width: 300px;
-            left: 45%;
-        }
-    }
-
-    @media only screen and (max-width: 599px) {
+    @media only screen and (max-width: 700px) {
         .main-nav-tab-home {
-            display:block;
+            display: flex;
         }
         .main-logo-image {
-            display:block;
+            display: block;
         }
         .main-chair-image {
             display: none;
         }
         .main-nav-tabs-box {
-            max-width: 300px;
+            max-width: 340px;
             left: 32%;
         }
         .main-search {
             width: 75%;
+        }
+        .isForeign-main-nav-tabs-box,
+        .main-nav-tabs-box {
+            display: none;
+        }
+        .main-nav-sidebar-container {
+            position: relative;
+            display: block;
         }
     }
 
     @media only screen and (max-width: 499px) {
         .main-nav-tabs-box {
             max-width: 300px;
-            left: 38%;
+            left: 42%;
         }
+    }
+
+    .sidebar-header {
+        height: 64px;
+    }
+    .sidebar-logo {
+        height: 64px;
+    }
+    .sidebar-content {
+        overflow-y: auto;
+        max-height: calc(100vh - 64px);
     }
 </style>

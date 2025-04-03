@@ -63,13 +63,13 @@
                 <v-tabs-items v-model="activeTab">
                     <!-- UserStory -->
                     <v-tab-item>
-                        <div class="gs-auto-modeling-userStory-text-pc">{{$t('autoModeling.explanation.userStory')}}</div>
-                        <div class="gs-auto-modeling-userStory-text-mobile">{{$t('autoModeling.explanation.userStory')}}</div>
+                        <!-- <div class="gs-auto-modeling-userStory-text-pc">{{$t('autoModeling.explanation.userStory')}}</div>
+                        <div class="gs-auto-modeling-userStory-text-mobile">{{$t('autoModeling.explanation.userStory')}}</div> -->
                         <v-card-text class="auto-modling-textarea">
-                            <v-textarea 
+                            <v-textarea
                                     v-model="value.userStory"
                                     flat
-                                    class="elevation-0"
+                                    class="elevation-0 auto-modeling-userStory"
                                     dense
                                     auto-grow
                                     rows="2"

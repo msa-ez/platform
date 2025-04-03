@@ -935,13 +935,13 @@
                             </div>
 
                             <v-card
-                                class="tools"
+                            class="tools"
                                 style="top: 100px; text-align: center"
                             >
                                 <v-tooltip right>
                                     <template v-slot:activator="{ on, attrs }">
                                         <span v-on="on" v-bind="attrs" @click="toggleHighlighting" style="cursor: pointer;">
-                                            <Icons v-if="!highlightingEnabled" :icon="'tracking'" style="margin: 7px;" />
+                                            <Icons v-if="!highlightingEnabled" :icon="'tracking-off'" style="margin: 7px;" />
                                             <Icons v-else :icon="'tracking'" :color="'#1976D2'" style="margin: 7px;" />
                                         </span>
                                     </template>
@@ -963,18 +963,17 @@
                                 <v-tooltip right>
                                     <template v-slot:activator="{ on, attrs }">
                                         <span
-                                            class="bpmn-icon-hand-tool"
-                                            v-bind:class="{ icons: !dragPageMovable, hands: dragPageMovable,}"
-                                            _width="30"
-                                            _height="30"
-                                            v-on:click="toggleGrip"
-                                            v-bind="attrs"
                                             v-on="on"
+                                            v-bind="attrs"
+                                            @click="toggleGrip"
+                                            style="cursor: pointer;"
                                         >
+                                            <Icons v-if="dragPageMovable" :icon="'drag-hand'" :color="'#1976D2'" style="margin: 7px;" />
+                                            <Icons v-else :icon="'drag-hand-off'" style="margin: 7px;" />
                                         </span>
                                     </template>
-                                    <span v-if="dragPageMovable == true">{{ $t('modelingPanelTool.draggableOn') }}</span>
-                                    <span v-if="dragPageMovable == false">{{ $t('modelingPanelTool.draggableOff') }}</span>
+                                    <span v-if="dragPageMovable">{{ $t('modelingPanelTool.draggableOn') }}</span>
+                                    <span v-else>{{ $t('modelingPanelTool.draggableOff') }}</span>
                                 </v-tooltip>
 
                                 <v-tooltip right v-if="!isReadOnlyModel">
@@ -2992,12 +2991,11 @@
 
                     this.generatePBCbyDraftOptions(this.filteredPBCs)
                     console.log("[*] 최종 생성 후 PBC 생성 완료", {filteredPBCs: this.filteredPBCs})
-                    
-                    this.isEditable = true
-                    
-                    // this.$nextTick(() => {
-                    //     this.$router.go(0)
-                    // })
+
+                    if(!localStorage.getItem("blockAutoRefresh"))
+                        this.$nextTick(() => {
+                            this.$router.go(0)
+                        })
                 }
             })
 
@@ -8863,7 +8861,7 @@
         }
     }
 
-    @media only screen and (max-width: 600px) {
+    @media only screen and (max-width: 700px) {
         .eventstorming-mobile-home-button {
             display: block;
             z-index: 1;
@@ -8878,7 +8876,7 @@
             left: 145px !important;
         }
         .es-is-mobile {
-            margin-top: 92px;
+            margin-top: 83px;
             margin-left: 6px;
         }
         .es-modeling-project-name {

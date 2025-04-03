@@ -2,7 +2,7 @@ const JsonAIGenerator = require("./JsonAIGenerator");
 
 class RequirementsValidationGenerator extends JsonAIGenerator {
     constructor(client) {
-        super(client, {}, "simpleModel");
+        super(client, {}, "normalModel");
         this.generatorName = 'RequirementsValidationGenerator';
 
         this.recursive = false;

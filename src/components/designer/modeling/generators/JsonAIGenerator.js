@@ -11,8 +11,8 @@ try{
 
 class JsonAIGenerator extends AIGenerator{
 
-    constructor(client, language){
-        super(client, language);
+    constructor(client, options, modelType){
+        super(client, options, modelType);
     }
 
     createMessages(){

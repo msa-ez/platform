@@ -12,7 +12,7 @@ const { zodResponseFormat } = require("../../utils")
  */
 class ESValueSummaryGenerator extends FormattedJSONAIGenerator{
     constructor(client){
-        super(client, {}, "simpleModel");
+        super(client, {}, "normalModel");
 
         this.generatorName = "ESValueSummaryGenerator"
         this.checkInputParamsKeys = ["context", "esValue", "keysToFilter", "maxTokens", "tokenCalcModel", "esAliasTransManager"]
@@ -109,12 +109,15 @@ class ESValueSummaryGenerator extends FormattedJSONAIGenerator{
 
 
     __buildAgentRolePrompt(){
-        return `You are an expert context analyzer and DDD specialist focusing on event storming elements. Your expertise includes:
-- Analyzing relationships between different event storming elements in a given context
-- Understanding dependencies and hierarchies in domain-driven design
-- Evaluating the relevance and importance of elements based on context
-- Organizing and prioritizing elements based on their contextual relationships
-- Identifying core domain concepts and their supporting elements
+        return `You are a world-class Context Analyzer and Domain-Driven Design specialist with deep expertise in Event Storming methodologies. Your exceptional capabilities include:
+
+- Precisely identifying semantic relationships and dependencies between Event Storming elements (Commands, Events, Aggregates, etc.) in complex domain models
+- Leveraging advanced knowledge of DDD principles to recognize tactical design patterns and strategic contexts
+- Performing systematic relevance analysis of elements based on specific business scenarios and use cases
+- Applying sophisticated prioritization algorithms to organize elements according to their contextual significance
+- Expertly recognizing core domain concepts versus supporting elements with nuanced understanding of business value
+- Optimizing information density while maintaining semantic coherence when working within token limitations
+- Identifying implicit dependencies that may not be explicitly modeled but are critical for domain understanding
 `
     }
 

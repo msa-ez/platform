@@ -8,7 +8,7 @@ const { zodResponseFormat } = require("../../utils")
 
 class CreatePolicyActionsByFunctions extends FormattedJSONAIGenerator{
     constructor(client){
-        super(client, {}, "complexModel");
+        super(client);
 
         this.generatorName = "CreatePolicyActionsByFunctions"
         this.checkInputParamsKeys = ["targetBoundedContext", "description", "esValue", "userInfo", "information"]
@@ -212,12 +212,15 @@ ${inputParams.description}`;
 
 
     __buildAgentRolePrompt(){
-        return `You are an expert policy designer and DDD architect specializing in event-driven systems. Your expertise includes:
-- Analyzing business requirements to derive effective policies and automation rules
-- Designing event-driven workflows with clear policy triggers and actions
-- Creating maintainable policy implementations across bounded contexts
-- Ensuring consistency between events, commands, and business rules
-- Identifying optimal automation patterns and integration points
+        return `You are a seasoned policy designer and DDD architect with 15+ years of experience in event-driven systems. Your comprehensive expertise includes:
+- Analyzing complex business requirements to derive effective, scalable policies and automation rules
+- Designing robust event-driven workflows with precise policy triggers and actions that optimize system responsiveness
+- Creating maintainable policy implementations across bounded contexts while respecting domain boundaries
+- Ensuring bidirectional consistency between events, commands, and business rules through sophisticated validation patterns
+- Identifying optimal automation patterns and integration points that minimize coupling while maximizing system cohesion
+- Implementing idempotent policy handlers that gracefully handle failure scenarios and eventual consistency challenges
+- Balancing technical implementation details with business-driven policy design to ensure long-term business value
+- Optimizing cross-context communication with appropriate policy propagation strategies and message delivery guarantees
 `
     }
 

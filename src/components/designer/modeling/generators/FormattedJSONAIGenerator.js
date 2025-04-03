@@ -233,7 +233,7 @@ class FormattedJSONAIGenerator extends AIGenerator {
         }
 
         if(this.useJsonRestoreStrategy && this.jsonOutputTextToRestore) {
-            this.changeToSimpleModel()
+            this.changeToNormalModel()
 
             this.createdPrompt = this._getJsonRestorePrompt(this.jsonOutputTextToRestore)
             console.log("[*] Json 파싱에러가 난 데이터를 복구하는 전략으로 시도", {
@@ -436,19 +436,7 @@ Rules:
 
 
     __buildSystemPrompt(){
-        const systemPrompts = [
-            this.__buildAgentRolePrompt(),
-            this.__buildTaskGuidelinesPrompt(),
-            this.__buildInferenceGuidelinesPrompt(),
-            this.__buildRequestFormatPrompt(),,
-            this.__buildResponseFormatPrompt()
-        ].filter(prompt => prompt !== "")
-
-        // 응답 포멧이 있는 경우에는 지시와 상관없이 공백을 반드시 포함해서 Json을 출력하기 때문에 없는 경우에만 추가
-        if(!this.modelInfo.requestArgs.response_format)
-            systemPrompts.push(this.__getJsonCompressGuidePrompt())
-
-        return systemPrompts.join("\n\n")
+        return this.__buildAgentRolePrompt()
     }
 
     /**
@@ -526,11 +514,26 @@ ${afterJsonFormat.trim()}
         }
 
         let userPrompts = []
-        const exampleInputs = this.__buildJsonExampleInputFormat()
-        if(exampleInputs) userPrompts.push(inputsToString(exampleInputs))
         
+        const guidelines = [
+            this.__buildTaskGuidelinesPrompt(),
+            this.__buildInferenceGuidelinesPrompt(),
+            this.__buildRequestFormatPrompt(),
+            this.__buildResponseFormatPrompt()
+        ].filter(prompt => prompt !== "");
+        
+        if(!this.modelInfo.requestArgs.response_format)
+            guidelines.push(this.__getJsonCompressGuidePrompt());
+
+        const exampleInputs = this.__buildJsonExampleInputFormat()
         const userInputs = this.__buildJsonUserQueryInputFormat()
-        if(userInputs) userPrompts.push(inputsToString(userInputs))
+        if(exampleInputs && userInputs) {
+            userPrompts.push(guidelines.join("\n\n") + "\n\nNow let's process the user's input.\n" + inputsToString(exampleInputs))
+            userPrompts.push(inputsToString(userInputs))
+        }
+        else if(userInputs) {
+            userPrompts.push(guidelines.join("\n\n") + "\n\nNow let's process the user's input.\n" + inputsToString(userInputs))
+        }
 
         return userPrompts
     }

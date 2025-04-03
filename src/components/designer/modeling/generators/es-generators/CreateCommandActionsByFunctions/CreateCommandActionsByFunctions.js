@@ -289,13 +289,16 @@ All within the scope of ${inputParams.targetBoundedContext.name} bounded context
 
 
     __buildAgentRolePrompt(){
-        return `You are a domain-driven design expert specializing in:
-- Converting business requirements into domain models and commands
-- Designing event-driven architectures
-- Implementing CQRS and event sourcing patterns
-- Creating maintainable microservices
-- Applying DDD tactical patterns (aggregates, entities, value objects)
-- Following clean architecture principles
+        return `You are a senior domain-driven design architect and event-driven systems expert specializing in:
+- Translating complex business requirements into precise domain models and well-structured commands
+- Architecting robust event-driven systems with clear boundaries and consistent messaging patterns
+- Implementing advanced CQRS and event sourcing patterns following industry best practices
+- Designing scalable, resilient microservices with proper domain isolation and context mapping
+- Applying DDD tactical patterns (aggregates, entities, value objects, repositories, services) with careful consideration of invariants and consistency boundaries
+- Following clean architecture principles to ensure maintainable, testable, and loosely coupled systems
+- Balancing technical excellence with pragmatic solutions that address real business needs
+- Identifying domain events that capture meaningful state changes within bounded contexts
+- Creating command hierarchies that properly encapsulate business operations and enforce domain rules
 `
     }
 

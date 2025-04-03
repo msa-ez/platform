@@ -54,15 +54,36 @@ export default {
     methods: {
         async loadSvg() {
             const storageKey = `icons-${this.icon}`;
-            const cachedSvg = localStorage.getItem(storageKey);
-            if (cachedSvg) {
-                this.updateSvgContent(cachedSvg);
-            } else {
-                const response = await fetch(`/assets/icon/${this.icon}.svg`);
-                let svg = await response.text();
-                localStorage.setItem(storageKey, svg); // 로컬 스토리지에 SVG 저장
+            const hashKey = `icons-hash-${this.icon}`;
+
+            const response = await fetch(`/assets/icon/${this.icon}.svg`);
+            let svg = await response.text();
+
+            // 해시 값 계산
+            const hash = await this.calculateHash(svg);
+
+            const cachedHash = localStorage.getItem(hashKey);
+
+            if (cachedHash !== hash) {
+                // 해시 값이 다르면 업데이트
+                localStorage.setItem(storageKey, svg);
+                localStorage.setItem(hashKey, hash);
                 this.updateSvgContent(svg);
+            } else {
+                // 해시 값이 같으면 캐시된 SVG 사용
+                const cachedSvg = localStorage.getItem(storageKey);
+                if (cachedSvg) {
+                    this.updateSvgContent(cachedSvg);
+                }
             }
+        },
+        async calculateHash(content) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(content);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            return hashHex;
         },
         shouldAddFill(svg) {
             return !svg.match(/fill="currentColor"/) && 

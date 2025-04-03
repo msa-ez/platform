@@ -58,20 +58,32 @@
                     >
                         <v-row class="pt-2 pb-2">
                             <v-spacer></v-spacer>
-                            <v-textarea
-                                v-model="projectInfo.prompt"
-                                ref="textarea"
-                                style="padding: 10px; width: 80%;"
-                                :style="!openAiResult && openAiResult == '' ? 'margin-top: 15px;':''"
-                                solo
-                                :hint="$t('autoModeling.mainClick')"
-                                persistent-hint
-                                :label="$t('autoModeling.main2')"
-                                :append-icon="startTemplateGenerate ? 'mdi-spin mdi-loading':'mdi-auto-fix'"
-                                @click:append="startGen(genType)"
-                                @keydown="startGenHandleKeydown(genType)"
-                                auto-grow
-                            ></v-textarea>
+                            <v-card style="width: 80%;">
+                                <v-col class="pa-0">
+                                    <v-textarea class="pa-0 delete-input-detail auto-modeling-input-textarea"
+                                        style="max-height: 400px;
+                                            overflow: auto;
+                                            margin-top: 4px !important;"
+                                        v-model="projectInfo.prompt"
+                                        ref="textarea"
+                                        solo
+                                        persistent-hint
+                                        :label="$t('autoModeling.main2')"
+                                        @keydown="startGenHandleKeydown(genType)"
+                                        auto-grow
+                                    ></v-textarea>
+                                    <v-row class="ma-0 pa-2">
+                                        <v-spacer></v-spacer>
+                                        <div @click="startGen(genType)"
+                                            style="cursor: pointer;
+                                            width:24px; height:24px;"
+                                        >
+                                            <v-icon v-if="startTemplateGenerate">mdi-spin mdi-loading</v-icon>
+                                            <v-icon v-else>mdi-auto-fix</v-icon>
+                                        </div>
+                                    </v-row>
+                                </v-col>
+                            </v-card>
                         </v-row>
                         <div v-if="openChatUI">
                             <v-col style="padding:0px;">
@@ -856,6 +868,11 @@
     }
 </script>
 <style>
+.auto-modeling-input-textarea .v-input__slot {
+    box-shadow: none !important;
+    border-bottom: none !important;
+
+}
 .main-auto-modeling-chip {
     margin:0px 5px;
     opacity: 0.8;

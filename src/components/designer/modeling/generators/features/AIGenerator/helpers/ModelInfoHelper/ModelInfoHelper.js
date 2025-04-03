@@ -108,9 +108,10 @@ class ModelInfoHelper {
             if (modelInfo.transforms && typeof modelInfo.transforms === 'object') {
                 Object.entries(modelInfo.transforms).forEach(([transformKey, transformInfo]) => {
                     options.push({
-                        label: transformInfo.label,
-                        defaultValue: transformInfo.defaultValue,
-                        vendor: modelInfo.vendor
+                        label: transformInfo.label || modelInfo.label,
+                        defaultValue: transformInfo.defaultValue || modelInfo.defaultValue,
+                        vendor: modelInfo.vendor,
+                        isInferenceModel: transformInfo.isInferenceModel || modelInfo.isInferenceModel
                     });
                 });
             }
@@ -118,7 +119,8 @@ class ModelInfoHelper {
             options.push({
                 label: modelInfo.label,
                 defaultValue: modelInfo.defaultValue,
-                vendor: modelInfo.vendor
+                vendor: modelInfo.vendor,
+                isInferenceModel: modelInfo.isInferenceModel
             });
         });
         // 이미 Low, Medium, High 옵션이 있으므로 제외함
@@ -143,17 +145,25 @@ class ModelInfoHelper {
 
         let selectedOptions = {}
         for(const key of Object.keys(defaultOptions)) {
+            if(key === "MODEL_FLAGS") continue;
+
             const modelName = defaultOptions[key];
-            selectedOptions[key] = this.getModelInfo(modelName);
+            if(modelName === defaultOptions.MODEL_FLAGS.NOT_USED)
+                selectedOptions[key] = defaultOptions.MODEL_FLAGS.NOT_USED;
+            else
+                selectedOptions[key] = this.getModelInfo(modelName);
         }
 
         return structuredClone(selectedOptions);
     }
 
     static setSelectedOptions(modelType, modelName) {
-        if(modelType !== "complexModel" && modelType !== "standardModel" && modelType !== "simpleModel")
+        const defaultOptions = getDefaultOptions();
+        if(!Object.keys(defaultOptions).includes(modelType))
             throw new Error(`Invalid model type: ${modelType}`);
-        this.getModelInfo(modelName); // 모델 정상 로드 여부 확인인
+
+        if(modelName && modelName !== defaultOptions.MODEL_FLAGS.NOT_USED)
+            this.getModelInfo(modelName); // 모델 정상 로드 여부 확인
 
         localStorage.setItem(modelType, modelName);
     }
@@ -161,6 +171,22 @@ class ModelInfoHelper {
     static getVendorInputOptions() {
         return this.vendorInputOptions;
     }
+
+    static getDefaultOptions() {
+        return getDefaultOptions();
+    }
+
+    static resetToDefaults() {
+        const defaultOptions = getDefaultOptions();
+        
+        for(const key of Object.keys(defaultOptions)) {
+            if(key === "MODEL_FLAGS") continue;
+            localStorage.removeItem(key);
+        }
+    
+        return this.getSelectedOptions();
+    }
+
 }
 ModelInfoHelper.modelInfos = modelInfos;
 ModelInfoHelper.vendorInputOptions = vendorInputOptions;
