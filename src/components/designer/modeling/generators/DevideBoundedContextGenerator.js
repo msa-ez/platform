@@ -40,21 +40,44 @@ Key principles:
 - Minimize inter-context dependencies
 - Seize event's action range to create bounded context
 - Seize relation between events to create flow
+- User-facing domains should be considered as Core Domain
+- Generic domains can have high complexity despite low differentiation
+
+Domain Classification Guidelines:
+Core Domain:
+- Direct impact on business competitive advantage
+- User-facing functionality
+- Strategic importance to business goals
+- Differentiation score typically 0.8-1.0
+- Complexity can vary (0.4-1.0)
+
+Supporting Domain:
+- Enables core domain functionality
+- Internal business processes
+- Medium business impact
+- Differentiation score typically 0.4-0.7
+- Complexity can vary (0.3-0.9)
+
+Generic Domain:
+- Common functionality across industries
+- Can be replaced by third-party solutions
+- Differentiation score 0.0-0.3
+- Complexity can vary (0.2-1.0)
+
+${this.relationGuidelines()}
 
 Scoring Instructions:
-- complexity: Score from 0.0 to 1.0 indicating the technical and business complexity
-  - 0.0-0.3: Simple implementation (Generic Domain level)
-  - 0.4-0.7: Moderate complexity (Supporting Domain level)
-  - 0.8-1.0: High complexity (Core Domain level)
+- complexity: Score from 0.0 to 1.0 indicating the technical implementation difficulty
+  - Consider: Technical dependencies, business rules complexity, data consistency requirements
+  - High score possible even for Generic domains
 - differentiation: Score from 0.0 to 1.0 indicating business differentiation value
-  - 0.0-0.3: Generic functionality (Generic Domain level)
-  - 0.4-0.7: Some unique value (Supporting Domain level)
-  - 0.8-1.0: Core competitive advantage (Core Domain level)
+  - Consider: Competitive advantage, user interaction, strategic importance
+  - User-facing domains should have higher scores
 
-Note: Scores should align with the domain importance:
-- Core Domain: Both complexity and differentiation should be in 0.8-1.0 range
-- Supporting Domain: Both scores should be in 0.4-0.7 range
-- Generic Domain: Both scores should be in 0.0-0.3 range
+Implementation Strategy Guidelines:
+- Core Domain: Rich Domain Model
+- Supporting Domain: Transaction Script or Active Record
+- Generic Domain: Active Record or PBC: (pbc-name)
 
 Language Instruction of Output:
 - Use the "same national language" as the Requirements at thoughts, context of explanations, alias, requirements.
@@ -78,7 +101,9 @@ The format must be as follows:
                     "alias":"alias of Aggregate in language of Requirements"
                 }
             ],
-            ${this.requirementsPrompt()}
+            "events":[ ], // All events that composed from this Bounded Context.
+            "requirements":[ ] // Must be empty
+
         }
       ],
       "relations":
@@ -157,7 +182,7 @@ Before creating any bounded context, first check if the functionality already ex
 If a functionality matches with any available PBC, you MUST:
 1. Create it as a Generic Domain bounded context
 2. Set its implementation strategy to "PBC: [pbc-name]"
-3. Set both complexity and differentiation scores to 0.0-0.3 range
+3. Bounded context name of PBC must be written it as is pbc name.
 This rule takes precedence over all other domain classification rules.
 
 Available Pre-Built Components (PBCs):
@@ -229,6 +254,19 @@ Important: In the "thoughts" section of your response, please explicitly explain
         }
     }
 
+    relationGuidelines(){
+        if(this.client.input['generateOption']['isProtocolMode']){
+            return `
+Relation Guidelines:
+- All relation types must use 'Pub/Sub' pattern
+- Exception: Only Generic domains as downstream MUST use 'Request/Response' pattern
+- Event-driven architecture is preferred for loose coupling 
+        `
+        }else{
+            return ``
+        }
+    }
+
     createModel(text){
         try{
             text = text.trim();
@@ -250,11 +288,11 @@ Important: In the "thoughts" section of your response, please explicitly explain
                     console.log(`[*] ${this.client.input['devisionAspect']}의 모델 생성이 진행중임`, {textLength: text.length})
 
                 // 요약 결과가 있으면 요약 결과를 기반으로 매핑 진행하므로 제거
-                if(this.client.input['requirements']['summarizedResult']!=""){
-                    model['boundedContexts'].forEach(boundedContext => {
-                        boundedContext['requirements'] = []
-                    })
-                }
+                // if(this.client.input['requirements']['summarizedResult']!=""){
+                //     model['boundedContexts'].forEach(boundedContext => {
+                //         boundedContext['requirements'] = []
+                //     })
+                // }
 
                 // COT 추가
                 if(this.parsedTexts.think){

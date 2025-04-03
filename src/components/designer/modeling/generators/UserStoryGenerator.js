@@ -75,15 +75,38 @@ export default class UserStoryGenerator extends AIGenerator{
                 "");
             }
 
-            modelDescription += `\n\nThe response is must be in the same language with the service name. Also, please list development teams that manages this system and bounded contexts in the perspective of ${this.client.input.separationPrinciple}.`
+            modelDescription += `\n\nThe response is must be in the same language with the service name. Also, please list bounded contexts in the perspective of ${this.client.input.separationPrinciple}.`
         }
 
 
         return `
-        Please generate actors and ${this.style} for ${this.client.input.title}. 
+            Please generate a comprehensive analysis for ${this.client.input.title} with the following requests:
 
-        ${modelDescription}
-        
+            1. Actors:
+            - List all actors (users, external systems, etc.) that interact with the system
+            - Describe each actor's role and responsibilities
+            
+            2. User Stories (in ${this.style}):
+            - Create detailed user stories for each actor
+            - Each story should include "As a", "I want to", "So that" format
+            - Include acceptance criteria for each story
+            
+            3. Business Rules:
+            - Define core business rules and constraints
+            - Include validation rules and business logic
+            - Specify any regulatory or compliance requirements
+            
+            4. Bounded Contexts:
+            - Define clear boundaries between different domains
+            - Specify the responsibilities of each bounded context
+            - Include the relationships between bounded contexts
+            - Consider the separation principle: ${this.client.input.separationPrinciple}
+            
+            ${modelDescription}
+
+            The response must:
+            - Ensure complete traceability between actors, stories, and bounded contexts
+            - Avoid any missing connections between components
         `
     }
 

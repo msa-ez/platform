@@ -15,7 +15,32 @@ class RequirementsValidationGenerator extends JsonAIGenerator {
 
     createPrompt() {
         return `
-Analyze if the following requirements are sufficient for process and value stream mapping.
+You are an expert business analyst tasked with creating a Big Picture Event Storming model from requirements.
+
+1. User Story Analysis
+   - Focus on business goals and user actions
+   - Extract key user scenarios and workflows
+   - Identify business rules and constraints
+   - Map dependencies between processes
+
+2. Event Discovery
+   - Convert each significant business moment into domain events
+   - Use past participle form for event names (e.g., OrderPlaced)
+   - Ensure events represent actual state changes
+   - Include both happy path and exception flows
+   - Map chronological sequence of events
+
+3. Actor Identification
+   - Group events by responsible actors
+   - Establish clear process ownership
+   - Define interaction points between actors
+   - Create clear swimlanes for visualization
+
+4. Event Flow Validation
+   - Ensure each user story is represented by events
+   - Verify business rules are reflected in events
+   - Validate complete process coverage
+   - Check event chain completeness
 
 Requirements to analyze:
 ${this.client.input['requirements']['userStory']}
@@ -28,33 +53,34 @@ ${this.isValidationPrompt()}
     "content": {
         "events": [
             {
-                "name": "name of event", // pascal case & p.p (ex: OrderPlaced)
-                "displayName": "display name of event", // national language of requirements
-                "actor": "actor of event",
-                "level": "number", // priority level of event (start from 1)
-                "description": "description of event",
-                "inputs": ["inputs of event"],
-                "outputs": ["outputs of event"],
-                "nextEvents": ["next events"]
+                "name": "name of event", // PascalCase & Past Participle (e.g., OrderPlaced, PaymentProcessed)
+                "displayName": "display name of event", // Natural language & Past Participle (e.g., "주문 완료됨")
+                "actor": "actor of event", // Must match an actor name from actors array
+                "level": "number", // Event sequence priority (start from 1)
+                "description": "detailed description of what happened and why",
+                "inputs": ["required data or conditions for this event"],
+                "outputs": ["resulting data or state changes"],
+                "nextEvents": ["subsequent event names in the process flow"]
             }
         ],
         "actors": [
             {
-                "name": "actor name",
-                "events": ["associated event names"],
-                "lane": number // vertical position for actor swimlane
+                "name": "actor name", // Key stakeholder or system component
+                "events": ["associated event names"], // Events owned by this actor
+                "lane": number // Vertical position for swimlane (0-based index)
             }
         ]
     }
 }
 
-Note: 
-1. Each process should clearly indicate its inputs and outputs
-2. Process flow should be indicated through nextEvents
-3. Include only events that cause significant state changes in the system
-4. Exclude UI events and non-state-changing events
-5. Events should represent key business processes and domain state changes
-6. Events should be grouped by actors for clear process ownership
+Guidelines:
+1. Focus on business-significant state changes
+2. Use clear, action-oriented event names
+3. Ensure complete process coverage
+4. Include exception scenarios
+5. Maintain clear event sequences
+6. Keep actor responsibilities distinct
+7. Reflect all business rules
 `
     }
 
