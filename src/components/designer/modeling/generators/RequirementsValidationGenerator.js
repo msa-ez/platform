@@ -51,6 +51,7 @@ ${this.isValidationPrompt()}
 {
     "type": "ANALYSIS_RESULT",
     "content": {
+        "recommendedBoundedContextsNumber": "Number of recommended bounded contexts based on the events",
         "events": [
             {
                 "name": "name of event", // PascalCase & Past Participle (e.g., OrderPlaced, PaymentProcessed)

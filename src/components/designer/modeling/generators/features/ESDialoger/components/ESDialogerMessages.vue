@@ -75,6 +75,7 @@
                     :isGeneratingBoundedContext="message.isGeneratingBoundedContext"
                     :isStartMapping="message.isStartMapping"
                     :isAnalizing="message.isAnalizing"
+                    :recommendedBoundedContextsNumber="message.recommendedBoundedContextsNumber"
                     @setGenerateOption="(option, boolean) => $emit('setGenerateOption', option, boolean)"
                 ></BCGenerationOption>
             </v-card>

@@ -4251,6 +4251,7 @@
                             }
                             openAPIPBC.setPBCInfo(pbc, info)
                             await openAPIPBC.appendPBC(info)
+                            this.changedByMe = true
                         }
 
                         this.activePBCElement(pbc)
@@ -4270,6 +4271,8 @@
                 if (pbc.views && pbc.views.length > 0) {
                     pbc.views[0].visibility = 'public'
                 }
+
+                this.changedByMe = true
             },
 
 

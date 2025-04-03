@@ -1379,6 +1379,7 @@
                         isGeneratingBoundedContext: this.processingState.isGeneratingBoundedContext,
                         isStartMapping: this.processingState.isStartMapping,
                         isAnalizing: this.processingState.isAnalizing,
+                        recommendedBoundedContextsNumber: this.requirementsValidationResult.analysisResult.recommendedBoundedContextsNumber,
                         timestamp: new Date()
                     };
                 }

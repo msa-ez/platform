@@ -128,6 +128,7 @@ export default {
         isGeneratingBoundedContext: Boolean,
         isStartMapping: Boolean,
         isAnalizing: Boolean,
+        recommendedBoundedContextsNumber: Number,
     },
 
     data() {
@@ -174,6 +175,10 @@ export default {
                this.isAnalizing ||
                this.localOptions.numberOfBCs > 15;
         },
+    },
+
+    mounted() {
+        this.localOptions.numberOfBCs = this.recommendedBoundedContextsNumber;
     },
 
     watch: {},
