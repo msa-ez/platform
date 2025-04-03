@@ -2084,7 +2084,7 @@
     .main-nav-tabs-box {
         margin-top:-78px;
         margin-bottom:10px;
-        position:absolute;
+        position:fixed;
         max-width:60%;
         min-width:10%;
         z-index:1;
@@ -2094,11 +2094,11 @@
     .isForeign-main-nav-tabs-box {
         margin-top:-78px;
         margin-bottom:10px;
-        position:absolute;
+        position:fixed;
         max-width:60%;
         min-width:10%;
         z-index:1;
-        left: 43%;
+        left: 50%;
         transform: translate(-50%, 0%);
     }
     .main-nav-tab {

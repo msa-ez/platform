@@ -178,45 +178,23 @@
                             </template>
 
                             <template v-slot:item.importance="{ item }">
-                                <v-edit-dialog
-                                    :return-value.sync="item.importance"
-                                    @save="saveItemEdit(item, 'importance')"
-                                    @open="initializeEditFields(item)"
-                                    @cancel="cancelEdit(item)"
-                                    large
-                                    persistent
-                                >
-                                    <template v-slot:input>
-                                        <v-select
-                                            v-model="editedFields.importance"
-                                            :items="importances"
-                                            :label="$t('DevideBoundedContextDialog.edit.importance')"
-                                            single-line
-                                        ></v-select>
-                                    </template>
-                                    <span>{{ item.importance }}</span>
-                                </v-edit-dialog>
+                                <v-select
+                                    v-model="item.importance"
+                                    :items="importances"
+                                    :label="$t('DevideBoundedContextDialog.edit.importance')"
+                                    single-line
+                                    @change="saveItemEdit(item, 'importance')"
+                                ></v-select>
                             </template>
 
                             <template v-slot:item.implementationStrategy="{ item }">
-                                <v-edit-dialog
-                                    :return-value.sync="item.implementationStrategy"
-                                    @save="saveItemEdit(item, 'implementationStrategy')"
-                                    @open="initializeEditFields(item)"
-                                    @cancel="cancelEdit(item)"
-                                    large
-                                    persistent
-                                >
-                                    <template v-slot:input>
-                                        <v-select
-                                            v-model="editedFields.implementationStrategy"
-                                            :items="implementationStrategies"
-                                            :label="$t('DevideBoundedContextDialog.edit.implementationStrategy')"
-                                            single-line
-                                        ></v-select>
-                                    </template>
-                                    <span>{{ item.implementationStrategy }}</span>
-                                </v-edit-dialog>
+                                <v-select
+                                    v-model="item.implementationStrategy"
+                                    :items="implementationStrategies"
+                                    :label="$t('DevideBoundedContextDialog.edit.implementationStrategy')"
+                                    single-line
+                                    @change="saveItemEdit(item, 'implementationStrategy')"
+                                ></v-select>
                             </template>
 
                             <template v-slot:expanded-item="{ headers, item }">
@@ -225,7 +203,8 @@
                                         <tbody>
                                             <tr v-for="req in item.requirements" :key="req.type">
                                                 <td class="requirement-type" width="100">{{ req.type }}</td>
-                                                <td class="requirement-text">{{ req.text }}</td>
+                                                <td class="requirement-text" v-html="req.text"></td>
+                                                {{ req }}
                                             </tr>
                                         </tbody>
                                     </v-simple-table>
@@ -297,11 +276,11 @@
                 :key="index"
             >
 
-                <v-card-subtitle>
+                <!-- <v-card-subtitle>
                     <div v-if="Object.keys(resultDevideBoundedContext).length > 0">
                         <p class="mb-0">{{ resultDevideBoundedContext[aspect].devisionAspect }}</p>
                     </div>
-                </v-card-subtitle>
+                </v-card-subtitle> -->
 
                 <v-card-subtitle>
                     <div class="d-flex align-center">
@@ -394,45 +373,23 @@
                                 </template>
 
                                 <template v-slot:item.importance="{ item }">
-                                    <v-edit-dialog
-                                        :return-value.sync="item.importance"
-                                        @save="saveItemEdit(item, 'importance')"
-                                        @open="initializeEditFields(item)"
-                                        @cancel="cancelEdit(item)"
-                                        large
-                                        persistent
-                                    >
-                                        <template v-slot:input>
-                                            <v-select
-                                                v-model="editedFields.importance"
-                                                :items="importances"
-                                                :label="$t('DevideBoundedContextDialog.edit.importance')"
-                                                single-line
-                                            ></v-select>
-                                        </template>
-                                        <span>{{ item.importance }}</span>
-                                    </v-edit-dialog>
+                                    <v-select
+                                        v-model="item.importance"
+                                        :items="importances"
+                                        :label="$t('DevideBoundedContextDialog.edit.importance')"
+                                        single-line
+                                        @change="saveItemEdit(item, 'importance')"
+                                    ></v-select>
                                 </template>
 
                                 <template v-slot:item.implementationStrategy="{ item }">
-                                    <v-edit-dialog
-                                        :return-value.sync="item.implementationStrategy"
-                                        @save="saveItemEdit(item, 'implementationStrategy')"
-                                        @open="initializeEditFields(item)"
-                                        @cancel="cancelEdit(item)"
-                                        large
-                                        persistent
-                                    >
-                                        <template v-slot:input>
-                                            <v-select
-                                                v-model="editedFields.implementationStrategy"
-                                                :items="implementationStrategies"
-                                                :label="$t('DevideBoundedContextDialog.edit.implementationStrategy')"
-                                                single-line
-                                            ></v-select>
-                                        </template>
-                                        <span>{{ item.implementationStrategy }}</span>
-                                    </v-edit-dialog>
+                                    <v-select
+                                        v-model="item.implementationStrategy"
+                                        :items="implementationStrategies"
+                                        :label="$t('DevideBoundedContextDialog.edit.implementationStrategy')"
+                                        single-line
+                                        @change="saveItemEdit(item, 'implementationStrategy')"
+                                    ></v-select>
                                 </template>
 
                                 <template v-slot:expanded-item="{ headers, item }">
@@ -441,7 +398,7 @@
                                             <tbody>
                                                 <tr v-for="req in item.requirements" :key="req.type">
                                                     <td class="requirement-type" width="100">{{ req.type }}</td>
-                                                    <td class="requirement-text">{{ req.text }}</td>
+                                                    <td class="requirement-text" v-html="req.text"></td>
                                                 </tr>
                                             </tbody>
                                         </v-simple-table>
@@ -657,9 +614,13 @@
             },
 
             activeTab: {
-                handler() {
+                handler(newTabIndex) {
                     this.$nextTick(() => {
                         this.renderKey++;
+                        const aspects = Object.keys(this.resultDevideBoundedContext);
+                        if (aspects.length > newTabIndex) {
+                            this.$emit('updateSelectedAspect', aspects[newTabIndex]);
+                        }
                     });
                 }
             }
@@ -685,11 +646,12 @@
                         editable: true,
                         edgeType: 'stadium',
                         style: this.getDomainStyle(bc.importance),
-                        group: bc.importance || 'Generic Domain' // 그룹 지정
+                        group: bc.importance || 'Generic Domain',
+                        next: [], // 초기화
+                        link: []  // 초기화
                     };
                     nodes.push(node);
                     
-                    // 도메인 그룹에 추가
                     if (bc.importance && domainGroups[bc.importance]) {
                         domainGroups[bc.importance].push(node);
                     } else {
@@ -697,19 +659,15 @@
                     }
                 });
                 
-                // 관계 생성
+                // 관계 정보 추가
                 relations.forEach((rel) => {
                     const sourceIndex = boundedContexts.findIndex(bc => bc.name === rel.upStream.name);
                     const targetIndex = boundedContexts.findIndex(bc => bc.name === rel.downStream.name);
                     
                     if (sourceIndex !== -1 && targetIndex !== -1) {
-                        const sourceNode = nodes.find(node => node.id === `BC${sourceIndex}`);
-                        if (sourceNode) {
-                            sourceNode.next = sourceNode.next || [];
-                            sourceNode.next.push(`BC${targetIndex}`);
-                            sourceNode.link = sourceNode.link || [];
-                            sourceNode.link.push(`-->|"${rel.type}"|`);
-                        }
+                        const sourceNode = nodes[sourceIndex];
+                        sourceNode.next.push(`BC${targetIndex}`);
+                        sourceNode.link.push(`-->|"${rel.type}"|`);
                     }
                 });
 
@@ -769,7 +727,7 @@
                         implementationStrategy: bc.implementationStrategy || '',
                         requirements: bc.requirements ? bc.requirements.map(req => ({
                             type: requirementNumber++,
-                            text: req.text || req
+                            text: req.text ? req.text.replace(/\n/g, '<br>') : req
                         })) : [],
                     };
                 });
@@ -823,15 +781,14 @@
                             break;
 
                         case 'importance':
-                            boundedContext.importance = this.editedFields.importance;
+                            boundedContext.importance = item.importance;
                             break;
 
                         case 'implementationStrategy':
-                            boundedContext.implementationStrategy = this.editedFields.implementationStrategy;
+                            boundedContext.implementationStrategy = item.implementationStrategy;
                             break;
                     }
 
-                    // 여기를 수정: 전체 resultDevideBoundedContext[key]를 전달
                     this.mermaidNodes = this.generateNodes({
                         boundedContexts: this.resultDevideBoundedContext[key].boundedContexts,
                         relations: this.resultDevideBoundedContext[key].relations
