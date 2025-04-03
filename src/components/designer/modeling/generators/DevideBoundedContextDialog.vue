@@ -178,45 +178,23 @@
                             </template>
 
                             <template v-slot:item.importance="{ item }">
-                                <v-edit-dialog
-                                    :return-value.sync="item.importance"
-                                    @save="saveItemEdit(item, 'importance')"
-                                    @open="initializeEditFields(item)"
-                                    @cancel="cancelEdit(item)"
-                                    large
-                                    persistent
-                                >
-                                    <template v-slot:input>
-                                        <v-select
-                                            v-model="editedFields.importance"
-                                            :items="importances"
-                                            :label="$t('DevideBoundedContextDialog.edit.importance')"
-                                            single-line
-                                        ></v-select>
-                                    </template>
-                                    <span>{{ item.importance }}</span>
-                                </v-edit-dialog>
+                                <v-select
+                                    v-model="item.importance"
+                                    :items="importances"
+                                    :label="$t('DevideBoundedContextDialog.edit.importance')"
+                                    single-line
+                                    @change="saveItemEdit(item, 'importance')"
+                                ></v-select>
                             </template>
 
                             <template v-slot:item.implementationStrategy="{ item }">
-                                <v-edit-dialog
-                                    :return-value.sync="item.implementationStrategy"
-                                    @save="saveItemEdit(item, 'implementationStrategy')"
-                                    @open="initializeEditFields(item)"
-                                    @cancel="cancelEdit(item)"
-                                    large
-                                    persistent
-                                >
-                                    <template v-slot:input>
-                                        <v-select
-                                            v-model="editedFields.implementationStrategy"
-                                            :items="implementationStrategies"
-                                            :label="$t('DevideBoundedContextDialog.edit.implementationStrategy')"
-                                            single-line
-                                        ></v-select>
-                                    </template>
-                                    <span>{{ item.implementationStrategy }}</span>
-                                </v-edit-dialog>
+                                <v-select
+                                    v-model="item.implementationStrategy"
+                                    :items="implementationStrategies"
+                                    :label="$t('DevideBoundedContextDialog.edit.implementationStrategy')"
+                                    single-line
+                                    @change="saveItemEdit(item, 'implementationStrategy')"
+                                ></v-select>
                             </template>
 
                             <template v-slot:expanded-item="{ headers, item }">
@@ -225,7 +203,8 @@
                                         <tbody>
                                             <tr v-for="req in item.requirements" :key="req.type">
                                                 <td class="requirement-type" width="100">{{ req.type }}</td>
-                                                <td class="requirement-text">{{ req.text }}</td>
+                                                <td class="requirement-text" v-html="req.text"></td>
+                                                {{ req }}
                                             </tr>
                                         </tbody>
                                     </v-simple-table>
@@ -394,45 +373,23 @@
                                 </template>
 
                                 <template v-slot:item.importance="{ item }">
-                                    <v-edit-dialog
-                                        :return-value.sync="item.importance"
-                                        @save="saveItemEdit(item, 'importance')"
-                                        @open="initializeEditFields(item)"
-                                        @cancel="cancelEdit(item)"
-                                        large
-                                        persistent
-                                    >
-                                        <template v-slot:input>
-                                            <v-select
-                                                v-model="editedFields.importance"
-                                                :items="importances"
-                                                :label="$t('DevideBoundedContextDialog.edit.importance')"
-                                                single-line
-                                            ></v-select>
-                                        </template>
-                                        <span>{{ item.importance }}</span>
-                                    </v-edit-dialog>
+                                    <v-select
+                                        v-model="item.importance"
+                                        :items="importances"
+                                        :label="$t('DevideBoundedContextDialog.edit.importance')"
+                                        single-line
+                                        @change="saveItemEdit(item, 'importance')"
+                                    ></v-select>
                                 </template>
 
                                 <template v-slot:item.implementationStrategy="{ item }">
-                                    <v-edit-dialog
-                                        :return-value.sync="item.implementationStrategy"
-                                        @save="saveItemEdit(item, 'implementationStrategy')"
-                                        @open="initializeEditFields(item)"
-                                        @cancel="cancelEdit(item)"
-                                        large
-                                        persistent
-                                    >
-                                        <template v-slot:input>
-                                            <v-select
-                                                v-model="editedFields.implementationStrategy"
-                                                :items="implementationStrategies"
-                                                :label="$t('DevideBoundedContextDialog.edit.implementationStrategy')"
-                                                single-line
-                                            ></v-select>
-                                        </template>
-                                        <span>{{ item.implementationStrategy }}</span>
-                                    </v-edit-dialog>
+                                    <v-select
+                                        v-model="item.implementationStrategy"
+                                        :items="implementationStrategies"
+                                        :label="$t('DevideBoundedContextDialog.edit.implementationStrategy')"
+                                        single-line
+                                        @change="saveItemEdit(item, 'implementationStrategy')"
+                                    ></v-select>
                                 </template>
 
                                 <template v-slot:expanded-item="{ headers, item }">
@@ -441,7 +398,7 @@
                                             <tbody>
                                                 <tr v-for="req in item.requirements" :key="req.type">
                                                     <td class="requirement-type" width="100">{{ req.type }}</td>
-                                                    <td class="requirement-text">{{ req.text }}</td>
+                                                    <td class="requirement-text" v-html="req.text"></td>
                                                 </tr>
                                             </tbody>
                                         </v-simple-table>
@@ -769,7 +726,7 @@
                         implementationStrategy: bc.implementationStrategy || '',
                         requirements: bc.requirements ? bc.requirements.map(req => ({
                             type: requirementNumber++,
-                            text: req.text || req
+                            text: req.text ? req.text.replace(/\n/g, '<br>') : req
                         })) : [],
                     };
                 });
@@ -823,11 +780,11 @@
                             break;
 
                         case 'importance':
-                            boundedContext.importance = this.editedFields.importance;
+                            boundedContext.importance = item.importance;
                             break;
 
                         case 'implementationStrategy':
-                            boundedContext.implementationStrategy = this.editedFields.implementationStrategy;
+                            boundedContext.implementationStrategy = item.implementationStrategy;
                             break;
                     }
 

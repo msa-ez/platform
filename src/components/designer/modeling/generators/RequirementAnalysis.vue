@@ -1,5 +1,5 @@
 <template>
-    <div class="requirement-analysis">
+    <div class="pa-4">
         <template v-if="isAnalizing">
             <div class="generating-state">
                 <v-progress-circular
@@ -13,124 +13,120 @@
             </div>
         </template>
         <template>
-            <v-card>
-                <!--분석 결과가 있는 경우-->
-                <div v-if="analysisResult && analysisResult.type === 'ANALYSIS_RESULT'" class="event-storming-wrapper">
-                    <div class="event-storming-header">
-                        <h2 class="event-storming-title">
+            <!--분석 결과가 있는 경우-->
+            <div v-if="analysisResult && analysisResult.type === 'ANALYSIS_RESULT'" class="event-storming-wrapper">
+                <div>
+                    <h2 class="event-storming-title">
+                        <v-row class="ma-0 pa-0">
                             <v-icon left>mdi-check-circle</v-icon>
-                            요구사항 분석 결과
-                        </h2>
-                        <div v-if="isAnalizing" class="event-storming-subtitle">
-                            프로세스 및 이벤트 흐름 도출 중...
-                        </div>
-                        <div v-else class="event-storming-subtitle">
-                            프로세스 및 이벤트 흐름이 성공적으로 도출되었습니다.
-                        </div>
-                    </div>
-
-                    <div class="event-storming-canvas">
-                        <event-storming-model-canvas
-                            v-model="analysisResult.content"
-                            :projectName="analysisResult.projectName"
-                            :labs-id="null"
-                            :is-original-model="false"
-                        />
-                    </div>
-
-                    <div class="event-storming-footer">
-                        <v-btn 
-                            :disabled="isAnalizing || isGeneratingBoundedContext || isStartMapping || isSummarizeStarted"
-                            @click="showBCGenerationOption()" 
-                            class="auto-modeling-btn" 
-                            color="primary"
-                        >
-                            Bounded Context 생성
-                        </v-btn>
-                    </div>
+                            <div>요구사항 분석 결과</div>
+                        </v-row>
+                    </h2>
+                    <div v-if="isAnalizing" class="event-storming-subtitle">프로세스 및 이벤트 흐름 도출 중...</div>
+                    <div v-else class="event-storming-subtitle">프로세스 및 이벤트 흐름이 성공적으로 도출되었습니다.</div>
                 </div>
 
-                <!-- 가이드가 필요한 경우 -->
-                <div v-else-if="analysisResult && analysisResult.type === 'ENHANCEMENT_GUIDE'" class="enhancement-guide">
-                    <v-alert
-                        type="warning"
-                        prominent
-                        border="left"
-                        colored-border
-                        class="guide-header"
-                    >
-                        요구사항 개선이 필요합니다. 아래 가이드를 참고하여 요구사항을 보완해주세요.
-                    </v-alert>
+                <div class="event-storming-canvas">
+                    <event-storming-model-canvas
+                        v-model="analysisResult.content"
+                        :projectName="analysisResult.projectName"
+                        :labs-id="null"
+                        :is-original-model="false"
+                    />
+                </div>
 
-                    <div class="quality-criteria-section">
-                        <template v-for="(items, criterion) in analysisResult.content.missingElements">
-                            <div v-if="items.length" :key="criterion" class="criterion-card">
-                                <div class="criterion-header">
-                                    <v-icon color="error" class="mr-2">mdi-alert-circle</v-icon>
-                                    {{ getCriterionTitle(criterion) }}
-                                </div>
-                                <ul class="criterion-items">
-                                    <li v-for="item in items" :key="item">{{ item }}</li>
+                <div class="event-storming-footer">
+                    <v-btn 
+                        :disabled="isAnalizing || isGeneratingBoundedContext || isStartMapping || isSummarizeStarted"
+                        @click="showBCGenerationOption()" 
+                        class="auto-modeling-btn" 
+                        color="primary"
+                    >
+                        Bounded Context 생성
+                    </v-btn>
+                </div>
+            </div>
+
+            <!-- 가이드가 필요한 경우 -->
+            <div v-else-if="analysisResult && analysisResult.type === 'ENHANCEMENT_GUIDE'" class="enhancement-guide">
+                <v-alert
+                    type="warning"
+                    prominent
+                    border="left"
+                    colored-border
+                    class="guide-header"
+                >
+                    요구사항 개선이 필요합니다. 아래 가이드를 참고하여 요구사항을 보완해주세요.
+                </v-alert>
+
+                <div class="quality-criteria-section">
+                    <template v-for="(items, criterion) in analysisResult.content.missingElements">
+                        <div v-if="items.length" :key="criterion" class="criterion-card">
+                            <div class="criterion-header">
+                                <v-icon color="error" class="mr-2">mdi-alert-circle</v-icon>
+                                {{ getCriterionTitle(criterion) }}
+                            </div>
+                            <ul class="criterion-items">
+                                <li v-for="item in items" :key="item">{{ item }}</li>
+                            </ul>
+                        </div>
+                    </template>
+                </div>
+
+                <div class="recommendations-section mt-4">
+                    <v-card outlined>
+                        <v-card-title class="recommendations-title">
+                            <v-icon color="primary" class="mr-2">mdi-lightbulb</v-icon>
+                            개선 권장사항
+                        </v-card-title>
+                        <v-card-text>
+                            <div v-if="analysisResult.content.recommendations.immediate">
+                                <h4 class="mb-2">즉시 개선사항:</h4>
+                                <ul>
+                                    <li v-for="item in analysisResult.content.recommendations.immediate" 
+                                        :key="item" 
+                                        class="mb-2">
+                                        {{ item }}
+                                    </li>
                                 </ul>
                             </div>
-                        </template>
-                    </div>
 
-                    <div class="recommendations-section mt-4">
-                        <v-card outlined>
-                            <v-card-title class="recommendations-title">
-                                <v-icon color="primary" class="mr-2">mdi-lightbulb</v-icon>
-                                개선 권장사항
-                            </v-card-title>
-                            <v-card-text>
-                                <div v-if="analysisResult.content.recommendations.immediate">
-                                    <h4 class="mb-2">즉시 개선사항:</h4>
-                                    <ul>
-                                        <li v-for="item in analysisResult.content.recommendations.immediate" 
-                                            :key="item" 
-                                            class="mb-2">
-                                            {{ item }}
-                                        </li>
-                                    </ul>
-                                </div>
-
-                                <div v-if="analysisResult.content.recommendations.questions" class="mt-4">
-                                    <h4 class="mb-2">검토 필요 사항:</h4>
-                                    <v-chip-group column>
-                                        <v-chip v-for="question in analysisResult.content.recommendations.questions"
-                                            :key="question"
-                                            outlined
-                                            class="ma-1">
-                                            <v-icon left small>mdi-help-circle</v-icon>
-                                            {{ question }}
-                                        </v-chip>
-                                    </v-chip-group>
-                                </div>
-                            </v-card-text>
-                        </v-card>
-                    </div>
-
-                    <div v-if="analysisResult.content.impactAreas" class="impact-areas-section mt-4">
-                        <v-card outlined>
-                            <v-card-title class="impact-title">
-                                <v-icon color="info" class="mr-2">mdi-target</v-icon>
-                                영향 범위
-                            </v-card-title>
-                            <v-card-text>
-                                <v-chip-group>
-                                    <v-chip v-for="area in analysisResult.content.impactAreas"
-                                        :key="area"
-                                        color="info"
-                                        text-color="white"
-                                        small>
-                                        {{ area }}
+                            <div v-if="analysisResult.content.recommendations.questions" class="mt-4">
+                                <h4 class="mb-2">검토 필요 사항:</h4>
+                                <v-chip-group column>
+                                    <v-chip v-for="question in analysisResult.content.recommendations.questions"
+                                        :key="question"
+                                        outlined
+                                        class="ma-1">
+                                        <v-icon left small>mdi-help-circle</v-icon>
+                                        {{ question }}
                                     </v-chip>
                                 </v-chip-group>
-                            </v-card-text>
-                        </v-card>
-                    </div>
+                            </div>
+                        </v-card-text>
+                    </v-card>
                 </div>
-            </v-card>
+
+                <div v-if="analysisResult.content.impactAreas" class="impact-areas-section mt-4">
+                    <v-card outlined>
+                        <v-card-title class="impact-title">
+                            <v-icon color="info" class="mr-2">mdi-target</v-icon>
+                            영향 범위
+                        </v-card-title>
+                        <v-card-text>
+                            <v-chip-group>
+                                <v-chip v-for="area in analysisResult.content.impactAreas"
+                                    :key="area"
+                                    color="info"
+                                    text-color="white"
+                                    small>
+                                    {{ area }}
+                                </v-chip>
+                            </v-chip-group>
+                        </v-card-text>
+                    </v-card>
+                </div>
+            </div>
         </template>
     </div>
 </template>
@@ -200,9 +196,6 @@ export default {
 </script>
 
 <style>
-.requirement-analysis {
-    padding: 20px;
-}
 
 .enhancement-guide {
     background: #f8f9fa;
@@ -261,19 +254,11 @@ export default {
     position: relative;
     display: flex;
     flex-direction: column;
-    padding: 20px;
-}
-
-.event-storming-header {
-    padding-bottom: 20px;
 }
 
 .event-storming-title {
     font-size: 1.5rem;
     color: #333;
-    display: flex;
-    align-items: center;
-    margin-bottom: 8px;
 }
 
 .event-storming-subtitle {

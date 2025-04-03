@@ -1,27 +1,14 @@
 <template xmlns:v-on="http://www.w3.org/1999/xhtml">
     <v-card class="auto-modeling-user-story-card">
         <v-card-title class="headline d-flex align-center">
-            <v-icon class="mr-2">mdi-cog-outline</v-icon>
+            <!-- <v-icon class="mr-2">mdi-cog-outline</v-icon> -->
             <div>{{ $t('aiModelSetting.template.aiModelSettings') }}</div>
-
-            <v-spacer></v-spacer>
-            
-            <v-btn 
-                small 
-                outlined 
-                color="primary" 
-                @click="resetToDefaults"
-                class="reset-button"
-            >
-                <v-icon small left>mdi-refresh</v-icon>
-                {{ $t('aiModelSetting.template.resetToDefaults') }}
-            </v-btn>
         </v-card-title>
         
         <v-card-text>
             <v-sheet class="pa-4 mb-5 rounded" color="grey lighten-5" elevation="1">
                 <h3 class="mb-4 primary--text d-flex align-center">
-                    <v-icon color="primary" class="mr-2">mdi-cube-outline</v-icon>
+                    <!-- <v-icon color="primary" class="mr-2">mdi-cube-outline</v-icon> -->
                     <div>{{ $t('aiModelSetting.template.selectModel') }}</div>
                 </h3>
                 
@@ -82,11 +69,11 @@
             
             <v-sheet class="pa-4 rounded" color="grey lighten-5" elevation="1">
                 <h3 class="mb-4 primary--text d-flex align-center">
-                    <v-icon color="primary" class="mr-2">mdi-key-variant</v-icon>
+                    <!-- <v-icon color="primary" class="mr-2">mdi-key-variant</v-icon> -->
                     <div>{{ $t('aiModelSetting.template.apiKeySettings') }}</div>
                 </h3>
                 
-                <div v-for="(inputFields, vendor) in requiredVendorInputs" :key="vendor" class="vendor-input-section mb-4">
+                <div v-for="(inputFields, vendor) in requiredVendorInputs" :key="vendor" class="mb-4">
                     <div class="d-flex align-center mb-3">
                         <div class="d-flex align-center">
                             <span v-if="hasSvgIcon(vendor)" v-html="vendorSvgIcons[vendor.toLowerCase()]" class="vendor-svg-icon mr-1"></span>
@@ -129,8 +116,16 @@
         
         <v-card-actions class="pa-4 pt-0">
             <v-spacer></v-spacer>
+            <v-btn 
+                small 
+                outlined 
+                color="primary" 
+                @click="resetToDefaults"
+            >
+                <!-- <v-icon small left>mdi-refresh</v-icon> -->
+                {{ $t('aiModelSetting.template.resetToDefaults') }}
+            </v-btn>
             <v-btn color="primary" class="auto-modeling-btn" @click="$emit('onConfirm')">
-                <v-icon left>mdi-check</v-icon>
                 {{ $t('aiModelSetting.template.confirm') }}
             </v-btn>
         </v-card-actions>
@@ -477,15 +472,6 @@ export default {
     font-size: 1rem;
 }
 
-.vendor-input-section {
-    border-left: 3px solid var(--v-primary-lighten1, #9FA8DA);
-    padding-left: 16px;
-    margin-bottom: 24px;
-    background-color: rgba(0, 0, 0, 0.01);
-    border-radius: 0 4px 4px 0;
-    padding: 16px 16px 16px 20px;
-}
-
 .vendor-header {
     background-color: #f5f5f5;
     border-bottom: 1px solid #e0e0e0;
@@ -525,10 +511,5 @@ export default {
 .disabled-model :deep(.v-select__selection) {
     color: #9e9e9e;
     font-style: italic;
-}
-
-.reset-button {
-    height: 32px !important;
-    font-size: 0.85rem;
 }
 </style>

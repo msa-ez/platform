@@ -897,6 +897,10 @@ code[class*=language-]:nth-child(1) {
     display: none !important;
 }
 
+.auto-modeling-userStory .v-input__slot {
+    padding: 0px !important;
+}
+
 .generator-ui-btn {
     position: absolute !important;
     bottom: 50px !important;
