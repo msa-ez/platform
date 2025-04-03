@@ -125,6 +125,7 @@
                 @reGenerateWithFeedback="reGenerateWithFeedback"
                 @mappingRequirements="mappingRequirements"
                 @setGenerateOption="setGenerateOption"
+                @updateSelectedAspect="updateSelectedAspect"
             ></ESDialogerMessages>
         </div>
         <div
@@ -800,7 +801,8 @@
                 githubHeaders: null,
                 gitAccessToken: null,
                 allRepoList: [],
-                pbcLists: []
+                pbcLists: [],
+                pbcResults: []
             }
         },
         methods: {
@@ -904,6 +906,7 @@
                         const baseKey = Object.keys(newResult)[0].split('_')[0];
                         const choiceCount = Object.keys(newResult).length;
                         const newKey = `${baseKey}_choice${choiceCount + 1}`;
+                        model.devisionAspect = newKey;
                         newResult[newKey] = model;
                     } else {
                         // 첫 번째 결과인 경우
@@ -1183,7 +1186,6 @@
                 this.collectedMockDatas.aggregateDraftScenarios.selectedStructureOption = structuredClone(selectedStructureOption)
 
                 // 요약 결과가 없어도, 상세한 매핑을 위해 원본 매핑 진행
-                // if(this.summarizedResult.length > 0){
                 if(!this.isAnalizeResultSetted){
                     let aspect = selectedStructureOption.devisionAspect
                     this.resultDevideBoundedContext[aspect].boundedContexts
@@ -1194,17 +1196,20 @@
                     });
                     this.mappingRequirements();
                     return;
-
-                    // if(allRequirementsEmpty) {
-                    //     this.mappingRequirements();
-                    //     return;
-                    // }
                 }
 
                 console.log("[*] 선택된 BC 구성 옵션을 기반으로 생성이 시도됨", {selectedStructureOption})
 
                 this.workingMessages.AggregateDraftDialogDto = MessageFactory.createAggregateDraftDialogDtoMessage()
                 this.messages.push(this.workingMessages.AggregateDraftDialogDto)
+
+                if(selectedStructureOption.boundedContexts.some(bc => bc.implementationStrategy.includes("PBC"))){
+                    this.pbcResults = this.pbcResults.concat(selectedStructureOption.boundedContexts.filter(bc => bc.implementationStrategy.includes("PBC")))
+                    selectedStructureOption.boundedContexts = selectedStructureOption.boundedContexts.filter(bc => {
+                        return !(bc.implementationStrategy.includes("PBC") && bc.importance === "Generic Domain");
+                    });
+                }
+
 
                 this.generators.PreProcessingFunctionsGenerator.buildInitialInputs(selectedStructureOption)
                 this.generators.PreProcessingFunctionsGenerator.initInputs()
@@ -1224,6 +1229,19 @@
                 )
                 console.log("[*] 시나리오별 테스트를 위한 Mock 데이터 구축 완료", {collectedMockDatas: this.collectedMockDatas.aggregateDraftScenarios})
 
+                if(this.pbcResults.length > 0){
+                    this.pbcResults.forEach(pbc => {
+                        if(!draftOptions[`PBC-${pbc.name}`]){
+                            this.pbcLists.forEach(pbcList => {
+                                if(pbcList.name === pbc.implementationStrategy.replace("PBC:", "").trim()){
+                                    pbc['info'] = pbcList
+                                }
+                            })
+                            draftOptions[`PBC-${pbc.name}`] = pbc
+                        }
+                    })
+                }
+                
                 this.state = {
                     ...this.state,
                     userStory: this.value.userStory,
@@ -1405,6 +1423,10 @@
                 if(this.messages.every(message => message.type != "bcGenerationOption")){
                     this.messages.push(this.generateMessage("bcGenerationOption", {}))
                 }
+            },
+
+            updateSelectedAspect(newTabIndex){
+                this.selectedAspect = this.resultDevideBoundedContext[newTabIndex].devisionAspect
             },
 
             getDisabledGenerateBtn(){

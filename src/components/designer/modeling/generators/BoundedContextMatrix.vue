@@ -13,7 +13,7 @@
                :key="bc.name"
                class="bc-item"
                :style="getBcStyle(bc)"
-               :title="`${bc.alias}\n중요도: ${bc.importance}`">
+               :title="`${bc.alias}\n중요도: ${bc.importance}\n복잡성: ${bc.complexity}\n차별성: ${bc.differentiation}\n구현 전략: ${bc.implementationStrategy}`">
             {{ bc.alias }}
           </div>
         </div>
