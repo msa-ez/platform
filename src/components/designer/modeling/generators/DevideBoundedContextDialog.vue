@@ -276,11 +276,11 @@
                 :key="index"
             >
 
-                <v-card-subtitle>
+                <!-- <v-card-subtitle>
                     <div v-if="Object.keys(resultDevideBoundedContext).length > 0">
                         <p class="mb-0">{{ resultDevideBoundedContext[aspect].devisionAspect }}</p>
                     </div>
-                </v-card-subtitle>
+                </v-card-subtitle> -->
 
                 <v-card-subtitle>
                     <div class="d-flex align-center">
@@ -614,9 +614,13 @@
             },
 
             activeTab: {
-                handler() {
+                handler(newTabIndex) {
                     this.$nextTick(() => {
                         this.renderKey++;
+                        const aspects = Object.keys(this.resultDevideBoundedContext);
+                        if (aspects.length > newTabIndex) {
+                            this.$emit('updateSelectedAspect', aspects[newTabIndex]);
+                        }
                     });
                 }
             }
@@ -642,11 +646,12 @@
                         editable: true,
                         edgeType: 'stadium',
                         style: this.getDomainStyle(bc.importance),
-                        group: bc.importance || 'Generic Domain' // 그룹 지정
+                        group: bc.importance || 'Generic Domain',
+                        next: [], // 초기화
+                        link: []  // 초기화
                     };
                     nodes.push(node);
                     
-                    // 도메인 그룹에 추가
                     if (bc.importance && domainGroups[bc.importance]) {
                         domainGroups[bc.importance].push(node);
                     } else {
@@ -654,19 +659,15 @@
                     }
                 });
                 
-                // 관계 생성
+                // 관계 정보 추가
                 relations.forEach((rel) => {
                     const sourceIndex = boundedContexts.findIndex(bc => bc.name === rel.upStream.name);
                     const targetIndex = boundedContexts.findIndex(bc => bc.name === rel.downStream.name);
                     
                     if (sourceIndex !== -1 && targetIndex !== -1) {
-                        const sourceNode = nodes.find(node => node.id === `BC${sourceIndex}`);
-                        if (sourceNode) {
-                            sourceNode.next = sourceNode.next || [];
-                            sourceNode.next.push(`BC${targetIndex}`);
-                            sourceNode.link = sourceNode.link || [];
-                            sourceNode.link.push(`-->|"${rel.type}"|`);
-                        }
+                        const sourceNode = nodes[sourceIndex];
+                        sourceNode.next.push(`BC${targetIndex}`);
+                        sourceNode.link.push(`-->|"${rel.type}"|`);
                     }
                 });
 
@@ -788,7 +789,6 @@
                             break;
                     }
 
-                    // 여기를 수정: 전체 resultDevideBoundedContext[key]를 전달
                     this.mermaidNodes = this.generateNodes({
                         boundedContexts: this.resultDevideBoundedContext[key].boundedContexts,
                         relations: this.resultDevideBoundedContext[key].relations

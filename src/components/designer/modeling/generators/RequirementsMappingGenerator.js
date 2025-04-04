@@ -19,6 +19,7 @@ Alias: ${this.client.input['boundedContext'].alias}
 implementationStrategy: ${this.client.input['boundedContext'].implementationStrategy}
 importance: ${this.client.input['boundedContext'].importance}
 Aggregates: ${JSON.stringify(this.client.input['boundedContext'].aggregates)}
+Events: ${JSON.stringify(this.client.input['boundedContext'].events)}
 
 Requirements or Analysis Result(Actors and Events) Chunk:
 ${this.parseRequirements(this.client.input['requirementChunk'])}

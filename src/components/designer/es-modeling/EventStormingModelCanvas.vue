@@ -1992,6 +1992,10 @@
             @stopGeneration="generatorProgressDto.actions.stopGeneration"
             ></GeneratorProgress>
         </div>
+
+        <OpenAPIPBC
+            ref="openAPIPBC"
+        ></OpenAPIPBC>
     </div>
 </template>
 
@@ -2033,6 +2037,9 @@
     import BoundedContextRelocateActionsGenerator from "../modeling/generators/es-ddl-generators/BoundedContextRelocateActionsGenerator"
     import ModelDraftDialog from "../modeling/ModelDraftDialog"
     import EventStormingTestTerminal from "./testTerminals/EventStormingTestTerminal.vue";
+
+    import OpenAPIPBC from '../modeling/OpenAPIPBC'
+
     import {
         DraftGeneratorByFunctions,
         CreateAggregateActionsByFunctions, 
@@ -2044,6 +2051,9 @@
     } from "../modeling/generators/es-generators";
     import GeneratorProgress from "./components/GeneratorProgress.vue"
     import ESActionsUtil from "../modeling/generators/es-ddl-generators/modules/ESActionsUtil"
+
+
+
     const prettier = require("prettier");
     const plugins = require("prettier-plugin-java");
     const axios = require("axios");
@@ -2115,7 +2125,8 @@
             ModelDraftDialog,
             ModelDraftDialogForDistribution,
             AggregateDraftDialog,
-            GeneratorProgress
+            GeneratorProgress,
+            OpenAPIPBC
             // ModelCodeGenerator
         },
         props: {
@@ -2568,7 +2579,8 @@
                     }
                 },
 
-                selectedDraftOptions: [],
+                selectedDraftOptions: {},
+                filteredPBCs: {},
                 collectedMockDatas: {
                     aggregateDraftScenarios: {
                     }
@@ -2976,7 +2988,9 @@
                     console.log("[*] 최종 생성까지 걸린 총 시간(초)", totalSeconds) 
                     
                     byFunctionCallbacks.onGenerationDone()
-                    this.isEditable = true
+
+                    this.generatePBCbyDraftOptions(this.filteredPBCs)
+                    console.log("[*] 최종 생성 후 PBC 생성 완료", {filteredPBCs: this.filteredPBCs})
 
                     if(!localStorage.getItem("blockAutoRefresh"))
                         this.$nextTick(() => {
@@ -4167,25 +4181,129 @@
                 }
             },
 
+            async generatePBCbyDraftOptions(pbc) {
+                if(Object.keys(pbc).length === 0) return
+
+                const boundedContexts = Object.values(this.value.elements).filter(element => element && element._type === "org.uengine.modeling.model.BoundedContext")
+                let maxBCBottom = 450  // 기본값
+                
+                if (boundedContexts.length > 0) {
+                    maxBCBottom = Math.max(...boundedContexts.map(bc => 
+                        bc.elementView.y + Math.round(bc.elementView.height/2)
+                    ))
+                }
+
+                // PBC 시작 좌표 설정
+                let initialX = 600  // BC와 비슷한 시작 X좌표
+                let initialY = maxBCBottom + 300  // BC들의 최하단 + 여유 공간
+
+                for(const [key, value] of Object.entries(pbc)) {
+                    if(key.includes('PBC')) {
+                        const pbc = {
+                            _type: 'org.uengine.modeling.model.PBC',
+                            id: `PBC-${value.name}-${this.uuid()}`,
+                            name: value.name,
+                            displayName: value.alias,
+                            description: value.requirements.map(requirement => requirement.text).join("\n"),
+                            author: null,
+                            boundedContextes: [],
+                            aggregates: [],
+                            events: [],
+                            commands: [],
+                            policies: [],
+                            views: [],
+                            modelValue: {},
+                            elementView: {
+                                '_type': 'org.uengine.modeling.model.PBC',
+                                'id': `PBC-${value.name}-${this.uuid()}`,
+                                'x': initialX,
+                                'y': initialY,
+                                'width': 500,
+                                'height': 500,
+                                'style': JSON.stringify({})
+                            },
+                            hexagonalView:{
+                                '_type': 'org.uengine.modeling.model.PBCHexagonal',
+                                'id': `PBC-${value.name}-${this.uuid()}`,
+                                'x': 0,
+                                'y': 0,
+                                'width': 0,
+                                'height': 0,
+                                'style': JSON.stringify({})
+                            },
+                            relations: [],
+                        }
+
+                        // X 좌표가 너무 커지면 다음 줄로
+                        if (initialX > 1950) {  // BC와 동일한 MAX_X_LIMIT 사용
+                            initialX = 600
+                            initialY += 600  // PBC 높이 + 여유 공간
+                        } else {
+                            initialX += 600  // 다음 PBC X 좌표
+                        }
+
+                        const openAPIPBC = this.$refs.openAPIPBC
+                        if (openAPIPBC) {
+                            const info = {
+                                name: value.name,
+                                path: value.info.pbcPath || '',
+                                description: value.info.description || ''
+                            }
+                            openAPIPBC.setPBCInfo(pbc, info)
+                            await openAPIPBC.appendPBC(info)
+                        }
+
+                        this.activePBCElement(pbc)
+                    }
+                }
+            },
+
+            activePBCElement(pbc) {
+                if (pbc.events && pbc.events.length > 0) {
+                    pbc.events[0].visibility = 'public'
+                }
+
+                if (pbc.commands && pbc.commands.length > 0) {
+                    pbc.commands[0].visibility = 'public'
+                }
+
+                if (pbc.views && pbc.views.length > 0) {
+                    pbc.views[0].visibility = 'public'
+                }
+            },
+
 
             generateAggregatesFromDraft(draftOptions) {
                 console.log("[*] 유저가 선택한 초안 옵션들을 이용해서 모델 생성 로직이 실행됨",
                     {prevDraftOptions: JSON.parse(JSON.stringify(draftOptions))}
                 )
 
-                this.selectedDraftOptions = draftOptions
+                // PBC 필터링 & 제거
+                let pbc = {}
+                let boundedContexts = {}
+                
+                Object.keys(draftOptions).forEach(key => {
+                    if(key.includes("PBC")) {
+                        pbc[key] = draftOptions[key]
+                    } else {
+                        boundedContexts[key] = draftOptions[key]
+                    }
+                })
 
-                this._removeInvalidReferencedAggregateProperties(draftOptions)
-                this._createBoundedContextsIfNotExists(draftOptions)
+                this.selectedDraftOptions = boundedContexts
+                this.filteredPBCs = pbc
 
-                console.log("[*] 초안 전처리 완료", {afterDraftOptions: JSON.parse(JSON.stringify(draftOptions))})
+                this._removeInvalidReferencedAggregateProperties(boundedContexts)
+                this._createBoundedContextsIfNotExists(boundedContexts)
+                
+                console.log("[*] 초안 전처리 완료", {afterDraftOptions: JSON.parse(JSON.stringify(boundedContexts))})
 
-                this.generatorProgressDto.totalGlobalProgressCount = this._getTotalGlobalProgressCount(draftOptions)
+                this.generatorProgressDto.totalGlobalProgressCount = this._getTotalGlobalProgressCount(boundedContexts)
                 this.generatorProgressDto.currentGlobalProgressCount = 0
 
                 this.generatorProgressDto.thinkMessage = ""
                 this.generatorProgressDto.previousThinkingMessage = ""
-                this.collectedMockDatas.aggregateDraftScenarios.draft = structuredClone(draftOptions)
+                this.collectedMockDatas.aggregateDraftScenarios.draft = structuredClone(boundedContexts)
                 this.collectedLogDatas.aggregateDraftScenarios.startTime = new Date().getTime()
                 
                 // AI 생성 중에는 수정을 불가능하도록 만듬
@@ -4231,26 +4349,26 @@
 
             _createBoundedContextsIfNotExists(draftOptions) {
                 for(const context of Object.values(draftOptions)) {
-                    const bcNameToCheck = context.boundedContext.name
-                    const isBoundedContextExists = Object.values(this.value.elements).some((element) => 
-                        element && element._type === "org.uengine.modeling.model.BoundedContext" && element.name.toLowerCase() === bcNameToCheck.toLowerCase()
-                    )
-                    if(isBoundedContextExists) continue
+                        const bcNameToCheck = context.boundedContext.name
+                        const isBoundedContextExists = Object.values(this.value.elements).some((element) => 
+                            element && element._type === "org.uengine.modeling.model.BoundedContext" && element.name.toLowerCase() === bcNameToCheck.toLowerCase()
+                        )
+                        if(isBoundedContextExists) continue
 
-                    const appliedESValue = ESActionsUtil.getActionAppliedESValue([
-                        {
-                            "objectType": "BoundedContext",
-                            "type": "create",
-                            "ids": {
-                                "boundedContextId": `bc-${context.boundedContext.name}`
-                            },
-                            "args": {
-                                "boundedContextName": context.boundedContext.name,
-                                "boundedContextAlias": context.boundedContext.displayName,
-                                "description": context.boundedContext.description
+                        const appliedESValue = ESActionsUtil.getActionAppliedESValue([
+                            {
+                                "objectType": "BoundedContext",
+                                "type": "create",
+                                "ids": {
+                                    "boundedContextId": `bc-${context.boundedContext.name}`
+                                },
+                                "args": {
+                                    "boundedContextName": context.boundedContext.name,
+                                    "boundedContextAlias": context.boundedContext.displayName,
+                                    "description": context.boundedContext.description
+                                }
                             }
-                        }
-                    ], this.userInfo, this.information, this.value)
+                        ], this.userInfo, this.information, this.value)
 
                     this.changedByMe = true
                     this.$set(this.value, "elements", appliedESValue.elements)

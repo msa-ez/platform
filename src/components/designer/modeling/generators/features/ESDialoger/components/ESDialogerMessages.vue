@@ -43,6 +43,7 @@
                         messageId
                     })"
                     @mappingRequirements="$emit('mappingRequirements', $event)"
+                    @updateSelectedAspect="updateSelectedAspect"
                 ></DevideBoundedContextDialog>
             </v-card>
 
@@ -144,6 +145,10 @@ export default {
 
         emitShowBCGenerationOption() {
             this.$emit('showBCGenerationOption')
+        },
+
+        updateSelectedAspect(aspect) {
+            this.$emit('updateSelectedAspect', aspect)
         }
     }
 }
