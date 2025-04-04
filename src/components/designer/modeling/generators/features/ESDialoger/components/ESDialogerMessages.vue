@@ -33,6 +33,7 @@
                     :currentProcessingBoundedContext="message.currentProcessingBoundedContext"
                     :selectedAspect="message.selectedAspect"
                     :summarizedResult="message.summarizedResult"
+                    :pbcLists="message.pbcLists"
                     :messageId="message.uniqueId"
                     @createModel="$emit('createModel', $event)"
                     @closeDialog="$emit('closeDialog')"

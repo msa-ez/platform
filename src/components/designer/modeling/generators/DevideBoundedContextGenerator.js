@@ -29,8 +29,11 @@ ${this.getPBCPrompt()}
 Requirements:
 ${this.summaryRequirements()}
 
-Actors and Events:
-${JSON.stringify(this.client.input['requirements']['analysisResult'], null, 2)}
+Actors:
+${JSON.stringify(this.client.input['requirements']['analysisResult']['actors'], null, 2)}
+
+Events:
+${JSON.stringify(this.client.input['requirements']['analysisResult']['events'], null, 2)}
 
 ${this.client.input['feedback'] ? this.feedbackPrompt() : ''}
 
@@ -64,8 +67,6 @@ Generic Domain:
 - Differentiation score 0.0-0.3
 - Complexity can vary (0.2-1.0)
 
-${this.relationGuidelines()}
-
 Scoring Instructions:
 - complexity: Score from 0.0 to 1.0 indicating the technical implementation difficulty
   - Consider: Technical dependencies, business rules complexity, data consistency requirements
@@ -78,6 +79,8 @@ Implementation Strategy Guidelines:
 - Core Domain: Rich Domain Model
 - Supporting Domain: Transaction Script or Active Record
 - Generic Domain: Active Record or PBC: (pbc-name)
+
+${this.relationGuidelines()}
 
 Language Instruction of Output:
 - Use the "same national language" as the Requirements at thoughts, context of explanations, alias, requirements.
@@ -180,7 +183,7 @@ Should be used all of the Bounded Contexts.
 IMPORTANT - PBC MATCHING RULE:
 Before creating any bounded context, first check if the functionality already exists in the available PBCs.
 If a functionality matches with any available PBC, you MUST:
-1. Create it as a Generic Domain bounded context
+1. Create it as a "Generic Domain" bounded context
 2. Set its implementation strategy to "PBC: [pbc-name]"
 3. Bounded context name of PBC must be written it as is pbc name.
 This rule takes precedence over all other domain classification rules.
@@ -258,9 +261,9 @@ Important: In the "thoughts" section of your response, please explicitly explain
         if(this.client.input['generateOption']['isProtocolMode']){
             return `
 Relation Guidelines:
-- All relation types must use 'Pub/Sub' pattern
-- Exception: Only Generic domains as downstream MUST use 'Request/Response' pattern
+- All Bounded Contexts must have at least one relation
 - Event-driven architecture is preferred for loose coupling 
+- Relation Type Rule: All relation types must use 'Pub/Sub' pattern. But, only Generic domains as downstream MUST use 'Request/Response' pattern
         `
         }else{
             return ``

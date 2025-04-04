@@ -17,6 +17,8 @@ class RequirementsValidationGenerator extends JsonAIGenerator {
         return `
 You are an expert business analyst tasked with creating a Big Picture Event Storming model from requirements.
 
+IMPORTANT: You must identify and generate ALL possible events from the requirements without omission. Do not summarize or skip any potential events.
+
 1. User Story Analysis
    - Focus on business goals and user actions
    - Extract key user scenarios and workflows
@@ -24,11 +26,11 @@ You are an expert business analyst tasked with creating a Big Picture Event Stor
    - Map dependencies between processes
 
 2. Event Discovery
-   - Convert each significant business moment into domain events
+   - Convert EVERY significant business moment into domain events
+   - Do not skip or summarize any processes
+   - Ensure ALL state changes are captured as events
+   - Include ALL happy path and exception flows
    - Use past participle form for event names (e.g., OrderPlaced)
-   - Ensure events represent actual state changes
-   - Include both happy path and exception flows
-   - Map chronological sequence of events
 
 3. Actor Identification
    - Group events by responsible actors
@@ -51,7 +53,7 @@ ${this.isValidationPrompt()}
 {
     "type": "ANALYSIS_RESULT",
     "content": {
-        "recommendedBoundedContextsNumber": "Number of recommended bounded contexts based on the events",
+        "recommendedBoundedContextsNumber": "Number of recommended bounded contexts based on requirements", // type is number
         "events": [
             {
                 "name": "name of event", // PascalCase & Past Participle (e.g., OrderPlaced, PaymentProcessed)
@@ -334,7 +336,10 @@ Consider potential connections to these existing events when defining nextEvents
             let model = super.createModel(text);
             
             if(model && model.type === "ANALYSIS_RESULT") {
-                console.log("[*] 요구사항이 충분하여 프로세스 분석 결과를 생성했습니다.");
+                if(this.state === "end")
+                    console.log(`[*] 요구사항이 충분하여 프로세스 분석 결과를 생성을 완료했습니다.`, {model, text, input: this.client.input})
+                else
+                    console.log(`[*] 요구사항이 충분하여 프로세스 분석 결과를 생성 중입니다.`, {textLength: text.length})
                 
                 // 간격 설정
                 const LANE_HEIGHT = 250;
