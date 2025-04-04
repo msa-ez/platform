@@ -33,6 +33,7 @@
                     :currentProcessingBoundedContext="message.currentProcessingBoundedContext"
                     :selectedAspect="message.selectedAspect"
                     :summarizedResult="message.summarizedResult"
+                    :pbcLists="message.pbcLists"
                     :messageId="message.uniqueId"
                     @createModel="$emit('createModel', $event)"
                     @closeDialog="$emit('closeDialog')"
@@ -75,6 +76,7 @@
                     :isGeneratingBoundedContext="message.isGeneratingBoundedContext"
                     :isStartMapping="message.isStartMapping"
                     :isAnalizing="message.isAnalizing"
+                    :recommendedBoundedContextsNumber="message.recommendedBoundedContextsNumber"
                     @setGenerateOption="(option, boolean) => $emit('setGenerateOption', option, boolean)"
                 ></BCGenerationOption>
             </v-card>

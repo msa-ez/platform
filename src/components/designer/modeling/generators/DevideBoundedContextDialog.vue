@@ -190,7 +190,7 @@
                             <template v-slot:item.implementationStrategy="{ item }">
                                 <v-select
                                     v-model="item.implementationStrategy"
-                                    :items="implementationStrategies"
+                                    :items="getImplementationStrategies(item.importance)"
                                     :label="$t('DevideBoundedContextDialog.edit.implementationStrategy')"
                                     single-line
                                     @change="saveItemEdit(item, 'implementationStrategy')"
@@ -519,6 +519,11 @@
                 type: String,
                 default: () => "",
                 required: false
+            },
+            pbcLists: {
+                type: Array,
+                default: () => [],
+                required: false
             }
         },
         components: {
@@ -588,7 +593,12 @@
                     { text: 'Event Sourcing', value: 'Event Sourcing' },
                     { text: 'Rich Domain Model', value: 'Rich Domain Model' },
                     { text: 'Transaction Script', value: 'Transaction Script' },
-                    { text: 'Active Record', value: 'Active Record' }
+                    { text: 'Active Record', value: 'Active Record' },
+                    { divider: true },
+                    ...this.pbcLists.map(pbc => ({
+                        text: `PBC: ${pbc.name}`,
+                        value: `PBC: ${pbc.name}`
+                    }))
                 ],
                 activeTab: 0
             }
@@ -883,6 +893,26 @@
                     'Generic Domain': 'fill:#9e9e9e,stroke:#333,stroke-width:2px'
                 };
                 return colors[importance] || 'fill:#ddd,stroke:#333,stroke-width:2px';
+            },
+            getImplementationStrategies(importance) {
+                const baseStrategies = [
+                    { text: 'Event Sourcing', value: 'Event Sourcing' },
+                    { text: 'Rich Domain Model', value: 'Rich Domain Model' },
+                    { text: 'Transaction Script', value: 'Transaction Script' },
+                    { text: 'Active Record', value: 'Active Record' }
+                ];
+
+                const pbcStrategies = this.pbcLists.map(pbc => ({
+                    text: `PBC: ${pbc.name}`,
+                    value: `PBC: ${pbc.name}`,
+                    disabled: importance !== 'Generic Domain'
+                }));
+
+                return [
+                    ...baseStrategies,
+                    { divider: true },
+                    ...pbcStrategies
+                ];
             }
         }
     }
@@ -900,5 +930,11 @@
 }
 .requirement-text {
     white-space: normal;
+}
+::v-deep .implementation-strategy-menu {
+    max-height: 400px;
+}
+::v-deep .v-list-group__header {
+    background-color: #f5f5f5;
 }
 </style>

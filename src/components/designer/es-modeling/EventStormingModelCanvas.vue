@@ -2975,6 +2975,9 @@
                 },
 
                 onGenerationDone: () => {
+                    this.generatePBCbyDraftOptions(this.filteredPBCs)
+                    console.log("[*] 최종 생성 후 PBC 생성 완료", {filteredPBCs: this.filteredPBCs})
+                    
                     this.collectedMockDatas.aggregateDraftScenarios.esValue = structuredClone(
                         {
                             elements: this.value.elements,
@@ -2989,12 +2992,10 @@
                     
                     byFunctionCallbacks.onGenerationDone()
 
-                    this.generatePBCbyDraftOptions(this.filteredPBCs)
-                    console.log("[*] 최종 생성 후 PBC 생성 완료", {filteredPBCs: this.filteredPBCs})
 
                     if(!localStorage.getItem("blockAutoRefresh"))
                         this.$nextTick(() => {
-                            this.$router.go(0)
+                            // this.$router.go(0)
                         })
                 }
             })
@@ -4251,6 +4252,7 @@
                             }
                             openAPIPBC.setPBCInfo(pbc, info)
                             await openAPIPBC.appendPBC(info)
+                            this.changedByMe = true
                         }
 
                         this.activePBCElement(pbc)
@@ -4270,6 +4272,8 @@
                 if (pbc.views && pbc.views.length > 0) {
                     pbc.views[0].visibility = 'public'
                 }
+
+                this.changedByMe = true
             },
 
 

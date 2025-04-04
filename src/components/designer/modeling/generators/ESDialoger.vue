@@ -105,7 +105,7 @@
                 <v-btn v-if="!done" @click="stop()" style="position: absolute; right:10px; top:10px;"><v-progress-circular class="auto-modeling-stop-loading-icon" indeterminate></v-progress-circular>Stop generating</v-btn>
                 <v-row v-if="done" class="ma-0 pa-4 button-row">
                     <v-spacer></v-spacer>
-                    <v-btn v-if="requirementsValidationResult" :disabled="getDisabledGenerateBtn()" class="auto-modeling-btn" @click="generate()">
+                    <v-btn :disabled="getDisabledGenerateBtn()" class="auto-modeling-btn" @click="generate()">
                         <v-icon class="auto-modeling-btn-icon">mdi-refresh</v-icon>{{ $t('ESDialoger.tryAgain') }}
                     </v-btn>
                     <v-btn :disabled="getDisabledGenerateBtn()" class="auto-modeling-btn" color="primary" @click="validateRequirements()">
@@ -218,6 +218,7 @@
         MessageFactory,
         AIModelSetting
     } from './features/ESDialoger';
+import { value } from 'jsonpath';
 
     export default {
         name: 'es-dialoger',
@@ -840,16 +841,16 @@
             },
 
             onReceived(content){
-                if(this.state.generator === "EventOnlyESGenerator"){
-                    if(!this.value){
-                        this.value = {
-                            userStory: ''
-                        }
-                    }
+                // if(this.state.generator === "EventOnlyESGenerator"){
+                //     if(!this.value){
+                //         this.value = {
+                //             userStory: ''
+                //         }
+                //     }
 
-                    if(content && content.length > 0)
-                        this.value.userStory = content;
-                }
+                //     if(content && content.length > 0)
+                //         this.value.userStory = content;
+                // }
             },
 
             onModelCreated(model){
@@ -858,6 +859,17 @@
             async onGenerationFinished(model){
                 var me = this;
                 me.done = true;
+
+                if(this.state.generator === "EventOnlyESGenerator"){
+                    if(!this.value){
+                        this.value = {
+                            userStory: ''
+                        }
+                    }
+
+                    if(model && model.length > 0)
+                        this.value.userStory = model;
+                }
 
                 if (this.state.generator === "RequirementsValidationGenerator" || 
                     this.state.generator === "RecursiveRequirementsValidationGenerator") {
@@ -999,6 +1011,8 @@
             async generate(){
                 let issuedTimeStamp = Date.now()
                 this.value.userStory = '';
+                this.state.generator = "EventOnlyESGenerator";
+                this.generatorName = "EventOnlyESGenerator";
                 this.input.businessModel = this.cachedModels["BMGenerator"]
                 this.input.painpointAnalysis = this.cachedModels["CJMGenerator"]
                 this.generator = new Generator(this);
@@ -1059,6 +1073,16 @@
                 
                 this.input.devisionAspect = targetMessage.selectedAspect;
                 this.input.previousAspectModel = targetMessage.result;
+                this.input['requirements'] = {
+                    userStory: this.value.userStory,
+                    summarizedResult: this.summarizedResult,
+                    analysisResult: this.requirementsValidationResult.analysisResult,
+                    pbcInfo: this.pbcLists.map(pbc => ({
+                        name: pbc.name,
+                        description: pbc.description
+                    }))
+                };
+
                 this.input.feedback = obj.feedback;
                 this.generator.generate();
             },
@@ -1090,6 +1114,11 @@
                         this.input['requirements'] = {
                             userStory: this.value.userStory,
                             summarizedResult: this.summarizedResult,
+                            analysisResult: this.requirementsValidationResult.analysisResult,
+                            pbcInfo: this.pbcLists.map(pbc => ({
+                                name: pbc.name,
+                                description: pbc.description
+                            }))
                         };
 
                         this.generator.generate();
@@ -1363,6 +1392,7 @@
                         currentProcessingBoundedContext: this.currentProcessingBoundedContext,
                         selectedAspect: this.selectedAspect,
                         summarizedResult: this.summarizedResult,
+                        pbcLists: this.pbcLists,
                         timestamp: new Date()
                     };
                 } else if(type === "userMessage"){
@@ -1392,6 +1422,7 @@
                         isGeneratingBoundedContext: this.processingState.isGeneratingBoundedContext,
                         isStartMapping: this.processingState.isStartMapping,
                         isAnalizing: this.processingState.isAnalizing,
+                        recommendedBoundedContextsNumber: this.requirementsValidationResult.analysisResult.recommendedBoundedContextsNumber,
                         timestamp: new Date()
                     };
                 }
