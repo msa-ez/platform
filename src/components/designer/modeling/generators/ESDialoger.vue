@@ -139,30 +139,43 @@
             </v-col>
         </div>
 
-        <v-dialog v-model="generateUserStoryDialog" max-width="600">
+        <v-dialog v-model="generateUserStoryDialog"
+            persistent
+            max-width="600"
+        >
             <v-card>
-                <v-card-title class="headline">
-                    유저스토리
-                </v-card-title>
+                <v-row class="ma-0 pa-4">
+                    <v-card-title class="headline pa-0">
+                        {{ $t('ESDialoger.userStory') }}
+                    </v-card-title>
+                    <v-spacer></v-spacer>
+                    <v-btn @click="generateUserStoryDialog = false"
+                        icon
+                        text
+                    >
+                        <v-icon>mdi-close</v-icon>
+                    </v-btn>
+                </v-row>
+
                 
-                <v-card-text>
-                    유저스토리를 자동 생성하시겠습니까?
+                <v-card-text class="ma-0 pa-4 pt-0">
+                    {{ $t('ESDialoger.generateUserStory') }}
                 </v-card-text>
                 
                 <v-card-actions>
                     <v-spacer></v-spacer>
                     <v-btn
-                        color="primary"
-                        @click="generate(); generateUserStoryDialog = false"
-                    >
-                        AI 자동 생성
-                    </v-btn>
-                    <v-btn
                         color="grey darken-1"
                         text
                         @click="generateUserStoryDialog = false; done = true"
                     >
-                        직접 입력
+                        {{ $t('ESDialoger.enterManually') }}
+                    </v-btn>
+                    <v-btn
+                        color="primary"
+                        @click="generate(); generateUserStoryDialog = false"
+                    >
+                        {{ $t('ESDialoger.generateAIAuto') }}
                     </v-btn>
                 </v-card-actions>
             </v-card>
