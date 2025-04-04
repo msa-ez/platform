@@ -85,7 +85,11 @@
     "tryAgain": "재생성",
     "validateRequirements": "요구사항 검증",
     "createBoundedContext": "Bounded Context 생성",
-    "summarizing": "요구사항을 분석 및 요약하고 있습니다..."
+    "summarizing": "요구사항을 분석 및 요약하고 있습니다...",
+    "userStory": "유저스토리",
+    "generateUserStory": "유저스토리를 자동 생성하시겠습니까?",
+    "generateAIAuto": "네, AI로 자동생성하겠습니다",
+    "enterManually": "아니오, 직접 입력하겠습니다"
   },
   "DevideBoundedContextDialog" : {
     "boundedContextDivisionResult": "서비스 (Bounded Context) 분할 결과",

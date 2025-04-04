@@ -1210,6 +1210,95 @@ class CodeGeneratorCore {
                             rootModel.boundedContexts[idx].aggregates[aggIdx].lifeCycles = lifeCycles;
                         }
                     })
+                }else{
+                    if(modelForElements.Aggregate){
+                        var agg = modelForElements.Aggregate
+                        for(var i = 0; i< agg.length; i++){
+                            if(agg[i].boundedContext.id == rootModel.boundedContexts[idx].id){
+                                if(rootModel.boundedContexts[idx].aggregates.length == 0) {
+                                    rootModel.boundedContexts[idx].aggregates = [agg[i]]
+                                } else {
+                                    rootModel.boundedContexts[idx].aggregates.push(agg[i])
+                                }
+                                rootModel.boundedContexts[idx].aggregates.forEach(function (agg, aggIdx) {
+                                    if (!agg) return;
+            
+                                    var lifeCycles = [
+                                        {trigger: 'PostPersist', annotation: '@PostPersist', events: [], commands: []},
+                                        {trigger: 'PostUpdate', annotation: '@PostUpdate', events: [], commands: []},
+                                        {trigger: 'PostRemove', annotation: '@PostRemove', events: [], commands: []},
+                                        {trigger: 'PrePersist', annotation: '@PrePersist', events: [], commands: []},
+                                        {trigger: 'PreUpdate', annotation: '@PreUpdate', events: [], commands: []},
+                                        {trigger: 'PreRemove', annotation: '@PreRemove', events: [], commands: []},
+                                    ]
+                                    // fieldDescriptors 전처리
+                                    agg.aggregateRoot.fieldDescriptors.forEach(function (fd, index) {
+                                        fd.name = fd.name
+                                        fd.nameCamelCase = _.camelCase(fd.name)
+                                        fd.namePascalCase = fd.nameCamelCase.substring(0, 1).toUpperCase() + fd.nameCamelCase.substring(1);
+                                        if (fd.isKey || index == 0) {
+                                            agg.aggregateRoot.keyFieldDescriptor = fd;
+                                            agg.keyFieldDescriptor = fd;
+                                        }
+                                    })
+            
+                                    if (agg.commands)
+                                        agg.commands.forEach(function (co) {
+                                            lifeCycles.some(function (lifeCycle) {
+                                                if (!co.trigger || co.trigger == undefined) {
+                                                    if (co.restRepositoryInfo.method == "POST") {
+                                                        co.trigger = "@PrePersist"
+                                                    } else if (co.restRepositoryInfo.method == "DELETE") {
+                                                        co.trigger = "@PreRemove"
+                                                    } else if (co.restRepositoryInfo.method == "PATCH") {
+                                                        co.trigger = "@PreUpdate"
+                                                    }
+                                                }
+                                                if (lifeCycle.annotation == co.trigger) {
+                                                    lifeCycle.commands.push(co)
+                                                    return;
+                                                }
+                                            })
+            
+                                            if (co.controllerInfo.apiPath != '') {
+                                                // co.controllerInfo.apiPath =co.controllerInfo.apiPath.replace('/',`//`)
+                                            }
+            
+                                        })
+            
+                                    if (agg.events)
+                                        agg.events.forEach(function (ev) {
+                                            ev.fieldDescriptors.forEach(function (fd) {
+                                                fd.name = fd.name
+                                                fd.nameCamelCase = _.camelCase(fd.name)
+                                                fd.namePascalCase = fd.nameCamelCase.substring(0, 1).toUpperCase() + fd.nameCamelCase.substring(1);
+                                                if (fd.isKey)
+                                                    ev.keyFieldDescriptor = fd;
+                                            })
+                                            lifeCycles.some(function (lifeCycle) {
+                                                if (lifeCycle.annotation == ev.trigger) {
+                                                    lifeCycle.events.push(ev)
+                                                    return;
+                                                }
+                                            })
+                                        })
+            
+                                    lifeCycles.forEach(function (lifeCycleNull, idx) {
+                                        if (lifeCycleNull.events.length == 0 && lifeCycleNull.commands.length == 0) {
+                                            lifeCycles[idx] = null;
+                                        }
+                                    })
+            
+                                    lifeCycles = lifeCycles.filter(n => n);
+            
+                                    if (lifeCycles.length > 0) {
+                                        rootModel.boundedContexts[idx].aggregates[aggIdx].lifeCycles = lifeCycles;
+                                    }
+                                })
+                            }
+                        }
+                        console.log(agg);
+                    }
                 }
 
                 if (rootModel.boundedContexts[idx].policies && rootModel.boundedContexts[idx].policies.length >= 1) {
