@@ -17,7 +17,7 @@
             </v-col>
         </div>
         <div style="display: flex; flex-direction: column;" v-if="!state.AIModelSelectMessageIsTyping">
-            <AIModelSetting @onConfirm="state.isAIModelSelected = true; generateUserStory();" />
+            <AIModelSetting @onConfirm="generateUserStory();" />
         </div>
         
         <div>
@@ -159,7 +159,7 @@
                 </v-row>
 
                 
-                <v-card-text class="ma-0 pa-4 pt-0">
+                <v-card-text class="ma-0 pa-4">
                     {{ $t('ESDialoger.generateUserStory') }}
                 </v-card-text>
                 
@@ -174,7 +174,7 @@
                     </v-btn>
                     <v-btn
                         color="primary"
-                        @click="generate(); generateUserStoryDialog = false"
+                        @click="generate(); generateUserStoryDialog = false; state.isAIModelSelected = true;"
                     >
                         {{ $t('ESDialoger.generateAIAuto') }}
                     </v-btn>
@@ -1254,7 +1254,7 @@
                         }
                     })
                 }
-                
+
                 this.state = {
                     ...this.state,
                     userStory: this.value.userStory,
