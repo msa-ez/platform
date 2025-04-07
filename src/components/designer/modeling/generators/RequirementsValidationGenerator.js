@@ -2,7 +2,7 @@ const JsonAIGenerator = require("./JsonAIGenerator");
 
 class RequirementsValidationGenerator extends JsonAIGenerator {
     constructor(client) {
-        super(client, {}, "normalModel");
+        super(client, {}, "thinkingModel");
         this.generatorName = 'RequirementsValidationGenerator';
 
         this.recursive = false;
@@ -17,7 +17,9 @@ class RequirementsValidationGenerator extends JsonAIGenerator {
         return `
 You are an expert business analyst tasked with creating a Big Picture Event Storming model from requirements.
 
-IMPORTANT: You must identify and generate ALL possible events from the requirements without omission. Do not summarize or skip any potential events.
+IMPORTANT: 
+Take a look requirements detail before generating events and actors. 
+Except for the events that are CRUD operations, you must generate events for all state changes without omission.
 
 1. User Story Analysis
    - Focus on business goals and user actions
@@ -53,7 +55,6 @@ ${this.isValidationPrompt()}
 {
     "type": "ANALYSIS_RESULT",
     "content": {
-        "recommendedBoundedContextsNumber": "Number of recommended bounded contexts based on requirements", // type is number
         "events": [
             {
                 "name": "name of event", // PascalCase & Past Participle (e.g., OrderPlaced, PaymentProcessed)
@@ -72,7 +73,8 @@ ${this.isValidationPrompt()}
                 "events": ["associated event names"], // Events owned by this actor
                 "lane": number // Vertical position for swimlane (0-based index)
             }
-        ]
+        ],
+        "recommendedBoundedContextsNumber": "Number of recommended bounded contexts based on events processed by each actor" // type is number (maximum 15)
     }
 }
 
