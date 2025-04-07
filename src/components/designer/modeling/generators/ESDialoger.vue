@@ -67,13 +67,14 @@
                         <div class="gs-auto-modeling-userStory-text-mobile">{{$t('autoModeling.explanation.userStory')}}</div> -->
                         <v-card-text class="auto-modling-textarea">
                             <v-textarea
-                                    v-model="value.userStory"
-                                    flat
-                                    class="elevation-0 auto-modeling-userStory"
-                                    dense
-                                    auto-grow
-                                    rows="2"
-                                    solo
+                                v-model="value.userStory"
+                                flat
+                                class="elevation-0 auto-modeling-userStory"
+                                dense
+                                auto-grow
+                                rows="2"
+                                solo
+                                :placeholder="$t('ESDialoger.userStoryText')"
                             >
                             </v-textarea>
                             <!--                <div-->
@@ -105,7 +106,7 @@
                 <v-btn v-if="!done" @click="stop()" style="position: absolute; right:10px; top:10px;"><v-progress-circular class="auto-modeling-stop-loading-icon" indeterminate></v-progress-circular>Stop generating</v-btn>
                 <v-row v-if="done" class="ma-0 pa-4 button-row">
                     <v-spacer></v-spacer>
-                    <v-btn :disabled="getDisabledGenerateBtn()" class="auto-modeling-btn" @click="generate()">
+                    <v-btn v-if="state.secondMessageIsTyping" :disabled="getDisabledGenerateBtn()" class="auto-modeling-btn" @click="generate()">
                         <v-icon class="auto-modeling-btn-icon">mdi-refresh</v-icon>{{ $t('ESDialoger.tryAgain') }}
                     </v-btn>
                     <v-btn :disabled="getDisabledGenerateBtn()" class="auto-modeling-btn" color="primary" @click="validateRequirements()">
@@ -168,7 +169,7 @@
                     <v-btn
                         color="grey darken-1"
                         text
-                        @click="generateUserStoryDialog = false; done = true"
+                        @click="generateUserStoryDialog = false; done = true; state.secondMessageIsTyping = false"
                     >
                         {{ $t('ESDialoger.enterManually') }}
                     </v-btn>

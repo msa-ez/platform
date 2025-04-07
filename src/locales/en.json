@@ -87,6 +87,7 @@
     "createBoundedContext": "Create Bounded Context",
     "summarizing": "Analyzing and summarizing requirements...",
     "userStory": "User Story",
+    "userStoryText": "Please enter the user story.",
     "generateUserStory": "Would you like to automatically generate the user story?",
     "generateAIAuto": "Yes, generate automatically with AI",
     "enterManually": "No, I will enter it manually"

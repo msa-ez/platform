@@ -87,6 +87,7 @@
     "createBoundedContext": "Bounded Context 생성",
     "summarizing": "요구사항을 분석 및 요약하고 있습니다...",
     "userStory": "유저스토리",
+    "userStoryText": "유저스토리를 입력해주세요.",
     "generateUserStory": "유저스토리를 자동 생성하시겠습니까?",
     "generateAIAuto": "네, AI로 자동생성하겠습니다",
     "enterManually": "아니오, 직접 입력하겠습니다"
@@ -445,7 +446,7 @@
     "mainClick": "서비스 이름 입력 - 예)클래스 관리 시스템, 택시 호출 서비스 시스템",
     "selectOptions": "생성할 옵션을 선택해주세요.",
     "isModelSelectMessage": "사용하실 AI 모델을 선택해주세요.",
-    "selectMessage1": "흥미롭네요! 몇 가지 아이디어를 생각해 볼게요...",
+    "selectMessage1": "다음은 AI가 추천하는 유저 스토리입니다.",
     "selectMessage2": "다음은 사용자 스토리입니다.",
     "explanation": {
       "userStory":"사용자 스토리를 편집하거나 다음과 같이 모델을 만들 수 있습니다:",
