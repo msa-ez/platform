@@ -8,7 +8,7 @@ class PreProcessingFunctionsGenerator extends FormattedJSONAIGenerator{
 
         this.generatorName = "PreProcessingFunctionsGenerator"
         this.checkInputParamsKeys = ["description", "boundedContext"]
-        this.progressCheckStrings = ["inference", "userStories", "entities", "businessRules", "interfaces"]
+        this.progressCheckStrings = ["inference", "userStories", "entities", "businessRules", "interfaces", "events"]
 
         this.initialResponseFormat = zodResponseFormat(
             z.object({
@@ -64,6 +64,13 @@ class PreProcessingFunctionsGenerator extends FormattedJSONAIGenerator{
                                 }).strict()
                             )
                         }).strict()
+                    ),
+                    events: z.array(
+                        z.object({
+                            name: z.string(),
+                            description: z.string(),
+                            displayName: z.string()
+                        }).strict()
                     )
                 }).strict()
             }).strict(),
@@ -108,7 +115,7 @@ class PreProcessingFunctionsGenerator extends FormattedJSONAIGenerator{
 
 3. Structured Formatting:
    - Produce the output strictly in the specified JSON format without any additional commentary.
-   - Organize the data into clearly defined sections such as user stories, entities, business rules, and interfaces.
+   - Organize the data into clearly defined sections such as user stories, entities, business rules, interfaces, and events.
 
 4. Entities Definition:
    - For each entity's property, specify the data type. Use Java's basic data types (e.g., String, Long, Integer, Double, Boolean, Date) or define an enum when appropriate.
@@ -140,7 +147,7 @@ Inference Guidelines:
 1. The reasoning process must be directly related to producing the output result without referencing a general strategy.
 2. Thoroughly analyze all provided user requirements, capturing both explicit details and any implicit or inferred needs.
 3. Evaluate the overall context by taking into account domain complexity, stakeholder impact, and technical feasibility.
-4. For each functional area (overview, user stories, entities, business rules, interfaces), ensure that all necessary details and potential edge cases are addressed.
+4. For each functional area (overview, user stories, entities, business rules, interfaces, events), ensure that all necessary details and potential edge cases are addressed.
 5. When analyzing entity definitions, verify that each property's data type is specified using Java's basic types (e.g., int, double, boolean, String) or an enum where suitable, with enum options clearly listed in the "values" field.
 6. In interface specifications, confirm that each section’s fields clearly state the input type (e.g., text, select, option, date, password, textarea, number, etc.) to accurately reflect the intended user input.
 `
@@ -203,7 +210,14 @@ Inference Guidelines:
                     }
                 ]
             }
-        }
+        },
+        "events": [
+            {
+                "name": "<name>",
+                "description": "<description>",
+                "displayName": "<displayName>"
+            }
+        ]
     }
 }`
     }
@@ -437,7 +451,14 @@ The 'Reservation Status' screen should show all booking history for guests. It s
                             }
                         ]
                     }
-                }
+                },
+                "events": [
+                    {
+                        "name": "Booking Created",
+                        "description": "When a booking is created, the booking status is set to 'Active'.",
+                        "displayName": "예약 생성됨"
+                    }
+                ]
             }
         }
     }

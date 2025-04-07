@@ -17,6 +17,7 @@
                         <v-tab v-if="analysisResult.entities">Entities</v-tab>
                         <v-tab v-if="analysisResult.businessRules">Business Rules</v-tab>
                         <v-tab v-if="analysisResult.interfaces">Interfaces</v-tab>
+                        <v-tab v-if="analysisResult.events">Events</v-tab>
                     </v-tabs>
 
                     <v-tabs-items v-model="analysisTab">
@@ -222,6 +223,22 @@
                                 </v-row>
                             </div>
                         </v-tab-item>
+
+                        <!-- Events -->
+                        <v-tab-item v-if="analysisResult.events">
+                            <div class="pa-4">
+                                <v-list>
+                                    <v-list-item v-for="(event, index) in analysisResult.events"
+                                                :key="index" two-line>
+                                        <v-list-item-content>
+                                            <v-list-item-title>{{ event.name }} ({{ event.displayName }})</v-list-item-title>
+                                            <v-list-item-subtitle>{{ event.description }}</v-list-item-subtitle>
+                                        </v-list-item-content>
+                                    </v-list-item>
+                                </v-list>
+                            </div>
+                        </v-tab-item>
+
                     </v-tabs-items>
                 </v-card-text>
             </v-expansion-panel-content>
