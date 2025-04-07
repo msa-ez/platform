@@ -74,7 +74,8 @@
                                 auto-grow
                                 rows="2"
                                 solo
-                                :placeholder="$t('ESDialoger.userStoryText')"
+                                :placeholder="done ? $t('ESDialoger.userStoryText') : ''"
+                                :disabled="!done"
                             >
                             </v-textarea>
                             <!--                <div-->
@@ -88,7 +89,7 @@
 
                     <!-- DDL -->
                     <v-tab-item>
-                        <v-card-subtitle>{{$t('autoModeling.explanation.ddl')}}</v-card-subtitle>
+                        <!-- <v-card-subtitle>{{$t('autoModeling.explanation.ddl')}}</v-card-subtitle> -->
                         <v-card-text class="auto-modling-textarea">
                             <v-textarea 
                                     v-model="inputDDL"
@@ -106,7 +107,7 @@
                 <v-btn v-if="!done" @click="stop()" style="position: absolute; right:10px; top:10px;"><v-progress-circular class="auto-modeling-stop-loading-icon" indeterminate></v-progress-circular>Stop generating</v-btn>
                 <v-row v-if="done" class="ma-0 pa-4 button-row">
                     <v-spacer></v-spacer>
-                    <v-btn v-if="state.secondMessageIsTyping" :disabled="getDisabledGenerateBtn()" class="auto-modeling-btn" @click="generate()">
+                    <v-btn v-if="state.startTemplateGenerate" :disabled="getDisabledGenerateBtn()" class="auto-modeling-btn" @click="generate()">
                         <v-icon class="auto-modeling-btn-icon">mdi-refresh</v-icon>{{ $t('ESDialoger.tryAgain') }}
                     </v-btn>
                     <v-btn :disabled="getDisabledGenerateBtn()" class="auto-modeling-btn" color="primary" @click="validateRequirements()">
@@ -1043,7 +1044,7 @@ import { value } from 'jsonpath';
                 }
                 
                 this.generator.stop();
-                this.state.startTemplateGenerate = false
+                this.state.startTemplateGenerate = true
                 this.done = true;
             },
 

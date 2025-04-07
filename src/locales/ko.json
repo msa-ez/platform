@@ -536,7 +536,7 @@
       "apiKeySettings": "API 키 설정",
       "connectionTest": "연결 테스트",
       "vendorInputTip": "모델을 선택하면 필요한 API 키가 표시됩니다",
-      "confirm": "스토리 생성",
+      "confirm": "유저 스토리 생성",
       "close": "닫기",
       "enabled": "활성화됨",
       "disabled": "비활성화됨",
