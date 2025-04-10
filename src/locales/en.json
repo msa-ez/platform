@@ -31,14 +31,22 @@
     "readWriteAuthority": "Read/Write Authority"
   },
   "BCGenerationOption" : {
-    "generationOption": "Generation Options",
+    "generationOption": "Bounded Context Separation Criteria",
     "numberOfBCs": "Maximum Number of Bounded Contexts (max 15)",
     "selectAspects": "Select Analysis Aspects",
     "additionalRequirements": "Additional Requirements",
     "generate" : "Generate",
     "bcNumberLimitError": "Must be 15 or less",
     "invalidNumberError": "Numbers only",
-    "ContextMappingRelationType": "Context Mapping Relation Type"
+    "ContextMappingRelationType": "Context Mapping Relation Type",
+    "domainAspectDescription": "The domain aspect separates Bounded Contexts based on business logic and rules. It groups logically related functions into a single context by considering core business concepts, business rules, and the cohesion of domain processes.",
+    "processAspectDescription": "The process aspect separates Bounded Contexts based on process (value stream). It groups logically related functions into a single context by considering the flow of processes and the cohesion of business processes.",
+    "organizationalAspectDescription": "The organizational aspect separates Bounded Contexts based on team structure and decision-making boundaries. It reflects organizational structure according to Conway's Law and sets contexts by considering team autonomy and areas of responsibility.",
+    "personaAspectDescription": "The persona aspect defines Bounded Contexts centered on user roles and use cases. It sets user-centric service boundaries by analyzing the requirements and interaction patterns of different user groups.",
+    "transactionPerformanceAspectDescription": "The transaction/performance aspect separates Bounded Contexts by considering system scalability and throughput. It defines independently scalable units based on transaction throughput, data consistency requirements, and scalability.",
+    "infrastructureAspectDescription": "The infrastructure aspect separates Bounded Contexts based on technical requirements. It separates contexts by considering technical characteristics such as data storage types, security requirements, and external system integration.",
+    "enterOrganizationalStructure": "Enter the organizational structure. Example: Claims Management Team, Compensation Team, Customer Management Team",
+    "enterInfrastructureEnvironment": "Enter the infrastructure environment. Example: Java, Spring-boot, JPA, MySQL (Customer management uses Python, PostgreSQL)"
   },
   "BoundedContextPanel" : {
     "name": "Name",
@@ -88,12 +96,14 @@
     "summarizing": "Analyzing and summarizing requirements...",
     "userStory": "User Story",
     "userStoryText": "Please enter the user story.",
-    "generateUserStory": "Would you like to automatically generate the user story?",
-    "generateAIAuto": "Yes, generate automatically with AI",
-    "enterManually": "No, I will enter it manually"
+    "generateUserStory": "Would you like to generate the user story automatically?",
+    "generateAIAuto": "Yes, generate with AI",
+    "enterManually": "No, I will enter it manually",
+    "confirmGeneration": "Regenerate",
+    "confirmGenerationMessage": "All outputs generated based on the AI-recommended scenario and design will be deleted."
   },
   "DevideBoundedContextDialog" : {
-    "boundedContextDivisionResult": "Seperating into multiple Bounded Contexts",
+    "boundedContextDivisionResult": "Bounded Context Division Result",
     "aspectsOfBoundedContexts": "Key Aspects of Bounded Context",
     "domainAspect": "Domain",
     "processAspect": "Process",
@@ -110,7 +120,7 @@
     "analysis": "Analysis",
     "feedback": "Feedback",
     "createModel": "Create Model",
-    "createAggregateDraft": "Create Aggregate Draft",
+    "createAggregateDraft": "Create Draft Aggregate",
     "descriptionOfEachBoundedContext": "Description of Each Bounded Context",
     "relations": "Relations",
     "boundedContextName": "Bounded Context Name",
@@ -240,6 +250,18 @@
     "reconstructionAggregateDraft": "Aggregate Design Draft",
     "reGenerate": "Regenerate",
     "requirementAnalysisResult": "Requirement Analysis Result"
+  },
+  "RequirementAnalysis": {
+    "validateRequirements": "Validating requirements...",
+    "requirementAnalysisResult": "Requirement Analysis Result",
+    "processAndEventFlowExtraction": "Extracting process and event flow...",
+    "processAndEventFlowExtracted": "Process and event flow successfully extracted.",
+    "createBoundedContext": "Create Bounded Context",
+    "requirementImprovementNeeded": "Requirement improvement is needed. Please refer to the guide below to supplement the requirements.",
+    "improvementRecommendations": "Improvement recommendations",
+    "immediateImprovements": "Immediate improvements:",
+    "reviewRequiredItems": "Review required:",
+    "impactAreas": "Impact areas"
   },
   "RuleExampleDialog": {
     "generateExamples": "Generate Examples",
@@ -538,7 +560,7 @@
       "enabled": "Enabled",
       "disabled": "Disabled",
       "cannotDisableAll": "At least one model must remain enabled.",
-      "resetToDefaults": "Reset to Defaults"
+      "resetToDefaults": "Reset"
     },
     "snackbar": {
       "resetComplete": "Model settings have been reset."

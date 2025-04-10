@@ -144,7 +144,7 @@
 
         <v-dialog v-model="generateUserStoryDialog"
             persistent
-            max-width="600"
+            max-width="fit-content"
         >
             <v-card>
                 <v-row class="ma-0 pa-4">
@@ -751,7 +751,7 @@ import { value } from 'jsonpath';
                 selectedAspect: "",
 
                 activeTab: null,
-                generatorInputTabs: ['UserStory','DDL'
+                generatorInputTabs: ['User Story','DDL'
                                         // , 'DDL', "Process"
                                     ],
                 inputDDL: '',
