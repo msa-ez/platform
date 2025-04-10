@@ -42,16 +42,105 @@
                     left: 0px;
                     z-index: 201;"
                 >
-                    <v-row style="height:40px;" class="ma-0 pa-4 align-center">
+                    <v-row style="height:60px;" class="ma-0 pa-4 align-center">
                         <v-spacer></v-spacer>
-                        <div class="mr-1">
-                            <v-icon v-if="!isServer" @click="openStorageDialog()">mdi-content-save</v-icon>
-                            <!-- PowerPoint Generate -->
-                            <v-icon v-if="isServer" @click="generatePowerPoint()">mdi-file-powerpoint-box-outline</v-icon>
+                        <div class="mr-1 d-flex align-center">
+                            <!-- Save Button -->
+                            <v-tooltip bottom>
+                                <template v-slot:activator="{ on, attrs }">
+                                    <v-btn
+                                        v-if="isOwnModel || !isReadOnlyModel || !isServer"
+                                        icon
+                                        class="mx-1"
+                                        v-bind="attrs"
+                                        v-on="on"
+                                        @click="openStorageDialog()"
+                                    >
+                                        <v-icon>mdi-content-save</v-icon>
+                                    </v-btn>
+                                </template>
+                                <span>Save Project</span>
+                            </v-tooltip>
+
+                            <!-- PowerPoint Generate Button -->
+                            <v-tooltip bottom>
+                                <template v-slot:activator="{ on, attrs }">
+                                    <v-btn
+                                        v-if="(isOwnModel || !isReadOnlyModel) && isServer"
+                                        icon
+                                        class="mx-1"
+                                        v-bind="attrs"
+                                        v-on="on"
+                                        @click="generatePowerPoint()"
+                                    >
+                                        <v-icon>mdi-file-powerpoint-box-outline</v-icon>
+                                    </v-btn>
+                                </template>
+                                <span>Generate PowerPoint</span>
+                            </v-tooltip>
+
+                            <!-- Join Request Button -->
+                            <v-tooltip bottom>
+                                <template v-slot:activator="{ on, attrs }">
+                                    <v-btn
+                                        v-if="!isOwnModel && isReadOnlyModel && isServer"
+                                        :color="joinRequestedText.show ? 'primary' : 'success'"
+                                        class="mx-1"
+                                        v-bind="attrs"
+                                        v-on="on"
+                                        @click="requestInviteUser()"
+                                        text
+                                    >
+                                        <v-icon class="mr-1">
+                                            {{ joinRequestedText.show ? 'mdi-account-multiple-check' : 'mdi-account-plus' }}
+                                        </v-icon>
+                                        <span class="es-hide-join">{{ joinRequestedText.text }}</span>
+                                    </v-btn>
+                                </template>
+                                <span>{{ joinRequestedText.show ? 'Join Requested' : 'Request to Join' }}</span>
+                            </v-tooltip>
+
+                            <!-- Share Button -->
+                            <v-tooltip bottom>
+                                <template v-slot:activator="{ on, attrs }">
+                                    <v-btn
+                                        v-if="isOwnModel && isServer && !isReadOnlyModel"
+                                        text
+                                        class="mx-1"
+                                        v-bind="attrs"
+                                        v-on="on"
+                                        @click="openInviteUsers()"
+                                    >
+                                        <v-icon>mdi-share-variant</v-icon>
+                                        <v-avatar
+                                            v-if="requestCount"
+                                            size="20"
+                                            color="error"
+                                            class="ml-1"
+                                        >
+                                            <span class="white--text">{{ requestCount }}</span>
+                                        </v-avatar>
+                                    </v-btn>
+                                </template>
+                                <span>Share Project</span>
+                            </v-tooltip>
+
+                            <!-- Close Button -->
+                            <v-tooltip bottom>
+                                <template v-slot:activator="{ on, attrs }">
+                                    <v-btn
+                                        icon
+                                        class="ml-2"
+                                        v-bind="attrs"
+                                        v-on="on"
+                                        @click="cancelCreateModel()"
+                                    >
+                                        <v-icon>mdi-close</v-icon>
+                                    </v-btn>
+                                </template>
+                                <span>Close</span>
+                            </v-tooltip>
                         </div>
-                        <v-icon @click="cancelCreateModel()"
-                        >mdi-close
-                        </v-icon>
                     </v-row>
                     <v-card-text id="scroll-text"
                         class="gs-auto-modeling-box"
@@ -145,7 +234,8 @@
                                 :projectInfo="projectInfo"
                                 :modelIds="modelIds" 
                                 :prompt="projectInfo.prompt" 
-                                :cachedModels="cachedModels" 
+                                :cachedModels="cachedModels"
+                                :isEditable="isOwnModel || !isReadOnlyModel"
                                 @change="backupProject" 
                                 @update:boundedContextDrafts="updateBoundedContextDrafts" 
                                 @update:aggregateDrafts="updateAggregateDrafts"
@@ -166,6 +256,18 @@
                     @close="closeStorageDialog()"
             ></ModelStorageDialog>
         </v-col>
+
+        <model-canvas-share-dialog
+            v-model="invitationLists"
+            :showDialog.sync="inviteDialog"
+            :checkPublic="showPublicModel"
+            canvasComponentName="event-storming-model-canvas"
+            @all="invitePublic"
+            @apply="applyInviteUsers"
+            @close="closeInviteUsers"
+            @add="addInviteUser"
+            @remove="removeInviteUser"
+        ></model-canvas-share-dialog>
 
 
         <v-snackbar v-model="snackbar.show"
@@ -202,6 +304,8 @@
     import StorageBase from "../../CommonStorageBase";
     import ModelStorageDialog from "./ModelStorageDialog";
     import getParent from '../../../utils/getParent'
+
+    import ModelCanvasShareDialog from "./ModelCanvasShareDialog";
 
     // const axios = require('axios');
     let partialParse = require('partial-json-parser');
@@ -254,6 +358,30 @@
                     return null;
                 }
             },
+            isOwnModel: {
+                type: Boolean,
+                default: function () {
+                    return false;
+                }
+            },
+            isReadOnlyModel: {
+                type: Boolean,
+                default: function () {
+                    return false;
+                }
+            },
+            requestCount: {
+                type: Number,
+                default: function () {
+                    return 0;
+                }
+            },
+            joinRequestedText: {
+                type: Object,
+                default: function () {
+                    return {};
+                }
+            },
         },
         mixins: [StorageBase],
         components: {
@@ -264,7 +392,8 @@
             BMDialoger,
             UIWizardDialoger,
             USMDialoger,
-            ModelStorageDialog
+            ModelStorageDialog,
+            ModelCanvasShareDialog
         },
         data() {
             return {
@@ -382,7 +511,12 @@
                     BMDefinitionId : null,
                     UIDefinitionId : null,
                     USMDefinitionId: null,
-                }
+                },
+
+                // share
+                invitationLists: null,
+                participantLists: [],
+                inviteDialog: false,
             }
         },
         computed: {
@@ -395,7 +529,7 @@
                     // 기본값으로 false 반환
                     return false;
                 }
-            },
+            }
         },
         async created(){
             await this.setUserInfo()
@@ -574,7 +708,13 @@
                     await me.putObject(`db://definitions/${settingProjectId}/information`, me.projectInfo)
                     me.isServer = true;
                     
-                    let path = me.userInfo.providerUid ? `/${me.userInfo.providerUid}/${me.storageCondition.type}/${originSetProjectId}` : `/${me.projectInfo.type}/${settingProjectId}`
+                    let path = ''
+                    if(me.storageCondition.type == 'project'){
+                        path = `/${me.projectInfo.type}/${settingProjectId}`
+                    }else{
+                        path = `/${me.userInfo.providerUid}/${me.storageCondition.type}/${originSetProjectId}`
+                    }
+                    
                     me.$router.push({path: path});
                     setTimeout(function () {
                         me.$emit('forceUpdateKey')
@@ -863,6 +1003,181 @@
                 }
                 this.projectInfo.draft = messages;
                 this.saveProject();
+            },
+
+            // project share
+            async openInviteUsers() {
+                var me = this
+                if (!me.isOwnModel) {
+                    me.snackbar = {
+                        show: true,
+                        text: me.$t('common.noPermission'),
+                        color: 'error',
+                        timeout: 2000
+                    };
+                    return;
+                }
+
+                var getPermission = await me._get(`db://definitions/${me.projectId}/information/permissions`)
+                me.invitationLists = getPermission
+                if (me.invitationLists) {
+                    me.showPublicModel = Object.keys(me.invitationLists).indexOf('everyone') == -1 ? false : true
+                }
+                me.inviteDialog = true
+                return
+            },
+
+            async addInviteUser(user, myself) {
+                var me = this
+                var write = false
+                if (user.email) {
+                    return new Promise(async function (resolve, reject) {
+                        if (user.permission == 'Write') {
+                            write = true
+                        }
+
+                        var options = {
+                            sort: "desc",
+                            orderBy: 'email',
+                            size: null,
+                            startAt: `${user.email}`,
+                            endAt: `${user.email}`,
+                        }
+
+                        var snapshots = await me.list('db://users', options)
+                        if(snapshots){
+                            if (!me.invitationLists) me.invitationLists = {}
+                            snapshots.forEach(function (snapshot) {
+                                var uid = snapshot.key
+                                if( (myself && me.userInfo.uid == uid) || (!myself && me.userInfo.uid != uid) ){
+                                    var item = snapshot
+                                    me.invitationLists[uid] = {
+                                        uid: uid,
+                                        userName: item.userName ? item.userName : ( item.username ? item.username : 'anyone'),
+                                        userPic: item.profile_picture ? item.profile_picture : '',
+                                        email: item.email ? item.email : user.email,
+                                        write: write,
+                                        request: user.request ? user.request : null
+                                    }
+                                }
+                            })
+                            me.invitationLists.__ob__.dep.notify()
+                            resolve(true)
+                        } else {
+                            var obj = {
+                                msg: "공유실패: 초대하려는 유저가 구글 로그인을 안했을 가능성이 높습니다."
+                            }
+                            me.$EventBus.$emit('inviteCallBack', obj)
+                            resolve(false)
+                        }
+                    })
+                }
+            },
+
+            async applyInviteUsers(inputUser, request) {
+                var me = this
+                var result = true
+                if (inputUser) {
+                    if(me.userInfo.email == inputUser.email){
+                        result = await me.addInviteUser(inputUser, true)
+                    }else{
+                        result = await me.addInviteUser(inputUser, false)
+                    }
+                }
+
+                if (me.invitationLists) {
+                    if (!request) {
+                        Object.keys(me.invitationLists).forEach(function (invitation) {
+                            if (me.invitationLists[invitation] && me.invitationLists[invitation].request) {
+                                me.invitationLists[invitation].request = false
+                            }
+                        })
+                    }
+
+                    me.putObject(`db://definitions/${me.projectId}/information/permissions`, me.invitationLists)
+                    me.projectInfo.permissions = me.invitationLists
+                    if (request) {
+                        me.joinRequested = true
+                    }
+                }
+
+                if (result) {
+                    var obj = {
+                        msg: null
+                    }
+                    me.$EventBus.$emit('inviteCallBack', obj)
+                    me.inviteDialog = false
+                }
+            },
+
+            closeInviteUsers(beforeInvitationLists) {
+                var me = this
+                if (beforeInvitationLists) {
+                    Object.keys(beforeInvitationLists).forEach(function (invitation) {
+                        if (beforeInvitationLists[invitation] && beforeInvitationLists[invitation].request) {
+                            beforeInvitationLists[invitation].request = false
+                        }
+                    })
+                    me.putObject(`db://definitions/${me.projectId}/information/permissions`, beforeInvitationLists)
+                    me.projectInfo.permissions = beforeInvitationLists
+                }
+                me.inviteDialog = false
+                return
+            },
+
+            removeInviteUser(user) {
+                var me = this
+                me.invitationLists[user.uid] = null
+                if (user.uid == 'everyone') {
+                    me.showPublicModel = false
+                }
+                me.invitationLists.__ob__.dep.notify();
+            },
+
+            invitePublic(show) {
+                var me = this
+                if (!me.invitationLists) me.invitationLists = {}
+
+                if (show) {
+                    me.invitationLists['everyone'] = {
+                        uid: 'everyone',
+                        userName: 'Everyone',
+                        write: false,
+                    }
+                    me.showPublicModel = true
+                } else {
+                    me.invitationLists['everyone'] = null
+                    me.showPublicModel = false
+                }
+            },
+
+            requestInviteUser() {
+                var me = this
+                //login check
+                try {
+                    me.setUserInfo()
+                    if (me.isLogin) {
+                        if (me.projectInfo.permissions &&
+                            me.projectInfo.permissions[me.userInfo.uid] &&
+                            me.projectInfo.permissions[me.userInfo.uid].request) {
+                            alert('권한 요청된 상태입니다.')
+                        } else {
+                            var obj = {
+                                email: me.userInfo.email,
+                                permission: "Write",
+                                request: true,
+                            }
+                            me.applyInviteUsers(obj, true)
+                        }
+
+                    } else {
+                        me.$EventBus.$emit('showLoginDialog')
+                    }
+
+                } catch (e) {
+                    alert('Error: request - inviteUser :', e)
+                }
+
             },
         }
     }

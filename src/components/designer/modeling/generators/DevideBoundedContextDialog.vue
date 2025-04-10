@@ -255,7 +255,7 @@
                         class="ml-2"
                     ></v-progress-circular>
                     <v-btn 
-                        :disabled="isGeneratingBoundedContext || isStartMapping" 
+                        :disabled="isGeneratingBoundedContext || isStartMapping || !isEditable" 
                         class="auto-modeling-btn" 
                         color="primary" 
                         @click="createModel()"
@@ -426,7 +426,7 @@
                         ></v-textarea>
                         <v-row class="pa-0 ma-0">
                             <v-spacer></v-spacer>
-                            <v-btn :disabled="feedback === '' || isGeneratingBoundedContext || isStartMapping" class="auto-modeling-btn" @click="reGenerateWithFeedback()">
+                            <v-btn :disabled="feedback === '' || isGeneratingBoundedContext || isStartMapping || !isEditable" class="auto-modeling-btn" @click="reGenerateWithFeedback()">
                                 {{ $t('DevideBoundedContextDialog.reGenerate') }} 
                             </v-btn>
                         </v-row>
@@ -449,7 +449,7 @@
                             class="ml-2"
                         ></v-progress-circular>
                         <v-btn 
-                            :disabled="isGeneratingBoundedContext || isStartMapping || isAnalizing || isSummarizeStarted" 
+                            :disabled="isGeneratingBoundedContext || isStartMapping || isAnalizing || isSummarizeStarted || !isEditable" 
                             class="auto-modeling-btn" 
                             color="primary" 
                             @click="createModel(aspect)"
@@ -523,6 +523,11 @@
             pbcLists: {
                 type: Array,
                 default: () => [],
+                required: false
+            },
+            isEditable: {
+                type: Boolean,
+                default: () => false,
                 required: false
             }
         },
@@ -604,6 +609,11 @@
             }
         },
         mounted() {
+            if(Object.keys(this.resultDevideBoundedContext).length > 0) {
+                this.mermaidNodes = this.generateNodes(this.resultDevideBoundedContext[this.selectedAspect]);
+                this.renderKey++;
+                this.tableRenderKey++;
+            }
         },
         watch: {
             resultDevideBoundedContext: {

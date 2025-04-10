@@ -39,7 +39,7 @@
 
                 <div class="event-storming-footer">
                     <v-btn 
-                        :disabled="isAnalizing || isGeneratingBoundedContext || isStartMapping || isSummarizeStarted"
+                        :disabled="isAnalizing || isGeneratingBoundedContext || isStartMapping || isSummarizeStarted || !isEditable"
                         @click="showBCGenerationOption()" 
                         class="auto-modeling-btn" 
                         color="primary"
@@ -146,11 +146,7 @@ export default {
     props: {
         analysisResult: {
             type: Object,
-            required: true,
-            default: () => ({
-            type: '',
-            content: { processes: [] }
-        })
+            required: true
         },
         isAnalizing: {
             type: Boolean,
@@ -172,10 +168,26 @@ export default {
             type: Number,
             required: false,
             default: 0
+        },
+        isEditable: {
+            type: Boolean,
+            required: false
         }
     },
     data() {
         return {
+        }
+    },
+    watch: {
+        analysisResult: {
+            handler(newVal) {
+                console.log(newVal);
+            },
+        }
+    },
+    mounted() {
+        if(Object.keys(this.analysisResult).length > 0){
+            console.log(this.analysisResult);
         }
     },
     methods: {

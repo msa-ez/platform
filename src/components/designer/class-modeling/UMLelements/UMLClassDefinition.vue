@@ -539,7 +539,7 @@
                             el.sourceMultiplicity == '1' && 
                             (el.targetMultiplicity == '1..n' || el.targetMultiplicity == '0..n')
                     ) {
-                        var label = `- ${el.displayName ? el.displayName : pluralize(attr.nameCamelCase)}: List<${attr.className}>`
+                        var label = `- ${el.displayName ? el.displayName : pluralize(changeCase.camelCase(name))}: List<${toName}>`
                         me.$set(me.value.fieldDescriptors[idx], "isList", true)
                         me.$set(me.value.fieldDescriptors[idx], "name", changeCase.camelCase(pluralize(name)))
                         me.$set(me.value.fieldDescriptors[idx], "displayName", el.displayName ? el.displayName : pluralize(name))

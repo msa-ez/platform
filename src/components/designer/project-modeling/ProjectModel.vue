@@ -191,7 +191,11 @@
                         :projectId="projectId"
                         :projectInfo="information"
                         :isServer="isServer"
+                        :isOwnModel="isOwnModel"
+                        :isReadOnlyModel="isReadOnlyModel"
                         :genType="generatorType"
+                        :requestCount="requestCount"
+                        :joinRequestedText="joinRequestedText"
                         @closeDialog="close()"
                         @forceUpdateKey="forceUpdateKey"
                         @saveProject="openStorageDialog('project')"
@@ -265,6 +269,12 @@
                     return false;
                 }
             },
+            isReadOnlyModel: {
+                type: Boolean,
+                default: function () {
+                    return false;
+                }
+            },
             isClass : {
                 type: Boolean,
                 default: function () {
@@ -287,6 +297,7 @@
 
                 //
                 generatorType: null,
+                joinRequested: false,
             }
         },
         computed: {
@@ -322,7 +333,39 @@
                 return this.information.customerJourneyMap.personas
                     .filter(persona => persona.modelList)
                     .flatMap(persona => persona.modelList);
-            }
+            },
+            isReadOnlyModel(){
+                // default: false (편집 가능)
+                if(this.isDisable) return true; // permissions.
+                if(!this.isEditable) return true; // write
+                if(this.projectVersion) return true; // version Mode.
+
+                return false;
+            },
+            requestCount() {
+                if (this.information && this.information.permissions) {
+                    var array = Object.values(this.information.permissions)
+                    return array.filter((word) => {
+                        if (word)
+                            return word.request == true
+                    }).length
+                }
+
+                return null
+            },
+            joinRequestedText() {
+                var obj = {
+                    show: true,
+                    text: 'Join',
+                }
+
+                if (this.joinRequested) {
+                    obj.show = false
+                    obj.text = 'Join Requested'
+                    return obj
+                }
+                return obj
+            },
         },
         created: async function () {
             var me = this

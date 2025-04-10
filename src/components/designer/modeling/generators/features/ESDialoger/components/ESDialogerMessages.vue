@@ -8,6 +8,7 @@
                     :isGeneratorButtonEnabled="message.isGeneratorButtonEnabled"
                     :uiType="'ESDialoger'"
                     :messageUniqueId="message.uniqueId"
+                    :isEditable="isEditable"
 
                     @onClose="message.actions.stop()"
                     @onRetry="message.actions.retry()"
@@ -35,6 +36,7 @@
                     :summarizedResult="message.summarizedResult"
                     :pbcLists="message.pbcLists"
                     :messageId="message.uniqueId"
+                    :isEditable="isEditable"
                     @createModel="$emit('createModel', $event)"
                     @closeDialog="$emit('closeDialog')"
                     @stop="$emit('stop')"
@@ -61,6 +63,7 @@
                     :isGeneratingBoundedContext="message.isGeneratingBoundedContext"
                     :isStartMapping="message.isStartMapping"
                     :processingRate="message.processingRate"
+                    :isEditable="isEditable"
                     @showBCGenerationOption="emitShowBCGenerationOption"
                 />
             </v-card>
@@ -77,6 +80,8 @@
                     :isStartMapping="message.isStartMapping"
                     :isAnalizing="message.isAnalizing"
                     :recommendedBoundedContextsNumber="message.recommendedBoundedContextsNumber"
+                    :generateOption="message.generateOption"
+                    :isEditable="isEditable"
                     @setGenerateOption="(option, boolean) => $emit('setGenerateOption', option, boolean)"
                 ></BCGenerationOption>
             </v-card>
@@ -123,6 +128,11 @@ export default {
             type: Array,
             required: true,
             default: () => []
+        },
+        isEditable: {
+            type: Boolean,
+            required: true,
+            default: false
         }
     },
     components: {

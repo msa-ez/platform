@@ -5,7 +5,7 @@
             <v-row class="pa-0 ma-0">
                 <v-spacer></v-spacer>
                 <v-btn 
-                    :disabled="isGenerateButtonDisabled || !localFeedback" 
+                    :disabled="isGenerateButtonDisabled || !localFeedback || !isEditable" 
                     class="auto-modeling-btn" 
                     @click="handleFeedback"
                 >
@@ -18,7 +18,7 @@
         <v-row class="ma-0 pa-4">
             <v-spacer></v-spacer>
             <v-btn 
-                :disabled="isGenerateButtonDisabled" 
+                :disabled="isGenerateButtonDisabled || !isEditable" 
                 class="auto-modeling-btn" 
                 @click="$emit('retry')"
             >
@@ -26,7 +26,7 @@
                 {{ $t('ESDialoger.tryAgain') }}
             </v-btn>
             <v-btn 
-                :disabled="isGenerateButtonDisabled" 
+                :disabled="isGenerateButtonDisabled || !isEditable" 
                 class="auto-modeling-btn" 
                 color="primary" 
                 @click="$emit('generateFromDraft')"
@@ -57,6 +57,11 @@ export default {
         feedback: {
             type: String,
             required: true
+        },
+        isEditable: {
+            type: Boolean,
+            default: () => false,
+            required: false
         }
     },
     data() {
