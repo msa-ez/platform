@@ -1,153 +1,162 @@
 <template xmlns:v-on="http://www.w3.org/1999/xhtml">
-    <v-card class="auto-modeling-user-story-card">
-        <v-card-title class="headline d-flex align-center">
-            <!-- <v-icon class="mr-2">mdi-cog-outline</v-icon> -->
-            <div>{{ $t('aiModelSetting.template.aiModelSettings') }}</div>
-        </v-card-title>
-        
-        <v-card-text>
-            <v-sheet class="pa-4 mb-5 rounded" color="grey lighten-5" elevation="1">
-                <h3 class="mb-4 primary--text d-flex align-center">
-                    <!-- <v-icon color="primary" class="mr-2">mdi-cube-outline</v-icon> -->
-                    <div>{{ $t('aiModelSetting.template.selectModel') }}</div>
-                </h3>
-                
-                <div v-for="(modelInfo, modelType) in selectedModels" :key="modelType" class="mb-4">
-                    <div class="d-flex align-center mb-2">
-                        <h4 class="model-type-title mb-0">{{ getModelTypeLabel(modelType) }}</h4>
-                        <v-tooltip bottom max-width="300">
-                            <template v-slot:activator="{ on, attrs }">
-                                <v-icon small v-bind="attrs" v-on="on" class="ml-2">mdi-help-circle-outline</v-icon>
-                            </template>
-                            <span>{{ getModelTypeDescription(modelType) }}</span>
-                        </v-tooltip>
-                        <v-spacer></v-spacer>
-                        <v-switch
-                            v-model="modelEnabled[modelType]"
-                            hide-details
-                            class="mt-0 pt-0"
-                            dense
-                            @change="handleModelToggle(modelType)"
-                            :disabled="isLastEnabledModel(modelType)"
-                            color="primary"
-                        ></v-switch>
-                        <span class="ml-1 caption">{{ modelEnabled[modelType] ? $t('aiModelSetting.template.enabled') : $t('aiModelSetting.template.disabled') }}</span>
-                    </div>
-                    
-                    <v-select
-                        :value="modelInfo.defaultValue"
-                        :items="getGroupedSelectableOptions(modelType === 'thinkingModel')"
-                        item-text="label"
-                        item-value="defaultValue"
-                        @change="(val) => handleModelSelect(modelType, val)"
-                        return-object
-                        outlined
-                        dense
-                        class="model-select"
-                        :menu-props="{ maxHeight: '400px' }"
-                        :disabled="!modelEnabled[modelType]"
-                        :class="{'disabled-model': !modelEnabled[modelType]}"
-                    >
-                        <template v-slot:item="{ item }">
-                            <div class="d-flex align-center">
-                                <span v-if="hasSvgIcon(item.vendor)" v-html="vendorSvgIcons[item.vendor.toLowerCase()]" class="vendor-svg-icon mr-1"></span>
-                                <v-icon v-else x-small class="mr-1">{{ getVendorIcon(item.vendor) }}</v-icon>
-                                <div>{{ item.label }}</div>
-                            </div>
-                        </template>
-                        
-                        <template v-slot:selection="{ item }">
-                            <div class="d-flex align-center">
-                                <span v-if="hasSvgIcon(item.vendor)" v-html="vendorSvgIcons[item.vendor.toLowerCase()]" class="vendor-svg-icon mr-1"></span>
-                                <v-icon v-else x-small class="mr-1">{{ getVendorIcon(item.vendor) }}</v-icon>
-                                <div>{{ item.label }}</div>
-                            </div>
-                        </template>
-                    </v-select>
-                </div>
-            </v-sheet>
+    <div>
+        <v-card class="auto-modeling-user-story-card">
+            <v-card-title class="headline d-flex align-center">
+                <!-- <v-icon class="mr-2">mdi-cog-outline</v-icon> -->
+                <div>{{ $t('aiModelSetting.template.aiModelSettings') }}</div>
+            </v-card-title>
             
-            <v-sheet class="pa-4 rounded" color="grey lighten-5" elevation="1">
-                <h3 class="mb-4 primary--text d-flex align-center">
-                    <!-- <v-icon color="primary" class="mr-2">mdi-key-variant</v-icon> -->
-                    <div>{{ $t('aiModelSetting.template.apiKeySettings') }}</div>
-                </h3>
-                
-                <div v-for="(inputFields, vendor) in requiredVendorInputs" :key="vendor" class="mb-4">
-                    <div class="d-flex align-center mb-3">
-                        <div class="d-flex align-center">
-                            <span v-if="hasSvgIcon(vendor)" v-html="vendorSvgIcons[vendor.toLowerCase()]" class="vendor-svg-icon mr-1"></span>
-                            <v-icon v-else x-small class="mr-1">{{ getVendorIcon(vendor) }}</v-icon>
-                        </div>
-                        <h4 class="vendor-title mb-0">{{ getVendorLabel(vendor) }}</h4>
-                    </div>
+            <v-card-text>
+                <v-sheet class="pa-4 mb-5 rounded" color="grey lighten-5" elevation="1">
+                    <h3 class="mb-4 primary--text d-flex align-center">
+                        <!-- <v-icon color="primary" class="mr-2">mdi-cube-outline</v-icon> -->
+                        <div>{{ $t('aiModelSetting.template.selectModel') }}</div>
+                    </h3>
                     
-                    <div v-for="field in inputFields" :key="field" class="mt-2">
-                        <v-text-field
-                            :label="getInputFieldLabel(field)"
-                            :value="getStoredInputValue(field)"
-                            @input="updateInputValue(field, $event)"
-                            :append-icon="getAppendIcon(field)"
-                            @click:append="handleAppendIconClick(field)"
-                            :type="field.includes('key') && !showPassword[field] ? 'password' : 'text'"
+                    <div v-for="(modelInfo, modelType) in selectedModels" :key="modelType" class="mb-4">
+                        <div class="d-flex align-center mb-2">
+                            <h4 class="model-type-title mb-0">{{ getModelTypeLabel(modelType) }}</h4>
+                            <v-tooltip bottom max-width="300">
+                                <template v-slot:activator="{ on, attrs }">
+                                    <v-icon small v-bind="attrs" v-on="on" class="ml-2">mdi-help-circle-outline</v-icon>
+                                </template>
+                                <span>{{ getModelTypeDescription(modelType) }}</span>
+                            </v-tooltip>
+                            <v-spacer></v-spacer>
+                            <v-switch
+                                v-model="modelEnabled[modelType]"
+                                hide-details
+                                class="mt-0 pt-0"
+                                dense
+                                @change="handleModelToggle(modelType)"
+                                :disabled="isLastEnabledModel(modelType)"
+                                color="primary"
+                            ></v-switch>
+                            <span class="ml-1 caption">{{ modelEnabled[modelType] ? $t('aiModelSetting.template.enabled') : $t('aiModelSetting.template.disabled') }}</span>
+                        </div>
+                        
+                        <v-select
+                            :value="modelInfo.defaultValue"
+                            :items="getGroupedSelectableOptions(modelType === 'thinkingModel')"
+                            item-text="label"
+                            item-value="defaultValue"
+                            @change="(val) => handleModelSelect(modelType, val)"
+                            return-object
                             outlined
                             dense
-                            :hint="getFieldHint(field)"
-                            persistent-hint
-                        ></v-text-field>
+                            class="model-select"
+                            :menu-props="{ maxHeight: '400px' }"
+                            :disabled="!modelEnabled[modelType]"
+                            :class="{'disabled-model': !modelEnabled[modelType]}"
+                        >
+                            <template v-slot:item="{ item }">
+                                <div class="d-flex align-center">
+                                    <span v-if="hasSvgIcon(item.vendor)" v-html="vendorSvgIcons[item.vendor.toLowerCase()]" class="vendor-svg-icon mr-1"></span>
+                                    <v-icon v-else x-small class="mr-1">{{ getVendorIcon(item.vendor) }}</v-icon>
+                                    <div>{{ item.label }}</div>
+                                </div>
+                            </template>
+                            
+                            <template v-slot:selection="{ item }">
+                                <div class="d-flex align-center">
+                                    <span v-if="hasSvgIcon(item.vendor)" v-html="vendorSvgIcons[item.vendor.toLowerCase()]" class="vendor-svg-icon mr-1"></span>
+                                    <v-icon v-else x-small class="mr-1">{{ getVendorIcon(item.vendor) }}</v-icon>
+                                    <div>{{ item.label }}</div>
+                                </div>
+                            </template>
+                        </v-select>
+                    </div>
+                </v-sheet>
+                
+                <v-sheet class="pa-4 rounded" color="grey lighten-5" elevation="1">
+                    <h3 class="mb-4 primary--text d-flex align-center">
+                        <!-- <v-icon color="primary" class="mr-2">mdi-key-variant</v-icon> -->
+                        <div>{{ $t('aiModelSetting.template.apiKeySettings') }}</div>
+                    </h3>
+                    
+                    <div v-for="(inputFields, vendor) in requiredVendorInputs" :key="vendor" class="mb-4">
+                        <div class="d-flex align-center mb-3">
+                            <div class="d-flex align-center">
+                                <span v-if="hasSvgIcon(vendor)" v-html="vendorSvgIcons[vendor.toLowerCase()]" class="vendor-svg-icon mr-1"></span>
+                                <v-icon v-else x-small class="mr-1">{{ getVendorIcon(vendor) }}</v-icon>
+                            </div>
+                            <h4 class="vendor-title mb-0">{{ getVendorLabel(vendor) }}</h4>
+                        </div>
+                        
+                        <div v-for="field in inputFields" :key="field" class="mt-2">
+                            <v-text-field
+                                :label="getInputFieldLabel(field)"
+                                :value="getStoredInputValue(field)"
+                                @input="updateInputValue(field, $event)"
+                                :append-icon="getAppendIcon(field)"
+                                @click:append="handleAppendIconClick(field)"
+                                :type="field.includes('key') && !showPassword[field] ? 'password' : 'text'"
+                                outlined
+                                dense
+                                :hint="getFieldHint(field)"
+                                persistent-hint
+                            ></v-text-field>
+                        </div>
+                        
+                        <div class="d-flex justify-end mt-2">
+                            <v-btn small text color="primary" @click="testApiKey(vendor)" :disabled="!canTestApiKey(vendor)" :loading="apiKeyTestLoading[vendor]">
+                                <v-icon small left>mdi-connection</v-icon>
+                                {{ $t('aiModelSetting.template.connectionTest') }}
+                            </v-btn>
+                            <v-icon v-if="apiKeyTestStatus[vendor] === true" color="success" small class="ml-2">mdi-check-circle</v-icon>
+                            <v-icon v-if="apiKeyTestStatus[vendor] === false" color="error" small class="ml-2">mdi-alert-circle</v-icon>
+                        </div>
                     </div>
                     
-                    <div class="d-flex justify-end mt-2">
-                        <v-btn small text color="primary" @click="testApiKey(vendor)" :disabled="!canTestApiKey(vendor)" :loading="apiKeyTestLoading[vendor]">
-                            <v-icon small left>mdi-connection</v-icon>
-                            {{ $t('aiModelSetting.template.connectionTest') }}
-                        </v-btn>
-                        <v-icon v-if="apiKeyTestStatus[vendor] === true" color="success" small class="ml-2">mdi-check-circle</v-icon>
-                        <v-icon v-if="apiKeyTestStatus[vendor] === false" color="error" small class="ml-2">mdi-alert-circle</v-icon>
+                    <div v-if="Object.keys(requiredVendorInputs).length === 0" class="text-center pa-5 grey lighten-4 rounded">
+                        <v-icon color="grey lighten-1" x-large>mdi-key-remove</v-icon>
+                        <p class="mt-3 grey--text text--darken-1">{{ $t('aiModelSetting.template.vendorInputTip') }}</p>
                     </div>
-                </div>
-                
-                <div v-if="Object.keys(requiredVendorInputs).length === 0" class="text-center pa-5 grey lighten-4 rounded">
-                    <v-icon color="grey lighten-1" x-large>mdi-key-remove</v-icon>
-                    <p class="mt-3 grey--text text--darken-1">{{ $t('aiModelSetting.template.vendorInputTip') }}</p>
-                </div>
-            </v-sheet>
-        </v-card-text>
-        
-        <v-card-actions class="pa-4 pt-0">
-            <v-spacer></v-spacer>
-            <v-btn 
-                small 
-                outlined 
-                color="primary" 
-                @click="resetToDefaults"
+                </v-sheet>
+            </v-card-text>
+            
+            <v-row class="ma-0 pa-4 pt-0">
+                <v-spacer></v-spacer>
+                <v-btn @click="resetToDefaults"
+                    class="auto-modeling-btn"
+                    outlined 
+                    color="primary" 
+                >
+                    <!-- <v-icon small left>mdi-refresh</v-icon> -->
+                    {{ $t('aiModelSetting.template.resetToDefaults') }}
+                </v-btn>
+            </v-row>
+
+            <v-snackbar
+                v-model="snackbar.show"
+                :color="snackbar.color"
+                :timeout="1500"
+                class="custom-snackbar"
             >
-                <!-- <v-icon small left>mdi-refresh</v-icon> -->
-                {{ $t('aiModelSetting.template.resetToDefaults') }}
-            </v-btn>
-            <v-btn color="primary" class="auto-modeling-btn" @click="$emit('onConfirm')">
+                {{ snackbar.text }}
+                <template v-slot:action="{ attrs }">
+                    <v-btn @click="snackbar.show = false"
+                        text
+                        v-bind="attrs"
+                    >
+                        {{ $t('aiModelSetting.template.close') }}
+                    </v-btn>
+                </template>
+            </v-snackbar>
+        </v-card>
+
+        <v-row class="ma-0"
+            style="padding: 20px 0px 0px 0px"
+        >
+            <v-spacer></v-spacer>
+            <v-btn @click="$emit('onConfirm')"
+                class="auto-modeling-btn"
+                color="primary"
+            >
                 {{ $t('aiModelSetting.template.confirm') }}
             </v-btn>
-        </v-card-actions>
-
-        <v-snackbar
-            v-model="snackbar.show"
-            :color="snackbar.color"
-            :timeout="1500"
-            class="custom-snackbar"
-        >
-            {{ snackbar.text }}
-            <template v-slot:action="{ attrs }">
-                <v-btn
-                    text
-                    v-bind="attrs"
-                    @click="snackbar.show = false"
-                >
-                    {{ $t('aiModelSetting.template.close') }}
-                </v-btn>
-            </template>
-        </v-snackbar>
-    </v-card>
+        </v-row>
+    </div>
 </template>
   
 <script>

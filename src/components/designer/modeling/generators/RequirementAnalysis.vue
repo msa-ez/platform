@@ -16,14 +16,16 @@
             <!--분석 결과가 있는 경우-->
             <div v-if="analysisResult && analysisResult.type === 'ANALYSIS_RESULT'" class="event-storming-wrapper">
                 <div>
-                    <h2 class="event-storming-title">
+                    <h2 class="event-storming-title pb-2">
                         <v-row class="ma-0 pa-0">
                             <v-icon left>mdi-check-circle</v-icon>
                             <div>요구사항 분석 결과</div>
                         </v-row>
                     </h2>
-                    <div v-if="isAnalizing" class="event-storming-subtitle">프로세스 및 이벤트 흐름 도출 중...</div>
-                    <div v-else class="event-storming-subtitle">프로세스 및 이벤트 흐름이 성공적으로 도출되었습니다.</div>
+                    <div class="pb-2">
+                        <div v-if="isAnalizing" class="event-storming-subtitle">프로세스 및 이벤트 흐름 도출 중...</div>
+                        <div v-else class="event-storming-subtitle">프로세스 및 이벤트 흐름이 성공적으로 도출되었습니다.</div>
+                    </div>
                 </div>
 
                 <div class="event-storming-canvas">
