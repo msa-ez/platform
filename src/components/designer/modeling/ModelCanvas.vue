@@ -2171,7 +2171,7 @@
                     }
 
                     if (me.isServerModel) {
-                        if( information.type != me.canvasType ){
+                        if( information.type != me.canvasType && !information.draft){
                             me.isDisable = true
 
                             me.alertInfo.text = 'The wrong approach. Please check the url.'
@@ -2214,6 +2214,12 @@
 
                     if (loadedDefinition) {
                         loadedDefinition = me.migrate(loadedDefinition)
+                        // project의 draft 정보가 있으면 초기 모델링 정보를 대체
+                        if(me.information.draft){
+                            let bigPicture = me.information.draft.find(item => item.type == 'processAnalysis')
+                            loadedDefinition.elements = bigPicture.content.content.elements
+                            loadedDefinition.relations = bigPicture.content.content.relations
+                        }
                         for(let key of Object.keys(loadedDefinition)) {
                             me.$set(me.value, key, loadedDefinition[key])
                         }

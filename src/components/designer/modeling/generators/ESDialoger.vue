@@ -75,6 +75,7 @@
                                 rows="2"
                                 solo
                                 :placeholder="$t('ESDialoger.userStoryText')"
+                                :disabled="!isEditable"
                             >
                             </v-textarea>
                             <!--                <div-->
@@ -98,18 +99,19 @@
                                     auto-grow
                                     rows="2"
                                     solo
+                                    :disabled="!isEditable"
                             >
                             </v-textarea>
                         </v-card-text>
                     </v-tab-item>
                 </v-tabs-items>
-                <v-btn v-if="!done" @click="stop()" style="position: absolute; right:10px; top:10px;"><v-progress-circular class="auto-modeling-stop-loading-icon" indeterminate></v-progress-circular>Stop generating</v-btn>
-                <v-row v-if="done" class="ma-0 pa-4 button-row">
+                <v-btn v-if="!done" :disabled="!isEditable" @click="stop()" style="position: absolute; right:10px; top:10px;"><v-progress-circular class="auto-modeling-stop-loading-icon" indeterminate></v-progress-circular>Stop generating</v-btn>
+                <v-row v-if="done" :disabled="!isEditable" class="ma-0 pa-4 button-row">
                     <v-spacer></v-spacer>
-                    <v-btn v-if="state.secondMessageIsTyping" :disabled="getDisabledGenerateBtn()" class="auto-modeling-btn" @click="generate()">
+                    <v-btn v-if="state.secondMessageIsTyping" :disabled="getDisabledGenerateBtn() || !isEditable" class="auto-modeling-btn" @click="generate()">
                         <v-icon class="auto-modeling-btn-icon">mdi-refresh</v-icon>{{ $t('ESDialoger.tryAgain') }}
                     </v-btn>
-                    <v-btn :disabled="getDisabledGenerateBtn()" class="auto-modeling-btn" color="primary" @click="validateRequirements()">
+                    <v-btn :disabled="getDisabledGenerateBtn() || !isEditable" class="auto-modeling-btn" color="primary" @click="validateRequirements()">
                         {{ $t('ESDialoger.validateRequirements') }}
                     </v-btn>
                 </v-row>
@@ -117,6 +119,7 @@
 
             <ESDialogerMessages 
                 :messages="messages"
+                :isEditable="isEditable"
                 @generateFromAggregateDrafts="generateFromAggregateDrafts"
                 @feedbackFromAggregateDrafts="feedbackFromAggregateDrafts"
                 @showBCGenerationOption="onShowBCGenerationOption"
@@ -235,7 +238,8 @@ import { value } from 'jsonpath';
             projectId: String,
             projectInfo: Object,
             modelIds: Object,
-            isServerProject: Boolean
+            isServerProject: Boolean,
+            isEditable: Boolean
         },
         components: {
             VueTypedJs,
@@ -823,6 +827,9 @@ import { value } from 'jsonpath';
         methods: {
             initESDialoger(){
                 if(!this.projectInfo.draft) return;
+                this.value.userStory = this.projectInfo.eventStorming.userStory;
+                this.done = true;
+                this.state.secondMessageIsTyping = false;
                 this.messages = this.projectInfo.draft;
             },
             deleteModel(id){
@@ -875,7 +882,7 @@ import { value } from 'jsonpath';
                 if (this.state.generator === "RequirementsValidationGenerator" || 
                     this.state.generator === "RecursiveRequirementsValidationGenerator") {
                     
-                    const currentMessage = this.messages[this.messages.length-1];
+                    const currentMessage = this.messages.find(msg => msg.type === 'processAnalysis');
                     
                     if (this.state.generator === "RecursiveRequirementsValidationGenerator") {
                         // 현재 청크의 인덱스가 마지막 청크의 인덱스보다 작은 경우
@@ -1091,6 +1098,12 @@ import { value } from 'jsonpath';
             setGenerateOption(option, isNewChoice) {
                 this.selectedAspect = option.selectedAspects.join('+');
                 this.bcGenerationOption = option;
+                let optionMessage = this.messages.find(msg => msg.type === 'bcGenerationOption');
+                if(optionMessage){
+                    this.updateMessageState(optionMessage.uniqueId, {
+                        generateOption: option
+                    });
+                }
 
                 if (isNewChoice && this.messages.length > 0) {
                     // 마지막 boundedContextResult 메시지 찾기
@@ -1423,6 +1436,7 @@ import { value } from 'jsonpath';
                         isGeneratingBoundedContext: this.processingState.isGeneratingBoundedContext,
                         isStartMapping: this.processingState.isStartMapping,
                         isAnalizing: this.processingState.isAnalizing,
+                        generateOption: {},
                         recommendedBoundedContextsNumber: this.requirementsValidationResult.analysisResult.recommendedBoundedContextsNumber,
                         timestamp: new Date()
                     };

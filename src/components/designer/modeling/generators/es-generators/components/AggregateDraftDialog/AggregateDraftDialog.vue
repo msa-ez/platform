@@ -61,6 +61,7 @@
                 :draftOptions="draftOptions"
                 :activeTab="activeTab"
                 :feedback="feedback"
+                :isEditable="isEditable"
                 @generateFromDraft="generateFromDraft"
                 @feedbackFromDraft="feedbackFromDraft"
                 @retry="retry"
@@ -170,6 +171,12 @@
             messageUniqueId: {
                 type: String,
                 default: '',
+                required: false
+            },
+
+            isEditable: {
+                type: Boolean,
+                default: () => false,
                 required: false
             }
         },

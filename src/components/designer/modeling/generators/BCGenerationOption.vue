@@ -109,7 +109,7 @@
                     </div>
                     <v-btn @click="onConfirm"
                         color="primary"
-                        :disabled="generateBtnDisabled"
+                        :disabled="generateBtnDisabled || !isEditable"
                     >
                         {{ $t('BCGenerationOption.generate') }}
                     </v-btn>
@@ -129,6 +129,8 @@ export default {
         isStartMapping: Boolean,
         isAnalizing: Boolean,
         recommendedBoundedContextsNumber: Number,
+        generateOption: Object,
+        isEditable: Boolean
     },
 
     data() {
@@ -179,6 +181,13 @@ export default {
 
     mounted() {
         this.localOptions.numberOfBCs = this.recommendedBoundedContextsNumber;
+        if(Object.keys(this.generateOption).length > 0){
+            this.localOptions.numberOfBCs = this.generateOption.numberOfBCs;
+            this.localOptions.selectedAspects = this.generateOption.selectedAspects;
+            this.localOptions.aspectDetails = this.generateOption.aspectDetails;
+            this.localOptions.additionalOptions = this.generateOption.additionalOptions;
+            this.localOptions.isProtocolMode = this.generateOption.isProtocolMode;
+        }
     },
 
     watch: {},

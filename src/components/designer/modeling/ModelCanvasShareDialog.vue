@@ -1,5 +1,5 @@
 <template>
-    <v-dialog v-model="showDialog" max-width="600" @click:outside="participantClose()" style="overflow-y:hidden;">
+    <v-dialog v-model="showDialog" max-width="600" style="overflow-y:hidden;">
         <v-card>
             <v-tabs
                 v-model="tab"
@@ -54,9 +54,7 @@
         props: {
             showDialog:{
                 type: Boolean,
-                default: function () {
-                    return false
-                }
+                default: false
             },
             value: {
                 type: Object,
