@@ -146,7 +146,7 @@
 
         <v-dialog v-model="generateUserStoryDialog"
             persistent
-            max-width="600"
+            max-width="fit-content"
         >
             <v-card>
                 <v-row class="ma-0 pa-4">
@@ -407,7 +407,7 @@ import { value } from 'jsonpath';
 
                 onRetry: (returnObj) => {
                     clearThinkingUpdateInterval()
-                    alert(`[!] An error occurred while analysing your requirements, please try again..\n* Error log \n${returnObj.errorMessage}`)
+                    console.warn(`[!] An error occurred while analysing your requirements, please try again..\n* Error log \n${returnObj.errorMessage}`)
                 }
             })
             this.generators.PreProcessingFunctionsGenerator.buildInitialInputs = (selectedStructureOption) => {
@@ -612,7 +612,7 @@ import { value } from 'jsonpath';
 
                 onRetry: (returnObj) => {
                     clearThinkingUpdateInterval()
-                    alert(`[!] There was an error creating your draft, please try again.\n* Error log \n${returnObj.errorMessage}`)
+                    console.warn(`[!] There was an error creating your draft, please try again.\n* Error log \n${returnObj.errorMessage}`)
                 }
             })
             this.generators.DraftGeneratorByFunctions.generate = (structuredDescription, boundedContext, analysisResult) => {
@@ -754,7 +754,7 @@ import { value } from 'jsonpath';
                 selectedAspect: "",
 
                 activeTab: null,
-                generatorInputTabs: ['UserStory','DDL'
+                generatorInputTabs: ['User Story','DDL'
                                         // , 'DDL', "Process"
                                     ],
                 inputDDL: '',

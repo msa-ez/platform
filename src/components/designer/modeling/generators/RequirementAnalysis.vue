@@ -8,8 +8,8 @@
                     size="24"
                     class="mr-2"
                 ></v-progress-circular>
-                <span v-if="processingRate==0 || processingRate==100">요구사항 검증 중...</span>
-                <span v-else>요구사항 검증 중... ({{ processingRate }}%)</span>
+                <span v-if="processingRate==0 || processingRate==100">{{ $t('RequirementAnalysis.validateRequirements') }}</span>
+                <span v-else>{{ $t('RequirementAnalysis.validateRequirements') }} ({{ processingRate }}%)</span>
             </div>
         </template>
         <template>
@@ -19,12 +19,12 @@
                     <h2 class="event-storming-title pb-2">
                         <v-row class="ma-0 pa-0">
                             <v-icon left>mdi-check-circle</v-icon>
-                            <div>요구사항 분석 결과</div>
+                            <div>{{ $t('RequirementAnalysis.requirementAnalysisResult') }}</div>
                         </v-row>
                     </h2>
                     <div class="pb-2">
-                        <div v-if="isAnalizing" class="event-storming-subtitle">프로세스 및 이벤트 흐름 도출 중...</div>
-                        <div v-else class="event-storming-subtitle">프로세스 및 이벤트 흐름이 성공적으로 도출되었습니다.</div>
+                        <div v-if="isAnalizing" class="event-storming-subtitle">{{ $t('RequirementAnalysis.processAndEventFlowExtraction') }}</div>
+                        <div v-else class="event-storming-subtitle">{{ $t('RequirementAnalysis.processAndEventFlowExtracted') }}</div>
                     </div>
                 </div>
 
@@ -44,7 +44,7 @@
                         class="auto-modeling-btn" 
                         color="primary"
                     >
-                        Bounded Context 생성
+                        {{ $t('RequirementAnalysis.createBoundedContext') }}
                     </v-btn>
                 </div>
             </div>
@@ -58,7 +58,7 @@
                     colored-border
                     class="guide-header"
                 >
-                    요구사항 개선이 필요합니다. 아래 가이드를 참고하여 요구사항을 보완해주세요.
+                    {{ $t('RequirementAnalysis.requirementImprovementNeeded') }}
                 </v-alert>
 
                 <div class="quality-criteria-section">
@@ -79,11 +79,11 @@
                     <v-card outlined>
                         <v-card-title class="recommendations-title">
                             <v-icon color="primary" class="mr-2">mdi-lightbulb</v-icon>
-                            개선 권장사항
+                            {{ $t('RequirementAnalysis.improvementRecommendations') }}
                         </v-card-title>
                         <v-card-text>
                             <div v-if="analysisResult.content.recommendations.immediate">
-                                <h4 class="mb-2">즉시 개선사항:</h4>
+                                <h4 class="mb-2">{{ $t('RequirementAnalysis.immediateImprovements') }}</h4>
                                 <ul>
                                     <li v-for="item in analysisResult.content.recommendations.immediate" 
                                         :key="item" 
@@ -94,7 +94,7 @@
                             </div>
 
                             <div v-if="analysisResult.content.recommendations.questions" class="mt-4">
-                                <h4 class="mb-2">검토 필요 사항:</h4>
+                                <h4 class="mb-2">{{ $t('RequirementAnalysis.reviewRequiredItems')}}</h4>
                                 <v-chip-group column>
                                     <v-chip v-for="question in analysisResult.content.recommendations.questions"
                                         :key="question"
@@ -113,7 +113,7 @@
                     <v-card outlined>
                         <v-card-title class="impact-title">
                             <v-icon color="info" class="mr-2">mdi-target</v-icon>
-                            영향 범위
+                            {{ $t('RequirementAnalysis.impactAreas') }}
                         </v-card-title>
                         <v-card-text>
                             <v-chip-group>

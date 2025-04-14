@@ -149,7 +149,7 @@ class CreateAggregateClassIdByDrafts extends FormattedJSONAIGenerator{
             },
 
             onRetry: (returnObj) => {
-                alert(`[!] An error occurred during aggregate class id creation, please try again.\n* Error log \n${returnObj.errorMessage}`)
+                console.warn(`[!] An error occurred during aggregate class id creation, please try again.\n* Error log \n${returnObj.errorMessage}`)
 
                 if(callbacks.onRetry)
                     callbacks.onRetry(returnObj)

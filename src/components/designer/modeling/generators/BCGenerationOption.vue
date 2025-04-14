@@ -252,12 +252,12 @@ export default {
 
         getAspectDescription(index) {
             const descriptions = [
-                '도메인 관점은 비즈니스 로직과 규칙을 중심으로 Bounded Context를 분리합니다. 핵심 비즈니스 개념, 업무 규칙, 도메인 프로세스의 응집도를 고려하여 논리적으로 연관된 기능들을 하나의 컨텍스트로 그룹화합니다.',
-                '프로세스 관점은 프로세스(value stream) 기반으로 Bounded Context를 분리합니다. 프로세스의 흐름과 업무 프로세스의 응집도를 고려하여 논리적으로 연관된 기능들을 하나의 컨텍스트로 그룹화합니다.',
-                '조직 관점은 팀 구조와 의사결정 경계를 기준으로 Bounded Context를 구분합니다. 콘웨이의 법칙에 따라 조직 구조를 반영하며, 팀의 자율성과 책임 영역을 고려하여 컨텍스트를 설정합니다.',
-                '페르소나 관점은 사용자 역할과 사용 사례를 중심으로 Bounded Context를 정의합니다. 각기 다른 사용자 그룹의 요구사항과 상호작용 패턴을 분석하여 사용자 중심의 서비스 경계를 설정합니다.',
-                '트랜잭션/성능 관점은 시스템의 확장성과 처리량을 고려하여 Bounded Context를 분리합니다. 트랜잭션 처리량, 데이터 일관성 요구사항, 확장 가능성을 기준으로 독립적으로 스케일링 가능한 단위를 정의합니다.',
-                '인프라 관점은 기술적 요구사항을 기준으로 Bounded Context를 구분합니다. 데이터 저장소 유형, 보안 요구사항, 외부 시스템 통합 등 기술적 특성을 고려하여 컨텍스트를 분리합니다.'
+                this.$t('BCGenerationOption.domainAspectDescription'),
+                this.$t('BCGenerationOption.processAspectDescription'),
+                this.$t('BCGenerationOption.organizationalAspectDescription'),
+                this.$t('BCGenerationOption.personaAspectDescription'),
+                this.$t('BCGenerationOption.transactionPerformanceAspectDescription'),
+                this.$t('BCGenerationOption.infrastructureAspectDescription')
             ];
             return descriptions[index];
         },
@@ -269,9 +269,9 @@ export default {
 
         getAdditionalInputLabel(aspect) {
             if (aspect === this.$t('DevideBoundedContextDialog.organizationalAspect')) {
-                return '조직 구조를 입력하세요. 예시) 청약관리팀, 클레임관리팀, 보상지급팀, 고객관리팀';
-            }else if(aspect === this.$t('DevideBoundedContextDialog.infrastructureAspect')){
-                return '인프라 환경을 입력하세요. 예시) Java, Spring-boot, JPA, MySQL(단, 고객관리는 Python, PostgreSQL)';
+                return this.$t('BCGenerationOption.enterOrganizationalStructure');
+            } else if (aspect === this.$t('DevideBoundedContextDialog.infrastructureAspect')) {
+                return this.$t('BCGenerationOption.enterInfrastructureEnvironment');
             }
         },
         getAdditionalInputPlaceholder(aspect) {

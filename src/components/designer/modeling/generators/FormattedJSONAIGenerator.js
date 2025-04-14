@@ -130,6 +130,7 @@ class FormattedJSONAIGenerator extends AIGenerator {
 
         this.isUseResponseFormat = true
         this.initialResponseFormat = undefined
+        this.isFinishMethodCalled = false
     }
 
     _addOnsendCallback(){
@@ -170,6 +171,7 @@ class FormattedJSONAIGenerator extends AIGenerator {
         this.isUseResponseFormat = true
         this.useJsonRestoreStrategy = false
         this.isUseJsonRestoreStrategyUsed = false
+        this.isFinishMethodCalled = false
 
 
         await this.onGenerateBefore(this.client.input, this.generatorName)
@@ -580,6 +582,7 @@ ${JSON.stringify(exampleOutputs)}
             currentState: this.state,
             finish_reason: this.finish_reason,
             isFinished: this.state === 'end',
+            isFinishMethodCalled: this.isFinishMethodCalled,
             actions: {
                 stopGeneration: () => {
                     this.stop()
@@ -685,6 +688,12 @@ ${JSON.stringify(exampleOutputs)}
                 }
                 return returnObj
             }
+
+            if(this.isFinishMethodCalled) {
+                console.warn(`[!] ${this.generatorName}에서 이미 finish 메서드가 호출되었습니다.`)
+                return returnObj
+            }
+            this.isFinishMethodCalled = true
  
             returnObj.modelValue.aiOutput = JsonParsingUtil.applyTrimToAllStringProperties(
                 JsonParsingUtil.parseToJson(text)
@@ -811,11 +820,20 @@ ${JSON.stringify(exampleOutputs)}
         return false;
     }
 
-    _retryByError(){
+    async _retryByError(){
         // 일부 경우에는 response_format이 정의되어 있어서 끝없이 동일한 예외가 발생하는 경우가 있기 때문에 재시도시에는 제거해서 재시도 하도록 함
         this.modelInfo.requestArgs.response_format = undefined
         this.isUseResponseFormat = false
-        super.generate()
+        this.isFinishMethodCalled = false
+
+
+        const delay = Math.floor(Math.random() * 2001) + 1000;
+        console.log(`[*] 오류 발생 감지! ${delay / 1000}초 후 재시도합니다...`);
+
+        await new Promise(resolve => setTimeout(resolve, delay));
+
+
+        await super.generate()
     }
 
     _makeDebugObject(returnObj) {
