@@ -1,7 +1,7 @@
 <template xmlns:v-on="http://www.w3.org/1999/xhtml">
     <div>
         <template v-for="(message, index) in messages">
-            <v-card v-if="message.type === 'aggregateDraftDialogDto'" :key="index" class="auto-modeling-user-story-card" style="margin-top: 30px !important;">
+            <v-card v-if="message.type === 'aggregateDraftDialogDto'" :key="index" class="auto-modeling-user-story-card pdf-content-item" style="margin-top: 30px !important;">
                 <AggregateDraftDialog
                     :draftOptions="message.draftOptions"
                     :draftUIInfos="message.draftUIInfos"
@@ -21,7 +21,7 @@
             <v-card 
                 v-if="message.type === 'boundedContextResult'" 
                 :key="`bounded-context-${message.uniqueId}`" 
-                class="auto-modeling-user-story-card" 
+                class="auto-modeling-user-story-card pdf-content-item" 
                 style="margin-top: 30px !important;"
             >
                 <DevideBoundedContextDialog
@@ -53,7 +53,7 @@
             <v-card 
                 v-if="message.type === 'processAnalysis'" 
                 :key="index" 
-                class="auto-modeling-user-story-card" 
+                class="auto-modeling-user-story-card pdf-content-item" 
                 style="margin-top: 30px !important;"
             >
                 <RequirementAnalysis 
@@ -71,7 +71,7 @@
             <v-card 
                 v-if="message.type === 'bcGenerationOption'" 
                 :key="index" 
-                class="auto-modeling-user-story-card" 
+                class="auto-modeling-user-story-card pdf-content-item" 
                 style="margin-top: 30px !important;"
             >
                 <BCGenerationOption

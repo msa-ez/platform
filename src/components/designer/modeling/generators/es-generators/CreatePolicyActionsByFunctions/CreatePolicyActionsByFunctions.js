@@ -132,7 +132,7 @@ class CreatePolicyActionsByFunctions extends FormattedJSONAIGenerator{
             },
 
             onRetry: (returnObj) => {
-                alert(`[!] An error occurred during policy creation, please try again.\n* Error log \n${returnObj.errorMessage}`)
+                console.warn(`[!] An error occurred during policy creation, please try again.\n* Error log \n${returnObj.errorMessage}`)
 
                 if(callbacks.onRetry)
                     callbacks.onRetry(returnObj)

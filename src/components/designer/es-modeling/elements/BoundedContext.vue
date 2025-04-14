@@ -509,7 +509,7 @@
 
                     onRetry: (returnObj) => {
                         this._clearThinkingUpdateInterval()
-                        alert(`[!] An error occurred while analysing your requirements, please try again..\n* Error log \n${returnObj.errorMessage}`)
+                        console.warn(`[!] An error occurred while analysing your requirements, please try again..\n* Error log \n${returnObj.errorMessage}`)
                         this.boundedContextPanelDto.genAIDto.isGenerateWithDescriptionDone = true
                         this.canvas.AggregateDraftDialogDto.isShow = false
                     },
