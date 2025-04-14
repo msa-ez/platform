@@ -2845,7 +2845,7 @@
 
                 onRetry: (returnObj) => {
                     clearThinkingUpdateInterval()
-                    alert(`[!] An error occurred during creation, please try again.\n* Error log \n${returnObj.errorMessage}`)
+                    console.warn(`[!] An error occurred during creation, please try again.\n* Error log \n${returnObj.errorMessage}`)
                     this.AggregateDraftDialogDto = {
                         ...this.AggregateDraftDialogDto,
                         isShow: true,
