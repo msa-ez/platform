@@ -93,7 +93,7 @@ The format must be as follows:
     [
         {
             "name":"name of Bounded Context in PascalCase",
-            "alias":"alias of Bounded Context in language of Requirements",
+            "alias":"alias of Bounded Context in national language of Requirements",
             "importance": "Core Domain" || "Supporting Domain" || "Generic Domain",
             "complexity": "score of complexity", // 0.0 ~ 1.0
             "differentiation": "score of differentiation", // 0.0 ~ 1.0
