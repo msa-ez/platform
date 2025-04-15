@@ -2166,7 +2166,16 @@
                         }
                     }
                 })
+
                 if(isNew) {
+                    Object.values(me.value.relations).forEach(function(item, idx) {
+                        if(item!=null && relationInfo.targetElement.name+'s' == item.name) {
+                            isNew = false;
+                        }
+                    })
+
+                    if(!isNew) return;
+
                     var relation = me.addElement(relationInfo)
                     relation.name = relationName
                     relation.displayName = target.displayName
