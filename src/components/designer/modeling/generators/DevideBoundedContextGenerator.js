@@ -105,7 +105,8 @@ The format must be as follows:
                 }
             ],
             "events":[ ], // All events that composed from this Bounded Context.
-            "requirements":[ ] // Must be empty
+            "requirements":[ ], // Must be empty
+            "role":"Explanation of what to do and how to works in this Bounded Context"
 
         }
       ],
@@ -284,6 +285,7 @@ Relation Guidelines:
 
             if(model){
                 model['devisionAspect'] = this.client.input['devisionAspect'];
+                model['currentGeneratedLength'] = text.length;
                 
                 if(this.state === "end")
                     console.log(`[*] ${this.client.input['devisionAspect']}의 모델 생성이 완료됨`, {model, text, input: this.client.input})
@@ -309,7 +311,8 @@ Relation Guidelines:
                         "boundedContexts":[],
                         "relations":[],
                         "thoughts":"",
-                        "explanations":[]
+                        "explanations":[],
+                        "role":""
                     }
                 }
 
@@ -327,7 +330,8 @@ Relation Guidelines:
                     "boundedContexts":[],
                     "relations":[],
                     "thoughts":"",
-                    "explanations":[]
+                    "explanations":[],
+                    "role":""
                 }
             }
             return model

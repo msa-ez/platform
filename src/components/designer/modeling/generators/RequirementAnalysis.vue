@@ -8,8 +8,9 @@
                     size="24"
                     class="mr-2"
                 ></v-progress-circular>
-                <span v-if="processingRate==0 || processingRate==100">{{ $t('RequirementAnalysis.validateRequirements') }}</span>
+                <span v-if="processingRate==0 || processingRate==100">{{ $t('RequirementAnalysis.validateRequirements') }} ({{ currentGeneratedLength }} Text generated.)</span>
                 <span v-else>{{ $t('RequirementAnalysis.validateRequirements') }} ({{ processingRate }}%)</span>
+                <v-btn v-if="isAnalizing" text color="primary" @click="stop()">Stop</v-btn>
             </div>
         </template>
         <template>
@@ -172,6 +173,11 @@ export default {
         isEditable: {
             type: Boolean,
             required: false
+        },
+        currentGeneratedLength: {
+            type: Number,
+            required: false,
+            default: 0
         }
     },
     data() {
@@ -204,6 +210,9 @@ export default {
                 traceability: '추적 가능성'
             };
             return titles[criterion] || criterion;
+        },
+        stop() {
+            this.$emit('stop');
         }
     }
 }

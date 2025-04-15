@@ -36,7 +36,7 @@ Format your response as:
     "relevantRequirements": 
     [
         {
-            "type": "userStory || DDL || AnalysisResult",
+            "type": "userStory || DDL || Event",
             "text": "exact text from the chunk that is definitely related to this BC" // If an object comes, write it as a string
         }
     ]

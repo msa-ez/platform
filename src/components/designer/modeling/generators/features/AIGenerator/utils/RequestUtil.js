@@ -32,13 +32,19 @@ class RequestUtil {
    * - 이벤트 핸들러: onProgress, onLoadEnd, onError와 같은 콜백 함수들이 올바르게 정의되지 않으면
    *   의도치 않은 동작이나 에러 핸들링 실패가 발생할 수 있습니다.
    */
-  static sendPostRequest(url, data, headers = {}, onProgress, onLoadEnd, onError, resolve, reject) {
+  static sendPostRequest(url, data, headers = {}, onProgress, onLoadEnd, onError, resolve, reject, signal) {
     const xhr = new XMLHttpRequest();
     xhr.open("POST", url, true);
 
     Object.keys(headers).forEach(header => {
       xhr.setRequestHeader(header, headers[header]);
     });
+
+    if (signal) {
+      signal.addEventListener('abort', () => {
+        xhr.abort();
+      });
+    }
 
     if (onProgress) xhr.onprogress = (event) => onProgress(event, resolve, reject);
     if (onLoadEnd) xhr.onloadend = (event) => onLoadEnd(event, resolve, reject);

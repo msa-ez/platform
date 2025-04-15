@@ -124,6 +124,7 @@
     "descriptionOfEachBoundedContext": "각 Bounded Context의 설명",
     "relations": "관계",
     "boundedContextName": "Bounded Context 이름",
+    "role": "역할",
     "importance": "중요도",
     "implementationStrategy": "구현 전략",
     "requirements": "요구사항",

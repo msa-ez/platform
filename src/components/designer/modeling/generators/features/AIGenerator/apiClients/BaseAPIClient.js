@@ -112,7 +112,14 @@ class BaseAPIClient {
     }
 
     stop() {
-        this.aiGenerator.stopSignaled = true;
+        const g = this.aiGenerator;
+        g.stopSignaled = true;
+        
+        if (g.abortController) {
+            g.abortController.abort();
+            g.state = 'stopped';
+            console.log("[*] 생성이 중단됨");
+        }
     }
     
     async getToken(vendor) {
@@ -141,6 +148,7 @@ class BaseAPIClient {
             try {
                 g.state = 'running';
                 g.messages = this._getMessages(generateOption);
+                g.abortController = new AbortController();
         
                 if(localStorage.getItem("useCache") === "true") {
                     const hashKey = HashUtil.generateHashKey(JSON.stringify(g.messages));
@@ -190,7 +198,8 @@ class BaseAPIClient {
                     (error) => {
                         g.lockKey = false;
                         reject(error);
-                    }
+                    },
+                    g.abortController.signal
                 );
     
                 if(g.client.onSend) {
