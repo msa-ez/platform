@@ -158,7 +158,7 @@
                             </v-tooltip>
                         </div>
                     </v-row>
-                    <v-card-text id="scroll-text"
+                    <v-card-text
                         class="gs-auto-modeling-box"
                     >
                         <v-row class="pt-2 pb-2">
@@ -168,7 +168,8 @@
                                     <v-textarea class="pa-0 delete-input-detail auto-modeling-input-textarea"
                                         style="max-height: 400px;
                                             overflow: auto;
-                                            margin-top: 4px !important;"
+                                            margin-top: 4px !important;
+                                            height: auto !important;"
                                         v-model="projectInfo.prompt"
                                         ref="textarea"
                                         :rows="1"
@@ -192,7 +193,9 @@
                             </v-card>
                         </v-row>
                         <div v-if="openChatUI">
-                            <v-col style="padding:0px;">
+
+                            <!-- 기존 카드를 선택해서 auto 생성 하던부분 시작 -->
+                            <!-- <v-col style="padding:0px;">
                                 <v-card style="display:inline-block; background-color: #DAF5FF;">
                                     <v-card-text class="auto-modeling-message">
                                         <vue-typed-js 
@@ -204,21 +207,21 @@
                                         </vue-typed-js>
                                     </v-card-text>
                                 </v-card>
-                            </v-col>
+                            </v-col> -->
                             
-                            <v-card style="margin-top: 10px; display: inline-block; background-color: #DAF5FF;">
+                            <!-- <v-card style="margin-top: 10px; display: inline-block; background-color: #DAF5FF;">
                                 <v-row lg="3" md="3" sm="6" cols="12" style="padding:10px;">
                                     <v-col v-for="(item, index) in cardItems"
                                         :key="index"
                                         style="text-align: center;"
                                     >
                                         <v-card :style="genType == item.type ? 'border: solid darkturquoise;' : 'background-color: white;'" :class="item.class">
-                                            <!-- <v-chip :style="item.chipText == 'Stable' ? 'color: white;' : ''"
+                                            <v-chip :style="item.chipText == 'Stable' ? 'color: white;' : ''"
                                                 x-small
                                                 :outlined="item.chipOutlined"
                                                 :color="item.chipColor"
                                                 style="position: absolute; right: 5px; top: 5px; z-index: 1;"
-                                            >{{ item.chipText }}</v-chip> -->
+                                            >{{ item.chipText }}</v-chip>
                                             <div @click="checkLogin(item.type)" style="cursor: pointer;">
                                                 <v-avatar class="ma-3" size="125" rounded="0">
                                                     <v-img :src="item.imgSrc"></v-img>
@@ -233,7 +236,9 @@
                                         </v-card>
                                     </v-col>
                                 </v-row>
-                            </v-card>
+                            </v-card> -->
+                            <!-- 기존 카드를 선택해서 auto 생성 하던부분 끝 -->
+
                             <div v-if="startCrateModel && genType == 'BM'" style="margin-top: 10px; margin-left: 5px;">
                                 <v-progress-circular
                                     indeterminate
@@ -875,6 +880,8 @@
 
                 if(!me.isLogin){
                     localStorage.setItem('noLoginPrompt', me.projectInfo.prompt)
+                } else {
+                    me.startGen()
                 }
             },
             uuid: function () {
