@@ -105,7 +105,7 @@ The format must be as follows:
                 }
             ],
             "events":[ ], // All events that composed from this Bounded Context.
-            "requirements":[ ], // Must be empty
+            "requirements":[ ], // Must be empty array
             "role":"Explanation of what to do and how to works in this Bounded Context"
 
         }

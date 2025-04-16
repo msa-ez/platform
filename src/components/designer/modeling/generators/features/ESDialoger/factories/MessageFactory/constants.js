@@ -9,6 +9,7 @@ export const aggregateDraftDialogDtoMessage = {
         progress: 0
     },
     isGeneratorButtonEnabled: true,
+    boundedContextVersion: 1,
     actions: {
         stop: null,
         retry: null

@@ -3,6 +3,7 @@
         <component 
             :is="currentHeaderComponent"
             :isGenerateButtonDisabled="isGenerateButtonDisabled"
+            :boundedContextVersion="boundedContextVersion"
             @retry="retry"
             @close="close"
         />
@@ -177,6 +178,12 @@
             isEditable: {
                 type: Boolean,
                 default: () => false,
+                required: false
+            },
+
+            boundedContextVersion: {
+                type: Number,
+                default: 1,
                 required: false
             }
         },

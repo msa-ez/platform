@@ -774,6 +774,8 @@ import { value } from 'jsonpath';
                 },
                 isAnalizeResultSetted: false,
                 isStopped: false,
+
+                boundedContextVersion: null,
                 
                 reGenerateMessageId: null,
 
@@ -958,7 +960,7 @@ import { value } from 'jsonpath';
                     me.processingState.isGeneratingBoundedContext = false;
                     
                     // 현재 메시지의 result를 깊은 복사로 가져옴
-                    const currentMessage = me.messages[me.messages.length-1];
+                    const currentMessage = me.messages.find(msg => msg.type === 'boundedContextResult');
                     const newResult = JSON.parse(JSON.stringify(currentMessage.result || {}));
                     
                     // 새로운 모델을 해당 aspect에 할당
@@ -1001,7 +1003,7 @@ import { value } from 'jsonpath';
                     me.currentProcessingBoundedContext = me.resultDevideBoundedContext[me.selectedAspect].boundedContexts[me.bcInAspectIndex].alias;
 
                     // 현재 메시지의 result를 깊은 복사로 가져옴
-                    const currentMessage = me.messages[me.messages.length-1];
+                    const currentMessage = me.messages.find(msg => msg.type === 'boundedContextResult');
                     me.updateMessageState(currentMessage.uniqueId, {
                         result: JSON.parse(JSON.stringify(me.resultDevideBoundedContext)),
                         processingRate: me.processingRate,
@@ -1098,7 +1100,7 @@ import { value } from 'jsonpath';
                 }
 
                 if(this.state.generator === "RequirementsMappingGenerator"){
-                    messageId = this.messages.find(msg => msg.type === "requirementsMapping").uniqueId;
+                    messageId = this.messages.find(msg => msg.type === "boundedContextResult").uniqueId;
                     this.bcInAspectIndex = 0;
                     this.userStoryChunksIndex = 0;
                     this.processingRate = 0;
@@ -1300,19 +1302,22 @@ import { value } from 'jsonpath';
             },
 
 
-            generateAggregateDrafts(selectedStructureOption){
-                if(!selectedStructureOption) return
+            generateAggregateDrafts(versionInfo){
+                if(!versionInfo) return
+
+                if(versionInfo.data && versionInfo.version){
+                    this.boundedContextVersion = versionInfo
+                }
+
+                let isRequirementsMapping = !this.resultDevideBoundedContext[this.boundedContextVersion.aspect].boundedContexts.every(bc => 
+                    bc.requirements.length === 0
+                );
+
+                let selectedStructureOption = this.resultDevideBoundedContext[this.boundedContextVersion.aspect]
                 this.collectedMockDatas.aggregateDraftScenarios.selectedStructureOption = structuredClone(selectedStructureOption)
 
                 // 요약 결과가 없어도, 상세한 매핑을 위해 원본 매핑 진행
-                if(!this.isAnalizeResultSetted){
-                    let aspect = selectedStructureOption.devisionAspect
-                    this.resultDevideBoundedContext[aspect].boundedContexts
-
-                    // 모든 BC의 requirements를 비우고 원본 매핑 진행
-                    this.resultDevideBoundedContext[aspect].boundedContexts.forEach(bc => {
-                        bc.requirements = [];
-                    });
+                if(!isRequirementsMapping){
                     this.mappingRequirements();
                     return;
                 }
@@ -1320,6 +1325,7 @@ import { value } from 'jsonpath';
                 console.log("[*] 선택된 BC 구성 옵션을 기반으로 생성이 시도됨", {selectedStructureOption})
 
                 this.workingMessages.AggregateDraftDialogDto = MessageFactory.createAggregateDraftDialogDtoMessage()
+                this.workingMessages.AggregateDraftDialogDto.boundedContextVersion = this.boundedContextVersion.version
                 this.messages.push(this.workingMessages.AggregateDraftDialogDto)
 
                 if(selectedStructureOption.boundedContexts.some(bc => bc.implementationStrategy.includes("PBC"))){
