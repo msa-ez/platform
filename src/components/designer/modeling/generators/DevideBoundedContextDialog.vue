@@ -635,8 +635,8 @@
 
                     let key = Object.keys(newVal)[0];
                     
-                    const boundedContexts = newVal[key].boundedContexts || [];
-                    const relations = newVal[key].relations || [];
+                    const boundedContexts = newVal[key].boundedContexts? newVal[key].boundedContexts : [];
+                    const relations = newVal[key].relations? newVal[key].relations : [];
                     if (boundedContexts && relations) {
                         this.mermaidNodes = this.generateNodes({ boundedContexts, relations });
                         this.renderKey++;
@@ -715,7 +715,14 @@
                 if(!aspect) {
                     aspect = Object.keys(this.resultDevideBoundedContext)[0];
                 }
-                this.$emit("createModel", this.resultDevideBoundedContext[aspect]);
+
+                const versionInfo = {
+                    data: this.resultDevideBoundedContext[aspect],
+                    version: this.activeTab + 1,
+                    aspect: aspect
+                };
+
+                this.$emit("createModel", versionInfo);
             },
 
             closeDialog(){
@@ -761,7 +768,7 @@
                         implementationStrategy: bc.implementationStrategy || '',
                         requirements: bc.requirements ? bc.requirements.map(req => ({
                             type: requirementNumber++,
-                            text: req.text ? req.text.replace(/\n/g, '<br>') : req
+                            text: this.convertText(req.text ? req.text.replace(/\n/g, '<br>') : req)
                         })) : [],
                     };
                 });
@@ -939,7 +946,7 @@
                 ];
             },
             convertText(text) {
-                if(text.startsWith('{"name":')) {
+                if(text.includes('"name":') && text.includes('"actor":') && text.includes('"description":')) {
                     const json = JSON.parse(text);
                     let result = '';
                     result += `Event: ${json.name} (${json.displayName})<br>`;
