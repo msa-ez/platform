@@ -438,7 +438,8 @@ Consider potential connections to these existing events when defining nextEvents
                     type: "ANALYSIS_RESULT",
                     projectName: "Requirements Analysis",
                     content: esvalue,
-                    analysisResult: model.content
+                    analysisResult: model.content,
+                    currentGeneratedLength: text.length
                 };
             } else if (model.type === "ENHANCEMENT_GUIDE") {
                 console.log("[*] 요구사항이 불충분하여 개선 가이드를 생성했습니다.");

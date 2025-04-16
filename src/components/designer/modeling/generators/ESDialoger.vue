@@ -776,6 +776,7 @@ import { value } from 'jsonpath';
                     isGeneratingBoundedContext: false,
                 },
                 isAnalizeResultSetted: false,
+                isStopped: false,
                 
                 reGenerateMessageId: null,
 
@@ -784,6 +785,8 @@ import { value } from 'jsonpath';
                 pendingBCGeneration: false,
                 isGeneratingBoundedContext: false,
                 bcGenerationOption: {},
+
+                currentGeneratedLength: 0,
                 
                 messages: [
                 ],
@@ -865,11 +868,31 @@ import { value } from 'jsonpath';
             },
 
             onModelCreated(model){
+                if(model && model.currentGeneratedLength){
+                    this.currentGeneratedLength = model.currentGeneratedLength;
+                    if(this.state.generator === "RequirementsValidationGenerator" || 
+                        this.state.generator === "RecursiveRequirementsValidationGenerator"){
+                        const currentMessage = this.messages.find(msg => msg.type === 'processAnalysis');
+                        this.updateMessageState(currentMessage.uniqueId, {
+                            currentGeneratedLength: this.currentGeneratedLength,
+                        });
+                    }else if(this.state.generator === "DevideBoundedContextGenerator"){
+                        const currentMessage = this.messages.find(msg => msg.type === 'boundedContextResult');
+                        this.updateMessageState(currentMessage.uniqueId, {
+                            currentGeneratedLength: this.currentGeneratedLength,
+                        });
+                    }
+                }
             },
 
             async onGenerationFinished(model){
                 var me = this;
                 me.done = true;
+
+                if(this.isStopped){
+                    this.isStopped = false;
+                    return;
+                }
 
                 if(this.state.generator === "EventOnlyESGenerator"){
                     if(!this.value){
@@ -921,6 +944,11 @@ import { value } from 'jsonpath';
                             this.requirementsValidationResult = model;
                         }
                     }
+
+                    this.currentGeneratedLength = 0;
+                    this.updateMessageState(currentMessage.uniqueId, {
+                        currentGeneratedLength: this.currentGeneratedLength
+                    });
                 }
 
                 if (me.state.generator === "RecursiveRequirementsSummarizer") {
@@ -958,6 +986,11 @@ import { value } from 'jsonpath';
 
                     me.resultDevideBoundedContext = JSON.parse(JSON.stringify(newResult));
                     me.$emit("update:boundedContextDrafts", me.messages);
+
+                    me.currentGeneratedLength = 0;
+                    me.updateMessageState(currentMessage.uniqueId, {
+                        currentGeneratedLength: me.currentGeneratedLength
+                    });
                     console.log("output: ", model)
                 }
 
@@ -1048,13 +1081,43 @@ import { value } from 'jsonpath';
             },
 
             stop(){
-                if(this.state.generator === "DevideBoundedContextGenerator"){
-                    this.resultDevideBoundedContext = {};
-                }
-                
+                this.isStopped = true;
+
                 this.generator.stop();
                 this.state.startTemplateGenerate = true
                 this.done = true;
+
+                let messageId = null
+                if(this.state.generator === "DevideBoundedContextGenerator"){
+                    messageId = this.messages.find(msg => msg.type === "boundedContextResult").uniqueId;
+                    this.resultDevideBoundedContext = {};
+                }
+
+                if(this.state.generator === "RequirementsValidationGenerator" || 
+                    this.state.generator === "RecursiveRequirementsValidationGenerator"){
+                    messageId = this.messages.find(msg => msg.type === "processAnalysis").uniqueId;
+                    this.messages.splice(this.messages.findIndex(msg => msg.type === "processAnalysis"), 1);
+                    this.requirementsValidationResult = null;
+                }
+
+                if(this.state.generator === "RequirementsMappingGenerator"){
+                    messageId = this.messages.find(msg => msg.type === "requirementsMapping").uniqueId;
+                    this.bcInAspectIndex = 0;
+                    this.userStoryChunksIndex = 0;
+                    this.processingRate = 0;
+                    this.currentProcessingBoundedContext = "";
+                }
+
+                this.currentGeneratedLength = 0;
+                this.updateMessageState(messageId, {
+                    currentGeneratedLength: this.currentGeneratedLength
+                });
+
+                this.processingState.isAnalizing = false;
+                this.processingState.isGeneratingBoundedContext = false;
+                this.processingState.isSummarizeStarted = false;
+                this.processingState.isStartMapping = false;
+
             },
 
             reGenerate(){
@@ -1410,6 +1473,7 @@ import { value } from 'jsonpath';
                         selectedAspect: this.selectedAspect,
                         summarizedResult: this.summarizedResult,
                         pbcLists: this.pbcLists,
+                        currentGeneratedLength: this.currentGeneratedLength,
                         timestamp: new Date()
                     };
                 } else if(type === "userMessage"){
@@ -1429,6 +1493,7 @@ import { value } from 'jsonpath';
                         isStartMapping: this.processingState.isStartMapping,
                         processingRate: this.processingRate,
                         content: result,
+                        currentGeneratedLength: this.currentGeneratedLength,
                         timestamp: new Date()
                     };
                 } else if(type === "bcGenerationOption") {

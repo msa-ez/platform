@@ -137,7 +137,10 @@ export default {
         return {
             localOptions: {
                 numberOfBCs: 3,
-                selectedAspects: [],
+                selectedAspects: [
+                    this.$t('DevideBoundedContextDialog.domainAspect'),
+                    this.$t('DevideBoundedContextDialog.processAspect')
+                ],
                 additionalOptions: '',
                 aspectDetails: {},
                 isProtocolMode: true

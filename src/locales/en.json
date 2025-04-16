@@ -124,6 +124,7 @@
     "descriptionOfEachBoundedContext": "Description of Each Bounded Context",
     "relations": "Relations",
     "boundedContextName": "Bounded Context Name",
+    "role": "Role",
     "importance": "Importance",
     "implementationStrategy": "Implementation Strategy",
     "requirements": "Requirements",

@@ -2,7 +2,7 @@
     <v-card :key="`bounded-context-${messageId}`" style="max-height: 2000px; overflow-y: auto;">
         <v-card-title>
             {{ $t('DevideBoundedContextDialog.boundedContextDivisionResult') }}
-            <!-- <v-btn v-if="isGeneratingBoundedContext" text color="primary" @click="stop()">Stop</v-btn> -->
+            <v-btn v-if="isGeneratingBoundedContext" text color="primary" @click="stop()">Stop</v-btn>
             <!-- <v-btn :style="{'margin-left': 'auto'}" icon @click="closeDialog()">
                 <v-icon>mdi-close</v-icon>
             </v-btn> -->
@@ -31,7 +31,7 @@
             <v-card-subtitle>
                 <div class="d-flex align-center">
                     <div v-if="isGeneratingBoundedContext">
-                        <p class="mb-0">{{ $t('DevideBoundedContextDialog.lodingMessage') }}</p>
+                        <p class="mb-0">{{ $t('DevideBoundedContextDialog.lodingMessage') }} ({{ currentGeneratedLength }} Text generated.)</p>
                     </div>
                     <v-progress-circular
                         v-if="isGeneratingBoundedContext"
@@ -177,6 +177,10 @@
                                 </v-edit-dialog>
                             </template>
 
+                            <template v-slot:item.role="{ item }">
+                                <span>{{ item.role }}</span>
+                            </template>
+
                             <template v-slot:item.importance="{ item }">
                                 <v-select
                                     v-model="item.importance"
@@ -203,8 +207,7 @@
                                         <tbody>
                                             <tr v-for="req in item.requirements" :key="req.type">
                                                 <td class="requirement-type" width="100">{{ req.type }}</td>
-                                                <td class="requirement-text" v-html="req.text"></td>
-                                                {{ req }}
+                                                <td class="requirement-text" v-html="convertText(req.text)"></td>
                                             </tr>
                                         </tbody>
                                     </v-simple-table>
@@ -285,7 +288,7 @@
                 <v-card-subtitle>
                     <div class="d-flex align-center">
                         <div v-if="isGeneratingBoundedContext">
-                            <p class="mb-0">{{ $t('DevideBoundedContextDialog.lodingMessage') }}</p>
+                            <p class="mb-0">{{ $t('DevideBoundedContextDialog.lodingMessage') }} ({{ currentGeneratedLength }} Text generated.)</p>
                         </div>
                         <v-progress-circular
                             v-if="isGeneratingBoundedContext"
@@ -370,6 +373,10 @@
                                         </template>
                                         <span>{{ item.name }}</span>
                                     </v-edit-dialog>
+                                </template>
+
+                                <template v-slot:item.role="{ item }">
+                                    <span>{{ item.role }}</span>
                                 </template>
 
                                 <template v-slot:item.importance="{ item }">
@@ -529,6 +536,11 @@
                 type: Boolean,
                 default: () => false,
                 required: false
+            },
+            currentGeneratedLength: {
+                type: Number,
+                required: false,
+                default: 0
             }
         },
         components: {
@@ -562,6 +574,7 @@
                 expandIcon: 'mdi-chevron-down',
                 boundedContextHeaders: [
                     { text: this.$t('DevideBoundedContextDialog.boundedContextName'), value: 'name' },
+                    { text: this.$t('DevideBoundedContextDialog.role'), value: 'role' },
                     { text: this.$t('DevideBoundedContextDialog.importance'), value: 'importance' },
                     { text: this.$t('DevideBoundedContextDialog.implementationStrategy'), value: 'implementationStrategy' },
                     { text: '', value: 'data-table-expand' },
@@ -743,6 +756,7 @@
                     return {
                         name: bc.alias,
                         originalName: bc.name,
+                        role: bc.role || '',
                         importance: bc.importance || '',
                         implementationStrategy: bc.implementationStrategy || '',
                         requirements: bc.requirements ? bc.requirements.map(req => ({
@@ -923,6 +937,19 @@
                     { divider: true },
                     ...pbcStrategies
                 ];
+            },
+            convertText(text) {
+                if(text.startsWith('{"name":')) {
+                    const json = JSON.parse(text);
+                    let result = '';
+                    result += `Event: ${json.name} (${json.displayName})<br>`;
+                    result += `Actor: ${json.actor}<br>`;
+                    result += `Description: ${json.description}<br>`;
+                    
+                    return result;
+                }else{
+                    return text;
+                }
             }
         }
     }

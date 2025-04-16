@@ -37,6 +37,7 @@
                     :pbcLists="message.pbcLists"
                     :messageId="message.uniqueId"
                     :isEditable="isEditable"
+                    :currentGeneratedLength="message.currentGeneratedLength"
                     @createModel="$emit('createModel', $event)"
                     @closeDialog="$emit('closeDialog')"
                     @stop="$emit('stop')"
@@ -64,7 +65,9 @@
                     :isStartMapping="message.isStartMapping"
                     :processingRate="message.processingRate"
                     :isEditable="isEditable"
+                    :currentGeneratedLength="message.currentGeneratedLength"
                     @showBCGenerationOption="emitShowBCGenerationOption"
+                    @stop="$emit('stop')"
                 />
             </v-card>
 
