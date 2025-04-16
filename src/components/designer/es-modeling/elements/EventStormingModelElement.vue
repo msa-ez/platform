@@ -375,9 +375,8 @@ import { group } from "d3";
         },
         methods: {
             updateConnectedStickers(connectedRelations) {
-                const highlightingEnabled = localStorage.getItem('highlightingEnabled') === 'true';
-                if (!highlightingEnabled) return;
-
+                // const highlightingEnabled = localStorage.getItem('highlightingEnabled') === 'true';
+                // if (!highlightingEnabled) return;
                 connectedRelations.forEach(relation => {
                     if(!relation) return;
                     if(!relation.to) return;
@@ -388,7 +387,7 @@ import { group } from "d3";
                     if(!pathElement) return;
                     // 기본 스타일 설정
                     pathElement.setAttribute('stroke', '#7B1E1E');
-                    pathElement.setAttribute('stroke-width', '5');
+                    pathElement.setAttribute('stroke-width', '3');
 
                     // dash 효과를 위한 속성
                     pathElement.style.strokeDasharray = '10';
@@ -709,27 +708,27 @@ import { group } from "d3";
                 var connectedRelations = [];
                 var visitedRelations = new Set();
                 // localStorage에서 highlightingEnabled 값을 불러오기
-                const highlightingEnabled = localStorage.getItem('highlightingEnabled') === 'true';
-                if (highlightingEnabled) {
-                    function findConnectedRelations(stickerId) {
-                        Object.keys(me.canvas.value.relations).forEach(function(key) {
-                            var relation = me.canvas.value.relations[key];
-                            if (relation && !visitedRelations.has(key) && relation.from === stickerId) {
-                                connectedRelations.push(relation);
-                                visitedRelations.add(key);
-                                // 재귀적으로 to(연결된 선)를 탐색
-                                findConnectedRelations(relation.to);
-                            }
-                        });
-                    }
-                    me.currentConnectedRelations = connectedRelations
-                    findConnectedRelations(me.value.id);
-
-                    // 스티커를 클릭했을 때 연결된 모든 선의 정보를 이벤트 버스를 통해 전송
-                    // 관련 코드 classRelation.vue 검색 -> if (!this.isProgress && this.isHighlighted)
-                    me.$EventBus.$emit('selectedStickerConnections', connectedRelations);
-                    me.updateConnectedStickers(connectedRelations)
+                // const highlightingEnabled = localStorage.getItem('highlightingEnabled') === 'true';
+                // if (highlightingEnabled) {
+                function findConnectedRelations(stickerId) {
+                    Object.keys(me.canvas.value.relations).forEach(function(key) {
+                        var relation = me.canvas.value.relations[key];
+                        if (relation && !visitedRelations.has(key) && relation.from === stickerId) {
+                            connectedRelations.push(relation);
+                            visitedRelations.add(key);
+                            // 재귀적으로 to(연결된 선)를 탐색
+                            findConnectedRelations(relation.to);
+                        }
+                    });
                 }
+                me.currentConnectedRelations = connectedRelations
+                findConnectedRelations(me.value.id);
+
+                // 스티커를 클릭했을 때 연결된 모든 선의 정보를 이벤트 버스를 통해 전송
+                // 관련 코드 classRelation.vue 검색 -> if (!this.isProgress && this.isHighlighted)
+                me.$EventBus.$emit('selectedStickerConnections', connectedRelations);
+                me.updateConnectedStickers(connectedRelations)
+                // }
 
                 if (me.value) {
                     var elementType = me.value._type ? me.value._type : null;

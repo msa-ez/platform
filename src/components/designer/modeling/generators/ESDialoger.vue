@@ -28,14 +28,17 @@
                                 :strings="[$t('autoModeling.selectMessage1')]"
                                 :typeSpeed="10"
                                 :showCursor="false"
-                                @onComplete="state.firstMessageIsTyping = false"
+                                @onComplete="
+                                    state.firstMessageIsTyping = false; 
+                                    state.secondMessageIsTyping = false;
+                                "
                         >
                             <span class="typing"></span>
                         </vue-typed-js>
                     </v-card-text>
                 </v-card>
             </v-col>
-            <v-col class="auto-modeling-message-box">
+            <!-- <v-col class="auto-modeling-message-box">
                 <v-card v-if="!state.firstMessageIsTyping" class="auto-modeling-message-card">
                     <v-card-text class="auto-modeling-message">
                         <vue-typed-js
@@ -48,7 +51,7 @@
                         </vue-typed-js>
                     </v-card-text>
                 </v-card>
-            </v-col>
+            </v-col> -->
         </div>
         <v-tabs v-model="activeTab" v-if="!state.secondMessageIsTyping">
             <v-tab 

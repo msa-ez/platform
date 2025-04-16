@@ -171,6 +171,7 @@
                                             margin-top: 4px !important;"
                                         v-model="projectInfo.prompt"
                                         ref="textarea"
+                                        :rows="1"
                                         solo
                                         persistent-hint
                                         :label="$t('autoModeling.main2')"

@@ -935,10 +935,10 @@
                             </div>
 
                             <v-card
-                            class="tools"
+                                class="tools"
                                 style="top: 100px; text-align: center"
                             >
-                                <v-tooltip right>
+                                <!-- <v-tooltip right>
                                     <template v-slot:activator="{ on, attrs }">
                                         <span v-on="on" v-bind="attrs" @click="toggleHighlighting" style="cursor: pointer;">
                                             <Icons v-if="!highlightingEnabled" :icon="'tracking-off'" style="margin: 7px;" />
@@ -947,7 +947,7 @@
                                     </template>
                                     <span v-if="highlightingEnabled">{{ $t('modelingPanelTool.highlightingOn') }}</span>
                                     <span v-else>{{ $t('modelingPanelTool.highlightingOff') }}</span>
-                                </v-tooltip>
+                                </v-tooltip> -->
 
                                 <v-tooltip right>
                                     <template v-slot:activator="{ on, attrs }">
@@ -1522,6 +1522,7 @@
                             transition="dialog-bottom-transition"
                     >
                         <v-card>
+                            {{ embeddedCanvasType }}
                             <Icons v-if="embeddedCanvasType == 'Domain Class Modeling'"
                                 class="gs-icon-style"
                                 :icon="'modeling-view'"
@@ -1685,7 +1686,9 @@
                             style="height: 100%"
                             scrollable
                     >
-                        <v-card style="height: 100%">
+                        <v-card style="height: 100%"
+                            class="select-model-pbc-box"
+                        >
                             <v-card-title>Select Model for PBC</v-card-title>
                             <!-- <v-card-actions style="justify-content: flex-end">
                                 <v-btn
@@ -1695,7 +1698,6 @@
                                     <v-icon small>mdi-close</v-icon>
                                 </v-btn>
                             </v-card-actions> -->
-                            <v-card-text>
                                 <MarketPlace
                                     :isPBCMarket="true"
                                     :pbc="modelingPBCElement"
@@ -1707,7 +1709,6 @@
                                         @selected-model="applyModelingListsDialog"
                                         @close="closeModelingListsDialog"
                                 ></PBCModelList> -->
-                            </v-card-text>
                         </v-card>
                     </v-dialog>
 
@@ -2136,7 +2137,7 @@
         data() {
             return {
                 // 스티커에 연결된 선 추적
-                highlightingEnabled: false,
+                // highlightingEnabled: false,
                 //monitoring
                 monitoringDialog: false,
                 monitoringTab: 0,
@@ -3104,10 +3105,10 @@
                 me.repairBoundedContext(boundedContext)
             });
 
-            const storedHighlighting = localStorage.getItem('highlightingEnabled');
-            if (storedHighlighting !== null) {
-                this.highlightingEnabled = storedHighlighting === 'true';
-            }
+            // const storedHighlighting = localStorage.getItem('highlightingEnabled');
+            // if (storedHighlighting !== null) {
+            //     this.highlightingEnabled = storedHighlighting === 'true';
+            // }
         },
         beforeDestroy() {
             if (this.fetchEventInterval) {
@@ -3196,11 +3197,11 @@
 
         },
         methods: {
-            toggleHighlighting() {
-                this.highlightingEnabled = !this.highlightingEnabled;
-                // 연결선 하이라이팅 상태를 localStorage에 저장
-                localStorage.setItem('highlightingEnabled', this.highlightingEnabled);
-            },
+            // toggleHighlighting() {
+            //     this.highlightingEnabled = !this.highlightingEnabled;
+            //     // 연결선 하이라이팅 상태를 localStorage에 저장
+            //     localStorage.setItem('highlightingEnabled', this.highlightingEnabled);
+            // },
             toggleVisibility() {
                 this.processMode = !this.processMode;
                 localStorage.setItem('processMode', this.processMode); // processMode 값을 localStorage에 저장

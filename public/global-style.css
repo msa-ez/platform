@@ -627,7 +627,7 @@ code[class*=language-]:nth-child(1) {
     height:64px !important;
 }
 .v-main {
-    padding: 64px 0px 0px !important;
+    padding-top: 64px !important;
 }
 
 .modeling-btn-box {
@@ -642,6 +642,15 @@ code[class*=language-]:nth-child(1) {
 .gs-main-page-img-box-mobile {
     padding-right:80px;
     padding-left:80px;
+}
+
+.market-place-box {
+    height: 85vh;
+    background-color:white;
+}
+
+.select-model-pbc-box .market-place-box {
+    height: 80vh;
 }
 
 .gs-auto-modeling-text-box .v-text-field__details{

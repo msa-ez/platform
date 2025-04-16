@@ -1,5 +1,5 @@
 <template>
-    <div style="height:85vh; background-color:white;">
+    <div class="market-place-box">
         <v-row class="ma-0 pa-0"
             style="height:48px;"
         >
@@ -426,9 +426,7 @@
                 </v-tabs-items>
             </div>
         </div>
-        <div v-else class="marketplace-details-page-box"
-            style="height:calc(100% - 48px); overflow: auto;"
-        >
+        <div v-else class="marketplace-details-page-box">
         <div v-if="selectedTemplate">
             <div>
                 <v-row
@@ -1150,6 +1148,8 @@
     .marketplace-details-page-box {
         background-color:white;
         padding:0px 16px 0px 16px;
+        height:calc(100% - 48px);
+        overflow: auto;
     }
     .marketplace-details-page-back-btn {
         font-size: 25px !important;
