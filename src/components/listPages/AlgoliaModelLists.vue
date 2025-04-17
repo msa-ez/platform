@@ -528,12 +528,14 @@
                                 >
                                     <v-card @click="openPublicModeling(mainPublicModel.url)" 
                                         class="public-model-card"
+                                        outlined
                                     >
-                                        <v-row class="ma-0 pa-2 pb-0">
-                                            <v-card-sub-title class="pa-0">{{ $t(mainPublicModel.title) }}</v-card-sub-title>
+                                        <v-row class="ma-0 pa-2 pb-0" justify="center">
+                                            <v-card-sub-title class="pa-0 text-center"
+                                            >{{ $t(mainPublicModel.title) }}</v-card-sub-title>
                                         </v-row>
                                         <div class="pa-2">
-                                            <v-card style="height: 150px; overflow: hidden; background: #F8F8F7;" outlined>
+                                            <div style="height: 150px; overflow: hidden;" outlined>
                                                 <v-img 
                                                     :src="mainPublicModel.imageUrl" 
                                                     height="100%"
@@ -541,7 +543,7 @@
                                                     contain
                                                     style="max-width: 100%; max-height: 100%; object-fit: contain;"
                                                 />
-                                            </v-card>
+                                            </div>
                                         </div>
                                     </v-card>
                                 </v-col>
@@ -2214,7 +2216,6 @@
         font-size: 20px;
         font-weight: 500;
         text-align: center;
-        color: #1E88E5;
     }
 
     .home-card-title {
