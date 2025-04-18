@@ -1513,45 +1513,67 @@
                         </v-card>
                     </v-dialog>
 
+                    <div v-if="embeddedCanvasType == 'Domain Class Modeling'"
+                        style="
+                            position: absolute;
+                            top: 0;
+                            left: 0;
+                            width: 100%;
+                            height: 100%;
+                            z-index: 100;
+                            background-color: white;
+                        "
+                    >
+                        <v-btn
+                            icon
+                            @click="closeEmbeddedCanvas()"
+                            style="
+                                position: absolute;
+                                z-index: 101;
+                                right: 20px;
+                                top: 20px;
+                                color: gray;
+                            "
+                        >
+                            <v-icon>mdi-close</v-icon>
+                        </v-btn>
+                        
+                        <uml-class-model-canvas
+                            :embedded="true"
+                            v-model="embeddedCanvasValue"
+                            :aggregateRootList="aggregateRootList"
+                            :esValue="value"
+                            :projectId="projectId"
+                        ></uml-class-model-canvas>
+                    </div>
+
+                    <!-- Kubernetes Dialog -->
                     <v-dialog
-                            no-click-animation
-                            v-model="embeddedCanvasDialog"
-                            persistent
-                            fullscreen
-                            hide-overlay
-                            transition="dialog-bottom-transition"
+                        no-click-animation
+                        v-model="embeddedCanvasDialog"
+                        persistent
+                        fullscreen
+                        hide-overlay
+                        transition="dialog-bottom-transition"
+                        v-if="embeddedCanvasType == 'Kubernetes'"
                     >
                         <v-card>
-                            {{ embeddedCanvasType }}
-                            <Icons v-if="embeddedCanvasType == 'Domain Class Modeling'"
-                                class="gs-icon-style"
-                                :icon="'modeling-view'"
-                                :size="50"
-                                :color="'#1e88e5'"
-                                style="margin-right: 2px;
-                                    position: fixed;
-                                    z-index: 1;
-                                    top: 15px;
-                                    left: 20px;"
-                            />
                             <v-icon
-                                    v-else-if="embeddedCanvasType == 'Kubernetes'"
-                                    size="55"
-                                    style="
+                                size="55"
+                                style="
                                     color: #1e88e5;
                                     position: fixed;
                                     z-index: 1;
                                     top: 15px;
                                     left: 20px;
                                 "
-                                    @click="closeEmbeddedCanvas()"
-                            >mdi-kubernetes</v-icon
-                            >
+                                @click="closeEmbeddedCanvas()"
+                            >mdi-kubernetes</v-icon>
                             <v-btn
-                                    icon
-                                    dark
-                                    @click="closeEmbeddedCanvas()"
-                                    style="
+                                icon
+                                dark
+                                @click="closeEmbeddedCanvas()"
+                                style="
                                     position: fixed;
                                     z-index: 1;
                                     right: 20px;
@@ -1561,33 +1583,17 @@
                             >
                                 <v-icon>mdi-close</v-icon>
                             </v-btn>
-                            <v-layout
-                                    v-if="
-                                    embeddedCanvasType ==
-                                    'Domain Class Modeling'
-                                "
-                            >
-                                <uml-class-model-canvas
-                                        :embedded="true"
-                                        v-model="embeddedCanvasValue"
-                                        :aggregateRootList="aggregateRootList"
-                                        :esValue="value"
-                                        :projectId="projectId"
-                                ></uml-class-model-canvas>
-                            </v-layout>
-                            <v-layout
-                                    v-else-if="embeddedCanvasType == 'Kubernetes'"
-                            >
+                            <v-layout>
                                 <kubernetes-model-canvas
-                                        :embedded="true"
-                                        :projectId="projectId"
-                                        :projectName="projectName"
-                                        :isOwnModel="isOwnModel"
-                                        :isReadOnlyModel="isReadOnlyModel"
-                                        :modelingProjectId="projectId"
-                                        :projectVersion="projectVersion"
-                                        v-model="embeddedCanvasInitValue"
-                                        @changedByMe="settingChangedByMe"
+                                    :embedded="true"
+                                    :projectId="projectId"
+                                    :projectName="projectName"
+                                    :isOwnModel="isOwnModel"
+                                    :isReadOnlyModel="isReadOnlyModel"
+                                    :modelingProjectId="projectId"
+                                    :projectVersion="projectVersion"
+                                    v-model="embeddedCanvasInitValue"
+                                    @changedByMe="settingChangedByMe"
                                 ></kubernetes-model-canvas>
                             </v-layout>
                         </v-card>
