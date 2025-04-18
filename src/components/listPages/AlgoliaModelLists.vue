@@ -491,9 +491,11 @@
                                     </div>
                                 </transition>
                             </div>
-                            <div class="gs-main-page-top-box-mobile">
+                            <div >
                                 <transition name="fade" mode="out-in">
-                                    <div v-for="item in mainTexts" :key="item.id" v-if="currentTextId === item.id">
+                                    <div v-for="item in mainTexts" :key="item.id" v-if="currentTextId === item.id"
+                                        class="gs-main-page-top-box-mobile"
+                                    >
                                         <v-row>
                                             <v-col cols="3.5"></v-col>
                                             <v-col cols="5" class="gs-main-page-img-box-mobile">
@@ -518,9 +520,15 @@
                                 :showDialog="false"
                                 :showChat="true"
                             ></AutoModelingDialog>
-                            <div class="title-page-title">{{$t('examples.modeling')}}</div>
+
+                            <!-- 제목을 위한 별도의 v-col (전체 너비) -->
+                            <div class="text-h6 main-examples-title-margin text-center font-weight-medium">
+                                {{$t('examples.modeling')}}
+                            </div>
+                            
                             <v-row class="ma-0 pa-0" style="width: 72%; margin: 0 auto !important;">
-                                <v-col class="pa-4" v-for="(mainPublicModel, index) in mainPublicModeling" :key="index"
+                                <!-- 기존 v-col 카드들 -->
+                                <v-col class="main-examples-card-padding" v-for="(mainPublicModel, index) in mainPublicModeling" :key="index"
                                     cols="12"
                                     sm="6"
                                     md="3"
@@ -2089,7 +2097,7 @@
         position:fixed;
         max-width:60%;
         min-width:10%;
-        z-index:1;
+        z-index:5;
         left: 50%;
         transform: translate(-50%, 0%);
     }
@@ -2107,6 +2115,7 @@
         font-size:16px;
         color:#898989 !important;
         font-weight: 700;
+        z-index: 5
     }
     .main-nav-tabs {
         cursor: pointer !important;
@@ -2166,10 +2175,10 @@
     }
 
     .sidebar-toggle-btn {
-        position: absolute;
-        top: -72px;
+        position: fixed;
+        top: 16px;
         left: 130px;
-        z-index: 999;  
+        z-index: 5;  
     }
 
     .sidebar-drawer {
@@ -2209,13 +2218,6 @@
         position: absolute;
         right: 0;
         bottom: 0;
-    }
-
-    .title-page-title {
-        margin: 10px 0 10px 0;
-        font-size: 20px;
-        font-weight: 500;
-        text-align: center;
     }
 
     .home-card-title {
@@ -2336,10 +2338,6 @@
     }
     .gs-main-page-sub-title {
         margin: 10px 0;
-    }
-    .gs-main-page-sub-title-mobile {
-        font-size: 12px;
-        margin-top: 10px;
     }
     
     @media only screen and (max-width: 1200px) {

@@ -574,7 +574,7 @@ code[class*=language-]:nth-child(1) {
 
 .gs-main-page-top-box-mobile {
     display: none;
-    margin-bottom: 20px;
+    margin-bottom: 32px;
 }
 
 .gs-main-page-top-image-mobile {
@@ -586,10 +586,6 @@ code[class*=language-]:nth-child(1) {
     margin-top:20px;
     font-size:20px;
     font-weight: 500;
-}
-
-.gs-main-page-sub-title-mobile {
-    font-size:10px;
 }
 
 .gs-window-width-610-under-zoom {
@@ -921,6 +917,17 @@ code[class*=language-]:nth-child(1) {
     flex-direction: row;
 }
 
+.gs-main-top-app-bar {
+    left: 0px !important;
+    background-color: transparent !important;
+    z-index: 1 !important;
+    height: 64px !important;
+}
+
+.main-examples-title-margin {
+    margin-top: 48px;
+}
+
 /* 애니메이션  */
 @keyframes flow-stroke {
     0% {
@@ -1030,7 +1037,6 @@ code[class*=language-]:nth-child(1) {
 @media only screen and (max-width:1110px) {
     .gs-main-page-top-box-mobile {
         display: block;
-        min-height:490px;
     }
 
     .gs-main-page-top-box {
@@ -1046,9 +1052,6 @@ code[class*=language-]:nth-child(1) {
 
     .gs-main-page-text-box {
         margin:0px -50px 0px -20px;
-    }
-    .gs-main-page-top-box-mobile {
-        min-height:480px;
     }
     .gs-main-page-img-box-mobile {
         padding-right:60px;
@@ -1087,9 +1090,6 @@ code[class*=language-]:nth-child(1) {
     .gs-main-page-title-box {
         width:420px;
     }
-    .gs-main-page-top-box-mobile {
-        min-height:460px;
-    }
     .gs-main-page-img-box-mobile {
         padding-right:30px;
         padding-left:30px;
@@ -1104,9 +1104,6 @@ code[class*=language-]:nth-child(1) {
 }
 
 @media only screen and (max-width:897px) {
-    .gs-main-page-top-box-mobile {
-        min-height:460px;
-    }
     .gs-main-page-img-box-mobile {
         padding-right:30px;
         padding-left:30px;
@@ -1114,9 +1111,6 @@ code[class*=language-]:nth-child(1) {
 }
 
 @media only screen and (max-width:680px) {
-    .gs-main-page-top-box-mobile {
-        min-height:380px;
-    }
 
     .gs-auto-modeling-box {
         height:calc(100vh - 40px) !important;
@@ -1139,9 +1133,6 @@ code[class*=language-]:nth-child(1) {
 
 
 @media only screen and (max-width:800px){
-    .gs-main-page-top-box-mobile {
-        min-height:320px;
-    }
 
     .button-row {
         flex-direction: column;
@@ -1162,9 +1153,12 @@ code[class*=language-]:nth-child(1) {
     .model-canvas-mobile-home-button {
         display: block;
     }
-    .gs-main-page-top-box-mobile {
-        min-height:320px;
+
+    .gs-main-page-sub-title-mobile {
+        font-size:11px;
+        margin-top: 10px;
     }
+
     .gs-window-width-610-under-zoom {
         position:fixed !important;
         left: 10px !important;
@@ -1187,4 +1181,15 @@ code[class*=language-]:nth-child(1) {
     }
     
 }
+
+@media only screen and (max-width:599px){
+    .main-examples-card-padding {
+        padding: 8px;
+    }
+    .main-examples-title-margin {
+        margin-top: 32px;
+    }
+}
+
+
 

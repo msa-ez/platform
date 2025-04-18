@@ -14,7 +14,8 @@
             elevation="0"
             app
             fixed
-            style="left:0px; background-color:transparent; z-index:1; height: 64px;"
+            class="gs-main-top-app-bar"
+            :style="isRootPage ? 'background-color: white !important;' : ''"
         >
 
             <v-toolbar-title class="ml-0 pl-3" style="height: 64px; width: 140px; overflow: visible;">

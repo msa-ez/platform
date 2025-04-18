@@ -2,9 +2,10 @@
     <div v-if="showChat" ref="dialogContainer">
         <v-card v-if="autoModelingInput"
             class="mx-auto auto-modeling-dialog-card"
+            outlined
         >
             <v-row class="justify-start main-auto-modeling-chip-row">
-                <v-col class="text-left" style="padding:0px;">
+                <v-col class="text-center pa-0">
                     <v-chip class="main-auto-modeling-chip"
                         v-for="(inputAutoModelingChip, index) in setAutoModelingTextChips"
                         :key="index"
@@ -14,7 +15,7 @@
                     </v-chip>
                 </v-col>
             </v-row>
-            <v-card-text class="pt-2 pb-2" style="font-weight: 500;">
+            <v-card-text class="pt-3 pb-2" style="font-weight: 500;">
                 <v-textarea
                     class="auto-modeling-text delete-input-detail"
                     v-model="projectInfo.prompt"
