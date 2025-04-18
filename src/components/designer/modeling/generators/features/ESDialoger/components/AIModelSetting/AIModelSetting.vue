@@ -13,7 +13,7 @@
                         <div>{{ $t('aiModelSetting.template.selectModel') }}</div>
                     </h3>
                     
-                    <div v-for="(modelInfo, modelType) in selectedModels" :key="modelType" class="mb-4">
+                    <div v-for="(modelOption, modelType) in selectedModels" :key="modelType" class="mb-4">
                         <div class="d-flex align-center mb-2">
                             <h4 class="model-type-title mb-0">{{ getModelTypeLabel(modelType) }}</h4>
                             <v-tooltip bottom max-width="300">
@@ -36,10 +36,10 @@
                         </div>
                         
                         <v-select
-                            :value="modelInfo.defaultValue"
+                            :value="getSelectedValue(modelType)" 
                             :items="getGroupedSelectableOptions(modelType === 'thinkingModel')"
                             item-text="label"
-                            item-value="defaultValue"
+                            item-value="defaultValue" 
                             @change="(val) => handleModelSelect(modelType, val)"
                             return-object
                             outlined
@@ -50,7 +50,9 @@
                             :class="{'disabled-model': !modelEnabled[modelType]}"
                         >
                             <template v-slot:item="{ item }">
-                                <div class="d-flex align-center">
+                                <v-list-item-content v-if="item.header" class="grey--text text--darken-1 font-weight-bold">{{ item.header }}</v-list-item-content>
+                                <v-divider v-else-if="item.divider"></v-divider>
+                                <div v-else class="d-flex align-center">
                                     <span v-if="hasSvgIcon(item.vendor)" v-html="vendorSvgIcons[item.vendor.toLowerCase()]" class="vendor-svg-icon mr-1"></span>
                                     <v-icon v-else x-small class="mr-1">{{ getVendorIcon(item.vendor) }}</v-icon>
                                     <div>{{ item.label }}</div>
@@ -59,7 +61,7 @@
                             
                             <template v-slot:selection="{ item }">
                                 <div class="d-flex align-center">
-                                    <span v-if="hasSvgIcon(item.vendor)" v-html="vendorSvgIcons[item.vendor.toLowerCase()]" class="vendor-svg-icon mr-1"></span>
+                                     <span v-if="hasSvgIcon(item.vendor)" v-html="vendorSvgIcons[item.vendor.toLowerCase()]" class="vendor-svg-icon mr-1"></span>
                                     <v-icon v-else x-small class="mr-1">{{ getVendorIcon(item.vendor) }}</v-icon>
                                     <div>{{ item.label }}</div>
                                 </div>
@@ -74,23 +76,24 @@
                         <div>{{ $t('aiModelSetting.template.apiKeySettings') }}</div>
                     </h3>
                     
-                    <div v-for="(inputFields, vendor) in requiredVendorInputs" :key="vendor" class="mb-4">
-                        <div class="d-flex align-center mb-3">
+                    <div v-for="apiSetting in apiSettingModels" :key="apiSetting.key" class="mb-4">
+                         <div class="d-flex align-center mb-3">
                             <div class="d-flex align-center">
-                                <span v-if="hasSvgIcon(vendor)" v-html="vendorSvgIcons[vendor.toLowerCase()]" class="vendor-svg-icon mr-1"></span>
-                                <v-icon v-else x-small class="mr-1">{{ getVendorIcon(vendor) }}</v-icon>
+                                <span v-if="hasSvgIcon(apiSetting.vendor)" v-html="vendorSvgIcons[apiSetting.vendor.toLowerCase()]" class="vendor-svg-icon mr-1"></span>
+                                <v-icon v-else x-small class="mr-1">{{ getVendorIcon(apiSetting.vendor) }}</v-icon>
                             </div>
-                            <h4 class="vendor-title mb-0">{{ getVendorLabel(vendor) }}</h4>
+                            <h4 class="vendor-title mb-0">{{ getVendorLabel(apiSetting.vendor, apiSetting.modelType) }}</h4>
                         </div>
                         
-                        <div v-for="field in inputFields" :key="field" class="mt-2">
-                            <v-text-field
+                         <div v-for="field in apiSetting.fields" :key="`${apiSetting.key}-${field}`" class="mt-2">
+                             <v-text-field
                                 :label="getInputFieldLabel(field)"
-                                :value="getStoredInputValue(field)"
-                                @input="updateInputValue(field, $event)"
-                                :append-icon="getAppendIcon(field)"
-                                @click:append="handleAppendIconClick(field)"
-                                :type="field.includes('key') && !showPassword[field] ? 'password' : 'text'"
+                                :placeholder="getInputFieldPlaceholder(field)"
+                                :value="getStoredInputValue(apiSetting.modelType, apiSetting.vendor, field)"
+                                @input="updateInputValue(apiSetting.modelType, apiSetting.vendor, field, $event)"
+                                :append-icon="getAppendIcon(field, apiSetting.key)"
+                                @click:append="handleAppendIconClick(field, apiSetting.key)"
+                                :type="getInputFieldType(field, apiSetting.key)"
                                 outlined
                                 dense
                                 :hint="getFieldHint(field)"
@@ -99,16 +102,16 @@
                         </div>
                         
                         <div class="d-flex justify-end mt-2">
-                            <v-btn small text color="primary" @click="testApiKey(vendor)" :disabled="!canTestApiKey(vendor)" :loading="apiKeyTestLoading[vendor]">
+                            <v-btn small text color="primary" @click="testApiKey(apiSetting.modelType, apiSetting.vendor)" :disabled="!canTestApiKey(apiSetting.modelType, apiSetting.vendor)" :loading="apiKeyTestLoading[apiSetting.key]">
                                 <v-icon small left>mdi-connection</v-icon>
                                 {{ $t('aiModelSetting.template.connectionTest') }}
                             </v-btn>
-                            <v-icon v-if="apiKeyTestStatus[vendor] === true" color="success" small class="ml-2">mdi-check-circle</v-icon>
-                            <v-icon v-if="apiKeyTestStatus[vendor] === false" color="error" small class="ml-2">mdi-alert-circle</v-icon>
+                            <v-icon v-if="apiKeyTestStatus[apiSetting.key] === true" color="success" small class="ml-2">mdi-check-circle</v-icon>
+                            <v-icon v-if="apiKeyTestStatus[apiSetting.key] === false" color="error" small class="ml-2">mdi-alert-circle</v-icon>
                         </div>
                     </div>
                     
-                    <div v-if="Object.keys(requiredVendorInputs).length === 0" class="text-center pa-5 grey lighten-4 rounded">
+                    <div v-if="apiSettingModels.length === 0" class="text-center pa-5 grey lighten-4 rounded">
                         <v-icon color="grey lighten-1" x-large>mdi-key-remove</v-icon>
                         <p class="mt-3 grey--text text--darken-1">{{ $t('aiModelSetting.template.vendorInputTip') }}</p>
                     </div>
@@ -160,7 +163,7 @@
 </template>
   
 <script>
-import { ModelInfoHelper } from "../../../AIGenerator";
+import { ModelInfoHelper, ModelOptionDto } from "../../../AIGenerator";
 import VendorConnectTestUtil from "./VendorConnectTestUtil";
 
 export default {
@@ -182,41 +185,82 @@ export default {
                 color: 'info'
             },
             modelEnabled: {},
-            MODEL_FLAGS: {}
+            MODEL_FLAGS: {},
+            previousSelections: {}
         }
     },
     computed: {
-        uniqueVendors() {
-            const vendors = new Set();
-            Object.values(this.selectedModels).forEach(model => {
-                if (model && model.vendor) {
-                    vendors.add(model.vendor);
+        apiSettingModels() {
+            const settings = [];
+            const addedVendors = new Set(); // Non-compatible vendor 중복 방지
+
+            Object.entries(this.selectedModels).forEach(([modelType, modelOption]) => {
+                if (this.modelEnabled[modelType] && modelOption && modelOption !== this.MODEL_FLAGS.NOT_USED && modelOption.vendor) {
+                    const vendor = modelOption.vendor;
+                    const vendorInputOptions = ModelInfoHelper.getVendorInputOptions();
+                    const fields = vendorInputOptions[vendor] || [];
+                    const key = vendor === 'openaiCompatible' ? `${modelType}_${vendor}` : vendor;
+
+                    if (vendor === 'openaiCompatible') {
+                        settings.push({
+                            key: key,
+                            modelType: modelType,
+                            vendor: vendor,
+                            fields: fields
+                        });
+                    } else if (!addedVendors.has(vendor)) {
+                        settings.push({
+                            key: key,
+                            modelType: null, // Non-compatible은 특정 모델 타입에 종속되지 않음
+                            vendor: vendor,
+                            fields: fields
+                        });
+                        addedVendors.add(vendor);
+                    }
                 }
             });
-            return Array.from(vendors);
+            return settings;
         }
     },
     created() {
         this.loadData();
         this.loadSvgIcons();
-        this.initModelEnabledState();
     },
     methods: {
         loadData() {
+            this.MODEL_FLAGS = ModelInfoHelper.getDefaultOptions().MODEL_FLAGS;
             this.selectableOptions = ModelInfoHelper.getSelectableOptions();
             this.selectedModels = ModelInfoHelper.getSelectedOptions();
-            this.MODEL_FLAGS = ModelInfoHelper.getDefaultOptions().MODEL_FLAGS;
-            this.updateRequiredVendorInputs();
+            this.initModelEnabledState();
+            this.loadInputValues();
+        },
+
+        loadInputValues() {
+            const allVendorInputOptions = ModelInfoHelper.getVendorInputOptions();
+            this.inputValues = {}; // 초기화
+
+            Object.entries(this.selectedModels).forEach(([modelType, modelOption]) => {
+                 if (this.modelEnabled[modelType] && modelOption && modelOption !== this.MODEL_FLAGS.NOT_USED && modelOption.vendor) {
+                    const vendor = modelOption.vendor;
+                    const fields = allVendorInputOptions[vendor] || [];
+                    fields.forEach(field => {
+                        const storageKey = this.getStorageKey(modelType, vendor, field);
+                        const storedValue = localStorage.getItem(storageKey) || "";
+                        this.$set(this.inputValues, storageKey, storedValue);
+                    });
+                 }
+            });
         },
 
         initModelEnabledState() {
-            Object.keys(this.selectedModels).forEach(modelType => {
+             Object.keys(this.selectedModels).forEach(modelType => {
                 const isEnabled = this.selectedModels[modelType] !== this.MODEL_FLAGS.NOT_USED;
                 this.$set(this.modelEnabled, modelType, isEnabled);
-
-                if(this.selectedModels[modelType] && this.selectedModels[modelType] !== this.MODEL_FLAGS.NOT_USED)
-                    localStorage.setItem(`previous_${modelType}`, this.selectedModels[modelType].defaultValue);
+                if (isEnabled) {
+                    this.$set(this.previousSelections, modelType, this.selectedModels[modelType]);
+                }
             });
+            this.apiKeyTestStatus = {};
         },
 
         handleModelToggle(modelType) {
@@ -227,22 +271,46 @@ export default {
                     return;
                 }
                 
+                this.$set(this.previousSelections, modelType, this.selectedModels[modelType]);
                 ModelInfoHelper.setSelectedOptions(modelType, this.MODEL_FLAGS.NOT_USED);
-                this.selectedModels = ModelInfoHelper.getSelectedOptions();
-                this.updateRequiredVendorInputs();
+                this.$set(this.selectedModels, modelType, this.MODEL_FLAGS.NOT_USED);
+
             } else {
-                let previousValue = localStorage.getItem(`previous_${modelType}`)
-                if(!previousValue || previousValue === this.MODEL_FLAGS.NOT_USED) {
-                    ModelInfoHelper.setSelectedOptions(modelType, "");
-                    previousValue = ModelInfoHelper.getDefaultOptions()[modelType];
+                let previousDto = this.previousSelections[modelType];
+
+                if (!previousDto || previousDto === this.MODEL_FLAGS.NOT_USED) {
+                    localStorage.removeItem(modelType);
+                    const defaultModelId = ModelInfoHelper.getDefaultOptions()[modelType];
+                     if(defaultModelId instanceof ModelOptionDto) {
+                         previousDto = defaultModelId;
+                     } else if (typeof defaultModelId === 'string' && defaultModelId !== this.MODEL_FLAGS.NOT_USED) {
+                         try {
+                            const modelInfo = ModelInfoHelper.getModelInfo(defaultModelId);
+                            previousDto = new ModelOptionDto({
+                                vendor: modelInfo.vendor,
+                                modelID: defaultModelId,
+                                modelInfos: modelInfo
+                            });
+                         } catch (e) {
+                             console.error("Failed to create default DTO:", e);
+                             previousDto = null;
+                         }
+                     } else {
+                         previousDto = null;
+                     }
                 }
                 
-                if (previousValue && previousValue !== this.MODEL_FLAGS.NOT_USED) {
-                    ModelInfoHelper.setSelectedOptions(modelType, previousValue);
-                    this.selectedModels = ModelInfoHelper.getSelectedOptions();
-                    this.updateRequiredVendorInputs();
+                if (previousDto) {
+                    ModelInfoHelper.setSelectedOptions(modelType, previousDto);
+                    this.$set(this.selectedModels, modelType, previousDto);
+                } else {
+                     console.error(`Cannot enable ${modelType}: No previous selection or default model found.`);
+                     this.$set(this.modelEnabled, modelType, false);
+                     this.$alert(this.$t('aiModelSetting.alert.cannotEnableModel'));
+                     return; 
                 }
             }
+            this.apiKeyTestStatus = {};
         },
         
         isLastEnabledModel(modelType) {
@@ -253,14 +321,21 @@ export default {
         },
 
         async loadSvgIcons() {
-            const vendors = ['openai', 'anthropic', 'google', 'runpod', 'ollama'];
+            const vendors = ['openai', 'anthropic', 'google', 'ollama', 'runpod', 'openaiCompatible'];
             
             for (const vendor of vendors) {
-                try {
-                    const response = await fetch(`/assets/icon/${vendor}.svg`);
+                 try {
+                    const iconPath = vendor === 'openaiCompatible' ? '/assets/icon/openai.svg' : `/assets/icon/${vendor}.svg`;
+                    const response = await fetch(iconPath);
                     if (response.ok) {
                         const svg = await response.text();
-                        this.$set(this.vendorSvgIcons, vendor, svg);
+                        this.$set(this.vendorSvgIcons, vendor.toLowerCase(), svg);
+                    } else if(vendor === 'openaiCompatible') {
+                        const fallbackResponse = await fetch('/assets/icon/openai.svg');
+                        if(fallbackResponse.ok) {
+                           const svg = await fallbackResponse.text();
+                           this.$set(this.vendorSvgIcons, vendor.toLowerCase(), svg);
+                        }
                     }
                 } catch (error) {
                     console.error(`Failed to load SVG for ${vendor}:`, error);
@@ -268,26 +343,65 @@ export default {
             }
         },
         
-        updateRequiredVendorInputs() {
-            const vendorInputOptions = ModelInfoHelper.getVendorInputOptions();
-            const requiredInputs = {};
-            
-            this.uniqueVendors.forEach(vendor => {
-                if (vendorInputOptions[vendor]) {
-                    requiredInputs[vendor] = vendorInputOptions[vendor];
-                }
-            });
-            
-            this.requiredVendorInputs = requiredInputs;
-        },
-        
         handleModelSelect(modelType, selectedOption) {
             if (!selectedOption || !selectedOption.defaultValue) return;
+
+            let newDto;
+            if (selectedOption.vendor === 'openaiCompatible') {
+                newDto = new ModelOptionDto({
+                    vendor: 'openaiCompatible',
+                    modelID: 'compatible-model',
+                    modelInfos: {
+                        contextWindowTokenLimit: this.getStoredInputValue(modelType, 'openaiCompatible', 'contextWindowTokenLimit') || 0,
+                        outputTokenLimit: this.getStoredInputValue(modelType, 'openaiCompatible', 'outputTokenLimit') || 0,
+                        vendor: 'openaiCompatible',
+                        requestModelName: this.getStoredInputValue(modelType, 'openaiCompatible', 'modelID') || 'compatible-model'
+                    },
+                    modelParameters: {}
+                });
+            } else {
+                 try {
+                    const modelInfo = ModelInfoHelper.getModelInfo(selectedOption.defaultValue);
+                    newDto = new ModelOptionDto({
+                        vendor: modelInfo.vendor,
+                        modelID: selectedOption.defaultValue,
+                        modelInfos: modelInfo,
+                        modelParameters: modelInfo.requestArgs || {}
+                    });
+                 } catch(e) {
+                     console.error("Error getting model info for DTO:", e);
+                     return;
+                 }
+            }
+
+            ModelInfoHelper.setSelectedOptions(modelType, newDto);
+            this.$set(this.selectedModels, modelType, newDto);
+            this.$set(this.previousSelections, modelType, newDto);
+            this.apiKeyTestStatus = {};
+            this.loadInputValues();
             
-            ModelInfoHelper.setSelectedOptions(modelType, selectedOption.defaultValue);
-            localStorage.setItem(`previous_${modelType}`, selectedOption.defaultValue);
-            this.selectedModels = ModelInfoHelper.getSelectedOptions();
-            this.updateRequiredVendorInputs();
+            if(newDto.vendor === 'openaiCompatible') {
+                this.updateInputValue(modelType, 'openaiCompatible', null, null);
+            }
+        },
+
+        getSelectedValue(modelType) {
+            const currentOption = this.selectedModels[modelType];
+            if (!currentOption || currentOption === this.MODEL_FLAGS.NOT_USED) return null;
+
+             const matchingOption = this.selectableOptions.find(opt => {
+                 if (opt.vendor === 'openaiCompatible' && currentOption.vendor === 'openaiCompatible') {
+                     return true;
+                 }
+                 return opt.defaultValue === currentOption.modelID && opt.vendor === currentOption.vendor;
+             });
+
+             return matchingOption || {
+                 label:  (currentOption.modelInfos && currentOption.modelInfos.label) ? currentOption.modelInfos.label : currentOption.modelID || currentOption.vendor,
+                 defaultValue: currentOption.modelID || currentOption.vendor,
+                 vendor: currentOption.vendor,
+                 isInferenceModel: (currentOption.modelInfos && currentOption.modelInfos.isInferenceModel) ? currentOption.modelInfos.isInferenceModel : null
+             };
         },
 
         getModelTypeLabel(modelType) {
@@ -298,46 +412,124 @@ export default {
             return this.$t('aiModelSetting.modelTypeDescription.' + modelType) || "";
         },
         
-        getVendorLabel(vendor) {
+        getVendorLabel(vendor, modelType = null) {
             const labels = {
                 openai: "OpenAI",
                 anthropic: "Anthropic",
                 google: "Google",
-                runpod: "RunPod",
-                ollama: "Ollama"
+                runpod: "RunPod (Deprecated)",
+                ollama: "Ollama (Deprecated)",
+                openaiCompatible: "OpenAI Compatible"
             };
-            return labels[vendor] || vendor;
+            let label = labels[vendor] || vendor;
+            if (vendor === 'openaiCompatible' && modelType) {
+                label += ` (${this.getModelTypeLabel(modelType)})`;
+            }
+            return label;
         },
         
         getInputFieldLabel(field) {
-            const labels = {
-                api_key_openai: "OpenAI API Key",
-                api_key_anthropic: "Anthropic API Key",
-                api_key_google: "Google API Key",
-                api_key_runpod: "RunPod API Key",
-                runpodUrl: "RunPod URL",
-                ollamaUrl: "Ollama URL"
-            };
-            return labels[field] || field;
+            return this.$t(`aiModelSetting.inputLabel.${field}`);
+        },
+
+        getInputFieldPlaceholder(field) {
+            return {
+                api_key_openai: "sk-...",
+                api_key_anthropic: "sk-...",
+                api_key_google: "",
+                baseURL: "https://api.example.com",
+                apiKey: "sk-...",
+                modelID: "gpt-4o",
+                contextWindowTokenLimit: "16385",
+                outputTokenLimit: "4096"
+            }[field] || "";
+        },
+
+        getInputFieldType(field, apiKeySettingKey) {
+            if (field.toLowerCase().includes('key') && !this.showPassword[apiKeySettingKey]) {
+                return 'password';
+            }
+            if (field.toLowerCase().includes('limit')) {
+                 return 'number';
+             }
+            return 'text';
         },
         
-        getStoredInputValue(field) {
-            if (this.inputValues[field] !== undefined) {
-                return this.inputValues[field];
+        getStorageKey(modelType, vendor, field) {
+             return vendor === 'openaiCompatible' ? `${field}_${modelType}` : `${field}`;
+        },
+
+        getStoredInputValue(modelType, vendor, field) {
+            const storageKey = this.getStorageKey(modelType, vendor, field);
+            return this.inputValues[storageKey] !== undefined ? this.inputValues[storageKey] : '';
+        },
+        
+        updateInputValue(modelType, vendor, field, value) {
+            if(field && value) {
+                const storageKey = this.getStorageKey(modelType, vendor, field);
+                localStorage.setItem(storageKey, value);
+                this.$set(this.inputValues, storageKey, value);
             }
 
-            const storedValue = localStorage.getItem(field) || "";
-            this.$set(this.inputValues, field, storedValue);
-            return storedValue;
+            const apiKeySettingKey = vendor === 'openaiCompatible' ? `${modelType}_${vendor}` : vendor;
+            this.$set(this.apiKeyTestStatus, apiKeySettingKey, null); // 입력값 변경 시 테스트 상태 초기화
+
+            if (vendor === 'openaiCompatible') {
+                 const dto = this.selectedModels[modelType];
+                 if (dto && dto !== this.MODEL_FLAGS.NOT_USED && dto.vendor === 'openaiCompatible') {
+                        const newDto = new ModelOptionDto(JSON.parse(JSON.stringify(dto))); // Deep copy DTO
+                        if(!newDto.modelInfos) newDto.modelInfos = {};
+
+                        let fieldsToUpdate = {}
+                        for(const checkField of ['baseURL', 'apiKey', 'modelID', 'contextWindowTokenLimit', 'outputTokenLimit']) {
+                            fieldsToUpdate[checkField] = (checkField === field) ? value : this.getStoredInputValue(modelType, vendor, checkField);
+                        }
+
+
+                        let sanitizedBaseURL = fieldsToUpdate.baseURL.trim();
+                        const suffixesToRemove = ['/v1/chat/completions', '/v1/chat', '/v1'];
+
+                        for (const suffix of suffixesToRemove) {
+                            if (sanitizedBaseURL.endsWith(suffix)) {
+                                sanitizedBaseURL = sanitizedBaseURL.slice(0, -suffix.length);
+                                break;
+                            }
+                        }
+
+                        if (sanitizedBaseURL.endsWith('/')) {
+                            sanitizedBaseURL = sanitizedBaseURL.slice(0, -1);
+                        }
+
+                        newDto.baseURL = sanitizedBaseURL;
+                        newDto.modelInfos.baseURL = sanitizedBaseURL;
+                        value = sanitizedBaseURL;
+
+
+                        newDto.apiKey = fieldsToUpdate.apiKey;
+                        newDto.modelInfos.apiKey = fieldsToUpdate.apiKey;
+
+                        newDto.modelID = fieldsToUpdate.modelID;
+                        newDto.modelInfos.requestModelName = fieldsToUpdate.modelID;
+
+                        newDto.modelInfos.contextWindowTokenLimit = parseInt(fieldsToUpdate.contextWindowTokenLimit, 10) || 0;
+                        newDto.modelInfos.outputTokenLimit = parseInt(fieldsToUpdate.outputTokenLimit, 10) || 0;
+                        newDto.modelInfos.isInferenceModel = (modelType === 'thinkingModel') ? true : false;
+
+
+                        ModelInfoHelper.setSelectedOptions(modelType, newDto);
+                        this.$set(this.selectedModels, modelType, newDto);
+
+                        
+                        if(field) {
+                            const storageKey = this.getStorageKey(modelType, vendor, field);
+                            this.$set(this.inputValues, storageKey, value);
+                        }
+                 }
+             }
         },
         
-        updateInputValue(field, value) {
-            localStorage.setItem(field, value);
-            this.$set(this.inputValues, field, value);
-        },
-        
-        togglePasswordVisibility(field) {
-            this.$set(this.showPassword, field, !this.showPassword[field]);
+        togglePasswordVisibility(apiKeySettingKey) {
+            this.$set(this.showPassword, apiKeySettingKey, !this.showPassword[apiKeySettingKey]);
         },
 
         getVendorIcon(vendor) {
@@ -346,67 +538,72 @@ export default {
                 anthropic: "mdi-alpha-a-circle",
                 google: "mdi-google",
                 runpod: "mdi-laptop",
-                ollama: "mdi-server"
+                ollama: "mdi-server",
+                openaiCompatible: "mdi-alpha-c-box-outline"
             };
-
             const normalizedVendor = vendor.toLowerCase();
-            
-            return icons[normalizedVendor] || "mdi-cube-outline"
+            return icons[normalizedVendor] || "mdi-cube-outline";
         },
 
         hasSvgIcon(vendor) {
             return !!this.vendorSvgIcons[vendor.toLowerCase()];
         },
         
-        getAppendIcon(field) {
-            if (field.includes('key')) {
-                return this.showPassword[field] ? 'mdi-eye-off' : 'mdi-eye';
+        getAppendIcon(field, apiKeySettingKey) {
+            if (field.toLowerCase().includes('key')) {
+                return this.showPassword[apiKeySettingKey] ? 'mdi-eye-off' : 'mdi-eye';
             }
             return null;
         },
         
-        handleAppendIconClick(field) {
-            if (field.includes('key')) {
-                this.togglePasswordVisibility(field);
+        handleAppendIconClick(field, apiKeySettingKey) {
+            if (field.toLowerCase().includes('key')) {
+                this.togglePasswordVisibility(apiKeySettingKey);
             }
         },
         
         getFieldHint(field) {
-            return this.$t('aiModelSetting.apiKeyHint.' + field) || "";
+            return this.$t('aiModelSetting.apiKeyHint.' + field);
         },
         
-        canTestApiKey(vendor) {
-            const fields = this.requiredVendorInputs[vendor] || [];
-            return fields.every(field => !!this.getStoredInputValue(field));
+        canTestApiKey(modelType, vendor) {
+            const vendorInputOptions = ModelInfoHelper.getVendorInputOptions();
+            const fields = vendorInputOptions[vendor] || [];
+            return fields.every(field => !!this.getStoredInputValue(modelType, vendor, field));
         },
         
-        async testApiKey(vendor) {
-            const fields = this.requiredVendorInputs[vendor] || [];
-            const params = fields.reduce((acc, field) => {
-                acc[field] = this.getStoredInputValue(field);
+        async testApiKey(modelType, vendor) {
+             const vendorInputOptions = ModelInfoHelper.getVendorInputOptions();
+             const fields = vendorInputOptions[vendor] || [];
+             const params = fields.reduce((acc, field) => {
+                const paramKey = field; // API 테스트 유틸리티는 원래 필드 이름을 기대할 수 있음
+                acc[paramKey] = this.getStoredInputValue(modelType, vendor, field);
                 return acc;
-            }, {});
+             }, {});
 
-            this.$set(this.apiKeyTestLoading, vendor, true); 
+            const apiKeySettingKey = vendor === 'openaiCompatible' ? `${modelType}_${vendor}` : vendor;
+            this.$set(this.apiKeyTestLoading, apiKeySettingKey, true);
+            this.$set(this.apiKeyTestStatus, apiKeySettingKey, null);
             try {
+                // VendorConnectTestUtil.testVendorConnect는 vendor와 params만 받음
                 const isPassed = await VendorConnectTestUtil.testVendorConnect(vendor, params);
-                this.$set(this.apiKeyTestStatus, vendor, isPassed);
-                
+                this.$set(this.apiKeyTestStatus, apiKeySettingKey, isPassed);
+
                 this.snackbar = {
                     show: true,
-                    text: this.$t('aiModelSetting.apiKeyTest.' + (isPassed ? 'success' : 'fail'), { vendor: this.getVendorLabel(vendor) }),
+                    text: this.$t('aiModelSetting.apiKeyTest.' + (isPassed ? 'success' : 'fail'), { vendor: this.getVendorLabel(vendor, modelType) }),
                     color: isPassed ? 'success' : 'error'
                 };
             } catch (error) {
-                console.error(`API Connection Test Error:`, error);
-                this.$set(this.apiKeyTestStatus, vendor, false);
+                console.error(`API Connection Test Error for ${vendor} (${modelType || ''}):`, error);
+                this.$set(this.apiKeyTestStatus, apiKeySettingKey, false);
                 this.snackbar = {
                     show: true,
-                    text: `An error occurred while testing the connection to ${this.getVendorLabel(vendor)}.`,
+                    text: this.$t('aiModelSetting.apiKeyTest.error', { vendor: this.getVendorLabel(vendor, modelType), error: error.message }),
                     color: 'error'
                 };
             } finally {
-                this.$set(this.apiKeyTestLoading, vendor, false);
+                this.$set(this.apiKeyTestLoading, apiKeySettingKey, false);
             }
         },
 
@@ -415,15 +612,13 @@ export default {
             const vendorGroups = {};
             
             this.selectableOptions.forEach(option => {
-                if(isInferenceModel != null) {
-                    if(isInferenceModel && !option.isInferenceModel) return;
-                    if(!isInferenceModel && option.isInferenceModel) return;
-                }
+                 if (isInferenceModel != null && option.isInferenceModel != null) {
+                    if (isInferenceModel !== option.isInferenceModel) return;
+                 }
 
                 if (!vendorGroups[option.vendor]) {
                     const group = {
-                        header: this.getVendorLabel(option.vendor),
-                        divider: true,
+                        header: option.vendor === 'openaiCompatible' ? 'Compatible' : this.getVendorLabel(option.vendor),
                         items: []
                     };
                     groups.push(group);
@@ -435,7 +630,8 @@ export default {
             
             const result = [];
             groups.forEach(group => {
-                result.push({ header: group.header, divider: true });
+                 result.push({ header: group.header });
+                 result.push({ divider: true });
                 group.items.forEach(item => {
                     result.push(item);
                 });
@@ -448,15 +644,29 @@ export default {
             if (!confirm(this.$t('aiModelSetting.alert.resetConfirm'))) {
                 return;
             }
-            
+
+            const allVendorInputOptions = ModelInfoHelper.getVendorInputOptions();
+            Object.keys(this.selectedModels).forEach(modelType => {
+                 Object.keys(allVendorInputOptions).forEach(vendor => {
+                     const fields = allVendorInputOptions[vendor] || [];
+                     fields.forEach(field => {
+                         const storageKey = this.getStorageKey(modelType, vendor, field);
+                         localStorage.removeItem(storageKey);
+                     });
+                 });
+            });
+
+            localStorage.removeItem('thinkingModel');
+            localStorage.removeItem('normalModel');
+
             ModelInfoHelper.resetToDefaults();
-            
-            this.loadData();
-            this.initModelEnabledState();
-            
-            this.apiKeyTestStatus = {};
+
             this.inputValues = {};
-            
+            this.showPassword = {};
+            this.apiKeyTestStatus = {};
+            this.apiKeyTestLoading = {};
+            this.loadData(); // Reset 후 데이터 다시 로드
+
             this.snackbar = {
                 show: true,
                 text: this.$t('aiModelSetting.snackbar.resetComplete'),

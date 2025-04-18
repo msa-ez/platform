@@ -20,7 +20,10 @@ import {
 } from "../../modeling/generators/es-generators";
 import { 
     ModelInfoHelperTest,
-    TextParseHelperTest
+    TextParseHelperTest,
+    getDefaultOptions,
+    ModelInfoHelper,
+    ModelOptionDto
 } from "../../modeling/generators/features/AIGenerator"
 import ESActionsUtilTest from "../../modeling/generators/es-ddl-generators/modules/ESActionsUtilTest";
 import { mockedProgressDto, mockedProgressDtoUpdateCallback } from "./mocks"
@@ -151,6 +154,33 @@ export default {
         },
 
         async _TempTest() {
+            console.log("### 1 ###")
+            ModelInfoHelper.setSelectedOptions("thinkingModel", "o3-mini-2025-01-31-medium")
+            console.log(ModelInfoHelper.getSelectedOptions())
+
+            console.log("### 2 ###")
+            ModelInfoHelper.setSelectedOptions("thinkingModel", new ModelOptionDto({
+                vendor: "openaiCompatible",
+                baseURL: "https://api.openai.com/v1",
+                apiKey: "sk-proj-1234567890",
+                modelID: "o3-mini-2025-01-31-medium",
+                modelInfos: {
+                    contextWindowTokenLimit: 32000,
+                    outputTokenLimit: 16000
+                },
+                modelParameters: {
+                    temperature: 0.5,
+                    max_tokens: 16000,
+                    top_p: 1,
+                    frequency_penalty: 0,
+                    presence_penalty: 0
+                }
+            }))
+            console.log(ModelInfoHelper.getSelectedOptions())
+
+            console.log("### 3 ###")
+            ModelInfoHelper.resetToDefaults()
+            console.log(ModelInfoHelper.getSelectedOptions())
         }
     }
 }

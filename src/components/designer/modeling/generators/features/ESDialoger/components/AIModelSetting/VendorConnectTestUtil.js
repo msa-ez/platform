@@ -97,6 +97,22 @@ class VendorConnectTestUtil {
                 } catch (error) {
                     return false;
                 }
+            },
+
+            // OpenAI Compatible 연결 테스트
+            "openaiCompatible": async () => {
+                try {
+                    const response = await fetch(`${params.baseURL}/v1/models`, {
+                        method: "GET",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": "Bearer " + params.apiKey
+                        }
+                    });
+                    return response.ok;
+                } catch (error) {
+                    return false;
+                }
             }
         }
 

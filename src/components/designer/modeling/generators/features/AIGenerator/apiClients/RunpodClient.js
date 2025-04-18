@@ -10,7 +10,8 @@ class RunpodClient extends BaseAPIClient {
     let requestData = {
       model: modelInfo.requestModelName,
       messages: messages,
-      stream: true
+      stream: true,
+      ...(modelInfo.customArgs ? modelInfo.customArgs : {})
     }
 
 

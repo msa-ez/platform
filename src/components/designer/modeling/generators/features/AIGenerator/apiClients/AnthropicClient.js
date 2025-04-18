@@ -11,7 +11,8 @@ class AnthropicClient extends BaseAPIClient {
       model: modelInfo.requestModelName,
       temperature: modelInfo.requestArgs.temperature,
       max_tokens: modelInfo.requestArgs.maxTokens,
-      stream: true
+      stream: true,
+      ...(modelInfo.customArgs ? modelInfo.customArgs : {})
     }
 
     if(messages[0].role === "system"){

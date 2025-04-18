@@ -14,6 +14,13 @@ class OpenAIClient extends BaseAPIClient {
     }
   }
   
+  async getToken(vendor) {
+    if(vendor === "openaiCompatible") {
+      return this.aiGenerator.modelInfo.apiKey;
+    }
+    return super.getToken(vendor);
+  }
+
   _makeRequestParams(messages, modelInfo, token){
     let requestData = {
       model: modelInfo.requestModelName,
@@ -23,26 +30,16 @@ class OpenAIClient extends BaseAPIClient {
       presence_penalty: modelInfo.requestArgs.presencePenalty,
       top_p: modelInfo.requestArgs.topP,
       reasoning_effort: modelInfo.requestArgs.reasoningEffort,
-      stream: true
+      stream: true,
+      ...(modelInfo.customArgs ? modelInfo.customArgs : {})
     }
 
-    if(localStorage.getItem("deterministicModel") === "true") {
-      requestData = {
-        ...requestData,
-        ...this.deterministicModelParams
-      }
-
-      if(modelInfo.requestModelName.startsWith("o3-mini")) {
-        requestData.top_p = undefined
-        requestData.temperature = undefined
-      }
-    }
-
-    if(modelInfo.requestModelName.startsWith("o3-mini") || modelInfo.requestModelName.startsWith("gpt-4o"))
+    if(modelInfo.isSupportedResponseFormat)
       requestData.response_format = modelInfo.requestArgs.response_format
 
+    const baseURL = (!modelInfo.baseURL) ? "https://api.openai.com" : modelInfo.baseURL
     return {
-      requestUrl: "https://api.openai.com/v1/chat/completions",
+      requestUrl: baseURL + "/v1/chat/completions",
       requestData: JSON.stringify(requestData),
       requestHeaders: {
         "content-type": "application/json",
@@ -52,7 +49,7 @@ class OpenAIClient extends BaseAPIClient {
   }
 
   _parseResponseText(responseText){
-    return TextParseHelper.parseResponseText(responseText, {
+    const result = TextParseHelper.parseResponseText(responseText, {
       splitFunction: (text) => text.replace("data: [DONE]", "")
           .trim()
           .split("data: ")
@@ -70,6 +67,14 @@ class OpenAIClient extends BaseAPIClient {
         return { content: "", id: parsed.id, finish_reason: null, error: parsed.error || null }
       }
     })
+
+    if(result.joinedText.startsWith("<think>")) {
+      const tagParsedContents = TextParseHelper.parseFrontTagContents(result.joinedText, "think");
+      result.joinedText = tagParsedContents.restText;
+      this.aiGenerator.parsedTexts.think = tagParsedContents.tagContents;
+    }
+
+    return result;
   }
 }
 

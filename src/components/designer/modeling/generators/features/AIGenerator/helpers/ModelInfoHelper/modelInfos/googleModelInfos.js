@@ -1,64 +1,27 @@
 export const googleModelInfos = {
-    // 가능한 설정 옵션들: gemini-2.0-flash
-    "gemini-2.0-flash": {
-        label: "Gemini Flash 2.0",
-        defaultValue: "gemini-2.0-flash",
+    // 가능한 설정 옵션들: gemini-2.5-pro-preview-03-25
+    "gemini-2.5-pro-preview": {
+        label: "Gemini Pro 2.5 (Preview)",
+        defaultValue: "gemini-2.5-pro-preview-03-25",
         vendor: "google",
         contextWindowTokenLimit: 1048576,
-        outputTokenLimit: 8192,
-        requestArgs: {
-            temperature: 0.7
-        }
-    },
-
-    // 가능한 설정 옵션들: gemini-1.5-pro
-    "gemini-1.5-pro": {
-        label: "Gemini Pro 1.5",
-        defaultValue: "gemini-1.5-pro",
-        vendor: "google",
-        contextWindowTokenLimit: 2000000,
-        outputTokenLimit: 8192,
-        requestArgs: {
-            temperature: 0.7
-        }
-    },
-
-    // 가능한 설정 옵션들: gemini-2.0-flash-lite
-    "gemini-2.0-flash-lite": {
-        label: "Gemini Flash Lite 2.0",
-        defaultValue: "gemini-2.0-flash-lite",
-        vendor: "google",
-        contextWindowTokenLimit: 1048576,
-        outputTokenLimit: 8192,
-        requestArgs: {
-            temperature: 0.7
-        }
-    },
-
-    
-    // [!] 아래의 모델들은 실험용 버전이며, 언제든지 삭제될 수 있음
-    // 가능한 설정 옵션들: gemini-2.0-pro-exp-02-05
-    "gemini-2.0-pro-exp-02-05": {
-        label: "Gemini Pro 2.0 (Exp)",
-        defaultValue: "gemini-2.0-pro-exp-02-05",
-        vendor: "google",
-        contextWindowTokenLimit: 2097152,
-        outputTokenLimit: 8192,
-        requestArgs: {
-            temperature: 0.7
-        }
-    },
-
-    // 가능한 설정 옵션들: gemini-2.0-flash-thinking-exp-01-21
-    "gemini-2.0-flash-thinking-exp-01-21": {
-        label: "Gemini Flash 2.0 Thinking (Exp)",
-        defaultValue: "gemini-2.0-flash-thinking-exp-01-21",
-        vendor: "google",
-        contextWindowTokenLimit: 1048576,
-        outputTokenLimit: 8192,
+        outputTokenLimit: 65536,
         requestArgs: {
             temperature: 0.7
         },
         isInferenceModel: true
+    },
+
+    // 가능한 설정 옵션들: gemini-2.5-flash-preview-04-17
+    "gemini-2.5-flash-preview": {
+        label: "Gemini Flash 2.5 (Preview)",
+        defaultValue: "gemini-2.5-flash-preview-04-17",
+        vendor: "google",
+        contextWindowTokenLimit: 1048576,
+        outputTokenLimit: 65536,
+        requestArgs: {
+            temperature: 0.7
+        },
+        isInferenceModel: false
     }
 }
