@@ -1,6 +1,6 @@
 const AIGenerator = require("./AIGenerator");
 const { TokenCounter, JsonParsingUtil } = require("./utils")
-const { GeneratorLockKeyError, GeneratorNetworkError, TokenNotInputedError } = require("./errors")
+const { GeneratorLockKeyError, GeneratorNetworkError, TokenNotInputedError, AiModelSettingError } = require("./errors")
 
 const DEFAULT_CONFIG = {
     MAX_RETRY_COUNT: 3,
@@ -203,6 +203,11 @@ class FormattedJSONAIGenerator extends AIGenerator {
                 return
             }
 
+            if(e instanceof AiModelSettingError) {
+                console.error(`[!] AI 모델 설정이 필요합니다.`, networkErrorReturnObj)
+                return
+            }
+
 
             console.error(`[!] ${this.generatorName}에 대한 생성 도중 네트워크 의심 에러 발생!`, networkErrorReturnObj)
             console.error(e)
@@ -214,7 +219,7 @@ class FormattedJSONAIGenerator extends AIGenerator {
             }
             else {
                 console.error(`[!] ${this.generatorName}에 대한 생성 도중 네트워크 의심 에러 발생! 재시도 실패!`, networkErrorReturnObj)
-                alert(`[!] A network error occurred during AI generation. Please try again later or review the relevant options. : ${e.message}`)
+                // alert(`[!] A network error occurred during AI generation. Please try again later or review the relevant options. : ${e.message}`)
                 throw new GeneratorNetworkError(e.message, e)
             }
 

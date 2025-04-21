@@ -17,7 +17,10 @@
             </v-col>
         </div>
         <div style="display: flex; flex-direction: column;" v-if="!state.AIModelSelectMessageIsTyping">
-            <AIModelSetting @onConfirm="generateUserStory();" />
+            <AIModelSetting 
+                @onConfirm="generateUserStory();" 
+                :isUserStoryUIMode="true"
+            />
         </div>
         
         <div>

@@ -4,14 +4,8 @@ const { TextParseHelper } = require('../helpers');
 class OpenAIClient extends BaseAPIClient {
   constructor(client, options, model, aiGenerator) {
     super(client, options, model, aiGenerator)
-    this.aiGenerator.roleNames.system = "developer"
-    this.deterministicModelParams = {
-      temperature: 0,
-      frequency_penalty: 0,
-      presence_penalty: 0,
-      top_p: 1,
-      seed: 42
-    }
+    if(this.aiGenerator.modelInfo.vendor === "openai")
+      this.aiGenerator.roleNames.system = "developer"
   }
   
   async getToken(vendor) {
@@ -38,12 +32,32 @@ class OpenAIClient extends BaseAPIClient {
       requestData.response_format = modelInfo.requestArgs.response_format
 
     const baseURL = (!modelInfo.baseURL) ? "https://api.openai.com" : modelInfo.baseURL
-    return {
-      requestUrl: baseURL + "/v1/chat/completions",
-      requestData: JSON.stringify(requestData),
-      requestHeaders: {
-        "content-type": "application/json",
-        "authorization": "Bearer " + token
+    if(baseURL.startsWith("https://")) {
+      return {
+        requestUrl: baseURL + "/v1/chat/completions",
+        requestData: JSON.stringify(requestData),
+        requestHeaders: {
+          "content-type": "application/json",
+          "authorization": "Bearer " + token
+        }
+      }
+    } else {
+      return {
+        requestUrl: "http://localhost:4000/proxy/stream",
+        requestData: JSON.stringify(requestData),
+        requestHeaders: {
+          "content-type": "application/json",
+          "param-url": baseURL + "/v1/chat/completions",
+          "param-error-label": "OpenAICompatible",
+          "param-reject-unauthorized": "false",
+          "param-is-use-agent": "false",
+          "param-method": "POST",
+          "param-headers": JSON.stringify({
+            "content-type": "application/json",
+            "authorization": "Bearer " + token,
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+          })
+        }
       }
     }
   }

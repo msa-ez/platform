@@ -1,6 +1,7 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
 import axios from 'axios'
+import aiModule from './store/modules/ai'
 
 Vue.prototype.$http = axios
 Vue.use(Vuex)
@@ -21,6 +22,9 @@ Vue.use(Vuex)
 // });
 
 export default new Vuex.Store({
+    modules: {
+        ai: aiModule
+    },
     state: {
         accessToken: null,
         kubeHost: '',

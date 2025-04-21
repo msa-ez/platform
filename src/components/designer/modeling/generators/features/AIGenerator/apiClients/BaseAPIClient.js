@@ -1,7 +1,8 @@
 const { COUNTRY_CODE_LANG_MAP, DEFAULT_LANG, REQUEST_ARG_KEYS } = require("./contants");
 const { ModelInfoHelper } = require("../helpers")
 const { HashUtil, RequestUtil, TokenUtil } = require("../utils")
-const { GeneratorLockKeyError, TokenNotInputedError } = require("../../../errors")
+const { GeneratorLockKeyError, TokenNotInputedError, AiModelSettingError } = require("../../../errors")
+const store = require("../../../../../../../store").default;
 
 
 let previousRequestInfos = []
@@ -127,6 +128,11 @@ class BaseAPIClient {
 
 
     async generate(generateOption) {
+        if(!localStorage.getItem('thinkingModel') || !localStorage.getItem('normalModel')){
+            store.dispatch('ai/checkAiModelSettings');
+            throw new AiModelSettingError();
+        }
+
         const g = this.aiGenerator
     
         if(g.lockKey) {

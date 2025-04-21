@@ -1,12 +1,26 @@
 <template xmlns:v-on="http://www.w3.org/1999/xhtml">
-    <div>
+    <div style="overflow-y: hidden;">
         <v-card class="auto-modeling-user-story-card">
             <v-card-title class="headline d-flex align-center">
                 <!-- <v-icon class="mr-2">mdi-cog-outline</v-icon> -->
                 <div>{{ $t('aiModelSetting.template.aiModelSettings') }}</div>
+
+                <v-spacer></v-spacer>
+
+                <v-btn v-if="!isUserStoryUIMode" icon @click="$emit('onClose')">
+                    <v-icon>mdi-close</v-icon>
+                </v-btn>
             </v-card-title>
             
             <v-card-text>
+                <v-alert
+                    v-if="errorMessage && !isUserStoryUIMode"
+                    type="error"
+                    dense
+                    outlined
+                    text
+                >{{ errorMessage }}</v-alert>
+
                 <v-sheet class="pa-4 mb-5 rounded" color="grey lighten-5" elevation="1">
                     <h3 class="mb-4 primary--text d-flex align-center">
                         <!-- <v-icon color="primary" class="mr-2">mdi-cube-outline</v-icon> -->
@@ -118,7 +132,7 @@
                 </v-sheet>
             </v-card-text>
             
-            <v-row class="ma-0 pa-4 pt-0">
+            <v-row class="ma-0 pa-4 pt-0" v-if="isUserStoryUIMode">
                 <v-spacer></v-spacer>
                 <v-btn @click="resetToDefaults"
                     class="auto-modeling-btn"
@@ -127,6 +141,26 @@
                 >
                     <!-- <v-icon small left>mdi-refresh</v-icon> -->
                     {{ $t('aiModelSetting.template.resetToDefaults') }}
+                </v-btn>
+            </v-row>
+
+            <v-row class="ma-0 pt-0 pl-4 pr-4 pb-8" v-if="!isUserStoryUIMode">
+                <v-btn @click="resetToDefaults"
+                    class="auto-modeling-btn ml-0"
+                    outlined 
+                    color="primary" 
+                >
+                    <!-- <v-icon small left>mdi-refresh</v-icon> -->
+                    {{ $t('aiModelSetting.template.resetToDefaults') }}
+                </v-btn>
+
+                <v-spacer></v-spacer>
+
+                <v-btn @click="onConfirm"
+                    class="auto-modeling-btn"
+                    color="primary"
+                >
+                    {{ $t('aiModelSetting.template.confirm_ok') }}
                 </v-btn>
             </v-row>
 
@@ -149,14 +183,15 @@
         </v-card>
 
         <v-row class="ma-0"
+            v-if="isUserStoryUIMode"
             style="padding: 20px 0px 0px 0px"
         >
             <v-spacer></v-spacer>
-            <v-btn @click="$emit('onConfirm')"
+            <v-btn @click="onConfirm"
                 class="auto-modeling-btn"
                 color="primary"
             >
-                {{ $t('aiModelSetting.template.confirm') }}
+                {{ $t('aiModelSetting.template.confirm_user_story') }}
             </v-btn>
         </v-row>
     </div>
@@ -168,6 +203,16 @@ import VendorConnectTestUtil from "./VendorConnectTestUtil";
 
 export default {
     name: "ai-model-setting",
+    props: {
+        isUserStoryUIMode: {
+            type: Boolean,
+            default: false
+        },
+        errorMessage: {
+            type: String,
+            default: ''
+        }
+    },
     data() {
         return {
             selectedModels: {},
@@ -673,6 +718,11 @@ export default {
                 color: 'success'
             };
         },
+
+        onConfirm() {
+            ModelInfoHelper.saveDefaultOptions();
+            this.$emit('onConfirm');
+        }
     }
 }
 </script>

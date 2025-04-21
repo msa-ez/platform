@@ -189,6 +189,10 @@ class ModelInfoHelper {
                             ...loadedOption.modelInfos
                         };
                         loadedOption.modelParameters = loadedOption.modelParameters || {};
+
+                        loadedOption.modelInfos.inputTokenLimit = loadedOption.modelInfos.contextWindowTokenLimit - loadedOption.modelInfos.outputTokenLimit - loadedOption.modelInfos.inputTokenLimitMargin
+                        if(loadedOption.modelInfos.isInferenceModel)
+                            loadedOption.modelInfos.outputTokenLimit = loadedOption.modelInfos.outputTokenLimit - loadedOption.modelInfos.outputTokenLimitReasoningMargin
                     }
                     selectedOptions[key] = loadedOption;
                 } catch (error) {
@@ -253,6 +257,13 @@ class ModelInfoHelper {
         return this.getSelectedOptions();
     }
 
+    static saveDefaultOptions() {
+        const defaultOptions = ModelInfoHelper.getDefaultOptions();
+        Object.keys(defaultOptions).forEach(modelType => {
+            if(modelType !== "MODEL_FLAGS" && !localStorage.getItem(modelType))
+                ModelInfoHelper.setSelectedOptions(modelType, defaultOptions[modelType]);
+        });
+    }
 }
 ModelInfoHelper.modelInfos = modelInfos;
 ModelInfoHelper.vendorInputOptions = vendorInputOptions;
