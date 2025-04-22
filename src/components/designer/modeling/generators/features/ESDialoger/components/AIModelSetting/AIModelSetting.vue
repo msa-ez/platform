@@ -547,8 +547,7 @@ export default {
 
                         newDto.baseURL = sanitizedBaseURL;
                         newDto.modelInfos.baseURL = sanitizedBaseURL;
-                        value = sanitizedBaseURL;
-
+                        if(field === 'baseURL') value = sanitizedBaseURL;
 
                         newDto.apiKey = fieldsToUpdate.apiKey;
                         newDto.modelInfos.apiKey = fieldsToUpdate.apiKey;
