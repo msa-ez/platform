@@ -122,8 +122,7 @@ class BaseAPIClient {
     }
     
     async getToken(vendor) {
-        this.aiGenerator.token = await TokenUtil.getToken(vendor);
-        return this.aiGenerator.token;
+        return await TokenUtil.getToken(vendor);
     }
 
 
@@ -141,8 +140,9 @@ class BaseAPIClient {
     
         g.lockKey = true;
         
+        let token = null
         try {
-            g.token = await g.getToken(g.modelInfo.vendor);
+            token = await g.getToken(g.modelInfo.vendor);
         } catch (err) {
             g.lockKey = false;
             return Promise.reject(new TokenNotInputedError());
@@ -178,7 +178,7 @@ class BaseAPIClient {
                 g.gptResponseId = null;
                 g.firstResponseTime = null
                 g.requestStartTime = new Date().getTime()
-                const requestParams = this._makeRequestParams(g.messages, g.modelInfo, g.token);
+                const requestParams = this._makeRequestParams(g.messages, g.modelInfo, token);
     
                 const requestInfo = this._makeRequestInfo(requestParams, g.messages)
                 previousRequestInfos.push(requestInfo)
