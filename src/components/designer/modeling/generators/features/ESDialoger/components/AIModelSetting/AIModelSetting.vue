@@ -514,7 +514,7 @@ export default {
         },
         
         updateInputValue(modelType, vendor, field, value) {
-            if(field && value) {
+            if(field && value !== undefined && value !== null) {
                 const storageKey = this.getStorageKey(modelType, vendor, field);
                 localStorage.setItem(storageKey, value);
                 this.$set(this.inputValues, storageKey, value);
