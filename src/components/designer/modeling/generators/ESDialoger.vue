@@ -249,6 +249,9 @@ import { value } from 'jsonpath';
         },
         async created(){
             await this.setUserInfo()
+            if(!this.value) this.value = {}
+            if(!this.value.userStory) this.value.userStory = ""
+
             this.initESDialoger();
             this.autoModel = getParent(this.$parent, 'auto-modeling-dialog');
 
