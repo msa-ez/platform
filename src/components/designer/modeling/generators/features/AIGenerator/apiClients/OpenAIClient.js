@@ -28,6 +28,10 @@ class OpenAIClient extends BaseAPIClient {
       ...(modelInfo.customArgs ? modelInfo.customArgs : {})
     }
 
+    if(modelInfo.baseURL.includes("groq") && modelInfo.requestModelName === "qwen-qwq-32b") {
+      requestData.reasoning_format = "parsed" // 이 옵션은 qwq-32b의 불확실한 thinkng 태그 출력을 제거해서 안정성을 향상시킴
+    }
+
     if(modelInfo.isSupportedResponseFormat)
       requestData.response_format = modelInfo.requestArgs.response_format
 
