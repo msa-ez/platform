@@ -1,14 +1,28 @@
 <template xmlns:v-on="http://www.w3.org/1999/xhtml">
     <div>
-        <template v-for="(message, index) in messages">
+        <template v-if="isLoading && isServerProject">
+            <v-col v-for="i in 3" :key="`skeleton-${i}`">
+                <v-card outlined class="auto-modeling-user-story-card" style="margin-top: 30px !important;">
+                    <v-skeleton-loader ref="skeleton" type="card" class="mx-auto"></v-skeleton-loader>
+                </v-card>
+            </v-col>
+        </template>
+
+        <template v-else v-for="(message, index) in renderedMessages">
             <v-card 
                 v-if="message.type === 'aggregateDraftDialogDto'" 
                 :key="index" 
-                class="auto-modeling-user-story-card pdf-content-item" 
+                class="auto-modeling-user-story-card" 
                 style="margin-top: 30px !important;"
                 :class="{'hidden': shouldHideMessage(message)}"
             >
+
+                <v-skeleton-loader v-if="message._isLoading && !isMessageComplete(message)"
+                    type="card" class="mx-auto"
+                ></v-skeleton-loader>
+
                 <AggregateDraftDialog
+                    v-else
                     :draftOptions="message.draftOptions"
                     :draftUIInfos="message.draftUIInfos"
                     :isGeneratorButtonEnabled="message.isGeneratorButtonEnabled"
@@ -22,16 +36,22 @@
 
                     @generateFromDraft="generateFromDraft"
                     @feedbackFromDraft="feedbackFromDraft"
+                    @updateSelectedOptionItem="updateSelectedOptionItem"
                 ></AggregateDraftDialog>
             </v-card>
 
             <v-card 
                 v-if="message.type === 'boundedContextResult'" 
                 :key="`bounded-context-${message.uniqueId}`" 
-                class="auto-modeling-user-story-card pdf-content-item" 
+                class="auto-modeling-user-story-card" 
                 style="margin-top: 30px !important;"
             >
+                <v-skeleton-loader v-if="message._isLoading && !isMessageComplete(message)"
+                    type="card" class="mx-auto"
+                ></v-skeleton-loader>
+
                 <DevideBoundedContextDialog
+                    v-else
                     :resultDevideBoundedContext="deepCopy(message.result)"
                     :isStartMapping="message.isStartMapping"
                     :isGeneratingBoundedContext="message.isGeneratingBoundedContext"
@@ -61,10 +81,15 @@
             <v-card 
                 v-if="message.type === 'processAnalysis'" 
                 :key="index" 
-                class="auto-modeling-user-story-card pdf-content-item" 
+                class="auto-modeling-user-story-card" 
                 style="margin-top: 30px !important;"
             >
+                <v-skeleton-loader v-if="message._isLoading && !isMessageComplete(message)"
+                    type="card" class="mx-auto"
+                ></v-skeleton-loader>
+
                 <RequirementAnalysis 
+                    v-else
                     :analysisResult="message.content"
                     :isAnalizing="message.isAnalizing"
                     :isSummarizeStarted="message.isSummarizeStarted"
@@ -81,10 +106,15 @@
             <v-card 
                 v-if="message.type === 'bcGenerationOption'" 
                 :key="index" 
-                class="auto-modeling-user-story-card pdf-content-item" 
+                class="auto-modeling-user-story-card" 
                 style="margin-top: 30px !important;"
             >
+                <v-skeleton-loader v-if="message._isLoading && !isMessageComplete(message)"
+                    type="card" class="mx-auto"
+                ></v-skeleton-loader>
+
                 <BCGenerationOption
+                    v-else
                     :isSummarizeStarted="message.isSummarizeStarted"
                     :isGeneratingBoundedContext="message.isGeneratingBoundedContext"
                     :isStartMapping="message.isStartMapping"
@@ -139,6 +169,11 @@ export default {
             required: true,
             default: () => []
         },
+        isServerProject: {
+            type: Boolean,
+            required: true,
+            default: false
+        },
         isEditable: {
             type: Boolean,
             required: true,
@@ -154,7 +189,59 @@ export default {
     },
     data() {
         return {
-            activeVersion: 1
+            activeVersion: 1,
+            isLoading: true,
+            renderedMessages: [],
+            renderIndex: 0 ,
+            isProcessing: false
+        }
+    },
+    watch: {
+        messages: {
+            immediate: true,
+            handler(newMessages) {
+                if (this.isServerProject) {
+                    if (this.renderedMessages.length === 0) {
+                        this.isLoading = true;
+                        setTimeout(() => {
+                            this.isLoading = false;
+                        }, 1000);
+                    }
+                    
+                    if (this.renderedMessages.length < newMessages.length) {
+                        const newMessageCount = newMessages.length - this.renderedMessages.length;
+                        for (let i = 0; i < newMessageCount; i++) {
+                            const newMessage = newMessages[this.renderedMessages.length + i];
+                            this.renderedMessages.push({
+                                ...newMessage,
+                                _isLoading: true
+                            });
+                        }
+                        this.renderIndex = this.renderedMessages.length - newMessageCount;
+                        this.isProcessing = true;
+                        this.renderNextMessage();
+                    } else {
+                        newMessages.forEach((message, index) => {
+                            if (this.renderedMessages[index]) {
+                                const isComplete = this.isMessageComplete(message);
+                                if (isComplete) {
+                                    this.$set(this.renderedMessages, index, {
+                                        ...message,
+                                        _isLoading: false
+                                    });
+                                }
+                            }
+                        });
+                    }
+                } else {
+                    this.renderedMessages = [...newMessages];
+                }
+            }
+        }
+    },
+    beforeDestroy() {
+        if (this.renderTimer) {
+            clearTimeout(this.renderTimer);
         }
     },
     methods: {
@@ -179,6 +266,10 @@ export default {
             this.$emit('updateSelectedAspect', aspect)
         },
 
+        updateSelectedOptionItem(selectedOptionItem) {
+            this.$emit('updateSelectedOptionItem', selectedOptionItem)
+        },
+
         shouldHideMessage(message) {
             if (message.type !== 'aggregateDraftDialogDto') return false;
             
@@ -195,7 +286,90 @@ export default {
         getVersionFromAspect(aspect) {
             const match = aspect.match(/_choice(\d+)$/);
             return match ? parseInt(match[1]) : 1;
-        }
+        },
+
+        isMessageComplete(message) {
+            if(!this.isServerProject) {
+                return true;
+            }
+
+            switch (message.type) {
+                case 'aggregateDraftDialogDto':
+                    const isDraftOptionsValid = message.draftOptions && 
+                        Array.isArray(message.draftOptions) && 
+                        message.draftOptions.length > 0 &&
+                        message.draftOptions.every(option => {
+                            if (!option) return false;
+                            if (!option.boundedContext || !option.boundedContextAlias) return false;
+                            if (!Array.isArray(option.options)) return false;
+                            return option.options.every(opt => opt && opt.structure);
+                        });
+
+                    const isDraftUIInfosValid = message.draftUIInfos && 
+                        Object.prototype.hasOwnProperty.call(message.draftUIInfos, 'leftBoundedContextCount') &&
+                        Object.prototype.hasOwnProperty.call(message.draftUIInfos, 'directMessage') &&
+                        Object.prototype.hasOwnProperty.call(message.draftUIInfos, 'progress');
+
+                    return isDraftOptionsValid && 
+                        isDraftUIInfosValid
+                
+                case 'boundedContextResult':
+                    const isResultValid = message.result && 
+                        Object.keys(message.result).length > 0 &&
+                        Object.values(message.result).every(aspect => {
+                            if (!aspect) return false;
+                            if (!aspect.boundedContexts || !Array.isArray(aspect.boundedContexts) || aspect.boundedContexts.length === 0) return false;
+                            if (!aspect.relations || !Array.isArray(aspect.relations) || aspect.relations.length === 0) return false;
+                            return !!aspect.thoughts;
+                        });
+
+                    return isResultValid
+                
+                case 'processAnalysis':
+                    const isContentValid = message.content && 
+                        message.content.analysisResult &&
+                        message.content.content
+
+                    return isContentValid
+                
+                case 'bcGenerationOption':
+                    return message.generateOption && 
+                        message.recommendedBoundedContextsNumber !== undefined;
+                
+                case 'botMessage':
+                case 'userMessage':
+                    return message.message && message.uniqueId;
+                
+                default:
+                    return true;
+            }
+        },
+
+        renderNextMessage() {
+            if (this.renderIndex < this.messages.length) {
+                const message = this.messages[this.renderIndex];
+                
+                if (this.processingMessage && this.processingMessage.uniqueId === message.uniqueId) {
+                    const index = this.renderedMessages.findIndex(m => m.uniqueId === message.uniqueId);
+                    if (index !== -1) {
+                        this.$set(this.renderedMessages, index, { ...message });
+                    }
+                } else {
+                    this.renderedMessages.push({ ...message });
+                    this.processingMessage = message;
+                }
+                
+                this.renderIndex++;
+                this.isProcessing = true;
+
+                this.renderTimer = setTimeout(() => {
+                    this.renderNextMessage();
+                }, 100);
+            } else {
+                this.isProcessing = false;
+                this.processingMessage = null;
+            }
+        },
     }
 }
 </script>
@@ -203,5 +377,15 @@ export default {
 <style scoped>
 .hidden {
     display: none;
+}
+
+.mb-8 {
+    margin-bottom: 20px;
+}
+
+.v-skeleton-loader {
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    padding: 16px;
 }
 </style>

@@ -294,6 +294,8 @@
                         if(this.selectedOptionItem[option.boundedContext] == null)
                             this.selectedOptionItem[option.boundedContext] = option.options[option.defaultOptionIndex]                        
                     })
+
+                    this.$emit('updateSelectedOptionItem', this.selectedOptionItem)
                 }
             }
         }

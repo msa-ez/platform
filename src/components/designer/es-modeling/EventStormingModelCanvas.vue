@@ -2584,7 +2584,8 @@
                 filteredPBCs: {},
                 collectedMockDatas: {
                     aggregateDraftScenarios: {
-                    }
+                    },
+                    projectName: ""
                 },
                 collectedLogDatas: {
                     aggregateDraftScenarios: {
@@ -2975,7 +2976,7 @@
                     }
                 },
 
-                onGenerationDone: () => {
+                onGenerationDone: async () => {
                     this.generatePBCbyDraftOptions(this.filteredPBCs)
                     console.log("[*] 최종 생성 후 PBC 생성 완료", {filteredPBCs: this.filteredPBCs})
                     
@@ -2993,6 +2994,10 @@
                     
                     byFunctionCallbacks.onGenerationDone()
 
+                    // AI 생성된 모델을 Project에 저장하기 위해 세팅
+                    await this.storageDialogReady('save')
+                    this.storageCondition.projectId = this.projectId
+                    this.storageCondition.projectName = this.collectedMockDatas.projectName
 
                     if(!localStorage.getItem("blockAutoRefresh"))
                         this.$nextTick(() => {

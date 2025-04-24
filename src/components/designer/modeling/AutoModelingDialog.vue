@@ -261,6 +261,8 @@
                                 @change="backupProject" 
                                 @update:boundedContextDrafts="updateBoundedContextDrafts" 
                                 @update:aggregateDrafts="updateAggregateDrafts"
+                                @update:userStory="updateUserStory"
+                                @update:modelList="updateModelList"
                                 :uiStyle="uiStyle"  
                             ></ESDialoger>
                             <CJMDialoger v-if="genType == 'CJM'"    ref="cjMDialoger"   v-model="projectInfo.customerJourneyMap" :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" @change="backupProject" @setPersonas="setPersonas" ></CJMDialoger>
@@ -278,6 +280,14 @@
                     @close="closeStorageDialog()"
             ></ModelStorageDialog>
         </v-col>
+
+        <DocumentPreviewDialog
+            v-if="userInfo && userInfo.providerUid"
+            ref="documentPreview"
+            :project-info="projectInfo"
+            :cached-models="cachedModels"
+            :userInfo="userInfo"
+        />
 
         <model-canvas-share-dialog
             v-model="invitationLists"
@@ -329,6 +339,7 @@
 
     import ModelCanvasShareDialog from "./ModelCanvasShareDialog";
 
+    import DocumentPreviewDialog from "./DocumentPreviewDialog.vue";
     import * as htmlToImage from 'html-to-image'
     import { jsPDF } from 'jspdf'
 
@@ -418,7 +429,8 @@
             UIWizardDialoger,
             USMDialoger,
             ModelStorageDialog,
-            ModelCanvasShareDialog
+            ModelCanvasShareDialog,
+            DocumentPreviewDialog
         },
         data() {
             return {
@@ -679,7 +691,8 @@
             setModelIds(){
                 var me = this
 
-                if(!me.projectId) me.projectId = me.uuid();
+                // if(!me.projectId)
+                me.projectId = me.uuid();
                 if(!me.modelIds.projectId) me.modelIds.projectId = me.projectId
                 if(!me.modelIds.ESDefinitionId) me.modelIds.ESDefinitionId = me.uuid()
                 if(!me.modelIds.CJMDefinitionId) me.modelIds.CJMDefinitionId = me.uuid()
@@ -1007,6 +1020,9 @@
             onReceive(content){
                 console.log(content);
             },
+            updateUserStory(content){
+                this.$set(this.projectInfo, 'eventStorming', content);
+            },
             openCanvas(val){
                 var me = this
                 var dbuid = me.dbuid()
@@ -1030,8 +1046,45 @@
                 if(!this.projectInfo.draft) {
                     this.projectInfo.draft = {};
                 }
-                this.projectInfo.draft = messages;
+                this.projectInfo.draft = messages.map(msg => {
+                    if (msg.type === 'aggregateDraftDialogDto') {
+                        const {
+                            analysisResult,
+                            draftOptions,
+                            draftUIInfos,
+                            selectedOptionItem,
+                            isGeneratorButtonEnabled,
+                            isShow,
+                            type,
+                            uniqueId,
+                            boundedContextVersion
+                        } = msg;
+                        
+                        return {
+                            analysisResult,
+                            draftOptions,
+                            draftUIInfos,
+                            selectedOptionItem,
+                            isGeneratorButtonEnabled,
+                            isShow,
+                            type,
+                            uniqueId,
+                            boundedContextVersion
+                        };
+                    }
+                    return msg;
+                });
                 this.saveProject();
+            },
+
+            updateModelList(modelId){
+                if(!this.projectInfo['eventStormingModelIds']){
+                    this.projectInfo['eventStormingModelIds'] = []
+                }
+
+                if(!this.projectInfo['eventStormingModelIds'].includes(`${this.userInfo.providerUid}_es_${modelId}`)){
+                    this.projectInfo['eventStormingModelIds'].push(`${this.userInfo.providerUid}_es_${modelId}`)
+                }
             },
 
             // project share
@@ -1211,167 +1264,172 @@
 
             async exportToPDF() {
                 if (this.isPDFGenerating) return
-                this.isPDFGenerating = true
-
-                try {
-                    // 모든 PDF 컨텐츠 아이템을 찾음
-                    const pdfItems = this.$refs.dialogContainer.querySelectorAll('.pdf-content-item')
-                    if (!pdfItems.length) {
-                        throw new Error('PDF content items not found')
-                    }
-
-                    // Mermaid 다이어그램 렌더링 대기
-                    await new Promise(resolve => setTimeout(resolve, 1000))
-
-                    // 각 아이템별로 이미지 생성
-                    const pdfPromises = Array.from(pdfItems).map(async (container, index) => {
-                        const imageStates = new Map()
-                        const images = container.getElementsByTagName('img')
-                        
-                        const imageLoadPromises = Array.from(images).map(img => {
-                            return new Promise(resolve => {
-                                if (img.complete) {
-                                    imageStates.set(img, 'loaded')
-                                    resolve()
-                                    return
-                                }
-
-                                img.addEventListener('load', () => {
-                                    imageStates.set(img, 'loaded')
-                                    resolve()
-                                }, { once: true })
-
-                                img.addEventListener('error', () => {
-                                    console.warn('Image load failed:', img.src)
-                                    imageStates.set(img, 'error')
-                                    img.style.opacity = '0'
-                                    resolve()
-                                }, { once: true })
-                            })
-                        })
-
-                        await Promise.race([
-                            Promise.all(imageLoadPromises),
-                            new Promise(resolve => setTimeout(resolve, 3000))
-                        ])
-
-                        // 이미지 캡처
-                        let dataUrl = null
-                        let retryCount = 0
-                        const maxRetries = 3
-
-                        while (!dataUrl && retryCount < maxRetries) {
-                            try {
-                                dataUrl = await htmlToImage.toPng(container, {
-                                    skipFonts: true,
-                                    cacheBust: true,
-                                    pixelRatio: 2,
-                                    backgroundColor: '#ffffff',
-                                    filter: node => {
-                                        try {
-                                            if (!node || !node.tagName) return true
-                                            const hasNoPrintClass = node.classList && node.classList.contains('no-print')
-                                            const hasVBtnClass = node.classList && node.classList.contains('v-btn')
-                                            const isButton = node.tagName === 'BUTTON'
-                                            if (node.tagName === 'IMG') {
-                                                const state = imageStates.get(node)
-                                                if (state === 'error') return false
-                                            }
-                                            return !(hasNoPrintClass || hasVBtnClass || isButton)
-                                        } catch (err) {
-                                            console.warn('Filter error for node:', err)
-                                            return true
-                                        }
-                                    }
-                                })
-                            } catch (err) {
-                                console.warn(`Capture attempt ${retryCount + 1} failed:`, err)
-                                retryCount++
-                                await new Promise(resolve => setTimeout(resolve, 500))
-                            }
-                        }
-
-                        if (!dataUrl) {
-                            throw new Error(`Failed to capture content for item ${index}`)
-                        }
-
-                        return {
-                            dataUrl,
-                            height: container.offsetHeight,
-                            width: container.offsetWidth
-                        }
-                    })
-
-                    const capturedImages = await Promise.all(pdfPromises)
-
-                    // PDF 생성
-                    const pdf = new jsPDF('p', 'mm', 'a4')
-                    const pdfWidth = pdf.internal.pageSize.getWidth()
-                    const pdfHeight = pdf.internal.pageSize.getHeight()
-                    const margin = 10
-                    const imgWidth = pdfWidth - (margin * 2)
-
-                    // 각 이미지를 PDF에 추가
-                    capturedImages.forEach((img, index) => {
-                        if (index > 0) pdf.addPage()
-                        
-                        const imgHeight = (img.height * imgWidth) / img.width
-                        const maxHeight = pdfHeight - (margin * 2)
-
-                        if (imgHeight > maxHeight) {
-                            const pageCount = Math.ceil(imgHeight / maxHeight)
-                            for (let i = 0; i < pageCount; i++) {
-                                if (i > 0) pdf.addPage()
-                                pdf.addImage(
-                                    img.dataUrl,
-                                    'PNG',
-                                    margin,
-                                    margin,
-                                    imgWidth,
-                                    maxHeight,
-                                    undefined,
-                                    'FAST',
-                                    0,
-                                    i * (img.height / pageCount) / img.height
-                                )
-                            }
-                        } else {
-                            pdf.addImage(
-                                img.dataUrl,
-                                'PNG',
-                                margin,
-                                margin,
-                                imgWidth,
-                                imgHeight,
-                                undefined,
-                                'FAST'
-                            )
-                        }
-                    })
-
-                    const timestamp = new Date().toISOString().split('T')[0]
-                    const filename = `event-storming-${this.projectId || timestamp}.pdf`
-                    pdf.save(filename)
-
-                } catch (error) {
-                    console.error('PDF generation failed:', error)
-                    this.snackbar = {
-                        show: true,
-                        text: "PDF generation failed: " + (error.message || 'Unknown error'),
-                        color: "error",
-                        timeout: 3000
-                    }
-                } finally {
-                    // 원래 상태로 복구
-                    const pdfItems = this.$refs.dialogContainer.querySelectorAll('.pdf-content-item')
-                    pdfItems.forEach(container => {
-                        const images = container.getElementsByTagName('img')
-                        Array.from(images).forEach(img => {
-                            img.style.opacity = ''
-                        })
-                    })
-                    this.isPDFGenerating = false
+                if (this.$refs.documentPreview && this.$refs.documentPreview.dialog) {
+                    await this.$refs.documentPreview.close();
+                    await this.$nextTick();
                 }
+                
+                this.$refs.documentPreview.show();
+
+                // try {
+                //     // 모든 PDF 컨텐츠 아이템을 찾음
+                //     const pdfItems = this.$refs.dialogContainer.querySelectorAll('.pdf-content-item')
+                //     if (!pdfItems.length) {
+                //         throw new Error('PDF content items not found')
+                //     }
+
+                //     // Mermaid 다이어그램 렌더링 대기
+                //     await new Promise(resolve => setTimeout(resolve, 1000))
+
+                //     // 각 아이템별로 이미지 생성
+                //     const pdfPromises = Array.from(pdfItems).map(async (container, index) => {
+                //         const imageStates = new Map()
+                //         const images = container.getElementsByTagName('img')
+                        
+                //         const imageLoadPromises = Array.from(images).map(img => {
+                //             return new Promise(resolve => {
+                //                 if (img.complete) {
+                //                     imageStates.set(img, 'loaded')
+                //                     resolve()
+                //                     return
+                //                 }
+
+                //                 img.addEventListener('load', () => {
+                //                     imageStates.set(img, 'loaded')
+                //                     resolve()
+                //                 }, { once: true })
+
+                //                 img.addEventListener('error', () => {
+                //                     console.warn('Image load failed:', img.src)
+                //                     imageStates.set(img, 'error')
+                //                     img.style.opacity = '0'
+                //                     resolve()
+                //                 }, { once: true })
+                //             })
+                //         })
+
+                //         await Promise.race([
+                //             Promise.all(imageLoadPromises),
+                //             new Promise(resolve => setTimeout(resolve, 3000))
+                //         ])
+
+                //         // 이미지 캡처
+                //         let dataUrl = null
+                //         let retryCount = 0
+                //         const maxRetries = 3
+
+                //         while (!dataUrl && retryCount < maxRetries) {
+                //             try {
+                //                 dataUrl = await htmlToImage.toPng(container, {
+                //                     skipFonts: true,
+                //                     cacheBust: true,
+                //                     pixelRatio: 2,
+                //                     backgroundColor: '#ffffff',
+                //                     filter: node => {
+                //                         try {
+                //                             if (!node || !node.tagName) return true
+                //                             const hasNoPrintClass = node.classList && node.classList.contains('no-print')
+                //                             const hasVBtnClass = node.classList && node.classList.contains('v-btn')
+                //                             const isButton = node.tagName === 'BUTTON'
+                //                             if (node.tagName === 'IMG') {
+                //                                 const state = imageStates.get(node)
+                //                                 if (state === 'error') return false
+                //                             }
+                //                             return !(hasNoPrintClass || hasVBtnClass || isButton)
+                //                         } catch (err) {
+                //                             console.warn('Filter error for node:', err)
+                //                             return true
+                //                         }
+                //                     }
+                //                 })
+                //             } catch (err) {
+                //                 console.warn(`Capture attempt ${retryCount + 1} failed:`, err)
+                //                 retryCount++
+                //                 await new Promise(resolve => setTimeout(resolve, 500))
+                //             }
+                //         }
+
+                //         if (!dataUrl) {
+                //             throw new Error(`Failed to capture content for item ${index}`)
+                //         }
+
+                //         return {
+                //             dataUrl,
+                //             height: container.offsetHeight,
+                //             width: container.offsetWidth
+                //         }
+                //     })
+
+                //     const capturedImages = await Promise.all(pdfPromises)
+
+                //     // PDF 생성
+                //     const pdf = new jsPDF('p', 'mm', 'a4')
+                //     const pdfWidth = pdf.internal.pageSize.getWidth()
+                //     const pdfHeight = pdf.internal.pageSize.getHeight()
+                //     const margin = 10
+                //     const imgWidth = pdfWidth - (margin * 2)
+
+                //     // 각 이미지를 PDF에 추가
+                //     capturedImages.forEach((img, index) => {
+                //         if (index > 0) pdf.addPage()
+                        
+                //         const imgHeight = (img.height * imgWidth) / img.width
+                //         const maxHeight = pdfHeight - (margin * 2)
+
+                //         if (imgHeight > maxHeight) {
+                //             const pageCount = Math.ceil(imgHeight / maxHeight)
+                //             for (let i = 0; i < pageCount; i++) {
+                //                 if (i > 0) pdf.addPage()
+                //                 pdf.addImage(
+                //                     img.dataUrl,
+                //                     'PNG',
+                //                     margin,
+                //                     margin,
+                //                     imgWidth,
+                //                     maxHeight,
+                //                     undefined,
+                //                     'FAST',
+                //                     0,
+                //                     i * (img.height / pageCount) / img.height
+                //                 )
+                //             }
+                //         } else {
+                //             pdf.addImage(
+                //                 img.dataUrl,
+                //                 'PNG',
+                //                 margin,
+                //                 margin,
+                //                 imgWidth,
+                //                 imgHeight,
+                //                 undefined,
+                //                 'FAST'
+                //             )
+                //         }
+                //     })
+
+                //     const timestamp = new Date().toISOString().split('T')[0]
+                //     const filename = `event-storming-${this.projectId || timestamp}.pdf`
+                //     pdf.save(filename)
+
+                // } catch (error) {
+                //     console.error('PDF generation failed:', error)
+                //     this.snackbar = {
+                //         show: true,
+                //         text: "PDF generation failed: " + (error.message || 'Unknown error'),
+                //         color: "error",
+                //         timeout: 3000
+                //     }
+                // } finally {
+                //     // 원래 상태로 복구
+                //     const pdfItems = this.$refs.dialogContainer.querySelectorAll('.pdf-content-item')
+                //     pdfItems.forEach(container => {
+                //         const images = container.getElementsByTagName('img')
+                //         Array.from(images).forEach(img => {
+                //             img.style.opacity = ''
+                //         })
+                //     })
+                //     this.isPDFGenerating = false
+                // }
             }
         }
     }
