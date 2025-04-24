@@ -112,6 +112,8 @@
                                 dense
                                 :hint="getFieldHint(field)"
                                 persistent-hint
+                                :error-messages="getInputError(apiSetting.modelType, apiSetting.vendor, field)"
+                                :success-messages="getSuccessMessage(apiSetting.modelType, apiSetting.vendor, field)"
                             ></v-text-field>
                         </div>
                         
@@ -231,7 +233,8 @@ export default {
             },
             modelEnabled: {},
             MODEL_FLAGS: {},
-            previousSelections: {}
+            previousSelections: {},
+            inputErrors: {}
         }
     },
     computed: {
@@ -292,6 +295,7 @@ export default {
                         const storageKey = this.getStorageKey(modelType, vendor, field);
                         const storedValue = localStorage.getItem(storageKey) || "";
                         this.$set(this.inputValues, storageKey, storedValue);
+                        this.validateInput(modelType, vendor, field, storedValue);
                     });
                  }
             });
@@ -480,10 +484,10 @@ export default {
         getInputFieldPlaceholder(field) {
             return {
                 api_key_openai: "sk-...",
-                api_key_anthropic: "sk-...",
+                api_key_anthropic: "sk-ant-...",
                 api_key_google: "",
                 baseURL: "https://api.example.com",
-                apiKey: "sk-...",
+                apiKey: "",
                 modelID: "gpt-4o",
                 contextWindowTokenLimit: "16385",
                 outputTokenLimit: "4096"
@@ -514,6 +518,7 @@ export default {
                 const storageKey = this.getStorageKey(modelType, vendor, field);
                 localStorage.setItem(storageKey, value);
                 this.$set(this.inputValues, storageKey, value);
+                this.validateInput(modelType, vendor, field, value);
             }
 
             const apiKeySettingKey = vendor === 'openaiCompatible' ? `${modelType}_${vendor}` : vendor;
@@ -613,7 +618,11 @@ export default {
         canTestApiKey(modelType, vendor) {
             const vendorInputOptions = ModelInfoHelper.getVendorInputOptions();
             const fields = vendorInputOptions[vendor] || [];
-            return fields.every(field => !!this.getStoredInputValue(modelType, vendor, field));
+            return fields.every(field => {
+                const value = this.getStoredInputValue(modelType, vendor, field);
+                const error = this.getInputError(modelType, vendor, field);
+                return !!value && !error;
+            });
         },
         
         async testApiKey(modelType, vendor) {
@@ -710,6 +719,7 @@ export default {
             this.apiKeyTestStatus = {};
             this.apiKeyTestLoading = {};
             this.loadData(); // Reset 후 데이터 다시 로드
+            this.inputErrors = {}; // Reset errors on default reset
 
             this.snackbar = {
                 show: true,
@@ -721,6 +731,39 @@ export default {
         onConfirm() {
             ModelInfoHelper.saveDefaultOptions();
             this.$emit('onConfirm');
+        },
+
+        validateInput(modelType, vendor, field, value) {
+            const storageKey = this.getStorageKey(modelType, vendor, field);
+            let errorMessage = null;
+
+            if (field === 'api_key_openai') {
+                if (value && !value.startsWith('sk-')) {
+                    errorMessage = this.$t('aiModelSetting.validation.invalidOpenAIKey');
+                }
+            } else if (field === 'api_key_anthropic') {
+                if (value && !value.startsWith('sk-ant-')) {
+                    errorMessage = this.$t('aiModelSetting.validation.invalidAnthropicKey');
+                }
+            }
+
+            this.$set(this.inputErrors, storageKey, errorMessage);
+        },
+
+        getInputError(modelType, vendor, field) {
+            const storageKey = this.getStorageKey(modelType, vendor, field);
+            return this.inputErrors[storageKey] || '';
+        },
+
+        getSuccessMessage(modelType, vendor, field) {
+            const storageKey = this.getStorageKey(modelType, vendor, field);
+            const value = this.inputValues[storageKey];
+            const error = this.inputErrors[storageKey];
+
+            if ((field === 'api_key_openai' || field === 'api_key_anthropic') && value && !error) {
+                return this.$t('aiModelSetting.validation.validKey');
+            }
+            return '';
         }
     }
 }

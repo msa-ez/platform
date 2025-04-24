@@ -585,6 +585,11 @@
       "modelID": "Model ID",
       "contextWindowTokenLimit": "Context Window Tokens",
       "outputTokenLimit": "Output Tokens Limit"
+    },
+    "validation": {
+      "invalidOpenAIKey": "Invalid OpenAI API key. Please check your API key.",
+      "invalidAnthropicKey": "Invalid Anthropic API key. Please check your API key.",
+      "validKey": "API key is valid."
     }
   }
 }

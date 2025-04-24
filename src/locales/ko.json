@@ -589,6 +589,11 @@
       "modelID": "모델 ID",
       "contextWindowTokenLimit": "컨텍스트 윈도우 토큰 제한",
       "outputTokenLimit": "출력 토큰 제한"
+    },
+    "validation": {
+      "invalidOpenAIKey": "OpenAI API 키가 유효하지 않습니다. 다시 확인해주세요.",
+      "invalidAnthropicKey": "Anthropic API 키가 유효하지 않습니다. 다시 확인해주세요.",
+      "validKey": "API 키가 유효합니다."
     }
   }
 }
