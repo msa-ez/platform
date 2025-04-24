@@ -127,11 +127,6 @@ class BaseAPIClient {
 
 
     async generate(generateOption) {
-        if(!localStorage.getItem('thinkingModel') || !localStorage.getItem('normalModel')){
-            store.dispatch('ai/checkAiModelSettings');
-            throw new AiModelSettingError();
-        }
-
         const g = this.aiGenerator
     
         if(g.lockKey) {

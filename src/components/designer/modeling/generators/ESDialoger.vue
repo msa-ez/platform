@@ -1,28 +1,5 @@
 <template>
-    <div style="margin-top: 10px;">
-        <div>
-            <v-col class="auto-modeling-message-box">
-                <v-card class="auto-modeling-message-card">
-                    <v-card-text class="auto-modeling-message">
-                        <vue-typed-js
-                                :strings="[$t('autoModeling.isModelSelectMessage')]"
-                                :typeSpeed="10"
-                                :showCursor="false"
-                                @onComplete="state.AIModelSelectMessageIsTyping = false"
-                        >
-                            <span class="typing"></span>
-                        </vue-typed-js>
-                    </v-card-text>
-                </v-card>
-            </v-col>
-        </div>
-        <div style="display: flex; flex-direction: column;" v-if="!state.AIModelSelectMessageIsTyping">
-            <AIModelSetting 
-                @onConfirm="generateUserStory();" 
-                :isUserStoryUIMode="true"
-            />
-        </div>
-        
+    <div style="margin-top: 10px;">        
         <div>
             <v-col class="auto-modeling-message-box" style="margin-top: 20px;">
                 <v-card v-if="state.isAIModelSelected" class="auto-modeling-message-card">
@@ -722,6 +699,7 @@ import { value } from 'jsonpath';
             })
             
             me.loadAllRepoList()
+            me.generateUserStory();
         },
         data() {
             return {
@@ -729,7 +707,6 @@ import { value } from 'jsonpath';
                 autoModel: null,
                 state:{
                     generator: "EventOnlyESGenerator", // EventOnlyESGenerator
-                    AIModelSelectMessageIsTyping: true,
                     isAIModelSelected: false,
                     firstMessageIsTyping: true,
                     secondMessageIsTyping: true,

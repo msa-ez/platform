@@ -676,6 +676,7 @@
                   @onClose="closeAiModelSettingDialog"
                   :isUserStoryUIMode="false"
                   :errorMessage="aiSettingsErrorMessage"
+                  :isVisible="showAiModelSettingDialog"
                 >
                 </AIModelSetting>
             </v-card>
@@ -866,6 +867,7 @@
                 {key: 'manager', display: `loginList.purchaseList`},
                 {key: 'getCoin', display: `loginList.CoinsCoupons`},
                 {key: 'payQuestion', display: `loginList.inquiry`},
+                {key: 'aiModelSetting', display: "loginList.aiModelSetting"},
                 {key: 'logout', display: `loginList.logout`}
             ],
             loginText: 'Login',
@@ -1990,6 +1992,8 @@
                         }
                     } else if (key == 'payQuestion') {
                         alert("'help@uengine.org' 으로 메일 문의 바랍니다. ") 
+                    } else if (key == 'aiModelSetting') {
+                        me.openAiModelSettingDialog()
                     } else {
                         console.log("app")
                         if (me.isLogin) {
@@ -2223,6 +2227,10 @@
             dragStop() {
                 var me = this;
                 me.isDragging = false;
+            },
+            openAiModelSettingDialog() {
+                this.showAiModelSettingDialog = true;
+                this.setAiSettingsRequired(true);
             },
             handleAiSettingsConfirm() {
                 this.closeAiModelSettingDialog();

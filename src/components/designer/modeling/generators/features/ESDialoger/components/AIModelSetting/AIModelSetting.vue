@@ -213,6 +213,10 @@ export default {
         errorMessage: {
             type: String,
             default: ''
+        },
+        isVisible: {
+            type: Boolean,
+            default: false
         }
     },
     data() {
@@ -274,11 +278,20 @@ export default {
         this.loadData();
         this.loadSvgIcons();
     },
+    watch: {
+        isVisible(newVal) {
+            if (newVal === true) {
+                this.loadData();
+            }
+        }
+    },
     methods: {
         loadData() {
             this.MODEL_FLAGS = ModelInfoHelper.getDefaultOptions().MODEL_FLAGS;
             this.selectableOptions = ModelInfoHelper.getSelectableOptions();
             this.selectedModels = ModelInfoHelper.getSelectedOptions();
+            this.inputErrors = {};
+            this.apiKeyTestStatus = {};
             this.initModelEnabledState();
             this.loadInputValues();
         },
