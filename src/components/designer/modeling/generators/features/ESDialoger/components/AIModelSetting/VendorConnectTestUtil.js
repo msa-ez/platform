@@ -97,6 +97,35 @@ class VendorConnectTestUtil {
                 } catch (error) {
                     return false;
                 }
+            },
+
+            // OpenAI Compatible 연결 테스트
+            "openaiCompatible": async () => {
+                try {
+                    if(params.baseURL.startsWith("https://")) {
+                        const response = await fetch(`${params.baseURL}/v1/models`, {
+                            method: "GET",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "Authorization": "Bearer " + params.apiKey
+                            }
+                        });
+                        return response.ok;
+                    } else {
+                        const response = await fetch("http://localhost:4000/proxy/request", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "param-url": `${params.baseURL}/v1/models`,
+                                "param-is-use-agent": "false",
+                                "param-method": "GET"
+                            }
+                        });
+                        return response.ok;
+                    }
+                } catch (error) {
+                    return false;
+                }
             }
         }
 

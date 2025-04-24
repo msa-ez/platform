@@ -543,8 +543,13 @@
       "api_key_anthropic": "Get your API key from the Anthropic console",
       "api_key_google": "Get your API key from the Google Cloud console",
       "api_key_runpod": "Get your API key from the RunPod dashboard",
-      "runpodUrl": "Example: https://<your-pod-id>-8000.proxy.runpod.net",
-      "ollamaUrl": "Example: http://localhost:11434"
+      "runpodUrl": "e.g. https://<your-pod-id>-8000.proxy.runpod.net",
+      "ollamaUrl": "e.g. http://localhost:11434",
+      "baseURL": "e.g. https://api.example.com",
+      "apiKey": "An authentication key used to access the API endpoint. You can obtain it from the service provider’s dashboard.",
+      "modelID": "The unique identifier of the specific AI model you want to use. For example: 'gpt-4', 'claude-3-opus-20240229'.",
+      "contextWindowTokenLimit": "The maximum number of tokens (input + output) the model can process in a single request. This affects model performance and cost.",
+      "outputTokenLimit": "The maximum number of tokens the model can generate in its response. If set too low, responses may be cut off."
     },
     "apiKeyTest": {
       "success": "{vendor} connection test successful!",
@@ -556,7 +561,8 @@
       "apiKeySettings": "API Key Settings",
       "connectionTest": "Connection Test",
       "vendorInputTip": "Once you select a model, the required API key will be displayed",
-      "confirm": "Create User Story",
+      "confirm_user_story": "Create User Story",
+      "confirm_ok": "OK",
       "close": "Close",
       "enabled": "Enabled",
       "disabled": "Disabled",
@@ -568,6 +574,17 @@
     },
     "alert": {
       "resetConfirm": "Are you sure you want to reset model settings?"
+    },
+    "inputLabel": {
+      "api_key_openai": "OpenAI API Key",
+      "api_key_anthropic": "Anthropic API Key",
+      "api_key_google": "Google Cloud API Key",
+      "api_key_runpod": "RunPod API Key",
+      "baseURL": "API Base URL",
+      "apiKey": "API Key",
+      "modelID": "Model ID",
+      "contextWindowTokenLimit": "Context Window Tokens",
+      "outputTokenLimit": "Output Tokens Limit"
     }
   }
 }

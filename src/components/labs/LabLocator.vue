@@ -3,7 +3,7 @@
         <v-tooltip v-if="naviIndex == 0" right>
             <template v-slot:activator="{ on, attrs }">
                 <v-card
-                    style="position: fixed; left:20px; top:70px; z-index: 1; width:48px; height:26px; display: flex; align-items: center; justify-content: center;"
+                    style="position: fixed; left:20px; top:70px; z-index: 101; width:48px; height:26px; display: flex; align-items: center; justify-content: center;"
                     v-bind="attrs"
                     v-on="on"
                     @click="resizeGuide()"
@@ -186,7 +186,7 @@
                     clipped
                     stateless
                     :width="naviSize"
-                    style="z-index:99;"
+                    style="z-index:1000;"
             >
                 <!-- 비디오 추가 -->
                 <v-dialog v-model="openVideoTextfield" width="400">
@@ -419,7 +419,8 @@
                             <span v-else>출석처리가 되려면 3분을 기다려야 합니다</span>
                         </v-tooltip>
                     </div>
-
+                    
+                    <v-divider></v-divider>
 
                     <v-navigation-drawer
                             v-model="menuOpen"
@@ -577,7 +578,6 @@
                                 <v-btn color="primary" @click="sendUrl(urlText)">send</v-btn>
                             </div>
                         </v-col> -->
-                        <v-divider></v-divider>
                         <v-col v-if="opentextfield" style="margin-top:25px;">
                             <vue-simplemde style="overflow:scroll;" v-model="instructionText" ref="markdownEditor"/>
                         </v-col>
@@ -3170,8 +3170,9 @@
 <style>
     .lab-locator-fixed {
         position: sticky;
+        top: 0;
         background-color: white;
-        z-index: 99;
+        z-index: 100;
         width: 99.8%;
         padding-top: 8px;
     }

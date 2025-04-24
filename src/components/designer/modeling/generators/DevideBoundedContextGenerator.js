@@ -304,6 +304,11 @@ Relation Guidelines:
                     model['cotThink'] = this.parsedTexts.think
                 }
 
+                model['boundedContexts'].forEach(boundedContext => {
+                    if(!boundedContext['events']) boundedContext['events'] = []
+                    if(!boundedContext['requirements']) boundedContext['requirements'] = []
+                })
+
                 return model;
             }else{
                 let model = {

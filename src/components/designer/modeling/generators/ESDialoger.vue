@@ -17,7 +17,10 @@
             </v-col>
         </div>
         <div style="display: flex; flex-direction: column;" v-if="!state.AIModelSelectMessageIsTyping">
-            <AIModelSetting @onConfirm="generateUserStory();" />
+            <AIModelSetting 
+                @onConfirm="generateUserStory();" 
+                :isUserStoryUIMode="true"
+            />
         </div>
         
         <div>
@@ -207,6 +210,10 @@
         PreProcessingFunctionsGenerator,
         DraftGeneratorByFunctions 
     } from '../../modeling/generators/es-generators';
+
+    import {
+        LocalStorageCleanUtil
+    } from './utils'
     
     import DevideBoundedContextGenerator from './DevideBoundedContextGenerator.js'
 
@@ -1533,6 +1540,8 @@ import { value } from 'jsonpath';
 
                 try {
 
+                    LocalStorageCleanUtil.clean()
+
                     if(!this.value.modelList){
                         this.value.modelList = []
                     }
@@ -1553,19 +1562,6 @@ import { value } from 'jsonpath';
                 catch(e) {
 
                     console.log("[*] 생성 준비를 위한 입력값 구축과정에서 에러 발생", {error: e, state: this.state})
-
-                    if(e.name=="QuotaExceededError"){
-                        let keys = Object.keys(localStorage);
-
-                        for (let i = 0; i < keys.length; i++) {
-                            let key = keys[i];
-                            if(key.includes('image_')) {
-                                localStorage.removeItem(key);
-                            }
-                        }
-
-                        this.generateFromAggregateDrafts(draftOptions)
-                    }
 
                 }
             },

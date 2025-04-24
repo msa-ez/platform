@@ -1,7 +1,8 @@
 const { COUNTRY_CODE_LANG_MAP, DEFAULT_LANG, REQUEST_ARG_KEYS } = require("./contants");
 const { ModelInfoHelper } = require("../helpers")
 const { HashUtil, RequestUtil, TokenUtil } = require("../utils")
-const { GeneratorLockKeyError, TokenNotInputedError } = require("../../../errors")
+const { GeneratorLockKeyError, TokenNotInputedError, AiModelSettingError } = require("../../../errors")
+const store = require("../../../../../../../store").default;
 
 
 let previousRequestInfos = []
@@ -43,14 +44,15 @@ let previousResponseInfos = []
  *   보안 및 데이터 관리 정책에 유의해야 합니다.
  */
 class BaseAPIClient {
-    constructor(client, options, model, aiGenerator) {
+    constructor(client, options, modelOptionDto, aiGenerator) {
         this.aiGenerator = aiGenerator;
         const g = this.aiGenerator
 
 
         Object.assign(g, {
             client,
-            model,
+            model: modelOptionDto.modelID,
+            modelOptionDto: modelOptionDto,
             preferredLanguage: this.getPreferredLanguage(),
             partedResponseCount: 0,
             responseLimit: 15,
@@ -83,10 +85,7 @@ class BaseAPIClient {
                 g.extraOptions.requestArgs[key] = g[key]
         })
 
-        g.modelInfo = ModelInfoHelper.getModelInfo(
-            g.model,
-            g.extraOptions
-        )
+        g.modelInfo = modelOptionDto.modelInfos
 
         g.roleNames = {
             system: "system",
@@ -129,6 +128,11 @@ class BaseAPIClient {
 
 
     async generate(generateOption) {
+        if(!localStorage.getItem('thinkingModel') || !localStorage.getItem('normalModel')){
+            store.dispatch('ai/checkAiModelSettings');
+            throw new AiModelSettingError();
+        }
+
         const g = this.aiGenerator
     
         if(g.lockKey) {

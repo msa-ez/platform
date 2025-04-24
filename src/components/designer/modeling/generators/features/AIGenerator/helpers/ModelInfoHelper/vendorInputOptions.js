@@ -8,11 +8,11 @@ export const vendorInputOptions = {
     "google": [
         "api_key_google",
     ],
-    "runpod": [
-        "api_key_runpod",
-        "runpodUrl"
-    ],
-    "ollama": [
-        "ollamaUrl"
+    "openaiCompatible": [
+        "baseURL",
+        "apiKey",
+        "modelID",
+        "contextWindowTokenLimit",
+        "outputTokenLimit"
     ]
 }

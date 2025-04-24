@@ -14,7 +14,8 @@
             elevation="0"
             app
             fixed
-            style="left:0px; background-color:transparent; z-index:1; height: 64px;"
+            class="gs-main-top-app-bar"
+            :style="isRootPage ? 'background-color: white !important;' : ''"
         >
 
             <v-toolbar-title class="ml-0 pl-3" style="height: 64px; width: 140px; overflow: visible;">
@@ -662,6 +663,24 @@
             </v-card>
         </v-dialog>
 
+        <!-- AI 모델 설정 다이얼로그 -->
+        <v-dialog
+                v-model="showAiModelSettingDialog"
+                max-width="800px"
+                persistent
+                @click:outside="closeAiModelSettingDialog"
+        >
+            <v-card style="width:100%;">
+                <AIModelSetting 
+                  @onConfirm="handleAiSettingsConfirm" 
+                  @onClose="closeAiModelSettingDialog"
+                  :isUserStoryUIMode="false"
+                  :errorMessage="aiSettingsErrorMessage"
+                >
+                </AIModelSetting>
+            </v-card>
+        </v-dialog>
+
         <!-- Snackbar insert info -->
         <v-snackbar
                 v-model="snackbar"
@@ -752,6 +771,8 @@
     import SubscriptionItemTemplate from "./components/payment/SubscriptionItemTemplate";
     const fs = require('fs');
     import Draggable from 'vue-draggable';
+    import AIModelSetting from './components/designer/modeling/generators/features/ESDialoger/components/AIModelSetting/AIModelSetting.vue';
+    import { mapState, mapMutations } from 'vuex';
 
     export default {
         name: 'App',
@@ -965,7 +986,7 @@
             offsetX: 0,
             offsetY: 0,
             makingDialog: null,
-
+            showAiModelSettingDialog: false
         }),
         components: {
             SubscriptionItemTemplate,
@@ -979,10 +1000,15 @@
             RefundItem,
             VueContext,
             LogoView,
+            AIModelSetting,
         },
         // beforeMount(){
         // },
         computed: {
+            ...mapState({
+                isAiSettingsRequired: state => state.ai.isAiSettingsRequired,
+                aiSettingsErrorMessage: state => state.ai.aiSettingsErrorMessage
+            }),
             isRootPage() {
                 return this.$route.path === "/";
             },
@@ -1200,6 +1226,11 @@
             },
             "iFrame": function (newVal) {
                 console.log('iFrame', newVal)
+            },
+            isAiSettingsRequired(newVal) {
+                if (newVal) {
+                    this.showAiModelSettingDialog = true;
+                }
             }
         },
             "editorData":
@@ -1498,6 +1529,9 @@
 
         },
         methods: {
+            ...mapMutations({
+                setAiSettingsRequired: 'ai/SET_AI_SETTINGS_REQUIRED'
+            }),
             toggleBeta() {
                 this.showBeta = !this.showBeta;
             },
@@ -2189,6 +2223,13 @@
             dragStop() {
                 var me = this;
                 me.isDragging = false;
+            },
+            handleAiSettingsConfirm() {
+                this.closeAiModelSettingDialog();
+            },
+            closeAiModelSettingDialog() {
+                this.showAiModelSettingDialog = false;
+                this.setAiSettingsRequired(false);
             }
         }
     }

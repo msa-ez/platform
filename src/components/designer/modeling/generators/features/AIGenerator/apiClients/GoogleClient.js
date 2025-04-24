@@ -12,7 +12,8 @@ class GoogleClient extends BaseAPIClient {
     let requestData = {
       generationConfig: {
         temperature: modelInfo.requestArgs.temperature
-      }
+      },
+      ...(modelInfo.customArgs ? modelInfo.customArgs : {})
     }
 
     if(messages[0].role === "system"){

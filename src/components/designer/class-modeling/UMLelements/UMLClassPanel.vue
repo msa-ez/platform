@@ -1,6 +1,6 @@
 <template>
     <v-layout wrap>
-        <v-navigation-drawer absolute permanent right width="500">
+        <v-navigation-drawer absolute permanent right width="500" style="z-index: 102;">
             <v-list class="pa-1">
                 <v-list-item>
                     <v-list-item-avatar>
