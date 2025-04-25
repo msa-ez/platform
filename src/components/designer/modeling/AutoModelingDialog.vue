@@ -4,7 +4,7 @@
             class="mx-auto auto-modeling-dialog-card"
             outlined
         >
-            <v-row class="justify-start main-auto-modeling-chip-row">
+            <v-row class="justify-start auto-modeling-chip-box">
                 <v-col class="text-center pa-0">
                     <v-chip class="main-auto-modeling-chip"
                         v-for="(inputAutoModelingChip, index) in setAutoModelingTextChips"
@@ -15,7 +15,7 @@
                     </v-chip>
                 </v-col>
             </v-row>
-            <v-card-text class="pt-3 pb-2" style="font-weight: 500;">
+            <v-card-text class="pt-2 pb-2" style="font-weight: 500;">
                 <v-textarea
                     class="auto-modeling-text delete-input-detail"
                     v-model="projectInfo.prompt"
@@ -1378,6 +1378,10 @@
     }
 </script>
 <style>
+.auto-modeling-chip-box {
+    margin: 0px;
+    padding: 8px 8px 0px 8px;
+}
 .auto-modeling-input-textarea .v-input__slot {
     box-shadow: none !important;
     border-bottom: none !important;
@@ -1388,22 +1392,20 @@
     opacity: 0.8;
     border-width: 1.5px;
 }
-.main-auto-modeling-chip-row { 
-    padding:10px 0px 5px 10px;
-    margin:0px 0px -5px 0px;
-}
 
 .auto-modeling-dialog-card {
     max-width: 70%;
     background-color: aliceblue !important;
 }
 
-@media only screen and (max-width:672px) {
+@media only screen and (max-width:599px) {
     .main-auto-modeling-chip {
-        margin-top:10px;
+        margin-top:8px;
     }
-    .main-auto-modeling-chip-row { 
-        padding:0px 0px 0px 10px;
+
+    .auto-modeling-chip-box {
+        margin: 0px;
+        padding: 0px 8px 0px 8px;
     }
 
     .auto-modeling-dialog-card {
