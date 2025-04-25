@@ -214,7 +214,7 @@ Inference Guidelines:
         "events": [
             {
                 "name": "<name>",
-                "description": "<description>",
+                "description": "<only description of the event>",
                 "displayName": "<displayName>"
             }
         ]

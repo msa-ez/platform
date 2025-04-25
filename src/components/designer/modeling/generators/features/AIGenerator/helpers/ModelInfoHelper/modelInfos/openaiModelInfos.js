@@ -1,13 +1,14 @@
 export const openaiModelInfos = {
-    // 가능한 설정 옵션들: o3-mini-2025-01-31, o3-mini, o3-mini-2025-01-31-medium, o3-mini-2025-01-31-high
-    "o3-mini": { 
-        label: "O3-Mini",
-        defaultValue: "o3-mini-2025-01-31",
+    // 가능한 설정 옵션들: o4-mini-2025-04-16, o4-mini-2025-04-16-high
+    "o4-mini": { 
+        label: "O4-Mini",
+        defaultValue: "o4-mini-2025-04-16",
         vendor: "openai",
         contextWindowTokenLimit: 200000,
         outputTokenLimit: 100000,
         outputTokenLimitReasoningMargin: 25000,
         isInferenceModel: true,
+        isSupportedResponseFormat: true,
         requestArgs: {
             reasoningEffort: "medium",
             frequencyPenalty: 0,
@@ -15,22 +16,22 @@ export const openaiModelInfos = {
         },
         transforms: {
             "-high": {
-                label: "O3-Mini-High",
-                defaultValue: "o3-mini-2025-01-31-high",
+                label: "O4-Mini-High",
+                defaultValue: "o4-mini-2025-04-16-high",
                 requestArgs: {
                     reasoningEffort: "high"
                 }
             },
             "-medium": {
-                label: "O3-Mini-Medium",
-                defaultValue: "o3-mini-2025-01-31-medium",
+                label: "O4-Mini-Medium",
+                defaultValue: "o4-mini-2025-04-16-medium",
                 requestArgs: {
                     reasoningEffort: "medium"
                 }
             },
             "-low": {
-                label: "O3-Mini-Low",
-                defaultValue: "o3-mini-2025-01-31-low",
+                label: "O4-Mini-Low",
+                defaultValue: "o4-mini-2025-04-16-low",
                 requestArgs: {
                     reasoningEffort: "low"
                 }
@@ -38,31 +39,17 @@ export const openaiModelInfos = {
         }
     },
 
-    // 가능한 설정 옵션들: gpt-4o-2024-11-20, gpt-4o-2024-08-06, gpt-4o
-    "gpt-4o": {
-        label: "GPT-4o",
-        defaultValue: "gpt-4o-2024-11-20",
+    // 가능한 설정 옵션들: gpt-4.1-2025-04-14
+    "gpt-4.1": {
+        label: "GPT-4.1",
+        defaultValue: "gpt-4.1-2025-04-14",
         vendor: "openai",
-        contextWindowTokenLimit: 128000,
-        outputTokenLimit: 16384,
+        contextWindowTokenLimit: 1047576,
+        outputTokenLimit: 32768,
+        isSupportedResponseFormat: true,
         requestArgs: {
-            temperature: 0.7,
-            topP: 1,
-            frequencyPenalty: 0,
-            presencePenalty: 0
-        }
-    },
-
-    // 가능한 설정 옵션들: gpt-4o-mini-2024-07-18
-    "gpt-4o-mini": {
-        label: "GPT-4o-Mini",
-        defaultValue: "gpt-4o-mini-2024-07-18",
-        vendor: "openai",
-        contextWindowTokenLimit: 128000,
-        outputTokenLimit: 16384,
-        requestArgs: {
-            temperature: 0.7,
-            topP: 1,
+            temperature: 1.0,
+            topP: 0.9,
             frequencyPenalty: 0,
             presencePenalty: 0
         }

@@ -18,7 +18,8 @@ class OllamaClient extends BaseAPIClient {
       stream: true,
       options: {
         temperature: modelInfo.requestArgs.temperature
-      }
+      },
+      ...(modelInfo.customArgs ? modelInfo.customArgs : {})
     }
 
     const ollamaUrl = localStorage.getItem("ollamaUrl") || "http://127.0.0.1:11434"

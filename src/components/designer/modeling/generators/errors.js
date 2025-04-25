@@ -14,6 +14,12 @@ class TokenNotInputedError extends GeneratorError {
     }
 }
 
+class AiModelSettingError extends GeneratorError {
+    constructor(message = "AI 모델 설정이 필요합니다. 설정 다이얼로그 표시 요청...") {
+        super(message);
+    }
+}
+
 class GeneratorLockKeyError extends GeneratorError {
     constructor(message = "현재 다른 요청이 진행 중입니다. 잠시 후 다시 시도해 주세요.") {
         super(message);
@@ -31,5 +37,6 @@ module.exports = {
     GeneratorError,
     GeneratorLockKeyError,
     GeneratorNetworkError,
-    TokenNotInputedError
+    TokenNotInputedError,
+    AiModelSettingError
 }

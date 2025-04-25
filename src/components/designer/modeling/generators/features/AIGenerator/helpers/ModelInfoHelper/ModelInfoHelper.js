@@ -1,6 +1,7 @@
 const { modelInfos } = require("./modelInfos");
 const getDefaultOptions = require("../../apiClients/getDefaultOptions");
 const { vendorInputOptions } = require("./vendorInputOptions");
+const ModelOptionDto = require('../ModelOptionDto');
 
 class ModelInfoHelper {
     
@@ -102,9 +103,14 @@ class ModelInfoHelper {
     }
 
     static getSelectableOptions() {
+        const labelsToExclude = ["O4-Mini"];
+
+
         let options = [];
         
         Object.entries(this.modelInfos).forEach(([modelKey, modelInfo]) => {
+            if (modelInfo.vendor === 'ollama' || modelInfo.vendor === 'runpod') return;
+
             if (modelInfo.transforms && typeof modelInfo.transforms === 'object') {
                 Object.entries(modelInfo.transforms).forEach(([transformKey, transformInfo]) => {
                     options.push({
@@ -118,15 +124,21 @@ class ModelInfoHelper {
 
             options.push({
                 label: modelInfo.label,
-                defaultValue: modelInfo.defaultValue,
+                defaultValue: modelInfo.defaultValue || modelKey,
                 vendor: modelInfo.vendor,
                 isInferenceModel: modelInfo.isInferenceModel
             });
         });
-        // 이미 Low, Medium, High 옵션이 있으므로 제외함
-        options = options.filter(option => option.label !== "O3-Mini");
+
+        options = options.filter(option => !labelsToExclude.includes(option.label));
+        options.push({
+            label: "OpenAI Compatible",
+            defaultValue: "openaiCompatible",
+            vendor: "openaiCompatible",
+            isInferenceModel: null
+        });
         
-        const vendorOrder = ['openai', 'anthropic', 'google', 'ollama', 'runpod'];
+        const vendorOrder = ['openai', 'anthropic', 'google', 'openaiCompatible'];
         options.sort((a, b) => {
             const indexA = vendorOrder.indexOf(a.vendor);
             const indexB = vendorOrder.indexOf(b.vendor);
@@ -142,30 +154,88 @@ class ModelInfoHelper {
 
     static getSelectedOptions() {
         const defaultOptions = getDefaultOptions();
+        const selectedOptions = {};
 
-        let selectedOptions = {}
-        for(const key of Object.keys(defaultOptions)) {
-            if(key === "MODEL_FLAGS") continue;
+        for (const key of Object.keys(defaultOptions)) {
+            if (key === "MODEL_FLAGS") continue;
 
-            const modelName = defaultOptions[key];
-            if(modelName === defaultOptions.MODEL_FLAGS.NOT_USED)
+            const loadedOption = defaultOptions[key];
+
+            if (loadedOption === defaultOptions.MODEL_FLAGS.NOT_USED) {
                 selectedOptions[key] = defaultOptions.MODEL_FLAGS.NOT_USED;
-            else
-                selectedOptions[key] = this.getModelInfo(modelName);
-        }
+            } else if (loadedOption instanceof ModelOptionDto) {
+                try {
+                    if (loadedOption.modelID && loadedOption.vendor !== 'openaiCompatible' &&
+                        (!loadedOption.vendor || !loadedOption.modelInfos) 
+                    ) {
+                        const modelInfo = this.getModelInfo(loadedOption.modelID);
+                        loadedOption.vendor = modelInfo.vendor;
+                        loadedOption.modelInfos = { ...modelInfo, ...loadedOption.modelInfos };
+                        loadedOption.modelParameters = { ...modelInfo.requestArgs };
+                    } else if (loadedOption.vendor === 'openaiCompatible') {
+                        loadedOption.modelInfos = { 
+                            contextWindowTokenLimit: 16385,
+                            outputTokenLimit: 4096,
+                            inputTokenLimitMargin: 1000,
+                            outputTokenLimitReasoningMargin: 0,
+                            isInferenceModel: false,
+                            requestArgs: {},
+                            transforms: {},
+                            useThinkParseStrategy: false,
+                            defaultTokenizerWeight: 1.00,
+                            defaultEncoder: "cl100k_base",
+                            vendor: 'openaiCompatible',
+                            requestModelName: loadedOption.modelID || 'compatible-model',
+                            ...loadedOption.modelInfos
+                        };
+                        loadedOption.modelParameters = loadedOption.modelParameters || {};
 
-        return structuredClone(selectedOptions);
+                        loadedOption.modelInfos.inputTokenLimit = loadedOption.modelInfos.contextWindowTokenLimit - loadedOption.modelInfos.outputTokenLimit - loadedOption.modelInfos.inputTokenLimitMargin
+                        if(loadedOption.modelInfos.isInferenceModel)
+                            loadedOption.modelInfos.outputTokenLimit = loadedOption.modelInfos.outputTokenLimit - loadedOption.modelInfos.outputTokenLimitReasoningMargin
+                    }
+                    selectedOptions[key] = loadedOption;
+                } catch (error) {
+                    console.error(`Error processing model option for ${key} (modelID: ${loadedOption.modelID}):`, error);
+                    selectedOptions[key] = defaultOptions.MODEL_FLAGS.NOT_USED;
+                    localStorage.removeItem(key);
+                }
+            } else {
+                console.warn(`Unexpected value loaded for ${key}:`, loadedOption);
+                selectedOptions[key] = defaultOptions.MODEL_FLAGS.NOT_USED;
+            }
+        }
+        // DTO 인스턴스를 유지하기 위해 그대로 반환
+        return selectedOptions;
     }
 
-    static setSelectedOptions(modelType, modelName) {
+    static setSelectedOptions(modelType, optionData) {
         const defaultOptions = getDefaultOptions();
-        if(!Object.keys(defaultOptions).includes(modelType))
+        if (!Object.keys(defaultOptions).includes(modelType)) {
             throw new Error(`Invalid model type: ${modelType}`);
+        }
 
-        if(modelName && modelName !== defaultOptions.MODEL_FLAGS.NOT_USED)
-            this.getModelInfo(modelName); // 모델 정상 로드 여부 확인
-
-        localStorage.setItem(modelType, modelName);
+        if (optionData === defaultOptions.MODEL_FLAGS.NOT_USED) {
+            localStorage.setItem(modelType, defaultOptions.MODEL_FLAGS.NOT_USED);
+        } else if (optionData instanceof ModelOptionDto) {
+            if(optionData.modelInfos && optionData.modelInfos.transforms) delete optionData.modelInfos.transforms
+            optionData.saveTo(modelType);
+        } else if (typeof optionData === 'string' && optionData !== defaultOptions.MODEL_FLAGS.NOT_USED) {
+            try {
+                const modelInfo = this.getModelInfo(optionData);
+                const dto = new ModelOptionDto({
+                    vendor: modelInfo.vendor,
+                    modelID: optionData,
+                    modelInfos: modelInfo,
+                    modelParameters: modelInfo.requestArgs || {}
+                });
+                dto.saveTo(modelType);
+            } catch (error) {
+                throw new Error(`Failed to set model ${optionData} for ${modelType}: ${error.message}`);
+            }
+        } else {
+             throw new Error(`Invalid option data provided for ${modelType}`);
+        }
     }
 
     static getVendorInputOptions() {
@@ -187,6 +257,13 @@ class ModelInfoHelper {
         return this.getSelectedOptions();
     }
 
+    static saveDefaultOptions() {
+        const defaultOptions = ModelInfoHelper.getDefaultOptions();
+        Object.keys(defaultOptions).forEach(modelType => {
+            if(modelType !== "MODEL_FLAGS" && !localStorage.getItem(modelType))
+                ModelInfoHelper.setSelectedOptions(modelType, defaultOptions[modelType]);
+        });
+    }
 }
 ModelInfoHelper.modelInfos = modelInfos;
 ModelInfoHelper.vendorInputOptions = vendorInputOptions;

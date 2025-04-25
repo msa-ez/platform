@@ -434,6 +434,7 @@
     "purchaseList": "구매/사용 목록",
     "CoinsCoupons": "쿠폰등록 및 코인얻기",
     "inquiry": "제휴 및 설치형 문의( help@uengine.org )",
+    "aiModelSetting": "AI 모델 설정",
     "logout": "로그아웃",
     "LoginInformation1": "*Github 로그인을 권장하고 있습니다.",
     "LoginInformation2": "구글 로그인 시 일부 기능 사용에 제한이 있을 수 있습니다.",
@@ -547,7 +548,12 @@
       "api_key_google": "Google Cloud 콘솔에서 API 키를 발급받으세요",
       "api_key_runpod": "RunPod 대시보드에서 API 키를 발급받으세요",
       "runpodUrl": "예: https://<your-pod-id>-8000.proxy.runpod.net",
-      "ollamaUrl": "예: http://localhost:11434"
+      "ollamaUrl": "예: http://localhost:11434",
+      "baseURL": "예: https://api.example.com",
+      "apiKey": "API 엔드포인트에 접근하기 위한 인증 키입니다. 해당 서비스 제공 업체의 대시보드에서 발급받을 수 있습니다.",
+      "modelID": "사용하려는 특정 AI 모델의 고유 식별자입니다. 예: 'gpt-4', 'claude-3-opus-20240229'",
+      "contextWindowTokenLimit": "모델이 한 번의 요청에서 처리할 수 있는 최대 토큰(입력+출력) 수입니다. 모델 성능과 비용에 영향을 줍니다.",
+      "outputTokenLimit": "모델이 생성할 수 있는 응답의 최대 토큰 수입니다. 너무 작으면 응답이 잘릴 수 있습니다."
     },
     "apiKeyTest": {
       "success": "{vendor} 연결 테스트 성공!",
@@ -559,7 +565,8 @@
       "apiKeySettings": "API 키 설정",
       "connectionTest": "연결 테스트",
       "vendorInputTip": "모델을 선택하면 필요한 API 키가 표시됩니다",
-      "confirm": "유저 스토리 생성",
+      "confirm_user_story": "유저 스토리 생성",
+      "confirm_ok": "확인",
       "close": "닫기",
       "enabled": "활성화됨",
       "disabled": "비활성화됨",
@@ -570,7 +577,24 @@
       "resetComplete": "모델 설정이 초기화되었습니다."
     },
     "alert": {
-      "resetConfirm": "모델 설정을 초기화하시겠습니까?"
+      "resetConfirm": "모델 설정을 초기화하시겠습니까?",
+      "cannotEnableModel": "모델을 활성화할 수 없습니다. 이전 선택 또는 기본 모델을 찾을 수 없습니다."
+    },
+    "inputLabel": {
+      "api_key_openai": "OpenAI API 키",
+      "api_key_anthropic": "Anthropic API 키",
+      "api_key_google": "Google Cloud API 키",
+      "api_key_runpod": "RunPod API 키",
+      "baseURL": "API 기본 URL",
+      "apiKey": "API 키",
+      "modelID": "모델 ID",
+      "contextWindowTokenLimit": "컨텍스트 윈도우 토큰 제한",
+      "outputTokenLimit": "출력 토큰 제한"
+    },
+    "validation": {
+      "invalidOpenAIKey": "OpenAI API 키가 유효하지 않습니다. 다시 확인해주세요.",
+      "invalidAnthropicKey": "Anthropic API 키가 유효하지 않습니다. 다시 확인해주세요.",
+      "validKey": "API 키가 유효합니다."
     }
   }
 }

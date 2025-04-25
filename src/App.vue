@@ -663,6 +663,25 @@
             </v-card>
         </v-dialog>
 
+        <!-- AI 모델 설정 다이얼로그 -->
+        <v-dialog
+                v-model="showAiModelSettingDialog"
+                max-width="800px"
+                persistent
+                @click:outside="closeAiModelSettingDialog"
+        >
+            <v-card style="width:100%;">
+                <AIModelSetting 
+                  @onConfirm="handleAiSettingsConfirm" 
+                  @onClose="closeAiModelSettingDialog"
+                  :isUserStoryUIMode="false"
+                  :errorMessage="aiSettingsErrorMessage"
+                  :isVisible="showAiModelSettingDialog"
+                >
+                </AIModelSetting>
+            </v-card>
+        </v-dialog>
+
         <!-- Snackbar insert info -->
         <v-snackbar
                 v-model="snackbar"
@@ -753,6 +772,8 @@
     import SubscriptionItemTemplate from "./components/payment/SubscriptionItemTemplate";
     const fs = require('fs');
     import Draggable from 'vue-draggable';
+    import AIModelSetting from './components/designer/modeling/generators/features/ESDialoger/components/AIModelSetting/AIModelSetting.vue';
+    import { mapState, mapMutations } from 'vuex';
 
     export default {
         name: 'App',
@@ -846,6 +867,7 @@
                 {key: 'manager', display: `loginList.purchaseList`},
                 {key: 'getCoin', display: `loginList.CoinsCoupons`},
                 {key: 'payQuestion', display: `loginList.inquiry`},
+                {key: 'aiModelSetting', display: "loginList.aiModelSetting"},
                 {key: 'logout', display: `loginList.logout`}
             ],
             loginText: 'Login',
@@ -966,7 +988,7 @@
             offsetX: 0,
             offsetY: 0,
             makingDialog: null,
-
+            showAiModelSettingDialog: false
         }),
         components: {
             SubscriptionItemTemplate,
@@ -980,10 +1002,15 @@
             RefundItem,
             VueContext,
             LogoView,
+            AIModelSetting,
         },
         // beforeMount(){
         // },
         computed: {
+            ...mapState({
+                isAiSettingsRequired: state => state.ai.isAiSettingsRequired,
+                aiSettingsErrorMessage: state => state.ai.aiSettingsErrorMessage
+            }),
             isRootPage() {
                 return this.$route.path === "/";
             },
@@ -1201,6 +1228,11 @@
             },
             "iFrame": function (newVal) {
                 console.log('iFrame', newVal)
+            },
+            isAiSettingsRequired(newVal) {
+                if (newVal) {
+                    this.showAiModelSettingDialog = true;
+                }
             }
         },
             "editorData":
@@ -1499,6 +1531,9 @@
 
         },
         methods: {
+            ...mapMutations({
+                setAiSettingsRequired: 'ai/SET_AI_SETTINGS_REQUIRED'
+            }),
             toggleBeta() {
                 this.showBeta = !this.showBeta;
             },
@@ -1957,6 +1992,8 @@
                         }
                     } else if (key == 'payQuestion') {
                         alert("'help@uengine.org' 으로 메일 문의 바랍니다. ") 
+                    } else if (key == 'aiModelSetting') {
+                        me.openAiModelSettingDialog()
                     } else {
                         console.log("app")
                         if (me.isLogin) {
@@ -2190,6 +2227,17 @@
             dragStop() {
                 var me = this;
                 me.isDragging = false;
+            },
+            openAiModelSettingDialog() {
+                this.showAiModelSettingDialog = true;
+                this.setAiSettingsRequired(true);
+            },
+            handleAiSettingsConfirm() {
+                this.closeAiModelSettingDialog();
+            },
+            closeAiModelSettingDialog() {
+                this.showAiModelSettingDialog = false;
+                this.setAiSettingsRequired(false);
             }
         }
     }

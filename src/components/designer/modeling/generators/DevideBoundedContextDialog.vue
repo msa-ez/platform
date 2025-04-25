@@ -1,5 +1,5 @@
 <template>
-    <v-card :key="`bounded-context-${messageId}`" style="max-height: 2000px; overflow-y: auto;">
+    <v-card :key="`bounded-context-${messageId}`">
         <v-card-title>
             {{ $t('DevideBoundedContextDialog.boundedContextDivisionResult') }}
             <v-btn v-if="isGeneratingBoundedContext" text color="primary" @click="stop()">Stop</v-btn>
