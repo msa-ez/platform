@@ -1,0 +1,28 @@
+  apiVersion: networking.k8s.io/v1
+  kind: Ingress
+  metadata:
+    annotations:
+      cert-manager.io/cluster-issuer: route53-prod
+      nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+      nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+      nginx.ingress.kubernetes.io/secure-backends: "true"
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    name: gov24-ingress
+    namespace: demo
+  spec:
+    ingressClassName: nginx
+    rules:
+    - host: gov24.msafab.com
+      http:
+        paths:
+        - backend:
+            service:
+              name: gateway
+              port: 
+                name: http
+          path: /
+          pathType: Prefix   
+    tls:
+    - hosts: 
+      - gov24.msafab.com
+      secretName: aws-secret-cert

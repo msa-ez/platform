@@ -1,0 +1,38 @@
+apiVersion: v2
+name: on-prem-helm
+description: A Helm chart for Kubernetes
+
+# A chart can be either an 'application' or a 'library' chart.
+#
+# Application charts are a collection of templates that can be packaged into versioned archives
+# to be deployed.
+#
+# Library charts provide useful utilities or functions for the chart developer. They're included as
+# a dependency of application charts to inject those utilities and functions into the rendering
+# pipeline. Library charts do not define any templates and therefore cannot be deployed.
+type: application
+
+# This is the chart version. This version number should be incremented each time you make changes
+# to the chart and its templates, including the app version.
+# Versions are expected to follow Semantic Versioning (https://semver.org/)
+version: 0.1.0
+appVersion: "1.16.0"
+dependencies: # A list of the chart requirements (optional)
+#  - name: ingress-nginx
+#    version: "4.2.1"
+#    repository: "https://kubernetes.github.io/ingress-nginx"
+#  - name: redis
+#    version: "17.0.10"
+#    repository: "https://charts.bitnami.com/bitnami"
+  # - name: gitlab
+  #   version: "6.2.2"
+  #   repository: "https://charts.gitlab.io/"
+#  - name: The name of the chart (nginx)
+#    version: The version of the chart ("1.2.3")
+#    repository: (optional) The repository URL ("https://example.com/charts") or alias ("@repo-name")
+#    condition: (optional) A yaml path that resolves to a boolean, used for enabling/disabling charts (e.g. subchart1.enabled )
+#    tags: # (optional)
+#      - Tags can be used to group charts for enabling/disabling together
+#    import-values: # (optional)
+#      - ImportValues holds the mapping of source values to parent key to be imported. Each item can be a string or pair of child/parent sublist items.
+#    alias: (optional) Alias to be used for the chart. Useful when you have to add the same chart multiple times

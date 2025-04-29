@@ -1,0 +1,14 @@
+FROM deepseek-r1:14b
+
+# 생성할 최대 토큰 수 설정 (최대 16384)
+PARAMETER num_predict 8192
+
+PARAMETER temperature 0.3
+PARAMETER top_p 0.7
+PARAMETER stop "```"
+
+# 모델 생성 (CLI)
+# ollama create deepseek-custom -f ModelFile
+
+# 실행
+# ollama run deepseek-custom

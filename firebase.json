@@ -1,0 +1,42 @@
+{
+  "hosting": [
+    {
+      "site": "eventstorming-tool-db",
+      "public": "dist",
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+      ]
+    }
+  ],
+  "headers": [
+    {
+      "source": "**/*.html", 
+      "headers": [
+        {
+          "key": "Cache-Control", 
+          "value": "no-store"
+        }
+      ]
+    },
+    {
+      "source": "**/*.@(css|js)", 
+      "headers": [
+        {
+          "key": "Cache-Control", 
+          "value": "max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "**/*.@(jpg|jpeg|gif|png)", 
+      "headers": [
+        {
+          "key": "Cache-Control", 
+          "value": "max-age=31536000, immutable"
+        }
+      ]
+    }
+  ]
+}
