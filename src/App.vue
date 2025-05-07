@@ -180,7 +180,7 @@
                     </div>
 
                     <!-- 만들기 프로젝트(project) -->
-                    <div>
+                    <!-- <div>
                         <div v-if="makingProject.some(item => item.tagStatus === 'Stable') || showBeta" class="making-sub-title">{{$t('making.project')}}</div>
                         <v-row
                             style="margin:0px;"
@@ -228,7 +228,7 @@
                                 </v-card>
                             </v-col>
                         </v-row>
-                    </div>
+                    </div> -->
 
                     <!-- 만들기 기획(planning) -->
                     <div>
@@ -914,6 +914,14 @@
                     tagStatus: 'Stable'
                 },
                 {
+                    type: 'project', 
+                    title: 'tools.project',
+                    image: '/static/image/main/mainProject.png',
+                    subtitle: 'tools.project-inst',
+                    disabled: true,
+                    tagStatus: 'Stable'
+                },
+                {
                     type: 'uml', 
                     title: 'tools.uml',
                     image: '/static/image/main/mainUml.png',
@@ -950,14 +958,6 @@
                 },
             ],
             makingProject : [
-                {
-                    type: 'project', 
-                    title: 'tools.project',
-                    image: '/static/image/main/mainProject.png',
-                    subtitle: 'tools.project-inst',
-                    disabled: true,
-                    tagStatus: 'Stable'
-                },
             ],
             selectedItem: null,
             showNewButton: false,
