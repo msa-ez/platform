@@ -329,7 +329,7 @@
                                 </v-icon>
                             </div>
                             <div v-if="classIntroduction"
-                                    style="margin-top: 5px; padding: 5px; margin-bottom: 5px;">
+                                    style="margin-top: 5px; padding: 5px; margin-bottom: 5px; max-height: 900px; overflow-y: auto;">
                                 <vue-markdown
                                         v-if="!editClassIntroduction"
                                         :style="{ textDecoration: 'none !important' }"

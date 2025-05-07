@@ -17,12 +17,12 @@ module.exports = {
         //     },
         // },
         output: {
-            filename: 'js/[name].[hash].js',
-            chunkFilename: 'js/[name].[hash].js'
+            filename: 'js/[name].[contenthash].js',
+            chunkFilename: 'js/[name].[contenthash].js'
         },
         devtool: 'source-map',
         devServer: {
-            port: '8080',
+            port: '8081',
             // historyApiFallback: true,
             https: true,
             disableHostCheck: true,
