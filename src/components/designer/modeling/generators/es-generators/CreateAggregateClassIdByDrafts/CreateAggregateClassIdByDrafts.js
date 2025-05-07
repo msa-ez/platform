@@ -170,13 +170,15 @@ class CreateAggregateClassIdByDrafts extends FormattedJSONAIGenerator{
             const references = []
             for(const boundedContextId of Object.keys(draftOptionStructure)) {
                 for(const structure of draftOptionStructure[boundedContextId]) {
-                    for(const vo of structure.valueObjects) {
-                        if('referencedAggregate' in vo) {
-                            references.push({
-                                fromAggregate: structure.aggregate.name,
-                                toAggregate: vo.referencedAggregate.name,
-                                referenceName: vo.name
-                            })
+                    if(structure.valueObjects) {
+                        for(const vo of structure.valueObjects) {
+                            if('referencedAggregate' in vo) {
+                                references.push({
+                                    fromAggregate: structure.aggregate.name,
+                                    toAggregate: vo.referencedAggregate.name,
+                                    referenceName: vo.name
+                                })
+                            }
                         }
                     }
                 }

@@ -141,7 +141,8 @@
       "importance": "중요도",
       "implementationStrategy": "구현 전략"
     },
-    "selectAspects": "Select Aspects"
+    "selectAspects": "Select Aspects",
+    "requirementsMappingResult": "Requirements Mapping Result"
   },
   "ViewDefinitionPanel" : {
     "readModelAttributes": "Read Model Attributes",
@@ -481,7 +482,11 @@
     "chip3": "Fishery ERP",
     "chip4": "Internet Banking",
     "editPersona": "Edit persona name and details",
-    "processImageUpload": "Upload process & System configuration image"
+    "processImageUpload": "Upload process & System configuration image",
+    "unsavedChangesDialogTitle": "Unsaved changes",
+    "unsavedChanges": "Would you like to save before leaving?",
+    "dontSave": "Leave",
+    "save": "Save"
   },
   "UIWizardDialoger": {
     "imageMessage": "Here are a logo for this service:",

@@ -141,7 +141,8 @@
       "importance": "중요도",
       "implementationStrategy": "구현 전략"
     },
-    "selectAspects": "관점 선택"
+    "selectAspects": "관점 선택",
+    "requirementsMappingResult": "요구사항 매핑 결과"
   },
   "ViewDefinitionPanel" : {
     "readModelAttributes": "Read Model 속성",
@@ -483,7 +484,11 @@
     "chip3": "생선 유통 ERP",
     "chip4": "인터넷 뱅킹",
     "editPersona": "페르소나의 이름과 내용을 수정합니다.",
-    "processImageUpload": "프로세스 & 시스템 구성도 이미지 업로드"
+    "processImageUpload": "프로세스 & 시스템 구성도 이미지 업로드",
+    "unsavedChangesDialogTitle": "저장하지 않은 변경사항이 있습니다.",
+    "unsavedChanges": "저장하시겠습니까?",
+    "dontSave": "나가기",
+    "save": "저장"
   },
   "UIWizardDialoger": {
     "imageMessage": "다음은 이 서비스에 대한 이미지 추천입니다.",
