@@ -97,7 +97,7 @@
     "userStory": "유저스토리",
     "userStoryText": "유저스토리를 입력해주세요.",
     "generateUserStory": "유저스토리를 자동 생성하시겠습니까?",
-    "generateAIAuto": "네, AI로 자동생성하겠습니다",
+    "generateAIAuto": "AI로 생성",
     "enterManually": "아니오, 직접 입력하겠습니다",
     "confirmGeneration": "재생성",
     "confirmGenerationMessage": "AI가 추천한 시나리오와 시나리오 기반의 설계된 이후 모든 산출물은 모두 삭제됩니다."

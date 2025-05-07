@@ -91,6 +91,12 @@
                 <v-btn v-if="!done" :disabled="!isEditable" @click="stop()" style="position: absolute; right:10px; top:10px;"><v-progress-circular class="auto-modeling-stop-loading-icon" indeterminate></v-progress-circular>Stop generating</v-btn>
                 <v-row v-if="done" :disabled="!isEditable" class="ma-0 pa-4 button-row">
                     <v-spacer></v-spacer>
+                    <v-btn outlined
+                        color="#BDBDBD"
+                        @click="generate(); state.isAIModelSelected = true;"
+                    >
+                        {{ $t('ESDialoger.generateAIAuto') }}
+                    </v-btn>
                     <v-btn v-if="state.startTemplateGenerate" :disabled="getDisabledGenerateBtn() || !isEditable" class="auto-modeling-btn" @click="generate()">
                         <v-icon class="auto-modeling-btn-icon">mdi-refresh</v-icon>{{ $t('ESDialoger.tryAgain') }}
                     </v-btn>
@@ -129,7 +135,8 @@
             </v-col>
         </div>
 
-        <v-dialog v-model="generateUserStoryDialog"
+        <!-- AI 및 직접생성 다이얼로그 -->
+        <!-- <v-dialog v-model="generateUserStoryDialog"
             persistent
             max-width="fit-content"
         >
@@ -169,7 +176,7 @@
                     </v-btn>
                 </v-card-actions>
             </v-card>
-        </v-dialog>
+        </v-dialog> -->
     </div>
 
 </template>
@@ -1188,7 +1195,8 @@ import { value } from 'jsonpath';
                     this.value = {
                         userStory: ''
                     }
-                    this.generateUserStoryDialog = !this.generateUserStoryDialog;
+                    this.done = true;
+                    this.state.secondMessageIsTyping = false;
                 } else {
                     this.done = true;
                 }

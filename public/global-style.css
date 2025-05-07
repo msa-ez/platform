@@ -668,7 +668,7 @@ code[class*=language-]:nth-child(1) {
 }
 
 .auto-modling-textarea {
-    max-height:80vh !important;
+    max-height:50vh !important;
     overflow-y: auto !important;
 }
 

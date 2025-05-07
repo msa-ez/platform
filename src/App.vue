@@ -391,12 +391,10 @@
                 :class="isRootPage ? 'question-btn-hide' : ''"
                 text
                 elevation="0"
+                color="primary"
                 style="text-transform: none;"
             >
-                <v-img src="/static/image/main/question.svg" contain
-                    style="width:24px; height:24px; margin-right:5px;">
-                </v-img>
-                <div font-size="14">{{ $t('inquiry.title') }}</div>
+                <div style="font-weight: 700; font-size: 16px;">{{ $t('inquiry.title') }}</div>
             </v-btn>
             
             <v-btn

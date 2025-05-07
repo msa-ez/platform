@@ -16,7 +16,7 @@
                 </v-col>
             </v-row>
             <v-card-text class="pt-2 pb-2" style="font-weight: 500;">
-                <v-textarea
+                <v-text-field
                     class="auto-modeling-text delete-input-detail"
                     v-model="projectInfo.prompt"
                     solo
@@ -25,9 +25,7 @@
                     :append-icon="startTemplateGenerate ? 'mdi-spin mdi-loading':'mdi-auto-fix'"
                     @click:append="openProjectDialog()"
                     @keydown="openProjectDialogHandleKeydown"
-                    auto-grow
-                    :rows="1"
-                ></v-textarea>
+                ></v-text-field>
             </v-card-text>
         </v-card>
 
@@ -166,30 +164,17 @@
                             <v-spacer></v-spacer>
                             <v-card style="width: 80%;">
                                 <v-col class="pa-0">
-                                    <v-textarea class="pa-0 delete-input-detail auto-modeling-input-textarea"
-                                        style="max-height: 400px;
-                                            overflow: auto;
-                                            margin-top: 4px !important;
-                                            height: auto !important;"
+                                    <v-text-field class="pa-0 delete-input-detail auto-modeling-input-textarea"
+                                        style="max-height: 400px;"
                                         v-model="projectInfo.prompt"
                                         ref="textarea"
-                                        :rows="1"
                                         solo
                                         persistent-hint
                                         :label="$t('autoModeling.main2')"
+                                        :append-icon="startTemplateGenerate ? 'mdi-spin mdi-loading':'mdi-auto-fix'"
+                                        @click:append="startGen(genType)"
                                         @keydown="startGenHandleKeydown(genType)"
-                                        auto-grow
-                                    ></v-textarea>
-                                    <v-row class="ma-0 pa-2">
-                                        <v-spacer></v-spacer>
-                                        <div @click="startGen(genType)"
-                                            style="cursor: pointer;
-                                            width:24px; height:24px;"
-                                        >
-                                            <v-icon v-if="startTemplateGenerate">mdi-spin mdi-loading</v-icon>
-                                            <v-icon v-else>mdi-auto-fix</v-icon>
-                                        </div>
-                                    </v-row>
+                                    ></v-text-field>
                                 </v-col>
                             </v-card>
                         </v-row>
@@ -248,7 +233,7 @@
                             </div>
                         </div>
                         <div :key="reGenKey">
-                            <ESDialoger 
+                            <ESDialoger
                                 v-if="genType == 'ES2'"     
                                 ref="esDialoger"    
                                 v-model="projectInfo.eventStorming"     
@@ -266,10 +251,10 @@
                                 @update:modelList="updateModelList"
                                 :uiStyle="uiStyle"  
                             ></ESDialoger>
-                            <CJMDialoger v-if="genType == 'CJM'"    ref="cjMDialoger"   v-model="projectInfo.customerJourneyMap" :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" @change="backupProject" @setPersonas="setPersonas" ></CJMDialoger>
+                            <!-- <CJMDialoger v-if="genType == 'CJM'"    ref="cjMDialoger"   v-model="projectInfo.customerJourneyMap" :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" @change="backupProject" @setPersonas="setPersonas" ></CJMDialoger>
                             <BMDialoger v-if="genType == 'BM2'"     ref="bmDialoger"    v-model="projectInfo.businessModel"      :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" @change="backupProject"></BMDialoger>
                             <USMDialoger v-if="genType == 'USM'"    ref="usmDialoger"   v-model="projectInfo.userStoryMap"       :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" @change="backupProject"></USMDialoger>
-                            <UIWizardDialoger v-if="genType == 'UI'" ref="uiDialoger"   v-model="projectInfo.ui"                 :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" @change="backupProject" @selected="onUIStyleSelected"  ></UIWizardDialoger>
+                            <UIWizardDialoger v-if="genType == 'UI'" ref="uiDialoger"   v-model="projectInfo.ui"                 :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" @change="backupProject" @selected="onUIStyleSelected"  ></UIWizardDialoger> -->
                         </div>
                     </v-card-text>
                 </v-card>
@@ -1443,8 +1428,9 @@
 .auto-modeling-input-textarea .v-input__slot {
     box-shadow: none !important;
     border-bottom: none !important;
-
+    margin: 0px !important;
 }
+
 .main-auto-modeling-chip {
     margin:0px 5px;
     opacity: 0.8;
