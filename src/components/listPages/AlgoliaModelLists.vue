@@ -515,11 +515,11 @@
                                     </div>
                                 </transition>
                             </div>
-                            <AutoModelingDialog
+                            <auto-modeling-dialog
                                 mode="es"
                                 :showDialog="false"
                                 :showChat="true"
-                            ></AutoModelingDialog>
+                            />
 
                             <!-- 제목을 위한 별도의 v-col (전체 너비) -->
                             <div class="text-h6 main-examples-title-margin text-center font-weight-medium">
@@ -760,7 +760,7 @@
     import CommonStorageBase from "../CommonStorageBase";
     import {YoutubeIcon} from 'vue-feather-icons'
     import 'instantsearch.css/themes/satellite-min.css';
-    import AutoModelingDialog from '../designer/modeling/AutoModelingDialog.vue';
+    // import AutoModelingDialog from '../designer/modeling/AutoModelingDialog.vue';
     import { Carousel, Slide } from 'vue-carousel';
     import ProvisionIndication from '../../components/payment/ProvisionIndication.vue'
     import LogoView from '../oauth/Logo.vue';
@@ -774,7 +774,8 @@
             'EventStormingListCard': () => import('./EventStormingListCard'),
             // 'ProvisionIndication': () => import('../payment/ProvisionIndication'),
             YoutubeIcon,
-            AutoModelingDialog,
+            // AutoModelingDialog,
+            'auto-modeling-dialog': () => import('../designer/modeling/AutoModelingDialog.vue'),
             Carousel,
             Slide,
             ProvisionIndication,

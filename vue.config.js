@@ -16,16 +16,16 @@ module.exports = {
         //         chunks: 'all',
         //     },
         // },
-        output: {
-            filename: 'js/[name].[contenthash].js',
-            chunkFilename: 'js/[name].[contenthash].js'
-        },
         devtool: 'source-map',
         devServer: {
             port: '8081',
             // historyApiFallback: true,
             https: true,
             disableHostCheck: true,
+        },
+        output: {
+            filename: '[name].[hash].js',
+            chunkFilename: '[name].[hash].js'
         },
         plugins: [
             new CompressionPlugin({
@@ -43,7 +43,13 @@ module.exports = {
         //     statsFilename: 'bundle-stats.json' // 분석파일 json 이름
         // })]
     },
-    "runtimeCompiler": true
+    "runtimeCompiler": true,
+    css: {
+        extract: {
+            filename: '[name].[hash].css',
+            chunkFilename: '[name].[hash].css'
+        }
+    }
 }
 
 // http

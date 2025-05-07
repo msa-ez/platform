@@ -187,7 +187,7 @@ export default {
         if(Object.keys(this.generateOption).length > 0){
             this.localOptions.numberOfBCs = this.generateOption.numberOfBCs;
             this.localOptions.selectedAspects = this.generateOption.selectedAspects;
-            this.localOptions.aspectDetails = this.generateOption.aspectDetails;
+            this.localOptions.aspectDetails = this.generateOption.aspectDetails || {};
             this.localOptions.additionalOptions = this.generateOption.additionalOptions;
             this.localOptions.isProtocolMode = this.generateOption.isProtocolMode;
         }

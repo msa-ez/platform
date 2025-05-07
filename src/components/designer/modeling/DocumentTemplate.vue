@@ -101,7 +101,7 @@
         <div class="section">
             <div class="pdf-content-item">
                 <h3>1-2. 사용자 스토리</h3>
-                <div v-if="projectInfo.eventStorming && projectInfo.eventStorming.userStory">
+                <div v-if="projectInfo && projectInfo.userStory">
                     <div v-if="chunkedUserStory.length > 0" class="story-content">
                         <p v-for="(paragraph, pIndex) in chunkedUserStory[0]" 
                             :key="pIndex" 
@@ -138,11 +138,19 @@
                 
                 <div class="value-stream-diagram">
                     <div class="work-in-progress">
-                        <v-icon size="64" color="grey lighten-1">mdi-file-cad-box</v-icon>
+                        <!-- <v-icon size="64" color="grey lighten-1">mdi-file-cad-box</v-icon>
                         <div class="wip-text">
                             <div class="wip-title">BPM 다이어그램 작업 예정</div>
                             <div class="wip-subtitle">밸류 스트림 다이어그램 BPM modeler 추후 작업.</div>
-                        </div>
+                        </div> -->
+                        <bpmn-uengine-viewer
+                            :style="{
+                                width: '100%',
+                                height: '100%'
+                            }"
+                            :bpmn="bpmXml"
+                            :key="bpmXml"
+                        />
                     </div>
                 </div>
             </div>
@@ -488,20 +496,261 @@
                 </div>
             </template>
         </div>
+
+        <!-- 이벤트스토밍 모델 섹션 -->
+        <div class="section">
+            <!-- 섹션 제목과 설명 -->
+            <div class="pdf-content-item" v-if="getEventStormingModels.length > 0">
+                <h2>5. 이벤트스토밍 모델</h2>
+                <div class="section-content">
+                    <p>도출된 바운디드 컨텍스트와 애그리거트  결과를 기반으로 시스템의 동작 흐름과 반응 구조를 모델링</p>
+                    <p>주요 도메인 이벤트, 커맨드, 리드모델 및 액터 간 상호작용을 시각적으로 정리</p>
+                </div>
+            </div>
+
+            <!-- 각 모델별 페이지 -->
+            <template v-for="(model, modelIndex) in getEventStormingModels">
+                <!-- 각 바운디드 컨텍스트별 상세 정보 -->
+                <template v-for="(bc, bcIndex) in model.BoundedContexts">
+                    <div :key="`bc-${modelIndex}-${bcIndex}`" class="pdf-content-item">
+                        <h3>모델: {{ model.modelName }} - 바운디드 컨텍스트: {{ bc.name }}</h3>
+                        
+                        <!-- 애그리게잇 정보 -->
+                        <div v-if="bc.aggregate && bc.aggregate.length > 0" class="component-section">
+                            <h5>애그리게잇</h5>
+                            <v-simple-table dense class="component-table">
+                                <thead>
+                                    <tr>
+                                        <th>이름</th>
+                                        <th>설명</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="agg in bc.aggregate" :key="agg.id">
+                                        <td>{{ agg.name }}</td>
+                                        <td>{{ agg.description || agg.displayName }}</td>
+                                    </tr>
+                                </tbody>
+                            </v-simple-table>
+                        </div>
+
+                        <!-- 커맨드 정보 -->
+                        <div v-if="bc.command && bc.command.length > 0" class="component-section">
+                            <h5>커맨드</h5>
+                            <v-simple-table dense class="component-table">
+                                <thead>
+                                    <tr>
+                                        <th>이름</th>
+                                        <th>설명</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="cmd in bc.command" :key="cmd.id">
+                                        <td>{{ cmd.name }}</td>
+                                        <td>{{ cmd.description || cmd.displayName }}</td>
+                                    </tr>
+                                </tbody>
+                            </v-simple-table>
+                        </div>
+
+                        <!-- 이벤트 정보 -->
+                        <div v-if="bc.event && bc.event.length > 0" class="component-section">
+                            <h5>이벤트</h5>
+                            <v-simple-table dense class="component-table">
+                                <thead>
+                                    <tr>
+                                        <th>이름</th>
+                                        <th>설명</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="evt in bc.event" :key="evt.id">
+                                        <td>{{ evt.name }}</td>
+                                        <td>{{ evt.description || evt.displayName }}</td>
+                                    </tr>
+                                </tbody>
+                            </v-simple-table>
+                        </div>
+
+                        <!-- 정책 정보 -->
+                        <div v-if="bc.policy && bc.policy.length > 0" class="component-section">
+                            <h5>정책</h5>
+                            <v-simple-table dense class="component-table">
+                                <thead>
+                                    <tr>
+                                        <th>이름</th>
+                                        <th>설명</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="pol in bc.policy" :key="pol.id">
+                                        <td>{{ pol.name }}</td>
+                                        <td>{{ pol.description || pol.displayName }}</td>
+                                    </tr>
+                                </tbody>
+                            </v-simple-table>
+                        </div>
+                    </div>
+                </template>
+            </template>
+        </div>
+
+        <!-- 애그리게잇 상세 정보 섹션 -->
+        <div class="section">
+            <div class="pdf-content-item" v-if="getEventStormingModels.length > 0">
+                <h2>6. 애그리게잇 상세 정보</h2>
+                <div class="section-content">
+                    <p>각 바운디드 컨텍스트의 애그리게잇 루트와 관련 엔티티들의 상세 구조를 정의</p>
+                    <p>도메인 모델의 핵심 구성요소인 애그리게잇의 속성, 연관 관계, 그리고 도메인 규칙을 상세하게 기술</p>
+                </div>
+            </div>
+
+            <!-- 각 바운디드 컨텍스트별 애그리게잇 정보 -->
+            <template v-for="(model, modelIndex) in getEventStormingModels">
+                <template v-for="(bc, bcIndex) in model.BoundedContexts">
+                    <div v-for="agg in bc.aggregate" :key="`agg-${bcIndex}-${agg.id}`" class="pdf-content-item">
+                        <h3>바운디드 컨텍스트: {{ bc.name }} - 애그리게잇: {{ agg.name }}</h3>
+                        
+                        <!-- 애그리게잇 루트 필드 정보 -->
+                        <div v-if="agg.aggregateRoot && agg.aggregateRoot.fieldDescriptors" class="component-section">
+                            <h5>애그리게잇 루트 필드 정보</h5>
+                            <v-simple-table dense class="field-table">
+                                <thead>
+                                    <tr>
+                                        <th>필드명</th>
+                                        <th>타입</th>
+                                        <th>키 여부</th>
+                                        <th>설명</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="field in agg.aggregateRoot.fieldDescriptors" :key="field.name">
+                                        <td>{{ field.name }}</td>
+                                        <td>{{ field.className }}</td>
+                                        <td>{{ field.isKey ? '예' : '아니오' }}</td>
+                                        <td>
+                                            <span v-if="field.referenceClass">참조: {{ field.referenceClass }}</span>
+                                            <span v-else-if="field.displayName">{{ field.displayName }}</span>
+                                            <span v-else>-</span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </v-simple-table>
+                        </div>
+
+                        <!-- 엔티티 정보 -->
+                        <div v-if="agg.aggregateRoot && agg.aggregateRoot.entities && agg.aggregateRoot.entities.elements" class="component-section">
+                            <h5>엔티티 정보</h5>
+                            <div v-for="(entity, entityId) in agg.aggregateRoot.entities.elements" :key="entityId" class="entity-detail">
+                                <!-- 일반 클래스 -->
+                                <template v-if="entity._type === 'org.uengine.uml.model.Class'">
+                                    <div class="entity-header">
+                                        <strong>{{ entity.name }}</strong>
+                                        <span v-if="entity.displayName" class="entity-display-name">
+                                            ({{ entity.displayName }})
+                                        </span>
+                                    </div>
+                                    <v-simple-table dense class="field-table">
+                                        <thead>
+                                            <tr>
+                                                <th>필드명</th>
+                                                <th>타입</th>
+                                                <th>키 여부</th>
+                                                <th>설명</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr v-for="field in entity.fieldDescriptors" :key="field.name">
+                                                <td>{{ field.name }}</td>
+                                                <td>{{ field.className }}</td>
+                                                <td>{{ field.isKey ? '예' : '아니오' }}</td>
+                                                <td>
+                                                    <span v-if="field.referenceClass">참조: {{ field.referenceClass }}</span>
+                                                    <span v-else-if="field.displayName">{{ field.displayName }}</span>
+                                                    <span v-else>-</span>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </v-simple-table>
+                                </template>
+
+                                <!-- 열거형 -->
+                                <template v-if="entity._type === 'org.uengine.uml.model.enum'">
+                                    <div class="entity-header">
+                                        <strong>{{ entity.name }}</strong>
+                                        <span v-if="entity.displayName" class="entity-display-name">
+                                            ({{ entity.displayName }})
+                                        </span>
+                                    </div>
+                                    <v-simple-table dense class="enum-table">
+                                        <thead>
+                                            <tr>
+                                                <th>값</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr v-for="(item, itemIndex) in entity.items" :key="itemIndex">
+                                                <td>{{ item.value }}</td>
+                                            </tr>
+                                        </tbody>
+                                    </v-simple-table>
+                                </template>
+
+                                <!-- Value Object -->
+                                <template v-if="entity._type === 'org.uengine.uml.model.vo.Class'">
+                                    <div class="entity-header">
+                                        <strong>{{ entity.name }} (Value Object)</strong>
+                                        <span v-if="entity.displayName" class="entity-display-name">
+                                            ({{ entity.displayName }})
+                                        </span>
+                                    </div>
+                                    <v-simple-table dense class="field-table">
+                                        <thead>
+                                            <tr>
+                                                <th>필드명</th>
+                                                <th>타입</th>
+                                                <th>키 여부</th>
+                                                <th>설명</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr v-for="field in entity.fieldDescriptors" :key="field.name">
+                                                <td>{{ field.name }}</td>
+                                                <td>{{ field.className }}</td>
+                                                <td>{{ field.isKey ? '예' : '아니오' }}</td>
+                                                <td>
+                                                    <span v-if="field.referenceClass">참조: {{ field.referenceClass }}</span>
+                                                    <span v-else-if="field.displayName">{{ field.displayName }}</span>
+                                                    <span v-else>-</span>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </v-simple-table>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </template>
+        </div>
     </div>
 </template>
 
 <script>
 import VueMermaid from '@/components/VueMermaid.vue';
-import VueMermaidString from 'vue-mermaid-string'
+import VueMermaidString from 'vue-mermaid-string';
 import BoundedContextMatrix from '@/components/designer/modeling/generators/BoundedContextMatrix.vue';
+import BpmnUengineViewer from '@/components/designer/bpmnModeling/bpmn/BpmnUengineViewer.vue';
+import EventStormingModelCanvas from '@/components/designer/es-modeling/EventStormingModelCanvas.vue';
 
 export default {
     name: 'DocumentTemplate',
     components: {
         VueMermaid,
         VueMermaidString,
-        BoundedContextMatrix
+        BoundedContextMatrix,
+        BpmnUengineViewer,
+        EventStormingModelCanvas
     },
     props: {
         projectInfo: {
@@ -538,7 +787,8 @@ export default {
                     'groupPadding': 20
                 }
             },
-            mermaidDtos: {}
+            mermaidDtos: {},
+            bpmXml: null
         }
     },
     computed: {
@@ -576,10 +826,10 @@ export default {
         },
 
         formattedUserStory() {
-            if (!this.projectInfo.eventStorming || !this.projectInfo.eventStorming.userStory) return [];
+            if (!this.projectInfo || !this.projectInfo.userStory) return [];
             
             // 원본 텍스트를 그대로 유지
-            const text = this.projectInfo.eventStorming.userStory;
+            const text = this.projectInfo.userStory;
             
             // 빈 줄을 기준으로 문단 분리 (줄바꿈 2개 이상)
             return text.split(/\n\s*\n/).filter(p => p.trim().length > 0);
@@ -589,7 +839,7 @@ export default {
             if (!this.formattedUserStory) return [];
             
             const chunks = [];
-            const TARGET_LENGTH = 2000;
+            const TARGET_LENGTH = 1500;
             
             let currentChunk = [];
             let currentLength = 0;
@@ -753,7 +1003,66 @@ export default {
             }
 
             return drafts;
+        },
+
+        getEventStormingModels() {
+            // 1. eventStormingModels가 존재하는지 체크
+            if (!this.eventStormingModels) {
+                return [];
+            }
+
+            // 2. 배열로 변환
+            const modelArray = Array.isArray(this.eventStormingModels) 
+                ? this.eventStormingModels 
+                : Object.values(this.eventStormingModels);
+
+            return modelArray.map(model => {
+                // 3. 필요한 데이터가 있는지 체크
+                if (!model || !model.information || !model.models) {
+                    return null;
+                }
+
+                // 4. elements가 배열인지 확인하고 변환
+                const elements = Array.isArray(model.models.elements) 
+                    ? model.models.elements 
+                    : Object.values(model.models.elements || {});
+
+                // 5. BoundedContext 필터링 및 매핑
+                const boundedContexts = elements
+                    .filter(element => element && element._type.includes('BoundedContext'))
+                    .map(bc => {
+                        return {
+                            id: bc.id,
+                            name: bc.name,
+                            aggregate: elements.filter(
+                                element => element && element._type.includes('Aggregate') && element.boundedContext.id === bc.id
+                            ),
+                            command: elements.filter(
+                                element => element && element._type.includes('Command') && element.boundedContext.id === bc.id
+                            ),
+                            event: elements.filter(
+                                element => element && element._type.includes('Event') && element.boundedContext.id === bc.id
+                            ),
+                            policy: elements.filter(
+                                element => element && element._type.includes('Policy') && element.boundedContext.id === bc.id
+                            ),
+                            actor: elements.filter(
+                                element => element && element._type.includes('Actor') && element.boundedContext.id === bc.id
+                            )
+                        };
+                    });
+
+                // 6. 결과 반환
+                return {
+                    modelName: model.information.projectName,
+                    BoundedContexts: boundedContexts
+                };
+            }).filter(Boolean); // null 값 제거
         }
+    },
+    mounted() {
+        this.generateBPMN();
+        console.log(this.bpmXml);
     },
     methods: {
         getDomainStyle(importance) {
@@ -896,6 +1205,149 @@ export default {
         getAggregateMermaidRenderKey(index, optionIndex) {
             const key = `${index}-${optionIndex}`;
             return this.mermaidDtos[key] ? this.mermaidDtos[key].renderKey : 0;
+        },
+
+        generateBPMN() {
+            let analysisResult = this.getProcessAnalysisMessages[0].content.analysisResult;
+
+            if (!analysisResult || !analysisResult.actors || !analysisResult.events) {
+                this.bpmXml = null;
+                return;
+            }
+            const { actors, events } = analysisResult;
+
+            // 1. 이벤트를 레벨 순서대로 정렬
+            const eventsByLevel = [...events].sort((a, b) => a.level - b.level);
+
+            // 2. 각 액터별로 이벤트를 level 순서대로 정렬
+            const actorEventMap = {};
+            actors.forEach(actor => {
+                actorEventMap[actor.name] = [];
+            });
+            eventsByLevel.forEach(ev => {
+                if (actorEventMap[ev.actor]) {
+                    actorEventMap[ev.actor].push(ev.name);
+                }
+            });
+
+            // 3. Pool/Lane 정의 (flowNodeRef를 level 순서대로)
+            let lanes = actors.map(actor => `
+                <bpmn:lane id="Lane_${actor.lane}" name="${actor.name}">
+                    ${actorEventMap[actor.name].map(ev => `<bpmn:flowNodeRef>${ev}</bpmn:flowNodeRef>`).join('\n')}
+                </bpmn:lane>
+            `).join('\n');
+
+            // 4. 이벤트(Task/Start/End 등) 정의 (level 순서대로)
+            let eventMap = {};
+            let flowNodes = eventsByLevel.map(ev => {
+                eventMap[ev.name] = ev;
+                if (ev.level === 1) {
+                    return `<bpmn:startEvent id="${ev.name}" name="${ev.displayName}" />`;
+                } else if (!ev.nextEvents || ev.nextEvents.length === 0) {
+                    return `<bpmn:endEvent id="${ev.name}" name="${ev.displayName}" />`;
+                } else {
+                    return `<bpmn:task id="${ev.name}" name="${ev.displayName}" />`;
+                }
+            }).join('\n');
+
+            // 5. 시퀀스 플로우 정의
+            let sequenceFlows = [];
+            events.forEach(ev => {
+                if (ev.nextEvents) {
+                    ev.nextEvents.forEach(next => {
+                        sequenceFlows.push(
+                            `<bpmn:sequenceFlow id="Flow_${ev.name}_to_${next}" sourceRef="${ev.name}" targetRef="${next}" />`
+                        );
+                    });
+                }
+            });
+
+            // 6. 시각적 요소(BPMN-DI) 생성
+            // 각 lane(액터)별로 y축을 다르게, 각 이벤트는 level에 따라 x축을 다르게 배치
+            const laneHeight = 160; // 더 크게!
+            const nodeWidth = 80;
+            const nodeHeight = 60;
+            const xGap = 140;
+            const yStart = 80;
+            const xStart = 100;
+
+            // 이벤트별 위치 계산
+            const nodePositions = {};
+            actors.forEach((actor, laneIdx) => {
+                actorEventMap[actor.name].forEach(evName => {
+                    const ev = events.find(e => e.name === evName);
+                    if (!ev) return;
+                    // x: level에 따라, y: lane에 따라
+                    nodePositions[evName] = {
+                        x: xStart + (ev.level - 1) * xGap,
+                        y: yStart + laneIdx * laneHeight
+                    };
+                });
+            });
+
+            // Lane의 BPMNShape 생성 (선택)
+            let bpmnLaneShapes = actors.map((actor, laneIdx) => {
+                // lane의 높이는 해당 lane의 노드 개수에 따라 동적으로 조정할 수도 있음
+                return `
+                <bpmndi:BPMNShape id="Shape_Lane_${actor.lane}" bpmnElement="Lane_${actor.lane}">
+                    <dc:Bounds x="0" y="${yStart + laneIdx * laneHeight - 20}" width="${xStart + xGap * 15}" height="${laneHeight}" />
+                </bpmndi:BPMNShape>
+                `;
+            }).join('\n');
+
+            // BPMNShape 생성
+            let bpmnShapes = Object.entries(nodePositions).map(([evName, pos]) => {
+                return `
+                <bpmndi:BPMNShape id="Shape_${evName}" bpmnElement="${evName}">
+                    <dc:Bounds x="${pos.x}" y="${pos.y}" width="${nodeWidth}" height="${nodeHeight}"/>
+                </bpmndi:BPMNShape>
+                `;
+            }).join('\n');
+
+            // BPMNEdge(시퀀스 플로우) 생성
+            let bpmnEdges = sequenceFlows.map(flowXml => {
+                const match = flowXml.match(/sourceRef="([^"]+)" targetRef="([^"]+)"/);
+                if (!match) return '';
+                const [, source, target] = match;
+                const src = nodePositions[source];
+                const tgt = nodePositions[target];
+                if (!src || !tgt) return '';
+                const waypoints = [
+                    `<di:waypoint x="${src.x + nodeWidth}" y="${src.y + nodeHeight/2}"/>`,
+                    `<di:waypoint x="${tgt.x}" y="${tgt.y + nodeHeight/2}"/>`
+                ].join('\n');
+                return `
+                <bpmndi:BPMNEdge id="Edge_${source}_to_${target}" bpmnElement="Flow_${source}_to_${target}">
+                    ${waypoints}
+                </bpmndi:BPMNEdge>
+                `;
+            }).join('\n');
+
+            // 7. 프로세스 조립
+            this.bpmXml = `<?xml version="1.0" encoding="UTF-8"?>
+        <bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                        xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                        xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                        xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                        id="Definitions_1"
+                        targetNamespace="http://bpmn.io/schema/bpmn">
+        <bpmn:process id="Process_1" isExecutable="false">
+            <bpmn:laneSet>
+            ${lanes}
+            </bpmn:laneSet>
+            ${flowNodes}
+            ${sequenceFlows.join('\n')}
+        </bpmn:process>
+        <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+            <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1">
+            ${bpmnLaneShapes}
+            ${bpmnShapes}
+            ${bpmnEdges}
+            </bpmndi:BPMNPlane>
+        </bpmndi:BPMNDiagram>
+        </bpmn:definitions>
+        `;
         }
     }
 }
@@ -1067,7 +1519,6 @@ h4 {
 /* PDF 변환 관련 스타일 */
 .pdf-content-item {
     margin-bottom: 20px;
-    page-break-inside: avoid;
     position: relative;
     padding: 20px;
     border: 1px solid #ccc;
@@ -1075,37 +1526,47 @@ h4 {
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
+    background: white;
+    transform: translateZ(0); /* 하드웨어 가속 활성화 */
+    -webkit-font-smoothing: antialiased; /* 폰트 스무딩 */
 }
 
-/* 페이지 구분선 표시 */
-/* .pdf-content-item::after {
-    content: '';
-    position: absolute;
-    bottom: -10px;
-    left: 0;
-    width: 100%;
-    border-bottom: 2px dashed #999;
-} */
-
-/* 페이지 번호 표시 */
-.pdf-content-item::before {
-    position: absolute;
-    bottom: -25px;
-    right: 0;
-    background: #f0f0f0;
-    padding: 2px 8px;
-    font-size: 12px;
-    color: #666;
-    border-radius: 3px;
-    z-index: 1;
+/* 다이어그램 컨테이너 스타일 */
+.mermaid-container, .bpmn-uengine-viewer {
+    background: white;
+    padding: 10px;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    margin: 10px 0;
+    transform: translateZ(0);
 }
 
-/* 표지와 마지막 페이지는 구분선 제외 */
-.cover::after,
-.cover::before,
-.pdf-content-item:last-child::after,
-.pdf-content-item:last-child::before {
-    display: none;
+/* 텍스트 컨텐츠 스타일 */
+.story-content, .actor-section, .section-content {
+    margin: 10px 0;
+    transform: translateZ(0);
+}
+
+/* 테이블 스타일 */
+.v-simple-table {
+    margin: 10px 0;
+    transform: translateZ(0);
+}
+
+/* 이미지 최적화 */
+img {
+    max-width: 100%;
+    height: auto;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+}
+
+/* 다이어그램 내부 요소 */
+.mermaid-container svg,
+.bpmn-uengine-viewer svg {
+    max-width: 100%;
+    height: auto;
+    transform: translateZ(0);
 }
 
 /* 밸류 스트림 다이어그램 스타일 */
@@ -1187,11 +1648,6 @@ h4 {
     padding: 15px;
     border: 1px solid #e0e0e0;
     border-radius: 4px;
-}
-
-.mermaid-container {
-    text-align: center;
-    overflow: hidden;
 }
 
 .analysis-section {
@@ -1299,14 +1755,84 @@ h4 {
     line-height: 1.5;
 }
 
-@media print {
-    .pdf-content-item {
-        border: none;
-    }
-    
-    .pdf-content-item::after,
-    .pdf-content-item::before {
-        display: none;
-    }
+/* 이벤트스토밍 모델 스타일 */
+.bounded-context-detail {
+    margin-bottom: 40px;
+    padding: 20px;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+}
+
+.component-section {
+    margin-top: 20px;
+}
+
+.component-section h5 {
+    font-size: 16px;
+    color: #333;
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #ddd;
+}
+
+.component-table {
+    margin-bottom: 20px;
+}
+
+.component-table th {
+    background-color: #f5f5f5;
+    font-weight: bold;
+    padding: 8px;
+    text-align: left;
+}
+
+.component-table td {
+    padding: 8px;
+    border-bottom: 1px solid #eee;
+}
+
+/* 애그리게잇 상세 정보 스타일 */
+.aggregate-detail {
+    margin-bottom: 30px;
+    padding: 20px;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    background-color: #fafafa;
+}
+
+.entity-detail {
+    margin: 15px 0;
+    padding: 15px;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    background-color: white;
+}
+
+.entity-header {
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #ddd;
+}
+
+.entity-display-name {
+    color: #666;
+    margin-left: 8px;
+    font-size: 0.9em;
+}
+
+.field-table, .enum-table {
+    margin-top: 10px;
+}
+
+.field-table th, .enum-table th {
+    background-color: #f5f5f5;
+    font-weight: bold;
+    padding: 8px;
+    text-align: left;
+}
+
+.field-table td, .enum-table td {
+    padding: 8px;
+    border-bottom: 1px solid #eee;
 }
 </style>

@@ -15,30 +15,34 @@
         </template>
         <template>
             <!--분석 결과가 있는 경우-->
-            <div v-if="analysisResult && analysisResult.type === 'ANALYSIS_RESULT'" class="event-storming-wrapper">
+            <div v-if="analysisResult && analysisResult.type === 'ANALYSIS_RESULT'" class="bpmn-wrapper">
                 <div>
-                    <h2 class="event-storming-title pb-2">
+                    <h2 class="bpmn-title pb-2">
                         <v-row class="ma-0 pa-0">
                             <v-icon left>mdi-check-circle</v-icon>
                             <div>{{ $t('RequirementAnalysis.requirementAnalysisResult') }}</div>
                         </v-row>
                     </h2>
                     <div class="pb-2">
-                        <div v-if="isAnalizing" class="event-storming-subtitle">{{ $t('RequirementAnalysis.processAndEventFlowExtraction') }}</div>
-                        <div v-else class="event-storming-subtitle">{{ $t('RequirementAnalysis.processAndEventFlowExtracted') }}</div>
+                        <div v-if="isAnalizing" class="bpmn-subtitle">{{ $t('RequirementAnalysis.processAndEventFlowExtraction') }}</div>
+                        <div v-else class="bpmn-subtitle">{{ $t('RequirementAnalysis.processAndEventFlowExtracted') }}</div>
                     </div>
                 </div>
 
-                <div class="event-storming-canvas">
-                    <event-storming-model-canvas
+                <div class="bpmn-canvas">
+                    <!-- <event-storming-model-canvas
                         v-model="analysisResult.content"
                         :projectName="analysisResult.projectName"
                         :labs-id="null"
                         :is-original-model="false"
+                    /> -->
+                    <bpmn-uengine-viewer
+                        :bpmn="bpmXml"
+                        :key="bpmXml"
                     />
                 </div>
 
-                <div class="event-storming-footer">
+                <div class="bpmn-footer">
                     <v-btn 
                         :disabled="isAnalizing || isGeneratingBoundedContext || isStartMapping || isSummarizeStarted || !isEditable"
                         @click="showBCGenerationOption()" 
@@ -137,12 +141,14 @@
 <script>
 import VueMermaid from '@/components/VueMermaid.vue';
 const EventStormingModelCanvas = () => import('@/components/designer/es-modeling/EventStormingModelCanvas.vue');
+import BpmnUengineViewer from '@/components/designer/bpmnModeling/bpmn/BpmnUengineViewer.vue';
 
 export default {
     name: 'RequirementAnalysis',
     components: {
         VueMermaid,
-        EventStormingModelCanvas
+        EventStormingModelCanvas,
+        BpmnUengineViewer
     },
     props: {
         analysisResult: {
@@ -182,18 +188,20 @@ export default {
     },
     data() {
         return {
+            bpmXml: null
         }
     },
     watch: {
         analysisResult: {
             handler(newVal) {
                 console.log(newVal);
+                this.generateBPMN(newVal.analysisResult);
             },
         }
     },
     mounted() {
-        if(Object.keys(this.analysisResult).length > 0){
-            console.log(this.analysisResult);
+        if (this.analysisResult) {
+            this.generateBPMN(this.analysisResult.analysisResult);
         }
     },
     methods: {
@@ -213,13 +221,152 @@ export default {
         },
         stop() {
             this.$emit('stop');
+        },
+        generateBPMN(analysisResult) {
+            if (!analysisResult || !analysisResult.actors || !analysisResult.events) {
+                this.bpmXml = null;
+                return;
+            }
+            const { actors, events } = analysisResult;
+
+            // 1. 이벤트를 레벨 순서대로 정렬
+            const eventsByLevel = [...events].sort((a, b) => a.level - b.level);
+
+            // 2. 각 액터별로 이벤트를 level 순서대로 정렬
+            const actorEventMap = {};
+            actors.forEach(actor => {
+                actorEventMap[actor.name] = [];
+            });
+            eventsByLevel.forEach(ev => {
+                if (actorEventMap[ev.actor]) {
+                    actorEventMap[ev.actor].push(ev.name);
+                }
+            });
+
+            // 3. Pool/Lane 정의 (flowNodeRef를 level 순서대로)
+            let lanes = actors.map(actor => `
+                <bpmn:lane id="Lane_${actor.lane}" name="${actor.name}">
+                    ${actorEventMap[actor.name].map(ev => `<bpmn:flowNodeRef>${ev}</bpmn:flowNodeRef>`).join('\n')}
+                </bpmn:lane>
+            `).join('\n');
+
+            // 4. 이벤트(Task/Start/End 등) 정의 (level 순서대로)
+            let eventMap = {};
+            let flowNodes = eventsByLevel.map(ev => {
+                eventMap[ev.name] = ev;
+                if (ev.level === 1) {
+                    return `<bpmn:startEvent id="${ev.name}" name="${ev.displayName}" />`;
+                } else if (!ev.nextEvents || ev.nextEvents.length === 0) {
+                    return `<bpmn:endEvent id="${ev.name}" name="${ev.displayName}" />`;
+                } else {
+                    return `<bpmn:task id="${ev.name}" name="${ev.displayName}" />`;
+                }
+            }).join('\n');
+
+            // 5. 시퀀스 플로우 정의
+            let sequenceFlows = [];
+            events.forEach(ev => {
+                if (ev.nextEvents) {
+                    ev.nextEvents.forEach(next => {
+                        sequenceFlows.push(
+                            `<bpmn:sequenceFlow id="Flow_${ev.name}_to_${next}" sourceRef="${ev.name}" targetRef="${next}" />`
+                        );
+                    });
+                }
+            });
+
+            // 6. 시각적 요소(BPMN-DI) 생성
+            // 각 lane(액터)별로 y축을 다르게, 각 이벤트는 level에 따라 x축을 다르게 배치
+            const laneHeight = 160; // 더 크게!
+            const nodeWidth = 80;
+            const nodeHeight = 60;
+            const xGap = 140;
+            const yStart = 80;
+            const xStart = 100;
+
+            // 이벤트별 위치 계산
+            const nodePositions = {};
+            actors.forEach((actor, laneIdx) => {
+                actorEventMap[actor.name].forEach(evName => {
+                    const ev = events.find(e => e.name === evName);
+                    if (!ev) return;
+                    // x: level에 따라, y: lane에 따라
+                    nodePositions[evName] = {
+                        x: xStart + (ev.level - 1) * xGap,
+                        y: yStart + laneIdx * laneHeight
+                    };
+                });
+            });
+
+            // Lane의 BPMNShape 생성 (선택)
+            let bpmnLaneShapes = actors.map((actor, laneIdx) => {
+                // lane의 높이는 해당 lane의 노드 개수에 따라 동적으로 조정할 수도 있음
+                return `
+                <bpmndi:BPMNShape id="Shape_Lane_${actor.lane}" bpmnElement="Lane_${actor.lane}">
+                    <dc:Bounds x="0" y="${yStart + laneIdx * laneHeight - 20}" width="${xStart + xGap * 15}" height="${laneHeight}" />
+                </bpmndi:BPMNShape>
+                `;
+            }).join('\n');
+
+            // BPMNShape 생성
+            let bpmnShapes = Object.entries(nodePositions).map(([evName, pos]) => {
+                return `
+                <bpmndi:BPMNShape id="Shape_${evName}" bpmnElement="${evName}">
+                    <dc:Bounds x="${pos.x}" y="${pos.y}" width="${nodeWidth}" height="${nodeHeight}"/>
+                </bpmndi:BPMNShape>
+                `;
+            }).join('\n');
+
+            // BPMNEdge(시퀀스 플로우) 생성
+            let bpmnEdges = sequenceFlows.map(flowXml => {
+                const match = flowXml.match(/sourceRef="([^"]+)" targetRef="([^"]+)"/);
+                if (!match) return '';
+                const [, source, target] = match;
+                const src = nodePositions[source];
+                const tgt = nodePositions[target];
+                if (!src || !tgt) return '';
+                const waypoints = [
+                    `<di:waypoint x="${src.x + nodeWidth}" y="${src.y + nodeHeight/2}"/>`,
+                    `<di:waypoint x="${tgt.x}" y="${tgt.y + nodeHeight/2}"/>`
+                ].join('\n');
+                return `
+                <bpmndi:BPMNEdge id="Edge_${source}_to_${target}" bpmnElement="Flow_${source}_to_${target}">
+                    ${waypoints}
+                </bpmndi:BPMNEdge>
+                `;
+            }).join('\n');
+
+            // 7. 프로세스 조립
+            this.bpmXml = `<?xml version="1.0" encoding="UTF-8"?>
+        <bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                        xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                        xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                        xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                        id="Definitions_1"
+                        targetNamespace="http://bpmn.io/schema/bpmn">
+        <bpmn:process id="Process_1" isExecutable="false">
+            <bpmn:laneSet>
+            ${lanes}
+            </bpmn:laneSet>
+            ${flowNodes}
+            ${sequenceFlows.join('\n')}
+        </bpmn:process>
+        <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+            <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1">
+            ${bpmnLaneShapes}
+            ${bpmnShapes}
+            ${bpmnEdges}
+            </bpmndi:BPMNPlane>
+        </bpmndi:BPMNDiagram>
+        </bpmn:definitions>
+        `;
         }
     }
 }
 </script>
 
 <style>
-
 .enhancement-guide {
     background: #f8f9fa;
     border-radius: 8px;
@@ -270,7 +417,7 @@ export default {
     margin-bottom: 24px;
 }
 
-.event-storming-wrapper {
+.bpmn-wrapper {
     width: 100%;
     height: 100vh;
     max-height: 900px;
@@ -279,27 +426,26 @@ export default {
     flex-direction: column;
 }
 
-.event-storming-title {
+.bpmn-title {
     font-size: 1.5rem;
     color: #333;
 }
 
-.event-storming-subtitle {
+.bpmn-subtitle {
     color: #666;
     font-size: 1rem;
 }
 
-.event-storming-canvas {
-    flex: 1;
+.bpmn-canvas {
     position: relative;
-    min-height: 0;
+    height: 100%;
     border: 1px solid #eee;
     border-radius: 4px;
     background: white;
     margin: 10px 0;
 }
 
-.event-storming-footer {
+.bpmn-footer {
     padding-top: 20px;
     display: flex;
     justify-content: flex-end;

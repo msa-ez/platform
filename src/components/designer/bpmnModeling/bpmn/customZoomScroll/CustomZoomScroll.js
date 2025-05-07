@@ -19,7 +19,7 @@ var sign = Math.sign || function(n) {
   return n >= 0 ? 1 : -1;
 };
 
-export default function CustomZoomScroll(config, eventBus, canvas) {
+function CustomZoomScroll(config, eventBus, canvas) {
   // 부모 클래스 생성자 호출
   BaseZoomScroll.call(this, config, eventBus, canvas);
 
@@ -183,3 +183,7 @@ CustomZoomScroll.prototype._handleWheel = function handleWheel(event) {
   }
 };
 
+export default {
+  __init__: ['zoomScroll'],
+  zoomScroll: ['type', CustomZoomScroll]
+};

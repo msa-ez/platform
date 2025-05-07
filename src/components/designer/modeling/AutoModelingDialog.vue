@@ -44,6 +44,16 @@
                     <v-row style="height:60px;" class="ma-0 pa-4 align-center">
                         <v-spacer></v-spacer>
                         <div class="mr-1 d-flex align-center">
+                            <div v-if="isInitializing" class="d-flex align-center">
+                                <v-progress-circular
+                                    indeterminate
+                                    size="20"
+                                    width="2"
+                                    color="primary"
+                                    class="mr-2"
+                                ></v-progress-circular>
+                            </div>
+                            
                             <!-- Save Button -->
                             <v-tooltip bottom>
                                 <template v-slot:activator="{ on, attrs }">
@@ -53,6 +63,7 @@
                                         class="mx-1"
                                         v-bind="attrs"
                                         v-on="on"
+                                        :disabled="isInitializing"
                                         @click="openStorageDialog()"
                                     >
                                         <v-icon>mdi-content-save</v-icon>
@@ -70,6 +81,7 @@
                                         class="mx-1"
                                         v-bind="attrs"
                                         v-on="on"
+                                        :disabled="isInitializing"
                                         @click="generatePowerPoint()"
                                     >
                                         <v-icon>mdi-file-powerpoint-box-outline</v-icon>
@@ -86,7 +98,8 @@
                                         class="mx-1"
                                         v-bind="attrs"
                                         v-on="on"
-                                        @click="exportToPDF()"
+                                        :disabled="isInitializing"
+                                        @click="openExportToPDF()"
                                     >
                                         <v-icon>mdi-file-pdf-box</v-icon>
                                     </v-btn>
@@ -103,6 +116,7 @@
                                         class="mx-1"
                                         v-bind="attrs"
                                         v-on="on"
+                                        :disabled="isInitializing"
                                         @click="requestInviteUser()"
                                         text
                                     >
@@ -124,6 +138,7 @@
                                         class="mx-1"
                                         v-bind="attrs"
                                         v-on="on"
+                                        :disabled="isInitializing"
                                         @click="openInviteUsers()"
                                     >
                                         <v-icon>mdi-share-variant</v-icon>
@@ -148,6 +163,7 @@
                                         class="ml-2"
                                         v-bind="attrs"
                                         v-on="on"
+                                        :disabled="isInitializing"
                                         @click="cancelCreateModel()"
                                     >
                                         <v-icon>mdi-close</v-icon>
@@ -245,6 +261,7 @@
                                 :cachedModels="cachedModels"
                                 :isEditable="isOwnModel || !isReadOnlyModel"
                                 @change="backupProject" 
+                                @update:processAnalysis="updateProcessAnalysis"
                                 @update:boundedContextDrafts="updateBoundedContextDrafts" 
                                 @update:aggregateDrafts="updateAggregateDrafts"
                                 @update:userStory="updateUserStory"
@@ -286,6 +303,38 @@
             @add="addInviteUser"
             @remove="removeInviteUser"
         ></model-canvas-share-dialog>
+
+        <!-- 저장하지 않은 Project unload 여부 확인 -->
+        <v-dialog
+            v-model="showConfirmDialog"
+            max-width="400"
+        >
+            <v-card>
+                <v-card-title class="headline">
+                    {{ $t('autoModeling.unsavedChangesDialogTitle') }}
+                </v-card-title>
+                <v-card-text>
+                    {{ $t('autoModeling.unsavedChanges') }}
+                </v-card-text>
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn
+                        color="grey darken-1"
+                        text
+                        @click="handleConfirmDialogResponse('dont-save')"
+                    >
+                        {{ $t('autoModeling.dontSave') }}
+                    </v-btn>
+                    <v-btn
+                        color="primary"
+                        text
+                        @click="handleConfirmDialogResponse('save')"
+                    >
+                        {{ $t('autoModeling.save') }}
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
 
 
         <v-snackbar v-model="snackbar.show"
@@ -346,6 +395,7 @@
                 default: function(){
                     return {
                         eventStorming: null,
+                        userStory: '',
                         customerJourneyMap: null,
                         businessModel: null,
                         userStoryMap: null,
@@ -372,12 +422,6 @@
                 type: Boolean,
                 default: function () {
                     return false
-                }
-            },
-            genType: {
-                type: String,
-                default: function(){
-                    return null;
                 }
             },
             isOwnModel: {
@@ -484,7 +528,7 @@
                 reGenKey: 0,
                 autoScroll: true,
                 bmName: null,
-                // genType: null,
+                genType: null,
                 autoModelDialog: 0,
                 gptResponseId: null,
                 userPanel: 1,
@@ -542,6 +586,14 @@
                 inviteDialog: false,
 
                 isPDFGenerating: false,
+
+                // Project unload 여부 확인
+                showConfirmDialog: false,
+                pendingAction: null,
+
+                initialDraft: null,
+                isInitializing: false,
+                unsavedChanges: false,
             }
         },
         computed: {
@@ -587,7 +639,21 @@
                 });
             }, 1000)
         },
+        beforeMount() {
+            window.addEventListener('beforeunload', this.handleBeforeUnload)
+        },
+        beforeRouteLeave(to, from, next) {
+            if (!this.isServer && this.hasUnsavedChanges()) {
+                this.showConfirmDialog = true
+                this.pendingAction = () => next()
+                next(false)
+            } else {
+                next()
+            }
+        },
         beforeDestroy() {
+            window.removeEventListener('beforeunload', this.handleBeforeUnload)
+
             let getPrompt = localStorage.getItem('noLoginPrompt')
             if( !(this.isLogin && getPrompt)){
                 localStorage.removeItem('noLoginPrompt')
@@ -647,6 +713,24 @@
                     await me.putString(`storage://definitions/${me.projectId}/information/image`, e.data.image);
                 }
             };
+
+            if(me.isServer){
+                me.isInitializing = true;
+                me.openProjectDialog()
+                me.$nextTick(async () => {
+                    if (me.$refs.esDialoger && me.$refs.esDialoger.initESDialoger) {
+                        try {
+                            await me.$refs.esDialoger.initESDialoger();
+                            me.initialDraft = JSON.parse(JSON.stringify(me.$refs.esDialoger.messages));
+                            console.log('Initialization complete');
+                        } catch (error) {
+                            console.error('Initialization failed:', error);
+                        } finally {
+                            me.isInitializing = false;
+                        }
+                    }
+                });
+            }
         },
         updated() {
             this.$nextTick(() => {
@@ -699,7 +783,7 @@
                     title: 'Save Project',
                     comment: '',
                     projectName: this.projectInfo.prompt,
-                    projectId: this.projectId,
+                    projectId: this.uuid(),
                     error: null,
                     loading: false,
                     type: 'project'
@@ -718,8 +802,7 @@
                     var settingProjectId = me.storageCondition.projectId.replaceAll(' ', '-').trim();
                     let originSetProjectId = JSON.parse(JSON.stringify(settingProjectId))
                     if(me.userInfo.providerUid){
-                        // providerUid를 붙여서 저장하는 이유?
-                        // settingProjectId = `${me.userInfo.providerUid}_${me.storageCondition.type}_${settingProjectId}`
+                        settingProjectId = `${me.userInfo.providerUid}_${me.storageCondition.type}_${settingProjectId}`
                     }
 
                     me.projectInfo.author = me.userInfo.uid
@@ -734,17 +817,17 @@
                     await me.putObject(`db://definitions/${settingProjectId}/information`, me.projectInfo)
                     me.isServer = true;
                     
-                    let path = ''
-                    if(me.storageCondition.type == 'project'){
-                        path = `/${me.projectInfo.type}/${settingProjectId}`
-                    }else{
-                        path = `/${me.userInfo.providerUid}/${me.storageCondition.type}/${originSetProjectId}`
-                    }
+                    let path = `/${me.userInfo.providerUid}/${me.storageCondition.type}/${originSetProjectId}`
                     
                     me.$router.push({path: path});
                     setTimeout(function () {
                         me.$emit('forceUpdateKey')
                     }, 300)
+
+                    if (me.afterSaveAction) {
+                        me.afterSaveAction()
+                        me.afterSaveAction = null
+                    }
                 } else{
                     me.storageCondition.loading = false
                 }
@@ -873,7 +956,9 @@
             },
             openProjectDialog(){
                 var me = this
-                me.genType = null
+                if(!me.genType){
+                    me.genType = 'ES2'
+                }
                 me.setModelIds()
                 me.openChatUI = true
 
@@ -892,28 +977,28 @@
 
                 return s4() + s4() + s4() + s4() + s4() + s4() + s4() + s4();
             },
-            cancelCreateModel(val){
-                var me = this
-                localStorage.removeItem('noLoginPrompt')
-                if(!val){
-                    me.openChatUI = false
-                    me.openaiPopup = false
+            async cancelCreateModel(val) {
+                const me = this;
 
-                    me.projectInfo = {
-                        eventStorming: null,
-                        customerJourneyMap: null,
-                        businessModel: null,
-                        userStoryMap: null,
-                        prompt: ""
-                    },
-                    me.modelScenarioPrompt = ""
-                    me.openAiResult = ""
-                } 
-                me.startTemplateGenerate = false
-                if(me.mode == 'project'){
-                    this.$emit("closeDialog")
+                const hasUnsavedChanges = me.hasUnsavedChanges();
+                console.log("Has unsaved changes:", hasUnsavedChanges);
+                
+                if (hasUnsavedChanges) {
+                    this.showConfirmDialog = true;
+                    this.pendingAction = () => this.closeComponent();
+                } else {
+                    localStorage.removeItem('noLoginPrompt');
+                    if (!val) {
+                        this.closeComponent();
+                    }
+                    this.startTemplateGenerate = false;
+                    
+                    if (this.mode == 'project') {
+                        this.$emit("closeDialog");
+                    }
+                    this.$emit("changeFieldStatus", false);
                 }
-                this.$emit("changeFieldStatus", false)
+                window.removeEventListener('beforeunload', this.handleBeforeUnload)
             },
             async open(){
                 let me = this;
@@ -1007,7 +1092,7 @@
                 console.log(content);
             },
             updateUserStory(content){
-                this.$set(this.projectInfo, 'eventStorming', content);
+                this.$set(this.projectInfo, 'userStory', content);
             },
             openCanvas(val){
                 var me = this
@@ -1020,13 +1105,18 @@
                 } else if(val.type == 'BM'){
                     me.$router.push({path: `business-model-canvas/${dbuid}`});
                 }
-            },  
+            },
+            updateProcessAnalysis(messages){
+                if(!this.projectInfo.draft) {
+                    this.projectInfo.draft = {};
+                }
+                this.projectInfo.draft = messages;
+            },
             updateBoundedContextDrafts(messages){
                 if(!this.projectInfo.draft) {
                     this.projectInfo.draft = {};
                 }
                 this.projectInfo.draft = messages;
-                this.saveProject();
             },
             updateAggregateDrafts(messages){
                 if(!this.projectInfo.draft) {
@@ -1060,7 +1150,6 @@
                     }
                     return msg;
                 });
-                this.saveProject();
             },
 
             updateModelList(modelId){
@@ -1071,6 +1160,8 @@
                 if(!this.projectInfo['eventStormingModelIds'].includes(`${this.userInfo.providerUid}_es_${modelId}`)){
                     this.projectInfo['eventStormingModelIds'].push(`${this.userInfo.providerUid}_es_${modelId}`)
                 }
+
+                this.unsavedChanges = true;
             },
 
             // project share
@@ -1248,7 +1339,7 @@
 
             },
 
-            async exportToPDF() {
+            async openExportToPDF() {
                 if (this.isPDFGenerating) return
                 if (this.$refs.documentPreview && this.$refs.documentPreview.dialog) {
                     await this.$refs.documentPreview.close();
@@ -1256,167 +1347,72 @@
                 }
                 
                 this.$refs.documentPreview.show();
+            },
 
-                // try {
-                //     // 모든 PDF 컨텐츠 아이템을 찾음
-                //     const pdfItems = this.$refs.dialogContainer.querySelectorAll('.pdf-content-item')
-                //     if (!pdfItems.length) {
-                //         throw new Error('PDF content items not found')
-                //     }
+            // 저장하지 않은 Project unload 여부 확인
+            hasUnsavedChanges() {
+                if(!this.isServer) {
+                    return true;
+                }
 
-                //     // Mermaid 다이어그램 렌더링 대기
-                //     await new Promise(resolve => setTimeout(resolve, 1000))
+                if(this.unsavedChanges) {
+                    return true;
+                }
 
-                //     // 각 아이템별로 이미지 생성
-                //     const pdfPromises = Array.from(pdfItems).map(async (container, index) => {
-                //         const imageStates = new Map()
-                //         const images = container.getElementsByTagName('img')
-                        
-                //         const imageLoadPromises = Array.from(images).map(img => {
-                //             return new Promise(resolve => {
-                //                 if (img.complete) {
-                //                     imageStates.set(img, 'loaded')
-                //                     resolve()
-                //                     return
-                //                 }
+                const currentStateStr = JSON.stringify(this.$refs.esDialoger.messages);
+                const initialStateStr = JSON.stringify(this.initialDraft);
 
-                //                 img.addEventListener('load', () => {
-                //                     imageStates.set(img, 'loaded')
-                //                     resolve()
-                //                 }, { once: true })
+                this.unsavedChanges = currentStateStr !== initialStateStr;
+                
+                return this.unsavedChanges;
+            },
 
-                //                 img.addEventListener('error', () => {
-                //                     console.warn('Image load failed:', img.src)
-                //                     imageStates.set(img, 'error')
-                //                     img.style.opacity = '0'
-                //                     resolve()
-                //                 }, { once: true })
-                //             })
-                //         })
+            handleBeforeUnload(e) {
+                if (window.location.pathname.includes('/project/') && !this.isServer && this.hasUnsavedChanges()) {
+                    e.preventDefault()
+                    e.returnValue = ''
+                }
+            },
 
-                //         await Promise.race([
-                //             Promise.all(imageLoadPromises),
-                //             new Promise(resolve => setTimeout(resolve, 3000))
-                //         ])
+            handleConfirmDialogResponse(response) {
+                this.showConfirmDialog = false
+                
+                if (response === 'save') {
+                    this.openStorageDialog()
+                    // 저장 완료 후 실행될 액션 저장
+                    this.afterSaveAction = this.pendingAction
+                } else if (response === 'dont-save') {
+                    if (this.pendingAction) {
+                        this.pendingAction()
+                    } else {
+                        this.closeComponent()
+                    }
+                }
+                
+                this.pendingAction = null
+            },
 
-                //         // 이미지 캡처
-                //         let dataUrl = null
-                //         let retryCount = 0
-                //         const maxRetries = 3
+            closeComponent() {
+                window.removeEventListener('beforeunload', this.handleBeforeUnload)
 
-                //         while (!dataUrl && retryCount < maxRetries) {
-                //             try {
-                //                 dataUrl = await htmlToImage.toPng(container, {
-                //                     skipFonts: true,
-                //                     cacheBust: true,
-                //                     pixelRatio: 2,
-                //                     backgroundColor: '#ffffff',
-                //                     filter: node => {
-                //                         try {
-                //                             if (!node || !node.tagName) return true
-                //                             const hasNoPrintClass = node.classList && node.classList.contains('no-print')
-                //                             const hasVBtnClass = node.classList && node.classList.contains('v-btn')
-                //                             const isButton = node.tagName === 'BUTTON'
-                //                             if (node.tagName === 'IMG') {
-                //                                 const state = imageStates.get(node)
-                //                                 if (state === 'error') return false
-                //                             }
-                //                             return !(hasNoPrintClass || hasVBtnClass || isButton)
-                //                         } catch (err) {
-                //                             console.warn('Filter error for node:', err)
-                //                             return true
-                //                         }
-                //                     }
-                //                 })
-                //             } catch (err) {
-                //                 console.warn(`Capture attempt ${retryCount + 1} failed:`, err)
-                //                 retryCount++
-                //                 await new Promise(resolve => setTimeout(resolve, 500))
-                //             }
-                //         }
-
-                //         if (!dataUrl) {
-                //             throw new Error(`Failed to capture content for item ${index}`)
-                //         }
-
-                //         return {
-                //             dataUrl,
-                //             height: container.offsetHeight,
-                //             width: container.offsetWidth
-                //         }
-                //     })
-
-                //     const capturedImages = await Promise.all(pdfPromises)
-
-                //     // PDF 생성
-                //     const pdf = new jsPDF('p', 'mm', 'a4')
-                //     const pdfWidth = pdf.internal.pageSize.getWidth()
-                //     const pdfHeight = pdf.internal.pageSize.getHeight()
-                //     const margin = 10
-                //     const imgWidth = pdfWidth - (margin * 2)
-
-                //     // 각 이미지를 PDF에 추가
-                //     capturedImages.forEach((img, index) => {
-                //         if (index > 0) pdf.addPage()
-                        
-                //         const imgHeight = (img.height * imgWidth) / img.width
-                //         const maxHeight = pdfHeight - (margin * 2)
-
-                //         if (imgHeight > maxHeight) {
-                //             const pageCount = Math.ceil(imgHeight / maxHeight)
-                //             for (let i = 0; i < pageCount; i++) {
-                //                 if (i > 0) pdf.addPage()
-                //                 pdf.addImage(
-                //                     img.dataUrl,
-                //                     'PNG',
-                //                     margin,
-                //                     margin,
-                //                     imgWidth,
-                //                     maxHeight,
-                //                     undefined,
-                //                     'FAST',
-                //                     0,
-                //                     i * (img.height / pageCount) / img.height
-                //                 )
-                //             }
-                //         } else {
-                //             pdf.addImage(
-                //                 img.dataUrl,
-                //                 'PNG',
-                //                 margin,
-                //                 margin,
-                //                 imgWidth,
-                //                 imgHeight,
-                //                 undefined,
-                //                 'FAST'
-                //             )
-                //         }
-                //     })
-
-                //     const timestamp = new Date().toISOString().split('T')[0]
-                //     const filename = `event-storming-${this.projectId || timestamp}.pdf`
-                //     pdf.save(filename)
-
-                // } catch (error) {
-                //     console.error('PDF generation failed:', error)
-                //     this.snackbar = {
-                //         show: true,
-                //         text: "PDF generation failed: " + (error.message || 'Unknown error'),
-                //         color: "error",
-                //         timeout: 3000
-                //     }
-                // } finally {
-                //     // 원래 상태로 복구
-                //     const pdfItems = this.$refs.dialogContainer.querySelectorAll('.pdf-content-item')
-                //     pdfItems.forEach(container => {
-                //         const images = container.getElementsByTagName('img')
-                //         Array.from(images).forEach(img => {
-                //             img.style.opacity = ''
-                //         })
-                //     })
-                //     this.isPDFGenerating = false
-                // }
-            }
+                this.openChatUI = false
+                this.openaiPopup = false
+                this.projectInfo = {
+                    eventStorming: null,
+                    customerJourneyMap: null,
+                    businessModel: null,
+                    userStoryMap: null,
+                    prompt: "",
+                    userStory: ""
+                }
+                this.modelScenarioPrompt = ""
+                this.openAiResult = ""
+                this.startTemplateGenerate = false
+                if(this.mode == 'project'){
+                    this.$emit("closeDialog")
+                }
+                this.$emit("changeFieldStatus", false)
+            },
         }
     }
 </script>

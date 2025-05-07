@@ -1513,6 +1513,14 @@
                     var convertProjectId = proName ? me.filteredProjectName(proName) : me.dbuid()
                     convertProjectId = convertProjectId.replaceAll(' ','-')
 
+                    if(this.projectId) {
+                        if(this.projectId.includes('_')) {
+                            convertProjectId = this.projectId.split('_')[this.projectId.split('_').length - 1]
+                        } else {
+                            convertProjectId = this.projectId
+                        }
+                    }
+
                     obj= {
                         action: 'save',
                         title: 'SAVE',
