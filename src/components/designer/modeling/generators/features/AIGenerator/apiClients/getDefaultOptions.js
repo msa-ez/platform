@@ -34,7 +34,7 @@ function getDefaultOptions() {
 
     return {
         // 복잡한 추론이 필요한 작업에 활용: 이벤트 스토밍 생성, 애그리거트 초안 생성 등
-        thinkingModel: loadOption("thinkingModel", "o4-mini-2025-04-16-medium"),
+        thinkingModel: loadOption("thinkingModel", MODEL_FLAGS.NOT_USED),
 
         // 입출력이 명확한 단순한 작업에 활용: 잘못된 JSON 데이터 복구 등
         normalModel: loadOption("normalModel", "gpt-4.1-2025-04-14"),

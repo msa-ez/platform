@@ -97,7 +97,7 @@
     "userStory": "User Story",
     "userStoryText": "Please enter the user story.",
     "generateUserStory": "Would you like to generate the user story automatically?",
-    "generateAIAuto": "Yes, generate with AI",
+    "generateAIAuto": "Generate with AI",
     "enterManually": "No, I will enter it manually",
     "confirmGeneration": "Regenerate",
     "confirmGenerationMessage": "All outputs generated based on the AI-recommended scenario and design will be deleted."
@@ -436,6 +436,7 @@
     "purchaseList": "Purchase / History",
     "CoinsCoupons": "Coupons or coins",
     "inquiry": "Request a demo / Question( help@uengine.org )",
+    "aiModelSetting": "AI Model Setting",
     "logout": "Sign Out",
     "LoginInformation1": "*Since there would be limits on functional usage if you sign in with Google",
     "LoginInformation2": "we recommend you to sign in with Github.",
@@ -590,6 +591,11 @@
       "modelID": "Model ID",
       "contextWindowTokenLimit": "Context Window Tokens",
       "outputTokenLimit": "Output Tokens Limit"
+    },
+    "validation": {
+      "invalidOpenAIKey": "Invalid OpenAI API key. Please check your API key.",
+      "invalidAnthropicKey": "Invalid Anthropic API key. Please check your API key.",
+      "validKey": "API key is valid."
     }
   }
 }

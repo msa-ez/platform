@@ -526,7 +526,7 @@
                                 {{$t('examples.modeling')}}
                             </div>
                             
-                            <v-row class="ma-0 pa-0" style="width: 72%; margin: 0 auto !important;">
+                            <v-row class="main-examples-card-box">
                                 <!-- 기존 v-col 카드들 -->
                                 <v-col class="main-examples-card-padding" v-for="(mainPublicModel, index) in mainPublicModeling" :key="index"
                                     cols="12"

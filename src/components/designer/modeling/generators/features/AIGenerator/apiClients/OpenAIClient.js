@@ -6,6 +6,8 @@ class OpenAIClient extends BaseAPIClient {
     super(client, options, model, aiGenerator)
     if(this.aiGenerator.modelInfo.vendor === "openai")
       this.aiGenerator.roleNames.system = "developer"
+
+    this.isStream = true
   }
   
   async getToken(vendor) {
@@ -31,6 +33,8 @@ class OpenAIClient extends BaseAPIClient {
     if(modelInfo.isSupportedResponseFormat)
       requestData.response_format = modelInfo.requestArgs.response_format
 
+
+    this.isStream = requestData.stream
     const baseURL = (!modelInfo.baseURL) ? "https://api.openai.com" : modelInfo.baseURL
     if(baseURL.startsWith("https://")) {
       return {
@@ -63,24 +67,37 @@ class OpenAIClient extends BaseAPIClient {
   }
 
   _parseResponseText(responseText){
-    const result = TextParseHelper.parseResponseText(responseText, {
-      splitFunction: (text) => text.replace("data: [DONE]", "")
-          .trim()
-          .split("data: ")
-          .filter(Boolean),
+    let result = null
 
-      extractFunction: (parsed) => {
-        if(parsed.choices && parsed.choices[0]){
-          return {
-            content: parsed.choices[0].delta.content || "",
-            id: parsed.id,
-            finish_reason: parsed.choices[0].finish_reason === 'length' ? 'length' : null,
-            error: parsed.error || null
+    if(this.isStream) {
+      result = TextParseHelper.parseResponseText(responseText, {
+        splitFunction: (text) => text.replace("data: [DONE]", "")
+            .trim()
+            .split("data: ")
+            .filter(Boolean),
+  
+        extractFunction: (parsed) => {
+          if(parsed.choices && parsed.choices[0]){
+            return {
+              content: parsed.choices[0].delta.content || "",
+              id: parsed.id,
+              finish_reason: parsed.choices[0].finish_reason === 'length' ? 'length' : null,
+              error: parsed.error || null
+            }
           }
+          return { content: "", id: parsed.id, finish_reason: null, error: parsed.error || null }
         }
-        return { content: "", id: parsed.id, finish_reason: null, error: parsed.error || null }
+      })
+    }
+    else {
+      const parsedResult = JSON.parse(responseText)
+      result = {
+        joinedText: parsedResult.choices[0].message.content,
+        id: parsedResult.id,
+        finish_reason: parsedResult.choices[0].finish_reason === 'length' ? 'length' : null,
+        error: parsedResult.error || null
       }
-    })
+    }
 
     if(result.joinedText.startsWith("<think>")) {
       const tagParsedContents = TextParseHelper.parseFrontTagContents(result.joinedText, "think");

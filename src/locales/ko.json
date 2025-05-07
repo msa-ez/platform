@@ -97,7 +97,7 @@
     "userStory": "유저스토리",
     "userStoryText": "유저스토리를 입력해주세요.",
     "generateUserStory": "유저스토리를 자동 생성하시겠습니까?",
-    "generateAIAuto": "네, AI로 자동생성하겠습니다",
+    "generateAIAuto": "AI로 생성",
     "enterManually": "아니오, 직접 입력하겠습니다",
     "confirmGeneration": "재생성",
     "confirmGenerationMessage": "AI가 추천한 시나리오와 시나리오 기반의 설계된 이후 모든 산출물은 모두 삭제됩니다."
@@ -435,6 +435,7 @@
     "purchaseList": "구매/사용 목록",
     "CoinsCoupons": "쿠폰등록 및 코인얻기",
     "inquiry": "제휴 및 설치형 문의( help@uengine.org )",
+    "aiModelSetting": "AI 모델 설정",
     "logout": "로그아웃",
     "LoginInformation1": "*Github 로그인을 권장하고 있습니다.",
     "LoginInformation2": "구글 로그인 시 일부 기능 사용에 제한이 있을 수 있습니다.",
@@ -594,6 +595,11 @@
       "modelID": "모델 ID",
       "contextWindowTokenLimit": "컨텍스트 윈도우 토큰 제한",
       "outputTokenLimit": "출력 토큰 제한"
+    },
+    "validation": {
+      "invalidOpenAIKey": "OpenAI API 키가 유효하지 않습니다. 다시 확인해주세요.",
+      "invalidAnthropicKey": "Anthropic API 키가 유효하지 않습니다. 다시 확인해주세요.",
+      "validKey": "API 키가 유효합니다."
     }
   }
 }

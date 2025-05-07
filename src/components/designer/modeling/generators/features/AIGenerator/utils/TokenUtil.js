@@ -29,16 +29,10 @@ class TokenUtil {
                 return token;
             }
 
-            token = prompt(`No token available. Please enter a token for ${vendor}.`);
-            if(!token || token === "null") {
-                const errorMessage = `AI generation has been stopped due to no input tokens.`;
-                alert(errorMessage);
-                throw new Error(errorMessage);
-            }
-
-            localStorage.setItem(`api_key_${vendor}`, token);
-            return token;
-
+            const errorMessage = `The API key to be used does not exist. Please register your API key in User Profile > AI Settings.`;
+            alert(errorMessage);
+            throw new Error(errorMessage);
+            
         } catch (error) {
             console.error(`[!] Error getting token`, {vendor, error});
             throw error;

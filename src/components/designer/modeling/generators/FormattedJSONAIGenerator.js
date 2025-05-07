@@ -484,7 +484,7 @@ Rules:
         const afterJsonFormat = this.__buildAfterJsonResponseFormat()
 
         if(!jsonFormat) return ""
-        return `You should return a list containing JSON objects for performing specific actions.
+        return `You should return a list containing pretty-printed JSON objects for performing specific actions.
 The returned format should be as follows.
 \`\`\`json
 ${jsonFormat.trim()}
@@ -495,23 +495,6 @@ ${afterJsonFormat.trim()}
     }
     __buildJsonResponseFormat() { return "" }
     __buildAfterJsonResponseFormat() { return "" }
-
-    /**
-     * JSON 응답을 압축시켜서 토큰 초과 문제 해소 및 출력 속도 개선
-     */
-    __getJsonCompressGuidePrompt() {
-        return `- When returning JSON, please remove all whitespace and return it in a compressed format, as shown in the example below.
-# BEFORE
-{
-    "a": 1,
-    "b": 2
-}
-        
-# AFTER
-{"a":1,"b":2}
-
-`
-    }
 
 
     __buildUserPrompt(){
@@ -528,9 +511,6 @@ ${afterJsonFormat.trim()}
             this.__buildRequestFormatPrompt(),
             this.__buildResponseFormatPrompt()
         ].filter(prompt => prompt !== "");
-        
-        if(!this.modelInfo.requestArgs.response_format)
-            guidelines.push(this.__getJsonCompressGuidePrompt());
 
         const exampleInputs = this.__buildJsonExampleInputFormat()
         const userInputs = this.__buildJsonUserQueryInputFormat()
@@ -554,7 +534,7 @@ ${afterJsonFormat.trim()}
         if(!exampleOutputs) return ""
 
         return [`\`\`\`json
-${JSON.stringify(exampleOutputs)}
+${JSON.stringify(exampleOutputs, null, 2)}
 \`\`\``]
     }
 

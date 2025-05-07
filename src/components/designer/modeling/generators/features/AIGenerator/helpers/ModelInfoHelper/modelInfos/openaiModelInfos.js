@@ -48,8 +48,8 @@ export const openaiModelInfos = {
         outputTokenLimit: 32768,
         isSupportedResponseFormat: true,
         requestArgs: {
-            temperature: 0.7,
-            topP: 1,
+            temperature: 1.0,
+            topP: 0.9,
             frequencyPenalty: 0,
             presencePenalty: 0
         }

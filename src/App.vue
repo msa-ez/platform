@@ -391,12 +391,10 @@
                 :class="isRootPage ? 'question-btn-hide' : ''"
                 text
                 elevation="0"
+                color="primary"
                 style="text-transform: none;"
             >
-                <v-img src="/static/image/main/question.svg" contain
-                    style="width:24px; height:24px; margin-right:5px;">
-                </v-img>
-                <div font-size="14">{{ $t('inquiry.title') }}</div>
+                <div style="font-weight: 700; font-size: 16px;">{{ $t('inquiry.title') }}</div>
             </v-btn>
             
             <v-btn
@@ -676,6 +674,7 @@
                   @onClose="closeAiModelSettingDialog"
                   :isUserStoryUIMode="false"
                   :errorMessage="aiSettingsErrorMessage"
+                  :isVisible="showAiModelSettingDialog"
                 >
                 </AIModelSetting>
             </v-card>
@@ -866,6 +865,7 @@
                 {key: 'manager', display: `loginList.purchaseList`},
                 {key: 'getCoin', display: `loginList.CoinsCoupons`},
                 {key: 'payQuestion', display: `loginList.inquiry`},
+                {key: 'aiModelSetting', display: "loginList.aiModelSetting"},
                 {key: 'logout', display: `loginList.logout`}
             ],
             loginText: 'Login',
@@ -1990,6 +1990,8 @@
                         }
                     } else if (key == 'payQuestion') {
                         alert("'help@uengine.org' 으로 메일 문의 바랍니다. ") 
+                    } else if (key == 'aiModelSetting') {
+                        me.openAiModelSettingDialog()
                     } else {
                         console.log("app")
                         if (me.isLogin) {
@@ -2223,6 +2225,10 @@
             dragStop() {
                 var me = this;
                 me.isDragging = false;
+            },
+            openAiModelSettingDialog() {
+                this.showAiModelSettingDialog = true;
+                this.setAiSettingsRequired(true);
             },
             handleAiSettingsConfirm() {
                 this.closeAiModelSettingDialog();

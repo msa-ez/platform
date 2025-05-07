@@ -574,7 +574,7 @@ code[class*=language-]:nth-child(1) {
 
 .gs-main-page-top-box-mobile {
     display: none;
-    margin-bottom: 32px;
+    margin-bottom: 48px;
 }
 
 .gs-main-page-top-image-mobile {
@@ -668,7 +668,7 @@ code[class*=language-]:nth-child(1) {
 }
 
 .auto-modling-textarea {
-    max-height:80vh !important;
+    max-height:50vh !important;
     overflow-y: auto !important;
 }
 
@@ -926,6 +926,12 @@ code[class*=language-]:nth-child(1) {
 
 .main-examples-title-margin {
     margin-top: 48px;
+}
+
+.main-examples-card-box {
+    width: 72% !important;
+    margin: 0 auto !important;
+    padding: 0px !important;
 }
 
 /* 애니메이션  */
@@ -1186,8 +1192,8 @@ code[class*=language-]:nth-child(1) {
     .main-examples-card-padding {
         padding: 8px;
     }
-    .main-examples-title-margin {
-        margin-top: 32px;
+    .main-examples-card-box {
+        width: 98% !important;
     }
 }
 

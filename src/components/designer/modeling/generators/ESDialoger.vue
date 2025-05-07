@@ -1,28 +1,5 @@
 <template>
-    <div style="margin-top: 10px;">
-        <div>
-            <v-col class="auto-modeling-message-box">
-                <v-card class="auto-modeling-message-card">
-                    <v-card-text class="auto-modeling-message">
-                        <vue-typed-js
-                                :strings="[$t('autoModeling.isModelSelectMessage')]"
-                                :typeSpeed="10"
-                                :showCursor="false"
-                                @onComplete="state.AIModelSelectMessageIsTyping = false"
-                        >
-                            <span class="typing"></span>
-                        </vue-typed-js>
-                    </v-card-text>
-                </v-card>
-            </v-col>
-        </div>
-        <div style="display: flex; flex-direction: column;" v-if="!state.AIModelSelectMessageIsTyping">
-            <AIModelSetting 
-                @onConfirm="generateUserStory();" 
-                :isUserStoryUIMode="true"
-            />
-        </div>
-        
+    <div style="margin-top: 10px;">        
         <div>
             <v-col class="auto-modeling-message-box" style="margin-top: 20px;">
                 <v-card v-if="state.isAIModelSelected" class="auto-modeling-message-card">
@@ -114,6 +91,12 @@
                 <v-btn v-if="!done" :disabled="!isEditable" @click="stop()" style="position: absolute; right:10px; top:10px;"><v-progress-circular class="auto-modeling-stop-loading-icon" indeterminate></v-progress-circular>Stop generating</v-btn>
                 <v-row v-if="done" :disabled="!isEditable" class="ma-0 pa-4 button-row">
                     <v-spacer></v-spacer>
+                    <v-btn outlined
+                        color="#BDBDBD"
+                        @click="generate(); state.isAIModelSelected = true;"
+                    >
+                        {{ $t('ESDialoger.generateAIAuto') }}
+                    </v-btn>
                     <v-btn v-if="state.startTemplateGenerate" :disabled="getDisabledGenerateBtn() || !isEditable" class="auto-modeling-btn" @click="generate()">
                         <v-icon class="auto-modeling-btn-icon">mdi-refresh</v-icon>{{ $t('ESDialoger.tryAgain') }}
                     </v-btn>
@@ -152,7 +135,8 @@
             </v-col>
         </div>
 
-        <v-dialog v-model="generateUserStoryDialog"
+        <!-- AI 및 직접생성 다이얼로그 -->
+        <!-- <v-dialog v-model="generateUserStoryDialog"
             persistent
             max-width="fit-content"
         >
@@ -192,7 +176,7 @@
                     </v-btn>
                 </v-card-actions>
             </v-card>
-        </v-dialog>
+        </v-dialog> -->
     </div>
 
 </template>
@@ -279,6 +263,10 @@ import { value } from 'jsonpath';
         },
         async created(){
             await this.setUserInfo()
+            if(!this.value) this.value = {}
+            if(!this.value.userStory) this.value.userStory = ""
+
+            this.initESDialoger();
             this.autoModel = getParent(this.$parent, 'auto-modeling-dialog');
 
 
@@ -734,6 +722,7 @@ import { value } from 'jsonpath';
             })
             
             me.loadAllRepoList()
+            me.generateUserStory();
         },
         data() {
             return {
@@ -741,7 +730,6 @@ import { value } from 'jsonpath';
                 autoModel: null,
                 state:{
                     generator: "EventOnlyESGenerator", // EventOnlyESGenerator
-                    AIModelSelectMessageIsTyping: true,
                     isAIModelSelected: false,
                     firstMessageIsTyping: true,
                     secondMessageIsTyping: true,
@@ -1208,6 +1196,8 @@ import { value } from 'jsonpath';
                 if(!this.projectInfo.userStory){
                     this.projectInfo['userStory'] = ''
                     this.generateUserStoryDialog = !this.generateUserStoryDialog;
+                    this.done = true;
+                    this.state.secondMessageIsTyping = false;
                 } else {
                     this.done = true;
                 }
