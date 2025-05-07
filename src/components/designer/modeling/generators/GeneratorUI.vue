@@ -1,7 +1,7 @@
 <template>
     <div v-if="modelCreationCompleted">
         <!-- 모델링 관련 AI Chat 버튼  -->
-        <v-btn class="generator-ui-btn"
+        <!-- <v-btn class="generator-ui-btn"
             v-if="!openGeneratorUI"
             fab
             primary
@@ -9,7 +9,7 @@
             @click="openGeneratorUI=!openGeneratorUI"
         >
             <v-icon>mdi-auto-fix</v-icon>
-        </v-btn>
+        </v-btn> -->
         <v-row v-if="openGeneratorUI" style="position:absolute; right:30px; top:75px;">
             <v-card style="text-align: center; z-index: 2;" width="auto">
                 <v-card-text :style="(isExpanded && generationStopped) ? { width: '75px' } : isExpanded ? { width: '170px' } : { width: '500px' }" 

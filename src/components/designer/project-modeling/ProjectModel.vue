@@ -1,6 +1,6 @@
 <template xmlns:v-on="http://www.w3.org/1999/xhtml">
     <div class="page" style="height: 100%">
-        <v-tabs  v-model="tab">
+        <!-- <v-tabs  v-model="tab">
             <v-tab key="0">HOME</v-tab>
             <v-tab key="1" :disabled="!isServer">AI</v-tab>
         </v-tabs>
@@ -182,7 +182,7 @@
                 </v-dialog>
             </v-tab-item>
 
-            <v-tab-item>
+            <v-tab-item> -->
                 <AutoModelingDialog
                         v-if="loading"
                         ref="autoModelingDialog"
@@ -201,8 +201,8 @@
                         @saveProject="openStorageDialog('project')"
                         @backupProject="backupProject()"
                 ></AutoModelingDialog>
-            </v-tab-item>
-        </v-tabs-items>
+            <!-- </v-tab-item>
+        </v-tabs-items> -->
 
     </div>
 </template>
@@ -626,7 +626,9 @@
                     businessModel: null,
                     contextMapping: null,
                     userStoryMap: null,
-                    prompt: ""
+                    prompt: "",
+                    userStory: "",
+                    draft: null
                 }
 
                 me.projectName = me.information.projectName  ? me.information.projectName : me.information.prompt

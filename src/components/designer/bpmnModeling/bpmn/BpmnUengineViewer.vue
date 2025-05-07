@@ -8,7 +8,7 @@
                 <v-icon @click="zoomOut" style="color: #444; cursor: pointer;">mdi-minus</v-icon>
             </div>
         </div>
-        <div v-if="previewersXMLLists.length > 0" style="position: absolute; top: 0px; left: 20px; pointer-events: auto; z-index: 10;">
+        <div v-if="previewersXMLLists.length > 0" style="position: absolute; top: 0px; left: 20px; pointer-events: auto; z-index: 10; overflow: scroll;">
             <v-row class="ma-0 pa-0">
                 <div v-for="(previewer, index) in previewersXMLLists" :key="index">
                     <h6 @click="goToPreviewer(index)" 
@@ -38,7 +38,7 @@ import ZoomScroll from './customZoomScroll/CustomZoomScroll';
 import MoveCanvas from './customMoveCanvas/CustomMoveCanvas';
 
 export default {
-    name: 'bpmn-uengine',
+    name: 'bpmn-uengine-viewer',
     props: {
         url: {
             type: String
@@ -358,7 +358,7 @@ export default {
             var elementRegistry = self.bpmnViewer.get('elementRegistry');
             var allPools = elementRegistry.filter(element => element.type === 'bpmn:Participant');
             const zoomScroll = self.bpmnViewer.get('zoomScroll');
-            const moveCanvas = self.bpmnViewer.get('MoveCanvas');
+            const moveCanvas = self.bpmnViewer.get('moveCanvas');
             zoomScroll.reset();
 
 

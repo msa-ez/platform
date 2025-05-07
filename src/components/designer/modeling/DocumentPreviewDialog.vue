@@ -126,6 +126,8 @@ export default {
     },
     methods: {
         async getEventStormingModel(){
+            if(!this.projectInfo['eventStormingModelIds']) return;
+
             var option = {
                         sort: "desc",
                         orderBy: null,
@@ -134,10 +136,26 @@ export default {
                         endAt: null,
                     }
 
-            this.projectInfo['eventStormingModelIds'].forEach(async (modelId) => {
-                var snapshots = await this.list(`db://definitions/${this.userInfo.providerUid}_es_${modelId}/snapshotLists`, option)
-                this.eventStormingModels[modelId] = JSON.parse(snapshots[0].snapshot)
-            })
+            for (const modelId of this.projectInfo['eventStormingModelIds']) {
+                if(modelId){
+                    const [snapshots, information] = await Promise.all([
+                        this.list(`db://definitions/${modelId}/snapshotLists`, option),
+                        this.list(`db://definitions/${modelId}/information`)
+                    ]);
+
+                    const modelData = {};
+                    
+                    if(snapshots && snapshots.length > 0){
+                        modelData.models = JSON.parse(snapshots[0].snapshot);
+                    }
+                    
+                    if(information){
+                        modelData.information = information;
+                    }
+
+                    this.$set(this.eventStormingModels, modelId, modelData);
+                }
+            }
         },
 
         show() {

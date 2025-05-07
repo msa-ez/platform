@@ -50,7 +50,7 @@
                         <div class="gs-auto-modeling-userStory-text-mobile">{{$t('autoModeling.explanation.userStory')}}</div> -->
                         <v-card-text class="auto-modling-textarea">
                             <v-textarea
-                                v-model="value.userStory"
+                                v-model="projectInfo.userStory"
                                 flat
                                 class="elevation-0 auto-modeling-userStory"
                                 dense
@@ -125,11 +125,11 @@
         </div>
         <div
              class="auto-modeling-message-card"
-             style="margin-top:25px; height: 100%; width: 20%;">
-            <v-col v-if="value && value.modelList && value.modelList.length > 0"
-                   style="height: 100%; align-items: center; margin: 2px; width: 100%;"
+             style="margin-top:25px; height: 100%; width: 100%; overflow-x: auto;">
+            <v-col v-if="value && value.eventStorming.modelList && value.eventStorming.modelList.length > 0"
+                   style="height: 100%; align-items: center; margin: 2px; width: fit-content; display: flex;"
             >
-                <div v-for="id in value.modelList" :key="id">
+                <div v-for="id in value.eventStorming.modelList" :key="id" style="display: inline-block;">
                     <jump-to-model-lists-card :id="id" path="storming" @deleteModel="deleteModel" ></jump-to-model-lists-card>
                 </div>
             </v-col>
@@ -227,7 +227,14 @@ import { value } from 'jsonpath';
             ESDialogerTestTerminal
         ],
         props: {
-            value: Object,
+            value: {
+                type: Object,
+                default: () => ({
+                    eventStorming: {
+                        modelList: []
+                    }
+                })
+            },
             prompt: String,
             uiStyle: Object,
             cachedModels: Object,
@@ -670,24 +677,30 @@ import { value } from 'jsonpath';
                     }
                 },1000)
             },
+            "projectInfo.userStory": {
+                deep: true,
+                handler(newVal, oldVal) {
+                    this.$emit("update:userStory", newVal)
+                }
+            },
             'processingState': {
                 deep: true,
                 handler(newState) {
-                if (!Array.isArray(this.messages)) return;
-                
-                this.messages.forEach(message => {
-                    if (!message || !message.type || !message.uniqueId) return;
+                    if (!Array.isArray(this.messages)) return;
                     
-                    if (['boundedContextResult', 'processAnalysis', 'bcGenerationOption'].includes(message.type)) {
-                        this.updateMessageState(message.uniqueId, {
-                            isSummarizeStarted: newState.isSummarizeStarted,
-                            isGeneratingBoundedContext: newState.isGeneratingBoundedContext,
-                            isStartMapping: newState.isStartMapping,
-                            isAnalizing: newState.isAnalizing
-                        });
-                    }
-                });
-            }
+                    this.messages.forEach(message => {
+                        if (!message || !message.type || !message.uniqueId) return;
+                        
+                        if (['boundedContextResult', 'processAnalysis', 'bcGenerationOption'].includes(message.type)) {
+                            this.updateMessageState(message.uniqueId, {
+                                isSummarizeStarted: newState.isSummarizeStarted,
+                                isGeneratingBoundedContext: newState.isGeneratingBoundedContext,
+                                isStartMapping: newState.isStartMapping,
+                                isAnalizing: newState.isAnalizing
+                            });
+                        }
+                    });
+                }
             }
         },
         mounted(){
@@ -818,8 +831,7 @@ import { value } from 'jsonpath';
 
                 collectedMockDatas: {
                     aggregateDraftScenarios: {
-                    },
-                    projectName: ""
+                    }
                 },
 
                 githubHeaders: null,
@@ -831,163 +843,169 @@ import { value } from 'jsonpath';
         },
         methods: {
             async initESDialoger() {
-                if(!this.projectInfo.draft) return;
-                this.value.userStory = this.projectInfo.eventStorming.userStory;
+                if(!this.projectInfo.userStory && !this.projectInfo.eventStorming.userStory) return;
                 this.done = true;
                 this.state.secondMessageIsTyping = false;
+                this.projectInfo.userStory = this.projectInfo.userStory || this.projectInfo.eventStorming.userStory;
 
                 this.messages = [];
-                
-                const addPropertyWithDelay = async (obj, key, value) => {
-                    await new Promise(resolve => setTimeout(resolve, 30));
-                    obj[key] = value;
-                };
 
-                const processMessageData = async (msg) => {
-                    const newMessage = {};
-                    
-                    switch (msg.type) {
-                        case 'aggregateDraftDialogDto':
-                            await addPropertyWithDelay(newMessage, 'type', msg.type);
-                            await addPropertyWithDelay(newMessage, 'uniqueId', msg.uniqueId);
-                            await addPropertyWithDelay(newMessage, 'isShow', msg.isShow);
-                            await addPropertyWithDelay(newMessage, 'isGeneratorButtonEnabled', msg.isGeneratorButtonEnabled);
-                            await addPropertyWithDelay(newMessage, 'boundedContextVersion', msg.boundedContextVersion);
-                            await addPropertyWithDelay(newMessage, 'isEditable', msg.isEditable);
-                            
-                            // draftUIInfos 점진적 추가
-                            newMessage.draftUIInfos = {};
-                            for (const [key, value] of Object.entries(msg.draftUIInfos || {})) {
-                                await addPropertyWithDelay(newMessage.draftUIInfos, key, value);
-                            }
+                if(this.projectInfo.draft){
+                    const addPropertyWithDelay = async (obj, key, value) => {
+                        await new Promise(resolve => setTimeout(resolve, 30));
+                        obj[key] = value;
+                    };
 
-                            // draftOptions 점진적 처리
-                            newMessage.draftOptions = [];
-                            for (const option of msg.draftOptions) {
-                                const newOption = {};
-                                const { description, ...rest } = option;
-                                for (const [key, value] of Object.entries(rest)) {
-                                    await addPropertyWithDelay(newOption, key, value);
+                    const processMessageData = async (msg) => {
+                        const newMessage = {};
+                        
+                        switch (msg.type) {
+                            case 'aggregateDraftDialogDto':
+                                await addPropertyWithDelay(newMessage, 'type', msg.type);
+                                await addPropertyWithDelay(newMessage, 'uniqueId', msg.uniqueId);
+                                await addPropertyWithDelay(newMessage, 'isShow', msg.isShow);
+                                await addPropertyWithDelay(newMessage, 'isGeneratorButtonEnabled', msg.isGeneratorButtonEnabled);
+                                await addPropertyWithDelay(newMessage, 'boundedContextVersion', msg.boundedContextVersion);
+                                await addPropertyWithDelay(newMessage, 'isEditable', msg.isEditable);
+                                
+                                // draftUIInfos 점진적 추가
+                                newMessage.draftUIInfos = {};
+                                for (const [key, value] of Object.entries(msg.draftUIInfos || {})) {
+                                    await addPropertyWithDelay(newMessage.draftUIInfos, key, value);
                                 }
-                                newMessage.draftOptions.push(newOption);
-                            }
-                            break;
 
-                        case 'boundedContextResult':
-                            await addPropertyWithDelay(newMessage, 'type', msg.type);
-                            await addPropertyWithDelay(newMessage, 'uniqueId', msg.uniqueId);
-                            await addPropertyWithDelay(newMessage, 'isStartMapping', msg.isStartMapping);
-                            await addPropertyWithDelay(newMessage, 'isGeneratingBoundedContext', msg.isGeneratingBoundedContext);
-                            await addPropertyWithDelay(newMessage, 'isAnalizing', msg.isAnalizing);
-                            await addPropertyWithDelay(newMessage, 'isSummarizeStarted', msg.isSummarizeStarted);
-                            await addPropertyWithDelay(newMessage, 'processingRate', msg.processingRate);
-                            await addPropertyWithDelay(newMessage, 'currentProcessingBoundedContext', msg.currentProcessingBoundedContext);
-                            await addPropertyWithDelay(newMessage, 'selectedAspect', msg.selectedAspect);
-                            await addPropertyWithDelay(newMessage, 'summarizedResult', msg.summarizedResult);
-                            await addPropertyWithDelay(newMessage, 'pbcLists', msg.pbcLists);
-                            await addPropertyWithDelay(newMessage, 'isEditable', msg.isEditable);
-                            await addPropertyWithDelay(newMessage, 'currentGeneratedLength', msg.currentGeneratedLength);
-                            
-                            // result 객체 점진적 처리
-                            if (msg.result) {
-                                newMessage.result = {};
-                                for (const [key, value] of Object.entries(msg.result)) {
-                                    await addPropertyWithDelay(newMessage.result, key, value);
+                                // draftOptions 점진적 처리
+                                newMessage.draftOptions = [];
+                                for (const option of msg.draftOptions) {
+                                    const newOption = {};
+                                    const { description, ...rest } = option;
+                                    for (const [key, value] of Object.entries(rest)) {
+                                        await addPropertyWithDelay(newOption, key, value);
+                                    }
+                                    newMessage.draftOptions.push(newOption);
                                 }
-                            }
-                            break;
+                                break;
 
-                        case 'processAnalysis':
-                            await addPropertyWithDelay(newMessage, 'type', msg.type);
-                            await addPropertyWithDelay(newMessage, 'uniqueId', msg.uniqueId);
-                            await addPropertyWithDelay(newMessage, 'isAnalizing', msg.isAnalizing);
-                            await addPropertyWithDelay(newMessage, 'isSummarizeStarted', msg.isSummarizeStarted);
-                            await addPropertyWithDelay(newMessage, 'isGeneratingBoundedContext', msg.isGeneratingBoundedContext);
-                            await addPropertyWithDelay(newMessage, 'isStartMapping', msg.isStartMapping);
-                            await addPropertyWithDelay(newMessage, 'processingRate', msg.processingRate);
-                            await addPropertyWithDelay(newMessage, 'isEditable', msg.isEditable);
-                            await addPropertyWithDelay(newMessage, 'currentGeneratedLength', msg.currentGeneratedLength);
-                            
-                            // content 객체 점진적 처리
-                            if (msg.content) {
-                                newMessage.content = {};
+                            case 'boundedContextResult':
+                                await addPropertyWithDelay(newMessage, 'type', msg.type);
+                                await addPropertyWithDelay(newMessage, 'uniqueId', msg.uniqueId);
+                                await addPropertyWithDelay(newMessage, 'isStartMapping', msg.isStartMapping);
+                                await addPropertyWithDelay(newMessage, 'isGeneratingBoundedContext', msg.isGeneratingBoundedContext);
+                                await addPropertyWithDelay(newMessage, 'isAnalizing', msg.isAnalizing);
+                                await addPropertyWithDelay(newMessage, 'isSummarizeStarted', msg.isSummarizeStarted);
+                                await addPropertyWithDelay(newMessage, 'processingRate', msg.processingRate);
+                                await addPropertyWithDelay(newMessage, 'currentProcessingBoundedContext', msg.currentProcessingBoundedContext);
+                                await addPropertyWithDelay(newMessage, 'selectedAspect', msg.selectedAspect);
+                                await addPropertyWithDelay(newMessage, 'summarizedResult', msg.summarizedResult);
+                                await addPropertyWithDelay(newMessage, 'pbcLists', msg.pbcLists);
+                                await addPropertyWithDelay(newMessage, 'isEditable', msg.isEditable);
+                                await addPropertyWithDelay(newMessage, 'currentGeneratedLength', msg.currentGeneratedLength);
+                                
+                                // result 객체 점진적 처리
+                                if (msg.result) {
+                                    newMessage.result = {};
+                                    for (const [key, value] of Object.entries(msg.result)) {
+                                        await addPropertyWithDelay(newMessage.result, key, value);
+                                    }
+
+                                    this.selectedAspect = msg.selectedAspect;
+                                    this.resultDevideBoundedContext[msg.selectedAspect] = JSON.parse(JSON.stringify(newMessage.result[msg.selectedAspect]));
+                                }
+                                break;
+
+                            case 'processAnalysis':
+                                await addPropertyWithDelay(newMessage, 'type', msg.type);
+                                await addPropertyWithDelay(newMessage, 'uniqueId', msg.uniqueId);
+                                await addPropertyWithDelay(newMessage, 'isAnalizing', msg.isAnalizing);
+                                await addPropertyWithDelay(newMessage, 'isSummarizeStarted', msg.isSummarizeStarted);
+                                await addPropertyWithDelay(newMessage, 'isGeneratingBoundedContext', msg.isGeneratingBoundedContext);
+                                await addPropertyWithDelay(newMessage, 'isStartMapping', msg.isStartMapping);
+                                await addPropertyWithDelay(newMessage, 'processingRate', msg.processingRate);
+                                await addPropertyWithDelay(newMessage, 'isEditable', msg.isEditable);
+                                await addPropertyWithDelay(newMessage, 'currentGeneratedLength', msg.currentGeneratedLength);
+                                
+                                // content 객체 점진적 처리
                                 if (msg.content) {
-                                    await addPropertyWithDelay(newMessage.content, 'projectName', msg.content.projectName);
-                                    await addPropertyWithDelay(newMessage.content, 'type', msg.content.type);
-                                }
-
-                                // analysisResult 객체 처리
-                                newMessage.content.analysisResult = {};
-                                if (msg.content.analysisResult) {
-                                    await addPropertyWithDelay(newMessage.content.analysisResult, 'actors', msg.content.analysisResult.actors);
-                                    await addPropertyWithDelay(newMessage.content.analysisResult, 'events', msg.content.analysisResult.events);
-                                    await addPropertyWithDelay(newMessage.content.analysisResult, 'recommendedBoundedContextsNumber', msg.content.analysisResult.recommendedBoundedContextsNumber);
-                                }
-                                // content 객체 처리
-                                newMessage.content.content = {};
-                                if (msg.content.content) {
-                                    const BATCH_SIZE = 10;
-                                    
-                                    // elements 배치 처리
-                                    newMessage.content.content.elements = [];
-                                    if (msg.content.content.elements) {
-                                        for (let i = 0; i < msg.content.content.elements.length; i += BATCH_SIZE) {
-                                            const batch = msg.content.content.elements.slice(i, i + BATCH_SIZE);
-                                            newMessage.content.content.elements.push(...batch);
-                                            await new Promise(resolve => setTimeout(resolve, 200));
-                                        }
+                                    newMessage.content = {};
+                                    if (msg.content) {
+                                        await addPropertyWithDelay(newMessage.content, 'projectName', msg.content.projectName);
+                                        await addPropertyWithDelay(newMessage.content, 'type', msg.content.type);
                                     }
 
-                                    // relations 배치 처리
-                                    newMessage.content.content.relations = [];
-                                    if (msg.content.content.relations) {
-                                        for (let i = 0; i < msg.content.content.relations.length; i += BATCH_SIZE) {
-                                            const batch = msg.content.content.relations.slice(i, i + BATCH_SIZE);
-                                            newMessage.content.content.relations.push(...batch);
-                                            await new Promise(resolve => setTimeout(resolve, 200));
+                                    // analysisResult 객체 처리
+                                    newMessage.content.analysisResult = {};
+                                    if (msg.content.analysisResult) {
+                                        await addPropertyWithDelay(newMessage.content.analysisResult, 'actors', msg.content.analysisResult.actors);
+                                        await addPropertyWithDelay(newMessage.content.analysisResult, 'events', msg.content.analysisResult.events);
+                                        await addPropertyWithDelay(newMessage.content.analysisResult, 'recommendedBoundedContextsNumber', msg.content.analysisResult.recommendedBoundedContextsNumber);
+                                    }
+                                    // content 객체 처리
+                                    newMessage.content.content = {};
+                                    if (msg.content.content) {
+                                        const BATCH_SIZE = 10;
+                                        
+                                        // elements 배치 처리
+                                        newMessage.content.content.elements = [];
+                                        if (msg.content.content.elements) {
+                                            for (let i = 0; i < msg.content.content.elements.length; i += BATCH_SIZE) {
+                                                const batch = msg.content.content.elements.slice(i, i + BATCH_SIZE);
+                                                newMessage.content.content.elements.push(...batch);
+                                                await new Promise(resolve => setTimeout(resolve, 200));
+                                            }
+                                        }
+
+                                        // relations 배치 처리
+                                        newMessage.content.content.relations = [];
+                                        if (msg.content.content.relations) {
+                                            for (let i = 0; i < msg.content.content.relations.length; i += BATCH_SIZE) {
+                                                const batch = msg.content.content.relations.slice(i, i + BATCH_SIZE);
+                                                newMessage.content.content.relations.push(...batch);
+                                                await new Promise(resolve => setTimeout(resolve, 200));
+                                            }
                                         }
                                     }
+                                    this.requirementsValidationResult = JSON.parse(JSON.stringify(msg.content));
                                 }
-                            }
-                            break;
+                                break;
 
-                        case 'bcGenerationOption':
-                            await addPropertyWithDelay(newMessage, 'type', msg.type);
-                            await addPropertyWithDelay(newMessage, 'uniqueId', msg.uniqueId);
-                            await addPropertyWithDelay(newMessage, 'isSummarizeStarted', msg.isSummarizeStarted);
-                            await addPropertyWithDelay(newMessage, 'isGeneratingBoundedContext', msg.isGeneratingBoundedContext);
-                            await addPropertyWithDelay(newMessage, 'isStartMapping', msg.isStartMapping);
-                            await addPropertyWithDelay(newMessage, 'isAnalizing', msg.isAnalizing);
-                            await addPropertyWithDelay(newMessage, 'generateOption', msg.generateOption);
-                            await addPropertyWithDelay(newMessage, 'recommendedBoundedContextsNumber', msg.recommendedBoundedContextsNumber);
-                            await addPropertyWithDelay(newMessage, 'isEditable', msg.isEditable);
-                            break;
+                            case 'bcGenerationOption':
+                                await addPropertyWithDelay(newMessage, 'type', msg.type);
+                                await addPropertyWithDelay(newMessage, 'uniqueId', msg.uniqueId);
+                                await addPropertyWithDelay(newMessage, 'isSummarizeStarted', msg.isSummarizeStarted);
+                                await addPropertyWithDelay(newMessage, 'isGeneratingBoundedContext', msg.isGeneratingBoundedContext);
+                                await addPropertyWithDelay(newMessage, 'isStartMapping', msg.isStartMapping);
+                                await addPropertyWithDelay(newMessage, 'isAnalizing', msg.isAnalizing);
+                                await addPropertyWithDelay(newMessage, 'generateOption', msg.generateOption);
+                                await addPropertyWithDelay(newMessage, 'recommendedBoundedContextsNumber', msg.recommendedBoundedContextsNumber);
+                                await addPropertyWithDelay(newMessage, 'isEditable', msg.isEditable);
+                                break;
 
-                        case 'botMessage':
-                        case 'userMessage':
-                            await addPropertyWithDelay(newMessage, 'type', msg.type);
-                            await addPropertyWithDelay(newMessage, 'uniqueId', msg.uniqueId);
-                            await addPropertyWithDelay(newMessage, 'message', msg.message);
-                            break;
+                            case 'botMessage':
+                            case 'userMessage':
+                                await addPropertyWithDelay(newMessage, 'type', msg.type);
+                                await addPropertyWithDelay(newMessage, 'uniqueId', msg.uniqueId);
+                                await addPropertyWithDelay(newMessage, 'message', msg.message);
+                                break;
 
-                        default:
-                            Object.assign(newMessage, msg);
+                            default:
+                                Object.assign(newMessage, msg);
+                        }
+
+                        return newMessage;
+                    };
+
+                    // 메시지들을 순차적으로 처리
+                    for (const msg of this.projectInfo.draft) {
+                        const processedMessage = await processMessageData(msg);
+                        this.messages.push(processedMessage);
+                        await new Promise(resolve => setTimeout(resolve, 100));
                     }
-
-                    return newMessage;
-                };
-
-                // 메시지들을 순차적으로 처리
-                for (const msg of this.projectInfo.draft) {
-                    const processedMessage = await processMessageData(msg);
-                    this.messages.push(processedMessage);
-                    await new Promise(resolve => setTimeout(resolve, 100));
                 }
             },
             deleteModel(id){
                 var me = this
-                var index = me.value.modelList.findIndex(x => x == id)
-                me.value.modelList.splice(index, 1)
+                var index = me.value.eventStorming.modelList.findIndex(x => x == id)
+                me.value.eventStorming.modelList.splice(index, 1)
                 
                 this.$emit("input", this.value);
                 this.$emit("change", 'eventStorming');
@@ -1002,17 +1020,13 @@ import { value } from 'jsonpath';
 
             onReceived(content){
                 if(this.state.generator === "EventOnlyESGenerator"){
-                    if(!this.value){
-                        this.value = {
-                            userStory: ''
-                        }
+                    if(!this.projectInfo.userStory){
+                        this.projectInfo['userStory'] = ''
                     }
 
-                    if(content && content.length > 0)
-                    this.$emit('input', {
-                        ...this.value,
-                        userStory: content
-                    });
+                    if(content && content.length > 0){
+                        this.$emit('update:userStory', content);
+                    }
                 }
             },
 
@@ -1038,66 +1052,57 @@ import { value } from 'jsonpath';
                 var me = this;
                 me.done = true;
 
-                if(this.isStopped){
-                    this.isStopped = false;
+                if(me.isStopped){
+                    me.isStopped = false;
                     return;
                 }
 
-                // if(this.state.generator === "EventOnlyESGenerator"){
-                //     if(!this.value){
-                //         this.value = {
-                //             userStory: ''
-                //         }
-                //     }
-
-                //     if(model && model.length > 0)
-                //         this.value.userStory = model;
-                // }
-
-                if (this.state.generator === "RequirementsValidationGenerator" || 
-                    this.state.generator === "RecursiveRequirementsValidationGenerator") {
+                if (me.state.generator === "RequirementsValidationGenerator" || 
+                    me.state.generator === "RecursiveRequirementsValidationGenerator") {
                     
-                    const currentMessage = this.messages.find(msg => msg.type === 'processAnalysis');
+                    const currentMessage = me.messages.find(msg => msg.type === 'processAnalysis');
                     
-                    if (this.state.generator === "RecursiveRequirementsValidationGenerator") {
+                    if (me.state.generator === "RecursiveRequirementsValidationGenerator") {
                         // 현재 청크의 인덱스가 마지막 청크의 인덱스보다 작은 경우
-                        if (this.generator.currentChunkIndex < this.generator.currentChunks.length - 1) {
-                            this.generator.handleGenerationFinished(model);
-                            this.processingState.isAnalizing = true;
-                            this.processingRate = Math.round((this.generator.currentChunkIndex + 1) / 
-                                                            this.generator.currentChunks.length * 100)
-                            this.updateMessageState(currentMessage.uniqueId, {
-                                content: this.generator.accumulatedResults,
-                                processingRate: this.processingRate
+                        if (me.generator.currentChunkIndex < me.generator.currentChunks.length - 1) {
+                            me.generator.handleGenerationFinished(model);
+                            me.processingState.isAnalizing = true;
+                            me.processingRate = Math.round((me.generator.currentChunkIndex + 1) / 
+                                                            me.generator.currentChunks.length * 100)
+                            me.updateMessageState(currentMessage.uniqueId, {
+                                content: me.generator.accumulatedResults,
+                                processingRate: me.processingRate
                             });
                             
                         } else {
-                            this.generator.handleGenerationFinished(model);
-                            this.processingState.isAnalizing = false;
-                            this.processingRate = 0;
-                            this.updateMessageState(currentMessage.uniqueId, {
-                                content: this.generator.accumulatedResults,
-                                processingRate: this.processingRate
+                            me.generator.handleGenerationFinished(model);
+                            me.processingState.isAnalizing = false;
+                            me.processingRate = 0;
+                            me.updateMessageState(currentMessage.uniqueId, {
+                                content: me.generator.accumulatedResults,
+                                processingRate: me.processingRate
                             });
-                            this.requirementsValidationResult = this.generator.accumulatedResults;
+                            me.requirementsValidationResult = me.generator.accumulatedResults;
                         }
                     } else {
                         // 일반 검증인 경우 (기존 로직)
                         if (model) {
-                            this.processingState.isAnalizing = false;
-                            this.processingRate = 0;
-                            this.updateMessageState(currentMessage.uniqueId, {
+                            me.processingState.isAnalizing = false;
+                            me.processingRate = 0;
+                            me.updateMessageState(currentMessage.uniqueId, {
                                 content: model,
-                                processingRate: this.processingRate
+                                processingRate: me.processingRate
                             });
-                            this.requirementsValidationResult = model;
+                            me.requirementsValidationResult = model;
                         }
                     }
 
                     this.currentGeneratedLength = 0;
-                    this.updateMessageState(currentMessage.uniqueId, {
-                        currentGeneratedLength: this.currentGeneratedLength
+                    me.updateMessageState(currentMessage.uniqueId, {
+                        currentGeneratedLength: me.currentGeneratedLength
                     });
+
+                    me.$emit("update:processAnalysis", me.messages);
                 }
 
                 if (me.state.generator === "RecursiveRequirementsSummarizer") {
@@ -1105,7 +1110,7 @@ import { value } from 'jsonpath';
                     return;
                 }
 
-                if(this.state.generator === "DevideBoundedContextGenerator"){
+                if(me.state.generator === "DevideBoundedContextGenerator"){
                     me.devisionAspectIndex = 0;
                     me.processingState.isGeneratingBoundedContext = false;
                     
@@ -1184,17 +1189,13 @@ import { value } from 'jsonpath';
                     }
                     me.mappingRequirements();
                 }
-
-                me.$emit("input", me.value);
-                me.$emit("change", 'eventStorming');
                 
             },  
 
             generateUserStory(){
-                if(!this.value){
-                    this.value = {
-                        userStory: ''
-                    }
+                if(!this.projectInfo.userStory){
+                    this.projectInfo['userStory'] = ''
+                    this.generateUserStoryDialog = !this.generateUserStoryDialog;
                     this.done = true;
                     this.state.secondMessageIsTyping = false;
                 } else {
@@ -1204,7 +1205,7 @@ import { value } from 'jsonpath';
 
             async generate(){
                 let issuedTimeStamp = Date.now()
-                this.value.userStory = '';
+                this.projectInfo.userStory = '';
                 this.state.generator = "EventOnlyESGenerator";
                 this.generatorName = "EventOnlyESGenerator";
                 this.input.businessModel = this.cachedModels["BMGenerator"]
@@ -1298,7 +1299,7 @@ import { value } from 'jsonpath';
                 this.input.devisionAspect = targetMessage.selectedAspect;
                 this.input.previousAspectModel = targetMessage.result;
                 this.input['requirements'] = {
-                    userStory: this.value.userStory,
+                    userStory: this.projectInfo.userStory,
                     summarizedResult: this.summarizedResult,
                     analysisResult: this.requirementsValidationResult.analysisResult,
                     pbcInfo: this.pbcLists.map(pbc => ({
@@ -1342,7 +1343,7 @@ import { value } from 'jsonpath';
                         this.input['devisionAspect'] = this.selectedAspect;
                         this.input['generateOption'] = this.bcGenerationOption;
                         this.input['requirements'] = {
-                            userStory: this.value.userStory,
+                            userStory: this.projectInfo.userStory,
                             summarizedResult: this.summarizedResult,
                             analysisResult: this.requirementsValidationResult.analysisResult,
                             pbcInfo: this.pbcLists.map(pbc => ({
@@ -1368,7 +1369,7 @@ import { value } from 'jsonpath';
                 this.processingState.isSummarizeStarted = true;
 
                 try {
-                    const summarizedText = await this.generator.summarizeRecursively(this.value.userStory + "\n" + this.inputDDL);
+                    const summarizedText = await this.generator.summarizeRecursively(this.projectInfo.userStory + "\n" + this.inputDDL);
                     // 요약 결과 저장
                     this.userStoryChunks = this.generator.currentChunks;
                     this.userStoryChunksIndex = 0;
@@ -1396,7 +1397,7 @@ import { value } from 'jsonpath';
 
                 // 요약 결과가 없어도 원본 매핑 진행을 위해 원본 요구사항을 청크로 넣어줌
                 if(this.userStoryChunks.length == 0){
-                    this.userStoryChunks.push(this.value.userStory);
+                    this.userStoryChunks.push(this.projectInfo.userStory);
                 }
 
                 if(this.requirementsValidationResult.analysisResult && this.userStoryChunksIndex == 0 && !this.isAnalizeResultSetted){
@@ -1412,7 +1413,7 @@ import { value } from 'jsonpath';
 
             generateDevideBoundedContext(feedback){
                 // 현재 요약본이 너무 길면 먼저 요약 진행
-                if (this.value.userStory.length + this.inputDDL.length > 25000 && this.summarizedResult.length == 0) {
+                if (this.projectInfo.userStory.length + this.inputDDL.length > 25000 && this.summarizedResult.length == 0) {
                     this.pendingBCGeneration = true;
                     this.summarizeRequirements();
                     return;
@@ -1429,7 +1430,7 @@ import { value } from 'jsonpath';
                 this.input['generateOption'] = this.bcGenerationOption;
                 
                 this.input['requirements'] = {
-                    userStory: this.value.userStory,
+                    userStory: this.projectInfo.userStory,
                     summarizedResult: this.summarizedResult,
                     analysisResult: this.requirementsValidationResult.analysisResult,
                     pbcInfo: this.pbcLists.map(pbc => ({
@@ -1495,7 +1496,7 @@ import { value } from 'jsonpath';
             generateFromAggregateDrafts(draftOptions){
                 if(this.isServerProject) this.state.associatedProject = this.modelIds.projectId
                 this.collectedMockDatas.aggregateDraftScenarios.draftOptions = structuredClone(draftOptions)
-                this.collectedMockDatas.aggregateDraftScenarios.userStory = this.value.userStory
+                this.collectedMockDatas.aggregateDraftScenarios.userStory = this.projectInfo.userStory
                 this.collectedMockDatas.aggregateDraftScenarios.state = structuredClone(this.state)
                 this.collectedMockDatas.aggregateDraftScenarios.messages = structuredClone(
                     this.messages.map(message => ({
@@ -1520,7 +1521,7 @@ import { value } from 'jsonpath';
 
                 this.state = {
                     ...this.state,
-                    userStory: this.value.userStory,
+                    userStory: this.projectInfo.userStory,
                     draftOptions: draftOptions,
                     generator: "CreateAggregateActionsByFunctions"
                 }
@@ -1530,19 +1531,22 @@ import { value } from 'jsonpath';
 
                     LocalStorageCleanUtil.clean()
 
-                    if(!this.value.modelList){
-                        this.value.modelList = []
+                    if(!this.value.eventStorming) {
+                        this.$set(this.value, 'eventStorming', {
+                            modelList: []
+                        });
                     }
+
+                    this.value.eventStorming.modelList.push(`${this.userInfo.providerUid}_es_${this.modelIds.ESDefinitionId}`)
 
                     this.$emit("input", this.value);
                     this.$emit("change", 'eventStorming');
 
                     // GeneratorUI.createGenerator() 함수에서 해당 값을 받아서 자동 처리 수행
                     localStorage["gen-state"] = JSON.stringify(this.state);;
-                    window.open(`/#/storming/${this.modelIds.ESDefinitionId}`, "_blank")
+                    window.open(`/#/${this.userInfo.providerUid}/storming/${this.modelIds.ESDefinitionId}`, "_blank")
 
                     // AI 생성된 모델을 Project에 저장하기 위해 세팅
-                    this.collectedMockDatas.projectName = this.projectInfo.projectName
                     this.$emit("update:modelList", this.modelIds.ESDefinitionId)
                     this.isCreatedModel = true;
 
@@ -1669,7 +1673,7 @@ import { value } from 'jsonpath';
             },
 
             validateRequirements() {
-                const requirements = this.value.userStory;
+                const requirements = this.projectInfo.userStory;
                 this.processingState.isAnalizing = true;
                 
                 if (requirements.length > 25000) {

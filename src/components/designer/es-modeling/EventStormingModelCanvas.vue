@@ -2595,8 +2595,7 @@
                 filteredPBCs: {},
                 collectedMockDatas: {
                     aggregateDraftScenarios: {
-                    },
-                    projectName: ""
+                    }
                 },
                 collectedLogDatas: {
                     aggregateDraftScenarios: {
@@ -3006,14 +3005,12 @@
                     byFunctionCallbacks.onGenerationDone()
 
                     // AI 생성된 모델을 Project에 저장하기 위해 세팅
-                    await this.storageDialogReady('save')
-                    this.storageCondition.projectId = this.projectId
-                    this.storageCondition.projectName = this.collectedMockDatas.projectName
+                    this.saveComposition('save')
 
-                    if(!localStorage.getItem("blockAutoRefresh"))
-                        this.$nextTick(() => {
-                            this.$router.go(0)
-                        })
+                    // if(!localStorage.getItem("blockAutoRefresh"))
+                    //     this.$nextTick(() => {
+                    //         this.$router.go(0)
+                    //     })
                 }
             })
 
@@ -3253,6 +3250,11 @@
             },
             setCanvasType(){
                 this.canvasType = 'es'
+
+                // Project 내에서 es canvas를 사용하는 경우
+                if(this.$route.path.includes('/project/') && this.$route.fullPath.includes('/project/')){
+                    this.canvasType = 'project'
+                }
                 Vue.use(EventStormingModeling);
             },
             isUserInteractionActive(){

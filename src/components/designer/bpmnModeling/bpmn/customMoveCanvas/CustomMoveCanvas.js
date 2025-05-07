@@ -26,7 +26,7 @@ import {
   var elementReg;
   var me;
   
-  export default function MoveCanvas(eventBus, canvas, elementRegistry) {
+  function MoveCanvas(eventBus, canvas, elementRegistry) {
     // 부모 클래스 생성자 호출
     BaseMoveCanvas.call(this, eventBus, canvas);
     
@@ -185,3 +185,8 @@ import {
   function length(point) {
     return Math.sqrt(Math.pow(point.x, 2) + Math.pow(point.y, 2));
   }
+
+  export default {
+    __init__: ['moveCanvas'],
+    moveCanvas: ['type', MoveCanvas]
+  };

@@ -136,73 +136,97 @@
                             :hide-default-footer="true"
                             :items-per-page="-1"
                             show-expand
-                            :expand-icon="expandIcon"
                             :single-expand="false"
                             item-key="name"
                             :key="tableRenderKey"
                         >
-                            <template v-slot:item.actions="{ item }">
-                                <v-icon 
-                                    small 
-                                    color="error"
-                                    @click="deleteBoundedContext(item)"
-                                >
-                                    mdi-delete
-                                </v-icon>
-                            </template>
-
-                            <template v-slot:item.name="{ item }">
-                                <v-edit-dialog
-                                    :return-value.sync="item.name"
-                                    @save="saveItemEdit(item, 'name')"
-                                    @open="initializeEditFields(item)"
-                                    @cancel="cancelEdit(item)"
-                                    large
-                                    persistent
-                                >
-                                    <template v-slot:input>
-                                        <v-text-field v-model="editedFields.name"
-                                            :label="$t('DevideBoundedContextDialog.edit.boundedContextName')"
-                                            :rules="[v => !!v || $t('validation.required')]"
+                            <template v-slot:item="{ item, expand, isExpanded }">
+                                <tr :class="{'processing-row': isProcessingBC(item)}">
+                                    <td>
+                                        <v-edit-dialog
+                                            :return-value.sync="item.name"
+                                            @save="saveItemEdit(item, 'name')"
+                                            @open="initializeEditFields(item)"
+                                            @cancel="cancelEdit(item)"
+                                            large
+                                            persistent
+                                        >
+                                            <template v-slot:input>
+                                                <v-text-field v-model="editedFields.name"
+                                                    :label="$t('DevideBoundedContextDialog.edit.boundedContextName')"
+                                                    :rules="[v => !!v || $t('validation.required')]"
+                                                    single-line
+                                                    class="mb-2"
+                                                ></v-text-field>
+                                                <v-text-field v-model="editedFields.alias"
+                                                    :label="$t('DevideBoundedContextDialog.edit.boundedContextAlias')"
+                                                    :rules="[v => !!v || $t('validation.required')]"
+                                                    single-line
+                                                ></v-text-field>
+                                            </template>
+                                            <span>{{ item.name }}</span>
+                                        </v-edit-dialog>
+                                    </td>
+                                    <td>{{ item.role }}</td>
+                                    <td>
+                                        <v-select
+                                            v-model="item.importance"
+                                            :items="importances"
+                                            :label="$t('DevideBoundedContextDialog.edit.importance')"
                                             single-line
-                                            class="mb-2"
-                                        ></v-text-field>
-                                        <v-text-field v-model="editedFields.alias"
-                                            :label="$t('DevideBoundedContextDialog.edit.boundedContextAlias')"
-                                            :rules="[v => !!v || $t('validation.required')]"
+                                            @change="saveItemEdit(item, 'importance')"
+                                        ></v-select>
+                                    </td>
+                                    <td>
+                                        <v-select
+                                            v-model="item.implementationStrategy"
+                                            :items="getImplementationStrategies(item.importance)"
+                                            :label="$t('DevideBoundedContextDialog.edit.implementationStrategy')"
                                             single-line
-                                        ></v-text-field>
-                                    </template>
-                                    <span>{{ item.name }}</span>
-                                </v-edit-dialog>
-                            </template>
-
-                            <template v-slot:item.role="{ item }">
-                                <span>{{ item.role }}</span>
-                            </template>
-
-                            <template v-slot:item.importance="{ item }">
-                                <v-select
-                                    v-model="item.importance"
-                                    :items="importances"
-                                    :label="$t('DevideBoundedContextDialog.edit.importance')"
-                                    single-line
-                                    @change="saveItemEdit(item, 'importance')"
-                                ></v-select>
-                            </template>
-
-                            <template v-slot:item.implementationStrategy="{ item }">
-                                <v-select
-                                    v-model="item.implementationStrategy"
-                                    :items="getImplementationStrategies(item.importance)"
-                                    :label="$t('DevideBoundedContextDialog.edit.implementationStrategy')"
-                                    single-line
-                                    @change="saveItemEdit(item, 'implementationStrategy')"
-                                ></v-select>
+                                            @change="saveItemEdit(item, 'implementationStrategy')"
+                                        ></v-select>
+                                    </td>
+                                    <td class="actions-cell">
+                                        <v-icon 
+                                            small 
+                                            color="error"
+                                            @click="deleteBoundedContext(item)"
+                                        >
+                                            mdi-delete
+                                        </v-icon>
+                                        <v-tooltip bottom>
+                                            <template v-slot:activator="{ on, attrs }">
+                                                <v-btn
+                                                    icon
+                                                    small
+                                                    class="expand-button"
+                                                    v-bind="attrs"
+                                                    v-on="on"
+                                                    @click="expand(!isExpanded)"
+                                                    v-if="item.requirements && item.requirements.length > 0"
+                                                >
+                                                    <v-icon>{{ isExpanded ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
+                                                </v-btn>
+                                            </template>
+                                            <span>{{ $t('DevideBoundedContextDialog.requirementsMappingResult') }}</span>
+                                        </v-tooltip>
+                                    </td>
+                                    <td v-if="isProcessingBC(item)" class="progress-cell">
+                                        <div class="progress-container">
+                                            <v-progress-linear
+                                                :value="processingRate"
+                                                height="4"
+                                                color="primary"
+                                                class="mt-2"
+                                            ></v-progress-linear>
+                                            <div class="progress-text">{{ processingRate }}%</div>
+                                        </div>
+                                    </td>
+                                </tr>
                             </template>
 
                             <template v-slot:expanded-item="{ headers, item }">
-                                <td class="pl-0" :colspan="headers.length">
+                                <td :colspan="headers.length">
                                     <v-simple-table dense class="requirement-subtable">
                                         <tbody>
                                             <tr v-for="req in item.requirements" :key="req.type">
@@ -334,78 +358,102 @@
                                 :hide-default-footer="true"
                                 :items-per-page="-1"
                                 show-expand
-                                :expand-icon="expandIcon"
                                 :single-expand="false"
                                 item-key="name"
                                 :key="tableRenderKey"
                             >
-                                <template v-slot:item.actions="{ item }">
-                                    <v-icon 
-                                        small 
-                                        color="error"
-                                        @click="deleteBoundedContext(item)"
-                                    >
-                                        mdi-delete
-                                    </v-icon>
-                                </template>
-
-                                <template v-slot:item.name="{ item }">
-                                    <v-edit-dialog
-                                        :return-value.sync="item.name"
-                                        @save="saveItemEdit(item, 'name')"
-                                        @open="initializeEditFields(item)"
-                                        @cancel="cancelEdit(item)"
-                                        large
-                                        persistent
-                                    >
-                                        <template v-slot:input>
-                                            <v-text-field v-model="editedFields.name"
-                                                :label="$t('DevideBoundedContextDialog.edit.boundedContextName')"
-                                                :rules="[v => !!v || $t('validation.required')]"
+                                <template v-slot:item="{ item, expand, isExpanded }">
+                                    <tr :class="{'processing-row': isProcessingBC(item)}">
+                                        <td>
+                                            <v-edit-dialog
+                                                :return-value.sync="item.name"
+                                                @save="saveItemEdit(item, 'name')"
+                                                @open="initializeEditFields(item)"
+                                                @cancel="cancelEdit(item)"
+                                                large
+                                                persistent
+                                            >
+                                                <template v-slot:input>
+                                                    <v-text-field v-model="editedFields.name"
+                                                        :label="$t('DevideBoundedContextDialog.edit.boundedContextName')"
+                                                        :rules="[v => !!v || $t('validation.required')]"
+                                                        single-line
+                                                        class="mb-2"
+                                                    ></v-text-field>
+                                                    <v-text-field v-model="editedFields.alias"
+                                                        :label="$t('DevideBoundedContextDialog.edit.boundedContextAlias')"
+                                                        :rules="[v => !!v || $t('validation.required')]"
+                                                        single-line
+                                                    ></v-text-field>
+                                                </template>
+                                                <span>{{ item.name }}</span>
+                                            </v-edit-dialog>
+                                        </td>
+                                        <td>{{ item.role }}</td>
+                                        <td>
+                                            <v-select
+                                                v-model="item.importance"
+                                                :items="importances"
+                                                :label="$t('DevideBoundedContextDialog.edit.importance')"
                                                 single-line
-                                                class="mb-2"
-                                            ></v-text-field>
-                                            <v-text-field v-model="editedFields.alias"
-                                                :label="$t('DevideBoundedContextDialog.edit.boundedContextAlias')"
-                                                :rules="[v => !!v || $t('validation.required')]"
+                                                @change="saveItemEdit(item, 'importance')"
+                                            ></v-select>
+                                        </td>
+                                        <td>
+                                            <v-select
+                                                v-model="item.implementationStrategy"
+                                                :items="getImplementationStrategies(item.importance)"
+                                                :label="$t('DevideBoundedContextDialog.edit.implementationStrategy')"
                                                 single-line
-                                            ></v-text-field>
-                                        </template>
-                                        <span>{{ item.name }}</span>
-                                    </v-edit-dialog>
-                                </template>
-
-                                <template v-slot:item.role="{ item }">
-                                    <span>{{ item.role }}</span>
-                                </template>
-
-                                <template v-slot:item.importance="{ item }">
-                                    <v-select
-                                        v-model="item.importance"
-                                        :items="importances"
-                                        :label="$t('DevideBoundedContextDialog.edit.importance')"
-                                        single-line
-                                        @change="saveItemEdit(item, 'importance')"
-                                    ></v-select>
-                                </template>
-
-                                <template v-slot:item.implementationStrategy="{ item }">
-                                    <v-select
-                                        v-model="item.implementationStrategy"
-                                        :items="implementationStrategies"
-                                        :label="$t('DevideBoundedContextDialog.edit.implementationStrategy')"
-                                        single-line
-                                        @change="saveItemEdit(item, 'implementationStrategy')"
-                                    ></v-select>
+                                                @change="saveItemEdit(item, 'implementationStrategy')"
+                                            ></v-select>
+                                        </td>
+                                        <td class="actions-cell">
+                                            <v-icon 
+                                                small 
+                                                color="error"
+                                                @click="deleteBoundedContext(item)"
+                                            >
+                                                mdi-delete
+                                            </v-icon>
+                                            <v-tooltip bottom>
+                                                <template v-slot:activator="{ on, attrs }">
+                                                    <v-btn
+                                                        icon
+                                                        small
+                                                        class="expand-button"
+                                                        v-bind="attrs"
+                                                        v-on="on"
+                                                        @click="expand(!isExpanded)"
+                                                        v-if="item.requirements && item.requirements.length > 0"
+                                                    >
+                                                        <v-icon>{{ isExpanded ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
+                                                    </v-btn>
+                                                </template>
+                                                <span>{{ $t('DevideBoundedContextDialog.requirementsMappingResult') }}</span>
+                                            </v-tooltip>
+                                        </td>
+                                        <td v-if="isProcessingBC(item)" class="progress-cell">
+                                            <div class="progress-container">
+                                                <v-progress-linear
+                                                    :value="processingRate"
+                                                    height="4"
+                                                    color="primary"
+                                                    class="mt-2"
+                                                ></v-progress-linear>
+                                                <div class="progress-text">{{ processingRate }}%</div>
+                                            </div>
+                                        </td>
+                                    </tr>
                                 </template>
 
                                 <template v-slot:expanded-item="{ headers, item }">
-                                    <td class="pl-0" :colspan="headers.length">
+                                    <td :colspan="headers.length">
                                         <v-simple-table dense class="requirement-subtable">
                                             <tbody>
                                                 <tr v-for="req in item.requirements" :key="req.type">
                                                     <td class="requirement-type" width="100">{{ req.type }}</td>
-                                                    <td class="requirement-text" v-html="req.text"></td>
+                                                    <td class="requirement-text" v-html="convertText(req.text)"></td>
                                                 </tr>
                                             </tbody>
                                         </v-simple-table>
@@ -957,6 +1005,10 @@
                 }else{
                     return text;
                 }
+            },
+            isProcessingBC(item) {
+                return this.isStartMapping && 
+                       this.currentProcessingBoundedContext === item.name;
             }
         }
     }
@@ -980,5 +1032,65 @@
 }
 ::v-deep .v-list-group__header {
     background-color: #f5f5f5;
+}
+.processing-row {
+    background-color: rgba(25, 118, 210, 0.04);
+}
+
+.progress-cell {
+    position: relative;
+    padding: 8px 16px;
+    min-width: 120px;  /* 최소 너비 설정 */
+}
+
+.progress-container {
+    position: relative;
+    width: 100%;
+    padding-right: 40px;  /* 퍼센트 텍스트를 위한 공간 */
+}
+
+.progress-text {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 12px;
+    color: #1976d2;
+    width: 35px;
+    text-align: right;
+}
+
+.actions-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.requirement-subtable {
+    background-color: #f5f5f5 !important;
+    margin: 8px;
+    border-radius: 4px;
+}
+
+.requirement-type {
+    font-weight: 500;
+    color: #666;
+}
+
+.requirement-text {
+    white-space: pre-wrap;
+    padding: 8px !important;
+}
+
+.expand-button::before {
+    display: none !important;
+}
+
+.expand-button::after {
+    display: none !important;
+}
+
+.expand-button {
+    box-shadow: none !important;
 }
 </style>
