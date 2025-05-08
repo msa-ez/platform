@@ -208,31 +208,39 @@ export default {
                         }, 1000);
                     }
                     
-                    if (this.renderedMessages.length < newMessages.length) {
-                        const newMessageCount = newMessages.length - this.renderedMessages.length;
-                        for (let i = 0; i < newMessageCount; i++) {
-                            const newMessage = newMessages[this.renderedMessages.length + i];
+                    // Update existing messages and add new ones
+                    newMessages.forEach((message, index) => {
+                        const existingIndex = this.renderedMessages.findIndex(m => m.uniqueId === message.uniqueId);
+                        if (existingIndex !== -1) {
+                            // Update existing message
+                            this.$set(this.renderedMessages, existingIndex, {
+                                ...message,
+                                _isLoading: !this.isMessageComplete(message)
+                            });
+                        } else {
+                            // Add new message
                             this.renderedMessages.push({
-                                ...newMessage,
+                                ...message,
                                 _isLoading: true
                             });
                         }
-                        this.renderIndex = this.renderedMessages.length - newMessageCount;
-                        this.isProcessing = true;
-                        this.renderNextMessage();
-                    } else {
-                        newMessages.forEach((message, index) => {
-                            if (this.renderedMessages[index]) {
-                                const isComplete = this.isMessageComplete(message);
-                                if (isComplete) {
-                                    this.$set(this.renderedMessages, index, {
-                                        ...message,
-                                        _isLoading: false
-                                    });
-                                }
-                            }
-                        });
-                    }
+                    });
+
+                    // Remove messages that are no longer in newMessages
+                    this.renderedMessages = this.renderedMessages.filter(message => 
+                        newMessages.some(m => m.uniqueId === message.uniqueId)
+                    );
+
+                    // Sort messages to maintain order
+                    this.renderedMessages.sort((a, b) => {
+                        const indexA = newMessages.findIndex(m => m.uniqueId === a.uniqueId);
+                        const indexB = newMessages.findIndex(m => m.uniqueId === b.uniqueId);
+                        return indexA - indexB;
+                    });
+
+                    this.renderIndex = this.renderedMessages.length;
+                    this.isProcessing = true;
+                    this.renderNextMessage();
                 } else {
                     this.renderedMessages = [...newMessages];
                 }
@@ -334,7 +342,9 @@ export default {
                 
                 case 'bcGenerationOption':
                     return message.generateOption && 
-                        message.recommendedBoundedContextsNumber !== undefined;
+                        message.generateOption.selectedAspects &&
+                        Array.isArray(message.generateOption.selectedAspects) &&
+                        message.generateOption.selectedAspects.length > 0;
                 
                 case 'botMessage':
                 case 'userMessage':

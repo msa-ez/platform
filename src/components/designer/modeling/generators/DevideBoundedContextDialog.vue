@@ -683,8 +683,8 @@
 
                     let key = Object.keys(newVal)[0];
                     
-                    const boundedContexts = newVal[key].boundedContexts? newVal[key].boundedContexts : [];
-                    const relations = newVal[key].relations? newVal[key].relations : [];
+                    const boundedContexts = newVal[key] && newVal[key].boundedContexts? newVal[key].boundedContexts : [];
+                    const relations = newVal[key] && newVal[key].relations? newVal[key].relations : [];
                     if (boundedContexts && relations) {
                         this.mermaidNodes = this.generateNodes({ boundedContexts, relations });
                         this.renderKey++;

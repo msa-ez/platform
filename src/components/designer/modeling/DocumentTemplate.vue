@@ -1,5 +1,45 @@
 <template>
     <div class="document-template">
+        <!-- 섹션 선택 체크박스 -->
+        <div class="section-selector">
+            <v-checkbox
+                v-model="selectedSections.userScenario"
+                label="1. 사용자 시나리오"
+                hide-details
+                class="section-checkbox"
+            ></v-checkbox>
+            <v-checkbox
+                v-model="selectedSections.valueStream"
+                label="2. 밸류 스트림 분석"
+                hide-details
+                class="section-checkbox"
+            ></v-checkbox>
+            <v-checkbox
+                v-model="selectedSections.boundedContext"
+                label="3. 바운디드 컨텍스트 정의"
+                hide-details
+                class="section-checkbox"
+            ></v-checkbox>
+            <v-checkbox
+                v-model="selectedSections.aggregateDesign"
+                label="4. 애그리거트 설계"
+                hide-details
+                class="section-checkbox"
+            ></v-checkbox>
+            <v-checkbox
+                v-model="selectedSections.eventStorming"
+                label="5. 이벤트스토밍 모델"
+                hide-details
+                class="section-checkbox"
+            ></v-checkbox>
+            <v-checkbox
+                v-model="selectedSections.aggregateDetail"
+                label="6. 애그리게잇 상세 정보"
+                hide-details
+                class="section-checkbox"
+            ></v-checkbox>
+        </div>
+
         <!-- 표지 -->
         <div class="cover pdf-content-item">
             <h1 class="main-title">{{projectInfo.projectName}}</h1>
@@ -17,47 +57,60 @@
         <div class="table-of-contents pdf-content-item">
             <h2>목 차</h2>
             <ol class="toc-list">
-                <li>사용자 시나리오
-                    <ul>
-                        <li>액터 목록</li>
-                        <li>사용자 스토리</li>
-                        <li>비즈니스 규칙</li>
-                        <li>분석된 바운디드 컨텍스트</li>
-                    </ul>
-                </li>
-                <li>밸류 스트림(Value stream) 분석</li>
-                <li>바운디드 컨텍스트 정의
-                    <ul>
-                        <li>분해 기준</li>
-                        <li>분해 결과</li>
-                        <li>컨텍스트 전략 맵</li>
-                        <li>바운디드 컨텍스트 상세</li>
-                    </ul>
-                </li>
-                <li>애그리거트 설계 (Aggregate Design)
-                    <ul>
-                        <li>애그리거트 모델</li>
-                        <li>애그리거트 분석 (Analysis)</li>
-                        <li>애그리거트 설계 기준</li>
-                    </ul>
-                </li>
-                <li>이벤트스토밍 모델
-                    <ul>
-                        <li>시스템 전체 모델</li>
-                        <li>바운디드 컨텍스트별 상세</li>
-                    </ul>
-                </li>
+                <template v-if="selectedSections.userScenario">
+                    <li>{{ sectionNumbers.userScenario }}. 사용자 시나리오
+                        <ul>
+                            <li>{{ sectionNumbers.userScenario }}-1. 액터 목록</li>
+                            <li>{{ sectionNumbers.userScenario }}-2. 사용자 스토리</li>
+                            <li>{{ sectionNumbers.userScenario }}-3. 비즈니스 규칙</li>
+                            <li>{{ sectionNumbers.userScenario }}-4. 분석된 바운디드 컨텍스트</li>
+                        </ul>
+                    </li>
+                </template>
+                <template v-if="selectedSections.valueStream">
+                    <li>{{ sectionNumbers.valueStream }}. 밸류 스트림(Value stream) 분석</li>
+                </template>
+                <template v-if="selectedSections.boundedContext">
+                    <li>{{ sectionNumbers.boundedContext }}. 바운디드 컨텍스트 정의
+                        <ul>
+                            <li>{{ sectionNumbers.boundedContext }}-1. 분해 기준</li>
+                            <li>{{ sectionNumbers.boundedContext }}-2. 분해 결과</li>
+                            <li>{{ sectionNumbers.boundedContext }}-3. 컨텍스트 전략 맵</li>
+                            <li>{{ sectionNumbers.boundedContext }}-4. 바운디드 컨텍스트 상세</li>
+                        </ul>
+                    </li>
+                </template>
+                <template v-if="selectedSections.aggregateDesign">
+                    <li>{{ sectionNumbers.aggregateDesign }}. 애그리거트 설계 (Aggregate Design)
+                        <ul>
+                            <li>{{ sectionNumbers.aggregateDesign }}-1. 애그리거트 모델</li>
+                            <li>{{ sectionNumbers.aggregateDesign }}-2. 애그리거트 분석 (Analysis)</li>
+                            <li>{{ sectionNumbers.aggregateDesign }}-3. 애그리거트 설계 기준</li>
+                        </ul>
+                    </li>
+                </template>
+                <template v-if="selectedSections.eventStorming">
+                    <li>{{ sectionNumbers.eventStorming }}. 이벤트스토밍 모델
+                        <ul>
+                            <li>{{ sectionNumbers.eventStorming }}-1. 시스템 전체 모델</li>
+                            <li>{{ sectionNumbers.eventStorming }}-2. 바운디드 컨텍스트별 상세</li>
+                        </ul>
+                    </li>
+                </template>
+                <template v-if="selectedSections.aggregateDetail">
+                    <li>{{ sectionNumbers.aggregateDetail }}. 애그리게잇 상세 정보</li>
+                </template>
             </ol>
         </div>
 
     
         <!-- 본문 -->
         <!-- 사용자 시나리오 (actor & event) -->
-        <div class="section">
+        <div v-if="selectedSections.userScenario" class="section">
             <div class="pdf-content-item">
-                <h2>1. 사용자 시나리오</h2>
+                <h2>{{ sectionNumbers.userScenario }}. 사용자 시나리오</h2>
                 <div v-if="projectInfo.draft">
-                    <h3>1-1. 액터(Actor) 목록</h3>
+                    <h3>{{ sectionNumbers.userScenario }}-1. 액터(Actor) 목록</h3>
                     <div v-if="groupedActors.length > 0" class="actor-section">
                         <div v-for="actor in groupedActors[0]" 
                             :key="actor.name" 
@@ -98,9 +151,9 @@
         </div>
 
         <!-- 사용자 스토리 -->
-        <div class="section">
+        <div v-if="selectedSections.userScenario" class="section">
             <div class="pdf-content-item">
-                <h3>1-2. 사용자 스토리</h3>
+                <h3>{{ sectionNumbers.userScenario }}-2. 사용자 스토리</h3>
                 <div v-if="projectInfo && projectInfo.userStory">
                     <div v-if="chunkedUserStory.length > 0" class="story-content">
                         <p v-for="(paragraph, pIndex) in chunkedUserStory[0]" 
@@ -128,8 +181,8 @@
         </div>
 
         <!-- 밸류 스트림(Value stream) 분석 -->
-        <div class="section pdf-content-item">
-            <h2>2. 밸류 스트림(Value stream) 분석</h2>
+        <div v-if="selectedSections.valueStream" class="section pdf-content-item">
+            <h2>{{ sectionNumbers.valueStream }}. 밸류 스트림(Value stream) 분석</h2>
             <div class="section-content">
                 <div class="value-stream-description">
                     <p>({{ projectInfo.projectName }}) 에서 가치 중심의 업무 흐름을 단계별로 식별하고, 시스템 개선 지점과 도메인 이벤트 발생 위치를 정리</p>
@@ -157,19 +210,18 @@
         </div>
 
         <!-- 바운디드 컨텍스트 정의 -->
-        <div class="section">
+        <div v-if="selectedSections.boundedContext" class="section">
             <div class="pdf-content-item">
-                <h2>3. 바운디드 컨텍스트 정의</h2>
+                <h2>{{ sectionNumbers.boundedContext }}. 바운디드 컨텍스트 정의</h2>
                 
                 <!-- 분해 기준과 분해 결과를 하나의 pdf-content-item에 포함 -->
                 <div class="section-content">
                     <!-- 분해 기준 -->
-                    <h3>분해 기준</h3>
+                    <h3>{{ sectionNumbers.boundedContext }}-1. 분해 기준</h3>
                     <div v-if="generationOption" class="criteria-section">
                     <!-- BCGenerationOption의 체크박스 UI를 가져옴 -->
-                    <template v-for="(aspect, index) in generationOption.selectedAspects">
+                    <div v-for="(aspect, index) in generationOption.selectedAspects" :key="`card-${index}`">
                         <v-card
-                            :key="`card-${index}`"
                             class="mb-2"
                             outlined
                         >
@@ -189,7 +241,7 @@
                                 </v-row>
                             </v-card-text>
                         </v-card>
-                    </template>
+                    </div>
 
                     <!-- 추가 요구사항이 있는 경우 표시 -->
                     <v-card v-if="generationOption.additionalOptions" class="mt-4" outlined>
@@ -201,7 +253,7 @@
                 </div>
 
                     <!-- 분해 결과 -->
-                    <h3>분해 결과</h3>
+                    <h3>{{ sectionNumbers.boundedContext }}-2. 분해 결과</h3>
                     <div style="text-align: center;">
                         <vue-mermaid
                             :id="`mermaid-${renderKey}`"
@@ -216,9 +268,9 @@
         </div>
 
         <!-- 바운디드 컨텍스트 추가정보 -->
-        <div class="section">
+        <div v-if="selectedSections.boundedContext" class="section">
             <div class="pdf-content-item">
-                <h3>3-1. 바운디드 컨텍스트 상세</h3>
+                <h3>{{ sectionNumbers.boundedContext }}-3. 바운디드 컨텍스트 상세</h3>
                 <div class="section-content" v-if="selectedBoundedContext">
                     <!-- 컨텍스트 맵 -->
                     <h3>컨텍스트 전략 맵</h3>
@@ -237,7 +289,7 @@
             <!-- 상세 정보 테이블을 별도의 pdf-content-item으로 분리 -->
             <div class="pdf-content-item" v-if="selectedBoundedContext">
                 <!-- 바운디드 컨텍스트 상세 정보 -->
-                <h3>3-2. 바운디드 컨텍스트 상세 정보</h3>
+                <h3>{{ sectionNumbers.boundedContext }}-4. 바운디드 컨텍스트 상세 정보</h3>
                 <v-simple-table class="bounded-context-table">
                     <thead>
                         <tr>
@@ -247,16 +299,16 @@
                             <th>구현 전략</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <template v-for="bc in selectedBoundedContext.boundedContexts">
-                            <tr :key="bc.name">
+                    <div v-for="(chunk, chunkIndex) in splitTableRows(selectedBoundedContext.boundedContexts)" :key="`bc-chunk-${chunkIndex}`">
+                        <tbody>
+                            <tr v-for="bc in chunk" :key="bc.name">
                                 <td>{{ bc.alias }}</td>
                                 <td>{{ bc.role }}</td>
                                 <td>{{ bc.importance }}</td>
                                 <td>{{ bc.implementationStrategy }}</td>
                             </tr>
-                        </template>
-                    </tbody>
+                        </tbody>
+                    </div>
                 </v-simple-table>
 
                 <!-- 컨텍스트 간 관계 -->
@@ -270,468 +322,313 @@
                             <th>상호작용 패턴</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr v-for="(relation, index) in selectedBoundedContext.explanations" 
-                            :key="index"
-                        >
-                            <td>{{ relation.sourceContext }}</td>
-                            <td>{{ relation.targetContext }}</td>
-                            <td>{{ relation.relationType }}</td>
-                            <td>{{ relation.interactionPattern }}</td>
-                        </tr>
-                    </tbody>
+                    <div v-for="(chunk, chunkIndex) in splitTableRows(selectedBoundedContext.explanations)" :key="`relation-chunk-${chunkIndex}`">
+                        <tbody>
+                            <tr v-for="(relation, index) in chunk" :key="index">
+                                <td>{{ relation.sourceContext }}</td>
+                                <td>{{ relation.targetContext }}</td>
+                                <td>{{ relation.relationType }}</td>
+                                <td>{{ relation.interactionPattern }}</td>
+                            </tr>
+                        </tbody>
+                    </div>
                 </v-simple-table>
             </div>
         </div>
 
         <!-- 애그리거트 설계 섹션 -->
-        <div class="section">
+        <div v-if="selectedSections.aggregateDesign" class="section">
             <!-- 섹션 제목과 설명 -->
-            <div class="pdf-content-item" v-if="getAggregateDrafts.length > 0">
-                <h2>4. 애그리거트 설계 (Aggregate Design)</h2>
-                <div class="section-content">
-                    <p>각 바운디드 컨텍스트 내에서 비즈니스 불변 조건과 상태 일관성을 보장하기 위한 애그리거트를 정의</p>
-                    <p>주요 명령(Command), 이벤트(Event), 엔티티(Entity), 값 객체(Value Object)를 식별하고, 트랜잭션 경계를 중심으로 모델을 구조화</p>
-                </div>
+            <div class="cover-section-title pdf-content-item" v-if="getAggregateDrafts.length > 0">
+                <div class="main-title">{{ sectionNumbers.aggregateDesign }}. 애그리거트 설계 (Aggregate Design)</div>
+                <div class="subtitle">각 바운디드 컨텍스트 내에서 비즈니스 불변 조건과 상태 일관성을 보장하기 위한 애그리거트를 정의합니다.<br>주요 명령(Command), 이벤트(Event), 엔티티(Entity), 값 객체(Value Object)를 식별하고, 트랜잭션 경계를 중심으로 모델을 구조화합니다.</div>
             </div>
 
-            <template v-for="(draft, index) in getAggregateDrafts">
-                <!-- 머메이드 다이어그램 페이지 -->
-                <div :key="`design-diagram-${index}`" class="pdf-content-item aggregate-page">
-                    <h3>바운디드 컨텍스트: {{ draft.boundedContextAlias }} - 애그리거트 모델</h3>
-                    <div v-if="draft.options" class="aggregate-models">
-                        <template v-for="(option, optionIndex) in draft.options">
-                            <div :key="optionIndex" class="aggregate-option">
-                                <div class="mermaid-container">
-                                    <vue-mermaid-string
-                                        :id="`aggregate-mermaid-${index}-${optionIndex}`"
-                                        :key="getAggregateMermaidRenderKey(index, optionIndex)"
-                                        :value="getAggregateMermaidNodes(option.structure, index, optionIndex)"
-                                    />
+            <div v-for="(draft, index) in getAggregateDrafts" :key="`draft-${index}`">
+                <!-- 4-1. 애그리거트 모델 -->
+                <div class="pdf-content-item">
+                    <h3>{{ sectionNumbers.aggregateDesign }}-1. 바운디드 컨텍스트: {{ draft.boundedContextAlias }} - 애그리거트 모델</h3>
+                    <div v-for="(option, optionIndex) in draft.options" :key="`option-${index}-${optionIndex}`" class="mermaid-container">
+                        <vue-mermaid-string
+                            :id="`aggregate-mermaid-${index}-${optionIndex}`"
+                            :key="getAggregateMermaidRenderKey(index, optionIndex)"
+                            :value="getAggregateMermaidNodes(option.structure, index, optionIndex)"
+                        />
+                    </div>
+                </div>
+
+                <!-- 4-2. 애그리거트 분석 -->
+                <div class="pdf-content-item">
+                    <h3>{{ sectionNumbers.aggregateDesign }}-2. 바운디드 컨텍스트: {{ draft.boundedContextAlias }} - 애그리거트 분석</h3>
+                    <div v-for="(option, optionIndex) in draft.options" :key="`analysis-${index}-${optionIndex}`">
+                        <v-simple-table dense class="pros-cons-table">
+                            <thead>
+                                <tr>
+                                    <th>항목</th>
+                                    <th>장점</th>
+                                    <th>단점</th>
+                                </tr>
+                            </thead>
+                            <div v-for="(chunk, chunkIndex) in splitTableRows(Object.keys(option.pros))" :key="`pros-cons-chunk-${chunkIndex}`">
+                                <tbody>
+                                    <tr v-for="key in chunk" :key="key">
+                                        <td class="font-weight-bold" style="width: 120px;">{{ key }}</td>
+                                        <td>{{ option.pros[key] }}</td>
+                                        <td>{{ option.cons[key] }}</td>
+                                    </tr>
+                                </tbody>
+                            </div>
+                        </v-simple-table>
+                    </div>
+                </div>
+
+                <!-- 4-3. 설계 기준 -->
+                <div v-for="(option, optionIndex) in draft.options" :key="`criteria-${index}-${optionIndex}`">
+                    <template v-if="option.analysisResult && getDesignCriteriaCombined(option.analysisResult).length > 0">
+                        <div v-for="(chunk, chunkIndex) in splitTableRows(getDesignCriteriaCombined(option.analysisResult))" :key="`criteria-chunk-${chunkIndex}`" class="pdf-content-item">
+                            <h3 v-if="chunkIndex === 0">{{ sectionNumbers.aggregateDesign }}-3. 바운디드 컨텍스트: {{ draft.boundedContextAlias }} - 설계 기준</h3>
+                            <div v-if="chunk.some(i => i.type === 'rule')">
+                                <h4 class="section-title">비즈니스 규칙</h4>
+                                <v-simple-table dense class="rules-table">
+                                    <thead>
+                                        <tr>
+                                            <th>규칙명</th>
+                                            <th>설명</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-for="rule in chunk.filter(i => i.type === 'rule')" :key="rule.name">
+                                            <td class="font-weight-bold" style="width: 150px;">{{ rule.name }}</td>
+                                            <td>{{ rule.description }}</td>
+                                        </tr>
+                                    </tbody>
+                                </v-simple-table>
+                            </div>
+                            <div v-if="chunk.some(i => i.type === 'entityProp')">
+                                <h4 class="section-title">엔티티 정의</h4>
+                                <div v-for="entityName in getEntitiesInChunk(chunk)" :key="entityName" class="entity-section">
+                                    <h5 class="entity-name">{{ entityName }}</h5>
+                                    <v-simple-table dense class="entity-table">
+                                        <thead>
+                                            <tr>
+                                                <th>속성</th>
+                                                <th>타입</th>
+                                                <th>필수여부</th>
+                                                <th>비고</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr v-for="prop in chunk.filter(i => i.type === 'entityProp' && i.entityName === entityName)" :key="prop.name">
+                                                <td>{{ prop.name }}</td>
+                                                <td>{{ prop.type }}</td>
+                                                <td>{{ prop.required ? 'Y' : 'N' }}</td>
+                                                <td>
+                                                    <span v-if="prop.isPrimaryKey">Primary Key</span>
+                                                    <span v-if="prop.foreignEntity">FK ({{ prop.foreignEntity }})</span>
+                                                    <span v-if="prop.values">{{ prop.values.join(', ') }}</span>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </v-simple-table>
                                 </div>
                             </div>
-                        </template>
-                    </div>
+                        </div>
+                    </template>
                 </div>
+            </div>
+        </div>
 
-                <!-- 장단점 분석 페이지 -->
-                <div :key="`design-analysis-${index}`" class="pdf-content-item">
-                    <h3>바운디드 컨텍스트: {{ draft.boundedContextAlias }} - 애그리거트 분석</h3>
-                    <div v-if="draft.options" class="analysis-content">
-                        <template v-for="(option, optionIndex) in draft.options">
-                            <div :key="optionIndex" class="analysis-section">
-                                <h4>애그리거트 분석</h4>
-                                <v-simple-table dense class="pros-cons-table">
-                                    <thead>
-                                        <tr>
-                                            <th>항목</th>
-                                            <th>장점</th>
-                                            <th>단점</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr v-for="(key) in Object.keys(option.pros)" :key="key">
-                                            <td class="font-weight-bold" style="width: 120px;">{{ key }}</td>
-                                            <td>{{ option.pros[key] }}</td>
-                                            <td>{{ option.cons[key] }}</td>
-                                        </tr>
-                                    </tbody>
-                                </v-simple-table>
-                            </div>
-                        </template>
-                    </div>
-                </div>
+        <!-- 이벤트스토밍 모델 섹션 -->
+        <div v-if="selectedSections.eventStorming" class="section">
+            <!-- 섹션 제목과 설명 -->
+            <div class="cover-section-title pdf-content-item" v-if="getEventStormingModels.length > 0">
+                <div class="main-title">{{ sectionNumbers.eventStorming }}. 이벤트스토밍 모델</div>
+                <div class="subtitle">도출된 바운디드 컨텍스트와 애그리거트 결과를 기반으로 시스템의 동작 흐름과 반응 구조를 모델링합니다.<br>주요 도메인 이벤트, 커맨드, 리드모델 및 액터 간 상호작용을 시각적으로 정리합니다.</div>
+            </div>
 
-                <!-- 설계 기준 페이지 1: 비즈니스 규칙과 엔티티 -->
-                <div :key="`criteria-${index}-1`" class="pdf-content-item">
-                    <h3>바운디드 컨텍스트: {{ draft.boundedContextAlias }} - 설계 기준 (1/3)</h3>
-                    <div v-if="draft.options[0].analysisResult" class="design-criteria">
-                        <!-- 비즈니스 규칙 -->
-                        <div class="criteria-section">
-                            <h4 class="section-title">비즈니스 규칙</h4>
-                            <v-simple-table dense class="rules-table">
+            <!-- 각 모델별 페이지 -->
+            <div v-for="(model, modelIndex) in getEventStormingModels" :key="`model-${modelIndex}`">
+                <div v-for="(bc, bcIndex) in model.BoundedContexts" :key="`bc-${modelIndex}-${bcIndex}`">
+                    <!-- 바운디드 컨텍스트 제목 -->
+                    <div v-for="(chunk, chunkIndex) in splitTableRows(getCombinedTableData(bc))" :key="`combined-chunk-${chunkIndex}`" class="pdf-content-item">
+                        <h3>{{ sectionNumbers.eventStorming }}-{{ bcIndex + 1 }}. 모델: {{ model.modelName }} - 바운디드 컨텍스트: {{ bc.name }}</h3>
+                        <!-- 타입별로 분류하여 테이블 헤더와 함께 렌더링 -->
+                        <div v-if="chunk.filter(i => i.type === 'aggregate').length">
+                            <h4>애그리게잇</h4>
+                            <v-simple-table dense class="component-table">
+                                <thead>
+                                    <tr>
+                                        <th>이름</th>
+                                        <th>설명</th>
+                                    </tr>
+                                </thead>
                                 <tbody>
-                                    <tr v-for="(rule, ruleIndex) in draft.options[0].analysisResult.businessRules" 
-                                        :key="ruleIndex"
-                                        class="criterion-row"
-                                    >
-                                        <td class="font-weight-bold" style="width: 150px;">{{ rule.name }}</td>
-                                        <td>{{ rule.description }}</td>
+                                    <tr v-for="item in chunk.filter(i => i.type === 'aggregate')" :key="item.id">
+                                        <td>{{ item.name }}</td>
+                                        <td>{{ item.description || item.displayName }}</td>
                                     </tr>
                                 </tbody>
                             </v-simple-table>
                         </div>
-
-                        <!-- 엔티티 정의 -->
-                        <div class="criteria-section">
-                            <h4 class="section-title">엔티티 정의</h4>
-                            <div v-for="(entity, entityName) in draft.options[0].analysisResult.entities" 
-                                :key="entityName" 
-                                class="entity-section"
-                            >
-                                <h5 class="entity-name">{{ entityName }}</h5>
-                                <v-simple-table dense class="entity-table">
-                                    <thead>
-                                        <tr>
-                                            <th>속성</th>
-                                            <th>타입</th>
-                                            <th>필수여부</th>
-                                            <th>비고</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr v-for="prop in entity.properties" :key="prop.name">
-                                            <td>{{ prop.name }}</td>
-                                            <td>{{ prop.type }}</td>
-                                            <td>{{ prop.required ? 'Y' : 'N' }}</td>
-                                            <td>
-                                                <span v-if="prop.isPrimaryKey">Primary Key</span>
-                                                <span v-if="prop.foreignEntity">FK ({{ prop.foreignEntity }})</span>
-                                                <span v-if="prop.values">{{ prop.values.join(', ') }}</span>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </v-simple-table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 설계 기준 페이지 2: 이벤트와 인터페이스 -->
-                <div :key="`criteria-${index}-2`" class="pdf-content-item">
-                    <h3>바운디드 컨텍스트: {{ draft.boundedContextAlias }} - 설계 기준 (2/3)</h3>
-                    <div v-if="draft.options[0].analysisResult" class="design-criteria">
-                        <!-- 이벤트 정의 -->
-                        <div class="criteria-section">
-                            <h4 class="section-title">이벤트 흐름</h4>
-                            <v-simple-table dense class="events-table">
+                        <div v-if="chunk.filter(i => i.type === 'command').length">
+                            <h4>커맨드</h4>
+                            <v-simple-table dense class="component-table">
+                                <thead>
+                                    <tr>
+                                        <th>이름</th>
+                                        <th>설명</th>
+                                    </tr>
+                                </thead>
                                 <tbody>
-                                    <tr v-for="(event, eventIndex) in draft.options[0].analysisResult.events" 
-                                        :key="eventIndex"
-                                        class="event-row"
-                                    >
-                                        <td class="font-weight-bold" style="width: 150px;">{{ event.displayName }}</td>
-                                        <td>{{ event.description }}</td>
+                                    <tr v-for="item in chunk.filter(i => i.type === 'command')" :key="item.id">
+                                        <td>{{ item.name }}</td>
+                                        <td>{{ item.description || item.displayName }}</td>
                                     </tr>
                                 </tbody>
                             </v-simple-table>
                         </div>
+                        <div v-if="chunk.filter(i => i.type === 'event').length">
+                            <h4>이벤트</h4>
+                            <v-simple-table dense class="component-table">
+                                <thead>
+                                    <tr>
+                                        <th>이름</th>
+                                        <th>설명</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="item in chunk.filter(i => i.type === 'event')" :key="item.id">
+                                        <td>{{ item.name }}</td>
+                                        <td>{{ item.description || item.displayName }}</td>
+                                    </tr>
+                                </tbody>
+                            </v-simple-table>
+                        </div>
+                        <div v-if="chunk.filter(i => i.type === 'policy').length">
+                            <h4>정책</h4>
+                            <v-simple-table dense class="component-table">
+                                <thead>
+                                    <tr>
+                                        <th>이름</th>
+                                        <th>설명</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="item in chunk.filter(i => i.type === 'policy')" :key="item.id">
+                                        <td>{{ item.name }}</td>
+                                        <td>{{ item.description || item.displayName }}</td>
+                                    </tr>
+                                </tbody>
+                            </v-simple-table>
+                        </div>
+                        <div v-if="chunk.filter(i => i.type === 'readModel').length">
+                            <h4>리드모델</h4>
+                            <v-simple-table dense class="component-table">
+                                <thead>
+                                    <tr>
+                                        <th>이름</th>
+                                        <th>설명</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="item in chunk.filter(i => i.type === 'readModel')" :key="item.id">
+                                        <td>{{ item.name }}</td>
+                                        <td>{{ item.description || item.displayName }}</td>
+                                    </tr>
+                                </tbody>
+                            </v-simple-table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-                        <!-- 인터페이스 정의 -->
-                        <div class="criteria-section">
-                            <h4 class="section-title">인터페이스</h4>
-                            <div v-for="(interfaceItem, interfaceName) in draft.options[0].analysisResult.interfaces" 
-                                :key="interfaceName" 
-                                class="interface-section"
-                            >
-                                <h5 class="interface-name">{{ interfaceName }}</h5>
-                                <div v-for="(section, sectionIndex) in interfaceItem.sections" 
-                                    :key="sectionIndex" 
-                                    class="interface-section-detail"
-                                >
-                                    <div class="section-header">
-                                        <strong>{{ section.name }}</strong> ({{ section.type }})
-                                    </div>
-                                    <div v-if="section.fields" class="section-fields">
-                                        <v-simple-table dense class="interface-table">
+        <!-- 애그리게잇 상세 정보 섹션 -->
+        <div v-if="selectedSections.aggregateDetail" class="section">
+            <!-- 섹션 제목과 설명 -->
+            <div class="cover-section-title pdf-content-item" v-if="getEventStormingModels.length > 0">
+                <div class="main-title">{{ sectionNumbers.aggregateDetail }}. 애그리게잇 상세 정보</div>
+                <div class="subtitle">각 바운디드 컨텍스트의 애그리게잇 루트와 관련 엔티티들의 상세 구조를 정의합니다.<br>도메인 모델의 핵심 구성요소인 애그리게잇의 속성, 연관 관계, 그리고 도메인 규칙을 상세하게 기술합니다.</div>
+            </div>
+
+            <!-- 각 바운디드 컨텍스트별 애그리게잇 정보 -->
+            <div v-for="(model, modelIndex) in getEventStormingModels" :key="`model-${modelIndex}`">
+                <div v-for="(bc, bcIndex) in model.BoundedContexts" :key="`bc-${modelIndex}-${bcIndex}`">
+                    <div v-for="agg in bc.aggregate" :key="`agg-${bcIndex}-${agg.id}`">
+                        <!-- 애그리게잇 제목 -->
+                        <div class="pdf-content-item">
+                            <h3>바운디드 컨텍스트: {{ bc.name }} - 애그리게잇: {{ agg.name }}</h3>
+                            
+                            <!-- 모든 테이블 데이터를 하나의 배열로 합치기 -->
+                            <template v-if="getAggregateDetailData(agg).length > 0">
+                                <div v-for="(chunk, chunkIndex) in splitTableRows(getAggregateDetailData(agg))" :key="`detail-chunk-${chunkIndex}`">
+                                    <!-- 애그리게잇 루트 필드 정보 -->
+                                    <div v-if="chunk.some(item => item.type === 'rootField')">
+                                        <h4>애그리게잇 루트 필드 정보</h4>
+                                        <v-simple-table dense class="field-table">
                                             <thead>
                                                 <tr>
                                                     <th>필드명</th>
                                                     <th>타입</th>
-                                                    <th>필수여부</th>
+                                                    <th>키 여부</th>
+                                                    <th>설명</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                <tr v-for="field in section.fields" :key="field.name">
+                                                <tr v-for="field in chunk.filter(i => i.type === 'rootField')" :key="field.name">
                                                     <td>{{ field.name }}</td>
-                                                    <td>{{ field.type }}</td>
-                                                    <td>{{ field.required ? 'Y' : 'N' }}</td>
+                                                    <td>{{ field.className }}</td>
+                                                    <td>{{ field.isKey ? '예' : '아니오' }}</td>
+                                                    <td>
+                                                        <span v-if="field.referenceClass">참조: {{ field.referenceClass }}</span>
+                                                        <span v-else-if="field.displayName">{{ field.displayName }}</span>
+                                                        <span v-else>-</span>
+                                                    </td>
                                                 </tr>
                                             </tbody>
                                         </v-simple-table>
                                     </div>
+
+                                    <!-- 엔티티 정보 -->
+                                    <div v-if="chunk.some(item => item.type === 'entity')">
+                                        <h4>엔티티 정보</h4>
+                                        <div v-for="entity in chunk.filter(i => i.type === 'entity')" :key="entity.id" class="entity-detail">
+                                            <div class="entity-header">
+                                                <strong>{{ entity.name }}</strong>
+                                                <span v-if="entity.displayName" class="entity-display-name">
+                                                    ({{ entity.displayName }})
+                                                </span>
+                                            </div>
+                                            <v-simple-table dense class="field-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>필드명</th>
+                                                        <th>타입</th>
+                                                        <th>키 여부</th>
+                                                        <th>설명</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr v-for="prop in entity.properties" :key="prop.name">
+                                                        <td>{{ prop.name }}</td>
+                                                        <td>{{ prop.type }}</td>
+                                                        <td>{{ prop.required ? 'Y' : 'N' }}</td>
+                                                        <td>
+                                                            <span v-if="prop.isPrimaryKey">Primary Key</span>
+                                                            <span v-if="prop.foreignEntity">FK ({{ prop.foreignEntity }})</span>
+                                                            <span v-if="prop.values">{{ prop.values.join(', ') }}</span>
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </v-simple-table>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
+                            </template>
                         </div>
                     </div>
-                </div>
-
-                <!-- 설계 기준 페이지 3: 사용자 스토리와 설계 기준 설명 -->
-                <div :key="`criteria-${index}-3`" class="pdf-content-item">
-                    <h3>바운디드 컨텍스트: {{ draft.boundedContextAlias }} - 설계 기준 (3/3)</h3>
-                    <div v-if="draft.options[0].analysisResult" class="design-criteria">
-                        <!-- 유저 스토리 -->
-                        <div class="criteria-section">
-                            <h4 class="section-title">사용자 스토리</h4>
-                            <div v-for="(story, storyIndex) in draft.options[0].analysisResult.userStories" 
-                                :key="storyIndex"
-                                class="story-section"
-                            >
-                                <div class="story-header">
-                                    <h5 class="story-title">{{ story.title }}</h5>
-                                    <p class="story-description">{{ story.description }}</p>
-                                </div>
-                                <div class="story-acceptance">
-                                    <strong>수용 기준:</strong>
-                                    <ul>
-                                        <li v-for="(criterion, criterionIndex) in story.acceptance" 
-                                            :key="criterionIndex"
-                                            class="acceptance-criterion"
-                                        >
-                                            {{ criterion }}
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- 설계 기준 설명 -->
-                        <div v-if="draft.options[0].analysisResult.inference" class="criteria-section">
-                            <h4 class="section-title">설계 기준 설명</h4>
-                            <div class="criteria-explanation">
-                                <p>{{ draft.options[0].analysisResult.inference }}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </template>
-        </div>
-
-        <!-- 이벤트스토밍 모델 섹션 -->
-        <div class="section">
-            <!-- 섹션 제목과 설명 -->
-            <div class="pdf-content-item" v-if="getEventStormingModels.length > 0">
-                <h2>5. 이벤트스토밍 모델</h2>
-                <div class="section-content">
-                    <p>도출된 바운디드 컨텍스트와 애그리거트  결과를 기반으로 시스템의 동작 흐름과 반응 구조를 모델링</p>
-                    <p>주요 도메인 이벤트, 커맨드, 리드모델 및 액터 간 상호작용을 시각적으로 정리</p>
                 </div>
             </div>
-
-            <!-- 각 모델별 페이지 -->
-            <template v-for="(model, modelIndex) in getEventStormingModels">
-                <!-- 각 바운디드 컨텍스트별 상세 정보 -->
-                <template v-for="(bc, bcIndex) in model.BoundedContexts">
-                    <div :key="`bc-${modelIndex}-${bcIndex}`" class="pdf-content-item">
-                        <h3>모델: {{ model.modelName }} - 바운디드 컨텍스트: {{ bc.name }}</h3>
-                        
-                        <!-- 애그리게잇 정보 -->
-                        <div v-if="bc.aggregate && bc.aggregate.length > 0" class="component-section">
-                            <h5>애그리게잇</h5>
-                            <v-simple-table dense class="component-table">
-                                <thead>
-                                    <tr>
-                                        <th>이름</th>
-                                        <th>설명</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr v-for="agg in bc.aggregate" :key="agg.id">
-                                        <td>{{ agg.name }}</td>
-                                        <td>{{ agg.description || agg.displayName }}</td>
-                                    </tr>
-                                </tbody>
-                            </v-simple-table>
-                        </div>
-
-                        <!-- 커맨드 정보 -->
-                        <div v-if="bc.command && bc.command.length > 0" class="component-section">
-                            <h5>커맨드</h5>
-                            <v-simple-table dense class="component-table">
-                                <thead>
-                                    <tr>
-                                        <th>이름</th>
-                                        <th>설명</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr v-for="cmd in bc.command" :key="cmd.id">
-                                        <td>{{ cmd.name }}</td>
-                                        <td>{{ cmd.description || cmd.displayName }}</td>
-                                    </tr>
-                                </tbody>
-                            </v-simple-table>
-                        </div>
-
-                        <!-- 이벤트 정보 -->
-                        <div v-if="bc.event && bc.event.length > 0" class="component-section">
-                            <h5>이벤트</h5>
-                            <v-simple-table dense class="component-table">
-                                <thead>
-                                    <tr>
-                                        <th>이름</th>
-                                        <th>설명</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr v-for="evt in bc.event" :key="evt.id">
-                                        <td>{{ evt.name }}</td>
-                                        <td>{{ evt.description || evt.displayName }}</td>
-                                    </tr>
-                                </tbody>
-                            </v-simple-table>
-                        </div>
-
-                        <!-- 정책 정보 -->
-                        <div v-if="bc.policy && bc.policy.length > 0" class="component-section">
-                            <h5>정책</h5>
-                            <v-simple-table dense class="component-table">
-                                <thead>
-                                    <tr>
-                                        <th>이름</th>
-                                        <th>설명</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr v-for="pol in bc.policy" :key="pol.id">
-                                        <td>{{ pol.name }}</td>
-                                        <td>{{ pol.description || pol.displayName }}</td>
-                                    </tr>
-                                </tbody>
-                            </v-simple-table>
-                        </div>
-                    </div>
-                </template>
-            </template>
-        </div>
-
-        <!-- 애그리게잇 상세 정보 섹션 -->
-        <div class="section">
-            <div class="pdf-content-item" v-if="getEventStormingModels.length > 0">
-                <h2>6. 애그리게잇 상세 정보</h2>
-                <div class="section-content">
-                    <p>각 바운디드 컨텍스트의 애그리게잇 루트와 관련 엔티티들의 상세 구조를 정의</p>
-                    <p>도메인 모델의 핵심 구성요소인 애그리게잇의 속성, 연관 관계, 그리고 도메인 규칙을 상세하게 기술</p>
-                </div>
-            </div>
-
-            <!-- 각 바운디드 컨텍스트별 애그리게잇 정보 -->
-            <template v-for="(model, modelIndex) in getEventStormingModels">
-                <template v-for="(bc, bcIndex) in model.BoundedContexts">
-                    <div v-for="agg in bc.aggregate" :key="`agg-${bcIndex}-${agg.id}`" class="pdf-content-item">
-                        <h3>바운디드 컨텍스트: {{ bc.name }} - 애그리게잇: {{ agg.name }}</h3>
-                        
-                        <!-- 애그리게잇 루트 필드 정보 -->
-                        <div v-if="agg.aggregateRoot && agg.aggregateRoot.fieldDescriptors" class="component-section">
-                            <h5>애그리게잇 루트 필드 정보</h5>
-                            <v-simple-table dense class="field-table">
-                                <thead>
-                                    <tr>
-                                        <th>필드명</th>
-                                        <th>타입</th>
-                                        <th>키 여부</th>
-                                        <th>설명</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr v-for="field in agg.aggregateRoot.fieldDescriptors" :key="field.name">
-                                        <td>{{ field.name }}</td>
-                                        <td>{{ field.className }}</td>
-                                        <td>{{ field.isKey ? '예' : '아니오' }}</td>
-                                        <td>
-                                            <span v-if="field.referenceClass">참조: {{ field.referenceClass }}</span>
-                                            <span v-else-if="field.displayName">{{ field.displayName }}</span>
-                                            <span v-else>-</span>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </v-simple-table>
-                        </div>
-
-                        <!-- 엔티티 정보 -->
-                        <div v-if="agg.aggregateRoot && agg.aggregateRoot.entities && agg.aggregateRoot.entities.elements" class="component-section">
-                            <h5>엔티티 정보</h5>
-                            <div v-for="(entity, entityId) in agg.aggregateRoot.entities.elements" :key="entityId" class="entity-detail">
-                                <!-- 일반 클래스 -->
-                                <template v-if="entity._type === 'org.uengine.uml.model.Class'">
-                                    <div class="entity-header">
-                                        <strong>{{ entity.name }}</strong>
-                                        <span v-if="entity.displayName" class="entity-display-name">
-                                            ({{ entity.displayName }})
-                                        </span>
-                                    </div>
-                                    <v-simple-table dense class="field-table">
-                                        <thead>
-                                            <tr>
-                                                <th>필드명</th>
-                                                <th>타입</th>
-                                                <th>키 여부</th>
-                                                <th>설명</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr v-for="field in entity.fieldDescriptors" :key="field.name">
-                                                <td>{{ field.name }}</td>
-                                                <td>{{ field.className }}</td>
-                                                <td>{{ field.isKey ? '예' : '아니오' }}</td>
-                                                <td>
-                                                    <span v-if="field.referenceClass">참조: {{ field.referenceClass }}</span>
-                                                    <span v-else-if="field.displayName">{{ field.displayName }}</span>
-                                                    <span v-else>-</span>
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </v-simple-table>
-                                </template>
-
-                                <!-- 열거형 -->
-                                <template v-if="entity._type === 'org.uengine.uml.model.enum'">
-                                    <div class="entity-header">
-                                        <strong>{{ entity.name }}</strong>
-                                        <span v-if="entity.displayName" class="entity-display-name">
-                                            ({{ entity.displayName }})
-                                        </span>
-                                    </div>
-                                    <v-simple-table dense class="enum-table">
-                                        <thead>
-                                            <tr>
-                                                <th>값</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr v-for="(item, itemIndex) in entity.items" :key="itemIndex">
-                                                <td>{{ item.value }}</td>
-                                            </tr>
-                                        </tbody>
-                                    </v-simple-table>
-                                </template>
-
-                                <!-- Value Object -->
-                                <template v-if="entity._type === 'org.uengine.uml.model.vo.Class'">
-                                    <div class="entity-header">
-                                        <strong>{{ entity.name }} (Value Object)</strong>
-                                        <span v-if="entity.displayName" class="entity-display-name">
-                                            ({{ entity.displayName }})
-                                        </span>
-                                    </div>
-                                    <v-simple-table dense class="field-table">
-                                        <thead>
-                                            <tr>
-                                                <th>필드명</th>
-                                                <th>타입</th>
-                                                <th>키 여부</th>
-                                                <th>설명</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr v-for="field in entity.fieldDescriptors" :key="field.name">
-                                                <td>{{ field.name }}</td>
-                                                <td>{{ field.className }}</td>
-                                                <td>{{ field.isKey ? '예' : '아니오' }}</td>
-                                                <td>
-                                                    <span v-if="field.referenceClass">참조: {{ field.referenceClass }}</span>
-                                                    <span v-else-if="field.displayName">{{ field.displayName }}</span>
-                                                    <span v-else>-</span>
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </v-simple-table>
-                                </template>
-                            </div>
-                        </div>
-                    </div>
-                </template>
-            </template>
         </div>
     </div>
 </template>
@@ -788,7 +685,15 @@ export default {
                 }
             },
             mermaidDtos: {},
-            bpmXml: null
+            bpmXml: null,
+            selectedSections: {
+                userScenario: true,
+                valueStream: true,
+                boundedContext: true,
+                aggregateDesign: true,
+                eventStorming: true,
+                aggregateDetail: true
+            }
         }
     },
     computed: {
@@ -1048,6 +953,12 @@ export default {
                             ),
                             actor: elements.filter(
                                 element => element && element._type.includes('Actor') && element.boundedContext.id === bc.id
+                            ),
+                            policy: elements.filter(
+                                element => element && element._type.includes('Policy') && element.boundedContext.id === bc.id
+                            ),
+                            readModel: elements.filter(
+                                element => element && element._type.includes('View') && element.boundedContext.id === bc.id
                             )
                         };
                     });
@@ -1058,6 +969,31 @@ export default {
                     BoundedContexts: boundedContexts
                 };
             }).filter(Boolean); // null 값 제거
+        },
+        sectionNumbers() {
+            const numbers = {};
+            let currentNumber = 1;
+
+            if (this.selectedSections.userScenario) {
+                numbers.userScenario = currentNumber++;
+            }
+            if (this.selectedSections.valueStream) {
+                numbers.valueStream = currentNumber++;
+            }
+            if (this.selectedSections.boundedContext) {
+                numbers.boundedContext = currentNumber++;
+            }
+            if (this.selectedSections.aggregateDesign) {
+                numbers.aggregateDesign = currentNumber++;
+            }
+            if (this.selectedSections.eventStorming) {
+                numbers.eventStorming = currentNumber++;
+            }
+            if (this.selectedSections.aggregateDetail) {
+                numbers.aggregateDetail = currentNumber++;
+            }
+
+            return numbers;
         }
     },
     mounted() {
@@ -1348,6 +1284,93 @@ export default {
         </bpmndi:BPMNDiagram>
         </bpmn:definitions>
         `;
+        },
+
+        splitTableRows(rows, chunkSize = 10) {
+            if (!Array.isArray(rows)) return [];
+            const chunks = [];
+            for (let i = 0; i < rows.length; i += chunkSize) {
+                chunks.push(rows.slice(i, i + chunkSize));
+            }
+            return chunks;
+        },
+
+        getCombinedTableData(bc) {
+            const combinedData = [];
+            
+            // 애그리게잇 데이터 추가
+            if (bc.aggregate && bc.aggregate.length > 0) {
+                combinedData.push(...bc.aggregate.map(item => ({ ...item, type: 'aggregate' })));
+            }
+            
+            // 커맨드 데이터 추가
+            if (bc.command && bc.command.length > 0) {
+                combinedData.push(...bc.command.map(item => ({ ...item, type: 'command' })));
+            }
+            
+            // 이벤트 데이터 추가
+            if (bc.event && bc.event.length > 0) {
+                combinedData.push(...bc.event.map(item => ({ ...item, type: 'event' })));
+            }
+            
+            // 정책 데이터 추가
+            if (bc.policy && bc.policy.length > 0) {
+                combinedData.push(...bc.policy.map(item => ({ ...item, type: 'policy' })));
+            }
+            
+            // 리드모델 데이터 추가
+            if (bc.readModel && bc.readModel.length > 0) {
+                combinedData.push(...bc.readModel.map(item => ({ ...item, type: 'readModel' })));
+            }
+            
+            return combinedData;
+        },
+
+        getAggregateDetailData(agg) {
+            const combinedData = [];
+            
+            // 애그리게잇 루트 필드 데이터 추가
+            if (agg.aggregateRoot && agg.aggregateRoot.fieldDescriptors) {
+                combinedData.push(...agg.aggregateRoot.fieldDescriptors.map(field => ({
+                    ...field,
+                    type: 'rootField'
+                })));
+            }
+            
+            // 엔티티 데이터 추가
+            if (agg.aggregateRoot && agg.aggregateRoot.entities && agg.aggregateRoot.entities.elements) {
+                Object.entries(agg.aggregateRoot.entities.elements).forEach(([id, entity]) => {
+                    combinedData.push({
+                        ...entity,
+                        id,
+                        type: 'entity'
+                    });
+                });
+            }
+            
+            return combinedData;
+        },
+        getDesignCriteriaCombined(analysisResult) {
+            const combined = [];
+            // 비즈니스 규칙
+            if (analysisResult.businessRules && Array.isArray(analysisResult.businessRules)) {
+                combined.push(...analysisResult.businessRules.map(rule => ({ ...rule, type: 'rule' })));
+            }
+            // 엔티티 정의
+            if (analysisResult.entities) {
+                Object.entries(analysisResult.entities).forEach(([entityName, entity]) => {
+                    if (entity.properties && Array.isArray(entity.properties)) {
+                        entity.properties.forEach(prop => {
+                            combined.push({ ...prop, type: 'entityProp', entityName });
+                        });
+                    }
+                });
+            }
+            return combined;
+        },
+        getEntitiesInChunk(chunk) {
+            // chunk 내에 등장하는 entityName의 유니크 리스트 반환
+            return [...new Set(chunk.filter(i => i.type === 'entityProp').map(i => i.entityName))];
         }
     }
 }
@@ -1834,5 +1857,49 @@ img {
 .field-table td, .enum-table td {
     padding: 8px;
     border-bottom: 1px solid #eee;
+}
+
+/* 섹션 선택기 스타일 */
+.section-selector {
+    position: fixed;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    z-index: 1000;
+}
+
+.section-checkbox {
+    margin-bottom: 8px;
+}
+
+.section-checkbox:last-child {
+    margin-bottom: 0;
+}
+
+.cover-section-title {
+    height: 297mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 60px 40px;
+    background: white;
+}
+.cover-section-title .main-title {
+    font-size: 36px;
+    font-weight: bold;
+    margin-bottom: 40px;
+    margin-top: 0;
+}
+.cover-section-title .subtitle {
+    font-size: 22px;
+    color: #555;
+    margin-top: 0;
+    line-height: 1.6;
 }
 </style>

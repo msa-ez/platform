@@ -227,30 +227,69 @@ export default {
                 this.bpmXml = null;
                 return;
             }
-            const { actors, events } = analysisResult;
+            // 1. 데이터 정합성 보정
+            // actors name, events actor 모두 trim, string화
+            const actors = analysisResult.actors.map(actor => ({
+                ...actor,
+                name: String(actor.name).trim(),
+                lane: Number(actor.lane)
+            }));
+            const events = analysisResult.events.map(ev => ({
+                ...ev,
+                actor: String(ev.actor).trim(),
+                level: Number(ev.level)
+            }));
 
-            // 1. 이벤트를 레벨 순서대로 정렬
+            // 2. 이벤트를 레벨 순서대로 정렬
             const eventsByLevel = [...events].sort((a, b) => a.level - b.level);
 
-            // 2. 각 액터별로 이벤트를 level 순서대로 정렬
-            const actorEventMap = {};
+            // 3. actorsMap 생성 (빠른 lookup)
+            const actorsMap = {};
             actors.forEach(actor => {
+                actorsMap[actor.name] = actor;
+            });
+
+            // 4. lanes 배열 생성 (Unknown 포함)
+            const lanes = [...actors];
+            const unknownEvents = [];
+            eventsByLevel.forEach(ev => {
+                if (!actorsMap[ev.actor]) {
+                    unknownEvents.push(ev);
+                }
+            });
+            if (unknownEvents.length > 0) {
+                lanes.push({
+                    name: "Unknown",
+                    events: unknownEvents.map(ev => ev.name),
+                    lane: lanes.length
+                });
+            }
+
+            // 5. actorEventMap 생성 - 수정된 부분
+            const actorEventMap = {};
+            lanes.forEach(actor => {
                 actorEventMap[actor.name] = [];
             });
             eventsByLevel.forEach(ev => {
-                if (actorEventMap[ev.actor]) {
-                    actorEventMap[ev.actor].push(ev.name);
+                const actor = actorsMap[ev.actor];
+                if (actor) {
+                    actorEventMap[actor.name].push(ev.name);
+                } else {
+                    actorEventMap["Unknown"].push(ev.name);
                 }
             });
 
-            // 3. Pool/Lane 정의 (flowNodeRef를 level 순서대로)
-            let lanes = actors.map(actor => `
+            // 6. Pool/Lane 정의 (flowNodeRef를 level 순서대로)
+            let lanesXml = lanes.map(actor => {
+                const actorEvents = actorEventMap[actor.name] || [];
+                return `
                 <bpmn:lane id="Lane_${actor.lane}" name="${actor.name}">
-                    ${actorEventMap[actor.name].map(ev => `<bpmn:flowNodeRef>${ev}</bpmn:flowNodeRef>`).join('\n')}
+                    ${actorEvents.map(ev => `<bpmn:flowNodeRef>${ev}</bpmn:flowNodeRef>`).join('\n')}
                 </bpmn:lane>
-            `).join('\n');
+            `;
+            }).join('\n');
 
-            // 4. 이벤트(Task/Start/End 등) 정의 (level 순서대로)
+            // 7. 이벤트(Task/Start/End 등) 정의 (level 순서대로)
             let eventMap = {};
             let flowNodes = eventsByLevel.map(ev => {
                 eventMap[ev.name] = ev;
@@ -263,7 +302,7 @@ export default {
                 }
             }).join('\n');
 
-            // 5. 시퀀스 플로우 정의
+            // 8. 시퀀스 플로우 정의
             let sequenceFlows = [];
             events.forEach(ev => {
                 if (ev.nextEvents) {
@@ -275,35 +314,49 @@ export default {
                 }
             });
 
-            // 6. 시각적 요소(BPMN-DI) 생성
+            // 9. 시각적 요소(BPMN-DI) 생성
             // 각 lane(액터)별로 y축을 다르게, 각 이벤트는 level에 따라 x축을 다르게 배치
-            const laneHeight = 160; // 더 크게!
+            const laneHeight = 160;
             const nodeWidth = 80;
             const nodeHeight = 60;
-            const xGap = 140;
             const yStart = 80;
             const xStart = 100;
 
-            // 이벤트별 위치 계산
+            // level 정규화: 실제 level 분포에 따라 x축 위치를 조정
+            const levels = eventsByLevel.map(ev => Number(ev.level));
+            const minLevel = Math.min(...levels);
+            const maxLevel = Math.max(...levels);
+            const levelRange = maxLevel - minLevel + 1;
+            const minCanvasWidth = 1200;
+            const canvasWidth = Math.max(minCanvasWidth, levelRange * 80); // 80px per level
+            const xGap = Math.max(80, canvasWidth / levelRange);
+
+            // 이벤트별 위치 계산 - 개선된 부분
             const nodePositions = {};
-            actors.forEach((actor, laneIdx) => {
-                actorEventMap[actor.name].forEach(evName => {
+            lanes.forEach((actor, laneIdx) => {
+                const actorEvents = actorEventMap[actor.name] || [];
+                actorEvents.forEach(evName => {
                     const ev = events.find(e => e.name === evName);
                     if (!ev) return;
-                    // x: level에 따라, y: lane에 따라
+                    const levelNum = Number(ev.level);
                     nodePositions[evName] = {
-                        x: xStart + (ev.level - 1) * xGap,
+                        x: xStart + (levelNum - minLevel) * xGap,
                         y: yStart + laneIdx * laneHeight
                     };
                 });
             });
 
-            // Lane의 BPMNShape 생성 (선택)
-            let bpmnLaneShapes = actors.map((actor, laneIdx) => {
-                // lane의 높이는 해당 lane의 노드 개수에 따라 동적으로 조정할 수도 있음
+            // 모든 노드의 x, y 최대값 구하기
+            const allX = Object.values(nodePositions).map(pos => pos.x);
+            const allY = Object.values(nodePositions).map(pos => pos.y);
+            const maxX = Math.max(...allX, 0) + nodeWidth + 100; // 여유 padding
+            const maxY = Math.max(...allY, 0) + nodeHeight + 100;
+
+            // Lane의 BPMNShape 생성 (width를 maxX로 동적 설정)
+            let bpmnLaneShapes = lanes.map((actor, laneIdx) => {
                 return `
                 <bpmndi:BPMNShape id="Shape_Lane_${actor.lane}" bpmnElement="Lane_${actor.lane}">
-                    <dc:Bounds x="0" y="${yStart + laneIdx * laneHeight - 20}" width="${xStart + xGap * 15}" height="${laneHeight}" />
+                    <dc:Bounds x="0" y="${yStart + laneIdx * laneHeight - 20}" width="${maxX}" height="${laneHeight}" />
                 </bpmndi:BPMNShape>
                 `;
             }).join('\n');
@@ -336,7 +389,7 @@ export default {
                 `;
             }).join('\n');
 
-            // 7. 프로세스 조립
+            // 10. 프로세스 조립 (BPMNPlane의 width/height를 maxX, maxY로 맞춤)
             this.bpmXml = `<?xml version="1.0" encoding="UTF-8"?>
         <bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                         xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
@@ -347,7 +400,7 @@ export default {
                         targetNamespace="http://bpmn.io/schema/bpmn">
         <bpmn:process id="Process_1" isExecutable="false">
             <bpmn:laneSet>
-            ${lanes}
+            ${lanesXml}
             </bpmn:laneSet>
             ${flowNodes}
             ${sequenceFlows.join('\n')}
@@ -358,6 +411,11 @@ export default {
             ${bpmnShapes}
             ${bpmnEdges}
             </bpmndi:BPMNPlane>
+            <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+                <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1">
+                    <dc:Bounds x="0" y="0" width="${maxX}" height="${maxY}" />
+                </bpmndi:BPMNPlane>
+            </bpmndi:BPMNDiagram>
         </bpmndi:BPMNDiagram>
         </bpmn:definitions>
         `;
