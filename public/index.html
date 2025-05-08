@@ -264,10 +264,10 @@
     <script>
       if (window.MODE == "onprem" || window.MODE == "bpm") {
         window.$acebase = new AceBaseClient({
-          host: "localhost",
-          port: 5757,
-          dbname: "mydb",
-          https: false,
+          host: window.DB_HOST,
+          port: window.DB_PORT,
+          dbname: window.DB_NAME,
+          https: window.DB_HTTPS,
         });
         window.$acebase.ready(() => {
           console.log("Connected successfully");
