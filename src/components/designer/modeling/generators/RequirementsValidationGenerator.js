@@ -55,6 +55,7 @@ ${this.isValidationPrompt()}
 {
     "type": "ANALYSIS_RESULT",
     "content": {
+        "recommendedBoundedContextsNumber": "Number of recommended bounded contexts based on events processed by each actor" // type is number (at least 3, maximum 15),
         "events": [
             {
                 "name": "name of event", // PascalCase & Past Participle (e.g., OrderPlaced, PaymentProcessed)
@@ -73,8 +74,7 @@ ${this.isValidationPrompt()}
                 "events": ["associated event names"], // Events owned by this actor
                 "lane": number // Vertical position for swimlane (0-based index)
             }
-        ],
-        "recommendedBoundedContextsNumber": "Number of recommended bounded contexts based on events processed by each actor" // type is number (maximum 15)
+        ]
     }
 }
 
@@ -172,6 +172,7 @@ Previously identified actors:
 ${actorSummary}
 
 Please ensure new events and actors are consistent with these existing elements.
+Make sure that when using existing actor names, there is no difference in spacing and case difference.
 Consider potential connections to these existing events when defining nextEvents.
 `;
     }

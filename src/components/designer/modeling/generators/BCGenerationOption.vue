@@ -128,7 +128,7 @@ export default {
         isGeneratingBoundedContext: Boolean,
         isStartMapping: Boolean,
         isAnalizing: Boolean,
-        recommendedBoundedContextsNumber: Number,
+        recommendedBoundedContextsNumber: {type: Number, default: 3},
         generateOption: Object,
         isEditable: Boolean
     },

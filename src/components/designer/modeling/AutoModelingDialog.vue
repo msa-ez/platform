@@ -720,7 +720,7 @@
                 me.$nextTick(async () => {
                     if (me.$refs.esDialoger && me.$refs.esDialoger.initESDialoger) {
                         try {
-                            await me.$refs.esDialoger.initESDialoger();
+                            // await me.$refs.esDialoger.initESDialoger();
                             me.initialDraft = JSON.parse(JSON.stringify(me.$refs.esDialoger.messages));
                             console.log('Initialization complete');
                         } catch (error) {
@@ -761,8 +761,7 @@
             setModelIds(){
                 var me = this
 
-                // if(!me.projectId)
-                me.projectId = me.uuid();
+                if(!me.projectId) me.projectId = me.uuid();
                 if(!me.modelIds.projectId) me.modelIds.projectId = me.projectId
                 if(!me.modelIds.ESDefinitionId) me.modelIds.ESDefinitionId = me.uuid()
                 if(!me.modelIds.CJMDefinitionId) me.modelIds.CJMDefinitionId = me.uuid()
@@ -816,10 +815,12 @@
 
                     await me.putObject(`db://definitions/${settingProjectId}/information`, me.projectInfo)
                     me.isServer = true;
-                    
-                    let path = `/${me.userInfo.providerUid}/${me.storageCondition.type}/${originSetProjectId}`
-                    
-                    me.$router.push({path: path});
+
+                    setTimeout(function () {
+                        let path = `/${me.userInfo.providerUid}/${me.storageCondition.type}/${originSetProjectId}`
+                        me.$router.push({path: path});
+                    }, 2000)
+
                     setTimeout(function () {
                         me.$emit('forceUpdateKey')
                     }, 300)
@@ -1177,7 +1178,7 @@
                     return;
                 }
 
-                var getPermission = await me._get(`db://definitions/${me.projectId}/information/permissions`)
+                var getPermission = await me._get(`db://definitions/${me.projectInfo.projectId}/information/permissions`)
                 me.invitationLists = getPermission
                 if (me.invitationLists) {
                     me.showPublicModel = Object.keys(me.invitationLists).indexOf('everyone') == -1 ? false : true
@@ -1253,7 +1254,7 @@
                         })
                     }
 
-                    me.putObject(`db://definitions/${me.projectId}/information/permissions`, me.invitationLists)
+                    me.putObject(`db://definitions/${me.projectInfo.projectId}/information/permissions`, me.invitationLists)
                     me.projectInfo.permissions = me.invitationLists
                     if (request) {
                         me.joinRequested = true
@@ -1277,7 +1278,7 @@
                             beforeInvitationLists[invitation].request = false
                         }
                     })
-                    me.putObject(`db://definitions/${me.projectId}/information/permissions`, beforeInvitationLists)
+                    me.putObject(`db://definitions/${me.projectInfo.projectId}/information/permissions`, beforeInvitationLists)
                     me.projectInfo.permissions = beforeInvitationLists
                 }
                 me.inviteDialog = false

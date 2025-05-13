@@ -184,120 +184,76 @@ export default {
         async exportToPDF() {
             if (this.isExporting) return;
             this.isExporting = true;
-
             try {
                 const pdfItems = document.querySelectorAll('.pdf-content-item');
-                console.log('Total PDF items:', pdfItems.length);
-                
                 const pdfPromises = Array.from(pdfItems).map(async (container, index) => {
-                    try {
-                        console.log(`Processing item ${index}...`);
-                        console.log(`Container ${index} dimensions:`, {
-                            width: container.offsetWidth,
-                            height: container.offsetHeight,
-                            content: container.innerHTML.substring(0, 100) + '...'
-                        });
-
-                        const originalDisplay = container.style.display;
-                        const originalVisibility = container.style.visibility;
-                        container.style.display = 'block';
-                        container.style.visibility = 'visible';
-                        
-                        const images = container.getElementsByTagName('img');
-                        const svgs = container.getElementsByTagName('svg');
-                        
-                        const loadPromises = [
-                            ...Array.from(images).map(img => 
-                                new Promise(resolve => {
-                                    if (img.complete) resolve();
-                                    else {
-                                        img.onload = resolve;
-                                        img.onerror = resolve;
-                                    }
-                                })
-                            ),
-                            ...Array.from(svgs).map(svg => 
-                                new Promise(resolve => setTimeout(resolve, 100))
-                            )
-                        ];
-
-                        await Promise.all(loadPromises);
-
-                        let dataUrl = null;
-                        let retryCount = 0;
-                        const maxRetries = 5;
-
-                        while (!dataUrl && retryCount < maxRetries) {
-                            try {
-                                dataUrl = await htmlToImage.toPng(container, {
-                                    skipFonts: true,
-                                    cacheBust: true,
-                                    pixelRatio: 2,
-                                    backgroundColor: '#ffffff',
-                                    width: container.offsetWidth,
-                                    height: container.offsetHeight,
-                                    style: {
-                                        transform: 'scale(1)',
-                                        transformOrigin: 'top left',
-                                        width: `${container.offsetWidth}px`,
-                                        height: `${container.offsetHeight}px`
-                                    },
-                                    filter: node => {
-                                        if (!node || !node.tagName) return true;
-                                        
-                                        // classList 존재 여부 확인
-                                        const hasNoClass = node.classList && (
-                                            node.classList.contains('no-print') || 
-                                            node.classList.contains('v-btn')
-                                        );
-                                        
-                                        return !['BUTTON', 'SCRIPT', 'STYLE'].includes(node.tagName) && !hasNoClass;
-                                    }
-                                });
-                            } catch (err) {
-                                console.warn(`Capture attempt ${retryCount + 1} for item ${index} failed:`, err);
-                                retryCount++;
-                                await new Promise(resolve => setTimeout(resolve, 500));
+                    // 이미지가 완전히 로드될 때까지 대기
+                    const images = container.getElementsByTagName('img');
+                    const svgs = container.getElementsByTagName('svg');
+                    const loadPromises = [
+                        ...Array.from(images).map(img => new Promise(resolve => {
+                            if (img.complete) resolve();
+                            else {
+                                img.onload = resolve;
+                                img.onerror = resolve;
                             }
+                        })),
+                        ...Array.from(svgs).map(svg => new Promise(resolve => setTimeout(resolve, 100)))
+                    ];
+                    await Promise.all(loadPromises);
+
+                    // 캡처
+                    let dataUrl = null;
+                    let retryCount = 0;
+                    const maxRetries = 5;
+                    while (!dataUrl && retryCount < maxRetries) {
+                        try {
+                            dataUrl = await htmlToImage.toPng(container, {
+                                skipFonts: true,
+                                cacheBust: true,
+                                pixelRatio: 2,
+                                backgroundColor: '#ffffff',
+                                width: container.offsetWidth,
+                                height: container.offsetHeight,
+                                style: {
+                                    transform: 'scale(1)',
+                                    transformOrigin: 'top left',
+                                    width: `${container.offsetWidth}px`,
+                                    height: `${container.offsetHeight}px`
+                                },
+                                filter: node => {
+                                    if (!node || !node.tagName) return true;
+                                    const hasNoClass = node.classList && (
+                                        node.classList.contains('no-print') || 
+                                        node.classList.contains('v-btn')
+                                    );
+                                    return !['BUTTON', 'SCRIPT', 'STYLE'].includes(node.tagName) && !hasNoClass;
+                                }
+                            });
+                        } catch (err) {
+                            retryCount++;
+                            await new Promise(resolve => setTimeout(resolve, 500));
                         }
-
-                        container.style.display = originalDisplay;
-                        container.style.visibility = originalVisibility;
-
-                        if (!dataUrl) {
-                            throw new Error(`Failed to capture item ${index} after ${maxRetries} attempts`);
-                        }
-
-                        return {
-                            dataUrl,
-                            height: container.offsetHeight,
-                            width: container.offsetWidth,
-                            index
-                        };
-                    } catch (error) {
-                        console.error(`Error processing item ${index}:`, error);
-                        return {
-                            dataUrl: null,
-                            height: 0,
-                            width: 0,
-                            index,
-                            error: true
-                        };
                     }
+                    if (!dataUrl) throw new Error(`Failed to capture item ${index}`);
+                    return {
+                        dataUrl,
+                        height: container.offsetHeight,
+                        width: container.offsetWidth,
+                        index
+                    };
                 });
-
                 const results = await Promise.all(pdfPromises);
-                const failedItems = results.filter(r => r.error);
-                if (failedItems.length > 0) {
-                    console.warn('Failed to capture items:', failedItems.map(f => f.index));
-                }
+                const successfulCaptures = results.filter(r => r.dataUrl);
+                if (successfulCaptures.length === 0) throw new Error('No content could be captured successfully');
 
-                const successfulCaptures = results.filter(r => !r.error);
-                if (successfulCaptures.length === 0) {
-                    throw new Error('No content could be captured successfully');
-                }
-
-                const pdf = new jsPDF('p', 'mm', 'a4');
+                const pdf = new jsPDF({
+                    orientation: 'p',
+                    unit: 'mm',
+                    format: 'a4',
+                    compress: true,
+                    putOnlyUsedFonts: true
+                });
                 const pdfWidth = pdf.internal.pageSize.getWidth();
                 const pdfHeight = pdf.internal.pageSize.getHeight();
                 const margin = 10;
@@ -305,27 +261,26 @@ export default {
 
                 successfulCaptures.forEach((img, index) => {
                     if (index > 0) pdf.addPage();
-                    
-                    const imgHeight = (img.height * imgWidth) / img.width;
-                    
+                    let imgHeight = (img.height * imgWidth) / img.width;
+                    // 한 페이지를 넘으면 압축
+                    const pageHeight = pdfHeight - (margin * 2);
+                    if (imgHeight > pageHeight) {
+                        imgHeight = pageHeight;
+                    }
                     pdf.addImage(
                         img.dataUrl,
                         'PNG',
                         margin,
                         margin,
                         imgWidth,
-                        imgHeight,
-                        `page_${index}`,
-                        'NONE'
+                        imgHeight
                     );
                 });
 
                 const timestamp = new Date().toISOString().split('T')[0];
                 const filename = `event-storming-${this.projectId || timestamp}.pdf`;
                 pdf.save(filename);
-
             } catch (error) {
-                console.error('PDF generation failed:', error);
                 this.snackbar = {
                     show: true,
                     text: "PDF generation failed: " + (error.message || 'Unknown error'),
@@ -333,13 +288,6 @@ export default {
                     timeout: 3000
                 };
             } finally {
-                const pdfItems = document.querySelectorAll('.pdf-content-item');
-                pdfItems.forEach(container => {
-                    const images = container.getElementsByTagName('img');
-                    Array.from(images).forEach(img => {
-                        img.style.opacity = '';
-                    });
-                });
                 this.isExporting = false;
             }
         }

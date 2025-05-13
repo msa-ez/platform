@@ -126,7 +126,7 @@
         <div
              class="auto-modeling-message-card"
              style="margin-top:25px; height: 100%; width: 100%; overflow-x: auto;">
-            <v-col v-if="value && value.eventStorming.modelList && value.eventStorming.modelList.length > 0"
+            <v-col v-if="value && value.eventStorming && value.eventStorming.modelList && value.eventStorming.modelList.length > 0"
                    style="height: 100%; align-items: center; margin: 2px; width: fit-content; display: flex;"
             >
                 <div v-for="id in value.eventStorming.modelList" :key="id" style="display: inline-block;">
@@ -1462,7 +1462,7 @@ import { value } from 'jsonpath';
                 }
 
                 let isRequirementsMapping = !this.resultDevideBoundedContext[this.boundedContextVersion.aspect].boundedContexts.every(bc => 
-                    bc.requirements.length === 0
+                    !bc.requirements || bc.requirements.length === 0
                 );
 
                 let selectedStructureOption = this.resultDevideBoundedContext[this.boundedContextVersion.aspect]
