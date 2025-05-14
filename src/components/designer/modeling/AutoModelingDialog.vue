@@ -260,6 +260,7 @@
                                 :prompt="projectInfo.prompt" 
                                 :cachedModels="cachedModels"
                                 :isEditable="isOwnModel || !isReadOnlyModel"
+                                :draft="draft"
                                 @change="backupProject" 
                                 @update:processAnalysis="updateProcessAnalysis"
                                 @update:boundedContextDrafts="updateBoundedContextDrafts" 
@@ -399,8 +400,7 @@
                         customerJourneyMap: null,
                         businessModel: null,
                         userStoryMap: null,
-                        prompt: '',
-                        draft: null
+                        prompt: ''
                     }
                 }
             },
@@ -448,6 +448,12 @@
                     return {};
                 }
             },
+            draft: {
+                type: Array,
+                default: function () {
+                    return null;
+                }
+            }
         },
         mixins: [StorageBase],
         components: {
@@ -814,12 +820,11 @@
                     me.projectInfo.lastModifiedTimeStamp = Date.now();
 
                     await me.putObject(`db://definitions/${settingProjectId}/information`, me.projectInfo)
+                    await me.putObject(`db://definitions/${settingProjectId}/draft`, me.draft)
                     me.isServer = true;
 
-                    setTimeout(function () {
-                        let path = `/${me.userInfo.providerUid}/${me.storageCondition.type}/${originSetProjectId}`
-                        me.$router.push({path: path});
-                    }, 2000)
+                    let path = `/${me.userInfo.providerUid}/${me.storageCondition.type}/${originSetProjectId}`
+                    me.$router.push({path: path});
 
                     setTimeout(function () {
                         me.$emit('forceUpdateKey')
@@ -1108,22 +1113,22 @@
                 }
             },
             updateProcessAnalysis(messages){
-                if(!this.projectInfo.draft) {
-                    this.projectInfo.draft = {};
+                if(!this.draft) {
+                    this.draft = [];
                 }
-                this.projectInfo.draft = messages;
+                this.draft = messages;
             },
             updateBoundedContextDrafts(messages){
-                if(!this.projectInfo.draft) {
-                    this.projectInfo.draft = {};
+                if(!this.draft) {
+                    this.draft = [];
                 }
-                this.projectInfo.draft = messages;
+                this.draft = messages;
             },
             updateAggregateDrafts(messages){
-                if(!this.projectInfo.draft) {
-                    this.projectInfo.draft = {};
+                if(!this.draft) {
+                    this.draft = [];
                 }
-                this.projectInfo.draft = messages.map(msg => {
+                this.draft = messages.map(msg => {
                     if (msg.type === 'aggregateDraftDialogDto') {
                         const {
                             analysisResult,

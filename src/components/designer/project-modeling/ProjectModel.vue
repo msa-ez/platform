@@ -196,6 +196,7 @@
                         :genType="generatorType"
                         :requestCount="requestCount"
                         :joinRequestedText="joinRequestedText"
+                        :draft="draft"
                         @closeDialog="close()"
                         @forceUpdateKey="forceUpdateKey"
                         @saveProject="openStorageDialog('project')"
@@ -281,6 +282,12 @@
                     return false;
                 }
             },
+            draft: {
+                type: Array,
+                default: function () {
+                    return null;
+                }
+            }
 
         },
         data() {
@@ -544,11 +551,18 @@
                     me.information.prompt = me.information.prompt ? me.information.prompt : me.information.projectName;
                     me.information.prompt = me.information.prompt ? me.information.prompt : me.information.projectId
 
-                    await me.putObject(`db://definitions/${me.information.projectId}/information`, me.information);
-                    me.isServer = true;
-                    if( me.information.projectId != me.projectId ) me.$router.push({path: `/${me.information.type}/${me.information.projectId}`});
-                    me.forceUpdateKey()
-                    me.closeStorageDialog()
+                    try {
+                        await me.putObject(`db://definitions/${me.information.projectId}/information`, me.information);
+                        await me.putObject(`db://definitions/${me.information.projectId}/draft`, me.draft);
+
+                        me.isServer = true;
+                        if( me.information.projectId != me.projectId ) me.$router.push({path: `/${me.information.type}/${me.information.projectId}`});
+                        me.forceUpdateKey()
+                        me.closeStorageDialog()
+                    } catch (error) {
+                        console.error('Error saving project:', error);
+                        me.storageCondition.loading = false;
+                    }
                 } else{
                     me.storageCondition.loading = false
                 }
@@ -573,6 +587,8 @@
                 var modelUrl = me.isClazzModeling ? me.projectId : me.$route.params.projectId
                 modelUrl = modelUrl ? modelUrl : me.uuid()
 
+                var providerUid = me.$route.params.providerUid
+
                 if(modelUrl.includes(':')){
                     me.projectId = modelUrl.split(':')[0]
                     me.projectVersion = modelUrl.split(':')[1]
@@ -582,22 +598,33 @@
                 }
 
                 if (me.projectId) {
-                    var information = await me.list(`db://definitions/${me.projectId}/information`);
+                    try {
+                        var information = await me.list(`db://definitions/${me.projectId}/information`);
+                        me.draft = await me.list(`db://definitions/${me.projectId}/draft`);
 
-                    // 없는 경우, 재탐색
-                    if(!information) {
-                        information = await me.list(`db://definitions/${me.userInfo.providerUid}_project_${me.projectId}/information`);
-                    }
+                        // 없는 경우, 재탐색
+                        if(!information) {
+                            information = await me.list(`db://definitions/${providerUid}_project_${me.projectId}/information`);
+                            me.draft = await me.list(`db://definitions/${providerUid}_project_${me.projectId}/draft`);
+                        }
 
-                    me.$EventBus.$emit('progressValue', true)
-                    if (information) {
-                        me.isServer = true;
-                        await me.loadServerProject(information);
-                        me.$EventBus.$emit('progressValue', false)
-                    } else {
-                        me.isServer = false;
-                        me.loadLocalProject();
-                        me.storageCondition = me.getCondition('project')
+                        if(!me.draft) {
+                            me.draft = information.draft;
+                        }
+
+                        me.$EventBus.$emit('progressValue', true)
+                        if (information) {
+                            me.isServer = true;
+                            await me.loadServerProject(information);
+                            me.$EventBus.$emit('progressValue', false)
+                        } else {
+                            me.isServer = false;
+                            me.loadLocalProject();
+                            me.storageCondition = me.getCondition('project')
+                            me.$EventBus.$emit('progressValue', false)
+                        }
+                    } catch (error) {
+                        console.error('Error loading project:', error);
                         me.$EventBus.$emit('progressValue', false)
                     }
                 }
@@ -627,8 +654,7 @@
                     contextMapping: null,
                     userStoryMap: null,
                     prompt: "",
-                    userStory: "",
-                    draft: null
+                    userStory: ""
                 }
 
                 me.projectName = me.information.projectName  ? me.information.projectName : me.information.prompt

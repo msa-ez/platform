@@ -123,9 +123,10 @@
 
                 var snapshots = await me._list(reference)
 
-                // if(snapshots && snapshots.ErrorCode){
-                //     return snapshots;
-                // }
+                if(snapshots && snapshots.ErrorCode){
+                    console.warn(`Permission denied for path: ${path}`);
+                    return null;
+                }
 
                 if( snapshots && metadata ){
                     if( metadata.sort && metadata.sort.includes('desc') ){

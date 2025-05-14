@@ -242,7 +242,8 @@ import { value } from 'jsonpath';
             projectInfo: Object,
             modelIds: Object,
             isServerProject: Boolean,
-            isEditable: Boolean
+            isEditable: Boolean,
+            draft: Array
         },
         components: {
             VueTypedJs,
@@ -850,7 +851,7 @@ import { value } from 'jsonpath';
 
                 this.messages = [];
 
-                if(this.projectInfo.draft){
+                if(this.draft){
                     const addPropertyWithDelay = async (obj, key, value) => {
                         await new Promise(resolve => setTimeout(resolve, 30));
                         obj[key] = value;
@@ -995,7 +996,7 @@ import { value } from 'jsonpath';
                     };
 
                     // 메시지들을 순차적으로 처리
-                    for (const msg of this.projectInfo.draft) {
+                    for (const msg of this.draft) {
                         const processedMessage = await processMessageData(msg);
                         this.messages.push(processedMessage);
                         await new Promise(resolve => setTimeout(resolve, 100));
