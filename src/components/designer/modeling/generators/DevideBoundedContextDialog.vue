@@ -187,28 +187,31 @@
                                         ></v-select>
                                     </td>
                                     <td class="actions-cell">
-                                        <v-icon 
-                                            small 
+                                        <v-btn
+                                            icon
+                                            small
                                             color="error"
                                             @click="deleteBoundedContext(item)"
                                         >
-                                            mdi-delete
-                                        </v-icon>
+                                            <v-icon>mdi-delete</v-icon>
+                                        </v-btn>
                                         <v-tooltip bottom>
                                             <template v-slot:activator="{ on, attrs }">
                                                 <v-btn
-                                                    icon
                                                     small
                                                     class="expand-button"
+                                                    text
                                                     v-bind="attrs"
                                                     v-on="on"
                                                     @click="expand(!isExpanded)"
                                                     v-if="item.requirements && item.requirements.length > 0"
+                                                    style="margin-left: 12px; min-width: 0; padding: 0 8px; display: flex; align-items: center;"
                                                 >
-                                                    <v-icon>{{ isExpanded ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
+                                                    <v-icon left>{{ isExpanded ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
+                                                    <span style="font-size: 13px; font-weight: 500;">View Requirements</span>
                                                 </v-btn>
                                             </template>
-                                            <span>{{ $t('DevideBoundedContextDialog.requirementsMappingResult') }}</span>
+                                            <span>Show or hide requirements for this Bounded Context</span>
                                         </v-tooltip>
                                     </td>
                                     <td v-if="isProcessingBC(item)" class="progress-cell">
@@ -409,28 +412,31 @@
                                             ></v-select>
                                         </td>
                                         <td class="actions-cell">
-                                            <v-icon 
-                                                small 
+                                            <v-btn
+                                                icon
+                                                small
                                                 color="error"
                                                 @click="deleteBoundedContext(item)"
                                             >
-                                                mdi-delete
-                                            </v-icon>
+                                                <v-icon>mdi-delete</v-icon>
+                                            </v-btn>
                                             <v-tooltip bottom>
                                                 <template v-slot:activator="{ on, attrs }">
                                                     <v-btn
-                                                        icon
                                                         small
                                                         class="expand-button"
+                                                        text
                                                         v-bind="attrs"
                                                         v-on="on"
                                                         @click="expand(!isExpanded)"
                                                         v-if="item.requirements && item.requirements.length > 0"
+                                                        style="margin-left: 12px; min-width: 0; padding: 0 8px; display: flex; align-items: center;"
                                                     >
-                                                        <v-icon>{{ isExpanded ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
+                                                        <v-icon left>{{ isExpanded ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
+                                                        <span style="font-size: 13px; font-weight: 500;">View Requirements</span>
                                                     </v-btn>
                                                 </template>
-                                                <span>{{ $t('DevideBoundedContextDialog.requirementsMappingResult') }}</span>
+                                                <span>Show or hide requirements for this Bounded Context</span>
                                             </v-tooltip>
                                         </td>
                                         <td v-if="isProcessingBC(item)" class="progress-cell">
@@ -679,17 +685,32 @@
         watch: {
             resultDevideBoundedContext: {
                 handler(newVal) {
-                    if(this.isStartMapping) return;
+                    const allAspectKeys = Object.keys(newVal);
+                    let aspectKeyForMermaid;
 
-                    let key = Object.keys(newVal)[0];
-                    
-                    const boundedContexts = newVal[key] && newVal[key].boundedContexts? newVal[key].boundedContexts : [];
-                    const relations = newVal[key] && newVal[key].relations? newVal[key].relations : [];
-                    if (boundedContexts && relations) {
-                        this.mermaidNodes = this.generateNodes({ boundedContexts, relations });
-                        this.renderKey++;
-                        this.tableRenderKey++;
+                    if (allAspectKeys.length === 0) {
+                        this.mermaidNodes = {};
+                    } else {
+                        // Determine the aspect key for Mermaid logic
+                        // For multiple tabs, use activeTab. For single, use selectedAspect or first key.
+                        if (allAspectKeys.length > 1) {
+                            aspectKeyForMermaid = allAspectKeys[this.activeTab || 0];
+                        } else { // Single aspect in results
+                            aspectKeyForMermaid = this.selectedAspect || allAspectKeys[0];
+                        }
+                        
+                        if (newVal[aspectKeyForMermaid]) {
+                            const data = newVal[aspectKeyForMermaid];
+                            this.mermaidNodes = this.generateNodes({ boundedContexts: data.boundedContexts || [], relations: data.relations || [] });
+                        } else {
+                             // Fallback if the determined key somehow doesn't exist (e.g. during rapid changes)
+                            this.mermaidNodes = {};
+                        }
                     }
+                    this.renderKey++; // For mermaid re-render
+
+                    // Always increment tableRenderKey to ensure table updates its rows and icons
+                    this.tableRenderKey++;
                 },
                 deep: true
             },
@@ -697,10 +718,19 @@
             activeTab: {
                 handler(newTabIndex) {
                     this.$nextTick(() => {
-                        this.renderKey++;
                         const aspects = Object.keys(this.resultDevideBoundedContext);
                         if (aspects.length > newTabIndex) {
-                            this.$emit('updateSelectedAspect', aspects[newTabIndex]);
+                            const currentAspectKey = aspects[newTabIndex];
+                            if (this.resultDevideBoundedContext[currentAspectKey]) {
+                                const aspectData = this.resultDevideBoundedContext[currentAspectKey];
+                                this.mermaidNodes = this.generateNodes({ 
+                                    boundedContexts: aspectData.boundedContexts || [], 
+                                    relations: aspectData.relations || [] 
+                                });
+                                this.renderKey++; // For mermaid
+                            }
+                            this.tableRenderKey++; // Re-key table for new aspect's items
+                            this.$emit('updateSelectedAspect', currentAspectKey);
                         }
                     });
                 }
@@ -723,7 +753,7 @@
                 boundedContexts.forEach((bc, index) => {
                     const node = {
                         id: `BC${index}`,
-                        text: bc.alias,
+                        text: bc.alias.replace(/·/g, '/').replace(/\./g, '/'),
                         editable: true,
                         edgeType: 'stadium',
                         style: this.getDomainStyle(bc.importance),
@@ -797,16 +827,24 @@
             },
 
             getGroupedBoundedContextRequirements(aspect) {
-                let key = null;
-                if(!aspect) {
-                    key = Object.keys(this.resultDevideBoundedContext)[0];
-                }else{
-                    key = aspect;
-                }
+                let keyToUse;
+                const allAspectKeys = Object.keys(this.resultDevideBoundedContext);
 
-                if (!this.resultDevideBoundedContext[key] || !this.resultDevideBoundedContext[key].boundedContexts) return [];
+                if (allAspectKeys.length === 0) return [];
+
+                if (aspect) { // If aspect is provided (e.g., from v-for in tabs)
+                    keyToUse = aspect;
+                } else { // No aspect parameter, typically for single result display
+                    keyToUse = this.selectedAspect; // Use the selectedAspect prop
+                    // Fallback if selectedAspect is not a valid key in the current results
+                    if (!this.resultDevideBoundedContext[keyToUse] && allAspectKeys.length > 0) {
+                        keyToUse = allAspectKeys[0];
+                    }
+                }
     
-                return this.resultDevideBoundedContext[key].boundedContexts.map(bc => {
+                if (!this.resultDevideBoundedContext[keyToUse] || !this.resultDevideBoundedContext[keyToUse].boundedContexts) return [];
+    
+                return this.resultDevideBoundedContext[keyToUse].boundedContexts.map(bc => {
                     let requirementNumber = 1;
                     return {
                         name: bc.alias,
@@ -1063,7 +1101,7 @@
 .actions-cell {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 12px;
 }
 
 .requirement-subtable {
@@ -1082,15 +1120,8 @@
     padding: 8px !important;
 }
 
-.expand-button::before {
-    display: none !important;
-}
-
-.expand-button::after {
-    display: none !important;
-}
-
 .expand-button {
+    background: transparent !important;
     box-shadow: none !important;
 }
 </style>

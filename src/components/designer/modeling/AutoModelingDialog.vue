@@ -727,7 +727,7 @@
                     if (me.$refs.esDialoger && me.$refs.esDialoger.initESDialoger) {
                         try {
                             // await me.$refs.esDialoger.initESDialoger();
-                            me.initialDraft = JSON.parse(JSON.stringify(me.$refs.esDialoger.messages));
+                            me.initialDraft = JSON.parse(JSON.stringify(me.draft));
                             console.log('Initialization complete');
                         } catch (error) {
                             console.error('Initialization failed:', error);
@@ -1357,15 +1357,15 @@
 
             // 저장하지 않은 Project unload 여부 확인
             hasUnsavedChanges() {
-                if(!this.isServer) {
-                    return true;
+                if(!this.draft || this.draft.length == 0) {
+                    return false;
                 }
 
                 if(this.unsavedChanges) {
                     return true;
                 }
 
-                const currentStateStr = JSON.stringify(this.$refs.esDialoger.messages);
+                const currentStateStr = JSON.stringify(this.draft);
                 const initialStateStr = JSON.stringify(this.initialDraft);
 
                 this.unsavedChanges = currentStateStr !== initialStateStr;

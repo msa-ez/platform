@@ -39,13 +39,36 @@
       getBcStyle(bc) {
         // 복잡도와 차별성이 비슷한 BC들을 구분하기 위한 오프셋 계산
         const offset = this.calculateOffset(bc);
+        const idealXPercent = bc.differentiation * 100 + offset.x;
+        const idealYPercent = bc.complexity * 100 + offset.y;
+
+        let cssLeftValue;
+        let cssTranslateXPercent;
+
+        // Adjust positioning for items near horizontal edges
+        // to prevent overflow, especially with long names.
+        if (bc.differentiation >= 0.9) { // Near the right edge
+          // Position item so its right edge is at idealXPercent (capped at 100%)
+          cssLeftValue = Math.min(idealXPercent, 100);
+          cssTranslateXPercent = -100; // translateX by -100% to align item's right edge
+        } else if (bc.differentiation <= 0.1) { // Near the left edge
+          // Position item so its left edge is at idealXPercent (capped at 0%)
+          cssLeftValue = Math.max(idealXPercent, 0);
+          cssTranslateXPercent = 0;    // translateX by 0% to align item's left edge
+        } else {
+          // Default behavior: item's center is at idealXPercent
+          cssLeftValue = idealXPercent;
+          cssTranslateXPercent = -50;  // translateX by -50% to center the item
+        }
+
+        const cssTranslateYPercent = 50; // translateY by 50% to center vertically (given 'bottom' positioning)
         
         return {
           backgroundColor: this.getDomainColor(bc.importance),
           position: 'absolute',
-          left: `${bc.differentiation * 100 + offset.x}%`,
-          bottom: `${bc.complexity * 100 + offset.y}%`,
-          transform: 'translate(-50%, 50%)',
+          left: `${cssLeftValue}%`,
+          bottom: `${idealYPercent}%`,
+          transform: `translate(${cssTranslateXPercent}%, ${cssTranslateYPercent}%)`,
           cursor: 'pointer',
           minWidth: '100px'
         }
