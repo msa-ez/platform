@@ -127,10 +127,11 @@
                             <div v-if="design.some(item => item.tagStatus === 'Stable') || showBeta">
                                 {{$t('making.design')}}
                             </div>
-                            <v-chip @click="toggleBeta" style="margin-left: 16px; cursor: pointer;" color="primary" outlined>
+                            <!-- 베타보기 칩 (ex. 여러 다른 모델링등 쿠버네티스 등등) -->
+                            <!-- <v-chip @click="toggleBeta" style="margin-left: 16px; cursor: pointer;" color="primary" outlined>
                                 <v-icon left>{{ showBeta ? 'mdi-eye' : 'mdi-eye-off' }}</v-icon>
                                 {{ showBeta ? $t('app.hideBeta') : $t('app.showBeta') }}
-                            </v-chip>
+                            </v-chip> -->
                         </v-row>
                         <v-row style="margin:0px;">
                             <v-col class="making-col"

@@ -89,16 +89,16 @@
                     </v-tab-item>
                 </v-tabs-items>
                 <v-btn v-if="!done" :disabled="!isEditable" @click="stop()" style="position: absolute; right:10px; top:10px;"><v-progress-circular class="auto-modeling-stop-loading-icon" indeterminate></v-progress-circular>Stop generating</v-btn>
-                <v-row v-if="done" :disabled="!isEditable" class="ma-0 pa-4 button-row">
+                <v-row v-if="done" :disabled="!isEditable" class="ma-0 pa-4">
                     <v-spacer></v-spacer>
-                    <v-btn outlined
-                        color="#BDBDBD"
+                    <v-btn v-if="state.startTemplateGenerate" :disabled="getDisabledGenerateBtn() || !isEditable" class="auto-modeling-btn" @click="generate()">
+                        <v-icon class="auto-modeling-btn-icon">mdi-refresh</v-icon>{{ $t('ESDialoger.tryAgain') }}
+                    </v-btn>
+                    <v-btn v-else
+                        class="auto-modeling-btn"
                         @click="generate(); state.isAIModelSelected = true;"
                     >
                         {{ $t('ESDialoger.generateAIAuto') }}
-                    </v-btn>
-                    <v-btn v-if="state.startTemplateGenerate" :disabled="getDisabledGenerateBtn() || !isEditable" class="auto-modeling-btn" @click="generate()">
-                        <v-icon class="auto-modeling-btn-icon">mdi-refresh</v-icon>{{ $t('ESDialoger.tryAgain') }}
                     </v-btn>
                     <v-btn :disabled="getDisabledGenerateBtn() || !isEditable" class="auto-modeling-btn" color="primary" @click="validateRequirements()">
                         {{ $t('ESDialoger.validateRequirements') }}
@@ -1709,7 +1709,7 @@ import { value } from 'jsonpath';
             },
 
             getDisabledGenerateBtn(){
-                return this.processingState.isSummarizeStarted || this.processingState.isGeneratingBoundedContext || this.processingState.isStartMapping || this.processingState.isAnalizing
+                return this.processingState.isSummarizeStarted || this.processingState.isGeneratingBoundedContext || this.processingState.isStartMapping || this.processingState.isAnalizing || !this.projectInfo.userStory
             },
 
             async loadAllRepoList(){

@@ -912,11 +912,6 @@ code[class*=language-]:nth-child(1) {
     right: 100px !important;
 }
 
-.button-row {
-    display: flex;
-    flex-direction: row;
-}
-
 .gs-main-top-app-bar {
     left: 0px !important;
     background-color: transparent !important;
@@ -1140,10 +1135,6 @@ code[class*=language-]:nth-child(1) {
 
 @media only screen and (max-width:800px){
 
-    .button-row {
-        flex-direction: column;
-        align-items: flex-end;
-    }
     .auto-modeling-btn {
         margin-bottom: 10px;
     }
@@ -1176,11 +1167,6 @@ code[class*=language-]:nth-child(1) {
         left: 50px !important;
         top: 10px !important;
         margin: 0px !important;
-    }
-
-    .button-row {
-        flex-direction: column;
-        align-items: flex-end;
     }
     .auto-modeling-btn {
         margin-bottom: 10px;
