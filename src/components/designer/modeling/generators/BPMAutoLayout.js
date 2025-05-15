@@ -3,19 +3,6 @@
  * 데이터 구조와 레이아웃 알고리즘을 포함합니다.
  */
 
-// 기본 노드 크기 상수 정의
-const defaultNodeWidth = 100;
-const defaultNodeHeight = 40;
-
-// === 확대 상수 선언 ===
-const NODE_WIDTH = 120;
-const NODE_HEIGHT = 90;
-const MIN_LANE_HEIGHT = 180;
-const MIN_TOTAL_HEIGHT = 1200;
-const NODE_Y_GAP = 150;
-const NODE_X_GAP = 120;
-const CANVAS_PADDING = 100;
-
 /**
  * 그래프 데이터 구조 클래스
  * 노드와 엣지를 관리하며 그룹화 기능을 제공합니다.
@@ -26,20 +13,18 @@ class Graph {
         this.edges = [];
         this.groups = [];
         this.groupOrder = [];
-        this.subGroups = [];
+        this.childGraphs = new Map();
     }
 
-    addNode(id, label, type = 'node', subGroupId = null) {
+    addNode(id, label) {
         this.nodes.push({
             id,
             label,
             x: 0,
             y: 0,
-            type, //node, subGroup
             layer: 0,
             order: 0,
             group: null, // 기본값: 그룹에 속하지 않음
-            subGroupId,
             width: 0,    // 노드의 너비
             height: 0    // 노드의 높이
         });
@@ -54,34 +39,13 @@ class Graph {
         return this;
     }
 
-    addSubGroup(id) {
-        this.subGroups.push({
-        id,
-        x: 0,
-        y: 0,
-        width: 0,
-        height: 0
-        });
-    
-        return this; // 체이닝 지원
-    }
-
-    getSubGroup(id) {
-      return this.subGroups.find(sg => sg.id === id) || null;
-    }
-
     getNode(id) {
         return this.nodes.find(node => node.id === id);
-    }
-
-    getNodesInSubGroup(subId) {
-      return this.nodes.filter(node => node.subGroupId === subId);
     }
 
     getNodeIndex(id) {
         return this.nodes.findIndex(node => node.id === id);
     }
-    
 
     // 노드에서 나가는 모든 엣지 가져오기
     getOutgoingEdges(nodeId) {
@@ -287,95 +251,38 @@ class SugiyamaLayout {
     // 계층 내 노드 순서 최적화
     orderLayer(layerIndex) {
         if (layerIndex <= 0 || layerIndex >= this.layers.length) return;
+        
         const currentLayer = this.layers[layerIndex];
-        // 기존: barycenter 기반 정렬
-        // 개선: 기존 x좌표(혹은 level) 기준 정렬
-        currentLayer.sort((a, b) => {
-            // level이 있으면 level 기준, 없으면 기존대로
-            if (typeof a.level === 'number' && typeof b.level === 'number') {
-                return a.level - b.level;
+        const prevLayer = this.layers[layerIndex - 1];
+        
+        // 간단한 순서 지정: 이전 계층의 연결된 노드 기반 무게중심(barycenter) 계산
+        currentLayer.forEach(node => {
+            const incomingEdges = this.graph.getIncomingEdges(node.id);
+            if (incomingEdges.length === 0) {
+                node.barycenter = 0;
+                return;
             }
-            if (typeof a.x === 'number' && typeof b.x === 'number' && a.x !== b.x) {
-                return a.x - b.x;
-            }
-            return (a.barycenter || 0) - (b.barycenter || 0);
+            
+            let sum = 0;
+            incomingEdges.forEach(edge => {
+                const sourceNode = this.graph.getNode(edge.source);
+                const sourceIndex = prevLayer.findIndex(n => n.id === sourceNode.id);
+                if (sourceIndex >= 0) {
+                    sum += sourceIndex;
+                }
+            });
+            
+            node.barycenter = sum / incomingEdges.length;
         });
-        // 순서 업데이트
+        
+        // 무게중심 값으로 계층 정렬
+        currentLayer.sort((a, b) => a.barycenter - b.barycenter);
+        
+        // 계층 내 순서 업데이트
         currentLayer.forEach((node, index) => {
             node.order = index;
         });
     }
-
-    assignCoordinatesInSubGroups() {
-        const defaultW = 100;
-        const defaultH = 40;
-        const laneGap  = 40;   // 레인(그룹) 간 수평 간격
-        const vGap     = 30;   // 같은 레인에서 노드 간 세로 간격
-        const padding  = 20;   // subGroup 안쪽 여백
-      
-        console.log('[DEBUG_SUB] assignCoordinatesInSubGroups 시작');
-      
-        // groupOrder → 레인 정렬 인덱스 맵
-        const laneOrder = {};
-        this.graph.groupOrder.forEach((gId, idx) => (laneOrder[gId] = idx));
-      
-        /* 서브그룹 순회 */
-        this.graph.subGroups.forEach(sg => {
-          const children = this.graph.getNodesInSubGroup(sg.id);
-          if (children.length === 0) {
-            sg.width = sg.height = 0;
-            return;
-          }
-      
-          // 레인별 노드 묶기
-          const lanes = {};
-          children.forEach(n => {
-            const laneId = n.group || '_noLane';
-            if (!lanes[laneId]) lanes[laneId] = [];
-            lanes[laneId].push(n);
-          });
-      
-          // laneId 정렬 (위→아래 혹은 좌→우)
-          const sortedLaneIds = Object.keys(lanes).sort(
-            (a, b) => (laneOrder[a] || 999) - (laneOrder[b] || 999)
-          );
-      
-          /* 내부 배치 */
-          let currentX = padding;
-          let maxY = 0;
-      
-          sortedLaneIds.forEach(laneId => {
-            const laneNodes = lanes[laneId];
-      
-            // 같은 레인 노드를 세로 스택
-            laneNodes.forEach((node, idx) => {
-              node.width  || defaultW;
-              node.height || defaultH;
-      
-              node.x = currentX + node.width / 2;
-              node.y = padding + idx * (defaultH + vGap) + node.height / 2;
-      
-              maxY = Math.max(maxY, node.y + node.height / 2);
-            });
-      
-            // 다음 레인 시작 X
-            currentX += defaultW + laneGap;
-          });
-      
-          /* 바운딩 박스 계산 */
-          sg.x = 0;
-          sg.y = 0;
-          sg.width  = currentX - laneGap + padding; // 마지막 간격 보정
-          sg.height = maxY + padding;
-      
-          console.log(
-            `[DEBUG_SUB] subGroup=${sg.id} children=${children.length}  ` +
-            `w=${sg.width}, h=${sg.height}`
-          );
-        });
-      
-        return this;
-      }
     
     // 단계 3: x, y 좌표 할당
     assignCoordinates() {
@@ -383,21 +290,149 @@ class SugiyamaLayout {
         const defaultNodeHeight = 40;
         const layerHeight = 150;
         const horizontalSpacing = 20;
-        // 레이어별 노드 배치 (그룹/레인 무시, 레이어/순서 기반)
+        const minNodeMargin = 10; // 노드와 레인 경계 사이의 최소 여백
+        
+        console.log(`[DEBUG_LAYOUT] 레이아웃 시작 - 총 ${this.layers.length}개 레이어, ${this.graph.nodes.length}개 노드`);
+        
+        // 그룹 경계 미리 계산 및 초기화
+        this.initializeGroupBoundaries();
+
+        // 그룹 순서에 따라 수평 위치 배치
+        const groupOrderMap = {};
+        this.graph.groupOrder.forEach((groupId, index) => {
+            groupOrderMap[groupId] = index;
+        });
+
+        // 각 그룹의 수평 위치 범위 계산
+        const groupHorizontalRanges = this.calculateGroupHorizontalRanges(0, 0);
+        
+        // 레인 경계 정보 로그 [DEBUG_LANE_INFO]
+        console.log('[DEBUG_LANE_INFO] 레인 경계 정보:');
+        for (const groupId in groupHorizontalRanges) {
+            const range = groupHorizontalRanges[groupId];
+            console.log(`  - 레인 ID=${groupId}: 좌측=${range.minX}, 우측=${range.maxX}, 너비=${range.maxX - range.minX}`);
+        }
+
+        // 레이어별 노드 배치
         for (let i = 0; i < this.layers.length; i++) {
             const layer = this.layers[i];
-            // 노드 순서대로 배치 (order 기준)
-            layer.sort((a, b) => a.order - b.order);
-            let currentX = 100 + i * NODE_X_GAP;
-            for (const node of layer) {
-                node.x = currentX;
-                node.y = i * layerHeight + 40;
-                node.width = NODE_WIDTH;
-                node.height = NODE_HEIGHT;
+            
+            console.log(`[DEBUG_LAYER] 레이어 ${i} 처리 중: ${layer.length}개 노드`);
+            
+            // 그룹별로 노드 분류
+            const nodesPerGroup = {};
+            layer.forEach(node => {
+                if (!nodesPerGroup[node.group]) {
+                    nodesPerGroup[node.group] = [];
+                }
+                nodesPerGroup[node.group].push(node);
+            });
+            
+            // 각 그룹 내에서 노드 배치
+            for (const groupId in nodesPerGroup) {
+                const groupNodes = nodesPerGroup[groupId];
+                const groupRange = groupHorizontalRanges[groupId];
+                
+                if (!groupRange) {
+                    console.log(`[DEBUG_ERROR] 그룹 ID=${groupId}에 대한 범위 정보 없음!`);
+                    continue;
+                }
+                
+                // 각 노드의 크기 확인 및 조정
+                groupNodes.forEach(node => {
+                    const originalWidth = node.width;
+                    console.log(`[DEBUG_NODE_SIZE] 노드 크기 통일: ID=${node.id}, 원래 너비=${originalWidth || 'undefined'}, 새 너비=${node.width}`);
+                });
+                
+                // 각 노드의 크기를 고려한 총 필요 너비 계산
+                const totalNodesWidth = groupNodes.length * defaultNodeWidth;
+                const totalSpacing = horizontalSpacing * (groupNodes.length - 1);
+                
+                // 공간이 부족하면 간격 조절
+                let actualSpacing = horizontalSpacing;
+                const availableWidth = groupRange.maxX - groupRange.minX - (2 * minNodeMargin);
+                if (totalNodesWidth + totalSpacing > availableWidth) {
+                    actualSpacing = Math.max(5, (availableWidth - totalNodesWidth) / (groupNodes.length - 1 || 1));
+                    console.log(`[DEBUG_SPACING] 노드 간격 조정: 그룹=${groupId}, 원래 간격=${horizontalSpacing}, 새 간격=${actualSpacing.toFixed(1)}`);
+                }
+                
+                // 그룹 내 시작 X 위치 계산 (좌측 정렬)
+                let startX = groupRange.minX + minNodeMargin;
+                
+                // 시작 위치가 레인 경계 내에 있는지 확인
+                const originalStartX = startX;
+                startX = Math.max(groupRange.minX + minNodeMargin, startX);
+                if (originalStartX !== startX) {
+                    console.log(`[DEBUG_START_POS] 시작 위치 조정: 그룹=${groupId}, 원래=${originalStartX.toFixed(1)}, 새 위치=${startX.toFixed(1)}`);
+                }
+                
+                let currentX = startX;
+                
+                // 노드 순서대로 배치
+                groupNodes.sort((a, b) => a.order - b.order);
+                
+                console.log(`[DEBUG_NODE_PLACEMENT] 그룹=${groupId}, 레이어=${i}, 노드 배치 시작: ${groupNodes.length}개 노드`);
+                
+                groupNodes.forEach((node, idx) => {
+                    const width = defaultNodeWidth;
+                    const height = node.height || defaultNodeHeight;
+                    
+                    // 노드가 레인 경계를 벗어나지 않도록 조정
+                    let nodeX = currentX + width / 2;
+                    
+                    // 원래 계산된 위치 기록
+                    const originalX = nodeX;
+                    
+                    // 왼쪽 경계 체크
+                    const leftBound = groupRange.minX + minNodeMargin;
+                    if (nodeX - width/2 < leftBound) {
+                        nodeX = leftBound + width/2;
+                    }
+                    
+                    // 오른쪽 경계 체크
+                    const rightBound = groupRange.maxX - minNodeMargin;
+                    if (nodeX + width/2 > rightBound) {
+                        nodeX = rightBound - width/2;
+                    }
+                    
+                    // 위치가 조정된 경우 로그
+                    if (originalX !== nodeX) {
+                        console.log(`[DEBUG_NODE_ADJUST] 노드 위치 조정: ID=${node.id}, 원래=${originalX.toFixed(1)}, 조정=${nodeX.toFixed(1)}`);
+                    }
+                    
+                    node.x = nodeX;
+                    node.y = i * layerHeight + 40;
+                    
+                    console.log(`[DEBUG_NODE_FINAL] 노드 최종 위치: ID=${node.id}, x=${node.x.toFixed(1)}, y=${node.y}, 레인=${node.group}`);
+                    
+                    // 다음 노드 위치 계산
+                    currentX = nodeX + width/2 + actualSpacing;
+                });
+
+                console.log(`[DEBUG_GROUP_SUMMARY] 그룹 ${groupId} 노드 배치 완료: 시작X=${startX.toFixed(1)}, 범위=[${groupRange.minX}-${groupRange.maxX}]`);
             }
         }
-        // 그룹 경계 최종 업데이트 등은 그대로 유지
+        
+        // 그룹 경계 최종 업데이트
         this.updateGroupBoundaries(layerHeight);
+        
+        // 노드 위치 최종 확인 [DEBUG_FINAL_CHECK]
+        console.log('[DEBUG_FINAL_CHECK] 노드 위치와 그룹 경계 최종 확인:');
+        this.graph.nodes.forEach(node => {
+            if (!node.group || !node.width) return;
+            
+            const group = this.graph.getGroup(node.group);
+            if (!group) return;
+            
+            const nodeLeft = node.x - node.width/2;
+            const nodeRight = node.x + node.width/2;
+            const isOutOfBounds = nodeLeft < group.minX || nodeRight > group.maxX;
+            
+            console.log(`  - 노드: ID=${node.id}, Label=${node.label}, 위치=${node.x.toFixed(1)}, 범위=[${nodeLeft.toFixed(1)}-${nodeRight.toFixed(1)}]`);
+            console.log(`    그룹: ID=${node.group}, 범위=[${group.minX.toFixed(1)}-${group.maxX.toFixed(1)}]`);
+            console.log(`    상태: ${isOutOfBounds ? '경계 이탈!' : '정상'}`);
+        });
+        
         return this;
     }
     
@@ -1147,7 +1182,6 @@ class SugiyamaLayout {
     run() {
         this.assignLayers()
             .minimizeCrossings()
-            .assignCoordinatesInSubGroups()
             .assignCoordinates()
             .calculateGroupHeights()
             .adjustNodePositionsForGroups() // 강제로 모든 노드가 자신의 레인 내에 있도록 조정하는 단계 추가
@@ -1185,161 +1219,6 @@ function generateRandomGraph(nodeCount = 10, edgeDensity = 0.3) {
     }
     
     return graph;
-}
-
-// BPMN XML의 <bpmndi:BPMNShape> <dc:Bounds>를 직접 수정하는 함수
-function updateBpmnShapeBounds(xmlDoc, elementId, x, y, width, height) {
-    const shapes = xmlDoc.getElementsByTagName('bpmndi:BPMNShape');
-    for (let i = 0; i < shapes.length; i++) {
-        const shape = shapes[i];
-        if (shape.getAttribute('bpmnElement') === elementId) {
-            const bounds = shape.getElementsByTagName('dc:Bounds')[0];
-            if (bounds) {
-                bounds.setAttribute('x', x);
-                bounds.setAttribute('y', y);
-                bounds.setAttribute('width', width);
-                bounds.setAttribute('height', height);
-            }
-        }
-    }
-}
-
-// BPMN XML의 <bpmndi:BPMNEdge> <di:waypoint>를 직접 수정하는 함수
-function updateBpmnEdgeWaypoints(xmlDoc, edgeId, waypoints) {
-    const edges = xmlDoc.getElementsByTagName('bpmndi:BPMNEdge');
-    for (let i = 0; i < edges.length; i++) {
-        const edge = edges[i];
-        if (edge.getAttribute('bpmnElement') === edgeId) {
-            // 기존 waypoint 모두 제거
-            const oldWaypoints = Array.from(edge.getElementsByTagName('di:waypoint'));
-            oldWaypoints.forEach(wp => edge.removeChild(wp));
-            // 새 waypoint 추가
-            waypoints.forEach(pt => {
-                const wp = xmlDoc.createElementNS('http://www.omg.org/spec/DD/20100524/DI', 'di:waypoint');
-                wp.setAttribute('x', pt.x);
-                wp.setAttribute('y', pt.y);
-                edge.appendChild(wp);
-            });
-        }
-    }
-}
-
-// 자동 레이아웃 후 BPMN XML을 직접 수정하여 반환하는 함수
-export async function applyAutoLayoutAndUpdateXml(bpmnModeler, options = { horizontal: true }) {
-    if (!bpmnModeler) return;
-    const elementRegistry = bpmnModeler.get('elementRegistry');
-    const modeling = bpmnModeler.get('modeling');
-    const elements = elementRegistry.filter(e => ['bpmn:Task', 'bpmn:StartEvent', 'bpmn:EndEvent'].includes(e.type));
-    const lanes = elementRegistry.filter(e => e.type === 'bpmn:Lane');
-    const pools = elementRegistry.filter(e => e.type === 'bpmn:Participant');
-    // 1. 그래프 생성 및 레이아웃 계산 (기존 로직 재사용)
-    const graph = new Graph();
-    elements.forEach(node => {
-        graph.addNode(node.id, node.businessObject.name || node.id);
-    });
-    elementRegistry.filter(e => e.type === 'bpmn:SequenceFlow').forEach(flow => {
-        graph.addEdge(flow.businessObject.sourceRef.id, flow.businessObject.targetRef.id);
-    });
-    lanes.forEach(lane => {
-        const nodeIds = (lane.businessObject.flowNodeRef || []).map(n => n.id);
-        graph.createGroup(lane.id, nodeIds);
-    });
-    window.isHorizontalLayout = options.horizontal;
-    const layout = new SugiyamaLayout(graph);
-    layout.run();
-
-    // [xmlDoc 생성 코드 추가]
-    const { xml } = await bpmnModeler.saveXML({ format: true });
-    const parser = new DOMParser();
-    const xmlDoc = parser.parseFromString(xml, 'text/xml');
-
-    // 2. 위치/크기 계산 (노드 위치에 맞게 레인 높이 자동 조정)
-    const padding = 40;
-    // === 수직 레인 배치 ===
-    // 1. 각 레인별 필요한 높이 계산
-    let maxLaneNodeCount = 0;
-    lanes.forEach((lane) => {
-        const laneNodes = graph.getNodesInGroup(lane.id);
-        if (laneNodes.length > maxLaneNodeCount) maxLaneNodeCount = laneNodes.length;
-    });
-    const nodeMargin = 40;
-    const requiredLaneHeight = maxLaneNodeCount > 0
-        ? maxLaneNodeCount * (NODE_HEIGHT + nodeMargin) - nodeMargin + 2 * nodeMargin
-        : MIN_LANE_HEIGHT;
-
-    // 전체 레벨(단계) 범위 계산 및 xGap 선언
-    const allLevels = graph.nodes.map(node => typeof node.layer === 'number' ? node.layer : 0);
-    const minLevel = allLevels.length > 0 ? Math.min(...allLevels) : 0;
-    const xGap = 180; // 단계별 x축 간격(조금 더 촘촘하게)
-
-    // 2. 전체 다이어그램 높이 결정 (최소값 보장)
-    const totalDiagramHeight = Math.max(requiredLaneHeight, MIN_TOTAL_HEIGHT);
-
-    // 3. 레인별로 동일한 높이로 배치
-    let currentX = 0;
-    const laneXMap = {};
-    lanes.forEach((lane, idx) => {
-        const laneNodes = graph.getNodesInGroup(lane.id);
-        // 노드 배치 (x: 레벨별, y: 레인 내 균등)
-        let minNodeX = Infinity, maxNodeX = -Infinity;
-        if (laneNodes.length > 0) {
-            const totalNodeHeight = laneNodes.length * (NODE_HEIGHT + nodeMargin) - nodeMargin;
-            const startY = (totalDiagramHeight - totalNodeHeight) / 2;
-            laneNodes.forEach((node, nodeIdx) => {
-                // x좌표: 노드의 레벨에 따라
-                const level = node.layer || 0;
-                node.x = currentX + 60 + (level - minLevel) * xGap;
-                // y좌표: 레인 내에서 균등 분포
-                node.y = startY + nodeIdx * (NODE_HEIGHT + nodeMargin);
-                if (node.x < minNodeX) minNodeX = node.x;
-                if (node.x > maxNodeX) maxNodeX = node.x;
-            });
-        }
-        // 레인 폭을 노드 범위에 맞게 조정
-        let width = 300;
-        if (laneNodes.length > 0 && isFinite(minNodeX) && isFinite(maxNodeX)) {
-            width = Math.max(width, (maxNodeX - minNodeX) + NODE_WIDTH + 80);
-        }
-        updateBpmnShapeBounds(xmlDoc, lane.id, currentX, 0, width, totalDiagramHeight);
-        laneXMap[lane.id] = { x: currentX, width, nodeIds: (lane.businessObject.flowNodeRef || []).map(n => n.id) };
-        // 노드가 레인 경계 내에 있도록 보정
-        if (laneNodes.length > 0) {
-            laneNodes.forEach(node => {
-                if (node.x < currentX + 20) node.x = currentX + 20;
-                if (node.x > currentX + width - NODE_WIDTH - 20) node.x = currentX + width - NODE_WIDTH - 20;
-                updateBpmnShapeBounds(xmlDoc, node.id, node.x, node.y, NODE_WIDTH, NODE_HEIGHT);
-            });
-        }
-        currentX += width;
-    });
-    // 풀 위치/크기 반영 (최소 전체 높이 보장)
-    if (pools.length > 0) {
-        updateBpmnShapeBounds(xmlDoc, pools[0].id, 0, 0, currentX, totalDiagramHeight);
-            }
-    // 4. 시퀀스 플로우(엣지) waypoints를 노드 위치에 맞게 갱신
-    elementRegistry.filter(e => e.type === 'bpmn:SequenceFlow').forEach(flow => {
-        const source = graph.getNode(flow.businessObject.sourceRef.id);
-        const target = graph.getNode(flow.businessObject.targetRef.id);
-        if (source && target) {
-            // 노드 중심에서 시작/끝
-            const sourceCenter = { x: source.x + NODE_WIDTH / 2, y: source.y + NODE_HEIGHT / 2 };
-            const targetCenter = { x: target.x + NODE_WIDTH / 2, y: target.y + NODE_HEIGHT / 2 };
-
-            // 중간 꺾임점 계산 (수평 이동 후 수직, 또는 반대)
-            const waypoints = [];
-            waypoints.push({ x: sourceCenter.x, y: sourceCenter.y });
-            if (Math.abs(sourceCenter.x - targetCenter.x) > 40 && Math.abs(sourceCenter.y - targetCenter.y) > 40) {
-                // 수평 → 수직 꺾임
-                waypoints.push({ x: targetCenter.x, y: sourceCenter.y });
-            }
-            waypoints.push({ x: targetCenter.x, y: targetCenter.y });
-
-            updateBpmnEdgeWaypoints(xmlDoc, flow.id, waypoints);
-        }
-    });
-    // 5. 수정된 XML 반환
-    const serializer = new XMLSerializer();
-    return serializer.serializeToString(xmlDoc);
 }
 
 // 모듈 내보내기

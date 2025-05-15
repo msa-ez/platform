@@ -12,7 +12,7 @@
 
 <script>
 import BpmnJS from 'bpmn-js/dist/bpmn-modeler.development.js';
-import BPMAutoLayout from '@/components/designer/modeling/generators/BPMAutoLayout.js';
+import { applyBpmnAutoLayout } from '@/components/designer/modeling/generators/utils/BpmnAutoLayoutUtil.js';
 
 export default {
   name: 'BpmnJsEditor',
@@ -57,12 +57,6 @@ export default {
         await this.bpmnModeler.importXML(xml);
         this.importError = null;
         this.bpmnModeler.get('canvas').zoom(1.5);
-        setTimeout(async () => {
-          if (BPMAutoLayout && typeof BPMAutoLayout.applyAutoLayoutAndUpdateXml === 'function') {
-            const newXml = await BPMAutoLayout.applyAutoLayoutAndUpdateXml(this.bpmnModeler, { horizontal: true });
-            if (newXml) this.$emit('update:xml', newXml);
-          }
-        }, 100);
       } catch (err) {
         this.importError = err;
       }
@@ -93,6 +87,12 @@ export default {
         a.click();
         URL.revokeObjectURL(url);
       })();
+    },
+    async autoLayout() {
+      if (!this.bpmnModeler) return;
+      await applyBpmnAutoLayout(this.bpmnModeler);
+      const { xml } = await this.bpmnModeler.saveXML({ format: true });
+      this.$emit('update:xml', xml);
     }
   }
 };

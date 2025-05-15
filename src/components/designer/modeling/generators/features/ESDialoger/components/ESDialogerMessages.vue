@@ -340,11 +340,11 @@ export default {
 
                     return isContentValid
                 
-                case 'bcGenerationOption':
-                    return message.generateOption && 
-                        message.generateOption.selectedAspects &&
-                        Array.isArray(message.generateOption.selectedAspects) &&
-                        message.generateOption.selectedAspects.length > 0;
+                // case 'bcGenerationOption':
+                //     return message.generateOption && 
+                //         message.generateOption.selectedAspects &&
+                //         Array.isArray(message.generateOption.selectedAspects) &&
+                //         message.generateOption.selectedAspects.length > 0;
                 
                 case 'botMessage':
                 case 'userMessage':
