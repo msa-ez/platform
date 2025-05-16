@@ -199,64 +199,31 @@ export async function applyBpmnAutoLayout(bpmnModeler) {
     }
   });
 
-  // 9. 엣지(waypoints) 반영
+  // === [플로우: x로 먼저 꺾고, y로 이동, target 왼쪽 중앙 도착] ===
   connections.forEach(conn => {
-    const edge = graph.edges.find(e => e.source === conn.source.id && e.target === conn.target.id);
-    if (edge) {
-      // BPMN-js shape의 실제 bbox 좌표를 사용해서 정확히 테두리에 붙도록 계산
-      const sourceNode = nodes.find(n => n.id === edge.source);
-      const targetNode = nodes.find(n => n.id === edge.target);
-      if (sourceNode && targetNode) {
-        const getAttachPoint = (el, toX, toY) => {
-          const { x, y, width, height } = el;
-          const cx = x + width / 2, cy = y + height / 2;
-          const dx = toX - cx, dy = toY - cy;
-          if (Math.abs(dx) > Math.abs(dy)) {
-            // 좌/우
-            return { x: cx + (dx > 0 ? width/2 : -width/2), y: cy };
-          } else {
-            // 위/아래
-            return { x: cx, y: cy + (dy > 0 ? height/2 : -height/2) };
-          }
-        };
-        // 출발/도착점 계산 (실제 shape 기준)
-        const sourceAttach = getAttachPoint(sourceNode, targetNode.x + targetNode.width/2, targetNode.y + targetNode.height/2);
-        const targetAttach = getAttachPoint(targetNode, sourceNode.x + sourceNode.width/2, sourceNode.y + sourceNode.height/2);
-        // 항상 마지막에 수평(→)으로 들어가도록 보정
-        let waypoints = [];
-        const margin = 40;
-        const targetLeft = targetNode.x;
-        const targetCenterY = targetNode.y + targetNode.height / 2;
-        if (Math.abs(sourceAttach.x - targetAttach.x) > Math.abs(sourceAttach.y - targetAttach.y)) {
-          // 수평 우선: source → (target.x-margin, source.y) → (target.x-margin, targetCenterY) → (target.x, targetCenterY)
-          waypoints = [
-            sourceAttach,
-            { x: targetLeft - margin, y: sourceAttach.y }, // 수평 이동
-            { x: targetLeft - margin, y: targetCenterY },   // 수직 이동
-            { x: targetLeft, y: targetCenterY }             // 마지막 수평 진입
-          ];
-        } else {
-          // 수직 우선: source → (source.x, targetCenterY) → (target.x-margin, targetCenterY) → (target.x, targetCenterY)
-          waypoints = [
-            sourceAttach,
-            { x: sourceAttach.x, y: targetCenterY },        // 수직 이동
-            { x: targetLeft - margin, y: targetCenterY },   // 수평 이동
-            { x: targetLeft, y: targetCenterY }             // 마지막 수평 진입
-          ];
-        }
-        // 마지막 두 점이 충분히 떨어지도록 보정 (최소 20px)
-        if (waypoints.length >= 2) {
-          let beforeLast = waypoints[waypoints.length - 2];
-          let last = waypoints[waypoints.length - 1];
-          const minDist = 20;
-          if (Math.abs(last.x - beforeLast.x) < minDist && Math.abs(last.y - beforeLast.y) < minDist) {
-            waypoints[waypoints.length - 2] = { x: last.x - minDist, y: last.y };
-          }
-        }
-        modeling.updateWaypoints(conn, waypoints);
-        bpmnModeler.get('eventBus').fire('elements.changed', { elements: [conn] });
-      }
-    }
+    const source = conn.source;
+    const target = conn.target;
+    if (!source || !target) return;
+    // 출발점: source의 오른쪽 중앙
+    const sourcePort = {
+      x: source.x + (source.width || 120),
+      y: source.y + (source.height || 60) / 2
+    };
+    // 도착점: target의 왼쪽 중앙
+    const targetPort = {
+      x: target.x,
+      y: target.y + (target.height || 60) / 2
+    };
+    // x로 먼저 이동, y로 이동, 마지막에 도착
+    const offset = 40; // x축 이동 거리
+    const waypoints = [
+      sourcePort,
+      { x: sourcePort.x + offset, y: sourcePort.y },
+      { x: sourcePort.x + offset, y: targetPort.y },
+      targetPort
+    ];
+    modeling.updateWaypoints(conn, waypoints);
+    bpmnModeler.get('eventBus').fire('elements.changed', { elements: [conn] });
   });
 
   // 10. 각 레인(BPMNShape)의 width를 전체 노드의 최대 x+width에 맞춰 통일
@@ -272,4 +239,84 @@ export async function applyBpmnAutoLayout(bpmnModeler) {
 
   // 11. 다이어그램 뷰포트 맞춤
   bpmnModeler.get('canvas').zoom('fit-viewport', 'auto');
+
+  // === [후처리] 레인별 노드 y분포로 레인 높이만 재조정 ===
+  let postCurrentY = 40;
+  lanes.forEach(lane => {
+    const bounds = lane.businessObject && lane.businessObject.di && lane.businessObject.di.bounds;
+    const laneId = lane.id;
+    // 노드가 lane에 속하는지 확인 (parent 또는 group/lane)
+    const nodesInLane = nodes.filter(n => {
+      // nodeMap[n.id].group === laneId 방식이 더 정확
+      return nodeMap[n.id] && nodeMap[n.id].group === laneId;
+    });
+    if (nodesInLane.length === 0) return;
+    const nodeYs = nodesInLane.map(n => nodeMap[n.id].y);
+    const minY = Math.min(...nodeYs);
+    const maxY = Math.max(...nodeYs);
+    const nodeHeight = 60; // 또는 nodesInLane[0].height
+    const margin = 40;
+    const requiredHeight = Math.max(nodeHeight + margin, (maxY - minY) + nodeHeight + margin, 80);
+    if (bounds) {
+      bounds.y = postCurrentY;
+      bounds.height = requiredHeight;
+      lane.y = postCurrentY;
+      lane.height = requiredHeight;
+      postCurrentY += requiredHeight;
+    }
+    // 레인 shape 리사이즈
+    modeling.resizeShape(lane, { x: lane.x, y: lane.y, width: lane.width, height: lane.height });
+  });
+
+  // === [후처리2] 레인 높이 조정 후, 노드 y좌표를 레인 내부에서 재분포 ===
+  lanes.forEach(lane => {
+    const bounds = lane.businessObject && lane.businessObject.di && lane.businessObject.di.bounds;
+    const laneId = lane.id;
+    const nodesInLane = nodes.filter(n => nodeMap[n.id] && nodeMap[n.id].group === laneId);
+    if (nodesInLane.length === 0) return;
+    // 레이어별로 그룹핑
+    const layerToNodes = {};
+    nodesInLane.forEach(n => {
+      if (!layerToNodes[nodeMap[n.id].layer]) layerToNodes[nodeMap[n.id].layer] = [];
+      layerToNodes[nodeMap[n.id].layer].push(n);
+    });
+    Object.values(layerToNodes).forEach(nodesInLayer => {
+      const nCount = nodesInLayer.length;
+      const nodeHeight = 60; // 또는 nodesInLayer[0].height
+      if (nCount === 1) {
+        // 노드가 1개면 레인 중앙에 배치
+        const centerY = bounds.y + bounds.height / 2;
+        const newY = centerY;
+        modeling.moveShape(nodesInLayer[0], { x: 0, y: newY - nodesInLayer[0].y });
+        nodeMap[nodesInLayer[0].id].y = newY;
+      } else {
+        // 여러 개면 레인 전체 높이 기준으로 균등 분포
+        const spacing = bounds.height / (nCount + 1);
+        nodesInLayer.forEach((n, idx) => {
+          const newY = bounds.y + spacing * (idx + 1);
+          modeling.moveShape(n, { x: 0, y: newY - n.y });
+          nodeMap[n.id].y = newY;
+        });
+      }
+    });
+  });
+
+  // === [후처리3] 레인 중심을 노드들의 중심에 맞춰 이동 ===
+  lanes.forEach(lane => {
+    const bounds = lane.businessObject && lane.businessObject.di && lane.businessObject.di.bounds;
+    const laneId = lane.id;
+    const nodesInLane = nodes.filter(n => nodeMap[n.id] && nodeMap[n.id].group === laneId);
+    if (nodesInLane.length === 0) return;
+    // 노드 중심점들의 평균(centroid) 계산
+    const nodeCenters = nodesInLane.map(n => nodeMap[n.id].y + (n.height || 60) / 2);
+    const centroid = nodeCenters.reduce((a, b) => a + b, 0) / nodeCenters.length;
+    // 레인 중심점
+    const laneCenter = bounds.y + bounds.height / 2;
+    // 레인 전체를 centroid에 맞게 이동
+    const deltaY = centroid - laneCenter;
+    bounds.y += deltaY;
+    lane.y += deltaY;
+    // 레인 shape 리사이즈/이동
+    modeling.resizeShape(lane, { x: lane.x, y: lane.y, width: lane.width, height: lane.height });
+  });
 } 

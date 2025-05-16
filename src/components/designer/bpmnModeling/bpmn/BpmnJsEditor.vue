@@ -98,7 +98,7 @@ export default {
 };
 </script>
 
-<style scoped>
+<style>
 .bpmn-js-editor-wrapper {
   width: 100%;
   height: 100%;
@@ -128,5 +128,11 @@ export default {
   border-radius: 4px;
   margin: 0 auto;
   display: block;
+}
+.bpmn-canvas .djs-container .djs-connection path {
+  stroke-width: 3px !important;
+}
+.bpmn-canvas .djs-container .djs-lane .djs-visual rect {
+  stroke-width: 0.4px !important;
 }
 </style> 

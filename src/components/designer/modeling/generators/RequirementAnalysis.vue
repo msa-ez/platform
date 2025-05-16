@@ -32,7 +32,7 @@
                 <div class="bpmn-canvas">
                     <v-btn @click="autoLayout">Auto Layout</v-btn>
                     <v-btn @click="restoreOriginalLayout" class="ml-2">Restore Layout</v-btn>
-                    <!-- <v-btn @click="printXML" class="ml-2">Print XML</v-btn> -->
+                    <v-btn @click="printXML" class="ml-2">Print XML</v-btn>
                     <bpmn-js-editor
                         ref="bpmnEditor"
                         :xml="bpmXml"
@@ -267,34 +267,65 @@ export default {
             // 5. 레이아웃 상수
             const minSpacing = 80;
             const nodeWidth = 120;
-            const nodeHeight = 60;
+            const nodeHeight = 70;
+            const margin = 40;
             const xStart = 60;
             const xGap = 180;
-            // === 레인 높이/위치 누적 계산 ===
+
+            // === 레인 높이/위치 계산 (노드 분포 중심과 레인 중심 일치) ===
             let currentY = 40;
             lanes.forEach(lane => {
                 const actorEvents = events.filter(ev => ev.normActor === lane.normName);
-                const requiredHeight = Math.max(180, minSpacing * (actorEvents.length + 1));
-                lane.y = currentY;
-                lane.height = requiredHeight;
-                currentY += requiredHeight;
-            });
-            // === 노드 y좌표 분산 (lane.y 기준) ===
-            lanes.forEach(lane => {
-                const actorEvents = events.filter(ev => ev.normActor === lane.normName);
+                if (actorEvents.length === 0) {
+                    lane.y = currentY;
+                    lane.height = nodeHeight + margin * 2;
+                    currentY += lane.height;
+                    return;
+                }
+
                 // 레벨별 그룹핑
-                const levelToEvents = {};
+                const levelGroups = {};
                 actorEvents.forEach(ev => {
-                    if (!levelToEvents[ev.level]) levelToEvents[ev.level] = [];
-                    levelToEvents[ev.level].push(ev);
+                    if (!levelGroups[ev.level]) levelGroups[ev.level] = [];
+                    levelGroups[ev.level].push(ev);
                 });
-                Object.values(levelToEvents).forEach(levelEvents => {
-                    const spacing = lane.height / (levelEvents.length + 1);
-                    levelEvents.forEach((ev, idx) => {
-                        ev._bpmn_y = lane.y + spacing * (idx + 1);
+
+                // 레벨별로 노드 배치 (중앙 정렬)
+                let levelYs = [];
+                let currentLevelY = 0;
+                const levelEntries = Object.entries(levelGroups);
+                levelEntries.forEach(([level, eventsInLevel], i) => {
+                    const n = eventsInLevel.length;
+                    const levelHeight = Math.max(nodeHeight, (n - 1) * (nodeHeight + margin) + nodeHeight);
+                    // 레벨 내 노드 분산
+                    const startY = currentLevelY;
+                    eventsInLevel.forEach((ev, idx) => {
+                        ev._bpmn_y = startY + idx * (nodeHeight + margin);
+                        levelYs.push(ev._bpmn_y);
                     });
+                    currentLevelY += levelHeight;
+                    if (i < levelEntries.length - 1) currentLevelY += margin; // 레벨 간 margin
                 });
+
+                // 노드 분포의 min/max
+                const minY = Math.min(...levelYs);
+                const maxY = Math.max(...levelYs) + nodeHeight;
+                // 레인 높이 = 노드 분포 + 상하 margin
+                const laneHeight = (maxY - minY) + margin * 2;
+                lane.y = currentY;
+                lane.height = laneHeight;
+
+                // 노드들을 레인 중심에 맞추기
+                const nodesCenterY = (minY + maxY) / 2;
+                const laneCenterY = lane.y + lane.height / 2;
+                const offset = laneCenterY - nodesCenterY;
+                actorEvents.forEach(ev => {
+                    ev._bpmn_y += offset;
+                });
+
+                currentY += lane.height;
             });
+
             // === x좌표는 기존대로 ===
             const levels = events.map(ev => ev.level);
             const minLevel = levels.length > 0 ? Math.min(...levels) : 0;
@@ -354,8 +385,7 @@ export default {
                 const targetX = targetEv._bpmn_x;
                 const targetY = targetEv._bpmn_y + nodeHeight / 2;
                 const midX = (sourceX + targetX) / 2;
-                return `
-                <bpmndi:BPMNEdge id="Edge_${source}_to_${target}" bpmnElement="Flow_${source}_to_${target}">
+                return `                <bpmndi:BPMNEdge id="Edge_${source}_to_${target}" bpmnElement="Flow_${source}_to_${target}">
                     <di:waypoint x="${sourceX}" y="${sourceY}"/>
                     <di:waypoint x="${midX}" y="${sourceY}"/>
                     <di:waypoint x="${midX}" y="${targetY}"/>
@@ -377,8 +407,7 @@ export default {
             let bpmnLaneShapes = lanes.map((lane, idx) => {
                 const laneId = `Lane_${lane.normName}`;
                 const laneWidth = xStart + (Math.max(...levels) - minLevel) * xGap + nodeWidth + 300;
-                return `
-                    <bpmndi:BPMNShape id="Shape_${laneId}" bpmnElement="${laneId}">
+                return `                    <bpmndi:BPMNShape id="Shape_${laneId}" bpmnElement="${laneId}">
                         <dc:Bounds x="0" y="${lane.y}" width="${laneWidth}" height="${lane.height}" />
                         <bpmndi:BPMNLabel>
                           <dc:Bounds x="20" y="${lane.y + 10}" width="300" height="40" />
