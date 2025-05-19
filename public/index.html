@@ -325,26 +325,28 @@
       // Gitple('boot');
     </script>
     <script type="text/javascript">
-      (function (w, d, n, u, o, t, m) {
-        w["SrecObject"] = o;
-        (w[o] =
-          w[o] ||
-          function () {
-            (w[o].q = w[o].q || []).push(arguments);
-          }),
-          (w[o].l = 1 * new Date());
-        (t = d.createElement(n)), (m = d.getElementsByTagName(n)[0]);
-        t.async = 1;
-        t.src = u;
-        m.parentNode.insertBefore(t, m);
-      })(
-        window,
-        document,
-        "script",
-        "https://app.uxlens.com/collect/initialize.js",
-        "srec"
-      );
-      srec("init", "da448a20-8a01-11ef-abb8-ea146b9fd539");
+      // 추적 초기화 로직
+      async function checkAndInitializeTracking() {
+        try {
+          // localhost 확인
+          const isLocalhost = window.location.hostname === 'localhost' || 
+                              window.location.hostname === '127.0.0.1';
+          
+          // localhost가 아닌 경우에만 추적 초기화
+          if (!isLocalhost) {
+            // UXLENS 추적 코드 초기화
+            (function(w,d,n,u,o,t,m){w['SrecObject']=o;w[o]=w[o]||function(){
+            (w[o].q=w[o].q||[]).push(arguments)},w[o].l=1*new Date();t=d.createElement(n),
+            m=d.getElementsByTagName(n)[0];t.async=1;t.src=u;m.parentNode.insertBefore(t,m)
+            })(window,document,'script','https://app.uxlens.com/collect/initialize.js','srec');
+            srec('init', 'da448a20-8a01-11ef-abb8-ea146b9fd539');
+          } 
+        } catch (error) {
+          console.error('추적 초기화 중 오류가 발생했습니다:', error);
+        }
+      }
+      // 페이지 로드 시 추적 확인 함수 실행
+      checkAndInitializeTracking();
     </script>
     <noscript>
       <strong
