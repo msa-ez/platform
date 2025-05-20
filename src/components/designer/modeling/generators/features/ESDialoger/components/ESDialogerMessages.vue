@@ -221,7 +221,7 @@ export default {
                             // Add new message
                             this.renderedMessages.push({
                                 ...message,
-                                _isLoading: true
+                                _isLoading: false
                             });
                         }
                     });
@@ -346,9 +346,9 @@ export default {
                 //         Array.isArray(message.generateOption.selectedAspects) &&
                 //         message.generateOption.selectedAspects.length > 0;
                 
-                case 'botMessage':
-                case 'userMessage':
-                    return message.message && message.uniqueId;
+                // case 'botMessage':
+                // case 'userMessage':
+                //     return message.message && message.uniqueId;
                 
                 default:
                     return true;

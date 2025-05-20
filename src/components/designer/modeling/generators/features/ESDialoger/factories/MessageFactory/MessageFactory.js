@@ -9,7 +9,7 @@ class MessageFactory {
   
     static createBotMessage(message="", subType="", metadatas={}) {
       const baseMessage = structuredClone(botMessage)
-      baseMessage.uniqueId = Date.now().toString()
+      baseMessage.uniqueId = Date.now().toString() + "bot"
       baseMessage.message = message
       baseMessage.subType = subType
       baseMessage.metadatas = metadatas
@@ -18,7 +18,7 @@ class MessageFactory {
   
     static createUserMessage(message="", subType="", metadatas={}) {
       const baseMessage = structuredClone(userMessage)
-      baseMessage.uniqueId = Date.now().toString()
+      baseMessage.uniqueId = Date.now().toString() + "user"
       baseMessage.message = message
       baseMessage.subType = subType
       baseMessage.metadatas = metadatas
