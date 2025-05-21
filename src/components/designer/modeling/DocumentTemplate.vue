@@ -155,7 +155,7 @@
                     <p>{{ $t('DocumentTemplate.valueStream.purpose') }}</p>
                 </div>
                 
-                <div v-if="projectInfo.draft && getValueStreamSteps.length > 0" class="value-stream-steps">
+                <div v-if="draft && getValueStreamSteps.length > 0" class="value-stream-steps">
                     <div class="value-stream-step">
                         <h3>{{ getLevelRangeTitle(getValueStreamSteps[0].levels) }}</h3>
                         <div class="step-levels">
@@ -652,6 +652,10 @@ export default {
         eventStormingModels: {
             type: Object,
             required: true
+        },
+        draft: {
+            type: Object,
+            required: true
         }
     },
     data() {
@@ -689,8 +693,8 @@ export default {
     },
     computed: {
         getProcessAnalysisMessages() {
-            if (!this.projectInfo.draft) return [];
-            return this.projectInfo.draft.filter(msg => msg.type === 'processAnalysis');
+            if (!this.draft) return [];
+            return this.draft.filter(msg => msg.type === 'processAnalysis');
         },
 
         groupedActors() {
@@ -795,9 +799,9 @@ export default {
         },
 
         selectedBoundedContext() {
-            if (!this.projectInfo.draft) return null;
+            if (!this.draft) return null;
             
-            const boundedContextResult = this.projectInfo.draft.find(
+            const boundedContextResult = this.draft.find(
                 msg => msg.type === 'boundedContextResult'
             );
             
@@ -861,9 +865,9 @@ export default {
         },
 
         generationOption() {
-            if (!this.projectInfo.draft) return null;
+            if (!this.draft) return null;
             
-            const option = this.projectInfo.draft.find(
+            const option = this.draft.find(
                 msg => msg.type === 'bcGenerationOption'
             );
             
@@ -871,9 +875,9 @@ export default {
         },
 
         getAggregateDrafts() {
-            if (!this.projectInfo.draft) return [];
+            if (!this.draft) return [];
             
-            const aggregateDraftMessages = this.projectInfo.draft.filter(msg => msg.type === 'aggregateDraftDialogDto');
+            const aggregateDraftMessages = this.draft.filter(msg => msg.type === 'aggregateDraftDialogDto');
             if (aggregateDraftMessages.length === 0) return [];
 
             const drafts = [];
@@ -987,8 +991,8 @@ export default {
             return numbers;
         },
         getValueStreamSteps() {
-            if (!this.projectInfo.draft) return [];
-            const processAnalysis = this.projectInfo.draft.find(msg => msg.type === 'processAnalysis');
+            if (!this.draft) return [];
+            const processAnalysis = this.draft.find(msg => msg.type === 'processAnalysis');
             if (!processAnalysis || !processAnalysis.content || !processAnalysis.content.analysisResult) return [];
 
             const { events } = processAnalysis.content.analysisResult;
@@ -1123,8 +1127,8 @@ export default {
         }
     },
     mounted() {
-        this.generateBPMN();
-        console.log(this.bpmXml);
+        // this.generateBPMN();
+        // console.log(this.bpmXml);
     },
     methods: {
         getDomainStyle(importance) {
@@ -1499,8 +1503,8 @@ export default {
             return [...new Set(chunk.filter(i => i.type === 'entityProp').map(i => i.entityName))];
         },
         getEventsByActor(actorName) {
-            if (!this.projectInfo.draft) return [];
-            const processAnalysis = this.projectInfo.draft.find(msg => msg.type === 'processAnalysis');
+            if (!this.draft) return [];
+            const processAnalysis = this.draft.find(msg => msg.type === 'processAnalysis');
             if (!processAnalysis || !processAnalysis.content || !processAnalysis.content.analysisResult) return [];
             
             return processAnalysis.content.analysisResult.events.filter(event => event.actor === actorName);

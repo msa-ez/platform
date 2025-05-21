@@ -291,6 +291,7 @@
             :project-info="projectInfo"
             :cached-models="cachedModels"
             :userInfo="userInfo"
+            :draft="draft"
         />
 
         <model-canvas-share-dialog
