@@ -1544,23 +1544,23 @@ import { value } from 'jsonpath';
 
                     LocalStorageCleanUtil.clean()
 
-                    // if(!this.value) {
-                    //     this.$set(this, 'value', {
-                    //         eventStorming: {
-                    //             modelList: []
-                    //         }
-                    //     });
-                    // }
+                    if(!this.value) {
+                        this.$set(this, 'value', {
+                            eventStorming: {
+                                modelList: []
+                            }
+                        });
+                    }
 
-                    // if(!this.value.eventStorming) {
-                    //     this.$set(this.value, 'eventStorming', {
-                    //         modelList: []
-                    //     });
-                    // }
+                    if(!this.value.eventStorming) {
+                        this.$set(this.value, 'eventStorming', {
+                            modelList: []
+                        });
+                    }
 
-                    // if(!this.value.eventStorming.modelList.find(model => model === `${this.userInfo.providerUid}_es_${this.modelIds.ESDefinitionId}`)){
-                    //     this.value.eventStorming.modelList.push(`${this.userInfo.providerUid}_es_${this.modelIds.ESDefinitionId}`)
-                    // }
+                    if(!this.value.eventStorming.modelList.find(model => model === `${this.userInfo.providerUid}_es_${this.modelIds.ESDefinitionId}`)){
+                        this.value.eventStorming.modelList.push(`${this.userInfo.providerUid}_es_${this.modelIds.ESDefinitionId}`)
+                    }
 
                     this.$emit("input", this.value);
                     this.$emit("change", 'eventStorming');
@@ -1618,13 +1618,13 @@ import { value } from 'jsonpath';
                 }
 
 
-                this.messages.push(
-                    MessageFactory.createUserMessage(
-                        feedback,
-                        "aggregateDraftDialogDtoUserFeedback",
-                        {targetBoundedContextName: boundedContextInfo.name}
-                    )
-                )
+                // this.messages.push(
+                //     MessageFactory.createUserMessage(
+                //         feedback,
+                //         "aggregateDraftDialogDtoUserFeedback",
+                //         {targetBoundedContextName: boundedContextInfo.name}
+                //     )
+                // )
                 this.messages.push(this.workingMessages.AggregateDraftDialogDto)
 
 

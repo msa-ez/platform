@@ -32,7 +32,7 @@
                 <div class="bpmn-canvas">
                     <v-btn @click="autoLayout">Auto Layout</v-btn>
                     <v-btn @click="restoreOriginalLayout" class="ml-2">Restore Layout</v-btn>
-                    <v-btn @click="printXML" class="ml-2">Print XML</v-btn>
+                    <!-- <v-btn @click="printXML" class="ml-2">Print XML</v-btn> -->
                     <bpmn-js-editor
                         ref="bpmnEditor"
                         :xml="bpmXml"
@@ -231,7 +231,14 @@ export default {
             }
 
             // 2. 데이터 정합성 보정 및 ID/이름 통일
-            const normalize = str => String(str).replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+            const normalize = str => {
+                if (!str) return '';
+                // 한글을 영문으로 변환하지 않고 그대로 유지
+                return String(str)
+                    .trim()
+                    .replace(/[^a-zA-Z0-9가-힣]/g, '') // 특수문자만 제거
+                    .toLowerCase();
+            };
             const actors = analysisResult.actors.map(actor => ({
                 ...actor,
                 name: String(actor.name).trim(),
@@ -243,7 +250,8 @@ export default {
                 normActor: normalize(ev.actor),
                 name: String(ev.name).trim(),
                 normName: normalize(ev.name),
-                level: Number(ev.level)
+                level: Number(ev.level),
+                nextEvents: ev.nextEvents ? ev.nextEvents.map(next => normalize(next)) : []
             }));
 
             // 3. 고유 액터 목록 (Unknown 포함)
@@ -254,14 +262,20 @@ export default {
             const lanes = actorNames.map((name, idx) => ({
                 name,
                 normName: normalize(name),
-                idx
+                idx,
+                id: `Lane_${idx}` // 고유한 레인 ID 추가
             }));
 
             // 4. Unknown 레인 처리
             const knownActorSet = new Set(actors.map(a => a.name));
             const unknownEvents = events.filter(ev => !knownActorSet.has(ev.actor));
             if (unknownEvents.length > 0 && !actorNames.includes('Unknown')) {
-                lanes.push({ name: 'Unknown', normName: normalize('Unknown'), idx: lanes.length });
+                lanes.push({ 
+                    name: 'Unknown', 
+                    normName: normalize('Unknown'), 
+                    idx: lanes.length,
+                    id: `Lane_${lanes.length}`
+                });
             }
 
             // 5. 레이아웃 상수
@@ -343,12 +357,10 @@ export default {
 
             // 7. 레인 XML 생성 (이벤트가 없어도 모든 레인 포함, flowNodeRef는 normName 기준)
             let lanesXml = lanes.map(lane => {
-                const laneId = `Lane_${lane.normName}`;
-                // actor 이름이 정확히 일치하지 않는 경우를 보정
-                // 이 레인에 속한 이벤트만 flowNodeRef로 포함
+                // 해당 레인에 속한 이벤트만 flowNodeRef로 포함
                 const actorEvents = events.filter(ev => ev.normActor === lane.normName);
                 return `
-                    <bpmn:lane id="${laneId}" name="${lane.name}">
+                    <bpmn:lane id="${lane.id}" name="${lane.name}">
                         ${actorEvents.map(ev => `<bpmn:flowNodeRef>${ev.normName}</bpmn:flowNodeRef>`).join('\n')}
                     </bpmn:lane>
                 `;
@@ -405,9 +417,8 @@ export default {
 
             // 12. 레인 BPMNShape 생성 (laneId와 bpmnElement 일치)
             let bpmnLaneShapes = lanes.map((lane, idx) => {
-                const laneId = `Lane_${lane.normName}`;
                 const laneWidth = xStart + (Math.max(...levels) - minLevel) * xGap + nodeWidth + 300;
-                return `                    <bpmndi:BPMNShape id="Shape_${laneId}" bpmnElement="${laneId}">
+                return `                    <bpmndi:BPMNShape id="Shape_${lane.id}" bpmnElement="${lane.id}">
                         <dc:Bounds x="0" y="${lane.y}" width="${laneWidth}" height="${lane.height}" />
                         <bpmndi:BPMNLabel>
                           <dc:Bounds x="20" y="${lane.y + 10}" width="300" height="40" />

@@ -8,148 +8,196 @@
             </v-col>
         </template>
 
-        <template v-else v-for="(message, index) in renderedMessages">
-            <v-card 
-                v-if="message.type === 'aggregateDraftDialogDto'" 
-                :key="index" 
-                class="auto-modeling-user-story-card" 
-                style="margin-top: 30px !important;"
-                :class="{'hidden': shouldHideMessage(message)}"
-            >
+        <template v-else>
+            <template v-for="(message, index) in renderedMessages">
+                <!-- Aggregate Draft Dialog Messages -->
+                <template v-if="message.type === 'aggregateDraftDialogDto'">
+                    <!-- Multiple Aggregate Draft Dialog Messages in Tabs -->
+                    <v-card v-if="hasMultipleAggregateDraftMessages" 
+                           :key="message.uniqueId"
+                           class="auto-modeling-user-story-card" 
+                           style="margin-top: 30px !important;">
+                        <v-tabs v-model="activeAggregateTab" show-arrows>
+                            <v-tab v-for="(msg, idx) in aggregateDraftMessages" 
+                                   :key="msg.uniqueId"
+                                   :disabled="shouldHideMessage(msg)">
+                                Version {{ idx + 1 }}
+                            </v-tab>
+                        </v-tabs>
 
-                <v-skeleton-loader v-if="message._isLoading && !isMessageComplete(message)"
-                    type="card" class="mx-auto"
-                ></v-skeleton-loader>
+                        <v-tabs-items v-model="activeAggregateTab">
+                            <v-tab-item v-for="(msg, idx) in aggregateDraftMessages" 
+                                       :key="msg.uniqueId"
+                                       :disabled="shouldHideMessage(msg)">
+                                <v-skeleton-loader v-if="msg._isLoading && !isMessageComplete(msg)"
+                                    type="card" class="mx-auto"
+                                ></v-skeleton-loader>
 
-                <AggregateDraftDialog
-                    v-else
-                    :draftOptions="message.draftOptions"
-                    :draftUIInfos="message.draftUIInfos"
-                    :isGeneratorButtonEnabled="message.isGeneratorButtonEnabled"
-                    :uiType="'ESDialoger'"
-                    :messageUniqueId="message.uniqueId"
-                    :isEditable="isEditable"
-                    :boundedContextVersion="message.boundedContextVersion"
+                                <AggregateDraftDialog
+                                    v-else
+                                    :draftOptions="msg.draftOptions"
+                                    :draftUIInfos="msg.draftUIInfos"
+                                    :isGeneratorButtonEnabled="msg.isGeneratorButtonEnabled"
+                                    :uiType="'ESDialoger'"
+                                    :messageUniqueId="msg.uniqueId"
+                                    :isEditable="isEditable"
+                                    :boundedContextVersion="msg.boundedContextVersion"
 
-                    @onClose="message.actions.stop()"
-                    @onRetry="message.actions.retry()"
+                                    @onClose="msg.actions.stop()"
+                                    @onRetry="msg.actions.retry()"
 
-                    @generateFromDraft="generateFromDraft"
-                    @feedbackFromDraft="feedbackFromDraft"
-                    @updateSelectedOptionItem="updateSelectedOptionItem"
-                ></AggregateDraftDialog>
-            </v-card>
-
-            <v-card 
-                v-if="message.type === 'boundedContextResult'" 
-                :key="`bounded-context-${message.uniqueId}`" 
-                class="auto-modeling-user-story-card" 
-                style="margin-top: 30px !important;"
-            >
-                <v-skeleton-loader v-if="message._isLoading && !isMessageComplete(message)"
-                    type="card" class="mx-auto"
-                ></v-skeleton-loader>
-
-                <DevideBoundedContextDialog
-                    v-else
-                    :resultDevideBoundedContext="deepCopy(message.result)"
-                    :isStartMapping="message.isStartMapping"
-                    :isGeneratingBoundedContext="message.isGeneratingBoundedContext"
-                    :isAnalizing="message.isAnalizing"
-                    :isSummarizeStarted="message.isSummarizeStarted"
-                    :processingRate="message.processingRate"
-                    :currentProcessingBoundedContext="message.currentProcessingBoundedContext"
-                    :selectedAspect="message.selectedAspect"
-                    :summarizedResult="message.summarizedResult"
-                    :pbcLists="message.pbcLists"
-                    :messageId="message.uniqueId"
-                    :isEditable="isEditable"
-                    :currentGeneratedLength="message.currentGeneratedLength"
-                    @createModel="$emit('createModel', $event)"
-                    @closeDialog="$emit('closeDialog')"
-                    @stop="$emit('stop')"
-                    @reGenerate="$emit('reGenerate')"
-                    @reGenerateWithFeedback="(feedback, messageId) => $emit('reGenerateWithFeedback', {
-                        feedback,
-                        messageId
-                    })"
-                    @mappingRequirements="$emit('mappingRequirements', $event)"
-                    @updateSelectedAspect="updateSelectedAspect"
-                ></DevideBoundedContextDialog>
-            </v-card>
-
-            <v-card 
-                v-if="message.type === 'processAnalysis'" 
-                :key="index" 
-                class="auto-modeling-user-story-card" 
-                style="margin-top: 30px !important;"
-            >
-                <v-skeleton-loader v-if="message._isLoading && !isMessageComplete(message)"
-                    type="card" class="mx-auto"
-                ></v-skeleton-loader>
-
-                <RequirementAnalysis 
-                    v-else
-                    :analysisResult="message.content"
-                    :isAnalizing="message.isAnalizing"
-                    :isSummarizeStarted="message.isSummarizeStarted"
-                    :isGeneratingBoundedContext="message.isGeneratingBoundedContext"
-                    :isStartMapping="message.isStartMapping"
-                    :processingRate="message.processingRate"
-                    :isEditable="isEditable"
-                    :currentGeneratedLength="message.currentGeneratedLength"
-                    @showBCGenerationOption="emitShowBCGenerationOption"
-                    @stop="$emit('stop')"
-                />
-            </v-card>
-
-            <v-card 
-                v-if="message.type === 'bcGenerationOption'" 
-                :key="index" 
-                class="auto-modeling-user-story-card" 
-                style="margin-top: 30px !important;"
-            >
-                <v-skeleton-loader v-if="message._isLoading && !isMessageComplete(message)"
-                    type="card" class="mx-auto"
-                ></v-skeleton-loader>
-
-                <BCGenerationOption
-                    v-else
-                    :isSummarizeStarted="message.isSummarizeStarted"
-                    :isGeneratingBoundedContext="message.isGeneratingBoundedContext"
-                    :isStartMapping="message.isStartMapping"
-                    :isAnalizing="message.isAnalizing"
-                    :recommendedBoundedContextsNumber="message.recommendedBoundedContextsNumber"
-                    :generateOption="message.generateOption"
-                    :isEditable="isEditable"
-                    @setGenerateOption="(option, boolean) => $emit('setGenerateOption', option, boolean)"
-                ></BCGenerationOption>
-            </v-card>
-            
-
-            <div v-if="message.type === 'botMessage'" :key="index" style="margin-top: 30px !important;">
-                <v-col class="auto-modeling-message-box">
-                    <v-card class="auto-modeling-message-card">
-                        <v-card-text class="auto-modeling-message">
-                            {{ message.message }}
-                        </v-card-text>
+                                    @generateFromDraft="generateFromDraft"
+                                    @feedbackFromDraft="feedbackFromDraft"
+                                    @updateSelectedOptionItem="updateSelectedOptionItem"
+                                ></AggregateDraftDialog>
+                            </v-tab-item>
+                        </v-tabs-items>
                     </v-card>
-                </v-col>
-            </div>
 
-            <div v-if="message.type === 'userMessage'" :key="index" style="margin-top: 30px !important;">
-                <v-col class="auto-modeling-message-box d-flex justify-end">
-                    <v-card class="auto-modeling-message-card">
-                        <v-card-text class="auto-modeling-message">
-                            {{ message.message }}
-                        </v-card-text>
+                    <!-- Single Aggregate Draft Dialog Message -->
+                    <v-card v-else
+                           :key="message.uniqueId"
+                           class="auto-modeling-user-story-card" 
+                           style="margin-top: 30px !important;"
+                           :class="{'hidden': shouldHideMessage(message)}">
+                        <v-skeleton-loader v-if="message._isLoading && !isMessageComplete(message)"
+                            type="card" class="mx-auto"
+                        ></v-skeleton-loader>
+
+                        <AggregateDraftDialog
+                            v-else
+                            :draftOptions="message.draftOptions"
+                            :draftUIInfos="message.draftUIInfos"
+                            :isGeneratorButtonEnabled="message.isGeneratorButtonEnabled"
+                            :uiType="'ESDialoger'"
+                            :messageUniqueId="message.uniqueId"
+                            :isEditable="isEditable"
+                            :boundedContextVersion="message.boundedContextVersion"
+
+                            @onClose="message.actions.stop()"
+                            @onRetry="message.actions.retry()"
+
+                            @generateFromDraft="generateFromDraft"
+                            @feedbackFromDraft="feedbackFromDraft"
+                            @updateSelectedOptionItem="updateSelectedOptionItem"
+                        ></AggregateDraftDialog>
                     </v-card>
-                </v-col>
-            </div>
+                </template>
 
-            <div v-if="message.type === 'mermaidStringTest'" :key="index" style="margin-top: 30px !important;">
-                <VueMermaidStringTest/>
-            </div>
+                <!-- Other Messages -->
+                <template v-else>
+                    <v-card 
+                        v-if="message.type === 'boundedContextResult'" 
+                        :key="`bounded-context-${message.uniqueId}`" 
+                        class="auto-modeling-user-story-card" 
+                        style="margin-top: 30px !important;"
+                    >
+                        <v-skeleton-loader v-if="message._isLoading && !isMessageComplete(message)"
+                            type="card" class="mx-auto"
+                        ></v-skeleton-loader>
+
+                        <DevideBoundedContextDialog
+                            v-else
+                            :resultDevideBoundedContext="deepCopy(message.result)"
+                            :isStartMapping="message.isStartMapping"
+                            :isGeneratingBoundedContext="message.isGeneratingBoundedContext"
+                            :isAnalizing="message.isAnalizing"
+                            :isSummarizeStarted="message.isSummarizeStarted"
+                            :processingRate="message.processingRate"
+                            :currentProcessingBoundedContext="message.currentProcessingBoundedContext"
+                            :selectedAspect="message.selectedAspect"
+                            :summarizedResult="message.summarizedResult"
+                            :pbcLists="message.pbcLists"
+                            :messageId="message.uniqueId"
+                            :isEditable="isEditable"
+                            :currentGeneratedLength="message.currentGeneratedLength"
+                            @createModel="$emit('createModel', $event)"
+                            @closeDialog="$emit('closeDialog')"
+                            @stop="$emit('stop')"
+                            @reGenerate="$emit('reGenerate')"
+                            @reGenerateWithFeedback="(feedback, messageId) => $emit('reGenerateWithFeedback', {
+                                feedback,
+                                messageId
+                            })"
+                            @mappingRequirements="$emit('mappingRequirements', $event)"
+                            @updateSelectedAspect="updateSelectedAspect"
+                        ></DevideBoundedContextDialog>
+                    </v-card>
+
+                    <v-card 
+                        v-if="message.type === 'processAnalysis'" 
+                        :key="index" 
+                        class="auto-modeling-user-story-card" 
+                        style="margin-top: 30px !important;"
+                    >
+                        <v-skeleton-loader v-if="message._isLoading && !isMessageComplete(message)"
+                            type="card" class="mx-auto"
+                        ></v-skeleton-loader>
+
+                        <RequirementAnalysis 
+                            v-else
+                            :analysisResult="message.content"
+                            :isAnalizing="message.isAnalizing"
+                            :isSummarizeStarted="message.isSummarizeStarted"
+                            :isGeneratingBoundedContext="message.isGeneratingBoundedContext"
+                            :isStartMapping="message.isStartMapping"
+                            :processingRate="message.processingRate"
+                            :isEditable="isEditable"
+                            :currentGeneratedLength="message.currentGeneratedLength"
+                            @showBCGenerationOption="emitShowBCGenerationOption"
+                            @stop="$emit('stop')"
+                        />
+                    </v-card>
+
+                    <v-card 
+                        v-if="message.type === 'bcGenerationOption'" 
+                        :key="index" 
+                        class="auto-modeling-user-story-card" 
+                        style="margin-top: 30px !important;"
+                    >
+                        <v-skeleton-loader v-if="message._isLoading && !isMessageComplete(message)"
+                            type="card" class="mx-auto"
+                        ></v-skeleton-loader>
+
+                        <BCGenerationOption
+                            v-else
+                            :isSummarizeStarted="message.isSummarizeStarted"
+                            :isGeneratingBoundedContext="message.isGeneratingBoundedContext"
+                            :isStartMapping="message.isStartMapping"
+                            :isAnalizing="message.isAnalizing"
+                            :recommendedBoundedContextsNumber="message.recommendedBoundedContextsNumber"
+                            :generateOption="message.generateOption"
+                            :isEditable="isEditable"
+                            @setGenerateOption="(option, boolean) => $emit('setGenerateOption', option, boolean)"
+                        ></BCGenerationOption>
+                    </v-card>
+                    
+
+                    <div v-if="message.type === 'botMessage'" :key="index" style="margin-top: 30px !important;">
+                        <v-col class="auto-modeling-message-box">
+                            <v-card class="auto-modeling-message-card">
+                                <v-card-text class="auto-modeling-message">
+                                    {{ message.message }}
+                                </v-card-text>
+                            </v-card>
+                        </v-col>
+                    </div>
+
+                    <div v-if="message.type === 'userMessage'" :key="index" style="margin-top: 30px !important;">
+                        <v-col class="auto-modeling-message-box d-flex justify-end">
+                            <v-card class="auto-modeling-message-card">
+                                <v-card-text class="auto-modeling-message">
+                                    {{ message.message }}
+                                </v-card-text>
+                            </v-card>
+                        </v-col>
+                    </div>
+
+                    <div v-if="message.type === 'mermaidStringTest'" :key="index" style="margin-top: 30px !important;">
+                        <VueMermaidStringTest/>
+                    </div>
+                </template>
+            </template>
         </template>
     </div>
 </template>
@@ -192,8 +240,23 @@ export default {
             activeVersion: 1,
             isLoading: true,
             renderedMessages: [],
-            renderIndex: 0 ,
-            isProcessing: false
+            renderIndex: 0,
+            isProcessing: false,
+            activeAggregateTab: 0
+        }
+    },
+    computed: {
+        aggregateDraftMessages() {
+            return this.renderedMessages.filter(msg => msg.type === 'aggregateDraftDialogDto');
+        },
+        nonAggregateMessages() {
+            return this.renderedMessages.filter(msg => msg.type !== 'aggregateDraftDialogDto');
+        },
+        hasAggregateDraftMessages() {
+            return this.aggregateDraftMessages.length > 0;
+        },
+        hasMultipleAggregateDraftMessages() {
+            return this.aggregateDraftMessages.length > 1;
         }
     },
     watch: {
@@ -379,7 +442,7 @@ export default {
                 this.isProcessing = false;
                 this.processingMessage = null;
             }
-        },
+        }
     }
 }
 </script>
@@ -397,5 +460,15 @@ export default {
     border: 1px solid #e0e0e0;
     border-radius: 4px;
     padding: 16px;
+}
+
+.v-tabs {
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.v-tab {
+    text-transform: none !important;
+    font-size: 14px;
+    min-width: 120px;
 }
 </style>
