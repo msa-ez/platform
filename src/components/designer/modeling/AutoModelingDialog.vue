@@ -291,6 +291,7 @@
             :project-info="projectInfo"
             :cached-models="cachedModels"
             :userInfo="userInfo"
+            :draft="draft"
         />
 
         <model-canvas-share-dialog
@@ -619,9 +620,9 @@
             this.setModelIds()
 
             let getPrompt = localStorage.getItem('noLoginPrompt')
-            if(this.isLogin && getPrompt){
-                this.projectInfo.prompt = this.projectInfo.prompt ? this.projectInfo.prompt : getPrompt
-                this.openChatUI = true
+            if(this.isLogin && getPrompt && getPrompt != 'undefined'){
+                // this.projectInfo.prompt = this.projectInfo.prompt ? this.projectInfo.prompt : getPrompt
+                // this.openChatUI = true
             }
         },
         watch: {

@@ -1323,40 +1323,44 @@ import { value } from 'jsonpath';
                     });
                 }
 
-                if (isNewChoice && this.messages.length > 0) {
-                    // 마지막 boundedContextResult 메시지 찾기
-                    const lastBCResultIndex = [...this.messages].reverse().findIndex(msg => 
-                        msg.type === "boundedContextResult"
-                    );
-                    
-                    if (lastBCResultIndex !== -1) {
-                        const messageIndex = this.messages.length - 1 - lastBCResultIndex;
-                        const targetMessage = this.messages[messageIndex];
-                        
-                        // 기존 메시지를 사용하여 새로운 선택지 생성
-                        this.processingState.isGeneratingBoundedContext = true;
-
-                        this.generator = new DevideBoundedContextGenerator(this);
-                        this.state.generator = "DevideBoundedContextGenerator";
-                        this.generatorName = "DevideBoundedContextGenerator";
-
-                        this.devisionAspectIndex = 0;
-                        this.input['devisionAspect'] = this.selectedAspect;
-                        this.input['generateOption'] = this.bcGenerationOption;
-                        this.input['requirements'] = {
-                            userStory: this.projectInfo.userStory,
-                            summarizedResult: this.summarizedResult,
-                            analysisResult: this.requirementsValidationResult.analysisResult,
-                            pbcInfo: this.pbcLists.map(pbc => ({
-                                name: pbc.name,
-                                description: pbc.description
-                            }))
-                        };
-
-                        this.generator.generate();
-                        return;
-                    }
+                if(!this.alertGenerateWarning("bcGenerationOption")){
+                    return;
                 }
+
+                // if (isNewChoice && this.messages.length > 0) {
+                //     // 마지막 boundedContextResult 메시지 찾기
+                //     const lastBCResultIndex = [...this.messages].reverse().findIndex(msg => 
+                //         msg.type === "boundedContextResult"
+                //     );
+                    
+                //     if (lastBCResultIndex !== -1) {
+                //         const messageIndex = this.messages.length - 1 - lastBCResultIndex;
+                //         const targetMessage = this.messages[messageIndex];
+                        
+                //         // 기존 메시지를 사용하여 새로운 선택지 생성
+                //         this.processingState.isGeneratingBoundedContext = true;
+
+                //         this.generator = new DevideBoundedContextGenerator(this);
+                //         this.state.generator = "DevideBoundedContextGenerator";
+                //         this.generatorName = "DevideBoundedContextGenerator";
+
+                //         this.devisionAspectIndex = 0;
+                //         this.input['devisionAspect'] = this.selectedAspect;
+                //         this.input['generateOption'] = this.bcGenerationOption;
+                //         this.input['requirements'] = {
+                //             userStory: this.projectInfo.userStory,
+                //             summarizedResult: this.summarizedResult,
+                //             analysisResult: this.requirementsValidationResult.analysisResult,
+                //             pbcInfo: this.pbcLists.map(pbc => ({
+                //                 name: pbc.name,
+                //                 description: pbc.description
+                //             }))
+                //         };
+
+                //         this.generator.generate();
+                //         return;
+                //     }
+                // }
 
                 // 첫 번째 생성이거나 기존 메시지를 찾지 못한 경우 새 메시지 생성
                 this.generateDevideBoundedContext();
@@ -1412,7 +1416,11 @@ import { value } from 'jsonpath';
                 this.generator.generate();
             },
 
-            generateDevideBoundedContext(feedback){
+            generateDevideBoundedContext(){
+                if(!this.alertGenerateWarning("DevideBoundedContextGenerator")){
+                    return;
+                }
+
                 // 현재 요약본이 너무 길면 먼저 요약 진행
                 if (this.projectInfo.userStory.length + this.inputDDL.length > 25000 && this.summarizedResult.length == 0) {
                     this.pendingBCGeneration = true;
@@ -1457,6 +1465,10 @@ import { value } from 'jsonpath';
 
             generateAggregateDrafts(versionInfo){
                 if(!versionInfo) return
+
+                if(!this.alertGenerateWarning("CreateAggregateActionsByFunctions")){
+                    return;
+                }
 
                 if(versionInfo.data && versionInfo.version){
                     this.boundedContextVersion = versionInfo
@@ -1532,13 +1544,23 @@ import { value } from 'jsonpath';
 
                     LocalStorageCleanUtil.clean()
 
+                    if(!this.value) {
+                        this.$set(this, 'value', {
+                            eventStorming: {
+                                modelList: []
+                            }
+                        });
+                    }
+
                     if(!this.value.eventStorming) {
                         this.$set(this.value, 'eventStorming', {
                             modelList: []
                         });
                     }
 
-                    this.value.eventStorming.modelList.push(`${this.userInfo.providerUid}_es_${this.modelIds.ESDefinitionId}`)
+                    if(!this.value.eventStorming.modelList.find(model => model === `${this.userInfo.providerUid}_es_${this.modelIds.ESDefinitionId}`)){
+                        this.value.eventStorming.modelList.push(`${this.userInfo.providerUid}_es_${this.modelIds.ESDefinitionId}`)
+                    }
 
                     this.$emit("input", this.value);
                     this.$emit("change", 'eventStorming');
@@ -1596,13 +1618,13 @@ import { value } from 'jsonpath';
                 }
 
 
-                this.messages.push(
-                    MessageFactory.createUserMessage(
-                        feedback,
-                        "aggregateDraftDialogDtoUserFeedback",
-                        {targetBoundedContextName: boundedContextInfo.name}
-                    )
-                )
+                // this.messages.push(
+                //     MessageFactory.createUserMessage(
+                //         feedback,
+                //         "aggregateDraftDialogDtoUserFeedback",
+                //         {targetBoundedContextName: boundedContextInfo.name}
+                //     )
+                // )
                 this.messages.push(this.workingMessages.AggregateDraftDialogDto)
 
 
@@ -1675,6 +1697,17 @@ import { value } from 'jsonpath';
 
             validateRequirements() {
                 const requirements = this.projectInfo.userStory;
+
+                if(requirements.length > 25000){
+                    if(!this.alertGenerateWarning("RecursiveRequirementsValidationGenerator")){
+                        return;
+                    }
+                }else{
+                    if(!this.alertGenerateWarning("RequirementsValidationGenerator")){
+                        return;
+                    }
+                }
+
                 this.processingState.isAnalizing = true;
                 
                 if (requirements.length > 25000) {
@@ -1811,6 +1844,125 @@ import { value } from 'jsonpath';
                 if(aggMessage){
                     aggMessage['selectedOptionItem'] = selectedOptionItem
                 }
+            },
+
+            alertGenerateWarning(generator) {
+                const hasMessagesToRemove = this.hasMessagesToRemove(generator);
+                
+                if (!hasMessagesToRemove) {
+                    return true;
+                }
+
+                let warningMessage = '';
+                let shouldProceed = false;
+
+                // 각 단계별 경고 메시지
+                switch(generator) {
+                    case "EventOnlyESGenerator":
+                        warningMessage = this.$t('ESDialoger.warnings');
+                        break;
+                    case "RequirementsValidationGenerator":
+                    case "RecursiveRequirementsValidationGenerator":
+                        warningMessage = this.$t('ESDialoger.warnings');
+                        break;
+                    case "bcGenerationOption":
+                        warningMessage = this.$t('ESDialoger.warnings');
+                        break;
+                    case "DevideBoundedContextGenerator":
+                        warningMessage = this.$t('ESDialoger.warnings');
+                        break;
+                    case "CreateAggregateActionsByFunctions":
+                        warningMessage = this.$t('ESDialoger.warnings');
+                        break;
+                }
+
+                shouldProceed = confirm(warningMessage);
+                
+                if (shouldProceed) {
+                    // 현재 단계에 따라 하단 메시지들 제거
+                    this.removeMessagesAfterCurrent(generator);
+                    return true;
+                }
+                return false;
+            },
+
+            hasMessagesToRemove(generator) {
+                // 각 단계별로 제거할 메시지 타입 정의
+                const messageTypesToRemove = {
+                    "EventOnlyESGenerator": [
+                        "processAnalysis",
+                        "bcGenerationOption",
+                        "boundedContextResult",
+                        "aggregateDraftDialogDto"
+                    ],
+                    "RequirementsValidationGenerator": [
+                        "processAnalysis",
+                        "bcGenerationOption",
+                        "boundedContextResult",
+                        "aggregateDraftDialogDto"
+                    ],
+                    "RecursiveRequirementsValidationGenerator": [
+                        "processAnalysis",
+                        "bcGenerationOption",
+                        "boundedContextResult",
+                        "aggregateDraftDialogDto"
+                    ],
+                    "bcGenerationOption": [
+                        "boundedContextResult",
+                        "aggregateDraftDialogDto"
+                    ],
+                    "DevideBoundedContextGenerator": [
+                        "boundedContextResult",
+                        "aggregateDraftDialogDto"
+                    ],
+                    "CreateAggregateActionsByFunctions": [
+                        "aggregateDraftDialogDto"
+                    ]
+                };
+
+                const typesToRemove = messageTypesToRemove[generator] || [];
+                
+                // 현재 메시지들 중 제거할 타입의 메시지가 있는지 확인
+                return this.messages.some(msg => typesToRemove.includes(msg.type));
+            },
+
+            removeMessagesAfterCurrent(generator) {
+                const messageTypesToRemove = {
+                    "EventOnlyESGenerator": [
+                        "processAnalysis",
+                        "bcGenerationOption",
+                        "boundedContextResult",
+                        "aggregateDraftDialogDto"
+                    ],
+                    "RequirementsValidationGenerator": [
+                        "processAnalysis",
+                        "bcGenerationOption",
+                        "boundedContextResult",
+                        "aggregateDraftDialogDto"
+                    ],
+                    "RecursiveRequirementsValidationGenerator": [
+                        "processAnalysis",
+                        "bcGenerationOption",
+                        "boundedContextResult",
+                        "aggregateDraftDialogDto"
+                    ],
+                    "bcGenerationOption": [
+                        "boundedContextResult",
+                        "aggregateDraftDialogDto"
+                    ],
+                    "DevideBoundedContextGenerator": [
+                        "boundedContextResult",
+                        "aggregateDraftDialogDto"
+                    ],
+                    "CreateAggregateActionsByFunctions": [
+                        "aggregateDraftDialogDto"
+                    ]
+                };
+
+                const typesToRemove = messageTypesToRemove[generator] || [];
+                
+                // 해당 타입의 메시지들 제거
+                this.messages = this.messages.filter(msg => !typesToRemove.includes(msg.type));
             }
         }
     }

@@ -42,6 +42,7 @@
                     :project-info="projectInfo"
                     :cached-models="cachedModels"
                     :event-storming-models="eventStormingModels"
+                    :draft="draft"
                 />
             </v-container>
 
@@ -102,6 +103,10 @@ export default {
             required: true
         },
         userInfo: {
+            type: Object,
+            required: true
+        },
+        draft: {
             type: Object,
             required: true
         }
