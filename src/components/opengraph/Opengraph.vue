@@ -1305,7 +1305,7 @@
 
     .canvas-container {
         position: relative;
-        width: 2000px;
+        width: 100%;
         height: 2000px;
         background: #f7f7f7;
     }
