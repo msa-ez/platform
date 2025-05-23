@@ -39,7 +39,9 @@ export default {
     }
   },
   mounted() {
-    this.bpmnModeler = new BpmnJS({ container: this.$refs.canvas });
+    this.bpmnModeler = new BpmnJS({
+      container: this.$refs.canvas,
+    });
     if (this.xml) {
       this.importDiagram(this.xml);
     }
@@ -57,6 +59,7 @@ export default {
         await this.bpmnModeler.importXML(xml);
         this.importError = null;
         this.bpmnModeler.get('canvas').zoom(1.5);
+        this.updateLaneStroke();
       } catch (err) {
         this.importError = err;
       }
@@ -65,6 +68,7 @@ export default {
       this.bpmnModeler.on('commandStack.changed', async () => {
         const { xml } = await this.bpmnModeler.saveXML({ format: true });
         this.$emit('update:xml', xml);
+        this.updateLaneStroke();
       });
     },
     zoomIn() {
@@ -93,6 +97,24 @@ export default {
       await applyBpmnAutoLayout(this.bpmnModeler);
       const { xml } = await this.bpmnModeler.saveXML({ format: true });
       this.$emit('update:xml', xml);
+    },
+    updateLaneStroke() {
+      this.$nextTick(() => {
+        const laneGroups = this.$el.querySelectorAll('.djs-element[data-element-id^="Lane_"]');
+        laneGroups.forEach(group => {
+          const visual = group.querySelector('g.djs-visual');
+          if (visual) {
+            const rect = visual.querySelector('rect');
+            if (rect) {
+              let style = rect.getAttribute('style') || '';
+              style = style.replace(/stroke:\s*[^;]+;/, 'stroke: #B9BFD2;');
+              style = style.replace(/stroke-width:\s*[^;]+;/, 'stroke-width: 2px;');
+              style = style.replace(/fill:\s*[^;]+;/, 'fill: #F4FAFF;');
+              rect.setAttribute('style', style);
+            }
+          }
+        });
+      });
     }
   }
 };
@@ -134,5 +156,6 @@ export default {
 }
 .bpmn-canvas .djs-container .djs-lane .djs-visual rect {
   stroke-width: 0.4px !important;
+  stroke: #808080 !important;
 }
 </style> 

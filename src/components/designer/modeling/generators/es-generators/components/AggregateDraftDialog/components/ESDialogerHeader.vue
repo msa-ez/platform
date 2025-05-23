@@ -1,6 +1,6 @@
 <template>
     <v-card-title class="d-flex justify-space-between align-center">
-        <span>{{ $t('ModelDraftDialogForDistribution.reconstructionAggregateDraft') }} - Version {{ boundedContextVersion }}</span>
+        <span>{{ $t('ModelDraftDialogForDistribution.reconstructionAggregateDraft') }}</span>
     </v-card-title>
 </template>
 

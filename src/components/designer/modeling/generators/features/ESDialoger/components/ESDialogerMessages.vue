@@ -13,8 +13,8 @@
                 <!-- Aggregate Draft Dialog Messages -->
                 <template v-if="message.type === 'aggregateDraftDialogDto'">
                     <!-- Multiple Aggregate Draft Dialog Messages in Tabs -->
-                    <v-card v-if="hasMultipleAggregateDraftMessages" 
-                           :key="message.uniqueId"
+                    <v-card v-if="hasMultipleAggregateDraftMessages && index === aggregateDraftMessages[0].index" 
+                           :key="'aggregate-draft-tabs'"
                            class="auto-modeling-user-story-card" 
                            style="margin-top: 30px !important;">
                         <v-tabs v-model="activeAggregateTab" show-arrows>
@@ -29,7 +29,7 @@
                             <v-tab-item v-for="(msg, idx) in aggregateDraftMessages" 
                                        :key="msg.uniqueId"
                                        :disabled="shouldHideMessage(msg)">
-                                <v-skeleton-loader v-if="msg._isLoading && !isMessageComplete(msg)"
+                                <v-skeleton-loader v-if="isLoading || (msg._isLoading && !isMessageComplete(msg))"
                                     type="card" class="mx-auto"
                                 ></v-skeleton-loader>
 
@@ -55,12 +55,12 @@
                     </v-card>
 
                     <!-- Single Aggregate Draft Dialog Message -->
-                    <v-card v-else
+                    <v-card v-else-if="!hasMultipleAggregateDraftMessages"
                            :key="message.uniqueId"
                            class="auto-modeling-user-story-card" 
                            style="margin-top: 30px !important;"
                            :class="{'hidden': shouldHideMessage(message)}">
-                        <v-skeleton-loader v-if="message._isLoading && !isMessageComplete(message)"
+                        <v-skeleton-loader v-if="isLoading || (message._isLoading && !isMessageComplete(message))"
                             type="card" class="mx-auto"
                         ></v-skeleton-loader>
 
@@ -73,7 +73,6 @@
                             :messageUniqueId="message.uniqueId"
                             :isEditable="isEditable"
                             :boundedContextVersion="message.boundedContextVersion"
-
                             @onClose="message.actions.stop()"
                             @onRetry="message.actions.retry()"
 
@@ -92,7 +91,7 @@
                         class="auto-modeling-user-story-card" 
                         style="margin-top: 30px !important;"
                     >
-                        <v-skeleton-loader v-if="message._isLoading && !isMessageComplete(message)"
+                        <v-skeleton-loader v-if="isLoading || (message._isLoading && !isMessageComplete(message))"
                             type="card" class="mx-auto"
                         ></v-skeleton-loader>
 
@@ -130,7 +129,7 @@
                         class="auto-modeling-user-story-card" 
                         style="margin-top: 30px !important;"
                     >
-                        <v-skeleton-loader v-if="message._isLoading && !isMessageComplete(message)"
+                        <v-skeleton-loader v-if="isLoading || (message._isLoading && !isMessageComplete(message))"
                             type="card" class="mx-auto"
                         ></v-skeleton-loader>
 
@@ -155,7 +154,7 @@
                         class="auto-modeling-user-story-card" 
                         style="margin-top: 30px !important;"
                     >
-                        <v-skeleton-loader v-if="message._isLoading && !isMessageComplete(message)"
+                        <v-skeleton-loader v-if="isLoading || (message._isLoading && !isMessageComplete(message))"
                             type="card" class="mx-auto"
                         ></v-skeleton-loader>
 
@@ -247,7 +246,9 @@ export default {
     },
     computed: {
         aggregateDraftMessages() {
-            return this.renderedMessages.filter(msg => msg.type === 'aggregateDraftDialogDto');
+            return this.renderedMessages
+                .map((msg, index) => ({ ...msg, index }))
+                .filter(msg => msg.type === 'aggregateDraftDialogDto');
         },
         nonAggregateMessages() {
             return this.renderedMessages.filter(msg => msg.type !== 'aggregateDraftDialogDto');
@@ -264,12 +265,7 @@ export default {
             immediate: true,
             handler(newMessages) {
                 if (this.isServerProject) {
-                    if (this.renderedMessages.length === 0) {
-                        this.isLoading = true;
-                        setTimeout(() => {
-                            this.isLoading = false;
-                        }, 1000);
-                    }
+                    this.isLoading = true;
                     
                     // Update existing messages and add new ones
                     newMessages.forEach((message, index) => {
@@ -284,7 +280,7 @@ export default {
                             // Add new message
                             this.renderedMessages.push({
                                 ...message,
-                                _isLoading: false
+                                _isLoading: !this.isMessageComplete(message)
                             });
                         }
                     });
@@ -304,8 +300,23 @@ export default {
                     this.renderIndex = this.renderedMessages.length;
                     this.isProcessing = true;
                     this.renderNextMessage();
+
+                    // 모든 메시지가 완전히 로드되었는지 확인
+                    const allMessagesComplete = this.renderedMessages.every(message => 
+                        this.isMessageComplete(message)
+                    );
+
+                    if (allMessagesComplete) {
+                        this.isLoading = false;
+                    } else {
+                        // 메시지가 완전히 로드될 때까지 대기
+                        setTimeout(() => {
+                            this.isLoading = false;
+                        }, 1000);
+                    }
                 } else {
                     this.renderedMessages = [...newMessages];
+                    this.isLoading = false;
                 }
             }
         }

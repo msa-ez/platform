@@ -601,6 +601,7 @@ import { value } from 'jsonpath';
                             directMessage: returnObj.directMessage,
                             progress: 100
                         }
+                        this.$emit("update:aggregateDrafts", this.messages)
                         return
                     }
 
@@ -844,7 +845,7 @@ import { value } from 'jsonpath';
         },
         methods: {
             async initESDialoger() {
-                if(!this.projectInfo.userStory && !this.projectInfo.eventStorming.userStory) return;
+                if(!this.projectInfo.userStory) return;
                 this.done = true;
                 this.state.secondMessageIsTyping = false;
                 this.projectInfo.userStory = this.projectInfo.userStory || this.projectInfo.eventStorming.userStory;
@@ -1286,6 +1287,8 @@ import { value } from 'jsonpath';
                 this.processingRate = 0;
                 this.currentProcessingBoundedContext = '';
 
+
+
                 // 기존 메시지의 상태 업데이트
                 this.updateMessageState(obj.messageId, {
                     processingRate: this.processingRate,
@@ -1301,6 +1304,7 @@ import { value } from 'jsonpath';
                 this.input.previousAspectModel = targetMessage.result;
                 this.input['requirements'] = {
                     userStory: this.projectInfo.userStory,
+                    generateOption: targetMessage.generateOption,
                     summarizedResult: this.summarizedResult,
                     analysisResult: this.requirementsValidationResult.analysisResult,
                     pbcInfo: this.pbcLists.map(pbc => ({

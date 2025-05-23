@@ -147,59 +147,23 @@
 
         <!-- 밸류 스트림(Value stream) 분석 -->
         <div v-if="selectedSections.valueStream" class="section">
-            <!-- 첫 번째 단계 -->
-            <div class="pdf-content-item">
-                <h2>{{ sectionNumbers.valueStream }}. {{ $t('DocumentTemplate.sections.valueStream') }}</h2>
-                <div class="value-stream-description">
-                    <p>{{ $t('DocumentTemplate.valueStream.description', { projectName: projectInfo.projectName }) }}</p>
-                    <p>{{ $t('DocumentTemplate.valueStream.purpose') }}</p>
-                </div>
-                
-                <div v-if="draft && getValueStreamSteps.length > 0" class="value-stream-steps">
-                    <div class="value-stream-step">
-                        <h3>{{ getLevelRangeTitle(getValueStreamSteps[0].levels) }}</h3>
-                        <div class="step-levels">
-                            <span v-for="level in getValueStreamSteps[0].levels" :key="level" class="level-badge">
-                                Level {{ level }}
-                            </span>
-                        </div>
-                        <div class="step-description">
-                            <p>{{ getValueStreamSteps[0].description }}</p>
-                        </div>
-                        <div class="step-actors">
-                            <div v-for="actor in getValueStreamSteps[0].actors" :key="actor.name" class="actor-group">
-                                <h4>{{ actor.name }}</h4>
-                                <ul>
-                                    <li v-for="event in actor.events" :key="event.name">
-                                        <strong>{{ event.displayName }}</strong>: {{ event.description }}
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <div class="cover-section-title pdf-content-item">
+                <div class="main-title">{{ sectionNumbers.valueStream }}. {{ $t('DocumentTemplate.sections.valueStream') }}</div>
+                <div class="subtitle">{{ $t('DocumentTemplate.valueStream.description', { projectName: projectInfo.projectName }) }}<br>{{ $t('DocumentTemplate.valueStream.purpose') }}</div>
             </div>
-
-            <!-- 나머지 단계들 -->
-            <div v-for="(step, index) in getValueStreamSteps.slice(1)" :key="index" class="pdf-content-item">
-                <div class="value-stream-step">
-                    <h3>{{ getLevelRangeTitle(step.levels) }}</h3>
-                    <div class="step-levels">
-                        <span v-for="level in step.levels" :key="level" class="level-badge">
-                            Level {{ level }}
-                        </span>
-                    </div>
-                    <div class="step-description">
-                        <p>{{ step.description }}</p>
-                    </div>
-                    <div class="step-actors">
-                        <div v-for="actor in step.actors" :key="actor.name" class="actor-group">
-                            <h4>{{ actor.name }}</h4>
-                            <ul>
-                                <li v-for="event in actor.events" :key="event.name">
-                                    <strong>{{ event.displayName }}</strong>: {{ event.description }}
-                                </li>
-                            </ul>
+            <!-- 플로우 페이지 -->
+            <div v-for="(page, pageIdx) in getValueStreamLinearPages"
+                 :key="'flow-page-' + pageIdx"
+                 class="pdf-content-item value-stream-linear-list section-page">
+                <h3 class="section-subtitle">
+                    {{ sectionNumbers.valueStream }}. {{ $t('DocumentTemplate.sections.valueStream') }}
+                </h3>
+                <div class="value-stream-flow-cards">
+                    <div v-for="(path, idx) in page" :key="idx" class="value-stream-flow-card">
+                        <div class="linear-path-row linear-text-row">
+                            <span v-for="(event, eIdx) in path" :key="event.name">
+                                {{ event.displayName }} ({{ event.actor }})<span v-if="eIdx < path.length - 1"> → </span>
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -211,7 +175,6 @@
             <div class="pdf-content-item">
                 <h2>{{ sectionNumbers.boundedContext }}. {{ $t('DocumentTemplate.sections.boundedContext') }}</h2>
                 
-                <!-- 분해 기준과 분해 결과를 하나의 pdf-content-item에 포함 -->
                 <div class="section-content">
                     <!-- 분해 기준 -->
                     <h3>{{ sectionNumbers.boundedContext }}-1. {{ $t('DocumentTemplate.boundedContext.decompositionCriteria') }}</h3>
@@ -990,140 +953,133 @@ export default {
 
             return numbers;
         },
+        getValueStreamTreeRoots() {
+            if (!this.draft) return [];
+            const processAnalysis = this.draft.find(msg => msg.type === 'processAnalysis');
+            if (!processAnalysis || !processAnalysis.content || !processAnalysis.content.analysisResult) return [];
+            const { events } = processAnalysis.content.analysisResult;
+            const eventMap = Object.fromEntries(events.map(ev => [ev.name, ev]));
+            // 트리 구조로 변환
+            function buildTree(event, visited) {
+                if (visited.has(event.name)) return null;
+                visited.add(event.name);
+                const children = (event.nextEvents || [])
+                    .map(nextName => eventMap[nextName])
+                    .filter(Boolean)
+                    .map(child => buildTree(child, new Set(visited)))
+                    .filter(Boolean);
+                return { ...event, children };
+            }
+            // 시작 이벤트(들)로부터 각각 트리 생성
+            const startEvents = events.filter(event => event.level === 1);
+            return startEvents.map(ev => buildTree(ev, new Set())).filter(Boolean);
+        },
+        getValueStreamPaths() {
+            if (!this.draft) return [];
+            const processAnalysis = this.draft.find(msg => msg.type === 'processAnalysis');
+            if (!processAnalysis || !processAnalysis.content || !processAnalysis.content.analysisResult) return [];
+            const { events } = processAnalysis.content.analysisResult;
+            const eventMap = Object.fromEntries(events.map(ev => [ev.name, ev]));
+            // 시작 이벤트 찾기 (level이 1인 이벤트)
+            const startEvents = events.filter(event => event.level === 1);
+            const paths = [];
+            // 재귀적으로 모든 경로를 추출 (순환 방지)
+            function traverse(event, path, visited) {
+                if (visited.has(event.name)) return; // 순환 방지
+                const newPath = [...path, event];
+                visited.add(event.name);
+                if (!event.nextEvents || event.nextEvents.length === 0) {
+                    paths.push(newPath);
+                    return;
+                }
+                event.nextEvents.forEach(nextName => {
+                    const nextEvent = eventMap[nextName];
+                    if (nextEvent) traverse(nextEvent, newPath, new Set(visited));
+                });
+            }
+            startEvents.forEach(startEvent => {
+                traverse(startEvent, [], new Set());
+            });
+            return paths;
+        },
         getValueStreamSteps() {
             if (!this.draft) return [];
             const processAnalysis = this.draft.find(msg => msg.type === 'processAnalysis');
             if (!processAnalysis || !processAnalysis.content || !processAnalysis.content.analysisResult) return [];
-
             const { events } = processAnalysis.content.analysisResult;
-            
-            // 이벤트를 level별로 그룹화
-            const levelGroups = {};
-            events.forEach(event => {
-                if (!levelGroups[event.level]) {
-                    levelGroups[event.level] = [];
-                }
-                levelGroups[event.level].push(event);
-            });
-
-            // level 순서대로 정렬
-            const sortedLevels = Object.keys(levelGroups).sort((a, b) => Number(a) - Number(b));
-
-            // 페이지당 최대 이벤트 수
-            const MAX_EVENTS_PER_PAGE = 5;
+            // 시작 이벤트 찾기 (level이 1인 이벤트)
+            const startEvents = events.filter(event => event.level === 1);
             const steps = [];
-            let currentStep = {
-                levels: [],
-                events: [],
-                actors: new Map()
-            };
-
-            // 각 level을 순회하면서 페이지 구성
-            for (let i = 0; i < sortedLevels.length; i++) {
-                const level = sortedLevels[i];
-                const levelEvents = levelGroups[level];
-                const nextLevel = sortedLevels[i + 1];
-                const nextLevelEvents = nextLevel ? levelGroups[nextLevel] : [];
-
-                // 현재 레벨의 이벤트 수가 MAX_EVENTS_PER_PAGE를 초과하는 경우
-                if (levelEvents.length > MAX_EVENTS_PER_PAGE) {
-                    // 현재 페이지가 비어있지 않다면 저장
-                    if (currentStep.events.length > 0) {
-                        steps.push({
-                            levels: [...currentStep.levels],
-                            description: this.generateStepDescription(currentStep.events),
-                            actors: Array.from(currentStep.actors.entries()).map(([name, events]) => ({
-                                name,
-                                events
-                            }))
-                        });
-                        currentStep = {
-                            levels: [],
-                            events: [],
-                            actors: new Map()
-                        };
-                    }
-
-                    // 현재 레벨의 이벤트를 여러 페이지로 나누기
-                    for (let j = 0; j < levelEvents.length; j += MAX_EVENTS_PER_PAGE) {
-                        const chunkEvents = levelEvents.slice(j, j + MAX_EVENTS_PER_PAGE);
-                        const chunkActors = new Map();
-                        
-                        chunkEvents.forEach(event => {
-                            if (!chunkActors.has(event.actor)) {
-                                chunkActors.set(event.actor, []);
-                            }
-                            chunkActors.get(event.actor).push(event);
-                        });
-
-                        steps.push({
-                            levels: [Number(level)],
-                            description: this.generateStepDescription(chunkEvents),
-                            actors: Array.from(chunkActors.entries()).map(([name, events]) => ({
-                                name,
-                                events
-                            }))
-                        });
-                    }
-                    continue;
-                }
-
-                // 현재 페이지에 추가할 수 있는지 확인
-                if (currentStep.events.length + levelEvents.length <= MAX_EVENTS_PER_PAGE) {
-                    // 현재 페이지에 추가
-                    currentStep.levels.push(Number(level));
-                    currentStep.events.push(...levelEvents);
-                    
-                    // 액터별로 이벤트 그룹화
-                    levelEvents.forEach(event => {
-                        if (!currentStep.actors.has(event.actor)) {
-                            currentStep.actors.set(event.actor, []);
-                        }
-                        currentStep.actors.get(event.actor).push(event);
+            // 각 시작 이벤트에 대해 흐름 추적 (분기 포함)
+            startEvents.forEach(startEvent => {
+                const visited = new Set();
+                const flows = [];
+                const buildFlow = (currentEvent) => {
+                    if (visited.has(currentEvent.name)) return;
+                    visited.add(currentEvent.name);
+                    flows.push(currentEvent);
+                    if (!currentEvent.nextEvents || currentEvent.nextEvents.length === 0) return;
+                    // 분기점이면 각 분기별로 별도 플로우(여기선 단순히 이어붙임)
+                    currentEvent.nextEvents.forEach(nextName => {
+                        const nextEvent = events.find(e => e.name === nextName);
+                        if (nextEvent) buildFlow(nextEvent);
                     });
-                } else {
-                    // 현재 페이지가 가득 찼으면 저장하고 새 페이지 시작
-                    if (currentStep.events.length > 0) {
-                        steps.push({
-                            levels: [...currentStep.levels],
-                            description: this.generateStepDescription(currentStep.events),
-                            actors: Array.from(currentStep.actors.entries()).map(([name, events]) => ({
-                                name,
-                                events
-                            }))
-                        });
-                    }
-                    
-                    // 새 페이지 시작
-                    currentStep = {
-                        levels: [Number(level)],
-                        events: [...levelEvents],
-                        actors: new Map()
-                    };
-                    
-                    // 액터별로 이벤트 그룹화
-                    levelEvents.forEach(event => {
-                        if (!currentStep.actors.has(event.actor)) {
-                            currentStep.actors.set(event.actor, []);
-                        }
-                        currentStep.actors.get(event.actor).push(event);
+                };
+                buildFlow(startEvent);
+                if (flows.length > 0) {
+                    steps.push({
+                        description: flows.map(ev => ev.displayName).join(' → '),
+                        events: flows
                     });
                 }
-            }
-
-            // 마지막 페이지 추가
-            if (currentStep.events.length > 0) {
-                steps.push({
-                    levels: currentStep.levels,
-                    description: this.generateStepDescription(currentStep.events),
-                    actors: Array.from(currentStep.actors.entries()).map(([name, events]) => ({
-                        name,
-                        events
-                    }))
+            });
+            return steps;
+        },
+        getValueStreamLinearPaths() {
+            if (!this.draft) return [];
+            const processAnalysis = this.draft.find(msg => msg.type === 'processAnalysis');
+            if (!processAnalysis || !processAnalysis.content || !processAnalysis.content.analysisResult) return [];
+            const { events } = processAnalysis.content.analysisResult;
+            const eventMap = Object.fromEntries(events.map(ev => [ev.name, ev]));
+            // 시작 이벤트(들)
+            const startEvents = events.filter(event => event.level === 1);
+            const paths = [];
+            function traverse(event, path, visited) {
+                if (visited.has(event.name)) return;
+                const newPath = [...path, event];
+                visited.add(event.name);
+                if (!event.nextEvents || event.nextEvents.length === 0) {
+                    paths.push(newPath);
+                    return;
+                }
+                event.nextEvents.forEach(nextName => {
+                    const nextEvent = eventMap[nextName];
+                    if (nextEvent) traverse(nextEvent, newPath, new Set(visited));
                 });
             }
-
-            return steps;
+            startEvents.forEach(startEvent => {
+                traverse(startEvent, [], new Set());
+            });
+            return paths;
+        },
+        getValueStreamLinearPages() {
+            // 페이지 분할 로직 적용
+            const flows = this.getValueStreamLinearPaths;
+            const longFlows = flows.filter(f => f.length > 30);
+            const shortFlows = flows.filter(f => f.length <= 30);
+            // 긴 플로우: 30개 단위로 쪼개서 각 페이지에
+            const longPages = [];
+            longFlows.forEach(flow => {
+                for (let i = 0; i < flow.length; i += 30) {
+                    longPages.push([flow.slice(i, i + 30)]);
+                }
+            });
+            // 짧은 플로우: 5세트씩 한 페이지에
+            const shortPages = [];
+            for (let i = 0; i < shortFlows.length; i += 5) {
+                shortPages.push(shortFlows.slice(i, i + 5));
+            }
+            return [...longPages, ...shortPages];
         }
     },
     mounted() {
@@ -1522,6 +1478,85 @@ export default {
             } else {
                 return `Level ${sorted[0]} ~ Level ${sorted[sorted.length - 1]}`;
             }
+        },
+        trackEventFlow(startEvent, allEvents) {
+            const flows = [];
+            const visited = new Set();
+            const MAX_EVENTS_PER_PAGE = 5;
+
+            const buildFlow = (currentEvent, currentStep = null) => {
+                if (visited.has(currentEvent.name)) return;
+                visited.add(currentEvent.name);
+
+                if (!currentStep) {
+                    currentStep = {
+                        events: [currentEvent],
+                        actors: new Map([[currentEvent.actor, [currentEvent]]]),
+                        isNewPage: true
+                    };
+                } else {
+                    // 현재 페이지의 이벤트 수가 MAX_EVENTS_PER_PAGE를 초과하면 새 페이지 시작
+                    if (currentStep.events.length >= MAX_EVENTS_PER_PAGE) {
+                        // 현재 페이지 저장
+                        flows.push({
+                            description: this.generateStepDescription(currentStep.events),
+                            actors: Array.from(currentStep.actors.entries()).map(([name, events]) => ({
+                                name,
+                                events
+                            })),
+                            hasNextPage: true
+                        });
+
+                        // 새 페이지 시작
+                        currentStep = {
+                            events: [currentEvent],
+                            actors: new Map([[currentEvent.actor, [currentEvent]]]),
+                            isNewPage: true
+                        };
+                    } else {
+                        currentStep.events.push(currentEvent);
+                        if (!currentStep.actors.has(currentEvent.actor)) {
+                            currentStep.actors.set(currentEvent.actor, []);
+                        }
+                        currentStep.actors.get(currentEvent.actor).push(currentEvent);
+                    }
+                }
+
+                // 다음 이벤트가 없는 경우 현재 흐름 저장
+                if (!currentEvent.nextEvents || currentEvent.nextEvents.length === 0) {
+                    flows.push({
+                        description: this.generateStepDescription(currentStep.events),
+                        actors: Array.from(currentStep.actors.entries()).map(([name, events]) => ({
+                            name,
+                            events
+                        })),
+                        hasNextPage: false
+                    });
+                    return;
+                }
+
+                // 다음 이벤트가 있는 경우
+                currentEvent.nextEvents.forEach((nextEventName, index) => {
+                    const nextEvent = allEvents.find(e => e.name === nextEventName);
+                    if (!nextEvent) return;
+
+                    // 첫 번째 다음 이벤트는 현재 흐름에 추가
+                    if (index === 0) {
+                        buildFlow(nextEvent, currentStep);
+                    } else {
+                        // 나머지 다음 이벤트들은 새로운 흐름 시작
+                        const newStep = {
+                            events: [...currentStep.events.slice(0, -1), currentEvent],
+                            actors: new Map(currentStep.actors),
+                            isNewPage: true
+                        };
+                        buildFlow(nextEvent, newStep);
+                    }
+                });
+            };
+
+            buildFlow(startEvent);
+            return flows;
         }
     }
 }
@@ -2043,7 +2078,9 @@ img {
 }
 
 .value-stream-steps {
-    margin-top: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
 }
 
 .value-stream-step {
@@ -2052,14 +2089,21 @@ img {
     border: 1px solid #e0e0e0;
     border-radius: 8px;
     background-color: #fafafa;
-    height: calc(100% - 40px); /* 패딩 고려한 높이 계산 */
+    min-height: 297mm;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    background: white;
+    transform: translateZ(0);
+    -webkit-font-smoothing: antialiased;
 }
 
 .step-description {
     margin: 15px 0;
-    padding: 10px;
+    padding: 15px;
     background-color: #fff;
     border-left: 4px solid #4CAF50;
+    border-radius: 4px;
 }
 
 .step-actors {
@@ -2067,8 +2111,7 @@ img {
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 20px;
     margin-top: 20px;
-    height: calc(100% - 100px); /* 설명 영역 높이를 제외한 나머지 공간 */
-    overflow-y: auto;
+    flex: 1;
 }
 
 .actor-group {
@@ -2076,57 +2119,215 @@ img {
     padding: 15px;
     border-radius: 4px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    height: fit-content;
+    display: flex;
+    flex-direction: column;
 }
 
 .actor-group h4 {
     color: #333;
-    margin-bottom: 10px;
-    padding-bottom: 5px;
+    margin-bottom: 15px;
+    padding-bottom: 8px;
     border-bottom: 1px solid #eee;
-    position: sticky;
-    top: 0;
-    background-color: #fff;
-    z-index: 1;
 }
 
-.actor-group ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
+.event-flow {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
 }
 
-.actor-group li {
-    margin-bottom: 10px;
-    padding-bottom: 10px;
-    border-bottom: 1px dashed #eee;
+.event-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
 }
 
-.actor-group li:last-child {
+.event-content {
+    background-color: #f5f5f5;
+    padding: 12px;
+    border-radius: 4px;
+    width: 100%;
+}
+
+.event-description {
+    margin: 8px 0 0 0;
+    font-size: 0.9em;
+    color: #666;
+}
+
+.event-arrow {
+    color: #2196F3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 24px;
+    margin: 4px 0;
+}
+
+.event-branches {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.event-branch {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.event-branch .v-icon {
+    color: #2196F3;
+    font-size: 24px;
+}
+
+.value-stream-tree-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 297mm;
+    padding: 40px 0;
+    background: white;
+}
+
+.value-stream-linear-list {
+    padding: 40px 0;
+    min-height: 297mm;
+    background: white;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    align-items: flex-start;
+}
+.value-stream-flow-card {
+    background: #f8fafc;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    padding: 18px 22px;
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto 16px auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+.linear-path-row {
+    font-size: 1.08em;
     margin-bottom: 0;
-    padding-bottom: 0;
+    word-break: break-all;
+    line-height: 1.7;
+    background: none;
+    border-radius: 0;
+    padding: 0;
+    box-shadow: none;
+    min-width: 320px;
+}
+.linear-text-row {
+    padding: 8px 0 8px 0;
+    border-bottom: none;
+    margin-bottom: 0;
+}
+.linear-text-row:last-child {
     border-bottom: none;
 }
-
-.actor-group strong {
-    color: #2196F3;
-    display: block;
-    margin-bottom: 5px;
+.event-inline-block {
+    display: inline-flex;
+    align-items: center;
 }
-
-.step-levels {
-    margin: 10px 0;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-
-.level-badge {
-    background-color: #e3f2fd;
+.event-badge {
+    background: #e3f2fd;
     color: #1976d2;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 0.9em;
+    border-radius: 5px;
+    padding: 4px 10px;
+    margin: 0 4px;
     font-weight: 500;
+    font-size: 1em;
+    display: inline-flex;
+    align-items: center;
+}
+.event-actor {
+    color: #666;
+    font-size: 0.95em;
+    margin-left: 4px;
+}
+.arrow-inline {
+    color: #2196F3;
+    font-size: 1.2em;
+    margin: 0 6px;
+    font-weight: bold;
+}
+.linear-divider {
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, #e3e3e3 0%, #b3c6e0 100%);
+    margin: 18px 0 0 0;
+    border: none;
+    border-radius: 1px;
+}
+
+.value-stream-page-title {
+    font-size: 28px;
+    color: #333;
+    font-weight: bold;
+    margin-bottom: 30px;
+    margin-top: 0;
+    padding-bottom: 15px;
+    border-bottom: 3px solid #333;
+    letter-spacing: -1px;
+    text-align: left;
+}
+.value-stream-page-subtitle {
+    font-size: 21px;
+    color: #333;
+    font-weight: bold;
+    margin-bottom: 24px;
+    margin-top: 0;
+    letter-spacing: -0.5px;
+    text-align: left;
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 10px;
+    width: 100%;
+}
+
+.section-subtitle-wrapper {
+    width: 100%;
+    margin-bottom: 18px;
+    padding-left: 0;
+}
+.value-stream-linear-list {
+    padding: 40px 0;
+    min-height: 297mm;
+    background: white;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    align-items: flex-start;
+}
+
+.value-stream-flow-cards {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.pdf-content-item.section-page {
+    padding: 40px;
+    box-sizing: border-box;
+}
+.section-subtitle {
+    width: 100%;
+    display: block;
+    padding-left: 0;
+    border-bottom: 1px solid #e0e0e0;
+    margin-bottom: 24px;
+    font-size: 21px;
+    font-weight: bold;
+    color: #333;
 }
 </style>
