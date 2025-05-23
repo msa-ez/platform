@@ -22,6 +22,27 @@
     <link rel="stylesheet" href="/github-markdown.css" />
     <link rel="stylesheet" href="/global-style.css" />
 
+    <!-- Microsoft Clarity 분석 스크립트 -->
+    <script type="text/javascript">
+      console.log("Clarity 스크립트 로드 시작");
+      (function(c,l,a,r,i,t,y){
+          c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+          t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+          y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+      })(window, document, "clarity", "script", "rm9un4g1ge");
+      
+      // Clarity 로드 확인
+      window.addEventListener('load', function() {
+        console.log("페이지 로드 완료");
+        console.log("Clarity 객체 존재 여부:", !!window.clarity);
+        if (window.clarity) {
+          console.log("Clarity가 성공적으로 로드됨");
+        } else {
+          console.log("Clarity 로드 실패");
+        }
+      });
+    </script>
+
     <!-- $ 관련-->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 
@@ -69,18 +90,6 @@
     <link rel="stylesheet" href="static/external/vue-i18n.js" />
     <!--    <script src="static/external/vue-i18n.global.js"></script> -->
     <!--    <script src="static/external/vue-i18n.js"></script> -->
-
-    <!-- Microsoft Clarity 분석 스크립트 -->
-    <script type="text/javascript">
-      // 모든 환경에서 Clarity 스크립트가 작동하도록 설정
-      window.addEventListener('DOMContentLoaded', function() {
-        (function(c,l,a,r,i,t,y){
-            c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-            t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-            y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-        })(window, document, "clarity", "script", "rm9un4g1ge");
-      });
-    </script>
 
     <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/mustache.js/3.0.1/mustache.min.js"></script>-->
     <script
