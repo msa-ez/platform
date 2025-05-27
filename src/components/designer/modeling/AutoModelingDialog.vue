@@ -343,7 +343,7 @@
             v-model="showModelSelectionDialog"
             max-width="500"
         >
-            <v-card>
+            <v-card v-if="projectInfo && projectInfo.eventStorming && projectInfo.eventStorming.eventStorming && projectInfo.eventStorming.eventStorming.modelList">
                 <v-card-title class="headline">
                     Select Model for PDF Export
                 </v-card-title>
