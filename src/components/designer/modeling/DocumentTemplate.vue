@@ -358,7 +358,7 @@
                                     </tbody>
                                 </v-simple-table>
                             </div>
-                            <div v-if="chunk.some(i => i.type === 'entityProp')">
+                            <div v-if="chunk.some(i => i.type !== 'rule')">
                                 <h4 class="section-title">{{ $t('DocumentTemplate.aggregateDesign.entityDefinitions') }}</h4>
                                 <div v-for="entityName in getEntitiesInChunk(chunk)" :key="entityName" class="entity-section">
                                     <h5 class="entity-name">{{ entityName }}</h5>
@@ -372,7 +372,7 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <tr v-for="prop in chunk.filter(i => i.type === 'entityProp' && i.entityName === entityName)" :key="prop.name">
+                                            <tr v-for="prop in chunk.filter(i => i.type !== 'rule' && i.entityName === entityName)" :key="prop.name">
                                                 <td>{{ prop.name }}</td>
                                                 <td>{{ prop.type }}</td>
                                                 <td>{{ prop.required ? 'Y' : 'N' }}</td>
@@ -398,6 +398,11 @@
             <div class="cover-section-title pdf-content-item" v-if="getEventStormingModels.length > 0">
                 <div class="main-title">{{ sectionNumbers.eventStorming }}. {{ $t('DocumentTemplate.sections.eventStorming') }}</div>
                 <div class="subtitle">{{ $t('DocumentTemplate.eventStorming.modelSystemBehavior') }}<br>{{ $t('DocumentTemplate.eventStorming.basedOnDerived') }}<br>{{ $t('DocumentTemplate.eventStorming.visuallyOrganize') }}</div>
+
+                <div class="model-info">
+                    <div class="model-name">{{ getEventStormingModels[0].modelName }}</div>
+                    <a :href="getEventstormingUrl" target="_blank" class="model-url">{{ getEventstormingUrl }}</a>
+                </div>
             </div>
 
             <!-- 각 모델별 페이지 -->
@@ -405,7 +410,7 @@
                 <div v-for="(bc, bcIndex) in model.BoundedContexts" :key="`bc-${modelIndex}-${bcIndex}`">
                     <!-- 바운디드 컨텍스트 제목 -->
                     <div v-for="(chunk, chunkIndex) in splitTableRows(getCombinedTableData(bc))" :key="`combined-chunk-${chunkIndex}`" class="pdf-content-item">
-                        <h3>{{ sectionNumbers.eventStorming }}-{{ bcIndex + 1 }}. {{ $t('DocumentTemplate.eventStorming.model') }}: {{ model.modelName }} - {{ $t('DocumentTemplate.eventStorming.boundedContext') }}: {{ bc.name }}</h3>
+                        <h3>{{ sectionNumbers.eventStorming }}-{{ bcIndex + 1 }}. {{ $t('DocumentTemplate.eventStorming.boundedContext') }}: {{ bc.name }}</h3>
                         <!-- 타입별로 분류하여 테이블 헤더와 함께 렌더링 -->
                         <div v-if="chunk.filter(i => i.type === 'aggregate').length">
                             <h4>{{ $t('DocumentTemplate.eventStorming.aggregate') }}</h4>
@@ -1041,45 +1046,95 @@ export default {
             if (!processAnalysis || !processAnalysis.content || !processAnalysis.content.analysisResult) return [];
             const { events } = processAnalysis.content.analysisResult;
             const eventMap = Object.fromEntries(events.map(ev => [ev.name, ev]));
-            // 시작 이벤트(들)
-            const startEvents = events.filter(event => event.level === 1);
+            
+            // 모든 이벤트를 시작점으로 사용
             const paths = [];
+            const processedEvents = new Set();
+            
             function traverse(event, path, visited) {
                 if (visited.has(event.name)) return;
                 const newPath = [...path, event];
                 visited.add(event.name);
+                processedEvents.add(event.name);
+                
+                // 다음 이벤트가 없는 경우 현재 경로 저장
                 if (!event.nextEvents || event.nextEvents.length === 0) {
                     paths.push(newPath);
                     return;
                 }
+                
+                // 다음 이벤트가 있는 경우
                 event.nextEvents.forEach(nextName => {
                     const nextEvent = eventMap[nextName];
-                    if (nextEvent) traverse(nextEvent, newPath, new Set(visited));
+                    if (nextEvent) {
+                        traverse(nextEvent, newPath, new Set(visited));
+                    }
                 });
             }
-            startEvents.forEach(startEvent => {
-                traverse(startEvent, [], new Set());
+            
+            // 모든 이벤트에 대해 경로 탐색
+            events.forEach(event => {
+                if (!processedEvents.has(event.name)) {
+                    traverse(event, [], new Set());
+                }
             });
-            return paths;
+            
+            // 경로를 level 순서대로 정렬
+            return paths.sort((a, b) => {
+                const aLevel = Math.min(...a.map(e => e.level));
+                const bLevel = Math.min(...b.map(e => e.level));
+                return aLevel - bLevel;
+            });
         },
         getValueStreamLinearPages() {
             // 페이지 분할 로직 적용
             const flows = this.getValueStreamLinearPaths;
-            const longFlows = flows.filter(f => f.length > 30);
-            const shortFlows = flows.filter(f => f.length <= 30);
-            // 긴 플로우: 30개 단위로 쪼개서 각 페이지에
-            const longPages = [];
-            longFlows.forEach(flow => {
-                for (let i = 0; i < flow.length; i += 30) {
-                    longPages.push([flow.slice(i, i + 30)]);
+            const pages = [];
+            let currentPage = [];
+            let currentPageSize = 0;
+            
+            // 각 플로우를 처리
+            flows.forEach(flow => {
+                // 현재 페이지에 추가했을 때 30개를 초과하거나 5개의 세트를 초과하는 경우
+                if (currentPageSize + flow.length > 30 || currentPage.length >= 5) {
+                    // 현재 페이지가 비어있지 않다면 저장
+                    if (currentPage.length > 0) {
+                        pages.push(currentPage);
+                    }
+                    
+                    // 플로우가 30개를 초과하는 경우 분할
+                    if (flow.length > 30) {
+                        for (let i = 0; i < flow.length; i += 30) {
+                            const chunk = flow.slice(i, i + 30);
+                            pages.push([chunk]);
+                        }
+                        currentPage = [];
+                        currentPageSize = 0;
+                    } else {
+                        // 새로운 페이지 시작
+                        currentPage = [flow];
+                        currentPageSize = flow.length;
+                    }
+                } else {
+                    // 현재 페이지에 플로우 추가
+                    currentPage.push(flow);
+                    currentPageSize += flow.length;
                 }
             });
-            // 짧은 플로우: 5세트씩 한 페이지에
-            const shortPages = [];
-            for (let i = 0; i < shortFlows.length; i += 5) {
-                shortPages.push(shortFlows.slice(i, i + 5));
+            
+            // 마지막 페이지가 있다면 추가
+            if (currentPage.length > 0) {
+                pages.push(currentPage);
             }
-            return [...longPages, ...shortPages];
+            
+            return pages;
+        },
+
+        getEventstormingUrl() {
+            let modelId = Object.keys(this.eventStormingModels)[0];
+            modelId = modelId.replace('_es_', '_storming_');
+            modelId = modelId.replaceAll('_', '/');
+            return `https://www.msaez.io/#/${modelId}`;
         }
     },
     mounted() {
@@ -1447,7 +1502,7 @@ export default {
                 Object.entries(analysisResult.entities).forEach(([entityName, entity]) => {
                     if (entity.properties && Array.isArray(entity.properties)) {
                         entity.properties.forEach(prop => {
-                            combined.push({ ...prop, type: 'entityProp', entityName });
+                            combined.push({ ...prop, type: prop.type || 'String', entityName });
                         });
                     }
                 });
@@ -1456,7 +1511,7 @@ export default {
         },
         getEntitiesInChunk(chunk) {
             // chunk 내에 등장하는 entityName의 유니크 리스트 반환
-            return [...new Set(chunk.filter(i => i.type === 'entityProp').map(i => i.entityName))];
+            return [...new Set(chunk.filter(i => i.type !== 'rule').map(i => i.entityName))];
         },
         getEventsByActor(actorName) {
             if (!this.draft) return [];
@@ -2329,5 +2384,34 @@ img {
     font-size: 21px;
     font-weight: bold;
     color: #333;
+}
+
+.model-info {
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    width: 90%;
+}
+
+.model-name {
+    font-size: 22px;
+    color: #333;
+    margin-bottom: 12px;
+    font-weight: 500;
+    letter-spacing: -0.5px;
+}
+
+.model-url {
+    font-size: 16px;
+    color: #1976d2;
+    text-decoration: none;
+    word-break: break-all;
+    display: inline-block;
+}
+
+.model-url:hover {
+    text-decoration: underline;
 }
 </style>

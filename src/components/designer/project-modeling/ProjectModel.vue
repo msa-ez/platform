@@ -569,16 +569,16 @@
             },
             async backupProject(){
                 // type: eventStorming,  businessModel, customerJourneyMap
-                var me = this
-                if(!me.isLogin) return;
+                // var me = this
+                // if(!me.isLogin) return;
 
-                if( me.isServer ) {
-                    me.setObject(`db://definitions/${me.projectId}/information/eventStorming`, me.information.eventStorming)
-                    me.setObject(`db://definitions/${me.projectId}/information/businessModel`, me.information.businessModel)
-                    me.setObject(`db://definitions/${me.projectId}/information/customerJourneyMap`, me.information.customerJourneyMap)
-                    me.setObject(`db://definitions/${me.projectId}/information/contextMapping`, me.information.contextMapping)
-                    me.setObject(`db://definitions/${me.projectId}/information/userStoryMap`, me.information.userStoryMap)
-                }
+                // if( me.isServer ) {
+                //     me.setObject(`db://definitions/${me.projectId}/information/eventStorming`, me.information.eventStorming)
+                //     me.setObject(`db://definitions/${me.projectId}/information/businessModel`, me.information.businessModel)
+                //     me.setObject(`db://definitions/${me.projectId}/information/customerJourneyMap`, me.information.customerJourneyMap)
+                //     me.setObject(`db://definitions/${me.projectId}/information/contextMapping`, me.information.contextMapping)
+                //     me.setObject(`db://definitions/${me.projectId}/information/userStoryMap`, me.information.userStoryMap)
+                // }
             },
             async loadProject() {
                 var me = this
@@ -599,15 +599,10 @@
 
                 if (me.projectId) {
                     try {
-                        var information = await me.list(`db://definitions/${me.projectId}/information`);
-                        me.draft = await me.list(`db://definitions/${me.projectId}/draft`);
+                        var information = await me.list(`db://definitions/${providerUid}_project_${me.projectId}/information`);
+                        me.draft = await me.list(`db://definitions/${providerUid}_project_${me.projectId}/draft`);
 
                         // 없는 경우, 재탐색
-                        if(!information) {
-                            information = await me.list(`db://definitions/${providerUid}_project_${me.projectId}/information`);
-                            me.draft = await me.list(`db://definitions/${providerUid}_project_${me.projectId}/draft`);
-                        }
-
                         if(!me.draft) {
                             me.draft = information.draft;
                         }
@@ -660,13 +655,13 @@
                 me.projectName = me.information.projectName  ? me.information.projectName : me.information.prompt
             },
             watchInformation(){
-                var me = this
-                me.watch(`db://definitions/${me.projectId}/information`, function (information) {
-                    if (information) {
-                        me.isServer = true;
-                        me.information = information;
-                    }
-                })
+                // var me = this
+                // me.watch(`db://definitions/${me.projectId}/information`, function (information) {
+                //     if (information) {
+                //         me.isServer = true;
+                //         me.information = information;
+                //     }
+                // })
             },
             settingPermission(information, init) {
                 var me = this

@@ -31,12 +31,12 @@ export async function applyBpmnAutoLayout(bpmnModeler) {
 
   // 4. 그래프 생성 및 노드/엣지 추가
   const graph = new Graph();
-  console.log('[DEBUG_NODES]', nodes.map(n => n.id));
-  console.log('[DEBUG_CONNECTIONS]', connections.map(c => ({
-    id: c.id,
-    source: c.source && c.source.id,
-    target: c.target && c.target.id
-  })));
+  // console.log('[DEBUG_NODES]', nodes.map(n => n.id));
+  // console.log('[DEBUG_CONNECTIONS]', connections.map(c => ({
+  //   id: c.id,
+  //   source: c.source && c.source.id,
+  //   target: c.target && c.target.id
+  // })));
   
   nodes.forEach(n => {
     graph.addNode(n.id, n.businessObject.name || n.id);

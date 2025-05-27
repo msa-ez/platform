@@ -95,6 +95,7 @@
                         <v-icon class="auto-modeling-btn-icon">mdi-refresh</v-icon>{{ $t('ESDialoger.tryAgain') }}
                     </v-btn>
                     <v-btn v-else
+                        :disabled="!isEditable"
                         class="auto-modeling-btn"
                         @click="generate(); state.isAIModelSelected = true;"
                     >
@@ -267,7 +268,7 @@ import { value } from 'jsonpath';
             if(!this.value) this.value = {}
             if(!this.value.userStory) this.value.userStory = ""
 
-            this.initESDialoger();
+            // this.initESDialoger();
             this.autoModel = getParent(this.$parent, 'auto-modeling-dialog');
 
 
@@ -649,7 +650,7 @@ import { value } from 'jsonpath';
 
                 const passedAnalysisResult = draftOptions.find(option => option.boundedContext === boundedContextInfo.boundedContext).analysisResult
                 this.generators.DraftGeneratorByFunctions.generator.client.input = {
-                    description: boundedContextInfo.description,
+                    description: "",
                     boundedContext: {
                         name: boundedContextInfo.boundedContext,
                         alias: boundedContextInfo.boundedContextAlias,
@@ -703,6 +704,27 @@ import { value } from 'jsonpath';
                         }
                     });
                 }
+            },
+            'workingMessages.AggregateDraftDialogDto': {
+                handler(newValue) {
+                    if (this.isServerProject && newValue) {
+                        const messageIndex = this.messages.findIndex(
+                            msg => msg.type === 'aggregateDraftDialogDto' && 
+                                msg.uniqueId === newValue.uniqueId
+                        );
+                        
+                        if (messageIndex !== -1) {
+                            this.$set(this.messages, messageIndex, {
+                                ...newValue
+                            });
+                        } else {
+                            this.messages.push({
+                                ...newValue
+                            });
+                        }
+                    }
+                },
+                deep: true
             }
         },
         mounted(){
@@ -845,7 +867,7 @@ import { value } from 'jsonpath';
         },
         methods: {
             async initESDialoger() {
-                if(!this.projectInfo.userStory) return;
+                if(!this.draft) return;
                 this.done = true;
                 this.state.secondMessageIsTyping = false;
                 this.projectInfo.userStory = this.projectInfo.userStory || this.projectInfo.eventStorming.userStory;
@@ -886,6 +908,8 @@ import { value } from 'jsonpath';
                                     }
                                     newMessage.draftOptions.push(newOption);
                                 }
+                                this.workingMessages.AggregateDraftDialog = newMessage;
+                                this.workingMessages['AggregateDraftDialogDto'] = newMessage;
                                 break;
 
                             case 'boundedContextResult':
@@ -980,6 +1004,8 @@ import { value } from 'jsonpath';
                                 await addPropertyWithDelay(newMessage, 'generateOption', msg.generateOption);
                                 await addPropertyWithDelay(newMessage, 'recommendedBoundedContextsNumber', msg.recommendedBoundedContextsNumber);
                                 await addPropertyWithDelay(newMessage, 'isEditable', msg.isEditable);
+                                
+                                this.bcGenerationOption = JSON.parse(JSON.stringify(msg.generateOption));
                                 break;
 
                             case 'botMessage':
@@ -1304,7 +1330,6 @@ import { value } from 'jsonpath';
                 this.input.previousAspectModel = targetMessage.result;
                 this.input['requirements'] = {
                     userStory: this.projectInfo.userStory,
-                    generateOption: targetMessage.generateOption,
                     summarizedResult: this.summarizedResult,
                     analysisResult: this.requirementsValidationResult.analysisResult,
                     pbcInfo: this.pbcLists.map(pbc => ({
@@ -1313,6 +1338,7 @@ import { value } from 'jsonpath';
                     }))
                 };
 
+                this.input['generateOption'] = this.bcGenerationOption;
                 this.input.feedback = obj.feedback;
                 this.generator.generate();
             },
@@ -1964,9 +1990,10 @@ import { value } from 'jsonpath';
                 };
 
                 const typesToRemove = messageTypesToRemove[generator] || [];
-                
+                let filteredMessages = this.messages.filter(msg => !typesToRemove.includes(msg.type));
                 // 해당 타입의 메시지들 제거
-                this.messages = this.messages.filter(msg => !typesToRemove.includes(msg.type));
+                this.messages = filteredMessages;
+                this.draft = filteredMessages;
             }
         }
     }

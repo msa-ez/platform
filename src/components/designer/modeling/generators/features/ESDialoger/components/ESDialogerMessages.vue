@@ -1,14 +1,15 @@
 <template xmlns:v-on="http://www.w3.org/1999/xhtml">
     <div>
-        <template v-if="isLoading && isServerProject">
+        <!-- <template v-if="isLoading && isServerProject">
             <v-col v-for="i in 3" :key="`skeleton-${i}`">
                 <v-card outlined class="auto-modeling-user-story-card" style="margin-top: 30px !important;">
                     <v-skeleton-loader ref="skeleton" type="card" class="mx-auto"></v-skeleton-loader>
                 </v-card>
             </v-col>
-        </template>
+        </template> -->
 
-        <template v-else>
+        <!-- <template v-else> -->
+        <template>
             <template v-for="(message, index) in renderedMessages">
                 <!-- Aggregate Draft Dialog Messages -->
                 <template v-if="message.type === 'aggregateDraftDialogDto'">
@@ -29,12 +30,7 @@
                             <v-tab-item v-for="(msg, idx) in aggregateDraftMessages" 
                                        :key="msg.uniqueId"
                                        :disabled="shouldHideMessage(msg)">
-                                <v-skeleton-loader v-if="isLoading || (msg._isLoading && !isMessageComplete(msg))"
-                                    type="card" class="mx-auto"
-                                ></v-skeleton-loader>
-
                                 <AggregateDraftDialog
-                                    v-else
                                     :draftOptions="msg.draftOptions"
                                     :draftUIInfos="msg.draftUIInfos"
                                     :isGeneratorButtonEnabled="msg.isGeneratorButtonEnabled"
@@ -60,12 +56,7 @@
                            class="auto-modeling-user-story-card" 
                            style="margin-top: 30px !important;"
                            :class="{'hidden': shouldHideMessage(message)}">
-                        <v-skeleton-loader v-if="isLoading || (message._isLoading && !isMessageComplete(message))"
-                            type="card" class="mx-auto"
-                        ></v-skeleton-loader>
-
                         <AggregateDraftDialog
-                            v-else
                             :draftOptions="message.draftOptions"
                             :draftUIInfos="message.draftUIInfos"
                             :isGeneratorButtonEnabled="message.isGeneratorButtonEnabled"
@@ -91,12 +82,7 @@
                         class="auto-modeling-user-story-card" 
                         style="margin-top: 30px !important;"
                     >
-                        <v-skeleton-loader v-if="isLoading || (message._isLoading && !isMessageComplete(message))"
-                            type="card" class="mx-auto"
-                        ></v-skeleton-loader>
-
                         <DevideBoundedContextDialog
-                            v-else
                             :resultDevideBoundedContext="deepCopy(message.result)"
                             :isStartMapping="message.isStartMapping"
                             :isGeneratingBoundedContext="message.isGeneratingBoundedContext"
@@ -129,12 +115,7 @@
                         class="auto-modeling-user-story-card" 
                         style="margin-top: 30px !important;"
                     >
-                        <v-skeleton-loader v-if="isLoading || (message._isLoading && !isMessageComplete(message))"
-                            type="card" class="mx-auto"
-                        ></v-skeleton-loader>
-
                         <RequirementAnalysis 
-                            v-else
                             :analysisResult="message.content"
                             :isAnalizing="message.isAnalizing"
                             :isSummarizeStarted="message.isSummarizeStarted"
@@ -154,12 +135,7 @@
                         class="auto-modeling-user-story-card" 
                         style="margin-top: 30px !important;"
                     >
-                        <v-skeleton-loader v-if="isLoading || (message._isLoading && !isMessageComplete(message))"
-                            type="card" class="mx-auto"
-                        ></v-skeleton-loader>
-
                         <BCGenerationOption
-                            v-else
                             :isSummarizeStarted="message.isSummarizeStarted"
                             :isGeneratingBoundedContext="message.isGeneratingBoundedContext"
                             :isStartMapping="message.isStartMapping"
@@ -273,14 +249,12 @@ export default {
                         if (existingIndex !== -1) {
                             // Update existing message
                             this.$set(this.renderedMessages, existingIndex, {
-                                ...message,
-                                _isLoading: !this.isMessageComplete(message)
+                                ...message
                             });
                         } else {
                             // Add new message
                             this.renderedMessages.push({
-                                ...message,
-                                _isLoading: !this.isMessageComplete(message)
+                                ...message
                             });
                         }
                     });
@@ -318,7 +292,8 @@ export default {
                     this.renderedMessages = [...newMessages];
                     this.isLoading = false;
                 }
-            }
+            },
+            deep: true
         }
     },
     beforeDestroy() {

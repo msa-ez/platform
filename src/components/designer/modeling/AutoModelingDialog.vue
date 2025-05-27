@@ -338,6 +338,40 @@
             </v-card>
         </v-dialog>
 
+        <!-- Model Selection Dialog -->
+        <v-dialog
+            v-model="showModelSelectionDialog"
+            max-width="500"
+        >
+            <v-card>
+                <v-card-title class="headline">
+                    Select Model for PDF Export
+                </v-card-title>
+                <v-card-text>
+                    <v-list>
+                        <v-list-item
+                            v-for="modelId in projectInfo.eventStorming.eventStorming.modelList"
+                            :key="modelId"
+                            @click="handleModelSelection(modelId)"
+                        >
+                            <v-list-item-content>
+                                <v-list-item-title>{{ ESModelNames[modelId] }}</v-list-item-title>
+                            </v-list-item-content>
+                        </v-list-item>
+                    </v-list>
+                </v-card-text>
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn
+                        color="grey darken-1"
+                        text
+                        @click="showModelSelectionDialog = false"
+                    >
+                        Cancel
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
 
         <v-snackbar v-model="snackbar.show"
                 outlined
@@ -601,6 +635,8 @@
                 initialDraft: null,
                 isInitializing: false,
                 unsavedChanges: false,
+                showModelSelectionDialog: false,
+                modelNamesCache: {},
             }
         },
         computed: {
@@ -610,9 +646,32 @@
                     return lang !== 'ko';
                 } catch (error) {
                     console.error('Error determining locale:', error);
-                    // 기본값으로 false 반환
                     return false;
                 }
+            },
+            ESModelNames() {
+                const modelList = this.projectInfo && 
+                                 this.projectInfo.eventStorming && 
+                                 this.projectInfo.eventStorming.eventStorming && 
+                                 this.projectInfo.eventStorming.eventStorming.modelList || [];
+                
+                // Load model names if not in cache
+                modelList.forEach(async (modelId) => {
+                    if (!this.modelNamesCache[modelId]) {
+                        try {
+                            const model = await this.list(`db://definitions/${modelId}/information`);
+                            this.$set(this.modelNamesCache, modelId, model.projectName || modelId);
+                        } catch (error) {
+                            console.error('Error loading model name:', error);
+                            this.$set(this.modelNamesCache, modelId, modelId);
+                        }
+                    }
+                });
+
+                return modelList.reduce((acc, modelId) => {
+                    acc[modelId] = this.modelNamesCache[modelId] || modelId;
+                    return acc;
+                }, {});
             }
         },
         async created(){
@@ -644,7 +703,15 @@
                         textarea.style.height = textarea.scrollHeight + 'px';
                     }
                 });
-            }, 1000)
+            }, 1000),
+            // Add watcher for documentPreview dialog state
+            "$refs.documentPreview.dialog": function(newVal) {
+                if (!newVal) {
+                    // Reset states when document preview is closed
+                    this.showModelSelectionDialog = false;
+                    this.isPDFGenerating = false;
+                }
+            }
         },
         beforeMount() {
             window.addEventListener('beforeunload', this.handleBeforeUnload)
@@ -727,7 +794,7 @@
                 me.$nextTick(async () => {
                     if (me.$refs.esDialoger && me.$refs.esDialoger.initESDialoger) {
                         try {
-                            // await me.$refs.esDialoger.initESDialoger();
+                            await me.$refs.esDialoger.initESDialoger();
                             me.initialDraft = JSON.parse(JSON.stringify(me.draft));
                             console.log('Initialization complete');
                         } catch (error) {
@@ -1025,27 +1092,27 @@
             },
             async backupProject(){
                 // type: eventStorming,  businessModel, customerJourneyMap
-                var me = this
+                // var me = this
 
-                if( me.isServer ) {
-                    if( me.isLogin ){
-                        me.putObject(`db://definitions/${me.projectId}/information`, {
-                            eventStorming: me.projectInfo.eventStorming,
-                            businessModel: me.projectInfo.businessModel,
-                            customerJourneyMap: me.projectInfo.customerJourneyMap,
-                            userStoryMap: me.projectInfo.userStoryMap,
-                        })
-                    }
-                } else  {
-                    // local
-                    let lists = await me.getObject(`localstorage://localLists`)
-                    lists = lists ? lists : [];
-                    var index = lists.findIndex(list => list.projectId == me.projectId)
-                    if( index != -1 ){
-                        lists[index] = me.projectInfo
-                        me.putObject(`localstorage://localLists`, lists);
-                    }
-                }
+                // if( me.isServer ) {
+                //     if( me.isLogin ){
+                //         me.putObject(`db://definitions/${me.projectId}/information`, {
+                //             eventStorming: me.projectInfo.eventStorming,
+                //             businessModel: me.projectInfo.businessModel,
+                //             customerJourneyMap: me.projectInfo.customerJourneyMap,
+                //             userStoryMap: me.projectInfo.userStoryMap,
+                //         })
+                //     }
+                // } else  {
+                //     // local
+                //     let lists = await me.getObject(`localstorage://localLists`)
+                //     lists = lists ? lists : [];
+                //     var index = lists.findIndex(list => list.projectId == me.projectId)
+                //     if( index != -1 ){
+                //         lists[index] = me.projectInfo
+                //         me.putObject(`localstorage://localLists`, lists);
+                //     }
+                // }
             },
             onUIStyleSelected(uiStyle){
                 this.uiStyle = uiStyle;
@@ -1347,13 +1414,44 @@
             },
 
             async openExportToPDF() {
-                if (this.isPDFGenerating) return
+                if (this.isPDFGenerating) return;
+                
+                this.showModelSelectionDialog = false;
+                this.isPDFGenerating = false;
+                
+                if (this.projectInfo.eventStorming && 
+                    this.projectInfo.eventStorming.eventStorming && 
+                    this.projectInfo.eventStorming.eventStorming.modelList && 
+                    this.projectInfo.eventStorming.eventStorming.modelList.length > 1) {
+                    
+                    if (this.$refs.documentPreview && this.$refs.documentPreview.dialog) {
+                        await this.$refs.documentPreview.close();
+                        await this.$nextTick();
+                    }
+                    
+                    await this.$nextTick();
+                    this.showModelSelectionDialog = true;
+                    return;
+                }
+
                 if (this.$refs.documentPreview && this.$refs.documentPreview.dialog) {
                     await this.$refs.documentPreview.close();
                     await this.$nextTick();
                 }
                 
                 this.$refs.documentPreview.show();
+            },
+
+            async handleModelSelection(modelId) {
+                this.showModelSelectionDialog = false;
+                
+                this.projectInfo.eventStormingModelIds = [modelId];
+                
+                await this.$nextTick();
+                
+                if (this.$refs.documentPreview) {
+                    await this.$refs.documentPreview.show();
+                }
             },
 
             // 저장하지 않은 Project unload 여부 확인
@@ -1419,7 +1517,7 @@
                     this.$emit("closeDialog")
                 }
                 this.$emit("changeFieldStatus", false)
-            },
+            }
         }
     }
 </script>

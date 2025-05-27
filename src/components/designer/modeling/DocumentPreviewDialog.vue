@@ -125,21 +125,19 @@ export default {
         }
     },
     mounted(){
-        if(this.userInfo && this.userInfo.providerUid){
-            this.getEventStormingModel()
-        }
+        // Remove model loading from mounted
     },
     methods: {
         async getEventStormingModel(){
             if(!this.projectInfo['eventStormingModelIds']) return;
 
             var option = {
-                        sort: "desc",
-                        orderBy: null,
-                        size: 1,
-                        startAt: null,
-                        endAt: null,
-                    }
+                sort: "desc",
+                orderBy: null,
+                size: 1,
+                startAt: null,
+                endAt: null,
+            }
 
             for (const modelId of this.projectInfo['eventStormingModelIds']) {
                 if(modelId){
@@ -163,18 +161,35 @@ export default {
             }
         },
 
-        show() {
-            this.dialog = true;
+        async show() {
+            // Reset states before showing
+            this.eventStormingModels = {};
             this.isExporting = false;
             this.snackbar.show = false;
+            
+            // Load model information first
+            if(this.userInfo && this.userInfo.providerUid){
+                await this.getEventStormingModel();
+            }
+            
+            // Show dialog after loading is complete
+            this.dialog = true;
         },
 
         async close() {
             if (this.isExporting) return;
+            
+            // Reset all component states
             this.dialog = false;
-            await this.$nextTick();
             this.isExporting = false;
             this.snackbar.show = false;
+            this.eventStormingModels = {};
+            
+            // Emit close event to parent
+            this.$emit('close');
+            
+            // Wait for the dialog to close
+            await this.$nextTick();
         },
 
         showSnackbar(text, color = 'success') {

@@ -70,7 +70,7 @@ ${this.isValidationPrompt()}
         ],
         "actors": [
             {
-                "name": "actor name", // Key stakeholder or system component
+                "name": "actor name", // Human or System name
                 "events": ["associated event names"], // Events owned by this actor
                 "lane": number // Vertical position for swimlane (0-based index)
             }

@@ -127,7 +127,13 @@
                 this.$emit("deleteDefinition", this.id, this.information)
             },
             selectedModel(){
-                window.open(`/#/${this.path}/${this.id}`, "_blank");
+                if(this.id.includes("_es_")){
+                    let providerId = this.id.split("_es_")[0]
+                    let modelId = this.id.split("_es_")[1]
+                    this.$router.push({path: `/${providerId}/storming/${modelId}`});
+                } else {
+                    window.open(`/#/${this.path}/${this.id}`, "_blank");
+                }
             }
 
         }
