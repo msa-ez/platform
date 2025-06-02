@@ -1647,19 +1647,8 @@ import { value } from 'jsonpath';
                     }
                 }
 
-
-                // this.messages.push(
-                //     MessageFactory.createUserMessage(
-                //         feedback,
-                //         "aggregateDraftDialogDtoUserFeedback",
-                //         {targetBoundedContextName: boundedContextInfo.name}
-                //     )
-                // )
                 this.messages.push(this.workingMessages.AggregateDraftDialogDto)
-
-
-                const previousFeedbacks = this.messages.filter(message => message.type === "userMessage" && message.subType === "aggregateDraftDialogDtoUserFeedback" && message.metadatas.targetBoundedContextName === boundedContextInfo.name).map(message => message.message)
-                this.generators.DraftGeneratorByFunctions.generateWithFeedback(boundedContextInfo, previousFeedbacks, draftOptions)
+                this.generators.DraftGeneratorByFunctions.generateWithFeedback(boundedContextInfo, [feedback], draftOptions)
             },
 
             generateMessage(type, result, feedback) {
