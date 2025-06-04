@@ -106,6 +106,7 @@
                             })"
                             @mappingRequirements="$emit('mappingRequirements', $event)"
                             @updateSelectedAspect="updateSelectedAspect"
+                            @updateDevideBoundedContext="(selectedAspect, devideBoundedContext) => $emit('updateDevideBoundedContext', selectedAspect, devideBoundedContext)"
                         ></DevideBoundedContextDialog>
                     </v-card>
 

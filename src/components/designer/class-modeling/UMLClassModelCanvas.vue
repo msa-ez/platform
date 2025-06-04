@@ -913,6 +913,15 @@
                     this.openGraphRenderKey += 1
             })
             // #endregion
+
+            this.$EventBus.$on('updateClassRelation', (item) => {
+                var me = this;
+                let classRelation = Object.values(me.value.relations).find(relation => relation!=null && relation.targetElement.elementView.id == item.classId);
+                if(classRelation) {
+                    classRelation.name = item.name;
+                    me.$set(me.value.relations, classRelation.id, classRelation);
+                }
+            })
         },
         methods: {
             setCanvasType(){
@@ -2155,13 +2164,15 @@
                     relationInfo.type = "Association"
                 }
 
+                // Check for existing relations with same source, target and target name
                 Object.values(me.value.relations).forEach(function(item, idx) {
                     if(item) {
                         if(item.sourceElement.elementView.id == source.elementView.id && 
                             item.targetElement.elementView.id == target.elementView.id &&
-                            item.name == relationName
+                            item.targetElement.name == target.name
                         ) {
                             isNew = false;
+                            // Update the relation name to match the new field name
                             item.name = relationName;
                         }
                     }

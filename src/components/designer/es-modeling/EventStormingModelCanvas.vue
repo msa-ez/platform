@@ -3152,7 +3152,8 @@
             "projectName": _.debounce(function (newVal, oldVal) {
                 var me = this;
                 if (me.initLoad) me.modelChanged = true;
-                if (newVal) {
+                var isKoreanIncluded = newVal.match(/[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/);
+                if (newVal && !isKoreanIncluded) {
                     if (me.gitRepoName == null) {
                         me.gitRepoName = newVal;
                     }
@@ -3160,10 +3161,10 @@
                     me.projectNameHint = null;
                     me.projectNameColor = null;
                 } else {
-                    me.projectNameHint = "Project name is required.";
+                    me.projectNameHint = "Project name is required. (English only)";
                     me.projectNameColor = "red";
                 }
-            }, 0),
+            }, 500),
             information: function () {
                 var me = this;
                 if (me.information) {

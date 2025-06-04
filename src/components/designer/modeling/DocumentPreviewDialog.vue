@@ -298,7 +298,7 @@ export default {
                 });
 
                 const timestamp = new Date().toISOString().split('T')[0];
-                const filename = `event-storming-${this.projectId || timestamp}.pdf`;
+                const filename = `${this.projectInfo.projectName? this.projectInfo.projectName:'untitled'}-${timestamp}.pdf`;
                 pdf.save(filename);
             } catch (error) {
                 this.snackbar = {

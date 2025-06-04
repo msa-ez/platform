@@ -130,7 +130,7 @@
                 if(this.id.includes("_es_")){
                     let providerId = this.id.split("_es_")[0]
                     let modelId = this.id.split("_es_")[1]
-                    this.$router.push({path: `/${providerId}/storming/${modelId}`});
+                    window.open(`/#/${providerId}/storming/${modelId}`, "_blank")
                 } else {
                     window.open(`/#/${this.path}/${this.id}`, "_blank");
                 }

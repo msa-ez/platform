@@ -852,21 +852,34 @@
         },
 
         mounted: function () {
-            this.render();
-            this.bindEvents();
+            this.waitForOGLibrary().then(() => {
+                this.render();
+                this.bindEvents();
 
-            var me = this;
+                var me = this;
 
-
-            window.Vue.OGBus.$on('renderingTime', function (a, b) {
-                if (!me.timerMap.renderingTime[a]) {
-                    me.timerMap.renderingTime[a] = 0;
-                }
-                me.timerMap.renderingTime[a] += b;
+                window.Vue.OGBus.$on('renderingTime', function (a, b) {
+                    if (!me.timerMap.renderingTime[a]) {
+                        me.timerMap.renderingTime[a] = 0;
+                    }
+                    me.timerMap.renderingTime[a] += b;
+                });
             });
         },
 
         methods: {
+            waitForOGLibrary: function() {
+                return new Promise((resolve) => {
+                    const checkOG = () => {
+                        if (window.OG) {
+                            resolve();
+                        } else {
+                            setTimeout(checkOG, 100);
+                        }
+                    };
+                    checkOG();
+                });
+            },
             setCanvasConfiguration: function (canvas) {
                 var me = this;
 

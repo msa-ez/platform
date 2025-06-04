@@ -703,15 +703,7 @@
                         textarea.style.height = textarea.scrollHeight + 'px';
                     }
                 });
-            }, 1000),
-            // Add watcher for documentPreview dialog state
-            "$refs.documentPreview.dialog": function(newVal) {
-                if (!newVal) {
-                    // Reset states when document preview is closed
-                    this.showModelSelectionDialog = false;
-                    this.isPDFGenerating = false;
-                }
-            }
+            }, 1000)
         },
         beforeMount() {
             window.addEventListener('beforeunload', this.handleBeforeUnload)
@@ -1416,35 +1408,39 @@
             async openExportToPDF() {
                 if (this.isPDFGenerating) return;
                 
+                // Reset all states
                 this.showModelSelectionDialog = false;
                 this.isPDFGenerating = false;
                 
-                if (this.projectInfo.eventStorming && 
-                    this.projectInfo.eventStorming.eventStorming && 
-                    this.projectInfo.eventStorming.eventStorming.modelList && 
-                    this.projectInfo.eventStorming.eventStorming.modelList.length > 1) {
-                    
-                    if (this.$refs.documentPreview && this.$refs.documentPreview.dialog) {
-                        await this.$refs.documentPreview.close();
-                        await this.$nextTick();
-                    }
-                    
-                    await this.$nextTick();
-                    this.showModelSelectionDialog = true;
-                    return;
-                }
-
+                // Wait for state updates
+                await this.$nextTick();
+                
+                // Check if document preview is open and close it
                 if (this.$refs.documentPreview && this.$refs.documentPreview.dialog) {
                     await this.$refs.documentPreview.close();
                     await this.$nextTick();
                 }
                 
+                // Check for multiple models
+                const hasMultipleModels = this.projectInfo.eventStorming && 
+                    this.projectInfo.eventStorming.eventStorming && 
+                    this.projectInfo.eventStorming.eventStorming.modelList && 
+                    this.projectInfo.eventStorming.eventStorming.modelList.length > 1;
+                
+                if (hasMultipleModels) {
+                    // Use setTimeout to ensure state updates are processed
+                    setTimeout(() => {
+                        this.showModelSelectionDialog = true;
+                    }, 0);
+                    return;
+                }
+                
+                // Single model case
                 this.$refs.documentPreview.show();
             },
 
             async handleModelSelection(modelId) {
                 this.showModelSelectionDialog = false;
-                
                 this.projectInfo.eventStormingModelIds = [modelId];
                 
                 await this.$nextTick();

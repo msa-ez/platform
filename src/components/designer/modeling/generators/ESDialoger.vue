@@ -122,6 +122,7 @@
                 @setGenerateOption="setGenerateOption"
                 @updateSelectedAspect="updateSelectedAspect"
                 @updateSelectedOptionItem="updateSelectedOptionItem"
+                @updateDevideBoundedContext="updateDevideBoundedContext"
             ></ESDialogerMessages>
         </div>
         <div
@@ -1769,6 +1770,9 @@ import { value } from 'jsonpath';
 
             updateSelectedAspect(newTabIndex){
                 this.selectedAspect = this.resultDevideBoundedContext[newTabIndex].devisionAspect
+                this.updateMessageState(this.messages.find(message => message.type === 'boundedContextResult').uniqueId, {
+                    selectedAspect: this.selectedAspect
+                });
             },
 
             getDisabledGenerateBtn(){
@@ -1994,6 +1998,14 @@ import { value } from 'jsonpath';
                 // 해당 타입의 메시지들 제거
                 this.messages = filteredMessages;
                 this.draft = filteredMessages;
+            },
+
+            updateDevideBoundedContext(selectedAspect, devideBoundedContext){
+                this.resultDevideBoundedContext[selectedAspect] = devideBoundedContext;
+                this.updateMessageState(this.messages.find(message => message.type === 'boundedContextResult').uniqueId, {
+                    result: this.resultDevideBoundedContext
+                });
+                this.draft = this.messages;
             }
         }
     }

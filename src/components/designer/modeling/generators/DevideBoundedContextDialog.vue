@@ -730,6 +730,7 @@
                                 this.renderKey++; // For mermaid
                             }
                             this.tableRenderKey++; // Re-key table for new aspect's items
+                            this.selectedAspect = currentAspectKey;
                             this.$emit('updateSelectedAspect', currentAspectKey);
                         }
                     });
@@ -861,7 +862,7 @@
             },
 
             saveItemEdit(item, field) {
-                let key = Object.keys(this.resultDevideBoundedContext)[0];
+                let key = this.selectedAspect;
 
                 const boundedContextIndex = this.resultDevideBoundedContext[key].boundedContexts
                     .findIndex(bc => bc.alias === item.originalName || bc.alias === item.name);
@@ -915,6 +916,8 @@
                             boundedContext.implementationStrategy = item.implementationStrategy;
                             break;
                     }
+
+                    this.$emit('updateDevideBoundedContext', this.selectedAspect, this.resultDevideBoundedContext[this.selectedAspect]);
 
                     this.mermaidNodes = this.generateNodes({
                         boundedContexts: this.resultDevideBoundedContext[key].boundedContexts,

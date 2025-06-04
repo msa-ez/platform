@@ -103,23 +103,6 @@
             <div class="pdf-content-item">
                 <h2>{{ sectionNumbers.userScenario }}. {{ $t('DocumentTemplate.sections.userScenario') }}</h2>
                 <div v-if="projectInfo && projectInfo.userStory">
-                    <div class="story-content">
-                        <p v-for="(paragraph, pIndex) in formattedUserStory" 
-                            :key="pIndex" 
-                            class="story-paragraph"
-                            v-html="paragraph"
-                        >
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 사용자 스토리 -->
-        <div v-if="selectedSections.userScenario" class="section">
-            <div class="pdf-content-item">
-                <h3>{{ sectionNumbers.userScenario }}-2. User Story</h3>
-                <div v-if="projectInfo && projectInfo.userStory">
                     <div v-if="chunkedUserStory.length > 0" class="story-content">
                         <p v-for="(paragraph, pIndex) in chunkedUserStory[0]" 
                             :key="pIndex" 
@@ -160,6 +143,9 @@
                 </h3>
                 <div class="value-stream-flow-cards">
                     <div v-for="(path, idx) in page" :key="idx" class="value-stream-flow-card">
+                        <h4 class="process-set-title">
+                            {{ path.length === 1 ? path[0].displayName : `${path[0].displayName} ~ ${path[path.length - 1].displayName}` }}
+                        </h4>
                         <div class="linear-path-row linear-text-row">
                             <span v-for="(event, eIdx) in path" :key="event.name">
                                 {{ event.displayName }} ({{ event.actor }})<span v-if="eIdx < path.length - 1"> → </span>
@@ -523,7 +509,7 @@
                                 <div v-for="(chunk, chunkIndex) in splitTableRows(getAggregateDetailData(agg))" :key="`detail-chunk-${chunkIndex}`">
                                     <!-- 애그리게잇 루트 필드 정보 -->
                                     <div v-if="chunk.some(item => item.type === 'rootField')">
-                                        <h4>{{ $t('DocumentTemplate.aggregateDetail.aggregateRootFieldInformation') }}</h4>
+                                        <h4>{{agg.name}} {{ $t('DocumentTemplate.aggregateDetail.aggregateRootFieldInformation') }}</h4>
                                         <v-simple-table dense class="field-table">
                                             <thead>
                                                 <tr>
@@ -696,23 +682,60 @@ export default {
         formattedUserStory() {
             if (!this.projectInfo || !this.projectInfo.userStory) return [];
             
-            // 원본 텍스트를 그대로 유지
             const text = this.projectInfo.userStory;
+            const paragraphs = [];
+            let currentParagraph = '';
+            let currentLineCount = 0;
             
-            // 빈 줄을 기준으로 문단 분리 (줄바꿈 2개 이상)
-            return text.split(/\n\s*\n/).filter(p => p.trim().length > 0);
+            // 텍스트를 줄 단위로 분리
+            const lines = text.split('\n');
+            
+            for (const line of lines) {
+                // 현재 줄이 빈 줄인 경우
+                if (line.trim() === '') {
+                    if (currentParagraph.trim()) {
+                        paragraphs.push(currentParagraph.trim());
+                        currentParagraph = '';
+                        currentLineCount = 0;
+                    }
+                    continue;
+                }
+                
+                // 현재 문단에 줄 추가
+                currentParagraph += (currentParagraph ? '\n' : '') + line;
+                currentLineCount++;
+                
+                // 글자수나 라인수가 제한을 초과하면 새로운 문단 시작
+                if (currentParagraph.length > 1500 || currentLineCount > 30) {
+                    paragraphs.push(currentParagraph.trim());
+                    currentParagraph = '';
+                    currentLineCount = 0;
+                }
+            }
+            
+            // 마지막 문단 처리
+            if (currentParagraph.trim()) {
+                paragraphs.push(currentParagraph.trim());
+            }
+            
+            return paragraphs;
         },
 
         chunkedUserStory() {
             if (!this.formattedUserStory) return [];
             
             const chunks = [];
-            const TARGET_LENGTH = 1500;
+            const TARGET_LENGTH = 1500;  // 텍스트 길이 제한
+            const MAX_LINES_PER_CHUNK = 30; // 라인 수
             
             let currentChunk = [];
             let currentLength = 0;
+            let currentLines = 0;
             
             for (const paragraph of this.formattedUserStory) {
+                // 현재 문단의 라인 수 계산
+                const paragraphLines = paragraph.split('\n').length;
+                
                 // 현재 문단의 길이가 TARGET_LENGTH를 초과하는 경우
                 if (paragraph.length > TARGET_LENGTH) {
                     // 현재 청크에 내용이 있으면 먼저 저장
@@ -720,41 +743,53 @@ export default {
                         chunks.push(currentChunk);
                         currentChunk = [];
                         currentLength = 0;
+                        currentLines = 0;
                     }
                     
                     // 긴 문단을 문장 단위로 분할
                     const sentences = paragraph.match(/[^.!?]+[.!?]+/g) || [paragraph];
                     let currentSentences = [];
                     let sentenceLength = 0;
+                    let sentenceLines = 0;
                     
                     for (const sentence of sentences) {
-                        if (sentenceLength + sentence.length > TARGET_LENGTH) {
+                        const sentenceLineCount = sentence.split('\n').length;
+                        
+                        // 현재 청크에 추가했을 때 라인 수나 길이가 제한을 초과하는 경우
+                        if (sentenceLines + sentenceLineCount > MAX_LINES_PER_CHUNK || 
+                            sentenceLength + sentence.length > TARGET_LENGTH) {
                             if (currentSentences.length > 0) {
                                 chunks.push([currentSentences.join('')]);
                                 currentSentences = [];
                                 sentenceLength = 0;
+                                sentenceLines = 0;
                             }
                         }
                         currentSentences.push(sentence);
                         sentenceLength += sentence.length;
+                        sentenceLines += sentenceLineCount;
                     }
                     
                     if (currentSentences.length > 0) {
                         currentChunk = [currentSentences.join('')];
                         currentLength = sentenceLength;
+                        currentLines = sentenceLines;
                     }
                 }
                 // 일반적인 경우
                 else {
-                    // 현재 청크에 추가했을 때 너무 길어지면 새로운 청크 시작
-                    if (currentLength + paragraph.length > TARGET_LENGTH) {
+                    // 현재 청크에 추가했을 때 라인 수나 길이가 제한을 초과하는 경우
+                    if (currentLines + paragraphLines > MAX_LINES_PER_CHUNK || 
+                        currentLength + paragraph.length > TARGET_LENGTH) {
                         chunks.push(currentChunk);
                         currentChunk = [];
                         currentLength = 0;
+                        currentLines = 0;
                     }
                     
                     currentChunk.push(paragraph);
                     currentLength += paragraph.length;
+                    currentLines += paragraphLines;
                 }
             }
             
@@ -1095,8 +1130,8 @@ export default {
             
             // 각 플로우를 처리
             flows.forEach(flow => {
-                // 현재 페이지에 추가했을 때 30개를 초과하거나 5개의 세트를 초과하는 경우
-                if (currentPageSize + flow.length > 30 || currentPage.length >= 5) {
+                // 현재 페이지에 추가했을 때 30개를 초과하거나 4개의 세트를 초과하는 경우
+                if (currentPageSize + flow.length > 30 || currentPage.length >= 4) {
                     // 현재 페이지가 비어있지 않다면 저장
                     if (currentPage.length > 0) {
                         pages.push(currentPage);
@@ -2413,5 +2448,14 @@ img {
 
 .model-url:hover {
     text-decoration: underline;
+}
+
+.process-set-title {
+    font-size: 16px;
+    color: #333;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e0e0e0;
+    font-weight: 500;
 }
 </style>

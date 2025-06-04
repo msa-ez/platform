@@ -441,6 +441,11 @@
                     "isSearchKey": item.isSearchKey || false
                 }
 
+                if(item.classId) {
+                    tmpObject['classId'] = item.classId;
+                    this.$EventBus.$emit('updateClassRelation', item)
+                }
+
                 if (item.referenceClass) {
                     tmpObject.referenceClass = item.referenceClass;
                 }
