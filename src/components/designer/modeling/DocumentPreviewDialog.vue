@@ -107,7 +107,7 @@ export default {
             required: true
         },
         draft: {
-            type: Object,
+            type: Array,
             required: true
         }
     },

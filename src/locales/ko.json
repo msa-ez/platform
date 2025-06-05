@@ -152,7 +152,8 @@
       "boundedContext": "바운디드 컨텍스트 정의",
       "aggregateDesign": "어그리거트 설계",
       "eventStorming": "이벤트스토밍 모델",
-      "aggregateDetail": "어그리거트 상세 정보"
+      "aggregateDetail": "어그리거트 상세 정보",
+      "apiSpecification": "API 명세"
     },
     "cover": {
       "subtitle": "도메인 주도 설계 기반 분석/설계 결과 보고서",
@@ -238,6 +239,15 @@
       "reference": "참조",
       "primaryKey": "기본 키",
       "fk": "외래 키"
+    },
+    "apiSpecification": {
+      "apiPath": "API 경로",
+      "method": "메서드",
+      "command": "커맨드",
+      "description": "각 바운디드 컨텍스트별 API 명세를 정의하고, 커맨드 기반의 RESTful API 인터페이스를 상세히 기술합니다.",
+      "description2": "설명",
+      "parameters": "파라미터",
+      "boundedContext": "바운디드 컨텍스트"
     }
   },
   "ViewDefinitionPanel" : {

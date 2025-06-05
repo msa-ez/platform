@@ -73,7 +73,7 @@
                             </v-tooltip>
 
                             <!-- PowerPoint Generate Button -->
-                            <v-tooltip bottom>
+                            <!-- <v-tooltip bottom>
                                 <template v-slot:activator="{ on, attrs }">
                                     <v-btn
                                         v-if="(isOwnModel || !isReadOnlyModel) && isServer"
@@ -88,7 +88,7 @@
                                     </v-btn>
                                 </template>
                                 <span>Generate PowerPoint</span>
-                            </v-tooltip>
+                            </v-tooltip> -->
 
                             <v-tooltip bottom>
                                 <template v-slot:activator="{ on, attrs }">
@@ -267,6 +267,7 @@
                                 @update:aggregateDrafts="updateAggregateDrafts"
                                 @update:userStory="updateUserStory"
                                 @update:modelList="updateModelList"
+                                @delete:modelList="deleteModelList"
                                 :uiStyle="uiStyle"  
                             ></ESDialoger>
                             <!-- <CJMDialoger v-if="genType == 'CJM'"    ref="cjMDialoger"   v-model="projectInfo.customerJourneyMap" :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" @change="backupProject" @setPersonas="setPersonas" ></CJMDialoger>
@@ -1218,16 +1219,31 @@
                 });
             },
 
-            updateModelList(modelId){
-                if(!this.projectInfo['eventStormingModelIds']){
-                    this.projectInfo['eventStormingModelIds'] = []
+            async updateModelList(modelId){
+                var me = this
+                if(!me.projectInfo['eventStormingModelIds']){
+                    me.projectInfo['eventStormingModelIds'] = []
                 }
 
-                if(!this.projectInfo['eventStormingModelIds'].includes(`${this.userInfo.providerUid}_es_${modelId}`)){
-                    this.projectInfo['eventStormingModelIds'].push(`${this.userInfo.providerUid}_es_${modelId}`)
+                if(!me.projectInfo['eventStormingModelIds'].includes(`${me.userInfo.providerUid}_es_${modelId}`)){
+                    await me.setObject(`db://definitions/${me.projectInfo.projectId}/information/eventStorming/eventStorming/modelList`, me.projectInfo['eventStormingModelIds'])
+                    await me.setObject(`db://definitions/${me.projectInfo.projectId}/information/eventStormingModelIds`, me.projectInfo['eventStormingModelIds'])
+                    
+                    me.projectInfo['eventStormingModelIds'].push(`${me.userInfo.providerUid}_es_${modelId}`)
+                    me.projectInfo['eventStorming']['eventStorming']['modelList'].push(`${me.userInfo.providerUid}_es_${modelId}`)
                 }
+
 
                 this.unsavedChanges = true;
+            },
+
+            async deleteModelList(modelId){
+                var me = this
+                me.projectInfo['eventStormingModelIds'] = me.projectInfo['eventStormingModelIds'].filter(id => id !== `${modelId}`)
+                me.projectInfo['eventStorming']['eventStorming']['modelList'] = me.projectInfo['eventStorming']['eventStorming']['modelList'].filter(id => id !== `${modelId}`)
+                
+                await me.setObject(`db://definitions/${me.projectInfo.projectId}/information/eventStorming/eventStorming/modelList`, me.projectInfo['eventStormingModelIds'])
+                await me.setObject(`db://definitions/${me.projectInfo.projectId}/information/eventStormingModelIds`, me.projectInfo['eventStormingModelIds'])
             },
 
             // project share

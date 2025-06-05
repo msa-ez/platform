@@ -187,8 +187,8 @@ export default {
     },
     data() {
         return {
-            bpmXml: null,
-            originalBpmXml: null
+            bpmXml: '',
+            originalBpmXml: ''
         }
     },
     watch: {

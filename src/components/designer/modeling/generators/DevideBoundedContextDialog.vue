@@ -494,29 +494,29 @@
                     </v-card>
                     <v-row class="pa-0 ma-0 pt-4">
                         <v-spacer></v-spacer>
-                        <!-- <v-btn @click="reGenerate()"
-                            :disabled="isGeneratingBoundedContext || isStartMapping"
-                        >
-                            <v-icon class="auto-modeling-btn-icon">mdi-refresh</v-icon>{{ $t('DevideBoundedContextDialog.reGenerate') }}
-                        </v-btn> -->
-                        <div v-if="isStartMapping">
-                            <p class="mb-0">{{ currentProcessingBoundedContext }} - {{ $t('DevideBoundedContextDialog.mappingMessage') }} ({{ processingRate }}%)</p>
-                        </div>
-                        <v-progress-circular
-                            v-if="isStartMapping"
-                            color="primary"
-                            indeterminate
-                            size="24"
-                            class="ml-2"
-                        ></v-progress-circular>
-                        <v-btn 
-                            :disabled="isGeneratingBoundedContext || isStartMapping || isAnalizing || isSummarizeStarted || !isEditable" 
-                            class="auto-modeling-btn" 
-                            color="primary" 
-                            @click="createModel(aspect)"
-                        >
-                            {{ $t('DevideBoundedContextDialog.createAggregateDraft') }}
-                        </v-btn>
+                            <!-- <v-btn @click="reGenerate()"
+                                :disabled="isGeneratingBoundedContext || isStartMapping"
+                            >
+                                <v-icon class="auto-modeling-btn-icon">mdi-refresh</v-icon>{{ $t('DevideBoundedContextDialog.reGenerate') }}
+                            </v-btn> -->
+                            <div v-if="isStartMapping">
+                                <p class="mb-0">{{ currentProcessingBoundedContext }} - {{ $t('DevideBoundedContextDialog.mappingMessage') }} ({{ processingRate }}%)</p>
+                            </div>
+                            <v-progress-circular
+                                v-if="isStartMapping"
+                                color="primary"
+                                indeterminate
+                                size="24"
+                                class="ml-2"
+                            ></v-progress-circular>
+                            <v-btn 
+                                :disabled="isGeneratingBoundedContext || isStartMapping || isAnalizing || isSummarizeStarted || !isEditable" 
+                                class="auto-modeling-btn" 
+                                color="primary" 
+                                @click="createModel(aspect)"
+                            >
+                                {{ $t('DevideBoundedContextDialog.createAggregateDraft') }}
+                            </v-btn>
                     </v-row>
                 </v-card-text>
             </v-tab-item>
@@ -604,7 +604,7 @@
         data() {
             return {
                 activeTab: null,
-                mermaidNodes: {},
+                mermaidNodes: [],
                 config: {
                     theme: 'default',
                     startOnLoad: false,
@@ -689,7 +689,7 @@
                     let aspectKeyForMermaid;
 
                     if (allAspectKeys.length === 0) {
-                        this.mermaidNodes = {};
+                        this.mermaidNodes = [];
                     } else {
                         // Determine the aspect key for Mermaid logic
                         // For multiple tabs, use activeTab. For single, use selectedAspect or first key.
@@ -704,7 +704,7 @@
                             this.mermaidNodes = this.generateNodes({ boundedContexts: data.boundedContexts || [], relations: data.relations || [] });
                         } else {
                              // Fallback if the determined key somehow doesn't exist (e.g. during rapid changes)
-                            this.mermaidNodes = {};
+                            this.mermaidNodes = [];
                         }
                     }
                     this.renderKey++; // For mermaid re-render
@@ -809,14 +809,14 @@
             },
 
             stop(){
-                this.mermaidNodes = {};
+                this.mermaidNodes = [];
                 this.renderKey++;
                 this.$emit("stop");
             },
 
             reGenerate(){
                 this.feedback = '';
-                this.mermaidNodes = {};
+                this.mermaidNodes = [];
                 this.renderKey++;
                 this.$emit("reGenerate");
             },
@@ -960,29 +960,40 @@
 
             deleteBoundedContext(item) {
                 if (confirm(this.$t(item.name+'를 삭제하시겠습니까?'))) {
-                    const boundedContexts = this.resultDevideBoundedContext.boundedContexts;
+                    const key = this.selectedAspect || Object.keys(this.resultDevideBoundedContext)[0];
+                    const boundedContexts = this.resultDevideBoundedContext[key].boundedContexts;
                     const index = boundedContexts.findIndex(bc => bc.alias === item.name);
                     
                     if (index > -1) {
                         boundedContexts.splice(index, 1);
                         
-                        this.resultDevideBoundedContext.relations = 
-                            this.resultDevideBoundedContext.relations.filter(relation => 
-                                relation.upStream.name !== item.name && 
-                                relation.downStream.name !== item.name
+                        // Update relations
+                        this.resultDevideBoundedContext[key].relations = 
+                            this.resultDevideBoundedContext[key].relations.filter(relation => 
+                                relation.upStream.name !== item.originalName && 
+                                relation.downStream.name !== item.originalName
                             );
 
-                        if (this.resultDevideBoundedContext.explanations) {
-                            this.resultDevideBoundedContext.explanations = 
-                                this.resultDevideBoundedContext.explanations.filter(explanation => 
+                        // Update explanations
+                        if (this.resultDevideBoundedContext[key].explanations) {
+                            this.resultDevideBoundedContext[key].explanations = 
+                                this.resultDevideBoundedContext[key].explanations.filter(explanation => 
                                     explanation.sourceContext !== item.name && 
                                     explanation.targetContext !== item.name
                                 );
                         }
 
-                        this.mermaidNodes = this.generateNodes(this.resultDevideBoundedContext);
+                        // Update mermaid nodes
+                        this.mermaidNodes = this.generateNodes({
+                            boundedContexts: this.resultDevideBoundedContext[key].boundedContexts,
+                            relations: this.resultDevideBoundedContext[key].relations
+                        });
+                        
                         this.renderKey++;
                         this.tableRenderKey++;
+
+                        // Emit update event
+                        this.$emit('updateDevideBoundedContext', key, this.resultDevideBoundedContext[key]);
                     }
                 }
             },

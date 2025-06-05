@@ -126,13 +126,15 @@
             ></ESDialogerMessages>
         </div>
         <div
-             class="auto-modeling-message-card"
-             style="margin-top:25px; height: 100%; width: 100%; overflow-x: auto;">
+            :key="modelListKey"
+            class="auto-modeling-message-card"
+            style="margin-top:25px; height: 100%; width: 100%; overflow-x: auto;"
+        >
             <v-col v-if="value && value.eventStorming && value.eventStorming.modelList && value.eventStorming.modelList.length > 0"
                    style="height: 100%; align-items: center; margin: 2px; width: fit-content; display: flex;"
             >
                 <div v-for="id in value.eventStorming.modelList" :key="id" style="display: inline-block;">
-                    <jump-to-model-lists-card :id="id" path="storming" @deleteModel="deleteModel" ></jump-to-model-lists-card>
+                    <jump-to-model-lists-card :id="id" path="storming" @deleteDefinition="deleteDefinition"></jump-to-model-lists-card>
                 </div>
             </v-col>
         </div>
@@ -748,6 +750,15 @@ import { value } from 'jsonpath';
             
             me.loadAllRepoList()
             me.generateUserStory();
+
+            window.addEventListener('storage', (event) => {
+                if (event.key === 'modelListUpdate') {
+                    me.modelListKey++;
+                }
+            })
+        },
+        beforeDestroy() {
+            window.removeEventListener('storage')
         },
         data() {
             return {
@@ -863,7 +874,9 @@ import { value } from 'jsonpath';
                 gitAccessToken: null,
                 allRepoList: [],
                 pbcLists: [],
-                pbcResults: []
+                pbcResults: [],
+
+                modelListKey: 0,
             }
         },
         methods: {
@@ -1328,7 +1341,7 @@ import { value } from 'jsonpath';
                 this.generatorName = "DevideBoundedContextGenerator";
                 
                 this.input.devisionAspect = targetMessage.selectedAspect;
-                this.input.previousAspectModel = targetMessage.result;
+                this.input.previousAspectModel = targetMessage.result[targetMessage.selectedAspect];
                 this.input['requirements'] = {
                     userStory: this.projectInfo.userStory,
                     summarizedResult: this.summarizedResult,
@@ -1587,10 +1600,6 @@ import { value } from 'jsonpath';
                         this.$set(this.value, 'eventStorming', {
                             modelList: []
                         });
-                    }
-
-                    if(!this.value.eventStorming.modelList.find(model => model === `${this.userInfo.providerUid}_es_${this.modelIds.ESDefinitionId}`)){
-                        this.value.eventStorming.modelList.push(`${this.userInfo.providerUid}_es_${this.modelIds.ESDefinitionId}`)
                     }
 
                     this.$emit("input", this.value);
@@ -1995,6 +2004,11 @@ import { value } from 'jsonpath';
                     result: this.resultDevideBoundedContext
                 });
                 this.draft = this.messages;
+            },
+
+            deleteDefinition(id, information){
+                this.$emit('delete:modelList', id, information)
+                this.modelListKey++;
             }
         }
     }

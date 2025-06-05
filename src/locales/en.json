@@ -152,7 +152,8 @@
       "boundedContext": "Bounded Context Definition",
       "aggregateDesign": "Aggregate Design",
       "eventStorming": "Event Storming Model",
-      "aggregateDetail": "Aggregate Detail Information"
+      "aggregateDetail": "Aggregate Detail Information",
+      "apiSpecification": "API Specification"
     },
     "cover": {
       "subtitle": "Domain-Driven Design Based Analysis/Design Report",
@@ -238,6 +239,15 @@
       "reference": "Reference",
       "primaryKey": "Primary Key",
       "fk": "FK"
+    },
+    "apiSpecification": {
+      "apiPath": "API Path",
+      "method": "Method",
+      "command": "Command",
+      "description": "Define API specifications for each bounded context and detail the RESTful API interface based on commands.",
+      "description2": "Description",
+      "parameters": "Parameters",
+      "boundedContext": "Bounded Context"
     }
   },
   "ViewDefinitionPanel" : {

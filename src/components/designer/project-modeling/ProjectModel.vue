@@ -515,7 +515,7 @@
                         path = 'storming'
                         if(!me.information.eventStorming ) me.information.eventStorming = {}
                         if(!me.information.eventStorming.modelList) me.information.eventStorming.modelList = []
-                        me.information.eventStorming.modelList.push(settingProjectId);
+                        // me.information.eventStorming.modelList.push(settingProjectId);
                     } else if(me.storageCondition.type == 'bm') {
                         path = 'business-model-canvas'
                         if(!me.information.businessModel ) me.information.businessModel = {}

@@ -33,6 +33,12 @@
                 class="section-checkbox"
             ></v-checkbox>
             <v-checkbox
+                v-model="selectedSections.apiSpecification"
+                :label="$t('DocumentTemplate.sections.apiSpecification')"
+                hide-details
+                class="section-checkbox"
+            ></v-checkbox>
+            <v-checkbox
                 v-model="selectedSections.aggregateDetail"
                 :label="$t('DocumentTemplate.sections.aggregateDetail')"
                 hide-details
@@ -56,7 +62,7 @@
         <!-- 목차 -->
         <div class="table-of-contents pdf-content-item">
             <h2>목 차</h2>
-            <ol class="toc-list">
+            <ul class="toc-list">
                 <template v-if="selectedSections.userScenario">
                     <li>{{ sectionNumbers.userScenario }}. {{ $t('DocumentTemplate.sections.userScenario') }}</li>
                 </template>
@@ -83,17 +89,15 @@
                     </li>
                 </template>
                 <template v-if="selectedSections.eventStorming">
-                    <li>{{ sectionNumbers.eventStorming }}. {{ $t('DocumentTemplate.sections.eventStorming') }}
-                        <ul>
-                            <li>{{ sectionNumbers.eventStorming }}-1. {{ $t('DocumentTemplate.eventStorming.systemWideModel') }}</li>
-                            <li>{{ sectionNumbers.eventStorming }}-2. {{ $t('DocumentTemplate.eventStorming.boundedContextDetails') }}</li>
-                        </ul>
-                    </li>
+                    <li>{{ sectionNumbers.eventStorming }}. {{ $t('DocumentTemplate.sections.eventStorming') }}</li>
+                </template>
+                <template v-if="selectedSections.apiSpecification">
+                    <li>{{ sectionNumbers.apiSpecification }}. {{ $t('DocumentTemplate.sections.apiSpecification') }}</li>
                 </template>
                 <template v-if="selectedSections.aggregateDetail">
                     <li>{{ sectionNumbers.aggregateDetail }}. {{ $t('DocumentTemplate.sections.aggregateDetail') }}</li>
                 </template>
-            </ol>
+            </ul>
         </div>
 
     
@@ -216,7 +220,7 @@
         <!-- 바운디드 컨텍스트 추가정보 -->
         <div v-if="selectedSections.boundedContext" class="section">
             <div class="pdf-content-item">
-                <h3>{{ sectionNumbers.boundedContext }}-3. {{ $t('DocumentTemplate.boundedContext.details') }}</h3>
+                <h3>{{ sectionNumbers.boundedContext }}-3. {{ $t('DocumentTemplate.boundedContext.contextStrategyMap') }}</h3>
                 <div class="section-content" v-if="selectedBoundedContext">
                     <!-- 컨텍스트 맵 -->
                     <h3>{{ $t('DocumentTemplate.boundedContext.contextStrategyMap') }}</h3>
@@ -488,6 +492,49 @@
             </div>
         </div>
 
+        <!-- API 명세 섹션 -->
+        <div v-if="selectedSections.apiSpecification" class="section">
+            <div class="cover-section-title pdf-content-item">
+                <div class="main-title">{{ sectionNumbers.apiSpecification }}. {{ $t('DocumentTemplate.sections.apiSpecification') }}</div>
+                <div class="subtitle">{{ $t('DocumentTemplate.apiSpecification.description') }}</div>
+            </div>
+
+            <!-- 각 바운디드 컨텍스트별 API 명세 -->
+            <div v-for="(model, modelIndex) in getEventStormingModels" :key="`model-${modelIndex}`">
+                <div v-for="(bc, bcIndex) in model.BoundedContexts" :key="`bc-${modelIndex}-${bcIndex}`">
+                    <div class="pdf-content-item">
+                        <h3>{{ $t('DocumentTemplate.apiSpecification.boundedContext') }}: {{ bc.name }}</h3>
+                        
+                        <!-- API 테이블 -->
+                        <v-simple-table dense class="api-table">
+                            <thead>
+                                <tr>
+                                    <th>{{ $t('DocumentTemplate.apiSpecification.apiPath') }}</th>
+                                    <th>{{ $t('DocumentTemplate.apiSpecification.method') }}</th>
+                                    <th>{{ $t('DocumentTemplate.apiSpecification.command') }}</th>
+                                    <th>{{ $t('DocumentTemplate.apiSpecification.description2') }}</th>
+                                    <th>{{ $t('DocumentTemplate.apiSpecification.parameters') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="cmd in getApiCommands(bc)" :key="cmd.id">
+                                    <td>{{ cmd.controllerInfo ? cmd.controllerInfo.apiPath : '-' }}</td>
+                                    <td>{{ cmd.controllerInfo ? cmd.controllerInfo.method || '-' : '-' }}</td>
+                                    <td>{{ cmd.displayName || cmd.name }}</td>
+                                    <td>{{ cmd.description || '-' }}</td>
+                                    <td>
+                                        <div v-for="field in cmd.fieldDescriptors" :key="field.name">
+                                            {{ field.name }} ({{ field.className }})
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </v-simple-table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- 애그리게잇 상세 정보 섹션 -->
         <div v-if="selectedSections.aggregateDetail" class="section">
             <!-- 섹션 제목과 설명 -->
@@ -544,7 +591,7 @@
                                                     ({{ entity.displayName }})
                                                 </span>
                                             </div>
-                                            <v-simple-table dense class="field-table">
+                                            <v-simple-table dense class="field-table" v-if="!entity._type.includes('enum')">
                                                 <thead>
                                                     <tr>
                                                         <th>{{ $t('DocumentTemplate.aggregateDetail.fieldName') }}</th>
@@ -554,15 +601,27 @@
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    <tr v-for="prop in entity.properties" :key="prop.name">
+                                                    <tr v-for="prop in entity.fieldDescriptors" :key="prop.name">
                                                         <td>{{ prop.name }}</td>
-                                                        <td>{{ prop.type }}</td>
-                                                        <td>{{ prop.required ? 'Y' : 'N' }}</td>
+                                                        <td>{{ prop.className }}</td>
+                                                        <td>{{ prop.isKey ? 'Y' : 'N' }}</td>
                                                         <td>
                                                             <span v-if="prop.isPrimaryKey">{{ $t('DocumentTemplate.aggregateDetail.primaryKey') }}</span>
                                                             <span v-if="prop.foreignEntity">{{ $t('DocumentTemplate.aggregateDetail.fk') }} ({{ prop.foreignEntity }})</span>
                                                             <span v-if="prop.values">{{ prop.values.join(', ') }}</span>
                                                         </td>
+                                                    </tr>
+                                                </tbody>
+                                            </v-simple-table>
+                                            <v-simple-table dense class="field-table" v-else>
+                                                <thead>
+                                                    <tr>
+                                                        <th>Items</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr v-for="item in entity.items" :key="item.name">
+                                                        <td>{{ item.value }}</td>
                                                     </tr>
                                                 </tbody>
                                             </v-simple-table>
@@ -608,7 +667,7 @@ export default {
             required: true
         },
         draft: {
-            type: Object,
+            type: Array,
             required: true
         }
     },
@@ -641,6 +700,7 @@ export default {
                 boundedContext: true,
                 aggregateDesign: true,
                 eventStorming: true,
+                apiSpecification: true,
                 aggregateDetail: true
             }
         }
@@ -986,6 +1046,9 @@ export default {
             }
             if (this.selectedSections.eventStorming) {
                 numbers.eventStorming = currentNumber++;
+            }
+            if (this.selectedSections.apiSpecification) {
+                numbers.apiSpecification = currentNumber++;
             }
             if (this.selectedSections.aggregateDetail) {
                 numbers.aggregateDetail = currentNumber++;
@@ -1647,6 +1710,35 @@ export default {
 
             buildFlow(startEvent);
             return flows;
+        },
+        getApiCommands(bc) {
+            if (!bc.command || !Array.isArray(bc.command)) return [];
+            
+            return bc.command
+                .filter(cmd => cmd.controllerInfo && cmd.controllerInfo.apiPath) // API 정보가 있는 커맨드만 필터링
+                .map(cmd => ({
+                    ...cmd,
+                    // API 경로가 상대 경로인 경우 전체 경로로 변환
+                    controllerInfo: {
+                        ...cmd.controllerInfo,
+                        apiPath: cmd.controllerInfo.apiPath.startsWith('/') 
+                            ? cmd.controllerInfo.apiPath 
+                            : `/${cmd.controllerInfo.apiPath}`
+                    }
+                }));
+        },
+        getControllerInfo(commandName) {
+            // Implement your logic to get controller information based on command name
+            // This is just a placeholder implementation
+            return {
+                apiPath: `/api/v1/${commandName}`,
+                method: 'GET',
+                description: `Description of ${commandName}`,
+                parameters: [
+                    { name: 'param1', type: 'String', description: 'Parameter 1' },
+                    { name: 'param2', type: 'Integer', description: 'Parameter 2' }
+                ]
+            };
         }
     }
 }
@@ -2457,5 +2549,15 @@ img {
     padding-bottom: 8px;
     border-bottom: 1px solid #e0e0e0;
     font-weight: 500;
+}
+
+.api-table th, .api-table td {
+    padding: 8px;
+    border: 1px solid #ddd;
+}
+
+.api-table th {
+    background-color: #f5f5f5;
+    font-weight: bold;
 }
 </style>
