@@ -14,6 +14,7 @@
             <div class="d-flex align-center">
                 <div class="progress-container">
                     <v-progress-circular
+                        v-if="progress !== null"
                         :value="progress"
                         :indeterminate="progress === null"
                         color="primary"
