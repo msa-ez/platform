@@ -2063,6 +2063,7 @@
 
     import GeneratorProgress from "./components/GeneratorProgress.vue"
     import ESActionsUtil from "../modeling/generators/es-ddl-generators/modules/ESActionsUtil"
+    import EsValueLangGraphStudioProxy from "../modeling/generators/proxies/EsValueLangGraphStudioProxy/EsValueLangGraphStudioProxy";
 
 
 
@@ -3046,6 +3047,99 @@
                     return {stop: true}
                 }
             }
+
+            const recorrect_boundedContexts = () => {
+                const boundedContexts = Object.values(this.value.elements).filter(element => element._type === "org.uengine.modeling.model.BoundedContext")
+
+                for(const boundedContext of boundedContexts){
+                    this.moveElementAction(boundedContext, {
+                        width: 560,
+                        height: 590,
+                        x: 650,
+                        y: 450
+                    }, {
+                        width: boundedContext.elementView.width,
+                        height: boundedContext.elementView.height,
+                        x: boundedContext.elementView.x,
+                        y: boundedContext.elementView.y
+                    })
+                }
+            }
+
+            const update_value_particaly = (esValue) => {
+                this.changedByMe = true
+
+                for(const element of Object.values(esValue.elements)){
+                    if(!this.value.elements[element.id] || JSON.stringify(this.value.elements[element.id]) !== JSON.stringify(element)){
+                        this.$set(this.value.elements, element.id, element)
+                    }
+                }
+
+                for(const relation of Object.values(esValue.relations)){
+                    if(!this.value.relations[relation.id] || JSON.stringify(this.value.relations[relation.id]) !== JSON.stringify(relation)){
+                        this.$set(this.value.relations, relation.id, relation)
+                    }
+                }
+            }
+
+            const checkReconnectToExistingRun = async () => {
+                setTimeout(async () => {
+                    if(this.isModelDefinitionLoaded && this.initLoad) {
+                        console.log("[*] 모델 정의 로드 완료", this.value)
+
+                        if(this.value.langgraphStudioInfos && this.value.langgraphStudioInfos.esGenerator &&
+                           this.value.langgraphStudioInfos.esGenerator.isCompleted === false &&
+                           this.value.langgraphStudioInfos.esGenerator.jobId
+                        ) {
+                            if(await EsValueLangGraphStudioProxy.healthCheckUsingConfig()) {
+                                EsValueLangGraphStudioProxy.watchJob(
+                                    this.value.langgraphStudioInfos.esGenerator.jobId,
+                                    (esValue, logs, totalPercentage) => {
+                                        console.log("onUpdate", esValue, logs, totalPercentage)
+                                        
+                                        this.generatorProgressDto = {
+                                            generateDone: false,
+                                            displayMessage: logs.slice(-1)[0].message,
+                                            thinkMessage: logs.map(log => `[${log.created_at}][${log.level}] ${log.message}`).join("\n"),
+                                            progress: null,
+                                            globalProgress: totalPercentage,
+                                            actions: {
+                                                stopGeneration: () => {
+                                                    recorrect_boundedContexts()
+
+                                                    this.value.langgraphStudioInfos.esGenerator.isCompleted = true
+                                                    this._backupModelForcely()
+                                                    this.$router.go(0)
+                                                }
+                                            }
+                                        }
+
+                                        update_value_particaly(esValue)
+                                    },
+                                    (esValue, logs, totalPercentage) => {
+                                        console.log("onComplete", esValue, logs, totalPercentage)
+                                        this.generatorProgressDto.generateDone = true
+
+                                        update_value_particaly(esValue)
+                                        recorrect_boundedContexts()
+
+                                        this.value.langgraphStudioInfos.esGenerator.isCompleted = true
+                                        this._backupModelForcely()
+                                    }
+                                )
+                                return
+                            }
+                        } else {
+                            this.forceRefreshCanvas()
+                        }
+                    }
+                    else {
+                        console.log("[*] 모델 정의 로드 대기 중")
+                        await checkReconnectToExistingRun()
+                    }
+                }, 500)
+            }
+            await checkReconnectToExistingRun()            
         },
         mounted: function () {
             var me = this;
@@ -4297,10 +4391,12 @@
             },
 
 
-            generateAggregatesFromDraft(draftOptions) {
+            async generateAggregatesFromDraft(draftOptions) {
                 console.log("[*] 유저가 선택한 초안 옵션들을 이용해서 모델 생성 로직이 실행됨",
                     {prevDraftOptions: JSON.parse(JSON.stringify(draftOptions))}
                 )
+
+                let me = this
 
                 // PBC 필터링 & 제거
                 let pbc = {}
@@ -4316,6 +4412,45 @@
 
                 this.selectedDraftOptions = boundedContexts
                 this.filteredPBCs = pbc
+
+
+                if(await EsValueLangGraphStudioProxy.healthCheckUsingConfig()) {
+                    const isAlreadyTried = this.value.langgraphStudioInfos && this.value.langgraphStudioInfos.esGenerator.isCompleted === false
+                    if(isAlreadyTried) {
+                        if(!confirm("There is an ongoing creation process. Would you like to stop it and start a new one?"))
+                            return
+                    }
+
+
+                    const COUNTRY_CODE_LANG_MAP = {
+                        "ko": "Korean",
+                        "en": "English"
+                    }
+                    let preferedLanguage = "English"
+                    if(window && window.countryCode && COUNTRY_CODE_LANG_MAP[window.countryCode])
+                        preferedLanguage = COUNTRY_CODE_LANG_MAP[window.countryCode]
+
+
+                    const jobId = this.uuid()
+                    await EsValueLangGraphStudioProxy.makeNewJob(
+                        jobId,
+                        this.selectedDraftOptions,
+                        this.userInfo,
+                        this.information,
+                        preferedLanguage
+                    )
+
+                    
+                    if(!this.value.langgraphStudioInfos) this.value.langgraphStudioInfos = {}
+                    this.value.langgraphStudioInfos.esGenerator = {jobId: jobId, isCompleted:false}
+
+                    if(isAlreadyTried) {
+                        this._backupModelForcely()
+                    } else {
+                        this._saveModelForcely()
+                    }
+                    return
+                }
 
                 this._removeInvalidReferencedAggregateProperties(boundedContexts)
                 this._createBoundedContextsIfNotExists(boundedContexts)
@@ -4343,6 +4478,42 @@
                     this.information
                 )
                 this.generators.CreateAggregateActionsByFunctions.generator.generateIfInputsExist()
+            },
+
+            _saveModelForcely() {
+                if(!this.storageCondition)
+                    this.storageCondition = {
+                        "action": "save",
+                        "title": "SAVE",
+                        "comment": "",
+                        "projectName": "untitled",
+                        "editProjectName": "untitled",
+                        "projectId": this.$route.params.projectId,
+                        "version": "v0.0.1",
+                        "connectedAssociatedProject": false,
+                        "error": null,
+                        "loading": true
+                    }
+
+                this.saveModel()
+            },
+
+            _backupModelForcely() {
+                if(!this.storageCondition)
+                    this.storageCondition = {
+                        "action": "backup",
+                        "title": "Save New Version",
+                        "comment": "",
+                        "projectName": "untitled",
+                        "editProjectName": "untitled",
+                        "projectId": this.$route.params.projectId,
+                        "version": "v0-0-2",
+                        "connectedAssociatedProject": false,
+                        "error": null,
+                        "loading": true
+                    }
+
+                this.backupModel()
             },
 
             _removeInvalidReferencedAggregateProperties(draftOptions) {
