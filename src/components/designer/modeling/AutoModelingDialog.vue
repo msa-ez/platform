@@ -487,7 +487,7 @@
             draft: {
                 type: Array,
                 default: function () {
-                    return null;
+                    return [];
                 }
             }
         },

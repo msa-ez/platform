@@ -4466,7 +4466,7 @@
                 this.collectedLogDatas.aggregateDraftScenarios.startTime = new Date().getTime()
                 
                 // AI 생성 중에는 수정을 불가능하도록 만듬
-                this.isEditable = false
+                // this.isEditable = false
 
                 // 로컬스토리지 데이터가 충분하지 않을 경우, 제대로 저장이 안되는 이슈 해결
                 LocalStorageCleanUtil.clean()

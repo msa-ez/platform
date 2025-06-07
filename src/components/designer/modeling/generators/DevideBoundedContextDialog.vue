@@ -754,7 +754,12 @@
                 boundedContexts.forEach((bc, index) => {
                     const node = {
                         id: `BC${index}`,
-                        text: bc.alias.replace(/·/g, '/').replace(/\./g, '/'),
+                        text: bc.alias
+                            .replaceAll('·', '/')
+                            .replaceAll('(', '-')
+                            .replaceAll('[', '-')
+                            .replaceAll(')', '')
+                            .replaceAll(']', ''),
                         editable: true,
                         edgeType: 'stadium',
                         style: this.getDomainStyle(bc.importance),
