@@ -25,14 +25,20 @@ export default {
   data() {
     return {
       bpmnModeler: null,
-      importError: null
+      importError: null,
+      _hasImported: false
     };
   },
   watch: {
     xml: {
       handler(newXml) {
         if (this.bpmnModeler && newXml) {
-          this.importDiagram(newXml);
+          // XML이 실제로 변경된 경우에만 import
+          this.bpmnModeler.saveXML().then(({ xml: currentXml }) => {
+            if (currentXml !== newXml) {
+              this.importDiagram(newXml);
+            }
+          });
         }
       },
       immediate: true
@@ -42,9 +48,6 @@ export default {
     this.bpmnModeler = new BpmnJS({
       container: this.$refs.canvas,
     });
-    if (this.xml) {
-      this.importDiagram(this.xml);
-    }
     this.setupChangeListener();
   },
   beforeDestroy() {
@@ -56,9 +59,24 @@ export default {
   methods: {
     async importDiagram(xml) {
       try {
+        // Save current view state if it exists
+        const canvas = this.bpmnModeler.get('canvas');
+        const currentZoom = canvas.zoom();
+        const viewbox = canvas.viewbox();
+
         await this.bpmnModeler.importXML(xml);
         this.importError = null;
-        this.bpmnModeler.get('canvas').zoom(1.5);
+
+        // Only set initial zoom if this is the first import
+        if (!this._hasImported) {
+          canvas.zoom(1.5);
+          this._hasImported = true;
+        } else {
+          // Restore previous view state
+          canvas.zoom(currentZoom);
+          canvas.viewbox(viewbox);
+        }
+        
         this.updateLaneStroke();
       } catch (err) {
         this.importError = err;
@@ -67,7 +85,10 @@ export default {
     setupChangeListener() {
       this.bpmnModeler.on('commandStack.changed', async () => {
         const { xml } = await this.bpmnModeler.saveXML({ format: true });
-        this.$emit('update:xml', xml);
+        // XML이 실제로 변경된 경우에만 이벤트 발생
+        if (xml !== this.xml) {
+          this.$emit('update:xml', xml);
+        }
         this.updateLaneStroke();
       });
     },

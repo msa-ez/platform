@@ -950,6 +950,9 @@ import { value } from 'jsonpath';
 
                                     this.selectedAspect = msg.selectedAspect;
                                     this.resultDevideBoundedContext[msg.selectedAspect] = JSON.parse(JSON.stringify(newMessage.result[msg.selectedAspect]));
+
+                                    // pbc 항목 추가
+                                    this.pbcResults = this.resultDevideBoundedContext[this.selectedAspect].boundedContexts.filter(bc => bc.implementationStrategy.includes("PBC"));
                                 }
                                 break;
 

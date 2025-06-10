@@ -36,7 +36,6 @@
                     <bpmn-js-editor
                         ref="bpmnEditor"
                         :xml="bpmXml"
-                        :key="bpmXml"
                         @update:xml="onBpmnXmlUpdate"
                     />
                 </div>
@@ -459,6 +458,13 @@ export default {
 
             // 15. 원본 XML 저장 (자동 레이아웃 복원용)
             this.originalBpmXml = this.bpmXml;
+
+            // 16. XML이 생성된 후 BpmnJsEditor 초기화 확인
+            this.$nextTick(() => {
+                if (this.$refs.bpmnEditor) {
+                    this.$refs.bpmnEditor.importDiagram(this.bpmXml);
+                }
+            });
         },
         async autoLayout() {
             const bpmnEditor = this.$refs.bpmnEditor;
@@ -472,7 +478,10 @@ export default {
             }
         },
         onBpmnXmlUpdate(newXml) {
-            this.bpmXml = newXml;
+            // XML이 실제로 변경된 경우에만 업데이트
+            if (newXml !== this.bpmXml) {
+                this.bpmXml = newXml;
+            }
         },
         printXML() {
             console.log(this.bpmXml);
