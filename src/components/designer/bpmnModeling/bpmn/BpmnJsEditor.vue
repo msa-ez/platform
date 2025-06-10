@@ -33,12 +33,20 @@ export default {
     xml: {
       handler(newXml) {
         if (this.bpmnModeler && newXml) {
-          // XML이 실제로 변경된 경우에만 import
-          this.bpmnModeler.saveXML().then(({ xml: currentXml }) => {
-            if (currentXml !== newXml) {
+          // 초기 로드인 경우 바로 import
+          if (!this._hasImported) {
+            this.importDiagram(newXml);
+          } else {
+            // 이후 업데이트는 현재 XML과 비교
+            this.bpmnModeler.saveXML().then(({ xml: currentXml }) => {
+              if (currentXml !== newXml) {
+                this.importDiagram(newXml);
+              }
+            }).catch(() => {
+              // saveXML 실패 시 (초기 로드 중) 바로 import
               this.importDiagram(newXml);
-            }
-          });
+            });
+          }
         }
       },
       immediate: true
