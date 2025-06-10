@@ -3006,7 +3006,7 @@
                     byFunctionCallbacks.onGenerationDone()
 
                     // AI 생성된 모델을 Project에 저장하기 위해 세팅
-                    // this.saveComposition('save')
+                    this.saveComposition('save')
 
                     // es model list update for Project Model
                     // localStorage.setItem('modelListUpdate', Date.now().toString())

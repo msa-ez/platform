@@ -1886,7 +1886,7 @@
                     }
 
                     // // es model list update for Project Model
-                    // localStorage.setItem('modelListUpdate', Date.now().toString())
+                    localStorage.setItem('modelListUpdate', Date.now().toString())
                 } catch (e) {
                     me.alertInfo.text = 'SAVE-ERROR: ' + e
                     me.alertInfo.show = true
