@@ -661,7 +661,12 @@
                     if (!this.modelNamesCache[modelId]) {
                         try {
                             const model = await this.list(`db://definitions/${modelId}/information`);
-                            this.$set(this.modelNamesCache, modelId, model.projectName || modelId);
+                            if(model){
+                                this.$set(this.modelNamesCache, modelId, model.projectName || modelId);
+                            }else{
+                                // this.deleteModelList(modelId)
+                                throw new Error(`Model not found: ${modelId}`);
+                            }
                         } catch (error) {
                             console.error('Error loading model name:', error);
                             this.$set(this.modelNamesCache, modelId, modelId);
@@ -1226,15 +1231,14 @@
                 }
 
                 if(!me.projectInfo['eventStormingModelIds'].includes(`${me.userInfo.providerUid}_es_${modelId}`)){
-                    await me.setObject(`db://definitions/${me.projectInfo.projectId}/information/eventStorming/eventStorming/modelList`, me.projectInfo['eventStormingModelIds'])
-                    await me.setObject(`db://definitions/${me.projectInfo.projectId}/information/eventStormingModelIds`, me.projectInfo['eventStormingModelIds'])
-                    
                     me.projectInfo['eventStormingModelIds'].push(`${me.userInfo.providerUid}_es_${modelId}`)
                     me.projectInfo['eventStorming']['eventStorming']['modelList'].push(`${me.userInfo.providerUid}_es_${modelId}`)
+
+                    await me.putObject(`db://definitions/${me.projectInfo.projectId}/information/eventStorming`, me.projectInfo['eventStorming'])
+                    await me.putObject(`db://definitions/${me.projectInfo.projectId}/information/eventStormingModelIds`, me.projectInfo['eventStormingModelIds'])
+                    
                 }
-
-
-                this.unsavedChanges = true;
+                // this.unsavedChanges = true;
             },
 
             async deleteModelList(modelId){
