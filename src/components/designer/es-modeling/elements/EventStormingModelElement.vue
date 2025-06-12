@@ -510,7 +510,7 @@ import { group } from "d3";
                     // init panel value.
                     me.namePanel = me.value.name;
                     me.descriptionPanel = me.value.description;
-                    // me.onMoveAction()
+                    me.onMoveAction()
                 }
             },
             onChangedElementName(newVal, oldVal){ },

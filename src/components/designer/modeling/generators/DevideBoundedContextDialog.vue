@@ -139,6 +139,7 @@
                             :single-expand="false"
                             item-key="name"
                             :key="tableRenderKey"
+                            :expanded.sync="expanded"
                         >
                             <template v-slot:item="{ item, expand, isExpanded }">
                                 <tr :class="{'processing-row': isProcessingBC(item)}">
@@ -364,6 +365,7 @@
                                 :single-expand="false"
                                 item-key="name"
                                 :key="tableRenderKey"
+                                :expanded.sync="expanded"
                             >
                                 <template v-slot:item="{ item, expand, isExpanded }">
                                     <tr :class="{'processing-row': isProcessingBC(item)}">
@@ -672,7 +674,8 @@
                         value: `PBC: ${pbc.name}`
                     }))
                 ],
-                activeTab: 0
+                activeTab: 0,
+                expanded: []
             }
         },
         mounted() {
