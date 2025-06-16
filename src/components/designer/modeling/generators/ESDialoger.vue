@@ -52,12 +52,11 @@
                             <v-textarea
                                 v-model="projectInfo.userStory"
                                 flat
-                                class="elevation-0 auto-modeling-userStory"
+                                class="elevation-0"
                                 dense
                                 auto-grow
                                 rows="2"
                                 solo
-                                :placeholder="done ? $t('ESDialoger.userStoryText') : ''"
                                 :disabled="!done || !isEditable"
                             >
                             </v-textarea>
@@ -75,7 +74,7 @@
                         <!-- <v-card-subtitle>{{$t('autoModeling.explanation.ddl')}}</v-card-subtitle> -->
                         <v-card-text class="auto-modling-textarea">
                             <v-textarea 
-                                    v-model="inputDDL"
+                                    v-model="projectInfo.inputDDL"
                                     flat
                                     class="elevation-0"
                                     dense
@@ -689,6 +688,12 @@ import { value } from 'jsonpath';
                     this.$emit("update:userStory", newVal)
                 }
             },
+            "projectInfo.inputDDL": {
+                deep: true,
+                handler(newVal, oldVal) {
+                    this.$emit("update:inputDDL", newVal)
+                }
+            },
             'processingState': {
                 deep: true,
                 handler(newState) {
@@ -758,7 +763,11 @@ import { value } from 'jsonpath';
             })
         },
         beforeDestroy() {
-            window.removeEventListener('storage')
+            window.removeEventListener('storage', (event) => {
+                if (event.key === 'modelListUpdate') {
+                    me.modelListKey++;
+                }
+            })
         },
         data() {
             return {
@@ -805,7 +814,6 @@ import { value } from 'jsonpath';
                 generatorInputTabs: ['User Story','DDL'
                                         // , 'DDL', "Process"
                                     ],
-                inputDDL: '',
                 
                 chunks: [],
                 summarizedResult: "",
@@ -884,7 +892,8 @@ import { value } from 'jsonpath';
                 if(!this.draft) return;
                 this.done = true;
                 this.state.secondMessageIsTyping = false;
-                this.projectInfo.userStory = this.projectInfo.userStory || this.projectInfo.eventStorming.userStory;
+                this.projectInfo.userStory = this.projectInfo.userStory || '';
+                this.projectInfo.inputDDL = this.projectInfo.inputDDL || '';
 
                 this.messages = [];
 
@@ -1421,7 +1430,7 @@ import { value } from 'jsonpath';
                 this.processingState.isSummarizeStarted = true;
 
                 try {
-                    const summarizedText = await this.generator.summarizeRecursively(this.projectInfo.userStory + "\n" + this.inputDDL);
+                    const summarizedText = await this.generator.summarizeRecursively(this.projectInfo.userStory + "\n" + this.projectInfo.inputDDL);
                     // 요약 결과 저장
                     this.userStoryChunks = this.generator.currentChunks;
                     this.userStoryChunksIndex = 0;
@@ -1454,7 +1463,7 @@ import { value } from 'jsonpath';
 
                 if(this.requirementsValidationResult.analysisResult && this.userStoryChunksIndex == 0 && !this.isAnalizeResultSetted){
                     this.userStoryChunks.push(this.requirementsValidationResult.analysisResult)
-                    this.userStoryChunks.push(this.inputDDL)
+                    this.userStoryChunks.push(this.projectInfo.inputDDL)
                     this.isAnalizeResultSetted = true;
                 }
 
@@ -1469,7 +1478,7 @@ import { value } from 'jsonpath';
                 }
 
                 // 현재 요약본이 너무 길면 먼저 요약 진행
-                if (this.projectInfo.userStory.length + this.inputDDL.length > 25000 && this.summarizedResult.length == 0) {
+                if (this.projectInfo.userStory.length + this.projectInfo.inputDDL.length > 25000 && this.summarizedResult.length == 0) {
                     this.pendingBCGeneration = true;
                     this.summarizeRequirements();
                     return;

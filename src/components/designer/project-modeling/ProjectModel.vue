@@ -194,7 +194,6 @@
                         :isOwnModel="isOwnModel"
                         :isReadOnlyModel="isReadOnlyModel"
                         :genType="generatorType"
-                        :requestCount="requestCount"
                         :joinRequestedText="joinRequestedText"
                         :draft="draft"
                         @closeDialog="close()"
@@ -348,17 +347,6 @@
                 if(this.projectVersion) return true; // version Mode.
 
                 return false;
-            },
-            requestCount() {
-                if (this.information && this.information.permissions) {
-                    var array = Object.values(this.information.permissions)
-                    return array.filter((word) => {
-                        if (word)
-                            return word.request == true
-                    }).length
-                }
-
-                return null
             },
             joinRequestedText() {
                 var obj = {

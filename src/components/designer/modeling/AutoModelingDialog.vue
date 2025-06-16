@@ -266,6 +266,7 @@
                                 @update:boundedContextDrafts="updateBoundedContextDrafts" 
                                 @update:aggregateDrafts="updateAggregateDrafts"
                                 @update:userStory="updateUserStory"
+                                @update:inputDDL="updateInputDDL"
                                 @update:modelList="updateModelList"
                                 @delete:modelList="deleteModelList"
                                 :uiStyle="uiStyle"  
@@ -294,6 +295,11 @@
             :userInfo="userInfo"
             :draft="draft"
         />
+
+        <ParticipantPanel
+            v-if="showParticipantPanel"
+            :lists="participantLists"
+        ></ParticipantPanel>
 
         <model-canvas-share-dialog
             v-model="invitationLists"
@@ -410,6 +416,7 @@
     import getParent from '../../../utils/getParent'
 
     import ModelCanvasShareDialog from "./ModelCanvasShareDialog";
+    import ParticipantPanel from "./ParticipantPanel";
 
     import DocumentPreviewDialog from "./DocumentPreviewDialog.vue";
     import * as htmlToImage from 'html-to-image'
@@ -433,6 +440,7 @@
                     return {
                         eventStorming: null,
                         userStory: '',
+                        inputDDL: '',
                         customerJourneyMap: null,
                         businessModel: null,
                         userStoryMap: null,
@@ -470,12 +478,6 @@
                 type: Boolean,
                 default: function () {
                     return false;
-                }
-            },
-            requestCount: {
-                type: Number,
-                default: function () {
-                    return 0;
                 }
             },
             joinRequestedText: {
@@ -626,6 +628,8 @@
                 invitationLists: null,
                 participantLists: [],
                 inviteDialog: false,
+                showParticipantPanel: false,
+                requestCount: 0,
 
                 isPDFGenerating: false,
 
@@ -681,14 +685,24 @@
             }
         },
         async created(){
-            await this.setUserInfo()
-            this.setModelIds()
+            var me = this
+
+            await me.setUserInfo()
+            me.setModelIds()
 
             let getPrompt = localStorage.getItem('noLoginPrompt')
-            if(this.isLogin && getPrompt && getPrompt != 'undefined'){
+            if(me.isLogin && getPrompt && getPrompt != 'undefined'){
                 // this.projectInfo.prompt = this.projectInfo.prompt ? this.projectInfo.prompt : getPrompt
                 // this.openChatUI = true
             }
+
+            me.watch(`db://definitions/${me.projectInfo.projectId}/information`, function (information) {
+                if (information.permissions) {
+                    me.invitationLists = information.permissions
+                    me.participantLists = information.permissions
+                    me.requestCount = Object.keys(information.permissions).filter(key => key != 'evenyone').length
+                }
+            })
         },
         watch: {
             openChatUI(newVal) {
@@ -698,6 +712,7 @@
                     document.documentElement.style.overflow = '';
                 }
             },
+
             "projectInfo.prompt": _.debounce(function() {
                 localStorage.setItem('noLoginPrompt', this.projectInfo.prompt);
                 
@@ -709,7 +724,14 @@
                         textarea.style.height = textarea.scrollHeight + 'px';
                     }
                 });
-            }, 1000)
+            }, 1000),
+
+            participantLists: {
+                deep: true,
+                handler: _.debounce(function (newVal, oldVal) {
+                    this.$EventBus.$emit('participant', newVal ? newVal : oldVal)
+                }, 1000)
+            },
         },
         beforeMount() {
             window.addEventListener('beforeunload', this.handleBeforeUnload)
@@ -800,9 +822,15 @@
                         } finally {
                             me.isInitializing = false;
                         }
+
+                        me.requestCount = Object.keys(me.projectInfo.information.permissions).filter(key => key != 'everyone').length
                     }
                 });
             }
+
+            me.$EventBus.$on('participantPanel', function (newVal) {
+                me.showParticipantPanel = newVal
+            })
         },
         updated() {
             this.$nextTick(() => {
@@ -1165,6 +1193,9 @@
             },
             updateUserStory(content){
                 this.$set(this.projectInfo, 'userStory', content);
+            },
+            updateInputDDL(content){
+                this.$set(this.projectInfo, 'inputDDL', content);
             },
             openCanvas(val){
                 var me = this
