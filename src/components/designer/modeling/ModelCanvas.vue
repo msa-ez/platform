@@ -1725,6 +1725,9 @@
                             comment: me.storageCondition.comment,
                         })
 
+                        // es model list update for Project Model
+                        // localStorage.setItem('modelListUpdate', Date.now().toString())
+
                         me.storageDialogCancel()
                     } else {
                         this.storageCondition.loading = false

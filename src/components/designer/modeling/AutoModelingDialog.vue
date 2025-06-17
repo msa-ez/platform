@@ -823,7 +823,7 @@
                             me.isInitializing = false;
                         }
 
-                        me.requestCount = Object.keys(me.projectInfo.information.permissions).filter(key => key != 'everyone').length
+                        me.requestCount = Object.keys(me.projectInfo.permissions).filter(key => key != 'everyone').length
                     }
                 });
             }
