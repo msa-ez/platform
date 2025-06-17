@@ -280,12 +280,6 @@
                 default: function () {
                     return false;
                 }
-            },
-            draft: {
-                type: Array,
-                default: function () {
-                    return null;
-                }
             }
 
         },
@@ -304,6 +298,7 @@
                 //
                 generatorType: null,
                 joinRequested: false,
+                draft: []
             }
         },
         computed: {
