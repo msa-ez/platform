@@ -91,19 +91,26 @@ export default {
 
         _directGenerateAggregateDrafts() {
             const selectedScenario = this.__getSelectedScenario()
+            this._initValuesFromSelectedScenario(selectedScenario)
             this.generateAggregateDrafts(selectedScenario.selectedStructureOption)
         },
 
         _directGenerateFromAggregateDrafts() {
             const selectedScenario = this.__getSelectedScenario()
-            this.value.userStory = selectedScenario.userStory
-            this.state = selectedScenario.state
+            this._initValuesFromSelectedScenario(selectedScenario)
             this.generateFromAggregateDrafts(selectedScenario.draftOptions)
         },
 
         _showAggregateDraftUI() {
             const selectedScenario = this.__getSelectedScenario()
             this.messages = selectedScenario.messages
+            this._initValuesFromSelectedScenario(selectedScenario)
+        },
+
+        _initValuesFromSelectedScenario(selectedScenario) {
+            this.value.userStory = selectedScenario.userStory
+            this.state = selectedScenario.state
+            this.resultDevideBoundedContext = selectedScenario.resultDevideBoundedContext
         },
 
         _mermaidStringTest() {

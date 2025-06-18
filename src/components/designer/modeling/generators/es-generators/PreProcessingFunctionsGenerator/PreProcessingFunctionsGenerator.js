@@ -8,7 +8,7 @@ class PreProcessingFunctionsGenerator extends FormattedJSONAIGenerator{
 
         this.generatorName = "PreProcessingFunctionsGenerator"
         this.checkInputParamsKeys = ["description", "boundedContext"]
-        this.progressCheckStrings = ["inference", "userStories", "entities", "businessRules", "interfaces", "events"]
+        this.progressCheckStrings = ["inference", "userStories", "entities", "businessRules", "interfaces", "events", "contextRelations"]
 
         this.initialResponseFormat = zodResponseFormat(
             z.object({
@@ -71,6 +71,16 @@ class PreProcessingFunctionsGenerator extends FormattedJSONAIGenerator{
                             description: z.string(),
                             displayName: z.string()
                         }).strict()
+                    ),
+                    contextRelations: z.array(
+                        z.object({
+                            name: z.string(),
+                            type: z.string(),
+                            direction: z.string(),
+                            targetContext: z.string(),
+                            reason: z.string(),
+                            interactionPattern: z.string()
+                        }).strict()
                     )
                 }).strict()
             }).strict(),
@@ -115,7 +125,7 @@ class PreProcessingFunctionsGenerator extends FormattedJSONAIGenerator{
 
 3. Structured Formatting:
    - Produce the output strictly in the specified JSON format without any additional commentary.
-   - Organize the data into clearly defined sections such as user stories, entities, business rules, interfaces, and events.
+   - Organize the data into clearly defined sections such as user stories, entities, business rules, interfaces, events, and context relations.
 
 4. Entities Definition:
    - For each entity's property, specify the data type. Use Java's basic data types (e.g., String, Long, Integer, Double, Boolean, Date) or define an enum when appropriate.
@@ -125,19 +135,24 @@ class PreProcessingFunctionsGenerator extends FormattedJSONAIGenerator{
    - Within each interface's sections, for the fields configuration, enumerate appropriate field types (e.g., text, select, option, date, password, textarea, number, etc.).
    - Ensure that the field types accurately capture the intended method of user input.
 
-6. Validation & Completeness:
+6. Events and Context Relations:
+   - Extract and define all domain events that occur within the bounded context.
+   - Identify context relationships including interaction patterns, directions, and integration points.
+   - For context relations, specify the type (e.g., Pub/Sub, REST API, Shared Database), direction (sends to, receives from), target context, reason for integration, and interaction pattern.
+
+7. Validation & Completeness:
    - Confirm that all mandatory fields and logical relationships between requirements are thoroughly addressed.
    - Recheck for any overlooked details or potential edge cases common to similar use cases.
 
-7. Inference & Justification:
+8. Inference & Justification:
    - When inferring additional requirements, base them on logical assumptions and industry best practices.
    - Provide clear justification for all inferred elements based on the supplied information.
 
-8. Quality Assurance:
+9. Quality Assurance:
    - Review the final output for consistency, clarity, and completeness.
    - Do not include internal commentary or chain-of-thought explanations in the JSON result.
 
-By following these guidelines meticulously, you will deliver a robust, clear, and comprehensive representation of the user’s requirements.
+By following these guidelines meticulously, you will deliver a robust, clear, and comprehensive representation of the user's requirements.
 `
     }
 
@@ -147,9 +162,11 @@ Inference Guidelines:
 1. The reasoning process must be directly related to producing the output result without referencing a general strategy.
 2. Thoroughly analyze all provided user requirements, capturing both explicit details and any implicit or inferred needs.
 3. Evaluate the overall context by taking into account domain complexity, stakeholder impact, and technical feasibility.
-4. For each functional area (overview, user stories, entities, business rules, interfaces, events), ensure that all necessary details and potential edge cases are addressed.
+4. For each functional area (overview, user stories, entities, business rules, interfaces, events, context relations), ensure that all necessary details and potential edge cases are addressed.
 5. When analyzing entity definitions, verify that each property's data type is specified using Java's basic types (e.g., int, double, boolean, String) or an enum where suitable, with enum options clearly listed in the "values" field.
-6. In interface specifications, confirm that each section’s fields clearly state the input type (e.g., text, select, option, date, password, textarea, number, etc.) to accurately reflect the intended user input.
+6. In interface specifications, confirm that each section's fields clearly state the input type (e.g., text, select, option, date, password, textarea, number, etc.) to accurately reflect the intended user input.
+7. For events analysis, identify all domain events that represent significant business occurrences within the bounded context.
+8. For context relations analysis, determine integration patterns, communication directions, and dependencies between bounded contexts.
 `
     }
 
@@ -217,6 +234,16 @@ Inference Guidelines:
                 "description": "<only description of the event>",
                 "displayName": "<displayName>"
             }
+        ],
+        "contextRelations": [
+            {
+                "name": "<name>",
+                "type": "<type>",
+                "direction": "<direction>",
+                "targetContext": "<targetContext>",
+                "reason": "<reason>",
+                "interactionPattern": "<interactionPattern>"
+            }
         ]
     }
 }`
@@ -228,13 +255,22 @@ Inference Guidelines:
 
 The 'Room Booking' screen should be divided into guest information and booking details sections. The guest information section should display name, guest ID, membership level (standard/VIP), phone number, email, and current active bookings. The booking details section should include room type, check-in date, check-out date, number of guests, meal plan, and special requests. Room type should be searchable with a magnifying glass button that opens a room search popup. Check-in and check-out dates must be selected from a calendar. Number of guests should be input as a number. Meal plan should be selectable from a dropdown menu with options for 'No Meal', 'Breakfast Only', 'Half Board', or 'Full Board'. Special requests is optional, but all other fields are required for the booking button to be activated.
 
-The 'Reservation Status' screen should show all booking history for guests. It should have filters for date range and booking status. Date range should be selectable in YYYY.MM.DD format. Status should be filterable through a dropdown with options for All/Active/Completed/Cancelled. Results should be displayed in a table showing booking number, room type, check-in date, check-out date, total amount, and status. Clicking a row should show detailed information in a popup, and active bookings should have options for modification or cancellation.`
+The 'Reservation Status' screen should show all booking history for guests. It should have filters for date range and booking status. Date range should be selectable in YYYY.MM.DD format. Status should be filterable through a dropdown with options for All/Active/Completed/Cancelled. Results should be displayed in a table showing booking number, room type, check-in date, check-out date, total amount, and status. Clicking a row should show detailed information in a popup, and active bookings should have options for modification or cancellation.
+
+## Event
+{"name":"BookingCreated","displayName":"Booking Created","actor":"Guest","level":1,"description":"A new booking is created by a guest with all required information.","inputs":["Guest Information","Booking Details"],"outputs":["Booking Record","Confirmation"],"nextEvents":["BookingConfirmed"]}
+
+## Context Relations
+### PaymentProcessing
+- **Type**: REST API
+- **Direction**: sends to Payment Context
+- **Reason**: To process payment for confirmed bookings`
         }
     }
 
     __buildJsonExampleOutputFormat() {
         return {
-            "inference": "Based on the provided requirements for hotel room reservation, two screens are necessary. The Room Booking screen enables guests to enter and submit detailed personal and booking information, ensuring mandatory fields are filled. The Reservation Status screen displays historical booking data with filtering options for date and status, allowing for modifications and cancellations.",
+            "inference": "Based on the provided requirements for hotel room reservation, two screens are necessary. The Room Booking screen enables guests to enter and submit detailed personal and booking information, ensuring mandatory fields are filled. The Reservation Status screen displays historical booking data with filtering options for date and status, allowing for modifications and cancellations. Additionally, domain events and context integrations are identified for proper system architecture.",
             "result": {
                 "userStories": [
                     {
@@ -454,9 +490,24 @@ The 'Reservation Status' screen should show all booking history for guests. It s
                 },
                 "events": [
                     {
-                        "name": "Booking Created",
-                        "description": "When a booking is created, the booking status is set to 'Active'.",
-                        "displayName": "예약 생성됨"
+                        "name": "BookingCreated",
+                        "description": "A new booking is created by a guest with all required information.",
+                        "displayName": "Booking Created"
+                    },
+                    {
+                        "name": "BookingConfirmed",
+                        "description": "A booking is confirmed after validation and payment processing.",
+                        "displayName": "Booking Confirmed"
+                    }
+                ],
+                "contextRelations": [
+                    {
+                        "name": "PaymentProcessing",
+                        "type": "REST API",
+                        "direction": "sends to",
+                        "targetContext": "Payment Context",
+                        "reason": "To process payment for confirmed bookings",
+                        "interactionPattern": "Synchronous API call to payment service when booking is confirmed"
                     }
                 ]
             }

@@ -3095,37 +3095,64 @@
                            this.value.langgraphStudioInfos.esGenerator.jobId
                         ) {
                             if(await EsValueLangGraphStudioProxy.healthCheckUsingConfig()) {
+                                const stopEventStormingGeneration = () => {
+                                    this.value.langgraphStudioInfos.esGenerator.isCompleted = true
+                                    this._backupModelForcely()
+                                    this.$router.go(0)
+                                }
+
+                                this.generatorProgressDto = {
+                                    generateDone: false,
+                                    displayMessage: `Requesting event storming creation...`,
+                                    thinkMessage: "",
+                                    progress: null,
+                                    globalProgress: 0,
+                                    actions: {
+                                        stopGeneration: stopEventStormingGeneration
+                                    }
+                                }
+
                                 EsValueLangGraphStudioProxy.watchJob(
                                     this.value.langgraphStudioInfos.esGenerator.jobId,
-                                    (esValue, logs, totalPercentage) => {
-                                        console.log("onUpdate", esValue, logs, totalPercentage)
-                                        
+                                    (esValue, logs, totalPercentage) => { // onUpdate
                                         this.generatorProgressDto = {
                                             generateDone: false,
-                                            displayMessage: logs.slice(-1)[0].message,
+                                            displayMessage: logs.length > 0 ? logs.slice(-1)[0].message : "Requesting event storming creation...",
                                             thinkMessage: logs.map(log => `[${log.created_at}][${log.level}] ${log.message}`).join("\n"),
                                             progress: null,
                                             globalProgress: totalPercentage,
                                             actions: {
-                                                stopGeneration: () => {
-                                                    recorrect_boundedContexts()
-
-                                                    this.value.langgraphStudioInfos.esGenerator.isCompleted = true
-                                                    this._backupModelForcely()
-                                                    this.$router.go(0)
-                                                }
+                                                stopGeneration: stopEventStormingGeneration
                                             }
                                         }
 
                                         update_value_particaly(esValue)
                                     },
-                                    (esValue, logs, totalPercentage) => {
-                                        console.log("onComplete", esValue, logs, totalPercentage)
+                                    (esValue, logs, totalPercentage) => { // onComplete
                                         this.generatorProgressDto.generateDone = true
 
                                         update_value_particaly(esValue)
                                         recorrect_boundedContexts()
 
+                                        this.value.langgraphStudioInfos.esGenerator.isCompleted = true
+                                        this._backupModelForcely()
+                                    },
+                                    (waitingJobCount) => { // onWaiting
+                                        this.generatorProgressDto = {
+                                            generateDone: false,
+                                            displayMessage: `The task will begin after completing the ${waitingJobCount} pending jobs...`,
+                                            thinkMessage: "",
+                                            progress: null,
+                                            globalProgress: 0,
+                                            actions: {
+                                                stopGeneration: stopEventStormingGeneration
+                                            }
+                                        }
+                                    },
+                                    (errorMsg) => { // onFailed
+                                        alert(`Failed to create event storming. Please try again later.: ${errorMsg}`)
+
+                                        this.generatorProgressDto.generateDone = true
                                         this.value.langgraphStudioInfos.esGenerator.isCompleted = true
                                         this._backupModelForcely()
                                     }

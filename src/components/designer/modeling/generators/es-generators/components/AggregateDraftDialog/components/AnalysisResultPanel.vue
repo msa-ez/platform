@@ -18,6 +18,7 @@
                         <v-tab v-if="analysisResult.businessRules">Business Rules</v-tab>
                         <v-tab v-if="analysisResult.interfaces">Interfaces</v-tab>
                         <v-tab v-if="analysisResult.events">Events</v-tab>
+                        <v-tab v-if="analysisResult.contextRelations">Context Relations</v-tab>
                     </v-tabs>
 
                     <v-tabs-items v-model="analysisTab">
@@ -239,6 +240,58 @@
                             </div>
                         </v-tab-item>
 
+                        <!-- Context Relations -->
+                        <v-tab-item v-if="analysisResult.contextRelations">
+                            <div class="pa-4">
+                                <v-row>
+                                    <v-col v-for="(relation, index) in analysisResult.contextRelations"
+                                        :key="index"
+                                        cols="12"
+                                        class="mb-4">
+                                        <v-card outlined class="context-relation-card">
+                                            <v-card-title class="subtitle-1 font-weight-bold d-flex align-center">
+                                                {{ relation.name }}
+                                                <v-spacer></v-spacer>
+                                                <v-chip small :color="getTypeColor(relation.type)" outlined>
+                                                    {{ relation.type }}
+                                                </v-chip>
+                                            </v-card-title>
+                                            
+                                            <v-card-text>
+                                                <!-- Direction and Target Context -->
+                                                <div class="mb-3">
+                                                    <div class="d-flex align-center mb-2">
+                                                        <v-chip small color="info" outlined class="mr-2">
+                                                            {{ relation.direction }}
+                                                        </v-chip>
+                                                        <span class="text-subtitle-2">{{ relation.targetContext }}</span>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Reason -->
+                                                <div class="mb-3">
+                                                    <v-subheader class="px-0 text-subtitle-2 font-weight-medium">
+                                                        <v-icon small class="mr-1">mdi-information-outline</v-icon>
+                                                        목적
+                                                    </v-subheader>
+                                                    <div class="text-body-2 ml-6">{{ relation.reason }}</div>
+                                                </div>
+
+                                                <!-- Interaction Pattern -->
+                                                <div>
+                                                    <v-subheader class="px-0 text-subtitle-2 font-weight-medium">
+                                                        <v-icon small class="mr-1">mdi-swap-horizontal</v-icon>
+                                                        상호작용 패턴
+                                                    </v-subheader>
+                                                    <div class="text-body-2 ml-6">{{ relation.interactionPattern }}</div>
+                                                </div>
+                                            </v-card-text>
+                                        </v-card>
+                                    </v-col>
+                                </v-row>
+                            </div>
+                        </v-tab-item>
+
                     </v-tabs-items>
                 </v-card-text>
             </v-expansion-panel-content>
@@ -277,6 +330,16 @@ export default {
                 'select': 'pink',
                 'search': 'cyan',
                 'textarea': 'brown'
+            };
+            return colorMap[type] || 'grey';
+        },
+        
+        getTypeColor(type) {
+            const colorMap = {
+                'Pub/Sub': 'purple',
+                'API': 'blue',
+                'Event': 'green',
+                'Database': 'orange'
             };
             return colorMap[type] || 'grey';
         }
@@ -348,5 +411,19 @@ export default {
 
 .v-chip {
     font-weight: 500;
+}
+
+.context-relation-card {
+    border: 1px solid var(--v-info-lighten3);
+}
+
+.context-relation-card .v-card-title {
+    background-color: var(--v-info-lighten5);
+    border-bottom: 1px solid var(--v-info-lighten3);
+}
+
+.context-relation-card .v-subheader {
+    color: var(--v-primary-base);
+    font-size: 0.875rem;
 }
 </style>

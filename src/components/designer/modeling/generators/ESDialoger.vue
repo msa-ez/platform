@@ -421,7 +421,7 @@ import { value } from 'jsonpath';
                 }
             })
             this.generators.PreProcessingFunctionsGenerator.buildInitialInputs = (selectedStructureOption) => {
-                const getDescription = (requirements) => {
+                const getDescription = (requirements, relations, explanations, currentBcName, currentBcAlias) => {
                     if (!requirements || !Array.isArray(requirements) || requirements.length === 0) {
                         return "Requirements have not been specified."
                     }
@@ -429,6 +429,43 @@ import { value } from 'jsonpath';
                     requirements.forEach((req) => {
                         markdownOutput += `## ${req.type}\n\n${req.text}\n\n`
                     })
+
+                    // Relations 정보 추가
+                    if (relations && relations.length > 0) {
+                        const relatedRelations = relations.filter(rel => 
+                            rel.upStream.name === currentBcName || 
+                            rel.downStream.name === currentBcName
+                        );
+
+                        if (relatedRelations.length > 0) {
+                            markdownOutput += "\n## Context Relations\n\n";
+                            
+                            relatedRelations.forEach(rel => {
+                                const isUpstream = rel.upStream.name === currentBcName;
+                                const targetContext = isUpstream ? rel.downStream : rel.upStream;
+                                const direction = isUpstream ? "sends to" : "receives from";
+                                
+                                markdownOutput += `### ${rel.name}\n`;
+                                markdownOutput += `- **Type**: ${rel.type}\n`;
+                                markdownOutput += `- **Direction**: ${direction} ${targetContext.alias} (${targetContext.name})\n`;
+                                
+                                // explanations에서 해당 관계의 상세 설명 찾기
+                                if (explanations && explanations.length > 0) {
+                                    const explanation = explanations.find(exp => 
+                                        (exp.sourceContext === currentBcAlias && exp.targetContext === targetContext.alias) ||
+                                        (exp.targetContext === currentBcAlias && exp.sourceContext === targetContext.alias)
+                                    );
+                                    
+                                    if (explanation) {
+                                        markdownOutput += `- **Reason**: ${explanation.reason}\n`;
+                                        markdownOutput += `- **Interaction Pattern**: ${explanation.interactionPattern}\n`;
+                                    }
+                                }
+                                markdownOutput += "\n";
+                            });
+                        }
+                    }
+
                     return markdownOutput.trim();
                 }
 
@@ -437,10 +474,22 @@ import { value } from 'jsonpath';
                         name: bc.name,
                         alias: bc.alias,
                         displayName: bc.alias,
-                        description: getDescription(bc.requirements),
+                        description: getDescription(
+                            bc.requirements, 
+                            selectedStructureOption.relations, 
+                            selectedStructureOption.explanations, 
+                            bc.name, 
+                            bc.alias
+                        ),
                         aggregates: bc.aggregates
                     },
-                    description: getDescription(bc.requirements)
+                    description: getDescription(
+                        bc.requirements, 
+                        selectedStructureOption.relations, 
+                        selectedStructureOption.explanations, 
+                        bc.name, 
+                        bc.alias
+                    )
                 }))
 
                 this.generators.PreProcessingFunctionsGenerator.initialInputs = structuredClone(passedGeneratorInputs)
@@ -1535,7 +1584,13 @@ import { value } from 'jsonpath';
                 );
 
                 let selectedStructureOption = this.resultDevideBoundedContext[this.boundedContextVersion.aspect]
-                this.collectedMockDatas.aggregateDraftScenarios.selectedStructureOption = structuredClone(selectedStructureOption)
+                
+                if(selectedStructureOption){
+                    this.collectedMockDatas.aggregateDraftScenarios.selectedStructureOption = structuredClone(selectedStructureOption)
+                }
+                if(this.resultDevideBoundedContext){
+                    this.collectedMockDatas.aggregateDraftScenarios.resultDevideBoundedContext = structuredClone(this.resultDevideBoundedContext)
+                }
 
                 // 요약 결과가 없어도, 상세한 매핑을 위해 원본 매핑 진행
                 if(!isRequirementsMapping){
