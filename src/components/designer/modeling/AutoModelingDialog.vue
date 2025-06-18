@@ -177,6 +177,7 @@
                         class="gs-auto-modeling-box"
                     >
                         <v-row class="pt-2 pb-2">
+                            <v-btn v-if="!isServer && draft.length == 0 && hasLocalDraft()" @click="restoreLocalDraft()">{{ $t('autoModeling.restoreDraft') }}</v-btn>
                             <v-spacer></v-spacer>
                             <v-card style="width: 80%;">
                                 <v-col class="pa-0">
@@ -668,7 +669,7 @@
                             if(model){
                                 this.$set(this.modelNamesCache, modelId, model.projectName || modelId);
                             }else{
-                                // this.deleteModelList(modelId)
+                                this.deleteModelList(modelId)
                                 throw new Error(`Model not found: ${modelId}`);
                             }
                         } catch (error) {
@@ -700,7 +701,7 @@
                 if (information.permissions) {
                     me.invitationLists = information.permissions
                     me.participantLists = information.permissions
-                    me.requestCount = Object.keys(information.permissions).filter(key => key != 'evenyone').length
+                    me.requestCount = Object.keys(information.permissions).filter(key => key != 'evenyone' && information.permissions[key].request).length
                 }
             })
         },
@@ -823,7 +824,9 @@
                             me.isInitializing = false;
                         }
 
-                        me.requestCount = Object.keys(me.projectInfo.permissions).filter(key => key != 'everyone').length
+                        if(me.projectInfo.permissions){
+                            me.requestCount = Object.keys(me.projectInfo.permissions).filter(key => key != 'everyone' && me.projectInfo.permissions[key].request).length
+                        }
                     }
                 });
             }
@@ -1214,12 +1217,24 @@
                     this.draft = [];
                 }
                 this.draft = messages;
+
+                let draft = {
+                    type: 'processAnalysis',
+                    content: messages
+                }
+                this.updateLocalDraft(draft)
             },
             updateBoundedContextDrafts(messages){
                 if(!this.draft) {
                     this.draft = [];
                 }
                 this.draft = messages;
+
+                let draft = {
+                    type: 'boundedContext',
+                    content: messages
+                }
+                this.updateLocalDraft(draft)
             },
             updateAggregateDrafts(messages){
                 if(!this.draft) {
@@ -1253,6 +1268,54 @@
                     }
                     return msg;
                 });
+
+                let draft = {
+                    type: 'aggregate',
+                    content: messages
+                }
+                this.updateLocalDraft(draft)
+            },
+
+            updateLocalDraft(draft){
+                if(draft && (draft.type == 'processAnalysis')){
+                    localStorage.setItem(`draft_userStory`, this.projectInfo.userStory || '')
+                    localStorage.setItem(`draft_inputDDL`, this.projectInfo.inputDDL || '')
+
+                    localStorage.setItem(`localDraft`, JSON.stringify(draft.content))
+                }else{
+                    localStorage.setItem('localDraft', JSON.stringify(this.draft))
+                }
+            },
+
+            restoreLocalDraft(){
+                var me = this
+
+                if(!confirm(this.$t('autoModeling.restoreDraftConfirm'))){
+                    return
+                }
+
+                let userStory = localStorage.getItem('draft_userStory') || ''
+                let inputDDL = localStorage.getItem('draft_inputDDL') || ''
+
+                me.projectInfo.userStory = userStory
+                me.projectInfo.inputDDL = inputDDL
+
+                me.draft = []
+                me.draft = JSON.parse(localStorage.getItem('localDraft') || '[]')
+                me.openProjectDialog()
+                me.$nextTick(async () => {
+                    if (me.$refs.esDialoger && me.$refs.esDialoger.initESDialoger) {
+                        try {
+                            await me.$refs.esDialoger.initESDialoger();
+                        } catch (error) {
+                            console.error('Initialization failed:', error);
+                        }
+                    }
+                });
+            },
+
+            hasLocalDraft(){
+                return localStorage.getItem('localDraft') ? true : false
             },
 
             async updateModelList(modelId){
@@ -1375,6 +1438,24 @@
                     if (request) {
                         me.joinRequested = true
                     }
+
+                    const modelList = me.projectInfo && 
+                                 me.projectInfo.eventStorming && 
+                                 me.projectInfo.eventStorming.eventStorming && 
+                                 me.projectInfo.eventStorming.eventStorming.modelList || [];
+                    
+                    // set permission for models that are associated with the project
+                    modelList.forEach(async (modelId) => {
+                        try {
+                            const model = await me.list(`db://definitions/${modelId}/information`);
+
+                            if(model){
+                                me.putObject(`db://definitions/${modelId}/information/permissions`, me.invitationLists)
+                            }
+                        } catch (error) {
+                            console.error('Error set permission for model:', error);
+                        }
+                    });
                 }
 
                 if (result) {

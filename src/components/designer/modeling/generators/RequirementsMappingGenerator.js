@@ -31,6 +31,7 @@ Important Instructions:
    - Data structures or entities that align with the Bounded Context's aggregates
    - Events that are published or consumed by this Bounded Context
    - User stories that describe functionality within this Bounded Context's domain
+   - Even if a DDL table name does not directly match the Bounded Context, if its field names (such as order_id, product_id, etc.) are clearly related to the Bounded Context's aggregates, entities, or events, consider it relevant.
 
 2. Include content if it:
    - Directly mentions or relates to the Bounded Context's core responsibilities

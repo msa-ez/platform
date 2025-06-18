@@ -593,7 +593,9 @@
     "unsavedChangesDialogTitle": "Unsaved changes",
     "unsavedChanges": "Would you like to save before leaving?",
     "dontSave": "Leave",
-    "save": "Save"
+    "save": "Save",
+    "restoreDraft": "Restore Draft",
+    "restoreDraftConfirm": "Are you sure you want to restore the draft?"
   },
   "UIWizardDialoger": {
     "imageMessage": "Here are a logo for this service:",

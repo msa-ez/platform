@@ -595,7 +595,9 @@
     "unsavedChangesDialogTitle": "저장하지 않은 변경사항이 있습니다.",
     "unsavedChanges": "저장하시겠습니까?",
     "dontSave": "나가기",
-    "save": "저장"
+    "save": "저장",
+    "restoreDraft": "최근 작업 복구",
+    "restoreDraftConfirm": "최근 작업을 복구하시겠습니까?"
   },
   "UIWizardDialoger": {
     "imageMessage": "다음은 이 서비스에 대한 이미지 추천입니다.",
