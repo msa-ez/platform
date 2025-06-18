@@ -1,230 +1,310 @@
 const StorageBase = require('../../../../../CommonStorageBase.vue').default;
+const firebase = require('firebase');
 
 class EsValueLangGraphStudioProxy {
-    /**
-     * 새로운 스레드와 런을 생성하고 결과를 스트리밍합니다.
-     * @param {Object} inputData - 입력 데이터
-     * @param {Function} onUpdate - 스트리밍 업데이트시 호출될 콜백 함수 (esValue를 인자로 받음)
-     * @param {Function} onComplete - 스트리밍 완료시 호출될 콜백 함수 (최종 esValue를 인자로 받음)
-     * @param {string} serverUrl - 서버 URL (기본값: DEFAULT_SERVER_URL)
-     * @returns {Promise<{threadId: string, runId: string}>} - 생성된 threadId와 runId
-     */
-    static async createNewThreadRun(inputData, onReady, onUpdate, onComplete, serverUrl = this.DEFAULT_SERVER_URL) {
-      try {
-        // 1. 스레드 생성
-        const threadResponse = await fetch(`${serverUrl}/threads`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({})
-        });
-  
-        const threadData = await threadResponse.json();
-        const threadId = threadData.thread_id;
-  
-  
-        // 2. 런 생성
-        const runResponse = await fetch(`${serverUrl}/threads/${threadId}/runs`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            assistant_id: "eventstorming_generator",
-            input: inputData,
-            stream_mode: ["events"]
-          })
-        });
-  
-        const runData = await runResponse.json();
-        const runId = runData.run_id;
-  
-  
-        if(typeof onReady === 'function') {
-          onReady(threadId, runId);
-        }
-  
-        // 3. 스트리밍 처리 시작
-        await this._handleStream(threadId, runId, onUpdate, onComplete, serverUrl);
-  
-        return { threadId, runId };
-      } catch (error) {
-        console.error('API 요청 오류:', error);
-        throw error;
-      }
+    // 상수 정의
+    static get PATHS() {
+        return {
+            CONFIG: 'db://configs/eventstorming_generator',
+            JOBS: 'jobs',
+            REQUESTED_JOBS: 'requestedJobs'
+        };
     }
-  
-    /**
-     * 기존 스레드와 런에 다시 연결하여 결과를 계속 스트리밍합니다.
-     * @param {string} threadId - 스레드 ID
-     * @param {string} runId - 런 ID
-     * @param {Function} onUpdate - 스트리밍 업데이트시 호출될 콜백 함수 (esValue를 인자로 받음)
-     * @param {Function} onComplete - 스트리밍 완료시 호출될 콜백 함수 (최종 esValue를 인자로 받음)
-     * @param {string} serverUrl - 서버 URL (기본값: DEFAULT_SERVER_URL)
-     * @returns {Promise<void>}
-     */
-    static async reconnectToExistingRun(threadId, runId, onUpdate, onComplete, serverUrl = this.DEFAULT_SERVER_URL) {
-      try {
-        await this._handleStream(threadId, runId, onUpdate, onComplete, serverUrl);
-      } catch (error) {
-        console.error('스트림 재연결 오류:', error);
-        throw error;
-      }
+
+    static get NAMESPACES() {
+        return {
+            DEFAULT: 'eventstorming_generator',
+            LOCAL: 'eventstorming_generator_local'
+        };
     }
-  
-    /**
-     * 서버 상태 확인
-     * @param {string} serverUrl - 서버 URL (기본값: DEFAULT_SERVER_URL)
-     * @returns {Promise<boolean>} - 서버가 정상이면 true
-     */
-    static async healthCheck(serverUrl = this.DEFAULT_SERVER_URL) {
-      try {
-        const response = await fetch(`${serverUrl}/ok`, {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' }
-        });
-        
-        const data = await response.json();
-        console.log('서버 상태:', data);
-        return data.status === 'ok' || response.status === 200;
-      } catch (error) {
-        console.error('서버 상태 확인 오류:', error);
-        return false;
-      }
-    }
-  
-    /**
-     * 스트림 처리를 위한 내부 메소드
-     * @param {string} threadId - 스레드 ID
-     * @param {string} runId - 런 ID
-     * @param {Function} onUpdate - 업데이트 콜백
-     * @param {Function} onComplete - 완료 콜백
-     * @param {string} serverUrl - 서버 URL
-     * @returns {Promise<void>}
-     * @private
-     */
-    static async _handleStream(threadId, runId, onUpdate, onComplete, serverUrl) {
-      const streamResponse = await fetch(`${serverUrl}/threads/${threadId}/runs/${runId}/stream`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
-      });
-  
-      const reader = streamResponse.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = '';
-      
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) {
-          // 스트리밍이 완료되면 최종 결과 가져오기
-          const finalResponse = await fetch(`${serverUrl}/threads/${threadId}/runs/${runId}/join`, {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' }
-          });
-      
-          const finalData = await finalResponse.json();
-          const finalEsValue = (finalData.outputs && finalData.outputs.esValue) || {};
-          
-          if (typeof onComplete === 'function') {
-            onComplete(finalEsValue);
-          }
-          
-          break;
-        }
-        
-        // 스트림 데이터를 디코딩하여 기존 버퍼에 추가
-        buffer += decoder.decode(value, { stream: true });
-        
-        // 줄 단위로 처리
-        let newlineIndex;
-        while ((newlineIndex = buffer.indexOf('\n')) !== -1) {
-          const line = buffer.substring(0, newlineIndex).trim();
-          buffer = buffer.substring(newlineIndex + 1);
-          
-          if (line && line.startsWith('data:')) {
-            try {
-              const jsonStr = line.substring(5).trim(); // "data: " 이후의 JSON 문자열 추출
-              const data = JSON.parse(jsonStr);
-  
-              if (data.event === "on_chain_end") {
-                const outputState = data.data.output;
-                if (outputState && outputState.outputs && outputState.outputs.esValue) {
-                  const outputEsValue = outputState.outputs.esValue;
-                  
-                  if (typeof onUpdate === 'function') {
-                    onUpdate(outputEsValue, data.name);
-                  }
-                }
-              }
-            } catch (parseError) {
-              console.error('JSON 파싱 오류:', parseError);
-            }
-          }
-        }
-      }
+
+    static get STORAGE_KEYS() {
+        return {
+            LOCAL_GENERATOR: 'is_local_eventstorming_generator'
+        };
     }
 
 
     static async healthCheckUsingConfig() {
-      try {
-        const CONFIG_PATH = `db://configs/eventstorming_generator`;
-        const storage = new Vue(StorageBase);
+        if(localStorage.getItem(this.STORAGE_KEYS.LOCAL_GENERATOR) === 'true') return true;
 
-        const config = await storage.getObject(CONFIG_PATH);
-        if(config.server_url) return true;
-      } catch (error) {
-        console.error('서버 상태 확인 오류:', error);
-        return false;
-      }
+        try {
+            const storage = new Vue(StorageBase);
+            const config = await storage.getObject(this.PATHS.CONFIG);
+            if(config.is_use_backend) return true;
+        } catch (error) {
+            console.error('서버 상태 확인 오류:', error);
+            return false;
+        }
     }
 
     static async makeNewJob(jobId, selectedDraftOptions, userInfo, information, preferedLanguage) {
-      const JOB_PATH = `db://requestedJobs/eventstorming_generator/${jobId}`;
-      const storage = new Vue(StorageBase);
+        const storage = new Vue(StorageBase);
 
-      await storage.setObject(JOB_PATH, {
-        "state": {
-          "inputs": {
-            "jobId": jobId,
-            "selectedDraftOptions": selectedDraftOptions,
-            "userInfo": userInfo,
-            "information": information,
-            "preferedLanguage": preferedLanguage
-          }
-        }
-      })
+        await storage.setObject(this._getJobPath(jobId), {
+            "state": {
+                "inputs": {
+                    "jobId": jobId,
+                    "selectedDraftOptions": selectedDraftOptions,
+                    "userInfo": userInfo,
+                    "information": information,
+                    "preferedLanguage": preferedLanguage
+                }
+            }
+        });
 
-      return jobId;
+        await storage.setObject(this._getRequestJobPath(jobId), {
+            "createdAt": firebase.database.ServerValue.TIMESTAMP
+        });
+
+        return jobId;
     }
 
-    static watchJob(jobId, onUpdate, onComplete) {
-      const JOB_PATH = `db://jobs/eventstorming_generator/${jobId}/state`;
-      const storage = new Vue(StorageBase);
-
-      storage.watch(JOB_PATH, (stateString) => {
-        if(!stateString) return;
+    static watchJob(jobId, onUpdate, onComplete, onWaiting, onFailed) {
+        const storage = new Vue(StorageBase);
+        const jobState = this._initializeJobState(storage, jobId);
+        const callbacks = { onUpdate, onComplete, onWaiting, onFailed };
         
-        const state = this.parseJobState(stateString);
-        if(state.isCompleted) {
-          onComplete(state.esValue, state.logs, state.totalPercentage);
-        }
-        else {
-          onUpdate(state.esValue, state.logs, state.totalPercentage);
-        }
-      });
+        this._setupJobWatchers(storage, jobId, jobState, callbacks);
     }
 
-    static parseJobState(stateString) {
-      const state = JSON.parse(stateString);
-      const outputs = state.outputs;
-      return {
-        isCompleted: outputs.isCompleted,
-        esValue: outputs.esValue,
-        logs: outputs.logs,
-        totalProgressCount: outputs.totalProgressCount,
-        currentProgressCount: outputs.currentProgressCount,
-        totalPercentage: Math.min(Math.round((outputs.currentProgressCount / outputs.totalProgressCount) * 100), 100)
-      }
+    
+    // 작업 상태 초기화
+    static _initializeJobState(storage, jobId) {
+        let accumulatedOutputState = this._restoreDataFromFirebase(
+            storage.getObject(`${this._getJobPath(jobId)}/state/outputs`)
+        );
+        
+        if (!accumulatedOutputState.esValue) {
+            accumulatedOutputState.esValue = {
+                elements: {},
+                relations: {}
+            };
+        }
+        if (!accumulatedOutputState.logs) {
+            accumulatedOutputState.logs = [];
+        }
+
+        return accumulatedOutputState;
+    }
+
+    // 모든 워처 설정
+    static _setupJobWatchers(storage, jobId, jobState, callbacks) {
+        const parseState = () => this._parseAndNotifyJobState(jobState, callbacks);
+        
+        // 대기 중인 작업 수 감시
+        this._watchWaitingJobCount(storage, jobId, callbacks.onWaiting);
+        
+        // 작업 상태 감시
+        this._watchJobStatus(storage, jobId, jobState, callbacks.onFailed, parseState);
+        
+        // 진행률 감시
+        this._watchJobProgress(storage, jobId, jobState, parseState);
+        
+        // 로그 감시
+        this._watchJobLogs(storage, jobId, jobState, parseState);
+        
+        // ES 값 감시 (elements, relations)
+        this._watchEsValues(storage, jobId, jobState, parseState);
+    }
+
+    // 대기 중인 작업 수 감시
+    static _watchWaitingJobCount(storage, jobId, onWaiting) {
+        storage.watch(`${this._getRequestJobPath(jobId)}/waitingJobCount`, (waitingJobCount) => {
+            if (waitingJobCount && waitingJobCount > 0) {
+                onWaiting(waitingJobCount);
+            }
+        });
+    }
+
+    // 작업 상태 감시 (완료/실패)
+    static _watchJobStatus(storage, jobId, jobState, onFailed, parseState) {
+        // 실패 상태 감시
+        storage.watch(`${this._getJobPath(jobId)}/state/outputs/isFailed`, (isFailed) => {
+            if (!isFailed) return;
+            
+            jobState.isFailed = isFailed;
+            parseState();
+            
+            const errorLogs = jobState.logs.filter(log => log.level === "error");
+            onFailed(errorLogs.join("\n"));
+        });
+
+        // 완료 상태 감시
+        storage.watch(`${this._getJobPath(jobId)}/state/outputs/isCompleted`, (isCompleted) => {
+            if (!isCompleted) return;
+            
+            jobState.isCompleted = isCompleted;
+            parseState();
+        });
+    }
+
+    // 작업 진행률 감시
+    static _watchJobProgress(storage, jobId, jobState, parseState) {
+        storage.watch(`${this._getJobPath(jobId)}/state/outputs/totalProgressCount`, (totalProgressCount) => {
+            if (!totalProgressCount) return;
+            
+            jobState.totalProgressCount = totalProgressCount;
+            parseState();
+        });
+
+        storage.watch(`${this._getJobPath(jobId)}/state/outputs/currentProgressCount`, (currentProgressCount) => {
+            if (!currentProgressCount) return;
+            
+            jobState.currentProgressCount = currentProgressCount;
+            parseState();
+        });
+    }
+
+    // 로그 감시
+    static _watchJobLogs(storage, jobId, jobState, parseState) {
+        storage.watch_added(`${this._getJobPath(jobId)}/state/outputs/logs`, null, (log) => {
+            if (!log) return;
+            
+            jobState.logs.push(this._restoreDataFromFirebase(log));
+            parseState();
+        });
+    }
+
+    // ES 값 감시 (elements, relations)
+    static _watchEsValues(storage, jobId, jobState, parseState) {
+        // Elements 감시
+        this._watchEsValueCollection(
+            storage, 
+            jobId, 
+            'elements', 
+            jobState.esValue.elements, 
+            parseState
+        );
+
+        // Relations 감시
+        this._watchEsValueCollection(
+            storage, 
+            jobId, 
+            'relations', 
+            jobState.esValue.relations, 
+            parseState
+        );
+    }
+
+    // ES 값 컬렉션 감시 (공통 로직)
+    static _watchEsValueCollection(storage, jobId, collectionName, targetCollection, parseState) {
+        const basePath = `${this._getJobPath(jobId)}/state/outputs/esValue/${collectionName}`;
+        
+        // 변경 감시
+        storage.watch_changed(basePath, (item, key) => {
+            if (!item || !key) return;
+            
+            targetCollection[key] = this._restoreDataFromFirebase(item);
+            parseState();
+        });
+
+        // 추가 감시
+        storage.watch_added(basePath, null, (item) => {
+            if (!item) return;
+            
+            targetCollection[item.id] = this._restoreDataFromFirebase(item);
+            parseState();
+        });
+    }
+
+    // 작업 상태 파싱 및 콜백 호출
+    static _parseAndNotifyJobState(jobState, callbacks) {
+        const state = this._parseJobState(jobState);
+        this._addElementRefToState(state.esValue);
+ 
+        if (state.isCompleted) {
+            callbacks.onComplete(state.esValue, state.logs, state.totalPercentage);
+        } else {
+            callbacks.onUpdate(state.esValue, state.logs, state.totalPercentage);
+        }
+    }
+
+    static _addElementRefToState(esValue) {
+        if(!esValue || !esValue.elements || !esValue.relations) return;
+
+        const relations = esValue.relations;
+        const elements = esValue.elements;
+
+        for(const relation of Object.values(relations)) {
+            if(relation.from && elements[relation.from]) {
+                relation.sourceElement = elements[relation.from];
+            }
+            if(relation.to && elements[relation.to]) {
+                relation.targetElement = elements[relation.to];
+            }
+        }
+    }
+
+    static _parseJobState(outputs) {
+        const totalPercentage = outputs.totalProgressCount 
+            ? Math.min(Math.round((outputs.currentProgressCount / outputs.totalProgressCount) * 100), 100)
+            : 0;
+
+        return {
+            isCompleted: outputs.isCompleted,
+            esValue: outputs.esValue,
+            logs: outputs.logs,
+            totalProgressCount: outputs.totalProgressCount,
+            currentProgressCount: outputs.currentProgressCount,
+            totalPercentage
+        };
+    }
+
+
+    static _getJobPath(jobId) {
+        return `db://${this.PATHS.JOBS}/${this._getNamespace()}/${jobId}`;
+    }
+
+    static _getRequestJobPath(jobId) {
+        return `db://${this.PATHS.REQUESTED_JOBS}/${this._getNamespace()}/${jobId}`;
+    }
+
+    static _getNamespace() {
+        return localStorage.getItem(this.STORAGE_KEYS.LOCAL_GENERATOR) === 'true' 
+            ? this.NAMESPACES.LOCAL 
+            : this.NAMESPACES.DEFAULT;
+    }
+
+
+    /**
+     * Firebase에서 가져온 데이터를 원본 형태로 복원
+     * @param {Object} data Firebase에서 가져온 데이터
+     * @returns {Object} 복원된 데이터
+     */
+    static _restoreDataFromFirebase(data) {
+        const processValue = (value) => {
+            if (value === "") {
+                return null;  // 빈 문자열 → null
+            } else if (Array.isArray(value) && value.length === 1 && value[0] === "__EMPTY_ARRAY__") {
+                return [];  // 마커 → 빈 배열
+            } else if (typeof value === 'object' && value !== null && !Array.isArray(value) && 
+                       Object.keys(value).length === 1 && value["__EMPTY_OBJECT__"] === true) {
+                return {};  // 마커 객체 → 빈 객체
+            } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+                // 객체인 경우 재귀적으로 처리
+                const result = {};
+                for (const [k, v] of Object.entries(value)) {
+                    result[k] = processValue(v);
+                }
+                return result;
+            } else if (Array.isArray(value)) {
+                // 배열인 경우 각 요소를 재귀적으로 처리
+                return value.map(item => processValue(item));
+            } else {
+                return value;
+            }
+        };
+
+        if (typeof data === 'object' && data !== null && !Array.isArray(data)) {
+            const result = {};
+            for (const [k, v] of Object.entries(data)) {
+                result[k] = processValue(v);
+            }
+            return result;
+        }
+        return data;
     }
 }
-
-EsValueLangGraphStudioProxy.DEFAULT_SERVER_URL = "http://127.0.0.1:2024"
 
 module.exports = EsValueLangGraphStudioProxy

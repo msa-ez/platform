@@ -3,11 +3,11 @@ export const aggregateDraftScenarios = {
         "selectedStructureOption": {
             "boundedContexts": [
                 {
-                    "name": "LibraryBookManagement",
-                    "alias": "도서관리",
+                    "name": "BookManagement",
+                    "alias": "도서 관리",
                     "importance": "Core Domain",
-                    "complexity": 0.8,
-                    "differentiation": 0.95,
+                    "complexity": "0.8",
+                    "differentiation": "0.9",
                     "implementationStrategy": "Rich Domain Model",
                     "aggregates": [
                         {
@@ -17,9 +17,11 @@ export const aggregateDraftScenarios = {
                     ],
                     "events": [
                         "BookRegistered",
-                        "BookStateChanged",
-                        "BookDisposed",
-                        "BookHistoryQueried"
+                        "BookRegistrationFailed",
+                        "BookDiscarded",
+                        "BookSearched",
+                        "BookLoanHistoryViewed",
+                        "BookStatusHistoryViewed"
                     ],
                     "requirements": [
                         {
@@ -28,33 +30,49 @@ export const aggregateDraftScenarios = {
                         },
                         {
                             "type": "userStory",
+                            "text": "도서는 도서명이나 ISBN으로 검색할 수 있어야 해."
+                        },
+                        {
+                            "type": "userStory",
+                            "text": "도서가 반납되면 자동으로 해당 도서의 상태가 '대출가능'으로 변경되어야 해. 만약 예약자가 있는 도서가 반납되면, 해당 도서는 '예약중' 상태로 변경되어야 해."
+                        },
+                        {
+                            "type": "userStory",
                             "text": "각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해."
                         },
                         {
                             "type": "Event",
-                            "text": "{\"name\":\"BookRegistered\",\"displayName\":\"도서 등록됨\",\"actor\":\"도서관리자\",\"level\":1,\"description\":\"관리자가 새로운 도서를 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력하여 등록함. ISBN 중복 및 13자리 유효성 검증을 통과함.\",\"inputs\":[\"도서명\",\"ISBN\",\"저자\",\"출판사\",\"카테고리 (소설/비소설/학술/잡지)\",\"ISBN 중복 없음\",\"ISBN 13자리\"],\"outputs\":[\"도서 엔티티 생성\",\"도서 상태: 대출가능\"],\"nextEvents\":[\"BookStateChanged\"]}"
+                            "text": "{\"name\":\"BookRegistered\",\"displayName\":\"도서가 등록됨\",\"actor\":\"도서 관리자\",\"level\":1,\"description\":\"도서 관리자가 새로운 도서를 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력하여 도서를 등록함. 등록된 도서는 '대출가능' 상태가 됨.\",\"inputs\":[\"도서명\",\"ISBN(13자리)\",\"저자\",\"출판사\",\"카테고리\",\"ISBN 중복 아님\"],\"outputs\":[\"신규 도서 데이터\",\"'대출가능' 상태\"],\"nextEvents\":[]}"
                         },
                         {
                             "type": "Event",
-                            "text": "{\"name\":\"BookStateChanged\",\"displayName\":\"도서 상태 변경됨\",\"actor\":\"도서관리시스템\",\"level\":2,\"description\":\"도서 등록/대출/반납/예약/폐기 등의 트리거에 의해 도서의 상태가 변경됨.\",\"inputs\":[\"도서 이벤트 트리거\",\"이전 도서 상태\"],\"outputs\":[\"도서 상태: 대출가능/대출중/예약중/폐기\"],\"nextEvents\":[\"BookDisposed\",\"LoanRequested\",\"LoanReturned\",\"BookReserved\"]}"
+                            "text": "{\"name\":\"BookRegistrationFailed\",\"displayName\":\"도서 등록 실패됨\",\"actor\":\"도서 관리자\",\"level\":2,\"description\":\"도서 등록 시 ISBN이 13자리가 아니거나 중복된 경우 등록이 거부됨.\",\"inputs\":[\"ISBN(중복 또는 13자리 아님)\"],\"outputs\":[\"에러 메시지\",\"등록 거부\"],\"nextEvents\":[]}"
                         },
                         {
                             "type": "Event",
-                            "text": "{\"name\":\"BookDisposed\",\"displayName\":\"도서 폐기됨\",\"actor\":\"도서관리자\",\"level\":3,\"description\":\"관리자가 훼손/분실로 인한 도서 폐기를 처리함. 폐기된 도서는 대출 불가 상태가 됨.\",\"inputs\":[\"도서 식별\",\"훼손/분실 사유\"],\"outputs\":[\"도서 상태: 폐기\"],\"nextEvents\":[]}"
+                            "text": "{\"name\":\"BookDiscarded\",\"displayName\":\"도서가 폐기됨\",\"actor\":\"도서 관리자\",\"level\":3,\"description\":\"도서가 훼손되거나 분실된 경우 도서 관리자가 해당 도서를 폐기 처리함. 폐기된 도서는 더 이상 대출이 불가함.\",\"inputs\":[\"도서 식별자\",\"폐기 사유\"],\"outputs\":[\"도서 상태 '폐기'로 변경\",\"대출 불가\"],\"nextEvents\":[]}"
                         },
                         {
                             "type": "Event",
-                            "text": "{\"name\":\"BookHistoryQueried\",\"displayName\":\"도서 이력 조회됨\",\"actor\":\"도서관리자\",\"level\":11,\"description\":\"관리자/회원이 도서별로 대출 및 상태 변경 이력을 조회함.\",\"inputs\":[\"도서 식별자\"],\"outputs\":[\"도서 대출 이력 목록\",\"도서 상태 변경 이력 목록\"],\"nextEvents\":[]}"
+                            "text": "{\"name\":\"BookSearched\",\"displayName\":\"도서가 검색됨\",\"actor\":\"회원\",\"level\":4,\"description\":\"회원이 도서명이나 ISBN으로 도서를 검색함.\",\"inputs\":[\"검색어(도서명 또는 ISBN)\"],\"outputs\":[\"검색 결과 도서 목록\"],\"nextEvents\":[]}"
+                        },
+                        {
+                            "type": "Event",
+                            "text": "{\"name\":\"BookLoanHistoryViewed\",\"displayName\":\"도서의 대출 이력이 조회됨\",\"actor\":\"도서 관리자\",\"level\":15,\"description\":\"도서 관리자가 특정 도서의 대출 이력을 조회함.\",\"inputs\":[\"도서 식별자\"],\"outputs\":[\"대출 이력 목록\"],\"nextEvents\":[]}"
+                        },
+                        {
+                            "type": "Event",
+                            "text": "{\"name\":\"BookStatusHistoryViewed\",\"displayName\":\"도서의 상태 변경 이력이 조회됨\",\"actor\":\"도서 관리자\",\"level\":16,\"description\":\"도서 관리자가 특정 도서의 상태 변경 이력을 조회함.\",\"inputs\":[\"도서 식별자\"],\"outputs\":[\"상태 변경 이력 목록\"],\"nextEvents\":[]}"
                         }
                     ],
-                    "role": "도서 등록, ISBN 중복 및 유효성 검사, 도서 상태 관리(대출가능/대출중/예약중/폐기), 도서 상태 변경 이력 추적, 도서의 폐기 처리 등 도서의 전체 수명 주기와 관련된 업무를 담당한다. 도서와 직접적으로 연관된 복잡한 비즈니스 규칙을 다루며, 사용자가 도서 등록, 상태 관리, 이력 조회 등 주도적으로 사용할 수 있다."
+                    "role": "도서 관리자는 새로운 도서를 등록하고, 도서의 상태(대출가능/대출중/예약중/폐기)를 관리하며, 각 도서의 대출 및 상태 변경 이력을 조회한다. 도서 등록 시 중복 및 형식 검증이 포함되고, 도서의 상태는 대출 및 반납 이벤트에 따라 변경된다. 도서 검색 기능도 포함한다."
                 },
                 {
-                    "name": "LibraryLoanProcess",
-                    "alias": "대출/반납",
+                    "name": "BookLoanProcess",
+                    "alias": "도서 대출 프로세스",
                     "importance": "Core Domain",
-                    "complexity": 0.85,
-                    "differentiation": 0.95,
+                    "complexity": "0.9",
+                    "differentiation": "0.8",
                     "implementationStrategy": "Rich Domain Model",
                     "aggregates": [
                         {
@@ -64,17 +82,23 @@ export const aggregateDraftScenarios = {
                         {
                             "name": "Reservation",
                             "alias": "예약"
+                        },
+                        {
+                            "name": "Member",
+                            "alias": "회원"
                         }
                     ],
                     "events": [
-                        "LoanRequested",
-                        "LoanApproved",
-                        "LoanReturned",
-                        "LoanExtended",
-                        "LoanOverdueChecked",
+                        "MemberVerified",
+                        "BookLoanRequested",
+                        "BookLoanRejected",
+                        "BookLoanApproved",
                         "BookReserved",
-                        "ReservationNotified",
-                        "LoanStatusQueried"
+                        "BookReturned",
+                        "BookAvailable",
+                        "BookReservedForNext",
+                        "LoanExtended",
+                        "LoanOverdue"
                     ],
                     "requirements": [
                         {
@@ -91,88 +115,263 @@ export const aggregateDraftScenarios = {
                         },
                         {
                             "type": "Event",
-                            "text": "{\"name\":\"LoanRequested\",\"displayName\":\"대출 신청됨\",\"actor\":\"회원\",\"level\":4,\"description\":\"회원이 도서명이나 ISBN으로 검색하여 대출 가능한 도서에 대해 대출을 신청함. 회원번호와 이름 확인 필요.\",\"inputs\":[\"회원번호\",\"이름\",\"도서명/ISBN\",\"대출 가능 상태 도서\",\"대출 기간(7/14/30일)\"],\"outputs\":[\"대출 신청 생성\",\"대출 대기 상태\"],\"nextEvents\":[\"LoanApproved\",\"BookReserved\"]}"
+                            "text": "{\"name\":\"MemberVerified\",\"displayName\":\"회원이 확인됨\",\"actor\":\"회원\",\"level\":5,\"description\":\"회원번호와 이름으로 회원 정보가 확인됨.\",\"inputs\":[\"회원번호\",\"이름\"],\"outputs\":[\"회원 정보\"],\"nextEvents\":[\"BookLoanRequested\"]}"
                         },
                         {
                             "type": "Event",
-                            "text": "{\"name\":\"LoanApproved\",\"displayName\":\"대출 완료됨\",\"actor\":\"도서관리시스템\",\"level\":5,\"description\":\"대출 요청이 처리되어 도서가 회원에게 대출됨. 도서 상태는 대출중으로 자동 변경됨.\",\"inputs\":[\"대출 신청\",\"대출 가능 도서\",\"회원 자격 유효\"],\"outputs\":[\"대출 기록 생성\",\"도서 상태: 대출중\",\"대출일\",\"반납예정일\"],\"nextEvents\":[\"LoanExtended\",\"LoanReturned\",\"LoanOverdueChecked\"]}"
+                            "text": "{\"name\":\"BookLoanRequested\",\"displayName\":\"도서 대출이 신청됨\",\"actor\":\"회원\",\"level\":6,\"description\":\"회원이 대출하고자 하는 도서와 대출 기간(7일/14일/30일)을 선택하여 대출을 신청함.\",\"inputs\":[\"회원 정보\",\"도서 식별자\",\"대출 기간\"],\"outputs\":[\"대출 신청 요청\"],\"nextEvents\":[\"BookLoanApproved\",\"BookLoanRejected\"]}"
                         },
                         {
                             "type": "Event",
-                            "text": "{\"name\":\"BookReserved\",\"displayName\":\"도서 예약됨\",\"actor\":\"회원\",\"level\":6,\"description\":\"회원이 이미 대출중인 도서에 대해 예약 신청을 함. 예약된 도서는 예약 대기 리스트에 등록됨.\",\"inputs\":[\"회원번호\",\"이름\",\"대출중 상태 도서\"],\"outputs\":[\"예약 기록 생성\",\"도서 상태: 예약중\"],\"nextEvents\":[\"LoanReturned\"]}"
+                            "text": "{\"name\":\"BookLoanRejected\",\"displayName\":\"도서 대출이 거부됨\",\"actor\":\"도서 대출 시스템\",\"level\":7,\"description\":\"도서가 폐기되었거나 대출 불가 상태인 경우 대출이 거부됨.\",\"inputs\":[\"도서 상태 '폐기' 또는 대출 불가\"],\"outputs\":[\"대출 거부 알림\"],\"nextEvents\":[]}"
                         },
                         {
                             "type": "Event",
-                            "text": "{\"name\":\"LoanReturned\",\"displayName\":\"도서 반납됨\",\"actor\":\"회원\",\"level\":7,\"description\":\"회원이 대출 중인 도서를 반납함. 반납 후 예약자가 있으면 도서 상태는 예약중, 없으면 대출가능으로 변경됨.\",\"inputs\":[\"대출 중 도서\",\"회원\"],\"outputs\":[\"반납 기록 생성\",\"도서 상태: 대출가능/예약중\"],\"nextEvents\":[\"BookStateChanged\",\"ReservationNotified\"]}"
+                            "text": "{\"name\":\"BookLoanApproved\",\"displayName\":\"도서 대출이 승인됨\",\"actor\":\"도서 대출 시스템\",\"level\":8,\"description\":\"도서가 대출 가능 상태라면 대출이 승인되고 대출 정보가 생성됨. 도서 상태는 '대출중'으로 변경됨.\",\"inputs\":[\"도서 상태 '대출가능'\",\"대출 신청 정보\"],\"outputs\":[\"대출 정보 생성\",\"도서 상태 '대출중'으로 변경\"],\"nextEvents\":[]}"
                         },
                         {
                             "type": "Event",
-                            "text": "{\"name\":\"LoanExtended\",\"displayName\":\"대출 연장됨\",\"actor\":\"회원\",\"level\":8,\"description\":\"회원이 대출중인 도서의 반납예정일을 연장 신청함. 연장은 정책에 따라 1회 혹은 제한 가능.\",\"inputs\":[\"회원\",\"대출중 상태 도서\",\"연장 조건 충족\"],\"outputs\":[\"반납예정일 변경\"],\"nextEvents\":[\"LoanOverdueChecked\",\"LoanReturned\"]}"
+                            "text": "{\"name\":\"BookReserved\",\"displayName\":\"도서가 예약됨\",\"actor\":\"회원\",\"level\":9,\"description\":\"대출하려는 도서가 이미 대출 중일 때 회원이 해당 도서의 예약을 신청하면 예약이 생성되고, 도서의 상태가 '예약중'으로 변경됨.\",\"inputs\":[\"회원 정보\",\"대출 중인 도서 식별자\"],\"outputs\":[\"예약 정보 생성\",\"도서 상태 '예약중'으로 변경\"],\"nextEvents\":[]}"
                         },
                         {
                             "type": "Event",
-                            "text": "{\"name\":\"LoanOverdueChecked\",\"displayName\":\"연체 확인됨\",\"actor\":\"도서관리시스템\",\"level\":9,\"description\":\"반납 예정일이 지난 도서의 연체 상태를 확인하여 연체로 표시함.\",\"inputs\":[\"대출중 도서\",\"현재 일자\",\"반납예정일\"],\"outputs\":[\"대출 상태: 연체\"],\"nextEvents\":[\"LoanReturned\"]}"
+                            "text": "{\"name\":\"BookReturned\",\"displayName\":\"도서가 반납됨\",\"actor\":\"회원\",\"level\":10,\"description\":\"회원이 대출한 도서를 반납함. 도서에 예약자가 있으면 상태가 '예약중'으로, 없으면 '대출가능'으로 변경됨.\",\"inputs\":[\"반납 도서 식별자\"],\"outputs\":[\"반납 처리\",\"도서 상태 변경\"],\"nextEvents\":[\"BookAvailable\",\"BookReservedForNext\"]}"
                         },
                         {
                             "type": "Event",
-                            "text": "{\"name\":\"ReservationNotified\",\"displayName\":\"예약자 통보됨\",\"actor\":\"도서관리시스템\",\"level\":10,\"description\":\"예약자가 있는 도서가 반납되었을 때, 예약자에게 도서 이용 가능 안내를 통보함.\",\"inputs\":[\"도서 반납\",\"예약자 존재\"],\"outputs\":[\"예약자 알림\"],\"nextEvents\":[]}"
+                            "text": "{\"name\":\"BookAvailable\",\"displayName\":\"도서가 대출 가능 상태로 변경됨\",\"actor\":\"도서 대출 시스템\",\"level\":11,\"description\":\"반납된 도서에 예약자가 없는 경우 도서 상태가 '대출가능'으로 변경됨.\",\"inputs\":[\"반납 도서 식별자\",\"예약자 없음\"],\"outputs\":[\"도서 상태 '대출가능'\"],\"nextEvents\":[]}"
                         },
                         {
                             "type": "Event",
-                            "text": "{\"name\":\"LoanStatusQueried\",\"displayName\":\"대출 현황 조회됨\",\"actor\":\"도서관리자\",\"level\":12,\"description\":\"현재 대출 중인 도서와 각 대출 건의 대출일, 반납예정일, 상태(대출중/연체/반납완료)를 조회함.\",\"inputs\":[\"조회 조건 (전체/회원별/도서별)\"],\"outputs\":[\"대출 건 목록\",\"각 대출 상태\"],\"nextEvents\":[]}"
+                            "text": "{\"name\":\"BookReservedForNext\",\"displayName\":\"도서가 다음 예약자를 위해 예약중 상태로 변경됨\",\"actor\":\"도서 대출 시스템\",\"level\":12,\"description\":\"반납된 도서에 예약자가 있을 경우 도서 상태가 '예약중'으로 변경됨.\",\"inputs\":[\"반납 도서 식별자\",\"예약자 존재\"],\"outputs\":[\"도서 상태 '예약중'\"],\"nextEvents\":[]}"
+                        },
+                        {
+                            "type": "Event",
+                            "text": "{\"name\":\"LoanExtended\",\"displayName\":\"대출 기간이 연장됨\",\"actor\":\"회원\",\"level\":13,\"description\":\"회원이 대출 중인 도서의 대출 기간을 연장함. 연체 상태에서는 연장이 불가함.\",\"inputs\":[\"회원 정보\",\"대출 중인 도서 식별자\",\"연장 요청\"],\"outputs\":[\"대출 기간 연장\",\"새 반납 예정일\"],\"nextEvents\":[]}"
+                        },
+                        {
+                            "type": "Event",
+                            "text": "{\"name\":\"LoanOverdue\",\"displayName\":\"도서 대출이 연체됨\",\"actor\":\"도서 대출 시스템\",\"level\":14,\"description\":\"반납 예정일이 지나도 도서가 반납되지 않은 경우, 대출 건의 상태가 '연체'로 변경됨.\",\"inputs\":[\"반납 예정일 경과\",\"반납 미처리\"],\"outputs\":[\"대출 상태 '연체'로 변경\"],\"nextEvents\":[]}"
                         }
                     ],
-                    "role": "도서 대출 신청, 회원 확인, 도서 검색, 대출 처리 및 상태 변경, 대출 연장/반납/연체 관리, 예약 처리 및 예약자 알림, 대출 현황 조회 등 도서의 대출-반납 및 예약 관련 전체 프로세스를 책임진다. 회원과 도서의 상호작용, 대출/반납/연장/예약 등 복잡한 프로세스 흐름을 포함하며, 각종 정책과 상태 변화에 따라 동작한다."
+                    "role": "회원의 대출/반납, 예약, 대출 연장, 연체 관리 등 도서 대출 전체 프로세스를 담당한다. 회원 인증 및 도서 검색, 대출 상태 전환, 예약 처리, 반납 및 연체 상태 처리까지의 흐름을 포함한다."
                 }
             ],
             "relations": [
                 {
-                    "name": "BookStatusEventPubSub",
+                    "name": "BookManagementToBookLoanProcess",
                     "type": "Pub/Sub",
                     "upStream": {
-                        "name": "LibraryLoanProcess",
-                        "alias": "대출/반납"
+                        "name": "BookManagement",
+                        "alias": "도서 관리"
                     },
                     "downStream": {
-                        "name": "LibraryBookManagement",
-                        "alias": "도서관리"
-                    }
-                },
-                {
-                    "name": "BookInfoQueryPubSub",
-                    "type": "Pub/Sub",
-                    "upStream": {
-                        "name": "LibraryBookManagement",
-                        "alias": "도서관리"
-                    },
-                    "downStream": {
-                        "name": "LibraryLoanProcess",
-                        "alias": "대출/반납"
+                        "name": "BookLoanProcess",
+                        "alias": "도서 대출 프로세스"
                     }
                 }
             ],
-            "thoughts": "본 분리는 도메인 복잡도와 value stream(업무 프로세스) 기반으로 이루어졌다. 도서관리(도서의 등록, 폐기, 상태 관리, 이력 관리)는 도서의 라이프사이클 및 마스터 데이터 관리라는 관점에서 하나의 높은 응집도를 가지는 코어 도메인으로 분리하였다. 반면, 대출/반납은 회원과 도서의 상호작용, 대출-반납-연장-예약-알림 등 일련의 업무 흐름과 정책을 주도하는 프로세스 기반의 코어 도메인으로 독립적으로 분리하였다. 두 컨텍스트 모두 고도의 비즈니스 규칙과 UI/사용자 주도 프로세스를 내포하므로 Core Domain으로 분류했다. 인프라 측면에서, 현재 요구사항과 주어진 PBC 내에서는 도메인에 직접 대응되는 PBC가 없어 독자적 Rich Domain Model 전략을 채택하였다. 각 컨텍스트 간 결합도를 낮추기 위해 Pub/Sub 이벤트 기반 통신 패턴을 도입하였다(예: 대출 완료 시 도서 상태 변경 이벤트 발행, 도서 정보 변경 시 대출 컨텍스트에 동기화 등). 이를 통해 컨텍스트별 역할과 책임의 명확한 분리와 함께 시스템 확장성 및 유지보수성을 높일 수 있다.",
+            "thoughts": "이번 분리는 도메인 복잡도와 프로세스(밸류 스트림)를 기준으로 수행하였다. 우선, 요구사항을 PBC 매칭 규칙에 따라 확인하였으나, 도서 관리, 대출, 예약 등 도서관 특화 기능에 일치하는 PBC가 없어 모두 고유 도메인(코어 도메인)으로 분리하였다. 도서 등록/상태관리/검색/이력 등 도서 객체와 직접 관련된 복잡한 비즈니스 규칙은 '도서 관리'로, 회원 인증부터 대출/반납/예약/연장/연체 등 대출의 전체 흐름은 '도서 대출 프로세스'로 분리하였다. 이는 각 도메인의 책임과 이벤트 흐름, 데이터 일관성, 프로세스 소유권을 명확히 하기 위함이다. 두 컨텍스트는 도서의 상태 변화(대출 가능→대출중, 반납→예약중 등) 등에서 상호 이벤트를 주고받으며 Pub/Sub 패턴으로 느슨하게 연결된다. 인프라적 관점에서는 확장성 및 업무 변경의 유연성을 고려하여 단방향 이벤트 기반 연동을 선택하였다.",
             "explanations": [
                 {
-                    "sourceContext": "대출/반납",
-                    "targetContext": "도서관리",
+                    "sourceContext": "도서 관리",
+                    "targetContext": "도서 대출 프로세스",
                     "relationType": "Pub/Sub",
-                    "reason": "대출/반납 컨텍스트에서 대출, 반납, 예약 등의 이벤트가 발생하면 도서의 상태를 변경해야 하므로, 이벤트 발행을 통해 도서관리 컨텍스트에 상태 변경을 알린다. 이 방식은 결합도를 낮추고 유연한 확장을 가능하게 한다.",
-                    "interactionPattern": "대출/반납 컨텍스트에서 도서 상태 변경 이벤트를 발행하면 도서관리 컨텍스트가 구독하여 처리(Pub/Sub, 예: 메시지 브로커 사용)한다."
-                },
-                {
-                    "sourceContext": "도서관리",
-                    "targetContext": "대출/반납",
-                    "relationType": "Pub/Sub",
-                    "reason": "도서관리 컨텍스트에서 도서 정보가 변경(등록/폐기 등)될 경우, 대출/반납 컨텍스트가 해당 정보를 반영할 수 있도록 Pub/Sub 이벤트를 활용한다.",
-                    "interactionPattern": "도서관리 컨텍스트가 도서 정보 이벤트를 발행하면, 대출/반납 컨텍스트가 이를 구독해 자신의 로컬 데이터/캐시를 동기화한다."
+                    "reason": "도서의 상태 변화, 신규 등록, 폐기 등 이벤트가 발생하면 이를 대출/예약/연체 프로세스에 전달해야 하며, 두 컨텍스트가 느슨하게 결합되고 데이터 소유권이 명확히 분리됨.",
+                    "interactionPattern": "도서 상태 변경, 신규 등록, 폐기 등 이벤트를 Pub/Sub로 발행하며 대출 프로세스에서 구독하여 반영함. 예: 도서가 폐기되면 대출 프로세스에서 대출 거부 처리."
                 }
             ],
             "devisionAspect": "도메인 복잡도 분리+프로세스(value stream) 기반 분리",
-            "currentGeneratedLength": 3981
+            "currentGeneratedLength": 3347
+        },
+        "resultDevideBoundedContext": {
+            "도메인 복잡도 분리+프로세스(value stream) 기반 분리": {
+                "boundedContexts": [
+                    {
+                        "name": "BookManagement",
+                        "alias": "도서 관리",
+                        "importance": "Core Domain",
+                        "complexity": "0.8",
+                        "differentiation": "0.9",
+                        "implementationStrategy": "Rich Domain Model",
+                        "aggregates": [
+                            {
+                                "name": "Book",
+                                "alias": "도서"
+                            }
+                        ],
+                        "events": [
+                            "BookRegistered",
+                            "BookRegistrationFailed",
+                            "BookDiscarded",
+                            "BookSearched",
+                            "BookLoanHistoryViewed",
+                            "BookStatusHistoryViewed"
+                        ],
+                        "requirements": [
+                            {
+                                "type": "userStory",
+                                "text": "'도서 관리' 화면에서는 새로운 도서를 등록하고 현재 보유한 도서들의 상태를 관리할 수 있어야 해. 도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해. 등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야 해."
+                            },
+                            {
+                                "type": "userStory",
+                                "text": "도서는 도서명이나 ISBN으로 검색할 수 있어야 해."
+                            },
+                            {
+                                "type": "userStory",
+                                "text": "도서가 반납되면 자동으로 해당 도서의 상태가 '대출가능'으로 변경되어야 해. 만약 예약자가 있는 도서가 반납되면, 해당 도서는 '예약중' 상태로 변경되어야 해."
+                            },
+                            {
+                                "type": "userStory",
+                                "text": "각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해."
+                            },
+                            {
+                                "type": "Event",
+                                "text": "{\"name\":\"BookRegistered\",\"displayName\":\"도서가 등록됨\",\"actor\":\"도서 관리자\",\"level\":1,\"description\":\"도서 관리자가 새로운 도서를 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력하여 도서를 등록함. 등록된 도서는 '대출가능' 상태가 됨.\",\"inputs\":[\"도서명\",\"ISBN(13자리)\",\"저자\",\"출판사\",\"카테고리\",\"ISBN 중복 아님\"],\"outputs\":[\"신규 도서 데이터\",\"'대출가능' 상태\"],\"nextEvents\":[]}"
+                            },
+                            {
+                                "type": "Event",
+                                "text": "{\"name\":\"BookRegistrationFailed\",\"displayName\":\"도서 등록 실패됨\",\"actor\":\"도서 관리자\",\"level\":2,\"description\":\"도서 등록 시 ISBN이 13자리가 아니거나 중복된 경우 등록이 거부됨.\",\"inputs\":[\"ISBN(중복 또는 13자리 아님)\"],\"outputs\":[\"에러 메시지\",\"등록 거부\"],\"nextEvents\":[]}"
+                            },
+                            {
+                                "type": "Event",
+                                "text": "{\"name\":\"BookDiscarded\",\"displayName\":\"도서가 폐기됨\",\"actor\":\"도서 관리자\",\"level\":3,\"description\":\"도서가 훼손되거나 분실된 경우 도서 관리자가 해당 도서를 폐기 처리함. 폐기된 도서는 더 이상 대출이 불가함.\",\"inputs\":[\"도서 식별자\",\"폐기 사유\"],\"outputs\":[\"도서 상태 '폐기'로 변경\",\"대출 불가\"],\"nextEvents\":[]}"
+                            },
+                            {
+                                "type": "Event",
+                                "text": "{\"name\":\"BookSearched\",\"displayName\":\"도서가 검색됨\",\"actor\":\"회원\",\"level\":4,\"description\":\"회원이 도서명이나 ISBN으로 도서를 검색함.\",\"inputs\":[\"검색어(도서명 또는 ISBN)\"],\"outputs\":[\"검색 결과 도서 목록\"],\"nextEvents\":[]}"
+                            },
+                            {
+                                "type": "Event",
+                                "text": "{\"name\":\"BookLoanHistoryViewed\",\"displayName\":\"도서의 대출 이력이 조회됨\",\"actor\":\"도서 관리자\",\"level\":15,\"description\":\"도서 관리자가 특정 도서의 대출 이력을 조회함.\",\"inputs\":[\"도서 식별자\"],\"outputs\":[\"대출 이력 목록\"],\"nextEvents\":[]}"
+                            },
+                            {
+                                "type": "Event",
+                                "text": "{\"name\":\"BookStatusHistoryViewed\",\"displayName\":\"도서의 상태 변경 이력이 조회됨\",\"actor\":\"도서 관리자\",\"level\":16,\"description\":\"도서 관리자가 특정 도서의 상태 변경 이력을 조회함.\",\"inputs\":[\"도서 식별자\"],\"outputs\":[\"상태 변경 이력 목록\"],\"nextEvents\":[]}"
+                            }
+                        ],
+                        "role": "도서 관리자는 새로운 도서를 등록하고, 도서의 상태(대출가능/대출중/예약중/폐기)를 관리하며, 각 도서의 대출 및 상태 변경 이력을 조회한다. 도서 등록 시 중복 및 형식 검증이 포함되고, 도서의 상태는 대출 및 반납 이벤트에 따라 변경된다. 도서 검색 기능도 포함한다."
+                    },
+                    {
+                        "name": "BookLoanProcess",
+                        "alias": "도서 대출 프로세스",
+                        "importance": "Core Domain",
+                        "complexity": "0.9",
+                        "differentiation": "0.8",
+                        "implementationStrategy": "Rich Domain Model",
+                        "aggregates": [
+                            {
+                                "name": "Loan",
+                                "alias": "대출"
+                            },
+                            {
+                                "name": "Reservation",
+                                "alias": "예약"
+                            },
+                            {
+                                "name": "Member",
+                                "alias": "회원"
+                            }
+                        ],
+                        "events": [
+                            "MemberVerified",
+                            "BookLoanRequested",
+                            "BookLoanRejected",
+                            "BookLoanApproved",
+                            "BookReserved",
+                            "BookReturned",
+                            "BookAvailable",
+                            "BookReservedForNext",
+                            "LoanExtended",
+                            "LoanOverdue"
+                        ],
+                        "requirements": [
+                            {
+                                "type": "userStory",
+                                "text": "'대출/반납' 화면에서는 회원이 도서를 대출하고 반납하는 것을 관리할 수 있어야 해. 대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할 도서를 선택해야 해. 도서는 도서명이나 ISBN으로 검색할 수 있어야 해. 대출 기간은 7일/14일/30일 중에서 선택할 수 있어. 만약 대출하려는 도서가 이미 대출 중이라면, 예약 신청이 가능해야 해. 대출이 완료되면 해당 도서의 상태는 자동으로 '대출중'으로 변경되어야 해."
+                            },
+                            {
+                                "type": "userStory",
+                                "text": "대출 현황 화면에서는 현재 대출 중인 도서들의 목록을 볼 수 있어야 해. 각 대출 건에 대해 대출일, 반납예정일, 현재 상태(대출중/연체/반납완료)를 확인할 수 있어야 하고, 대출 중인 도서는 연장이나 반납 처리가 가능해야 해. 도서가 반납되면 자동으로 해당 도서의 상태가 '대출가능'으로 변경되어야 해. 만약 예약자가 있는 도서가 반납되면, 해당 도서는 '예약중' 상태로 변경되어야 해."
+                            },
+                            {
+                                "type": "userStory",
+                                "text": "각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해."
+                            },
+                            {
+                                "type": "Event",
+                                "text": "{\"name\":\"MemberVerified\",\"displayName\":\"회원이 확인됨\",\"actor\":\"회원\",\"level\":5,\"description\":\"회원번호와 이름으로 회원 정보가 확인됨.\",\"inputs\":[\"회원번호\",\"이름\"],\"outputs\":[\"회원 정보\"],\"nextEvents\":[\"BookLoanRequested\"]}"
+                            },
+                            {
+                                "type": "Event",
+                                "text": "{\"name\":\"BookLoanRequested\",\"displayName\":\"도서 대출이 신청됨\",\"actor\":\"회원\",\"level\":6,\"description\":\"회원이 대출하고자 하는 도서와 대출 기간(7일/14일/30일)을 선택하여 대출을 신청함.\",\"inputs\":[\"회원 정보\",\"도서 식별자\",\"대출 기간\"],\"outputs\":[\"대출 신청 요청\"],\"nextEvents\":[\"BookLoanApproved\",\"BookLoanRejected\"]}"
+                            },
+                            {
+                                "type": "Event",
+                                "text": "{\"name\":\"BookLoanRejected\",\"displayName\":\"도서 대출이 거부됨\",\"actor\":\"도서 대출 시스템\",\"level\":7,\"description\":\"도서가 폐기되었거나 대출 불가 상태인 경우 대출이 거부됨.\",\"inputs\":[\"도서 상태 '폐기' 또는 대출 불가\"],\"outputs\":[\"대출 거부 알림\"],\"nextEvents\":[]}"
+                            },
+                            {
+                                "type": "Event",
+                                "text": "{\"name\":\"BookLoanApproved\",\"displayName\":\"도서 대출이 승인됨\",\"actor\":\"도서 대출 시스템\",\"level\":8,\"description\":\"도서가 대출 가능 상태라면 대출이 승인되고 대출 정보가 생성됨. 도서 상태는 '대출중'으로 변경됨.\",\"inputs\":[\"도서 상태 '대출가능'\",\"대출 신청 정보\"],\"outputs\":[\"대출 정보 생성\",\"도서 상태 '대출중'으로 변경\"],\"nextEvents\":[]}"
+                            },
+                            {
+                                "type": "Event",
+                                "text": "{\"name\":\"BookReserved\",\"displayName\":\"도서가 예약됨\",\"actor\":\"회원\",\"level\":9,\"description\":\"대출하려는 도서가 이미 대출 중일 때 회원이 해당 도서의 예약을 신청하면 예약이 생성되고, 도서의 상태가 '예약중'으로 변경됨.\",\"inputs\":[\"회원 정보\",\"대출 중인 도서 식별자\"],\"outputs\":[\"예약 정보 생성\",\"도서 상태 '예약중'으로 변경\"],\"nextEvents\":[]}"
+                            },
+                            {
+                                "type": "Event",
+                                "text": "{\"name\":\"BookReturned\",\"displayName\":\"도서가 반납됨\",\"actor\":\"회원\",\"level\":10,\"description\":\"회원이 대출한 도서를 반납함. 도서에 예약자가 있으면 상태가 '예약중'으로, 없으면 '대출가능'으로 변경됨.\",\"inputs\":[\"반납 도서 식별자\"],\"outputs\":[\"반납 처리\",\"도서 상태 변경\"],\"nextEvents\":[\"BookAvailable\",\"BookReservedForNext\"]}"
+                            },
+                            {
+                                "type": "Event",
+                                "text": "{\"name\":\"BookAvailable\",\"displayName\":\"도서가 대출 가능 상태로 변경됨\",\"actor\":\"도서 대출 시스템\",\"level\":11,\"description\":\"반납된 도서에 예약자가 없는 경우 도서 상태가 '대출가능'으로 변경됨.\",\"inputs\":[\"반납 도서 식별자\",\"예약자 없음\"],\"outputs\":[\"도서 상태 '대출가능'\"],\"nextEvents\":[]}"
+                            },
+                            {
+                                "type": "Event",
+                                "text": "{\"name\":\"BookReservedForNext\",\"displayName\":\"도서가 다음 예약자를 위해 예약중 상태로 변경됨\",\"actor\":\"도서 대출 시스템\",\"level\":12,\"description\":\"반납된 도서에 예약자가 있을 경우 도서 상태가 '예약중'으로 변경됨.\",\"inputs\":[\"반납 도서 식별자\",\"예약자 존재\"],\"outputs\":[\"도서 상태 '예약중'\"],\"nextEvents\":[]}"
+                            },
+                            {
+                                "type": "Event",
+                                "text": "{\"name\":\"LoanExtended\",\"displayName\":\"대출 기간이 연장됨\",\"actor\":\"회원\",\"level\":13,\"description\":\"회원이 대출 중인 도서의 대출 기간을 연장함. 연체 상태에서는 연장이 불가함.\",\"inputs\":[\"회원 정보\",\"대출 중인 도서 식별자\",\"연장 요청\"],\"outputs\":[\"대출 기간 연장\",\"새 반납 예정일\"],\"nextEvents\":[]}"
+                            },
+                            {
+                                "type": "Event",
+                                "text": "{\"name\":\"LoanOverdue\",\"displayName\":\"도서 대출이 연체됨\",\"actor\":\"도서 대출 시스템\",\"level\":14,\"description\":\"반납 예정일이 지나도 도서가 반납되지 않은 경우, 대출 건의 상태가 '연체'로 변경됨.\",\"inputs\":[\"반납 예정일 경과\",\"반납 미처리\"],\"outputs\":[\"대출 상태 '연체'로 변경\"],\"nextEvents\":[]}"
+                            }
+                        ],
+                        "role": "회원의 대출/반납, 예약, 대출 연장, 연체 관리 등 도서 대출 전체 프로세스를 담당한다. 회원 인증 및 도서 검색, 대출 상태 전환, 예약 처리, 반납 및 연체 상태 처리까지의 흐름을 포함한다."
+                    }
+                ],
+                "relations": [
+                    {
+                        "name": "BookManagementToBookLoanProcess",
+                        "type": "Pub/Sub",
+                        "upStream": {
+                            "name": "BookManagement",
+                            "alias": "도서 관리"
+                        },
+                        "downStream": {
+                            "name": "BookLoanProcess",
+                            "alias": "도서 대출 프로세스"
+                        }
+                    }
+                ],
+                "thoughts": "이번 분리는 도메인 복잡도와 프로세스(밸류 스트림)를 기준으로 수행하였다. 우선, 요구사항을 PBC 매칭 규칙에 따라 확인하였으나, 도서 관리, 대출, 예약 등 도서관 특화 기능에 일치하는 PBC가 없어 모두 고유 도메인(코어 도메인)으로 분리하였다. 도서 등록/상태관리/검색/이력 등 도서 객체와 직접 관련된 복잡한 비즈니스 규칙은 '도서 관리'로, 회원 인증부터 대출/반납/예약/연장/연체 등 대출의 전체 흐름은 '도서 대출 프로세스'로 분리하였다. 이는 각 도메인의 책임과 이벤트 흐름, 데이터 일관성, 프로세스 소유권을 명확히 하기 위함이다. 두 컨텍스트는 도서의 상태 변화(대출 가능→대출중, 반납→예약중 등) 등에서 상호 이벤트를 주고받으며 Pub/Sub 패턴으로 느슨하게 연결된다. 인프라적 관점에서는 확장성 및 업무 변경의 유연성을 고려하여 단방향 이벤트 기반 연동을 선택하였다.",
+                "explanations": [
+                    {
+                        "sourceContext": "도서 관리",
+                        "targetContext": "도서 대출 프로세스",
+                        "relationType": "Pub/Sub",
+                        "reason": "도서의 상태 변화, 신규 등록, 폐기 등 이벤트가 발생하면 이를 대출/예약/연체 프로세스에 전달해야 하며, 두 컨텍스트가 느슨하게 결합되고 데이터 소유권이 명확히 분리됨.",
+                        "interactionPattern": "도서 상태 변경, 신규 등록, 폐기 등 이벤트를 Pub/Sub로 발행하며 대출 프로세스에서 구독하여 반영함. 예: 도서가 폐기되면 대출 프로세스에서 대출 거부 처리."
+                    }
+                ],
+                "devisionAspect": "도메인 복잡도 분리+프로세스(value stream) 기반 분리",
+                "currentGeneratedLength": 3347
+            }
         },
         "draftOptions": {
-            "LibraryBookManagement": {
+            "BookManagement": {
                 "structure": [
                     {
                         "aggregate": {
@@ -191,64 +390,44 @@ export const aggregateDraftScenarios = {
                         ],
                         "valueObjects": [
                             {
-                                "name": "LoanReference",
-                                "alias": "대출 참조",
+                                "name": "BookLoanHistoryInfo",
+                                "alias": "도서 대출 이력 정보",
                                 "referencedAggregate": {
                                     "name": "Loan",
                                     "alias": "대출"
                                 }
                             },
                             {
-                                "name": "ReservationReference",
-                                "alias": "예약 참조",
-                                "referencedAggregate": {
-                                    "name": "Reservation",
-                                    "alias": "예약"
-                                }
-                            }
-                        ]
-                    },
-                    {
-                        "aggregate": {
-                            "name": "BookHistory",
-                            "alias": "도서 이력"
-                        },
-                        "enumerations": [],
-                        "valueObjects": [
-                            {
-                                "name": "BookReference",
-                                "alias": "도서 참조",
-                                "referencedAggregate": {
-                                    "name": "Book",
-                                    "alias": "도서"
-                                }
+                                "name": "BookStatusHistoryInfo",
+                                "alias": "도서 상태 변경 이력 정보"
                             }
                         ]
                     }
                 ],
                 "pros": {
-                    "cohesion": "도서와 이력 기능이 분리되어 각각 핵심 역할에 집중할 수 있음.",
-                    "coupling": "도서와 이력 간의 의존성이 ValueObject(참조) 수준으로 낮아집니다.",
-                    "consistency": "도서 트랜잭션과 이력 기록이 분리되어, 대용량 이력에도 안정적으로 대응 가능.",
-                    "encapsulation": "이력 관련 정책이나 확장(예: 다양한 이력 종류 추가)이 Book과 분리되어 독립적으로 변경 가능.",
-                    "complexity": "이력 관리 로직이 별도 Aggregate에 있어 도서 관리가 단순해지고, 이해하기 쉬움.",
-                    "independence": "이력 저장방식이나 보존정책 변경 시 도서 Aggregate에 영향 없음.",
-                    "performance": "도서 데이터와 이력 데이터를 분리 저장 및 조회할 수 있어 대량 이력에도 성능 저하가 없음."
+                    "cohesion": "도서의 핵심 정보와 이력 데이터, 상태 전이를 한 Aggregate 내에서 일관성 있게 관리하여 비즈니스 규칙을 강하게 보장한다.",
+                    "coupling": "도서 관련 작업이 한 Aggregate 내에서 해결되므로 외부 참조와 Aggregate 간 결합이 최소화된다.",
+                    "consistency": "ISBN 유일성, 상태 전이 등 도서 중심의 모든 비즈니스 불변성이 단일 트랜잭션에서 강하게 보장된다.",
+                    "encapsulation": "도서의 등록, 폐기, 상태 전이, 이력 관리까지 내부에서 처리되어 외부에 복잡성을 노출하지 않는다.",
+                    "complexity": "이력까지 모두 한 곳에서 관리되어 구현 및 유지보수가 직관적이다.",
+                    "independence": "Book Aggregate만으로 도서 업무의 대부분이 독립적으로 처리된다.",
+                    "performance": "도서와 연관된 이력/상태 조회가 단일 Aggregate 조회로 효율적이다."
                 },
                 "cons": {
-                    "cohesion": "상태 변경과 이력 기록이 분산되어 있어 단일 도서 관리 흐름이 단순하지 않을 수 있음.",
-                    "coupling": "이력 기록 시 도서의 참조를 유지해야 하므로 약간의 간접적인 결합이 존재함.",
-                    "consistency": "상태 변경과 이력 기록이 각각 별도의 트랜잭션에서 발생할 수 있어, 일시적으로 불일치 상태가 발생 가능.",
-                    "encapsulation": "도서 상태 변경이 이력과 분리되어 이력 누락/오류를 방지하는 추가적 방어 코드가 필요함.",
-                    "complexity": "이력 데이터 연동, 조회 시 cross-aggregate 처리 로직(조인 등)이 추가됨.",
-                    "independence": "도서 삭제 등 라이프사이클 정책이 이력 데이터와 동기화되어야 하므로 관리 포인트가 증가함.",
-                    "performance": "도서와 이력을 함께 조회할 경우 두 Aggregate를 동시에 접근해야 하므로 I/O가 증가함."
+                    "cohesion": "이력 데이터가 계속 누적되면 Aggregate가 비대해져 단일 책임 원칙이 약화될 수 있다.",
+                    "coupling": "이력 데이터의 구조 변경이 Book 전체에 영향을 줄 수 있어 변화에 취약해진다.",
+                    "consistency": "대량 이력 데이터로 인한 트랜잭션 부하 및 충돌 가능성이 증가한다.",
+                    "encapsulation": "외부 시스템에서 이력 정보만 분리 활용 시 도서 전체 구조를 알아야 한다.",
+                    "complexity": "이력 데이터, 상태 등 다양한 관심사가 한 객체에 집중되어 복잡도가 누적된다.",
+                    "independence": "이력 처리, 조회만 확장하려면 Book 전체 구조를 함께 고려해야 한다.",
+                    "performance": "이력 데이터 증가 시 단일 Aggregate 조회/저장 성능 저하 우려가 있다."
                 },
+                "isAIRecommended": false,
                 "boundedContext": {
-                    "name": "LibraryBookManagement",
-                    "alias": "도서관리",
-                    "displayName": "도서관리",
-                    "description": "# Requirements\n\n## userStory\n\n'도서 관리' 화면에서는 새로운 도서를 등록하고 현재 보유한 도서들의 상태를 관리할 수 있어야 해. 도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해. 등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야 해.\n\n## userStory\n\n각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해.\n\n## Event\n\n{\"name\":\"BookRegistered\",\"displayName\":\"도서 등록됨\",\"actor\":\"도서관리자\",\"level\":1,\"description\":\"관리자가 새로운 도서를 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력하여 등록함. ISBN 중복 및 13자리 유효성 검증을 통과함.\",\"inputs\":[\"도서명\",\"ISBN\",\"저자\",\"출판사\",\"카테고리 (소설/비소설/학술/잡지)\",\"ISBN 중복 없음\",\"ISBN 13자리\"],\"outputs\":[\"도서 엔티티 생성\",\"도서 상태: 대출가능\"],\"nextEvents\":[\"BookStateChanged\"]}\n\n## Event\n\n{\"name\":\"BookStateChanged\",\"displayName\":\"도서 상태 변경됨\",\"actor\":\"도서관리시스템\",\"level\":2,\"description\":\"도서 등록/대출/반납/예약/폐기 등의 트리거에 의해 도서의 상태가 변경됨.\",\"inputs\":[\"도서 이벤트 트리거\",\"이전 도서 상태\"],\"outputs\":[\"도서 상태: 대출가능/대출중/예약중/폐기\"],\"nextEvents\":[\"BookDisposed\",\"LoanRequested\",\"LoanReturned\",\"BookReserved\"]}\n\n## Event\n\n{\"name\":\"BookDisposed\",\"displayName\":\"도서 폐기됨\",\"actor\":\"도서관리자\",\"level\":3,\"description\":\"관리자가 훼손/분실로 인한 도서 폐기를 처리함. 폐기된 도서는 대출 불가 상태가 됨.\",\"inputs\":[\"도서 식별\",\"훼손/분실 사유\"],\"outputs\":[\"도서 상태: 폐기\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookHistoryQueried\",\"displayName\":\"도서 이력 조회됨\",\"actor\":\"도서관리자\",\"level\":11,\"description\":\"관리자/회원이 도서별로 대출 및 상태 변경 이력을 조회함.\",\"inputs\":[\"도서 식별자\"],\"outputs\":[\"도서 대출 이력 목록\",\"도서 상태 변경 이력 목록\"],\"nextEvents\":[]}",
+                    "name": "BookManagement",
+                    "alias": "도서 관리",
+                    "displayName": "도서 관리",
+                    "description": "# Requirements\n\n## userStory\n\n'도서 관리' 화면에서는 새로운 도서를 등록하고 현재 보유한 도서들의 상태를 관리할 수 있어야 해. 도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해. 등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야 해.\n\n## userStory\n\n도서는 도서명이나 ISBN으로 검색할 수 있어야 해.\n\n## userStory\n\n도서가 반납되면 자동으로 해당 도서의 상태가 '대출가능'으로 변경되어야 해. 만약 예약자가 있는 도서가 반납되면, 해당 도서는 '예약중' 상태로 변경되어야 해.\n\n## userStory\n\n각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해.\n\n## Event\n\n{\"name\":\"BookRegistered\",\"displayName\":\"도서가 등록됨\",\"actor\":\"도서 관리자\",\"level\":1,\"description\":\"도서 관리자가 새로운 도서를 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력하여 도서를 등록함. 등록된 도서는 '대출가능' 상태가 됨.\",\"inputs\":[\"도서명\",\"ISBN(13자리)\",\"저자\",\"출판사\",\"카테고리\",\"ISBN 중복 아님\"],\"outputs\":[\"신규 도서 데이터\",\"'대출가능' 상태\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookRegistrationFailed\",\"displayName\":\"도서 등록 실패됨\",\"actor\":\"도서 관리자\",\"level\":2,\"description\":\"도서 등록 시 ISBN이 13자리가 아니거나 중복된 경우 등록이 거부됨.\",\"inputs\":[\"ISBN(중복 또는 13자리 아님)\"],\"outputs\":[\"에러 메시지\",\"등록 거부\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookDiscarded\",\"displayName\":\"도서가 폐기됨\",\"actor\":\"도서 관리자\",\"level\":3,\"description\":\"도서가 훼손되거나 분실된 경우 도서 관리자가 해당 도서를 폐기 처리함. 폐기된 도서는 더 이상 대출이 불가함.\",\"inputs\":[\"도서 식별자\",\"폐기 사유\"],\"outputs\":[\"도서 상태 '폐기'로 변경\",\"대출 불가\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookSearched\",\"displayName\":\"도서가 검색됨\",\"actor\":\"회원\",\"level\":4,\"description\":\"회원이 도서명이나 ISBN으로 도서를 검색함.\",\"inputs\":[\"검색어(도서명 또는 ISBN)\"],\"outputs\":[\"검색 결과 도서 목록\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookLoanHistoryViewed\",\"displayName\":\"도서의 대출 이력이 조회됨\",\"actor\":\"도서 관리자\",\"level\":15,\"description\":\"도서 관리자가 특정 도서의 대출 이력을 조회함.\",\"inputs\":[\"도서 식별자\"],\"outputs\":[\"대출 이력 목록\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookStatusHistoryViewed\",\"displayName\":\"도서의 상태 변경 이력이 조회됨\",\"actor\":\"도서 관리자\",\"level\":16,\"description\":\"도서 관리자가 특정 도서의 상태 변경 이력을 조회함.\",\"inputs\":[\"도서 식별자\"],\"outputs\":[\"상태 변경 이력 목록\"],\"nextEvents\":[]}\n\n\n## Context Relations\n\n### BookManagementToBookLoanProcess\n- **Type**: Pub/Sub\n- **Direction**: sends to 도서 대출 프로세스 (BookLoanProcess)\n- **Reason**: 도서의 상태 변화, 신규 등록, 폐기 등 이벤트가 발생하면 이를 대출/예약/연체 프로세스에 전달해야 하며, 두 컨텍스트가 느슨하게 결합되고 데이터 소유권이 명확히 분리됨.\n- **Interaction Pattern**: 도서 상태 변경, 신규 등록, 폐기 등 이벤트를 Pub/Sub로 발행하며 대출 프로세스에서 구독하여 반영함. 예: 도서가 폐기되면 대출 프로세스에서 대출 거부 처리.",
                     "aggregates": [
                         {
                             "name": "Book",
@@ -256,9 +435,9 @@ export const aggregateDraftScenarios = {
                         }
                     ]
                 },
-                "description": "{\"userStories\":[{\"title\":\"도서 등록 및 관리\",\"description\":\"도서관리자는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력하여 새로운 도서를 등록할 수 있고, 등록된 도서의 상태를 관리할 수 있다.\",\"acceptance\":[\"ISBN은 13자리 숫자이며 중복되지 않아야 한다.\",\"카테고리는 소설, 비소설, 학술, 잡지 중에서 선택할 수 있다.\",\"도서 등록 시 상태는 '대출가능'이 된다.\",\"도서 상태는 대출/반납/예약/폐기 등의 이벤트에 따라 자동으로 변경된다.\",\"폐기된 도서는 대출이 불가능하다.\"]},{\"title\":\"도서별 이력 조회\",\"description\":\"도서관리자 또는 회원은 특정 도서의 대출 이력과 상태 변경 이력을 조회하여 도서의 대출 현황과 상태 변화를 파악할 수 있다.\",\"acceptance\":[\"도서별로 대출 이력과 상태 변경 이력을 각각 조회할 수 있다.\",\"이력에는 상태 변경 일시 및 사유가 명시되어야 한다.\"]}],\"entities\":{\"Book\":{\"properties\":[{\"name\":\"bookId\",\"type\":\"Long\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"title\",\"type\":\"String\",\"required\":true},{\"name\":\"isbn\",\"type\":\"String\",\"required\":true},{\"name\":\"author\",\"type\":\"String\",\"required\":true},{\"name\":\"publisher\",\"type\":\"String\",\"required\":true},{\"name\":\"category\",\"type\":\"enum\",\"required\":true,\"values\":[\"소설\",\"비소설\",\"학술\",\"잡지\"]},{\"name\":\"status\",\"type\":\"enum\",\"required\":true,\"values\":[\"대출가능\",\"대출중\",\"예약중\",\"폐기\"]}]},\"BookLoanHistory\":{\"properties\":[{\"name\":\"loanHistoryId\",\"type\":\"Long\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"bookId\",\"type\":\"Long\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"loanDate\",\"type\":\"Date\",\"required\":true},{\"name\":\"returnDate\",\"type\":\"Date\"},{\"name\":\"memberId\",\"type\":\"Long\",\"required\":true}]},\"BookStateHistory\":{\"properties\":[{\"name\":\"stateHistoryId\",\"type\":\"Long\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"bookId\",\"type\":\"Long\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"previousStatus\",\"type\":\"enum\",\"required\":true,\"values\":[\"대출가능\",\"대출중\",\"예약중\",\"폐기\"]},{\"name\":\"newStatus\",\"type\":\"enum\",\"required\":true,\"values\":[\"대출가능\",\"대출중\",\"예약중\",\"폐기\"]},{\"name\":\"changedAt\",\"type\":\"Date\",\"required\":true},{\"name\":\"reason\",\"type\":\"String\"}]}},\"businessRules\":[{\"name\":\"ISBN 유효성 검증\",\"description\":\"ISBN은 13자리 숫자여야 하며, 시스템 내에서 중복될 수 없다.\"},{\"name\":\"도서 상태 자동 전이\",\"description\":\"도서 등록 시 상태는 자동으로 '대출가능'으로 지정되고, 대출/반납/예약/폐기 등 이벤트 발생 시 상태가 자동으로 변경된다.\"},{\"name\":\"폐기 도서 대출 불가\",\"description\":\"폐기 상태의 도서는 어떠한 경우에도 대출 처리될 수 없다.\"}],\"interfaces\":{\"BookManagement\":{\"sections\":[{\"name\":\"도서 등록\",\"type\":\"form\",\"fields\":[{\"name\":\"title\",\"type\":\"text\",\"required\":true},{\"name\":\"isbn\",\"type\":\"text\",\"required\":true},{\"name\":\"author\",\"type\":\"text\",\"required\":true},{\"name\":\"publisher\",\"type\":\"text\",\"required\":true},{\"name\":\"category\",\"type\":\"select\",\"required\":true}],\"actions\":[\"중복확인\",\"도서등록\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}},{\"name\":\"도서 목록 및 상태 관리\",\"type\":\"table\",\"fields\":[],\"actions\":[\"대출처리\",\"반납처리\",\"예약처리\",\"폐기처리\"],\"filters\":[\"카테고리\",\"상태\"],\"resultTable\":{\"columns\":[\"bookId\",\"title\",\"isbn\",\"author\",\"publisher\",\"category\",\"status\"],\"actions\":[\"상세보기\"]}}]},\"BookHistory\":{\"sections\":[{\"name\":\"도서 이력 조회\",\"type\":\"table\",\"fields\":[],\"actions\":[],\"filters\":[\"도서ID\"],\"resultTable\":{\"columns\":[\"loanDate\",\"returnDate\",\"memberId\"],\"actions\":[]}},{\"name\":\"상태 변경 이력 조회\",\"type\":\"table\",\"fields\":[],\"actions\":[],\"filters\":[\"도서ID\"],\"resultTable\":{\"columns\":[\"previousStatus\",\"newStatus\",\"changedAt\",\"reason\"],\"actions\":[]}}]}},\"events\":[{\"name\":\"BookRegistered\",\"description\":\"관리자가 새로운 도서를 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력하여 등록함. ISBN 중복 및 13자리 유효성 검증을 통과함.\",\"displayName\":\"도서 등록됨\"},{\"name\":\"BookStateChanged\",\"description\":\"도서 등록/대출/반납/예약/폐기 등의 트리거에 의해 도서의 상태가 변경됨.\",\"displayName\":\"도서 상태 변경됨\"},{\"name\":\"BookDisposed\",\"description\":\"관리자가 훼손/분실로 인한 도서 폐기를 처리함. 폐기된 도서는 대출 불가 상태가 됨.\",\"displayName\":\"도서 폐기됨\"},{\"name\":\"BookHistoryQueried\",\"description\":\"관리자/회원이 도서별로 대출 및 상태 변경 이력을 조회함.\",\"displayName\":\"도서 이력 조회됨\"}]}"
+                "description": "{\"userStories\":[{\"title\":\"도서 등록 및 상태 관리\",\"description\":\"도서 관리자로서 새로운 도서를 등록하고, 보유 도서들의 상태(대출가능/대출중/예약중/폐기)를 관리할 수 있다.\",\"acceptance\":[\"도서명, ISBN(13자리), 저자, 출판사, 카테고리 입력이 필수이며, ISBN 중복 검사가 반드시 수행된다.\",\"도서 등록 시 상태는 '대출가능'이 기본값으로 설정된다.\",\"도서 상태는 대출/반납/예약/폐기 처리에 따라 자동으로 변경된다.\",\"폐기된 도서는 더 이상 대출이 불가하다.\"]},{\"title\":\"도서 검색\",\"description\":\"사용자로서 도서명이나 ISBN으로 도서를 검색할 수 있다.\",\"acceptance\":[\"검색어로 도서명 또는 ISBN 입력 시 관련 도서 목록이 출력된다.\"]},{\"title\":\"도서 반납 및 상태 전이\",\"description\":\"도서가 반납되면 해당 도서의 상태가 '대출가능' 또는 '예약중'으로 자동 전환된다.\",\"acceptance\":[\"예약자가 없으면 '대출가능', 예약자가 있으면 '예약중'으로 상태가 자동 변경된다.\"]},{\"title\":\"도서별 이력 조회\",\"description\":\"도서 관리자로서 각 도서별 대출 이력과 상태 변경 이력을 조회할 수 있다.\",\"acceptance\":[\"대출 이력과 상태 변경 이력이 조회 화면에 표시된다.\",\"이력에는 시점, 변경자, 변경 사유 등이 포함된다.\"]}],\"entities\":{\"Book\":{\"properties\":[{\"name\":\"bookId\",\"type\":\"Long\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"title\",\"type\":\"String\",\"required\":true},{\"name\":\"ISBN\",\"type\":\"String\",\"required\":true},{\"name\":\"author\",\"type\":\"String\",\"required\":true},{\"name\":\"publisher\",\"type\":\"String\",\"required\":true},{\"name\":\"category\",\"type\":\"enum\",\"required\":true,\"values\":[\"소설\",\"비소설\",\"학술\",\"잡지\"]},{\"name\":\"status\",\"type\":\"enum\",\"required\":true,\"values\":[\"대출가능\",\"대출중\",\"예약중\",\"폐기\"]}]},\"BookLoanHistory\":{\"properties\":[{\"name\":\"historyId\",\"type\":\"Long\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"bookId\",\"type\":\"Long\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"loanedBy\",\"type\":\"String\",\"required\":true},{\"name\":\"loanDate\",\"type\":\"Date\",\"required\":true},{\"name\":\"returnDate\",\"type\":\"Date\"}]},\"BookStatusHistory\":{\"properties\":[{\"name\":\"statusHistoryId\",\"type\":\"Long\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"bookId\",\"type\":\"Long\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"status\",\"type\":\"enum\",\"required\":true,\"values\":[\"대출가능\",\"대출중\",\"예약중\",\"폐기\"]},{\"name\":\"changedAt\",\"type\":\"Date\",\"required\":true},{\"name\":\"changedBy\",\"type\":\"String\",\"required\":true},{\"name\":\"reason\",\"type\":\"String\"}]}},\"businessRules\":[{\"name\":\"ISBN_Validation\",\"description\":\"ISBN은 반드시 13자리의 숫자여야 하며, 시스템 내에서 유일해야 한다.\"},{\"name\":\"BookStatus_AutoTransition\",\"description\":\"도서는 등록 시 '대출가능' 상태로 시작하며, 대출/반납/예약/폐기 상황에 따라 상태가 자동으로 변경된다.\"},{\"name\":\"BookDiscard_Restriction\",\"description\":\"폐기된 도서는 더 이상 대출이 불가하다.\"},{\"name\":\"ReturnStatusTransition\",\"description\":\"도서 반납 시 예약자가 없으면 '대출가능', 예약자가 있으면 '예약중' 상태로 자동 변경된다.\"}],\"interfaces\":{\"BookManagement\":{\"sections\":[{\"name\":\"도서 등록\",\"type\":\"form\",\"fields\":[{\"name\":\"title\",\"type\":\"text\",\"required\":true},{\"name\":\"ISBN\",\"type\":\"text\",\"required\":true},{\"name\":\"author\",\"type\":\"text\",\"required\":true},{\"name\":\"publisher\",\"type\":\"text\",\"required\":true},{\"name\":\"category\",\"type\":\"select\",\"required\":true}],\"actions\":[\"등록\",\"중복확인\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}},{\"name\":\"도서 목록\",\"type\":\"table\",\"fields\":[],\"actions\":[\"상세보기\",\"폐기처리\"],\"filters\":[\"title\",\"ISBN\",\"category\",\"status\"],\"resultTable\":{\"columns\":[\"bookId\",\"title\",\"ISBN\",\"author\",\"publisher\",\"category\",\"status\"],\"actions\":[\"상세보기\",\"폐기처리\"]}}]},\"BookDetail\":{\"sections\":[{\"name\":\"대출 이력\",\"type\":\"table\",\"fields\":[],\"actions\":[],\"filters\":[],\"resultTable\":{\"columns\":[\"loanedBy\",\"loanDate\",\"returnDate\"],\"actions\":[]}},{\"name\":\"상태 변경 이력\",\"type\":\"table\",\"fields\":[],\"actions\":[],\"filters\":[],\"resultTable\":{\"columns\":[\"status\",\"changedAt\",\"changedBy\",\"reason\"],\"actions\":[]}}]}},\"events\":[{\"name\":\"BookRegistered\",\"description\":\"도서 관리자가 새로운 도서를 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력하여 도서를 등록함. 등록된 도서는 '대출가능' 상태가 됨.\",\"displayName\":\"도서가 등록됨\"},{\"name\":\"BookRegistrationFailed\",\"description\":\"도서 등록 시 ISBN이 13자리가 아니거나 중복된 경우 등록이 거부됨.\",\"displayName\":\"도서 등록 실패됨\"},{\"name\":\"BookDiscarded\",\"description\":\"도서가 훼손되거나 분실된 경우 도서 관리자가 해당 도서를 폐기 처리함. 폐기된 도서는 더 이상 대출이 불가함.\",\"displayName\":\"도서가 폐기됨\"},{\"name\":\"BookSearched\",\"description\":\"회원이 도서명이나 ISBN으로 도서를 검색함.\",\"displayName\":\"도서가 검색됨\"},{\"name\":\"BookLoanHistoryViewed\",\"description\":\"도서 관리자가 특정 도서의 대출 이력을 조회함.\",\"displayName\":\"도서의 대출 이력이 조회됨\"},{\"name\":\"BookStatusHistoryViewed\",\"description\":\"도서 관리자가 특정 도서의 상태 변경 이력을 조회함.\",\"displayName\":\"도서의 상태 변경 이력이 조회됨\"}],\"contextRelations\":[{\"name\":\"BookManagementToBookLoanProcess\",\"type\":\"Pub/Sub\",\"direction\":\"sends to\",\"targetContext\":\"BookLoanProcess\",\"reason\":\"도서의 상태 변화, 신규 등록, 폐기 등 이벤트가 발생하면 이를 대출/예약/연체 프로세스에 전달해야 하며, 두 컨텍스트가 느슨하게 결합되고 데이터 소유권이 명확히 분리됨.\",\"interactionPattern\":\"도서 상태 변경, 신규 등록, 폐기 등 이벤트를 Pub/Sub로 발행하며 대출 프로세스에서 구독하여 반영함. 예: 도서가 폐기되면 대출 프로세스에서 대출 거부 처리.\"}]}"
             },
-            "LibraryLoanProcess": {
+            "BookLoanProcess": {
                 "structure": [
                     {
                         "aggregate": {
@@ -306,56 +485,32 @@ export const aggregateDraftScenarios = {
                                 "alias": "회원"
                             }
                         ]
-                    },
-                    {
-                        "aggregate": {
-                            "name": "LoanHistory",
-                            "alias": "대출 이력"
-                        },
-                        "enumerations": [],
-                        "valueObjects": [
-                            {
-                                "name": "LoanReference",
-                                "alias": "대출 참조",
-                                "referencedAggregate": {
-                                    "name": "Loan",
-                                    "alias": "대출"
-                                }
-                            },
-                            {
-                                "name": "BookReference",
-                                "alias": "도서 참조",
-                                "referencedAggregate": {
-                                    "name": "Book",
-                                    "alias": "도서"
-                                }
-                            }
-                        ]
                     }
                 ],
                 "pros": {
-                    "cohesion": "LoanHistory가 별도 Aggregate로 관리되어 대출·연장·반납·연체 이력을 전문적으로 누적·조회할 수 있다.",
-                    "coupling": "대출 흐름과 이력 관리가 분리되어 서로의 변경에 최소 영향만 받는다.",
-                    "consistency": "Loan/Reservation과 이력 저장이 별도 트랜잭션으로 처리되어 업무별 불변성 보호가 명확하다.",
-                    "encapsulation": "대출 이력 관련 규칙(예: 변경 불가, 조회 only 등)이 LoanHistory Aggregate 내부에 집중된다.",
-                    "complexity": "이력 관리 로직이 Loan, Reservation에서 분리되어 각 도메인의 복잡도가 낮아진다.",
-                    "independence": "이력 정책 변경(예: 이력 상세 항목 추가 등)이 Loan, Reservation Aggregate에 영향을 거의 미치지 않는다.",
-                    "performance": "이력 조회/통계 연산이 대출, 예약 데이터와 분리되어 대규모 데이터 처리 시 효율적이다."
+                    "cohesion": "핵심 대출·예약 업무에만 집중하여 집계 경계가 단순하다.",
+                    "coupling": "Book, Member 등 외부 엔티티와의 참조만 유지하며 내부 결합도가 낮다.",
+                    "consistency": "대출·예약 관련 상태 변경이 집계 내에서 일관성 있게 처리된다.",
+                    "encapsulation": "도서 상태 자동 변경, 연체 연장 불가 등 핵심 규칙이 Loan 집계에 명확히 캡슐화된다.",
+                    "complexity": "집계 수가 적어 전체 시스템 구조가 단순하며 이해와 유지보수가 쉽다.",
+                    "independence": "Loan, Reservation은 별도로 발전 가능하며, 서비스 규모가 작을 때 최적화된 형태다.",
+                    "performance": "불필요한 조인과 복잡한 트랜잭션이 최소화되어 빠른 응답이 가능하다."
                 },
                 "cons": {
-                    "cohesion": "대출-이력 간 강한 연관에도 불구하고 트랜잭션이 분리되어 약간의 데이터 불일치 가능성이 존재한다.",
-                    "coupling": "이력 기록 시 Loan의 상태·속성을 반드시 동기화해야 하므로 업무 서비스 계층에 추가 연동 로직이 필요하다.",
-                    "consistency": "Loan, LoanHistory의 일관성 보장을 위한 보상 트랜잭션 또는 동기화 이벤트 관리가 필요하다.",
-                    "encapsulation": "이력 변경 시 Loan/LoanHistory 양쪽에 수정이 필요할 수 있어 코드 추적성이 떨어질 수 있다.",
-                    "complexity": "Aggregate가 늘어나면서 배포, 관리 포인트가 증가한다.",
-                    "independence": "이력 데이터와 본 대출/예약 데이터 간의 비즈니스 룰 연결(예: 상태 이력 반영 등)이 추가 구현 필요.",
-                    "performance": "이력 저장, 조회에 별도 Aggregate 접근이 필요해 단순한 구조에 비해 오버헤드가 약간 증가한다."
+                    "cohesion": "이력 관리, 상세 현황 등 부가 업무가 서비스 계층에 집중되어 코드 분산이 발생한다.",
+                    "coupling": "이력·상태 추적이 외부 집계(BookLoanHistory, BookStatusHistory)에 의존해야 한다.",
+                    "consistency": "복합 시나리오(대출→이력 동시 기록 등)에서 강한 일관성 보장이 어렵다.",
+                    "encapsulation": "이력 및 상태 변경 규칙이 Loan 외부에 위치해 도메인 규칙이 분산될 수 있다.",
+                    "complexity": "확장 시 부가 업무(이력, 상태변경 등) 도입을 위해 구조 변경 필요성이 생긴다.",
+                    "independence": "외부 이력 집계와의 연동이 반드시 필요해 완전 독립 운영은 어렵다.",
+                    "performance": "대출 및 예약 현황, 이력 동시 조회 시 성능 저하가 발생할 수 있다."
                 },
+                "isAIRecommended": false,
                 "boundedContext": {
-                    "name": "LibraryLoanProcess",
-                    "alias": "대출/반납",
-                    "displayName": "대출/반납",
-                    "description": "# Requirements\n\n## userStory\n\n'대출/반납' 화면에서는 회원이 도서를 대출하고 반납하는 것을 관리할 수 있어야 해. 대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할 도서를 선택해야 해. 도서는 도서명이나 ISBN으로 검색할 수 있어야 해. 대출 기간은 7일/14일/30일 중에서 선택할 수 있어. 만약 대출하려는 도서가 이미 대출 중이라면, 예약 신청이 가능해야 해. 대출이 완료되면 해당 도서의 상태는 자동으로 '대출중'으로 변경되어야 해.\n\n## userStory\n\n대출 현황 화면에서는 현재 대출 중인 도서들의 목록을 볼 수 있어야 해. 각 대출 건에 대해 대출일, 반납예정일, 현재 상태(대출중/연체/반납완료)를 확인할 수 있어야 하고, 대출 중인 도서는 연장이나 반납 처리가 가능해야 해. 도서가 반납되면 자동으로 해당 도서의 상태가 '대출가능'으로 변경되어야 해. 만약 예약자가 있는 도서가 반납되면, 해당 도서는 '예약중' 상태로 변경되어야 해.\n\n## userStory\n\n각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해.\n\n## Event\n\n{\"name\":\"LoanRequested\",\"displayName\":\"대출 신청됨\",\"actor\":\"회원\",\"level\":4,\"description\":\"회원이 도서명이나 ISBN으로 검색하여 대출 가능한 도서에 대해 대출을 신청함. 회원번호와 이름 확인 필요.\",\"inputs\":[\"회원번호\",\"이름\",\"도서명/ISBN\",\"대출 가능 상태 도서\",\"대출 기간(7/14/30일)\"],\"outputs\":[\"대출 신청 생성\",\"대출 대기 상태\"],\"nextEvents\":[\"LoanApproved\",\"BookReserved\"]}\n\n## Event\n\n{\"name\":\"LoanApproved\",\"displayName\":\"대출 완료됨\",\"actor\":\"도서관리시스템\",\"level\":5,\"description\":\"대출 요청이 처리되어 도서가 회원에게 대출됨. 도서 상태는 대출중으로 자동 변경됨.\",\"inputs\":[\"대출 신청\",\"대출 가능 도서\",\"회원 자격 유효\"],\"outputs\":[\"대출 기록 생성\",\"도서 상태: 대출중\",\"대출일\",\"반납예정일\"],\"nextEvents\":[\"LoanExtended\",\"LoanReturned\",\"LoanOverdueChecked\"]}\n\n## Event\n\n{\"name\":\"BookReserved\",\"displayName\":\"도서 예약됨\",\"actor\":\"회원\",\"level\":6,\"description\":\"회원이 이미 대출중인 도서에 대해 예약 신청을 함. 예약된 도서는 예약 대기 리스트에 등록됨.\",\"inputs\":[\"회원번호\",\"이름\",\"대출중 상태 도서\"],\"outputs\":[\"예약 기록 생성\",\"도서 상태: 예약중\"],\"nextEvents\":[\"LoanReturned\"]}\n\n## Event\n\n{\"name\":\"LoanReturned\",\"displayName\":\"도서 반납됨\",\"actor\":\"회원\",\"level\":7,\"description\":\"회원이 대출 중인 도서를 반납함. 반납 후 예약자가 있으면 도서 상태는 예약중, 없으면 대출가능으로 변경됨.\",\"inputs\":[\"대출 중 도서\",\"회원\"],\"outputs\":[\"반납 기록 생성\",\"도서 상태: 대출가능/예약중\"],\"nextEvents\":[\"BookStateChanged\",\"ReservationNotified\"]}\n\n## Event\n\n{\"name\":\"LoanExtended\",\"displayName\":\"대출 연장됨\",\"actor\":\"회원\",\"level\":8,\"description\":\"회원이 대출중인 도서의 반납예정일을 연장 신청함. 연장은 정책에 따라 1회 혹은 제한 가능.\",\"inputs\":[\"회원\",\"대출중 상태 도서\",\"연장 조건 충족\"],\"outputs\":[\"반납예정일 변경\"],\"nextEvents\":[\"LoanOverdueChecked\",\"LoanReturned\"]}\n\n## Event\n\n{\"name\":\"LoanOverdueChecked\",\"displayName\":\"연체 확인됨\",\"actor\":\"도서관리시스템\",\"level\":9,\"description\":\"반납 예정일이 지난 도서의 연체 상태를 확인하여 연체로 표시함.\",\"inputs\":[\"대출중 도서\",\"현재 일자\",\"반납예정일\"],\"outputs\":[\"대출 상태: 연체\"],\"nextEvents\":[\"LoanReturned\"]}\n\n## Event\n\n{\"name\":\"ReservationNotified\",\"displayName\":\"예약자 통보됨\",\"actor\":\"도서관리시스템\",\"level\":10,\"description\":\"예약자가 있는 도서가 반납되었을 때, 예약자에게 도서 이용 가능 안내를 통보함.\",\"inputs\":[\"도서 반납\",\"예약자 존재\"],\"outputs\":[\"예약자 알림\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"LoanStatusQueried\",\"displayName\":\"대출 현황 조회됨\",\"actor\":\"도서관리자\",\"level\":12,\"description\":\"현재 대출 중인 도서와 각 대출 건의 대출일, 반납예정일, 상태(대출중/연체/반납완료)를 조회함.\",\"inputs\":[\"조회 조건 (전체/회원별/도서별)\"],\"outputs\":[\"대출 건 목록\",\"각 대출 상태\"],\"nextEvents\":[]}",
+                    "name": "BookLoanProcess",
+                    "alias": "도서 대출 프로세스",
+                    "displayName": "도서 대출 프로세스",
+                    "description": "# Requirements\n\n## userStory\n\n'대출/반납' 화면에서는 회원이 도서를 대출하고 반납하는 것을 관리할 수 있어야 해. 대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할 도서를 선택해야 해. 도서는 도서명이나 ISBN으로 검색할 수 있어야 해. 대출 기간은 7일/14일/30일 중에서 선택할 수 있어. 만약 대출하려는 도서가 이미 대출 중이라면, 예약 신청이 가능해야 해. 대출이 완료되면 해당 도서의 상태는 자동으로 '대출중'으로 변경되어야 해.\n\n## userStory\n\n대출 현황 화면에서는 현재 대출 중인 도서들의 목록을 볼 수 있어야 해. 각 대출 건에 대해 대출일, 반납예정일, 현재 상태(대출중/연체/반납완료)를 확인할 수 있어야 하고, 대출 중인 도서는 연장이나 반납 처리가 가능해야 해. 도서가 반납되면 자동으로 해당 도서의 상태가 '대출가능'으로 변경되어야 해. 만약 예약자가 있는 도서가 반납되면, 해당 도서는 '예약중' 상태로 변경되어야 해.\n\n## userStory\n\n각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해.\n\n## Event\n\n{\"name\":\"MemberVerified\",\"displayName\":\"회원이 확인됨\",\"actor\":\"회원\",\"level\":5,\"description\":\"회원번호와 이름으로 회원 정보가 확인됨.\",\"inputs\":[\"회원번호\",\"이름\"],\"outputs\":[\"회원 정보\"],\"nextEvents\":[\"BookLoanRequested\"]}\n\n## Event\n\n{\"name\":\"BookLoanRequested\",\"displayName\":\"도서 대출이 신청됨\",\"actor\":\"회원\",\"level\":6,\"description\":\"회원이 대출하고자 하는 도서와 대출 기간(7일/14일/30일)을 선택하여 대출을 신청함.\",\"inputs\":[\"회원 정보\",\"도서 식별자\",\"대출 기간\"],\"outputs\":[\"대출 신청 요청\"],\"nextEvents\":[\"BookLoanApproved\",\"BookLoanRejected\"]}\n\n## Event\n\n{\"name\":\"BookLoanRejected\",\"displayName\":\"도서 대출이 거부됨\",\"actor\":\"도서 대출 시스템\",\"level\":7,\"description\":\"도서가 폐기되었거나 대출 불가 상태인 경우 대출이 거부됨.\",\"inputs\":[\"도서 상태 '폐기' 또는 대출 불가\"],\"outputs\":[\"대출 거부 알림\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookLoanApproved\",\"displayName\":\"도서 대출이 승인됨\",\"actor\":\"도서 대출 시스템\",\"level\":8,\"description\":\"도서가 대출 가능 상태라면 대출이 승인되고 대출 정보가 생성됨. 도서 상태는 '대출중'으로 변경됨.\",\"inputs\":[\"도서 상태 '대출가능'\",\"대출 신청 정보\"],\"outputs\":[\"대출 정보 생성\",\"도서 상태 '대출중'으로 변경\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookReserved\",\"displayName\":\"도서가 예약됨\",\"actor\":\"회원\",\"level\":9,\"description\":\"대출하려는 도서가 이미 대출 중일 때 회원이 해당 도서의 예약을 신청하면 예약이 생성되고, 도서의 상태가 '예약중'으로 변경됨.\",\"inputs\":[\"회원 정보\",\"대출 중인 도서 식별자\"],\"outputs\":[\"예약 정보 생성\",\"도서 상태 '예약중'으로 변경\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookReturned\",\"displayName\":\"도서가 반납됨\",\"actor\":\"회원\",\"level\":10,\"description\":\"회원이 대출한 도서를 반납함. 도서에 예약자가 있으면 상태가 '예약중'으로, 없으면 '대출가능'으로 변경됨.\",\"inputs\":[\"반납 도서 식별자\"],\"outputs\":[\"반납 처리\",\"도서 상태 변경\"],\"nextEvents\":[\"BookAvailable\",\"BookReservedForNext\"]}\n\n## Event\n\n{\"name\":\"BookAvailable\",\"displayName\":\"도서가 대출 가능 상태로 변경됨\",\"actor\":\"도서 대출 시스템\",\"level\":11,\"description\":\"반납된 도서에 예약자가 없는 경우 도서 상태가 '대출가능'으로 변경됨.\",\"inputs\":[\"반납 도서 식별자\",\"예약자 없음\"],\"outputs\":[\"도서 상태 '대출가능'\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookReservedForNext\",\"displayName\":\"도서가 다음 예약자를 위해 예약중 상태로 변경됨\",\"actor\":\"도서 대출 시스템\",\"level\":12,\"description\":\"반납된 도서에 예약자가 있을 경우 도서 상태가 '예약중'으로 변경됨.\",\"inputs\":[\"반납 도서 식별자\",\"예약자 존재\"],\"outputs\":[\"도서 상태 '예약중'\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"LoanExtended\",\"displayName\":\"대출 기간이 연장됨\",\"actor\":\"회원\",\"level\":13,\"description\":\"회원이 대출 중인 도서의 대출 기간을 연장함. 연체 상태에서는 연장이 불가함.\",\"inputs\":[\"회원 정보\",\"대출 중인 도서 식별자\",\"연장 요청\"],\"outputs\":[\"대출 기간 연장\",\"새 반납 예정일\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"LoanOverdue\",\"displayName\":\"도서 대출이 연체됨\",\"actor\":\"도서 대출 시스템\",\"level\":14,\"description\":\"반납 예정일이 지나도 도서가 반납되지 않은 경우, 대출 건의 상태가 '연체'로 변경됨.\",\"inputs\":[\"반납 예정일 경과\",\"반납 미처리\"],\"outputs\":[\"대출 상태 '연체'로 변경\"],\"nextEvents\":[]}\n\n\n## Context Relations\n\n### BookManagementToBookLoanProcess\n- **Type**: Pub/Sub\n- **Direction**: receives from 도서 관리 (BookManagement)\n- **Reason**: 도서의 상태 변화, 신규 등록, 폐기 등 이벤트가 발생하면 이를 대출/예약/연체 프로세스에 전달해야 하며, 두 컨텍스트가 느슨하게 결합되고 데이터 소유권이 명확히 분리됨.\n- **Interaction Pattern**: 도서 상태 변경, 신규 등록, 폐기 등 이벤트를 Pub/Sub로 발행하며 대출 프로세스에서 구독하여 반영함. 예: 도서가 폐기되면 대출 프로세스에서 대출 거부 처리.",
                     "aggregates": [
                         {
                             "name": "Loan",
@@ -364,13 +519,17 @@ export const aggregateDraftScenarios = {
                         {
                             "name": "Reservation",
                             "alias": "예약"
+                        },
+                        {
+                            "name": "Member",
+                            "alias": "회원"
                         }
                     ]
                 },
-                "description": "{\"userStories\":[{\"title\":\"도서 대출 및 반납 관리\",\"description\":\"회원은 '대출/반납' 화면에서 본인의 회원번호와 이름을 통해 확인받고, 도서명 또는 ISBN으로 도서를 검색하여 대출을 신청할 수 있다. 이미 대출중인 도서는 예약 신청이 가능하다. 도서 대출 완료 시 도서 상태는 자동으로 '대출중'으로 변경된다.\",\"acceptance\":[\"회원번호와 이름으로 회원 확인이 가능하다.\",\"도서명 또는 ISBN으로 도서 검색이 가능하다.\",\"대출 가능 상태의 도서만 대출 신청이 가능하다.\",\"대출 기간은 7일/14일/30일 중 선택할 수 있다.\",\"대출 중인 도서는 예약 신청이 가능하다.\",\"대출 완료 시 도서 상태가 '대출중'으로 자동 변경된다.\"]},{\"title\":\"대출 현황 조회 및 관리\",\"description\":\"도서관리자는 '대출 현황' 화면에서 현재 대출 중인 도서의 대출일, 반납예정일, 상태(대출중/연체/반납완료)를 확인하고, 대출 건별로 연장 또는 반납 처리를 할 수 있다.\",\"acceptance\":[\"대출 건의 대출일, 반납예정일, 상태가 표시된다.\",\"대출 중인 도서에 대해 연장 및 반납 처리가 가능하다.\",\"도서 반납 시 예약자가 있으면 상태가 '예약중', 없으면 '대출가능'으로 변경된다.\",\"대출 상태는 '대출중', '연체', '반납완료'가 존재한다.\"]},{\"title\":\"도서별 대출 및 상태 이력 조회\",\"description\":\"관리자는 각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있다.\",\"acceptance\":[\"각 도서별로 대출 이력과 상태 변경 이력이 조회된다.\",\"대출 이력에는 대출일, 반납일, 연장, 연체 정보가 포함된다.\",\"상태 이력에는 상태 변경 일시와 변경 내용이 포함된다.\"]}],\"entities\":{\"Member\":{\"properties\":[{\"name\":\"memberId\",\"type\":\"String\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"name\",\"type\":\"String\",\"required\":true}]},\"Book\":{\"properties\":[{\"name\":\"bookId\",\"type\":\"String\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"title\",\"type\":\"String\",\"required\":true},{\"name\":\"isbn\",\"type\":\"String\",\"required\":true},{\"name\":\"status\",\"type\":\"enum\",\"required\":true,\"values\":[\"AVAILABLE\",\"ON_LOAN\",\"RESERVED\"]}]},\"Loan\":{\"properties\":[{\"name\":\"loanId\",\"type\":\"Long\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"bookId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"memberId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Member\"},{\"name\":\"loanDate\",\"type\":\"Date\",\"required\":true},{\"name\":\"dueDate\",\"type\":\"Date\",\"required\":true},{\"name\":\"returnDate\",\"type\":\"Date\"},{\"name\":\"loanStatus\",\"type\":\"enum\",\"required\":true,\"values\":[\"ON_LOAN\",\"OVERDUE\",\"RETURNED\"]},{\"name\":\"extendCount\",\"type\":\"Integer\"}]},\"Reservation\":{\"properties\":[{\"name\":\"reservationId\",\"type\":\"Long\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"bookId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"memberId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Member\"},{\"name\":\"reservationDate\",\"type\":\"Date\",\"required\":true}]},\"BookStatusHistory\":{\"properties\":[{\"name\":\"historyId\",\"type\":\"Long\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"bookId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"status\",\"type\":\"enum\",\"required\":true,\"values\":[\"AVAILABLE\",\"ON_LOAN\",\"RESERVED\"]},{\"name\":\"changeDate\",\"type\":\"Date\",\"required\":true}]}},\"businessRules\":[{\"name\":\"대출 가능 상태 확인\",\"description\":\"도서 상태가 AVAILABLE인 경우에만 대출 신청이 가능하다.\"},{\"name\":\"대출 중 도서 예약\",\"description\":\"도서 상태가 ON_LOAN일 때만 예약 신청이 가능하다.\"},{\"name\":\"대출 기간 선택\",\"description\":\"대출 신청 시 7일, 14일, 30일 중에서 대출 기간을 선택해야 한다.\"},{\"name\":\"연장 제한\",\"description\":\"대출 연장은 정책에 따라 1회 또는 제한 횟수만큼만 가능하다.\"},{\"name\":\"반납 시 도서 상태 전환\",\"description\":\"도서 반납 후 예약자가 있으면 상태를 RESERVED, 없으면 AVAILABLE로 변경한다.\"},{\"name\":\"연체 처리\",\"description\":\"반납 예정일이 경과하면 도서의 대출 상태를 OVERDUE로 변경한다.\"},{\"name\":\"상태 변경 이력 기록\",\"description\":\"모든 도서의 상태 변경은 BookStatusHistory에 기록된다.\"}],\"interfaces\":{\"LoanReturnScreen\":{\"sections\":[{\"name\":\"회원 확인\",\"type\":\"form\",\"fields\":[{\"name\":\"memberId\",\"type\":\"text\",\"required\":true},{\"name\":\"name\",\"type\":\"text\",\"required\":true}],\"actions\":[],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}},{\"name\":\"도서 검색 및 선택\",\"type\":\"form\",\"fields\":[{\"name\":\"titleOrIsbn\",\"type\":\"text\",\"required\":true}],\"actions\":[\"도서 검색\"],\"filters\":[],\"resultTable\":{\"columns\":[\"bookId\",\"title\",\"isbn\",\"status\"],\"actions\":[\"도서 선택\"]}},{\"name\":\"대출 신청\",\"type\":\"form\",\"fields\":[{\"name\":\"loanPeriod\",\"type\":\"select\",\"required\":true}],\"actions\":[\"대출 신청\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}},{\"name\":\"예약 신청\",\"type\":\"form\",\"fields\":[],\"actions\":[\"예약 신청\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}}]},\"LoanStatusScreen\":{\"sections\":[{\"name\":\"대출 현황 목록\",\"type\":\"table\",\"fields\":[],\"actions\":[\"연장 신청\",\"반납 처리\"],\"filters\":[\"전체/회원별/도서별\"],\"resultTable\":{\"columns\":[\"loanId\",\"memberId\",\"bookId\",\"loanDate\",\"dueDate\",\"loanStatus\"],\"actions\":[\"상세 조회\"]}}]},\"BookHistoryScreen\":{\"sections\":[{\"name\":\"대출 이력\",\"type\":\"table\",\"fields\":[],\"actions\":[],\"filters\":[\"도서별\"],\"resultTable\":{\"columns\":[\"loanId\",\"memberId\",\"loanDate\",\"dueDate\",\"returnDate\",\"loanStatus\"],\"actions\":[]}},{\"name\":\"상태 변경 이력\",\"type\":\"table\",\"fields\":[],\"actions\":[],\"filters\":[\"도서별\"],\"resultTable\":{\"columns\":[\"historyId\",\"status\",\"changeDate\"],\"actions\":[]}}]}},\"events\":[{\"name\":\"LoanRequested\",\"description\":\"회원이 도서명 또는 ISBN으로 검색하여 대출 가능한 도서에 대해 대출을 신청함. 회원번호와 이름 확인 필요.\",\"displayName\":\"대출 신청됨\"},{\"name\":\"LoanApproved\",\"description\":\"대출 요청이 처리되어 도서가 회원에게 대출됨. 도서 상태는 대출중으로 자동 변경됨.\",\"displayName\":\"대출 완료됨\"},{\"name\":\"BookReserved\",\"description\":\"회원이 이미 대출중인 도서에 대해 예약 신청을 함. 예약된 도서는 예약 대기 리스트에 등록됨.\",\"displayName\":\"도서 예약됨\"},{\"name\":\"LoanReturned\",\"description\":\"회원이 대출 중인 도서를 반납함. 반납 후 예약자가 있으면 도서 상태는 예약중, 없으면 대출가능으로 변경됨.\",\"displayName\":\"도서 반납됨\"},{\"name\":\"LoanExtended\",\"description\":\"회원이 대출중인 도서의 반납예정일을 연장 신청함. 연장은 정책에 따라 1회 혹은 제한 가능.\",\"displayName\":\"대출 연장됨\"},{\"name\":\"LoanOverdueChecked\",\"description\":\"반납 예정일이 지난 도서의 연체 상태를 확인하여 연체로 표시함.\",\"displayName\":\"연체 확인됨\"},{\"name\":\"ReservationNotified\",\"description\":\"예약자가 있는 도서가 반납되었을 때, 예약자에게 도서 이용 가능 안내를 통보함.\",\"displayName\":\"예약자 통보됨\"},{\"name\":\"LoanStatusQueried\",\"description\":\"현재 대출 중인 도서와 각 대출 건의 대출일, 반납예정일, 상태(대출중/연체/반납완료)를 조회함.\",\"displayName\":\"대출 현황 조회됨\"}]}"
+                "description": "{\"userStories\":[{\"title\":\"도서 대출 및 반납 관리\",\"description\":\"회원은 '대출/반납' 화면에서 회원 확인 후 도서를 대출하거나 반납할 수 있다. 대출 시 도서명 또는 ISBN으로 검색, 대출 기간 선택, 이미 대출 중인 경우 예약 신청이 가능하다. 반납 시 도서 상태 및 예약자 유무에 따라 자동 상태 변경이 이루어진다.\",\"acceptance\":[\"회원번호와 이름으로 회원이 확인되어야 한다.\",\"도서명 또는 ISBN으로 도서를 검색할 수 있어야 한다.\",\"대출 기간은 7일/14일/30일 중 선택할 수 있다.\",\"이미 대출 중인 도서는 예약 신청이 가능하다.\",\"대출 완료 시 도서 상태가 자동으로 '대출중'으로 변경된다.\",\"반납 완료 시 예약자 유무에 따라 도서 상태가 '예약중' 또는 '대출가능'으로 변경된다.\"]},{\"title\":\"대출 현황 및 처리\",\"description\":\"대출 현황 화면에서는 현재 대출 중인 도서들의 목록, 대출일, 반납예정일, 상태(대출중/연체/반납완료)를 확인하고, 대출 중인 도서에 대해 연장 및 반납 처리가 가능하다.\",\"acceptance\":[\"대출 건별로 대출일, 반납예정일, 현재 상태를 확인할 수 있다.\",\"대출 중인 도서에 대해 연장 및 반납 처리가 가능하다.\",\"연체 상태에서는 연장이 불가하다.\"]},{\"title\":\"도서별 이력 및 상태 변경 추적\",\"description\":\"관리자는 각 도서별 대출 이력과 상태 변경 이력을 조회할 수 있어야 하며, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있다.\",\"acceptance\":[\"도서별로 모든 대출 이력과 상태 변경 이력을 볼 수 있다.\"]}],\"entities\":{\"Member\":{\"properties\":[{\"name\":\"memberId\",\"type\":\"String\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"name\",\"type\":\"String\",\"required\":true}]},\"Book\":{\"properties\":[{\"name\":\"bookId\",\"type\":\"String\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"title\",\"type\":\"String\",\"required\":true},{\"name\":\"isbn\",\"type\":\"String\",\"required\":true},{\"name\":\"status\",\"type\":\"enum\",\"required\":true,\"values\":[\"AVAILABLE\",\"ON_LOAN\",\"RESERVED\",\"DISCARDED\"]}]},\"Loan\":{\"properties\":[{\"name\":\"loanId\",\"type\":\"String\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"memberId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Member\"},{\"name\":\"bookId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"loanDate\",\"type\":\"Date\",\"required\":true},{\"name\":\"dueDate\",\"type\":\"Date\",\"required\":true},{\"name\":\"returnDate\",\"type\":\"Date\"},{\"name\":\"status\",\"type\":\"enum\",\"required\":true,\"values\":[\"ON_LOAN\",\"OVERDUE\",\"RETURNED\"]}]},\"Reservation\":{\"properties\":[{\"name\":\"reservationId\",\"type\":\"String\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"memberId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Member\"},{\"name\":\"bookId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"reservationDate\",\"type\":\"Date\",\"required\":true}]},\"BookStatusHistory\":{\"properties\":[{\"name\":\"historyId\",\"type\":\"String\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"bookId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"beforeStatus\",\"type\":\"enum\",\"required\":true,\"values\":[\"AVAILABLE\",\"ON_LOAN\",\"RESERVED\",\"DISCARDED\"]},{\"name\":\"afterStatus\",\"type\":\"enum\",\"required\":true,\"values\":[\"AVAILABLE\",\"ON_LOAN\",\"RESERVED\",\"DISCARDED\"]},{\"name\":\"changedAt\",\"type\":\"Date\",\"required\":true}]}},\"businessRules\":[{\"name\":\"대출 기간 선택 제한\",\"description\":\"대출 기간은 7일, 14일, 30일만 선택할 수 있다.\"},{\"name\":\"연체 도서 연장 불가\",\"description\":\"연체 상태(OVERDUE)인 대출 건은 연장이 불가하다.\"},{\"name\":\"대출 상태 자동 변경\",\"description\":\"도서 대출 시 상태는 'ON_LOAN', 반납 시 예약자 없으면 'AVAILABLE', 예약자 있으면 'RESERVED'로 자동 변경된다.\"},{\"name\":\"폐기/대출 불가 도서 대출 거부\",\"description\":\"도서 상태가 'DISCARDED' 또는 대출 불가 시 대출이 거부된다.\"}],\"interfaces\":{\"LoanAndReturn\":{\"sections\":[{\"name\":\"회원 확인\",\"type\":\"form\",\"fields\":[{\"name\":\"memberId\",\"type\":\"text\",\"required\":true},{\"name\":\"name\",\"type\":\"text\",\"required\":true}],\"actions\":[\"회원 확인\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}},{\"name\":\"도서 대출 신청\",\"type\":\"form\",\"fields\":[{\"name\":\"bookSearch\",\"type\":\"text\",\"required\":true},{\"name\":\"searchType\",\"type\":\"select\",\"required\":true},{\"name\":\"loanPeriod\",\"type\":\"select\",\"required\":true}],\"actions\":[\"대출 신청\",\"예약 신청\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}},{\"name\":\"도서 반납\",\"type\":\"form\",\"fields\":[{\"name\":\"loanId\",\"type\":\"text\",\"required\":true}],\"actions\":[\"반납 처리\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}}]},\"LoanStatus\":{\"sections\":[{\"name\":\"대출 현황 목록\",\"type\":\"table\",\"fields\":[],\"actions\":[\"연장\",\"반납\"],\"filters\":[\"대출 상태\",\"대출일\",\"반납예정일\"],\"resultTable\":{\"columns\":[\"loanId\",\"bookId\",\"title\",\"loanDate\",\"dueDate\",\"status\"],\"actions\":[\"연장\",\"반납\"]}}]},\"BookHistory\":{\"sections\":[{\"name\":\"도서별 이력 조회\",\"type\":\"table\",\"fields\":[{\"name\":\"bookId\",\"type\":\"text\",\"required\":true}],\"actions\":[\"대출 이력 조회\",\"상태 변경 이력 조회\"],\"filters\":[],\"resultTable\":{\"columns\":[\"loanId\",\"memberId\",\"loanDate\",\"dueDate\",\"returnDate\",\"status\"],\"actions\":[]}},{\"name\":\"도서 상태 변경 이력\",\"type\":\"table\",\"fields\":[],\"actions\":[],\"filters\":[],\"resultTable\":{\"columns\":[\"historyId\",\"beforeStatus\",\"afterStatus\",\"changedAt\"],\"actions\":[]}}]}},\"events\":[{\"name\":\"MemberVerified\",\"description\":\"회원번호와 이름으로 회원 정보가 확인됨.\",\"displayName\":\"회원이 확인됨\"},{\"name\":\"BookLoanRequested\",\"description\":\"회원이 대출하고자 하는 도서와 대출 기간(7일/14일/30일)을 선택하여 대출을 신청함.\",\"displayName\":\"도서 대출이 신청됨\"},{\"name\":\"BookLoanRejected\",\"description\":\"도서가 폐기되었거나 대출 불가 상태인 경우 대출이 거부됨.\",\"displayName\":\"도서 대출이 거부됨\"},{\"name\":\"BookLoanApproved\",\"description\":\"도서가 대출 가능 상태라면 대출이 승인되고 대출 정보가 생성됨. 도서 상태는 '대출중'으로 변경됨.\",\"displayName\":\"도서 대출이 승인됨\"},{\"name\":\"BookReserved\",\"description\":\"대출하려는 도서가 이미 대출 중일 때 회원이 해당 도서의 예약을 신청하면 예약이 생성되고, 도서의 상태가 '예약중'으로 변경됨.\",\"displayName\":\"도서가 예약됨\"},{\"name\":\"BookReturned\",\"description\":\"회원이 대출한 도서를 반납함. 도서에 예약자가 있으면 상태가 '예약중'으로, 없으면 '대출가능'으로 변경됨.\",\"displayName\":\"도서가 반납됨\"},{\"name\":\"BookAvailable\",\"description\":\"반납된 도서에 예약자가 없는 경우 도서 상태가 '대출가능'으로 변경됨.\",\"displayName\":\"도서가 대출 가능 상태로 변경됨\"},{\"name\":\"BookReservedForNext\",\"description\":\"반납된 도서에 예약자가 있을 경우 도서 상태가 '예약중'으로 변경됨.\",\"displayName\":\"도서가 다음 예약자를 위해 예약중 상태로 변경됨\"},{\"name\":\"LoanExtended\",\"description\":\"회원이 대출 중인 도서의 대출 기간을 연장함. 연체 상태에서는 연장이 불가함.\",\"displayName\":\"대출 기간이 연장됨\"},{\"name\":\"LoanOverdue\",\"description\":\"반납 예정일이 지나도 도서가 반납되지 않은 경우, 대출 건의 상태가 '연체'로 변경됨.\",\"displayName\":\"도서 대출이 연체됨\"}],\"contextRelations\":[{\"name\":\"BookManagementToBookLoanProcess\",\"type\":\"Pub/Sub\",\"direction\":\"receives from\",\"targetContext\":\"도서 관리 (BookManagement)\",\"reason\":\"도서의 상태 변화, 신규 등록, 폐기 등 이벤트가 발생하면 이를 대출/예약/연체 프로세스에 전달해야 하며, 두 컨텍스트가 느슨하게 결합되고 데이터 소유권이 명확히 분리됨.\",\"interactionPattern\":\"도서 상태 변경, 신규 등록, 폐기 등 이벤트를 Pub/Sub로 발행하며 대출 프로세스에서 구독하여 반영함. 예: 도서가 폐기되면 대출 프로세스에서 대출 거부 처리.\"}]}"
             }
         },
-        "userStory": "도서관의 도서 관리와 대출/반납을 통합적으로 관리하는 화면을 만들려고 해.\n\n'도서 관리' 화면에서는 새로운 도서를 등록하고 현재 보유한 도서들의 상태를 관리할 수 있어야 해. 도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해. 등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야 해.\n\n'대출/반납' 화면에서는 회원이 도서를 대출하고 반납하는 것을 관리할 수 있어야 해. 대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할 도서를 선택해야 해. 도서는 도서명이나 ISBN으로 검색할 수 있어야 해. 대출 기간은 7일/14일/30일 중에서 선택할 수 있어. 만약 대출하려는 도서가 이미 대출 중이라면, 예약 신청이 가능해야 해. 대출이 완료되면 해당 도서의 상태는 자동으로 '대출중'으로 변경되어야 해.\n\n대출 현황 화면에서는 현재 대출 중인 도서들의 목록을 볼 수 있어야 해. 각 대출 건에 대해 대출일, 반납예정일, 현재 상태(대출중/연체/반납완료)를 확인할 수 있어야 하고, 대출 중인 도서는 연장이나 반납 처리가 가능해야 해. 도서가 반납되면 자동으로 해당 도서의 상태가 '대출가능'으로 변경되어야 해. 만약 예약자가 있는 도서가 반납되면, 해당 도서는 '예약중' 상태로 변경되어야 해.\n도서관의 도서 관리와 대출/반납을 통합적으로 관리하는 화면을 만들려고 해.\n\n'도서 관리' 화면에서는 새로운 도서를 등록하고 현재 보유한 도서들의 상태를 관리할 수 있어야 해. 도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해. 등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야 해.\n\n'대출/반납' 화면에서는 회원이 도서를 대출하고 반납하는 것을 관리할 수 있어야 해. 대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할 도서를 선택해야 해. 도서는 도서명이나 ISBN으로 검색할 수 있어야 해. 대출 기간은 7일/14일/30일 중에서 선택할 수 있어. 만약 대출하려는 도서가 이미 대출 중이라면, 예약 신청이 가능해야 해. 대출이 완료되면 해당 도서의 상태는 자동으로 '대출중'으로 변경되어야 해.\n\n대출 현황 화면에서는 현재 대출 중인 도서들의 목록을 볼 수 있어야 해. 각 대출 건에 대해 대출일, 반납예정일, 현재 상태(대출중/연체/반납완료)를 확인할 수 있어야 하고, 대출 중인 도서는 연장이나 반납 처리가 가능해야 해. 도서가 반납되면 자동으로 해당 도서의 상태가 '대출가능'으로 변경되어야 해. 만약 예약자가 있는 도서가 반납되면, 해당 도서는 '예약중' 상태로 변경되어야 해.\n\n각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해.\n\n각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해.\n",
+        "userStory": "도서관의 도서 관리와 대출/반납을 통합적으로 관리하는 화면을 만들려고 해.\n\n'도서 관리' 화면에서는 새로운 도서를 등록하고 현재 보유한 도서들의 상태를 관리할 수 있어야 해. 도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해. 등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야 해.\n\n'대출/반납' 화면에서는 회원이 도서를 대출하고 반납하는 것을 관리할 수 있어야 해. 대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할 도서를 선택해야 해. 도서는 도서명이나 ISBN으로 검색할 수 있어야 해. 대출 기간은 7일/14일/30일 중에서 선택할 수 있어. 만약 대출하려는 도서가 이미 대출 중이라면, 예약 신청이 가능해야 해. 대출이 완료되면 해당 도서의 상태는 자동으로 '대출중'으로 변경되어야 해.\n\n대출 현황 화면에서는 현재 대출 중인 도서들의 목록을 볼 수 있어야 해. 각 대출 건에 대해 대출일, 반납예정일, 현재 상태(대출중/연체/반납완료)를 확인할 수 있어야 하고, 대출 중인 도서는 연장이나 반납 처리가 가능해야 해. 도서가 반납되면 자동으로 해당 도서의 상태가 '대출가능'으로 변경되어야 해. 만약 예약자가 있는 도서가 반납되면, 해당 도서는 '예약중' 상태로 변경되어야 해.\n\n각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해.\n",
         "state": {
             "generator": "RequirementsMappingGenerator",
             "isAIModelSelected": false,
@@ -383,7 +542,7 @@ export const aggregateDraftScenarios = {
         },
         "messages": [
             {
-                "uniqueId": "7e4fecd1ce121a3a87cee83d994e1a37",
+                "uniqueId": "a7d478c9160fb9db7cdff83b720f30d7",
                 "type": "processAnalysis",
                 "isAnalizing": false,
                 "isSummarizeStarted": false,
@@ -395,17 +554,17 @@ export const aggregateDraftScenarios = {
                     "projectName": "Requirements Analysis",
                     "content": {
                         "elements": {
-                            "f6200042-b415-970e-d56e-69ba0f28733c": {
+                            "dc17fbbc-b66d-3c08-4d8d-c7f291c98cd6": {
                                 "_type": "org.uengine.modeling.model.Actor",
-                                "id": "f6200042-b415-970e-d56e-69ba0f28733c",
-                                "name": "도서관리자",
+                                "id": "dc17fbbc-b66d-3c08-4d8d-c7f291c98cd6",
+                                "name": "도서 관리자",
                                 "oldName": "",
                                 "displayName": "",
                                 "description": "",
                                 "author": null,
                                 "elementView": {
                                     "_type": "org.uengine.modeling.model.Actor",
-                                    "id": "f6200042-b415-970e-d56e-69ba0f28733c",
+                                    "id": "dc17fbbc-b66d-3c08-4d8d-c7f291c98cd6",
                                     "x": 150,
                                     "y": 150,
                                     "width": 100,
@@ -414,9 +573,9 @@ export const aggregateDraftScenarios = {
                                 },
                                 "boundedContext": {}
                             },
-                            "eac0876e-5b10-8109-7e9d-b8ab97e6becd": {
+                            "8772000b-f2c4-f4bb-2dbd-9ff041bf664c": {
                                 "_type": "org.uengine.modeling.model.Actor",
-                                "id": "eac0876e-5b10-8109-7e9d-b8ab97e6becd",
+                                "id": "8772000b-f2c4-f4bb-2dbd-9ff041bf664c",
                                 "name": "회원",
                                 "oldName": "",
                                 "displayName": "",
@@ -424,7 +583,7 @@ export const aggregateDraftScenarios = {
                                 "author": null,
                                 "elementView": {
                                     "_type": "org.uengine.modeling.model.Actor",
-                                    "id": "eac0876e-5b10-8109-7e9d-b8ab97e6becd",
+                                    "id": "8772000b-f2c4-f4bb-2dbd-9ff041bf664c",
                                     "x": 150,
                                     "y": 400,
                                     "width": 100,
@@ -433,17 +592,17 @@ export const aggregateDraftScenarios = {
                                 },
                                 "boundedContext": {}
                             },
-                            "f39b40be-c8e2-a76e-1c41-2344d46e86cb": {
+                            "0d1c5f32-b18e-e1b4-772f-42eed6905650": {
                                 "_type": "org.uengine.modeling.model.Actor",
-                                "id": "f39b40be-c8e2-a76e-1c41-2344d46e86cb",
-                                "name": "도서관리시스템",
+                                "id": "0d1c5f32-b18e-e1b4-772f-42eed6905650",
+                                "name": "도서 대출 시스템",
                                 "oldName": "",
                                 "displayName": "",
                                 "description": "",
                                 "author": null,
                                 "elementView": {
                                     "_type": "org.uengine.modeling.model.Actor",
-                                    "id": "f39b40be-c8e2-a76e-1c41-2344d46e86cb",
+                                    "id": "0d1c5f32-b18e-e1b4-772f-42eed6905650",
                                     "x": 150,
                                     "y": 650,
                                     "width": 100,
@@ -452,17 +611,17 @@ export const aggregateDraftScenarios = {
                                 },
                                 "boundedContext": {}
                             },
-                            "7645ce73-3114-051f-ba68-347a65424d71": {
+                            "628255aa-fb94-6e14-4f6d-14c5ee7d3d5b": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "7645ce73-3114-051f-ba68-347a65424d71",
+                                "id": "628255aa-fb94-6e14-4f6d-14c5ee7d3d5b",
                                 "visibility": "public",
                                 "name": "BookRegistered",
                                 "oldName": "",
-                                "displayName": "도서 등록됨",
+                                "displayName": "도서가 등록됨",
                                 "namePascalCase": "BookRegistered",
                                 "nameCamelCase": "bookRegistered",
                                 "namePlural": "",
-                                "description": "관리자가 새로운 도서를 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력하여 등록함. ISBN 중복 및 13자리 유효성 검증을 통과함.",
+                                "description": "도서 관리자가 새로운 도서를 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력하여 도서를 등록함. 등록된 도서는 '대출가능' 상태가 됨.",
                                 "author": null,
                                 "aggregate": {},
                                 "boundedContext": {},
@@ -479,7 +638,7 @@ export const aggregateDraftScenarios = {
                                 "mirrorElement": null,
                                 "elementView": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "7645ce73-3114-051f-ba68-347a65424d71",
+                                    "id": "628255aa-fb94-6e14-4f6d-14c5ee7d3d5b",
                                     "x": 300,
                                     "y": 150,
                                     "width": 100,
@@ -489,7 +648,7 @@ export const aggregateDraftScenarios = {
                                 },
                                 "hexagonalView": {
                                     "_type": "org.uengine.modeling.model.EventHexagonal",
-                                    "id": "7645ce73-3114-051f-ba68-347a65424d71",
+                                    "id": "628255aa-fb94-6e14-4f6d-14c5ee7d3d5b",
                                     "x": 300,
                                     "y": 150,
                                     "subWidth": 100,
@@ -501,17 +660,17 @@ export const aggregateDraftScenarios = {
                                 "relationCommandInfo": [],
                                 "trigger": "@PostPersist"
                             },
-                            "f54b8b55-6f10-3c7c-f168-17082b4ee4d0": {
+                            "5aea5ee1-144e-ad12-2e62-ebee77cff972": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "f54b8b55-6f10-3c7c-f168-17082b4ee4d0",
+                                "id": "5aea5ee1-144e-ad12-2e62-ebee77cff972",
                                 "visibility": "public",
-                                "name": "BookDisposed",
+                                "name": "BookRegistrationFailed",
                                 "oldName": "",
-                                "displayName": "도서 폐기됨",
-                                "namePascalCase": "BookDisposed",
-                                "nameCamelCase": "bookDisposed",
+                                "displayName": "도서 등록 실패됨",
+                                "namePascalCase": "BookRegistrationFailed",
+                                "nameCamelCase": "bookRegistrationFailed",
                                 "namePlural": "",
-                                "description": "관리자가 훼손/분실로 인한 도서 폐기를 처리함. 폐기된 도서는 대출 불가 상태가 됨.",
+                                "description": "도서 등록 시 ISBN이 13자리가 아니거나 중복된 경우 등록이 거부됨.",
                                 "author": null,
                                 "aggregate": {},
                                 "boundedContext": {},
@@ -528,7 +687,7 @@ export const aggregateDraftScenarios = {
                                 "mirrorElement": null,
                                 "elementView": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "f54b8b55-6f10-3c7c-f168-17082b4ee4d0",
+                                    "id": "5aea5ee1-144e-ad12-2e62-ebee77cff972",
                                     "x": 500,
                                     "y": 150,
                                     "width": 100,
@@ -538,7 +697,7 @@ export const aggregateDraftScenarios = {
                                 },
                                 "hexagonalView": {
                                     "_type": "org.uengine.modeling.model.EventHexagonal",
-                                    "id": "f54b8b55-6f10-3c7c-f168-17082b4ee4d0",
+                                    "id": "5aea5ee1-144e-ad12-2e62-ebee77cff972",
                                     "x": 500,
                                     "y": 150,
                                     "subWidth": 100,
@@ -550,17 +709,17 @@ export const aggregateDraftScenarios = {
                                 "relationCommandInfo": [],
                                 "trigger": "@PostPersist"
                             },
-                            "05d6ad4f-b523-6a03-be44-ccb8c9b6a612": {
+                            "ba6af07d-1de1-7c88-9591-339dbaeee7f5": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "05d6ad4f-b523-6a03-be44-ccb8c9b6a612",
+                                "id": "ba6af07d-1de1-7c88-9591-339dbaeee7f5",
                                 "visibility": "public",
-                                "name": "BookHistoryQueried",
+                                "name": "BookDiscarded",
                                 "oldName": "",
-                                "displayName": "도서 이력 조회됨",
-                                "namePascalCase": "BookHistoryQueried",
-                                "nameCamelCase": "bookHistoryQueried",
+                                "displayName": "도서가 폐기됨",
+                                "namePascalCase": "BookDiscarded",
+                                "nameCamelCase": "bookDiscarded",
                                 "namePlural": "",
-                                "description": "관리자/회원이 도서별로 대출 및 상태 변경 이력을 조회함.",
+                                "description": "도서가 훼손되거나 분실된 경우 도서 관리자가 해당 도서를 폐기 처리함. 폐기된 도서는 더 이상 대출이 불가함.",
                                 "author": null,
                                 "aggregate": {},
                                 "boundedContext": {},
@@ -577,7 +736,7 @@ export const aggregateDraftScenarios = {
                                 "mirrorElement": null,
                                 "elementView": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "05d6ad4f-b523-6a03-be44-ccb8c9b6a612",
+                                    "id": "ba6af07d-1de1-7c88-9591-339dbaeee7f5",
                                     "x": 700,
                                     "y": 150,
                                     "width": 100,
@@ -587,7 +746,7 @@ export const aggregateDraftScenarios = {
                                 },
                                 "hexagonalView": {
                                     "_type": "org.uengine.modeling.model.EventHexagonal",
-                                    "id": "05d6ad4f-b523-6a03-be44-ccb8c9b6a612",
+                                    "id": "ba6af07d-1de1-7c88-9591-339dbaeee7f5",
                                     "x": 700,
                                     "y": 150,
                                     "subWidth": 100,
@@ -599,17 +758,17 @@ export const aggregateDraftScenarios = {
                                 "relationCommandInfo": [],
                                 "trigger": "@PostPersist"
                             },
-                            "6cad6c4c-60f4-ef4e-32cd-517263995ea0": {
+                            "f24421e5-5a83-d40c-3870-d2df9a572838": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "6cad6c4c-60f4-ef4e-32cd-517263995ea0",
+                                "id": "f24421e5-5a83-d40c-3870-d2df9a572838",
                                 "visibility": "public",
-                                "name": "LoanStatusQueried",
+                                "name": "BookLoanHistoryViewed",
                                 "oldName": "",
-                                "displayName": "대출 현황 조회됨",
-                                "namePascalCase": "LoanStatusQueried",
-                                "nameCamelCase": "loanStatusQueried",
+                                "displayName": "도서의 대출 이력이 조회됨",
+                                "namePascalCase": "BookLoanHistoryViewed",
+                                "nameCamelCase": "bookLoanHistoryViewed",
                                 "namePlural": "",
-                                "description": "현재 대출 중인 도서와 각 대출 건의 대출일, 반납예정일, 상태(대출중/연체/반납완료)를 조회함.",
+                                "description": "도서 관리자가 특정 도서의 대출 이력을 조회함.",
                                 "author": null,
                                 "aggregate": {},
                                 "boundedContext": {},
@@ -626,7 +785,7 @@ export const aggregateDraftScenarios = {
                                 "mirrorElement": null,
                                 "elementView": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "6cad6c4c-60f4-ef4e-32cd-517263995ea0",
+                                    "id": "f24421e5-5a83-d40c-3870-d2df9a572838",
                                     "x": 900,
                                     "y": 150,
                                     "width": 100,
@@ -636,7 +795,7 @@ export const aggregateDraftScenarios = {
                                 },
                                 "hexagonalView": {
                                     "_type": "org.uengine.modeling.model.EventHexagonal",
-                                    "id": "6cad6c4c-60f4-ef4e-32cd-517263995ea0",
+                                    "id": "f24421e5-5a83-d40c-3870-d2df9a572838",
                                     "x": 900,
                                     "y": 150,
                                     "subWidth": 100,
@@ -648,17 +807,17 @@ export const aggregateDraftScenarios = {
                                 "relationCommandInfo": [],
                                 "trigger": "@PostPersist"
                             },
-                            "a46f6438-cb9e-0f34-421f-f330bf8c862c": {
+                            "460bf856-ee9b-40ad-ec18-df030e91a131": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "a46f6438-cb9e-0f34-421f-f330bf8c862c",
+                                "id": "460bf856-ee9b-40ad-ec18-df030e91a131",
                                 "visibility": "public",
-                                "name": "BookStateChanged",
+                                "name": "BookStatusHistoryViewed",
                                 "oldName": "",
-                                "displayName": "도서 상태 변경됨",
-                                "namePascalCase": "BookStateChanged",
-                                "nameCamelCase": "bookStateChanged",
+                                "displayName": "도서의 상태 변경 이력이 조회됨",
+                                "namePascalCase": "BookStatusHistoryViewed",
+                                "nameCamelCase": "bookStatusHistoryViewed",
                                 "namePlural": "",
-                                "description": "도서 등록/대출/반납/예약/폐기 등의 트리거에 의해 도서의 상태가 변경됨.",
+                                "description": "도서 관리자가 특정 도서의 상태 변경 이력을 조회함.",
                                 "author": null,
                                 "aggregate": {},
                                 "boundedContext": {},
@@ -675,9 +834,9 @@ export const aggregateDraftScenarios = {
                                 "mirrorElement": null,
                                 "elementView": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "a46f6438-cb9e-0f34-421f-f330bf8c862c",
-                                    "x": 300,
-                                    "y": 650,
+                                    "id": "460bf856-ee9b-40ad-ec18-df030e91a131",
+                                    "x": 1100,
+                                    "y": 150,
                                     "width": 100,
                                     "height": 100,
                                     "style": "{}",
@@ -685,9 +844,9 @@ export const aggregateDraftScenarios = {
                                 },
                                 "hexagonalView": {
                                     "_type": "org.uengine.modeling.model.EventHexagonal",
-                                    "id": "a46f6438-cb9e-0f34-421f-f330bf8c862c",
-                                    "x": 300,
-                                    "y": 650,
+                                    "id": "460bf856-ee9b-40ad-ec18-df030e91a131",
+                                    "x": 1100,
+                                    "y": 150,
                                     "subWidth": 100,
                                     "width": 20,
                                     "height": 20,
@@ -697,17 +856,17 @@ export const aggregateDraftScenarios = {
                                 "relationCommandInfo": [],
                                 "trigger": "@PostPersist"
                             },
-                            "2744e4e3-6792-0b2c-a980-88d5f6223aa0": {
+                            "99af563a-a66d-20a1-3ca7-29a0da0d3108": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "2744e4e3-6792-0b2c-a980-88d5f6223aa0",
+                                "id": "99af563a-a66d-20a1-3ca7-29a0da0d3108",
                                 "visibility": "public",
-                                "name": "LoanApproved",
+                                "name": "BookSearched",
                                 "oldName": "",
-                                "displayName": "대출 완료됨",
-                                "namePascalCase": "LoanApproved",
-                                "nameCamelCase": "loanApproved",
+                                "displayName": "도서가 검색됨",
+                                "namePascalCase": "BookSearched",
+                                "nameCamelCase": "bookSearched",
                                 "namePlural": "",
-                                "description": "대출 요청이 처리되어 도서가 회원에게 대출됨. 도서 상태는 대출중으로 자동 변경됨.",
+                                "description": "회원이 도서명이나 ISBN으로 도서를 검색함.",
                                 "author": null,
                                 "aggregate": {},
                                 "boundedContext": {},
@@ -724,154 +883,7 @@ export const aggregateDraftScenarios = {
                                 "mirrorElement": null,
                                 "elementView": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "2744e4e3-6792-0b2c-a980-88d5f6223aa0",
-                                    "x": 500,
-                                    "y": 650,
-                                    "width": 100,
-                                    "height": 100,
-                                    "style": "{}",
-                                    "angle": 0
-                                },
-                                "hexagonalView": {
-                                    "_type": "org.uengine.modeling.model.EventHexagonal",
-                                    "id": "2744e4e3-6792-0b2c-a980-88d5f6223aa0",
-                                    "x": 500,
-                                    "y": 650,
-                                    "subWidth": 100,
-                                    "width": 20,
-                                    "height": 20,
-                                    "style": "{}"
-                                },
-                                "relationPolicyInfo": [],
-                                "relationCommandInfo": [],
-                                "trigger": "@PostPersist"
-                            },
-                            "88218e81-cf65-8b25-1222-001fba8aa5ff": {
-                                "_type": "org.uengine.modeling.model.Event",
-                                "id": "88218e81-cf65-8b25-1222-001fba8aa5ff",
-                                "visibility": "public",
-                                "name": "LoanOverdueChecked",
-                                "oldName": "",
-                                "displayName": "연체 확인됨",
-                                "namePascalCase": "LoanOverdueChecked",
-                                "nameCamelCase": "loanOverdueChecked",
-                                "namePlural": "",
-                                "description": "반납 예정일이 지난 도서의 연체 상태를 확인하여 연체로 표시함.",
-                                "author": null,
-                                "aggregate": {},
-                                "boundedContext": {},
-                                "fieldDescriptors": [
-                                    {
-                                        "_type": "org.uengine.model.FieldDescriptor",
-                                        "name": "id",
-                                        "className": "Long",
-                                        "nameCamelCase": "id",
-                                        "namePascalCase": "Id",
-                                        "isKey": true
-                                    }
-                                ],
-                                "mirrorElement": null,
-                                "elementView": {
-                                    "_type": "org.uengine.modeling.model.Event",
-                                    "id": "88218e81-cf65-8b25-1222-001fba8aa5ff",
-                                    "x": 700,
-                                    "y": 650,
-                                    "width": 100,
-                                    "height": 100,
-                                    "style": "{}",
-                                    "angle": 0
-                                },
-                                "hexagonalView": {
-                                    "_type": "org.uengine.modeling.model.EventHexagonal",
-                                    "id": "88218e81-cf65-8b25-1222-001fba8aa5ff",
-                                    "x": 700,
-                                    "y": 650,
-                                    "subWidth": 100,
-                                    "width": 20,
-                                    "height": 20,
-                                    "style": "{}"
-                                },
-                                "relationPolicyInfo": [],
-                                "relationCommandInfo": [],
-                                "trigger": "@PostPersist"
-                            },
-                            "7396f14a-6b12-f1b9-281d-99403365ed35": {
-                                "_type": "org.uengine.modeling.model.Event",
-                                "id": "7396f14a-6b12-f1b9-281d-99403365ed35",
-                                "visibility": "public",
-                                "name": "ReservationNotified",
-                                "oldName": "",
-                                "displayName": "예약자 통보됨",
-                                "namePascalCase": "ReservationNotified",
-                                "nameCamelCase": "reservationNotified",
-                                "namePlural": "",
-                                "description": "예약자가 있는 도서가 반납되었을 때, 예약자에게 도서 이용 가능 안내를 통보함.",
-                                "author": null,
-                                "aggregate": {},
-                                "boundedContext": {},
-                                "fieldDescriptors": [
-                                    {
-                                        "_type": "org.uengine.model.FieldDescriptor",
-                                        "name": "id",
-                                        "className": "Long",
-                                        "nameCamelCase": "id",
-                                        "namePascalCase": "Id",
-                                        "isKey": true
-                                    }
-                                ],
-                                "mirrorElement": null,
-                                "elementView": {
-                                    "_type": "org.uengine.modeling.model.Event",
-                                    "id": "7396f14a-6b12-f1b9-281d-99403365ed35",
-                                    "x": 900,
-                                    "y": 650,
-                                    "width": 100,
-                                    "height": 100,
-                                    "style": "{}",
-                                    "angle": 0
-                                },
-                                "hexagonalView": {
-                                    "_type": "org.uengine.modeling.model.EventHexagonal",
-                                    "id": "7396f14a-6b12-f1b9-281d-99403365ed35",
-                                    "x": 900,
-                                    "y": 650,
-                                    "subWidth": 100,
-                                    "width": 20,
-                                    "height": 20,
-                                    "style": "{}"
-                                },
-                                "relationPolicyInfo": [],
-                                "relationCommandInfo": [],
-                                "trigger": "@PostPersist"
-                            },
-                            "65c7adb1-9c5e-8b68-610d-001a35e42a9f": {
-                                "_type": "org.uengine.modeling.model.Event",
-                                "id": "65c7adb1-9c5e-8b68-610d-001a35e42a9f",
-                                "visibility": "public",
-                                "name": "LoanRequested",
-                                "oldName": "",
-                                "displayName": "대출 신청됨",
-                                "namePascalCase": "LoanRequested",
-                                "nameCamelCase": "loanRequested",
-                                "namePlural": "",
-                                "description": "회원이 도서명이나 ISBN으로 검색하여 대출 가능한 도서에 대해 대출을 신청함. 회원번호와 이름 확인 필요.",
-                                "author": null,
-                                "aggregate": {},
-                                "boundedContext": {},
-                                "fieldDescriptors": [
-                                    {
-                                        "_type": "org.uengine.model.FieldDescriptor",
-                                        "name": "id",
-                                        "className": "Long",
-                                        "nameCamelCase": "id",
-                                        "namePascalCase": "Id",
-                                        "isKey": true
-                                    }
-                                ],
-                                "mirrorElement": null,
-                                "elementView": {
-                                    "_type": "org.uengine.modeling.model.Event",
-                                    "id": "65c7adb1-9c5e-8b68-610d-001a35e42a9f",
+                                    "id": "99af563a-a66d-20a1-3ca7-29a0da0d3108",
                                     "x": 300,
                                     "y": 400,
                                     "width": 100,
@@ -881,7 +893,7 @@ export const aggregateDraftScenarios = {
                                 },
                                 "hexagonalView": {
                                     "_type": "org.uengine.modeling.model.EventHexagonal",
-                                    "id": "65c7adb1-9c5e-8b68-610d-001a35e42a9f",
+                                    "id": "99af563a-a66d-20a1-3ca7-29a0da0d3108",
                                     "x": 300,
                                     "y": 400,
                                     "subWidth": 100,
@@ -893,17 +905,115 @@ export const aggregateDraftScenarios = {
                                 "relationCommandInfo": [],
                                 "trigger": "@PostPersist"
                             },
-                            "d5816e58-5dff-6c9f-dd62-a75ff386d96e": {
+                            "4f4560d3-88cb-ff96-3433-b28225f033eb": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "d5816e58-5dff-6c9f-dd62-a75ff386d96e",
+                                "id": "4f4560d3-88cb-ff96-3433-b28225f033eb",
+                                "visibility": "public",
+                                "name": "MemberVerified",
+                                "oldName": "",
+                                "displayName": "회원이 확인됨",
+                                "namePascalCase": "MemberVerified",
+                                "nameCamelCase": "memberVerified",
+                                "namePlural": "",
+                                "description": "회원번호와 이름으로 회원 정보가 확인됨.",
+                                "author": null,
+                                "aggregate": {},
+                                "boundedContext": {},
+                                "fieldDescriptors": [
+                                    {
+                                        "_type": "org.uengine.model.FieldDescriptor",
+                                        "name": "id",
+                                        "className": "Long",
+                                        "nameCamelCase": "id",
+                                        "namePascalCase": "Id",
+                                        "isKey": true
+                                    }
+                                ],
+                                "mirrorElement": null,
+                                "elementView": {
+                                    "_type": "org.uengine.modeling.model.Event",
+                                    "id": "4f4560d3-88cb-ff96-3433-b28225f033eb",
+                                    "x": 500,
+                                    "y": 400,
+                                    "width": 100,
+                                    "height": 100,
+                                    "style": "{}",
+                                    "angle": 0
+                                },
+                                "hexagonalView": {
+                                    "_type": "org.uengine.modeling.model.EventHexagonal",
+                                    "id": "4f4560d3-88cb-ff96-3433-b28225f033eb",
+                                    "x": 500,
+                                    "y": 400,
+                                    "subWidth": 100,
+                                    "width": 20,
+                                    "height": 20,
+                                    "style": "{}"
+                                },
+                                "relationPolicyInfo": [],
+                                "relationCommandInfo": [],
+                                "trigger": "@PostPersist"
+                            },
+                            "12d9c01f-d06d-4afc-f30e-448fa9164758": {
+                                "_type": "org.uengine.modeling.model.Event",
+                                "id": "12d9c01f-d06d-4afc-f30e-448fa9164758",
+                                "visibility": "public",
+                                "name": "BookLoanRequested",
+                                "oldName": "",
+                                "displayName": "도서 대출이 신청됨",
+                                "namePascalCase": "BookLoanRequested",
+                                "nameCamelCase": "bookLoanRequested",
+                                "namePlural": "",
+                                "description": "회원이 대출하고자 하는 도서와 대출 기간(7일/14일/30일)을 선택하여 대출을 신청함.",
+                                "author": null,
+                                "aggregate": {},
+                                "boundedContext": {},
+                                "fieldDescriptors": [
+                                    {
+                                        "_type": "org.uengine.model.FieldDescriptor",
+                                        "name": "id",
+                                        "className": "Long",
+                                        "nameCamelCase": "id",
+                                        "namePascalCase": "Id",
+                                        "isKey": true
+                                    }
+                                ],
+                                "mirrorElement": null,
+                                "elementView": {
+                                    "_type": "org.uengine.modeling.model.Event",
+                                    "id": "12d9c01f-d06d-4afc-f30e-448fa9164758",
+                                    "x": 700,
+                                    "y": 400,
+                                    "width": 100,
+                                    "height": 100,
+                                    "style": "{}",
+                                    "angle": 0
+                                },
+                                "hexagonalView": {
+                                    "_type": "org.uengine.modeling.model.EventHexagonal",
+                                    "id": "12d9c01f-d06d-4afc-f30e-448fa9164758",
+                                    "x": 700,
+                                    "y": 400,
+                                    "subWidth": 100,
+                                    "width": 20,
+                                    "height": 20,
+                                    "style": "{}"
+                                },
+                                "relationPolicyInfo": [],
+                                "relationCommandInfo": [],
+                                "trigger": "@PostPersist"
+                            },
+                            "c1070049-1afb-a305-1b3c-e3292e2d94c9": {
+                                "_type": "org.uengine.modeling.model.Event",
+                                "id": "c1070049-1afb-a305-1b3c-e3292e2d94c9",
                                 "visibility": "public",
                                 "name": "BookReserved",
                                 "oldName": "",
-                                "displayName": "도서 예약됨",
+                                "displayName": "도서가 예약됨",
                                 "namePascalCase": "BookReserved",
                                 "nameCamelCase": "bookReserved",
                                 "namePlural": "",
-                                "description": "회원이 이미 대출중인 도서에 대해 예약 신청을 함. 예약된 도서는 예약 대기 리스트에 등록됨.",
+                                "description": "대출하려는 도서가 이미 대출 중일 때 회원이 해당 도서의 예약을 신청하면 예약이 생성되고, 도서의 상태가 '예약중'으로 변경됨.",
                                 "author": null,
                                 "aggregate": {},
                                 "boundedContext": {},
@@ -920,8 +1030,8 @@ export const aggregateDraftScenarios = {
                                 "mirrorElement": null,
                                 "elementView": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "d5816e58-5dff-6c9f-dd62-a75ff386d96e",
-                                    "x": 500,
+                                    "id": "c1070049-1afb-a305-1b3c-e3292e2d94c9",
+                                    "x": 900,
                                     "y": 400,
                                     "width": 100,
                                     "height": 100,
@@ -930,8 +1040,8 @@ export const aggregateDraftScenarios = {
                                 },
                                 "hexagonalView": {
                                     "_type": "org.uengine.modeling.model.EventHexagonal",
-                                    "id": "d5816e58-5dff-6c9f-dd62-a75ff386d96e",
-                                    "x": 500,
+                                    "id": "c1070049-1afb-a305-1b3c-e3292e2d94c9",
+                                    "x": 900,
                                     "y": 400,
                                     "subWidth": 100,
                                     "width": 20,
@@ -942,17 +1052,17 @@ export const aggregateDraftScenarios = {
                                 "relationCommandInfo": [],
                                 "trigger": "@PostPersist"
                             },
-                            "2591d6ce-91a8-4278-4fb5-edb44f3de821": {
+                            "c8e51c16-e742-d37e-ad1f-64e10e852042": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "2591d6ce-91a8-4278-4fb5-edb44f3de821",
+                                "id": "c8e51c16-e742-d37e-ad1f-64e10e852042",
                                 "visibility": "public",
-                                "name": "LoanReturned",
+                                "name": "BookReturned",
                                 "oldName": "",
-                                "displayName": "도서 반납됨",
-                                "namePascalCase": "LoanReturned",
-                                "nameCamelCase": "loanReturned",
+                                "displayName": "도서가 반납됨",
+                                "namePascalCase": "BookReturned",
+                                "nameCamelCase": "bookReturned",
                                 "namePlural": "",
-                                "description": "회원이 대출 중인 도서를 반납함. 반납 후 예약자가 있으면 도서 상태는 예약중, 없으면 대출가능으로 변경됨.",
+                                "description": "회원이 대출한 도서를 반납함. 도서에 예약자가 있으면 상태가 '예약중'으로, 없으면 '대출가능'으로 변경됨.",
                                 "author": null,
                                 "aggregate": {},
                                 "boundedContext": {},
@@ -969,8 +1079,8 @@ export const aggregateDraftScenarios = {
                                 "mirrorElement": null,
                                 "elementView": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "2591d6ce-91a8-4278-4fb5-edb44f3de821",
-                                    "x": 700,
+                                    "id": "c8e51c16-e742-d37e-ad1f-64e10e852042",
+                                    "x": 1100,
                                     "y": 400,
                                     "width": 100,
                                     "height": 100,
@@ -979,8 +1089,8 @@ export const aggregateDraftScenarios = {
                                 },
                                 "hexagonalView": {
                                     "_type": "org.uengine.modeling.model.EventHexagonal",
-                                    "id": "2591d6ce-91a8-4278-4fb5-edb44f3de821",
-                                    "x": 700,
+                                    "id": "c8e51c16-e742-d37e-ad1f-64e10e852042",
+                                    "x": 1100,
                                     "y": 400,
                                     "subWidth": 100,
                                     "width": 20,
@@ -991,17 +1101,17 @@ export const aggregateDraftScenarios = {
                                 "relationCommandInfo": [],
                                 "trigger": "@PostPersist"
                             },
-                            "7e172b4f-fc79-432c-0a91-24528abf36d8": {
+                            "8f2a0b6c-5704-e46d-d4ec-92dff388fb8b": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "7e172b4f-fc79-432c-0a91-24528abf36d8",
+                                "id": "8f2a0b6c-5704-e46d-d4ec-92dff388fb8b",
                                 "visibility": "public",
                                 "name": "LoanExtended",
                                 "oldName": "",
-                                "displayName": "대출 연장됨",
+                                "displayName": "대출 기간이 연장됨",
                                 "namePascalCase": "LoanExtended",
                                 "nameCamelCase": "loanExtended",
                                 "namePlural": "",
-                                "description": "회원이 대출중인 도서의 반납예정일을 연장 신청함. 연장은 정책에 따라 1회 혹은 제한 가능.",
+                                "description": "회원이 대출 중인 도서의 대출 기간을 연장함. 연체 상태에서는 연장이 불가함.",
                                 "author": null,
                                 "aggregate": {},
                                 "boundedContext": {},
@@ -1018,8 +1128,8 @@ export const aggregateDraftScenarios = {
                                 "mirrorElement": null,
                                 "elementView": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "7e172b4f-fc79-432c-0a91-24528abf36d8",
-                                    "x": 900,
+                                    "id": "8f2a0b6c-5704-e46d-d4ec-92dff388fb8b",
+                                    "x": 1300,
                                     "y": 400,
                                     "width": 100,
                                     "height": 100,
@@ -1028,9 +1138,254 @@ export const aggregateDraftScenarios = {
                                 },
                                 "hexagonalView": {
                                     "_type": "org.uengine.modeling.model.EventHexagonal",
-                                    "id": "7e172b4f-fc79-432c-0a91-24528abf36d8",
-                                    "x": 900,
+                                    "id": "8f2a0b6c-5704-e46d-d4ec-92dff388fb8b",
+                                    "x": 1300,
                                     "y": 400,
+                                    "subWidth": 100,
+                                    "width": 20,
+                                    "height": 20,
+                                    "style": "{}"
+                                },
+                                "relationPolicyInfo": [],
+                                "relationCommandInfo": [],
+                                "trigger": "@PostPersist"
+                            },
+                            "7905f41a-3249-07c5-8156-23a812533f41": {
+                                "_type": "org.uengine.modeling.model.Event",
+                                "id": "7905f41a-3249-07c5-8156-23a812533f41",
+                                "visibility": "public",
+                                "name": "BookLoanRejected",
+                                "oldName": "",
+                                "displayName": "도서 대출이 거부됨",
+                                "namePascalCase": "BookLoanRejected",
+                                "nameCamelCase": "bookLoanRejected",
+                                "namePlural": "",
+                                "description": "도서가 폐기되었거나 대출 불가 상태인 경우 대출이 거부됨.",
+                                "author": null,
+                                "aggregate": {},
+                                "boundedContext": {},
+                                "fieldDescriptors": [
+                                    {
+                                        "_type": "org.uengine.model.FieldDescriptor",
+                                        "name": "id",
+                                        "className": "Long",
+                                        "nameCamelCase": "id",
+                                        "namePascalCase": "Id",
+                                        "isKey": true
+                                    }
+                                ],
+                                "mirrorElement": null,
+                                "elementView": {
+                                    "_type": "org.uengine.modeling.model.Event",
+                                    "id": "7905f41a-3249-07c5-8156-23a812533f41",
+                                    "x": 300,
+                                    "y": 650,
+                                    "width": 100,
+                                    "height": 100,
+                                    "style": "{}",
+                                    "angle": 0
+                                },
+                                "hexagonalView": {
+                                    "_type": "org.uengine.modeling.model.EventHexagonal",
+                                    "id": "7905f41a-3249-07c5-8156-23a812533f41",
+                                    "x": 300,
+                                    "y": 650,
+                                    "subWidth": 100,
+                                    "width": 20,
+                                    "height": 20,
+                                    "style": "{}"
+                                },
+                                "relationPolicyInfo": [],
+                                "relationCommandInfo": [],
+                                "trigger": "@PostPersist"
+                            },
+                            "d976f812-65a9-161c-a1f2-a9b83f7a39e2": {
+                                "_type": "org.uengine.modeling.model.Event",
+                                "id": "d976f812-65a9-161c-a1f2-a9b83f7a39e2",
+                                "visibility": "public",
+                                "name": "BookLoanApproved",
+                                "oldName": "",
+                                "displayName": "도서 대출이 승인됨",
+                                "namePascalCase": "BookLoanApproved",
+                                "nameCamelCase": "bookLoanApproved",
+                                "namePlural": "",
+                                "description": "도서가 대출 가능 상태라면 대출이 승인되고 대출 정보가 생성됨. 도서 상태는 '대출중'으로 변경됨.",
+                                "author": null,
+                                "aggregate": {},
+                                "boundedContext": {},
+                                "fieldDescriptors": [
+                                    {
+                                        "_type": "org.uengine.model.FieldDescriptor",
+                                        "name": "id",
+                                        "className": "Long",
+                                        "nameCamelCase": "id",
+                                        "namePascalCase": "Id",
+                                        "isKey": true
+                                    }
+                                ],
+                                "mirrorElement": null,
+                                "elementView": {
+                                    "_type": "org.uengine.modeling.model.Event",
+                                    "id": "d976f812-65a9-161c-a1f2-a9b83f7a39e2",
+                                    "x": 500,
+                                    "y": 650,
+                                    "width": 100,
+                                    "height": 100,
+                                    "style": "{}",
+                                    "angle": 0
+                                },
+                                "hexagonalView": {
+                                    "_type": "org.uengine.modeling.model.EventHexagonal",
+                                    "id": "d976f812-65a9-161c-a1f2-a9b83f7a39e2",
+                                    "x": 500,
+                                    "y": 650,
+                                    "subWidth": 100,
+                                    "width": 20,
+                                    "height": 20,
+                                    "style": "{}"
+                                },
+                                "relationPolicyInfo": [],
+                                "relationCommandInfo": [],
+                                "trigger": "@PostPersist"
+                            },
+                            "c45c0034-1123-ddea-61c8-45ce7691076e": {
+                                "_type": "org.uengine.modeling.model.Event",
+                                "id": "c45c0034-1123-ddea-61c8-45ce7691076e",
+                                "visibility": "public",
+                                "name": "BookAvailable",
+                                "oldName": "",
+                                "displayName": "도서가 대출 가능 상태로 변경됨",
+                                "namePascalCase": "BookAvailable",
+                                "nameCamelCase": "bookAvailable",
+                                "namePlural": "",
+                                "description": "반납된 도서에 예약자가 없는 경우 도서 상태가 '대출가능'으로 변경됨.",
+                                "author": null,
+                                "aggregate": {},
+                                "boundedContext": {},
+                                "fieldDescriptors": [
+                                    {
+                                        "_type": "org.uengine.model.FieldDescriptor",
+                                        "name": "id",
+                                        "className": "Long",
+                                        "nameCamelCase": "id",
+                                        "namePascalCase": "Id",
+                                        "isKey": true
+                                    }
+                                ],
+                                "mirrorElement": null,
+                                "elementView": {
+                                    "_type": "org.uengine.modeling.model.Event",
+                                    "id": "c45c0034-1123-ddea-61c8-45ce7691076e",
+                                    "x": 700,
+                                    "y": 650,
+                                    "width": 100,
+                                    "height": 100,
+                                    "style": "{}",
+                                    "angle": 0
+                                },
+                                "hexagonalView": {
+                                    "_type": "org.uengine.modeling.model.EventHexagonal",
+                                    "id": "c45c0034-1123-ddea-61c8-45ce7691076e",
+                                    "x": 700,
+                                    "y": 650,
+                                    "subWidth": 100,
+                                    "width": 20,
+                                    "height": 20,
+                                    "style": "{}"
+                                },
+                                "relationPolicyInfo": [],
+                                "relationCommandInfo": [],
+                                "trigger": "@PostPersist"
+                            },
+                            "24b57ad9-8842-6de1-3af4-b7d41c06f1de": {
+                                "_type": "org.uengine.modeling.model.Event",
+                                "id": "24b57ad9-8842-6de1-3af4-b7d41c06f1de",
+                                "visibility": "public",
+                                "name": "BookReservedForNext",
+                                "oldName": "",
+                                "displayName": "도서가 다음 예약자를 위해 예약중 상태로 변경됨",
+                                "namePascalCase": "BookReservedForNext",
+                                "nameCamelCase": "bookReservedForNext",
+                                "namePlural": "",
+                                "description": "반납된 도서에 예약자가 있을 경우 도서 상태가 '예약중'으로 변경됨.",
+                                "author": null,
+                                "aggregate": {},
+                                "boundedContext": {},
+                                "fieldDescriptors": [
+                                    {
+                                        "_type": "org.uengine.model.FieldDescriptor",
+                                        "name": "id",
+                                        "className": "Long",
+                                        "nameCamelCase": "id",
+                                        "namePascalCase": "Id",
+                                        "isKey": true
+                                    }
+                                ],
+                                "mirrorElement": null,
+                                "elementView": {
+                                    "_type": "org.uengine.modeling.model.Event",
+                                    "id": "24b57ad9-8842-6de1-3af4-b7d41c06f1de",
+                                    "x": 900,
+                                    "y": 650,
+                                    "width": 100,
+                                    "height": 100,
+                                    "style": "{}",
+                                    "angle": 0
+                                },
+                                "hexagonalView": {
+                                    "_type": "org.uengine.modeling.model.EventHexagonal",
+                                    "id": "24b57ad9-8842-6de1-3af4-b7d41c06f1de",
+                                    "x": 900,
+                                    "y": 650,
+                                    "subWidth": 100,
+                                    "width": 20,
+                                    "height": 20,
+                                    "style": "{}"
+                                },
+                                "relationPolicyInfo": [],
+                                "relationCommandInfo": [],
+                                "trigger": "@PostPersist"
+                            },
+                            "8df111e5-4765-a78f-0f42-7d544de05555": {
+                                "_type": "org.uengine.modeling.model.Event",
+                                "id": "8df111e5-4765-a78f-0f42-7d544de05555",
+                                "visibility": "public",
+                                "name": "LoanOverdue",
+                                "oldName": "",
+                                "displayName": "도서 대출이 연체됨",
+                                "namePascalCase": "LoanOverdue",
+                                "nameCamelCase": "loanOverdue",
+                                "namePlural": "",
+                                "description": "반납 예정일이 지나도 도서가 반납되지 않은 경우, 대출 건의 상태가 '연체'로 변경됨.",
+                                "author": null,
+                                "aggregate": {},
+                                "boundedContext": {},
+                                "fieldDescriptors": [
+                                    {
+                                        "_type": "org.uengine.model.FieldDescriptor",
+                                        "name": "id",
+                                        "className": "Long",
+                                        "nameCamelCase": "id",
+                                        "namePascalCase": "Id",
+                                        "isKey": true
+                                    }
+                                ],
+                                "mirrorElement": null,
+                                "elementView": {
+                                    "_type": "org.uengine.modeling.model.Event",
+                                    "id": "8df111e5-4765-a78f-0f42-7d544de05555",
+                                    "x": 1100,
+                                    "y": 650,
+                                    "width": 100,
+                                    "height": 100,
+                                    "style": "{}",
+                                    "angle": 0
+                                },
+                                "hexagonalView": {
+                                    "_type": "org.uengine.modeling.model.EventHexagonal",
+                                    "id": "8df111e5-4765-a78f-0f42-7d544de05555",
+                                    "x": 1100,
+                                    "y": 650,
                                     "subWidth": 100,
                                     "width": 20,
                                     "height": 20,
@@ -1042,18 +1397,18 @@ export const aggregateDraftScenarios = {
                             }
                         },
                         "relations": {
-                            "ab854105-0462-5609-0876-0aea82e12c56": {
+                            "3a415ff8-f749-77a7-4f06-c6a8a2adcb20": {
                                 "_type": "org.uengine.modeling.model.Line",
-                                "id": "ab854105-0462-5609-0876-0aea82e12c56",
+                                "id": "3a415ff8-f749-77a7-4f06-c6a8a2adcb20",
                                 "name": "",
                                 "author": null,
                                 "oldName": "",
                                 "displayName": "",
-                                "from": "ab854105-0462-5609-0876-0aea82e12c56",
-                                "to": "ab854105-0462-5609-0876-0aea82e12c56",
+                                "from": "3a415ff8-f749-77a7-4f06-c6a8a2adcb20",
+                                "to": "3a415ff8-f749-77a7-4f06-c6a8a2adcb20",
                                 "description": "",
                                 "relationView": {
-                                    "id": "ab854105-0462-5609-0876-0aea82e12c56",
+                                    "id": "3a415ff8-f749-77a7-4f06-c6a8a2adcb20",
                                     "value": "[[0,275],[2000,275]]"
                                 },
                                 "size": 10,
@@ -1062,18 +1417,18 @@ export const aggregateDraftScenarios = {
                                 "imgSrc": "https://www.msaez.io:8081/static/image/symbol/edge.png",
                                 "vertices": "[[0,275],[2000,275]]"
                             },
-                            "5b6658cc-edf3-8cd0-c94c-afc49e081036": {
+                            "bcd7193e-9f99-56d6-4ea0-bdace657808a": {
                                 "_type": "org.uengine.modeling.model.Line",
-                                "id": "5b6658cc-edf3-8cd0-c94c-afc49e081036",
+                                "id": "bcd7193e-9f99-56d6-4ea0-bdace657808a",
                                 "name": "",
                                 "author": null,
                                 "oldName": "",
                                 "displayName": "",
-                                "from": "5b6658cc-edf3-8cd0-c94c-afc49e081036",
-                                "to": "5b6658cc-edf3-8cd0-c94c-afc49e081036",
+                                "from": "bcd7193e-9f99-56d6-4ea0-bdace657808a",
+                                "to": "bcd7193e-9f99-56d6-4ea0-bdace657808a",
                                 "description": "",
                                 "relationView": {
-                                    "id": "5b6658cc-edf3-8cd0-c94c-afc49e081036",
+                                    "id": "bcd7193e-9f99-56d6-4ea0-bdace657808a",
                                     "value": "[[0,525],[2000,525]]"
                                 },
                                 "size": 10,
@@ -1082,18 +1437,18 @@ export const aggregateDraftScenarios = {
                                 "imgSrc": "https://www.msaez.io:8081/static/image/symbol/edge.png",
                                 "vertices": "[[0,525],[2000,525]]"
                             },
-                            "8733f075-ce65-aaaf-fa4e-33eb8e72a5e6": {
+                            "19b5c789-f01e-d7a4-e0c7-ce56a457cb5f": {
                                 "_type": "org.uengine.modeling.model.Line",
-                                "id": "8733f075-ce65-aaaf-fa4e-33eb8e72a5e6",
+                                "id": "19b5c789-f01e-d7a4-e0c7-ce56a457cb5f",
                                 "name": "",
                                 "author": null,
                                 "oldName": "",
                                 "displayName": "",
-                                "from": "8733f075-ce65-aaaf-fa4e-33eb8e72a5e6",
-                                "to": "8733f075-ce65-aaaf-fa4e-33eb8e72a5e6",
+                                "from": "19b5c789-f01e-d7a4-e0c7-ce56a457cb5f",
+                                "to": "19b5c789-f01e-d7a4-e0c7-ce56a457cb5f",
                                 "description": "",
                                 "relationView": {
-                                    "id": "8733f075-ce65-aaaf-fa4e-33eb8e72a5e6",
+                                    "id": "19b5c789-f01e-d7a4-e0c7-ce56a457cb5f",
                                     "value": "[[0,775],[2000,775]]"
                                 },
                                 "size": 10,
@@ -1102,820 +1457,22 @@ export const aggregateDraftScenarios = {
                                 "imgSrc": "https://www.msaez.io:8081/static/image/symbol/edge.png",
                                 "vertices": "[[0,775],[2000,775]]"
                             },
-                            "4e2d2b20-556e-f0cd-372d-01ba03576c86": {
+                            "7f18f2c0-cbad-4ef3-b6e5-e41f4ad73f41": {
                                 "_type": "org.uengine.modeling.model.Relation",
-                                "id": "4e2d2b20-556e-f0cd-372d-01ba03576c86",
-                                "name": "1",
-                                "displayName": "1",
-                                "sourceElement": {
-                                    "_type": "org.uengine.modeling.model.Event",
-                                    "id": "7645ce73-3114-051f-ba68-347a65424d71",
-                                    "visibility": "public",
-                                    "name": "BookRegistered",
-                                    "oldName": "",
-                                    "displayName": "도서 등록됨",
-                                    "namePascalCase": "BookRegistered",
-                                    "nameCamelCase": "bookRegistered",
-                                    "namePlural": "",
-                                    "description": "관리자가 새로운 도서를 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력하여 등록함. ISBN 중복 및 13자리 유효성 검증을 통과함.",
-                                    "author": null,
-                                    "aggregate": {},
-                                    "boundedContext": {},
-                                    "fieldDescriptors": [
-                                        {
-                                            "_type": "org.uengine.model.FieldDescriptor",
-                                            "name": "id",
-                                            "className": "Long",
-                                            "nameCamelCase": "id",
-                                            "namePascalCase": "Id",
-                                            "isKey": true
-                                        }
-                                    ],
-                                    "mirrorElement": null,
-                                    "elementView": {
-                                        "_type": "org.uengine.modeling.model.Event",
-                                        "id": "7645ce73-3114-051f-ba68-347a65424d71",
-                                        "x": 300,
-                                        "y": 150,
-                                        "width": 100,
-                                        "height": 100,
-                                        "style": "{}",
-                                        "angle": 0
-                                    },
-                                    "hexagonalView": {
-                                        "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "7645ce73-3114-051f-ba68-347a65424d71",
-                                        "x": 300,
-                                        "y": 150,
-                                        "subWidth": 100,
-                                        "width": 20,
-                                        "height": 20,
-                                        "style": "{}"
-                                    },
-                                    "relationPolicyInfo": [],
-                                    "relationCommandInfo": [],
-                                    "trigger": "@PostPersist"
-                                },
-                                "targetElement": {
-                                    "_type": "org.uengine.modeling.model.Event",
-                                    "id": "a46f6438-cb9e-0f34-421f-f330bf8c862c",
-                                    "visibility": "public",
-                                    "name": "BookStateChanged",
-                                    "oldName": "",
-                                    "displayName": "도서 상태 변경됨",
-                                    "namePascalCase": "BookStateChanged",
-                                    "nameCamelCase": "bookStateChanged",
-                                    "namePlural": "",
-                                    "description": "도서 등록/대출/반납/예약/폐기 등의 트리거에 의해 도서의 상태가 변경됨.",
-                                    "author": null,
-                                    "aggregate": {},
-                                    "boundedContext": {},
-                                    "fieldDescriptors": [
-                                        {
-                                            "_type": "org.uengine.model.FieldDescriptor",
-                                            "name": "id",
-                                            "className": "Long",
-                                            "nameCamelCase": "id",
-                                            "namePascalCase": "Id",
-                                            "isKey": true
-                                        }
-                                    ],
-                                    "mirrorElement": null,
-                                    "elementView": {
-                                        "_type": "org.uengine.modeling.model.Event",
-                                        "id": "a46f6438-cb9e-0f34-421f-f330bf8c862c",
-                                        "x": 300,
-                                        "y": 650,
-                                        "width": 100,
-                                        "height": 100,
-                                        "style": "{}",
-                                        "angle": 0
-                                    },
-                                    "hexagonalView": {
-                                        "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "a46f6438-cb9e-0f34-421f-f330bf8c862c",
-                                        "x": 300,
-                                        "y": 650,
-                                        "subWidth": 100,
-                                        "width": 20,
-                                        "height": 20,
-                                        "style": "{}"
-                                    },
-                                    "relationPolicyInfo": [],
-                                    "relationCommandInfo": [],
-                                    "trigger": "@PostPersist"
-                                },
-                                "from": "7645ce73-3114-051f-ba68-347a65424d71",
-                                "to": "a46f6438-cb9e-0f34-421f-f330bf8c862c",
-                                "relationView": {
-                                    "id": "4e2d2b20-556e-f0cd-372d-01ba03576c86",
-                                    "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
-                                    "value": null,
-                                    "from": "7645ce73-3114-051f-ba68-347a65424d71",
-                                    "to": "a46f6438-cb9e-0f34-421f-f330bf8c862c",
-                                    "needReconnect": true
-                                }
-                            },
-                            "9c149ba8-bab6-da4d-0eda-0f81dee788ae": {
-                                "_type": "org.uengine.modeling.model.Relation",
-                                "id": "9c149ba8-bab6-da4d-0eda-0f81dee788ae",
-                                "name": "2",
-                                "displayName": "2",
-                                "sourceElement": {
-                                    "_type": "org.uengine.modeling.model.Event",
-                                    "id": "a46f6438-cb9e-0f34-421f-f330bf8c862c",
-                                    "visibility": "public",
-                                    "name": "BookStateChanged",
-                                    "oldName": "",
-                                    "displayName": "도서 상태 변경됨",
-                                    "namePascalCase": "BookStateChanged",
-                                    "nameCamelCase": "bookStateChanged",
-                                    "namePlural": "",
-                                    "description": "도서 등록/대출/반납/예약/폐기 등의 트리거에 의해 도서의 상태가 변경됨.",
-                                    "author": null,
-                                    "aggregate": {},
-                                    "boundedContext": {},
-                                    "fieldDescriptors": [
-                                        {
-                                            "_type": "org.uengine.model.FieldDescriptor",
-                                            "name": "id",
-                                            "className": "Long",
-                                            "nameCamelCase": "id",
-                                            "namePascalCase": "Id",
-                                            "isKey": true
-                                        }
-                                    ],
-                                    "mirrorElement": null,
-                                    "elementView": {
-                                        "_type": "org.uengine.modeling.model.Event",
-                                        "id": "a46f6438-cb9e-0f34-421f-f330bf8c862c",
-                                        "x": 300,
-                                        "y": 650,
-                                        "width": 100,
-                                        "height": 100,
-                                        "style": "{}",
-                                        "angle": 0
-                                    },
-                                    "hexagonalView": {
-                                        "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "a46f6438-cb9e-0f34-421f-f330bf8c862c",
-                                        "x": 300,
-                                        "y": 650,
-                                        "subWidth": 100,
-                                        "width": 20,
-                                        "height": 20,
-                                        "style": "{}"
-                                    },
-                                    "relationPolicyInfo": [],
-                                    "relationCommandInfo": [],
-                                    "trigger": "@PostPersist"
-                                },
-                                "targetElement": {
-                                    "_type": "org.uengine.modeling.model.Event",
-                                    "id": "f54b8b55-6f10-3c7c-f168-17082b4ee4d0",
-                                    "visibility": "public",
-                                    "name": "BookDisposed",
-                                    "oldName": "",
-                                    "displayName": "도서 폐기됨",
-                                    "namePascalCase": "BookDisposed",
-                                    "nameCamelCase": "bookDisposed",
-                                    "namePlural": "",
-                                    "description": "관리자가 훼손/분실로 인한 도서 폐기를 처리함. 폐기된 도서는 대출 불가 상태가 됨.",
-                                    "author": null,
-                                    "aggregate": {},
-                                    "boundedContext": {},
-                                    "fieldDescriptors": [
-                                        {
-                                            "_type": "org.uengine.model.FieldDescriptor",
-                                            "name": "id",
-                                            "className": "Long",
-                                            "nameCamelCase": "id",
-                                            "namePascalCase": "Id",
-                                            "isKey": true
-                                        }
-                                    ],
-                                    "mirrorElement": null,
-                                    "elementView": {
-                                        "_type": "org.uengine.modeling.model.Event",
-                                        "id": "f54b8b55-6f10-3c7c-f168-17082b4ee4d0",
-                                        "x": 500,
-                                        "y": 150,
-                                        "width": 100,
-                                        "height": 100,
-                                        "style": "{}",
-                                        "angle": 0
-                                    },
-                                    "hexagonalView": {
-                                        "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "f54b8b55-6f10-3c7c-f168-17082b4ee4d0",
-                                        "x": 500,
-                                        "y": 150,
-                                        "subWidth": 100,
-                                        "width": 20,
-                                        "height": 20,
-                                        "style": "{}"
-                                    },
-                                    "relationPolicyInfo": [],
-                                    "relationCommandInfo": [],
-                                    "trigger": "@PostPersist"
-                                },
-                                "from": "a46f6438-cb9e-0f34-421f-f330bf8c862c",
-                                "to": "f54b8b55-6f10-3c7c-f168-17082b4ee4d0",
-                                "relationView": {
-                                    "id": "9c149ba8-bab6-da4d-0eda-0f81dee788ae",
-                                    "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
-                                    "value": null,
-                                    "from": "a46f6438-cb9e-0f34-421f-f330bf8c862c",
-                                    "to": "f54b8b55-6f10-3c7c-f168-17082b4ee4d0",
-                                    "needReconnect": true
-                                }
-                            },
-                            "74ab6fd6-867f-e1b9-d3cf-3b48c5425f5a": {
-                                "_type": "org.uengine.modeling.model.Relation",
-                                "id": "74ab6fd6-867f-e1b9-d3cf-3b48c5425f5a",
-                                "name": "2",
-                                "displayName": "2",
-                                "sourceElement": {
-                                    "_type": "org.uengine.modeling.model.Event",
-                                    "id": "a46f6438-cb9e-0f34-421f-f330bf8c862c",
-                                    "visibility": "public",
-                                    "name": "BookStateChanged",
-                                    "oldName": "",
-                                    "displayName": "도서 상태 변경됨",
-                                    "namePascalCase": "BookStateChanged",
-                                    "nameCamelCase": "bookStateChanged",
-                                    "namePlural": "",
-                                    "description": "도서 등록/대출/반납/예약/폐기 등의 트리거에 의해 도서의 상태가 변경됨.",
-                                    "author": null,
-                                    "aggregate": {},
-                                    "boundedContext": {},
-                                    "fieldDescriptors": [
-                                        {
-                                            "_type": "org.uengine.model.FieldDescriptor",
-                                            "name": "id",
-                                            "className": "Long",
-                                            "nameCamelCase": "id",
-                                            "namePascalCase": "Id",
-                                            "isKey": true
-                                        }
-                                    ],
-                                    "mirrorElement": null,
-                                    "elementView": {
-                                        "_type": "org.uengine.modeling.model.Event",
-                                        "id": "a46f6438-cb9e-0f34-421f-f330bf8c862c",
-                                        "x": 300,
-                                        "y": 650,
-                                        "width": 100,
-                                        "height": 100,
-                                        "style": "{}",
-                                        "angle": 0
-                                    },
-                                    "hexagonalView": {
-                                        "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "a46f6438-cb9e-0f34-421f-f330bf8c862c",
-                                        "x": 300,
-                                        "y": 650,
-                                        "subWidth": 100,
-                                        "width": 20,
-                                        "height": 20,
-                                        "style": "{}"
-                                    },
-                                    "relationPolicyInfo": [],
-                                    "relationCommandInfo": [],
-                                    "trigger": "@PostPersist"
-                                },
-                                "targetElement": {
-                                    "_type": "org.uengine.modeling.model.Event",
-                                    "id": "65c7adb1-9c5e-8b68-610d-001a35e42a9f",
-                                    "visibility": "public",
-                                    "name": "LoanRequested",
-                                    "oldName": "",
-                                    "displayName": "대출 신청됨",
-                                    "namePascalCase": "LoanRequested",
-                                    "nameCamelCase": "loanRequested",
-                                    "namePlural": "",
-                                    "description": "회원이 도서명이나 ISBN으로 검색하여 대출 가능한 도서에 대해 대출을 신청함. 회원번호와 이름 확인 필요.",
-                                    "author": null,
-                                    "aggregate": {},
-                                    "boundedContext": {},
-                                    "fieldDescriptors": [
-                                        {
-                                            "_type": "org.uengine.model.FieldDescriptor",
-                                            "name": "id",
-                                            "className": "Long",
-                                            "nameCamelCase": "id",
-                                            "namePascalCase": "Id",
-                                            "isKey": true
-                                        }
-                                    ],
-                                    "mirrorElement": null,
-                                    "elementView": {
-                                        "_type": "org.uengine.modeling.model.Event",
-                                        "id": "65c7adb1-9c5e-8b68-610d-001a35e42a9f",
-                                        "x": 300,
-                                        "y": 400,
-                                        "width": 100,
-                                        "height": 100,
-                                        "style": "{}",
-                                        "angle": 0
-                                    },
-                                    "hexagonalView": {
-                                        "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "65c7adb1-9c5e-8b68-610d-001a35e42a9f",
-                                        "x": 300,
-                                        "y": 400,
-                                        "subWidth": 100,
-                                        "width": 20,
-                                        "height": 20,
-                                        "style": "{}"
-                                    },
-                                    "relationPolicyInfo": [],
-                                    "relationCommandInfo": [],
-                                    "trigger": "@PostPersist"
-                                },
-                                "from": "a46f6438-cb9e-0f34-421f-f330bf8c862c",
-                                "to": "65c7adb1-9c5e-8b68-610d-001a35e42a9f",
-                                "relationView": {
-                                    "id": "74ab6fd6-867f-e1b9-d3cf-3b48c5425f5a",
-                                    "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
-                                    "value": null,
-                                    "from": "a46f6438-cb9e-0f34-421f-f330bf8c862c",
-                                    "to": "65c7adb1-9c5e-8b68-610d-001a35e42a9f",
-                                    "needReconnect": true
-                                }
-                            },
-                            "d9537c62-5fe7-173c-b775-4c7df7b95177": {
-                                "_type": "org.uengine.modeling.model.Relation",
-                                "id": "d9537c62-5fe7-173c-b775-4c7df7b95177",
-                                "name": "2",
-                                "displayName": "2",
-                                "sourceElement": {
-                                    "_type": "org.uengine.modeling.model.Event",
-                                    "id": "a46f6438-cb9e-0f34-421f-f330bf8c862c",
-                                    "visibility": "public",
-                                    "name": "BookStateChanged",
-                                    "oldName": "",
-                                    "displayName": "도서 상태 변경됨",
-                                    "namePascalCase": "BookStateChanged",
-                                    "nameCamelCase": "bookStateChanged",
-                                    "namePlural": "",
-                                    "description": "도서 등록/대출/반납/예약/폐기 등의 트리거에 의해 도서의 상태가 변경됨.",
-                                    "author": null,
-                                    "aggregate": {},
-                                    "boundedContext": {},
-                                    "fieldDescriptors": [
-                                        {
-                                            "_type": "org.uengine.model.FieldDescriptor",
-                                            "name": "id",
-                                            "className": "Long",
-                                            "nameCamelCase": "id",
-                                            "namePascalCase": "Id",
-                                            "isKey": true
-                                        }
-                                    ],
-                                    "mirrorElement": null,
-                                    "elementView": {
-                                        "_type": "org.uengine.modeling.model.Event",
-                                        "id": "a46f6438-cb9e-0f34-421f-f330bf8c862c",
-                                        "x": 300,
-                                        "y": 650,
-                                        "width": 100,
-                                        "height": 100,
-                                        "style": "{}",
-                                        "angle": 0
-                                    },
-                                    "hexagonalView": {
-                                        "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "a46f6438-cb9e-0f34-421f-f330bf8c862c",
-                                        "x": 300,
-                                        "y": 650,
-                                        "subWidth": 100,
-                                        "width": 20,
-                                        "height": 20,
-                                        "style": "{}"
-                                    },
-                                    "relationPolicyInfo": [],
-                                    "relationCommandInfo": [],
-                                    "trigger": "@PostPersist"
-                                },
-                                "targetElement": {
-                                    "_type": "org.uengine.modeling.model.Event",
-                                    "id": "2591d6ce-91a8-4278-4fb5-edb44f3de821",
-                                    "visibility": "public",
-                                    "name": "LoanReturned",
-                                    "oldName": "",
-                                    "displayName": "도서 반납됨",
-                                    "namePascalCase": "LoanReturned",
-                                    "nameCamelCase": "loanReturned",
-                                    "namePlural": "",
-                                    "description": "회원이 대출 중인 도서를 반납함. 반납 후 예약자가 있으면 도서 상태는 예약중, 없으면 대출가능으로 변경됨.",
-                                    "author": null,
-                                    "aggregate": {},
-                                    "boundedContext": {},
-                                    "fieldDescriptors": [
-                                        {
-                                            "_type": "org.uengine.model.FieldDescriptor",
-                                            "name": "id",
-                                            "className": "Long",
-                                            "nameCamelCase": "id",
-                                            "namePascalCase": "Id",
-                                            "isKey": true
-                                        }
-                                    ],
-                                    "mirrorElement": null,
-                                    "elementView": {
-                                        "_type": "org.uengine.modeling.model.Event",
-                                        "id": "2591d6ce-91a8-4278-4fb5-edb44f3de821",
-                                        "x": 700,
-                                        "y": 400,
-                                        "width": 100,
-                                        "height": 100,
-                                        "style": "{}",
-                                        "angle": 0
-                                    },
-                                    "hexagonalView": {
-                                        "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "2591d6ce-91a8-4278-4fb5-edb44f3de821",
-                                        "x": 700,
-                                        "y": 400,
-                                        "subWidth": 100,
-                                        "width": 20,
-                                        "height": 20,
-                                        "style": "{}"
-                                    },
-                                    "relationPolicyInfo": [],
-                                    "relationCommandInfo": [],
-                                    "trigger": "@PostPersist"
-                                },
-                                "from": "a46f6438-cb9e-0f34-421f-f330bf8c862c",
-                                "to": "2591d6ce-91a8-4278-4fb5-edb44f3de821",
-                                "relationView": {
-                                    "id": "d9537c62-5fe7-173c-b775-4c7df7b95177",
-                                    "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
-                                    "value": null,
-                                    "from": "a46f6438-cb9e-0f34-421f-f330bf8c862c",
-                                    "to": "2591d6ce-91a8-4278-4fb5-edb44f3de821",
-                                    "needReconnect": true
-                                }
-                            },
-                            "f3526ae7-65cb-e5fe-3172-543b5b2b3882": {
-                                "_type": "org.uengine.modeling.model.Relation",
-                                "id": "f3526ae7-65cb-e5fe-3172-543b5b2b3882",
-                                "name": "2",
-                                "displayName": "2",
-                                "sourceElement": {
-                                    "_type": "org.uengine.modeling.model.Event",
-                                    "id": "a46f6438-cb9e-0f34-421f-f330bf8c862c",
-                                    "visibility": "public",
-                                    "name": "BookStateChanged",
-                                    "oldName": "",
-                                    "displayName": "도서 상태 변경됨",
-                                    "namePascalCase": "BookStateChanged",
-                                    "nameCamelCase": "bookStateChanged",
-                                    "namePlural": "",
-                                    "description": "도서 등록/대출/반납/예약/폐기 등의 트리거에 의해 도서의 상태가 변경됨.",
-                                    "author": null,
-                                    "aggregate": {},
-                                    "boundedContext": {},
-                                    "fieldDescriptors": [
-                                        {
-                                            "_type": "org.uengine.model.FieldDescriptor",
-                                            "name": "id",
-                                            "className": "Long",
-                                            "nameCamelCase": "id",
-                                            "namePascalCase": "Id",
-                                            "isKey": true
-                                        }
-                                    ],
-                                    "mirrorElement": null,
-                                    "elementView": {
-                                        "_type": "org.uengine.modeling.model.Event",
-                                        "id": "a46f6438-cb9e-0f34-421f-f330bf8c862c",
-                                        "x": 300,
-                                        "y": 650,
-                                        "width": 100,
-                                        "height": 100,
-                                        "style": "{}",
-                                        "angle": 0
-                                    },
-                                    "hexagonalView": {
-                                        "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "a46f6438-cb9e-0f34-421f-f330bf8c862c",
-                                        "x": 300,
-                                        "y": 650,
-                                        "subWidth": 100,
-                                        "width": 20,
-                                        "height": 20,
-                                        "style": "{}"
-                                    },
-                                    "relationPolicyInfo": [],
-                                    "relationCommandInfo": [],
-                                    "trigger": "@PostPersist"
-                                },
-                                "targetElement": {
-                                    "_type": "org.uengine.modeling.model.Event",
-                                    "id": "d5816e58-5dff-6c9f-dd62-a75ff386d96e",
-                                    "visibility": "public",
-                                    "name": "BookReserved",
-                                    "oldName": "",
-                                    "displayName": "도서 예약됨",
-                                    "namePascalCase": "BookReserved",
-                                    "nameCamelCase": "bookReserved",
-                                    "namePlural": "",
-                                    "description": "회원이 이미 대출중인 도서에 대해 예약 신청을 함. 예약된 도서는 예약 대기 리스트에 등록됨.",
-                                    "author": null,
-                                    "aggregate": {},
-                                    "boundedContext": {},
-                                    "fieldDescriptors": [
-                                        {
-                                            "_type": "org.uengine.model.FieldDescriptor",
-                                            "name": "id",
-                                            "className": "Long",
-                                            "nameCamelCase": "id",
-                                            "namePascalCase": "Id",
-                                            "isKey": true
-                                        }
-                                    ],
-                                    "mirrorElement": null,
-                                    "elementView": {
-                                        "_type": "org.uengine.modeling.model.Event",
-                                        "id": "d5816e58-5dff-6c9f-dd62-a75ff386d96e",
-                                        "x": 500,
-                                        "y": 400,
-                                        "width": 100,
-                                        "height": 100,
-                                        "style": "{}",
-                                        "angle": 0
-                                    },
-                                    "hexagonalView": {
-                                        "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "d5816e58-5dff-6c9f-dd62-a75ff386d96e",
-                                        "x": 500,
-                                        "y": 400,
-                                        "subWidth": 100,
-                                        "width": 20,
-                                        "height": 20,
-                                        "style": "{}"
-                                    },
-                                    "relationPolicyInfo": [],
-                                    "relationCommandInfo": [],
-                                    "trigger": "@PostPersist"
-                                },
-                                "from": "a46f6438-cb9e-0f34-421f-f330bf8c862c",
-                                "to": "d5816e58-5dff-6c9f-dd62-a75ff386d96e",
-                                "relationView": {
-                                    "id": "f3526ae7-65cb-e5fe-3172-543b5b2b3882",
-                                    "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
-                                    "value": null,
-                                    "from": "a46f6438-cb9e-0f34-421f-f330bf8c862c",
-                                    "to": "d5816e58-5dff-6c9f-dd62-a75ff386d96e",
-                                    "needReconnect": true
-                                }
-                            },
-                            "3340c36f-f8a6-ba06-806b-ec9daa941e69": {
-                                "_type": "org.uengine.modeling.model.Relation",
-                                "id": "3340c36f-f8a6-ba06-806b-ec9daa941e69",
-                                "name": "4",
-                                "displayName": "4",
-                                "sourceElement": {
-                                    "_type": "org.uengine.modeling.model.Event",
-                                    "id": "65c7adb1-9c5e-8b68-610d-001a35e42a9f",
-                                    "visibility": "public",
-                                    "name": "LoanRequested",
-                                    "oldName": "",
-                                    "displayName": "대출 신청됨",
-                                    "namePascalCase": "LoanRequested",
-                                    "nameCamelCase": "loanRequested",
-                                    "namePlural": "",
-                                    "description": "회원이 도서명이나 ISBN으로 검색하여 대출 가능한 도서에 대해 대출을 신청함. 회원번호와 이름 확인 필요.",
-                                    "author": null,
-                                    "aggregate": {},
-                                    "boundedContext": {},
-                                    "fieldDescriptors": [
-                                        {
-                                            "_type": "org.uengine.model.FieldDescriptor",
-                                            "name": "id",
-                                            "className": "Long",
-                                            "nameCamelCase": "id",
-                                            "namePascalCase": "Id",
-                                            "isKey": true
-                                        }
-                                    ],
-                                    "mirrorElement": null,
-                                    "elementView": {
-                                        "_type": "org.uengine.modeling.model.Event",
-                                        "id": "65c7adb1-9c5e-8b68-610d-001a35e42a9f",
-                                        "x": 300,
-                                        "y": 400,
-                                        "width": 100,
-                                        "height": 100,
-                                        "style": "{}",
-                                        "angle": 0
-                                    },
-                                    "hexagonalView": {
-                                        "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "65c7adb1-9c5e-8b68-610d-001a35e42a9f",
-                                        "x": 300,
-                                        "y": 400,
-                                        "subWidth": 100,
-                                        "width": 20,
-                                        "height": 20,
-                                        "style": "{}"
-                                    },
-                                    "relationPolicyInfo": [],
-                                    "relationCommandInfo": [],
-                                    "trigger": "@PostPersist"
-                                },
-                                "targetElement": {
-                                    "_type": "org.uengine.modeling.model.Event",
-                                    "id": "2744e4e3-6792-0b2c-a980-88d5f6223aa0",
-                                    "visibility": "public",
-                                    "name": "LoanApproved",
-                                    "oldName": "",
-                                    "displayName": "대출 완료됨",
-                                    "namePascalCase": "LoanApproved",
-                                    "nameCamelCase": "loanApproved",
-                                    "namePlural": "",
-                                    "description": "대출 요청이 처리되어 도서가 회원에게 대출됨. 도서 상태는 대출중으로 자동 변경됨.",
-                                    "author": null,
-                                    "aggregate": {},
-                                    "boundedContext": {},
-                                    "fieldDescriptors": [
-                                        {
-                                            "_type": "org.uengine.model.FieldDescriptor",
-                                            "name": "id",
-                                            "className": "Long",
-                                            "nameCamelCase": "id",
-                                            "namePascalCase": "Id",
-                                            "isKey": true
-                                        }
-                                    ],
-                                    "mirrorElement": null,
-                                    "elementView": {
-                                        "_type": "org.uengine.modeling.model.Event",
-                                        "id": "2744e4e3-6792-0b2c-a980-88d5f6223aa0",
-                                        "x": 500,
-                                        "y": 650,
-                                        "width": 100,
-                                        "height": 100,
-                                        "style": "{}",
-                                        "angle": 0
-                                    },
-                                    "hexagonalView": {
-                                        "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "2744e4e3-6792-0b2c-a980-88d5f6223aa0",
-                                        "x": 500,
-                                        "y": 650,
-                                        "subWidth": 100,
-                                        "width": 20,
-                                        "height": 20,
-                                        "style": "{}"
-                                    },
-                                    "relationPolicyInfo": [],
-                                    "relationCommandInfo": [],
-                                    "trigger": "@PostPersist"
-                                },
-                                "from": "65c7adb1-9c5e-8b68-610d-001a35e42a9f",
-                                "to": "2744e4e3-6792-0b2c-a980-88d5f6223aa0",
-                                "relationView": {
-                                    "id": "3340c36f-f8a6-ba06-806b-ec9daa941e69",
-                                    "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
-                                    "value": null,
-                                    "from": "65c7adb1-9c5e-8b68-610d-001a35e42a9f",
-                                    "to": "2744e4e3-6792-0b2c-a980-88d5f6223aa0",
-                                    "needReconnect": true
-                                }
-                            },
-                            "bb5f7eaf-3b42-cce0-a1f8-d3b42643eb21": {
-                                "_type": "org.uengine.modeling.model.Relation",
-                                "id": "bb5f7eaf-3b42-cce0-a1f8-d3b42643eb21",
-                                "name": "4",
-                                "displayName": "4",
-                                "sourceElement": {
-                                    "_type": "org.uengine.modeling.model.Event",
-                                    "id": "65c7adb1-9c5e-8b68-610d-001a35e42a9f",
-                                    "visibility": "public",
-                                    "name": "LoanRequested",
-                                    "oldName": "",
-                                    "displayName": "대출 신청됨",
-                                    "namePascalCase": "LoanRequested",
-                                    "nameCamelCase": "loanRequested",
-                                    "namePlural": "",
-                                    "description": "회원이 도서명이나 ISBN으로 검색하여 대출 가능한 도서에 대해 대출을 신청함. 회원번호와 이름 확인 필요.",
-                                    "author": null,
-                                    "aggregate": {},
-                                    "boundedContext": {},
-                                    "fieldDescriptors": [
-                                        {
-                                            "_type": "org.uengine.model.FieldDescriptor",
-                                            "name": "id",
-                                            "className": "Long",
-                                            "nameCamelCase": "id",
-                                            "namePascalCase": "Id",
-                                            "isKey": true
-                                        }
-                                    ],
-                                    "mirrorElement": null,
-                                    "elementView": {
-                                        "_type": "org.uengine.modeling.model.Event",
-                                        "id": "65c7adb1-9c5e-8b68-610d-001a35e42a9f",
-                                        "x": 300,
-                                        "y": 400,
-                                        "width": 100,
-                                        "height": 100,
-                                        "style": "{}",
-                                        "angle": 0
-                                    },
-                                    "hexagonalView": {
-                                        "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "65c7adb1-9c5e-8b68-610d-001a35e42a9f",
-                                        "x": 300,
-                                        "y": 400,
-                                        "subWidth": 100,
-                                        "width": 20,
-                                        "height": 20,
-                                        "style": "{}"
-                                    },
-                                    "relationPolicyInfo": [],
-                                    "relationCommandInfo": [],
-                                    "trigger": "@PostPersist"
-                                },
-                                "targetElement": {
-                                    "_type": "org.uengine.modeling.model.Event",
-                                    "id": "d5816e58-5dff-6c9f-dd62-a75ff386d96e",
-                                    "visibility": "public",
-                                    "name": "BookReserved",
-                                    "oldName": "",
-                                    "displayName": "도서 예약됨",
-                                    "namePascalCase": "BookReserved",
-                                    "nameCamelCase": "bookReserved",
-                                    "namePlural": "",
-                                    "description": "회원이 이미 대출중인 도서에 대해 예약 신청을 함. 예약된 도서는 예약 대기 리스트에 등록됨.",
-                                    "author": null,
-                                    "aggregate": {},
-                                    "boundedContext": {},
-                                    "fieldDescriptors": [
-                                        {
-                                            "_type": "org.uengine.model.FieldDescriptor",
-                                            "name": "id",
-                                            "className": "Long",
-                                            "nameCamelCase": "id",
-                                            "namePascalCase": "Id",
-                                            "isKey": true
-                                        }
-                                    ],
-                                    "mirrorElement": null,
-                                    "elementView": {
-                                        "_type": "org.uengine.modeling.model.Event",
-                                        "id": "d5816e58-5dff-6c9f-dd62-a75ff386d96e",
-                                        "x": 500,
-                                        "y": 400,
-                                        "width": 100,
-                                        "height": 100,
-                                        "style": "{}",
-                                        "angle": 0
-                                    },
-                                    "hexagonalView": {
-                                        "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "d5816e58-5dff-6c9f-dd62-a75ff386d96e",
-                                        "x": 500,
-                                        "y": 400,
-                                        "subWidth": 100,
-                                        "width": 20,
-                                        "height": 20,
-                                        "style": "{}"
-                                    },
-                                    "relationPolicyInfo": [],
-                                    "relationCommandInfo": [],
-                                    "trigger": "@PostPersist"
-                                },
-                                "from": "65c7adb1-9c5e-8b68-610d-001a35e42a9f",
-                                "to": "d5816e58-5dff-6c9f-dd62-a75ff386d96e",
-                                "relationView": {
-                                    "id": "bb5f7eaf-3b42-cce0-a1f8-d3b42643eb21",
-                                    "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
-                                    "value": null,
-                                    "from": "65c7adb1-9c5e-8b68-610d-001a35e42a9f",
-                                    "to": "d5816e58-5dff-6c9f-dd62-a75ff386d96e",
-                                    "needReconnect": true
-                                }
-                            },
-                            "f164a04a-9260-4eca-d69b-90fcfa273a25": {
-                                "_type": "org.uengine.modeling.model.Relation",
-                                "id": "f164a04a-9260-4eca-d69b-90fcfa273a25",
+                                "id": "7f18f2c0-cbad-4ef3-b6e5-e41f4ad73f41",
                                 "name": "5",
                                 "displayName": "5",
                                 "sourceElement": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "2744e4e3-6792-0b2c-a980-88d5f6223aa0",
+                                    "id": "4f4560d3-88cb-ff96-3433-b28225f033eb",
                                     "visibility": "public",
-                                    "name": "LoanApproved",
+                                    "name": "MemberVerified",
                                     "oldName": "",
-                                    "displayName": "대출 완료됨",
-                                    "namePascalCase": "LoanApproved",
-                                    "nameCamelCase": "loanApproved",
+                                    "displayName": "회원이 확인됨",
+                                    "namePascalCase": "MemberVerified",
+                                    "nameCamelCase": "memberVerified",
                                     "namePlural": "",
-                                    "description": "대출 요청이 처리되어 도서가 회원에게 대출됨. 도서 상태는 대출중으로 자동 변경됨.",
+                                    "description": "회원번호와 이름으로 회원 정보가 확인됨.",
                                     "author": null,
                                     "aggregate": {},
                                     "boundedContext": {},
@@ -1932,9 +1489,9 @@ export const aggregateDraftScenarios = {
                                     "mirrorElement": null,
                                     "elementView": {
                                         "_type": "org.uengine.modeling.model.Event",
-                                        "id": "2744e4e3-6792-0b2c-a980-88d5f6223aa0",
+                                        "id": "4f4560d3-88cb-ff96-3433-b28225f033eb",
                                         "x": 500,
-                                        "y": 650,
+                                        "y": 400,
                                         "width": 100,
                                         "height": 100,
                                         "style": "{}",
@@ -1942,9 +1499,9 @@ export const aggregateDraftScenarios = {
                                     },
                                     "hexagonalView": {
                                         "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "2744e4e3-6792-0b2c-a980-88d5f6223aa0",
+                                        "id": "4f4560d3-88cb-ff96-3433-b28225f033eb",
                                         "x": 500,
-                                        "y": 650,
+                                        "y": 400,
                                         "subWidth": 100,
                                         "width": 20,
                                         "height": 20,
@@ -1956,15 +1513,15 @@ export const aggregateDraftScenarios = {
                                 },
                                 "targetElement": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "7e172b4f-fc79-432c-0a91-24528abf36d8",
+                                    "id": "12d9c01f-d06d-4afc-f30e-448fa9164758",
                                     "visibility": "public",
-                                    "name": "LoanExtended",
+                                    "name": "BookLoanRequested",
                                     "oldName": "",
-                                    "displayName": "대출 연장됨",
-                                    "namePascalCase": "LoanExtended",
-                                    "nameCamelCase": "loanExtended",
+                                    "displayName": "도서 대출이 신청됨",
+                                    "namePascalCase": "BookLoanRequested",
+                                    "nameCamelCase": "bookLoanRequested",
                                     "namePlural": "",
-                                    "description": "회원이 대출중인 도서의 반납예정일을 연장 신청함. 연장은 정책에 따라 1회 혹은 제한 가능.",
+                                    "description": "회원이 대출하고자 하는 도서와 대출 기간(7일/14일/30일)을 선택하여 대출을 신청함.",
                                     "author": null,
                                     "aggregate": {},
                                     "boundedContext": {},
@@ -1981,8 +1538,8 @@ export const aggregateDraftScenarios = {
                                     "mirrorElement": null,
                                     "elementView": {
                                         "_type": "org.uengine.modeling.model.Event",
-                                        "id": "7e172b4f-fc79-432c-0a91-24528abf36d8",
-                                        "x": 900,
+                                        "id": "12d9c01f-d06d-4afc-f30e-448fa9164758",
+                                        "x": 700,
                                         "y": 400,
                                         "width": 100,
                                         "height": 100,
@@ -1991,8 +1548,8 @@ export const aggregateDraftScenarios = {
                                     },
                                     "hexagonalView": {
                                         "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "7e172b4f-fc79-432c-0a91-24528abf36d8",
-                                        "x": 900,
+                                        "id": "12d9c01f-d06d-4afc-f30e-448fa9164758",
+                                        "x": 700,
                                         "y": 400,
                                         "subWidth": 100,
                                         "width": 20,
@@ -2003,261 +1560,33 @@ export const aggregateDraftScenarios = {
                                     "relationCommandInfo": [],
                                     "trigger": "@PostPersist"
                                 },
-                                "from": "2744e4e3-6792-0b2c-a980-88d5f6223aa0",
-                                "to": "7e172b4f-fc79-432c-0a91-24528abf36d8",
+                                "from": "4f4560d3-88cb-ff96-3433-b28225f033eb",
+                                "to": "12d9c01f-d06d-4afc-f30e-448fa9164758",
                                 "relationView": {
-                                    "id": "f164a04a-9260-4eca-d69b-90fcfa273a25",
+                                    "id": "7f18f2c0-cbad-4ef3-b6e5-e41f4ad73f41",
                                     "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
                                     "value": null,
-                                    "from": "2744e4e3-6792-0b2c-a980-88d5f6223aa0",
-                                    "to": "7e172b4f-fc79-432c-0a91-24528abf36d8",
+                                    "from": "4f4560d3-88cb-ff96-3433-b28225f033eb",
+                                    "to": "12d9c01f-d06d-4afc-f30e-448fa9164758",
                                     "needReconnect": true
                                 }
                             },
-                            "2fbc28b5-2758-2987-f25d-d40bdc378a06": {
+                            "441e296c-6e9f-abab-03a6-3f07d92b3560": {
                                 "_type": "org.uengine.modeling.model.Relation",
-                                "id": "2fbc28b5-2758-2987-f25d-d40bdc378a06",
-                                "name": "5",
-                                "displayName": "5",
-                                "sourceElement": {
-                                    "_type": "org.uengine.modeling.model.Event",
-                                    "id": "2744e4e3-6792-0b2c-a980-88d5f6223aa0",
-                                    "visibility": "public",
-                                    "name": "LoanApproved",
-                                    "oldName": "",
-                                    "displayName": "대출 완료됨",
-                                    "namePascalCase": "LoanApproved",
-                                    "nameCamelCase": "loanApproved",
-                                    "namePlural": "",
-                                    "description": "대출 요청이 처리되어 도서가 회원에게 대출됨. 도서 상태는 대출중으로 자동 변경됨.",
-                                    "author": null,
-                                    "aggregate": {},
-                                    "boundedContext": {},
-                                    "fieldDescriptors": [
-                                        {
-                                            "_type": "org.uengine.model.FieldDescriptor",
-                                            "name": "id",
-                                            "className": "Long",
-                                            "nameCamelCase": "id",
-                                            "namePascalCase": "Id",
-                                            "isKey": true
-                                        }
-                                    ],
-                                    "mirrorElement": null,
-                                    "elementView": {
-                                        "_type": "org.uengine.modeling.model.Event",
-                                        "id": "2744e4e3-6792-0b2c-a980-88d5f6223aa0",
-                                        "x": 500,
-                                        "y": 650,
-                                        "width": 100,
-                                        "height": 100,
-                                        "style": "{}",
-                                        "angle": 0
-                                    },
-                                    "hexagonalView": {
-                                        "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "2744e4e3-6792-0b2c-a980-88d5f6223aa0",
-                                        "x": 500,
-                                        "y": 650,
-                                        "subWidth": 100,
-                                        "width": 20,
-                                        "height": 20,
-                                        "style": "{}"
-                                    },
-                                    "relationPolicyInfo": [],
-                                    "relationCommandInfo": [],
-                                    "trigger": "@PostPersist"
-                                },
-                                "targetElement": {
-                                    "_type": "org.uengine.modeling.model.Event",
-                                    "id": "2591d6ce-91a8-4278-4fb5-edb44f3de821",
-                                    "visibility": "public",
-                                    "name": "LoanReturned",
-                                    "oldName": "",
-                                    "displayName": "도서 반납됨",
-                                    "namePascalCase": "LoanReturned",
-                                    "nameCamelCase": "loanReturned",
-                                    "namePlural": "",
-                                    "description": "회원이 대출 중인 도서를 반납함. 반납 후 예약자가 있으면 도서 상태는 예약중, 없으면 대출가능으로 변경됨.",
-                                    "author": null,
-                                    "aggregate": {},
-                                    "boundedContext": {},
-                                    "fieldDescriptors": [
-                                        {
-                                            "_type": "org.uengine.model.FieldDescriptor",
-                                            "name": "id",
-                                            "className": "Long",
-                                            "nameCamelCase": "id",
-                                            "namePascalCase": "Id",
-                                            "isKey": true
-                                        }
-                                    ],
-                                    "mirrorElement": null,
-                                    "elementView": {
-                                        "_type": "org.uengine.modeling.model.Event",
-                                        "id": "2591d6ce-91a8-4278-4fb5-edb44f3de821",
-                                        "x": 700,
-                                        "y": 400,
-                                        "width": 100,
-                                        "height": 100,
-                                        "style": "{}",
-                                        "angle": 0
-                                    },
-                                    "hexagonalView": {
-                                        "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "2591d6ce-91a8-4278-4fb5-edb44f3de821",
-                                        "x": 700,
-                                        "y": 400,
-                                        "subWidth": 100,
-                                        "width": 20,
-                                        "height": 20,
-                                        "style": "{}"
-                                    },
-                                    "relationPolicyInfo": [],
-                                    "relationCommandInfo": [],
-                                    "trigger": "@PostPersist"
-                                },
-                                "from": "2744e4e3-6792-0b2c-a980-88d5f6223aa0",
-                                "to": "2591d6ce-91a8-4278-4fb5-edb44f3de821",
-                                "relationView": {
-                                    "id": "2fbc28b5-2758-2987-f25d-d40bdc378a06",
-                                    "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
-                                    "value": null,
-                                    "from": "2744e4e3-6792-0b2c-a980-88d5f6223aa0",
-                                    "to": "2591d6ce-91a8-4278-4fb5-edb44f3de821",
-                                    "needReconnect": true
-                                }
-                            },
-                            "ff36cfee-342f-580d-6ba1-d81d3353b502": {
-                                "_type": "org.uengine.modeling.model.Relation",
-                                "id": "ff36cfee-342f-580d-6ba1-d81d3353b502",
-                                "name": "5",
-                                "displayName": "5",
-                                "sourceElement": {
-                                    "_type": "org.uengine.modeling.model.Event",
-                                    "id": "2744e4e3-6792-0b2c-a980-88d5f6223aa0",
-                                    "visibility": "public",
-                                    "name": "LoanApproved",
-                                    "oldName": "",
-                                    "displayName": "대출 완료됨",
-                                    "namePascalCase": "LoanApproved",
-                                    "nameCamelCase": "loanApproved",
-                                    "namePlural": "",
-                                    "description": "대출 요청이 처리되어 도서가 회원에게 대출됨. 도서 상태는 대출중으로 자동 변경됨.",
-                                    "author": null,
-                                    "aggregate": {},
-                                    "boundedContext": {},
-                                    "fieldDescriptors": [
-                                        {
-                                            "_type": "org.uengine.model.FieldDescriptor",
-                                            "name": "id",
-                                            "className": "Long",
-                                            "nameCamelCase": "id",
-                                            "namePascalCase": "Id",
-                                            "isKey": true
-                                        }
-                                    ],
-                                    "mirrorElement": null,
-                                    "elementView": {
-                                        "_type": "org.uengine.modeling.model.Event",
-                                        "id": "2744e4e3-6792-0b2c-a980-88d5f6223aa0",
-                                        "x": 500,
-                                        "y": 650,
-                                        "width": 100,
-                                        "height": 100,
-                                        "style": "{}",
-                                        "angle": 0
-                                    },
-                                    "hexagonalView": {
-                                        "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "2744e4e3-6792-0b2c-a980-88d5f6223aa0",
-                                        "x": 500,
-                                        "y": 650,
-                                        "subWidth": 100,
-                                        "width": 20,
-                                        "height": 20,
-                                        "style": "{}"
-                                    },
-                                    "relationPolicyInfo": [],
-                                    "relationCommandInfo": [],
-                                    "trigger": "@PostPersist"
-                                },
-                                "targetElement": {
-                                    "_type": "org.uengine.modeling.model.Event",
-                                    "id": "88218e81-cf65-8b25-1222-001fba8aa5ff",
-                                    "visibility": "public",
-                                    "name": "LoanOverdueChecked",
-                                    "oldName": "",
-                                    "displayName": "연체 확인됨",
-                                    "namePascalCase": "LoanOverdueChecked",
-                                    "nameCamelCase": "loanOverdueChecked",
-                                    "namePlural": "",
-                                    "description": "반납 예정일이 지난 도서의 연체 상태를 확인하여 연체로 표시함.",
-                                    "author": null,
-                                    "aggregate": {},
-                                    "boundedContext": {},
-                                    "fieldDescriptors": [
-                                        {
-                                            "_type": "org.uengine.model.FieldDescriptor",
-                                            "name": "id",
-                                            "className": "Long",
-                                            "nameCamelCase": "id",
-                                            "namePascalCase": "Id",
-                                            "isKey": true
-                                        }
-                                    ],
-                                    "mirrorElement": null,
-                                    "elementView": {
-                                        "_type": "org.uengine.modeling.model.Event",
-                                        "id": "88218e81-cf65-8b25-1222-001fba8aa5ff",
-                                        "x": 700,
-                                        "y": 650,
-                                        "width": 100,
-                                        "height": 100,
-                                        "style": "{}",
-                                        "angle": 0
-                                    },
-                                    "hexagonalView": {
-                                        "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "88218e81-cf65-8b25-1222-001fba8aa5ff",
-                                        "x": 700,
-                                        "y": 650,
-                                        "subWidth": 100,
-                                        "width": 20,
-                                        "height": 20,
-                                        "style": "{}"
-                                    },
-                                    "relationPolicyInfo": [],
-                                    "relationCommandInfo": [],
-                                    "trigger": "@PostPersist"
-                                },
-                                "from": "2744e4e3-6792-0b2c-a980-88d5f6223aa0",
-                                "to": "88218e81-cf65-8b25-1222-001fba8aa5ff",
-                                "relationView": {
-                                    "id": "ff36cfee-342f-580d-6ba1-d81d3353b502",
-                                    "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
-                                    "value": null,
-                                    "from": "2744e4e3-6792-0b2c-a980-88d5f6223aa0",
-                                    "to": "88218e81-cf65-8b25-1222-001fba8aa5ff",
-                                    "needReconnect": true
-                                }
-                            },
-                            "3af6ac49-526c-88e5-18a9-603aac3955a3": {
-                                "_type": "org.uengine.modeling.model.Relation",
-                                "id": "3af6ac49-526c-88e5-18a9-603aac3955a3",
+                                "id": "441e296c-6e9f-abab-03a6-3f07d92b3560",
                                 "name": "6",
                                 "displayName": "6",
                                 "sourceElement": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "d5816e58-5dff-6c9f-dd62-a75ff386d96e",
+                                    "id": "12d9c01f-d06d-4afc-f30e-448fa9164758",
                                     "visibility": "public",
-                                    "name": "BookReserved",
+                                    "name": "BookLoanRequested",
                                     "oldName": "",
-                                    "displayName": "도서 예약됨",
-                                    "namePascalCase": "BookReserved",
-                                    "nameCamelCase": "bookReserved",
+                                    "displayName": "도서 대출이 신청됨",
+                                    "namePascalCase": "BookLoanRequested",
+                                    "nameCamelCase": "bookLoanRequested",
                                     "namePlural": "",
-                                    "description": "회원이 이미 대출중인 도서에 대해 예약 신청을 함. 예약된 도서는 예약 대기 리스트에 등록됨.",
+                                    "description": "회원이 대출하고자 하는 도서와 대출 기간(7일/14일/30일)을 선택하여 대출을 신청함.",
                                     "author": null,
                                     "aggregate": {},
                                     "boundedContext": {},
@@ -2274,8 +1603,8 @@ export const aggregateDraftScenarios = {
                                     "mirrorElement": null,
                                     "elementView": {
                                         "_type": "org.uengine.modeling.model.Event",
-                                        "id": "d5816e58-5dff-6c9f-dd62-a75ff386d96e",
-                                        "x": 500,
+                                        "id": "12d9c01f-d06d-4afc-f30e-448fa9164758",
+                                        "x": 700,
                                         "y": 400,
                                         "width": 100,
                                         "height": 100,
@@ -2284,8 +1613,8 @@ export const aggregateDraftScenarios = {
                                     },
                                     "hexagonalView": {
                                         "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "d5816e58-5dff-6c9f-dd62-a75ff386d96e",
-                                        "x": 500,
+                                        "id": "12d9c01f-d06d-4afc-f30e-448fa9164758",
+                                        "x": 700,
                                         "y": 400,
                                         "subWidth": 100,
                                         "width": 20,
@@ -2298,15 +1627,15 @@ export const aggregateDraftScenarios = {
                                 },
                                 "targetElement": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "2591d6ce-91a8-4278-4fb5-edb44f3de821",
+                                    "id": "d976f812-65a9-161c-a1f2-a9b83f7a39e2",
                                     "visibility": "public",
-                                    "name": "LoanReturned",
+                                    "name": "BookLoanApproved",
                                     "oldName": "",
-                                    "displayName": "도서 반납됨",
-                                    "namePascalCase": "LoanReturned",
-                                    "nameCamelCase": "loanReturned",
+                                    "displayName": "도서 대출이 승인됨",
+                                    "namePascalCase": "BookLoanApproved",
+                                    "nameCamelCase": "bookLoanApproved",
                                     "namePlural": "",
-                                    "description": "회원이 대출 중인 도서를 반납함. 반납 후 예약자가 있으면 도서 상태는 예약중, 없으면 대출가능으로 변경됨.",
+                                    "description": "도서가 대출 가능 상태라면 대출이 승인되고 대출 정보가 생성됨. 도서 상태는 '대출중'으로 변경됨.",
                                     "author": null,
                                     "aggregate": {},
                                     "boundedContext": {},
@@ -2323,9 +1652,9 @@ export const aggregateDraftScenarios = {
                                     "mirrorElement": null,
                                     "elementView": {
                                         "_type": "org.uengine.modeling.model.Event",
-                                        "id": "2591d6ce-91a8-4278-4fb5-edb44f3de821",
-                                        "x": 700,
-                                        "y": 400,
+                                        "id": "d976f812-65a9-161c-a1f2-a9b83f7a39e2",
+                                        "x": 500,
+                                        "y": 650,
                                         "width": 100,
                                         "height": 100,
                                         "style": "{}",
@@ -2333,9 +1662,9 @@ export const aggregateDraftScenarios = {
                                     },
                                     "hexagonalView": {
                                         "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "2591d6ce-91a8-4278-4fb5-edb44f3de821",
-                                        "x": 700,
-                                        "y": 400,
+                                        "id": "d976f812-65a9-161c-a1f2-a9b83f7a39e2",
+                                        "x": 500,
+                                        "y": 650,
                                         "subWidth": 100,
                                         "width": 20,
                                         "height": 20,
@@ -2345,33 +1674,33 @@ export const aggregateDraftScenarios = {
                                     "relationCommandInfo": [],
                                     "trigger": "@PostPersist"
                                 },
-                                "from": "d5816e58-5dff-6c9f-dd62-a75ff386d96e",
-                                "to": "2591d6ce-91a8-4278-4fb5-edb44f3de821",
+                                "from": "12d9c01f-d06d-4afc-f30e-448fa9164758",
+                                "to": "d976f812-65a9-161c-a1f2-a9b83f7a39e2",
                                 "relationView": {
-                                    "id": "3af6ac49-526c-88e5-18a9-603aac3955a3",
+                                    "id": "441e296c-6e9f-abab-03a6-3f07d92b3560",
                                     "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
                                     "value": null,
-                                    "from": "d5816e58-5dff-6c9f-dd62-a75ff386d96e",
-                                    "to": "2591d6ce-91a8-4278-4fb5-edb44f3de821",
+                                    "from": "12d9c01f-d06d-4afc-f30e-448fa9164758",
+                                    "to": "d976f812-65a9-161c-a1f2-a9b83f7a39e2",
                                     "needReconnect": true
                                 }
                             },
-                            "a4d26a38-76bc-2b6c-e69a-b263bf2e68dd": {
+                            "f4af5758-5206-99f2-af9a-08ed0966598e": {
                                 "_type": "org.uengine.modeling.model.Relation",
-                                "id": "a4d26a38-76bc-2b6c-e69a-b263bf2e68dd",
-                                "name": "7",
-                                "displayName": "7",
+                                "id": "f4af5758-5206-99f2-af9a-08ed0966598e",
+                                "name": "6",
+                                "displayName": "6",
                                 "sourceElement": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "2591d6ce-91a8-4278-4fb5-edb44f3de821",
+                                    "id": "12d9c01f-d06d-4afc-f30e-448fa9164758",
                                     "visibility": "public",
-                                    "name": "LoanReturned",
+                                    "name": "BookLoanRequested",
                                     "oldName": "",
-                                    "displayName": "도서 반납됨",
-                                    "namePascalCase": "LoanReturned",
-                                    "nameCamelCase": "loanReturned",
+                                    "displayName": "도서 대출이 신청됨",
+                                    "namePascalCase": "BookLoanRequested",
+                                    "nameCamelCase": "bookLoanRequested",
                                     "namePlural": "",
-                                    "description": "회원이 대출 중인 도서를 반납함. 반납 후 예약자가 있으면 도서 상태는 예약중, 없으면 대출가능으로 변경됨.",
+                                    "description": "회원이 대출하고자 하는 도서와 대출 기간(7일/14일/30일)을 선택하여 대출을 신청함.",
                                     "author": null,
                                     "aggregate": {},
                                     "boundedContext": {},
@@ -2388,7 +1717,7 @@ export const aggregateDraftScenarios = {
                                     "mirrorElement": null,
                                     "elementView": {
                                         "_type": "org.uengine.modeling.model.Event",
-                                        "id": "2591d6ce-91a8-4278-4fb5-edb44f3de821",
+                                        "id": "12d9c01f-d06d-4afc-f30e-448fa9164758",
                                         "x": 700,
                                         "y": 400,
                                         "width": 100,
@@ -2398,7 +1727,7 @@ export const aggregateDraftScenarios = {
                                     },
                                     "hexagonalView": {
                                         "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "2591d6ce-91a8-4278-4fb5-edb44f3de821",
+                                        "id": "12d9c01f-d06d-4afc-f30e-448fa9164758",
                                         "x": 700,
                                         "y": 400,
                                         "subWidth": 100,
@@ -2412,15 +1741,15 @@ export const aggregateDraftScenarios = {
                                 },
                                 "targetElement": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "a46f6438-cb9e-0f34-421f-f330bf8c862c",
+                                    "id": "7905f41a-3249-07c5-8156-23a812533f41",
                                     "visibility": "public",
-                                    "name": "BookStateChanged",
+                                    "name": "BookLoanRejected",
                                     "oldName": "",
-                                    "displayName": "도서 상태 변경됨",
-                                    "namePascalCase": "BookStateChanged",
-                                    "nameCamelCase": "bookStateChanged",
+                                    "displayName": "도서 대출이 거부됨",
+                                    "namePascalCase": "BookLoanRejected",
+                                    "nameCamelCase": "bookLoanRejected",
                                     "namePlural": "",
-                                    "description": "도서 등록/대출/반납/예약/폐기 등의 트리거에 의해 도서의 상태가 변경됨.",
+                                    "description": "도서가 폐기되었거나 대출 불가 상태인 경우 대출이 거부됨.",
                                     "author": null,
                                     "aggregate": {},
                                     "boundedContext": {},
@@ -2437,7 +1766,7 @@ export const aggregateDraftScenarios = {
                                     "mirrorElement": null,
                                     "elementView": {
                                         "_type": "org.uengine.modeling.model.Event",
-                                        "id": "a46f6438-cb9e-0f34-421f-f330bf8c862c",
+                                        "id": "7905f41a-3249-07c5-8156-23a812533f41",
                                         "x": 300,
                                         "y": 650,
                                         "width": 100,
@@ -2447,7 +1776,7 @@ export const aggregateDraftScenarios = {
                                     },
                                     "hexagonalView": {
                                         "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "a46f6438-cb9e-0f34-421f-f330bf8c862c",
+                                        "id": "7905f41a-3249-07c5-8156-23a812533f41",
                                         "x": 300,
                                         "y": 650,
                                         "subWidth": 100,
@@ -2459,33 +1788,33 @@ export const aggregateDraftScenarios = {
                                     "relationCommandInfo": [],
                                     "trigger": "@PostPersist"
                                 },
-                                "from": "2591d6ce-91a8-4278-4fb5-edb44f3de821",
-                                "to": "a46f6438-cb9e-0f34-421f-f330bf8c862c",
+                                "from": "12d9c01f-d06d-4afc-f30e-448fa9164758",
+                                "to": "7905f41a-3249-07c5-8156-23a812533f41",
                                 "relationView": {
-                                    "id": "a4d26a38-76bc-2b6c-e69a-b263bf2e68dd",
+                                    "id": "f4af5758-5206-99f2-af9a-08ed0966598e",
                                     "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
                                     "value": null,
-                                    "from": "2591d6ce-91a8-4278-4fb5-edb44f3de821",
-                                    "to": "a46f6438-cb9e-0f34-421f-f330bf8c862c",
+                                    "from": "12d9c01f-d06d-4afc-f30e-448fa9164758",
+                                    "to": "7905f41a-3249-07c5-8156-23a812533f41",
                                     "needReconnect": true
                                 }
                             },
-                            "b8729c86-4796-87d8-dbf3-4213d63b087e": {
+                            "7ed2d57b-fd48-f546-fcd1-93e00611dabb": {
                                 "_type": "org.uengine.modeling.model.Relation",
-                                "id": "b8729c86-4796-87d8-dbf3-4213d63b087e",
-                                "name": "7",
-                                "displayName": "7",
+                                "id": "7ed2d57b-fd48-f546-fcd1-93e00611dabb",
+                                "name": "10",
+                                "displayName": "10",
                                 "sourceElement": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "2591d6ce-91a8-4278-4fb5-edb44f3de821",
+                                    "id": "c8e51c16-e742-d37e-ad1f-64e10e852042",
                                     "visibility": "public",
-                                    "name": "LoanReturned",
+                                    "name": "BookReturned",
                                     "oldName": "",
-                                    "displayName": "도서 반납됨",
-                                    "namePascalCase": "LoanReturned",
-                                    "nameCamelCase": "loanReturned",
+                                    "displayName": "도서가 반납됨",
+                                    "namePascalCase": "BookReturned",
+                                    "nameCamelCase": "bookReturned",
                                     "namePlural": "",
-                                    "description": "회원이 대출 중인 도서를 반납함. 반납 후 예약자가 있으면 도서 상태는 예약중, 없으면 대출가능으로 변경됨.",
+                                    "description": "회원이 대출한 도서를 반납함. 도서에 예약자가 있으면 상태가 '예약중'으로, 없으면 '대출가능'으로 변경됨.",
                                     "author": null,
                                     "aggregate": {},
                                     "boundedContext": {},
@@ -2502,8 +1831,8 @@ export const aggregateDraftScenarios = {
                                     "mirrorElement": null,
                                     "elementView": {
                                         "_type": "org.uengine.modeling.model.Event",
-                                        "id": "2591d6ce-91a8-4278-4fb5-edb44f3de821",
-                                        "x": 700,
+                                        "id": "c8e51c16-e742-d37e-ad1f-64e10e852042",
+                                        "x": 1100,
                                         "y": 400,
                                         "width": 100,
                                         "height": 100,
@@ -2512,8 +1841,8 @@ export const aggregateDraftScenarios = {
                                     },
                                     "hexagonalView": {
                                         "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "2591d6ce-91a8-4278-4fb5-edb44f3de821",
-                                        "x": 700,
+                                        "id": "c8e51c16-e742-d37e-ad1f-64e10e852042",
+                                        "x": 1100,
                                         "y": 400,
                                         "subWidth": 100,
                                         "width": 20,
@@ -2526,15 +1855,15 @@ export const aggregateDraftScenarios = {
                                 },
                                 "targetElement": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "7396f14a-6b12-f1b9-281d-99403365ed35",
+                                    "id": "c45c0034-1123-ddea-61c8-45ce7691076e",
                                     "visibility": "public",
-                                    "name": "ReservationNotified",
+                                    "name": "BookAvailable",
                                     "oldName": "",
-                                    "displayName": "예약자 통보됨",
-                                    "namePascalCase": "ReservationNotified",
-                                    "nameCamelCase": "reservationNotified",
+                                    "displayName": "도서가 대출 가능 상태로 변경됨",
+                                    "namePascalCase": "BookAvailable",
+                                    "nameCamelCase": "bookAvailable",
                                     "namePlural": "",
-                                    "description": "예약자가 있는 도서가 반납되었을 때, 예약자에게 도서 이용 가능 안내를 통보함.",
+                                    "description": "반납된 도서에 예약자가 없는 경우 도서 상태가 '대출가능'으로 변경됨.",
                                     "author": null,
                                     "aggregate": {},
                                     "boundedContext": {},
@@ -2551,8 +1880,8 @@ export const aggregateDraftScenarios = {
                                     "mirrorElement": null,
                                     "elementView": {
                                         "_type": "org.uengine.modeling.model.Event",
-                                        "id": "7396f14a-6b12-f1b9-281d-99403365ed35",
-                                        "x": 900,
+                                        "id": "c45c0034-1123-ddea-61c8-45ce7691076e",
+                                        "x": 700,
                                         "y": 650,
                                         "width": 100,
                                         "height": 100,
@@ -2561,8 +1890,8 @@ export const aggregateDraftScenarios = {
                                     },
                                     "hexagonalView": {
                                         "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "7396f14a-6b12-f1b9-281d-99403365ed35",
-                                        "x": 900,
+                                        "id": "c45c0034-1123-ddea-61c8-45ce7691076e",
+                                        "x": 700,
                                         "y": 650,
                                         "subWidth": 100,
                                         "width": 20,
@@ -2573,33 +1902,33 @@ export const aggregateDraftScenarios = {
                                     "relationCommandInfo": [],
                                     "trigger": "@PostPersist"
                                 },
-                                "from": "2591d6ce-91a8-4278-4fb5-edb44f3de821",
-                                "to": "7396f14a-6b12-f1b9-281d-99403365ed35",
+                                "from": "c8e51c16-e742-d37e-ad1f-64e10e852042",
+                                "to": "c45c0034-1123-ddea-61c8-45ce7691076e",
                                 "relationView": {
-                                    "id": "b8729c86-4796-87d8-dbf3-4213d63b087e",
+                                    "id": "7ed2d57b-fd48-f546-fcd1-93e00611dabb",
                                     "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
                                     "value": null,
-                                    "from": "2591d6ce-91a8-4278-4fb5-edb44f3de821",
-                                    "to": "7396f14a-6b12-f1b9-281d-99403365ed35",
+                                    "from": "c8e51c16-e742-d37e-ad1f-64e10e852042",
+                                    "to": "c45c0034-1123-ddea-61c8-45ce7691076e",
                                     "needReconnect": true
                                 }
                             },
-                            "9367fe61-e2cf-532e-63f3-e1353df149f4": {
+                            "91f6e213-75cd-b1fd-e1f7-1ec4fe94198b": {
                                 "_type": "org.uengine.modeling.model.Relation",
-                                "id": "9367fe61-e2cf-532e-63f3-e1353df149f4",
-                                "name": "8",
-                                "displayName": "8",
+                                "id": "91f6e213-75cd-b1fd-e1f7-1ec4fe94198b",
+                                "name": "10",
+                                "displayName": "10",
                                 "sourceElement": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "7e172b4f-fc79-432c-0a91-24528abf36d8",
+                                    "id": "c8e51c16-e742-d37e-ad1f-64e10e852042",
                                     "visibility": "public",
-                                    "name": "LoanExtended",
+                                    "name": "BookReturned",
                                     "oldName": "",
-                                    "displayName": "대출 연장됨",
-                                    "namePascalCase": "LoanExtended",
-                                    "nameCamelCase": "loanExtended",
+                                    "displayName": "도서가 반납됨",
+                                    "namePascalCase": "BookReturned",
+                                    "nameCamelCase": "bookReturned",
                                     "namePlural": "",
-                                    "description": "회원이 대출중인 도서의 반납예정일을 연장 신청함. 연장은 정책에 따라 1회 혹은 제한 가능.",
+                                    "description": "회원이 대출한 도서를 반납함. 도서에 예약자가 있으면 상태가 '예약중'으로, 없으면 '대출가능'으로 변경됨.",
                                     "author": null,
                                     "aggregate": {},
                                     "boundedContext": {},
@@ -2616,8 +1945,8 @@ export const aggregateDraftScenarios = {
                                     "mirrorElement": null,
                                     "elementView": {
                                         "_type": "org.uengine.modeling.model.Event",
-                                        "id": "7e172b4f-fc79-432c-0a91-24528abf36d8",
-                                        "x": 900,
+                                        "id": "c8e51c16-e742-d37e-ad1f-64e10e852042",
+                                        "x": 1100,
                                         "y": 400,
                                         "width": 100,
                                         "height": 100,
@@ -2626,8 +1955,8 @@ export const aggregateDraftScenarios = {
                                     },
                                     "hexagonalView": {
                                         "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "7e172b4f-fc79-432c-0a91-24528abf36d8",
-                                        "x": 900,
+                                        "id": "c8e51c16-e742-d37e-ad1f-64e10e852042",
+                                        "x": 1100,
                                         "y": 400,
                                         "subWidth": 100,
                                         "width": 20,
@@ -2640,15 +1969,15 @@ export const aggregateDraftScenarios = {
                                 },
                                 "targetElement": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "88218e81-cf65-8b25-1222-001fba8aa5ff",
+                                    "id": "24b57ad9-8842-6de1-3af4-b7d41c06f1de",
                                     "visibility": "public",
-                                    "name": "LoanOverdueChecked",
+                                    "name": "BookReservedForNext",
                                     "oldName": "",
-                                    "displayName": "연체 확인됨",
-                                    "namePascalCase": "LoanOverdueChecked",
-                                    "nameCamelCase": "loanOverdueChecked",
+                                    "displayName": "도서가 다음 예약자를 위해 예약중 상태로 변경됨",
+                                    "namePascalCase": "BookReservedForNext",
+                                    "nameCamelCase": "bookReservedForNext",
                                     "namePlural": "",
-                                    "description": "반납 예정일이 지난 도서의 연체 상태를 확인하여 연체로 표시함.",
+                                    "description": "반납된 도서에 예약자가 있을 경우 도서 상태가 '예약중'으로 변경됨.",
                                     "author": null,
                                     "aggregate": {},
                                     "boundedContext": {},
@@ -2665,74 +1994,9 @@ export const aggregateDraftScenarios = {
                                     "mirrorElement": null,
                                     "elementView": {
                                         "_type": "org.uengine.modeling.model.Event",
-                                        "id": "88218e81-cf65-8b25-1222-001fba8aa5ff",
-                                        "x": 700,
-                                        "y": 650,
-                                        "width": 100,
-                                        "height": 100,
-                                        "style": "{}",
-                                        "angle": 0
-                                    },
-                                    "hexagonalView": {
-                                        "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "88218e81-cf65-8b25-1222-001fba8aa5ff",
-                                        "x": 700,
-                                        "y": 650,
-                                        "subWidth": 100,
-                                        "width": 20,
-                                        "height": 20,
-                                        "style": "{}"
-                                    },
-                                    "relationPolicyInfo": [],
-                                    "relationCommandInfo": [],
-                                    "trigger": "@PostPersist"
-                                },
-                                "from": "7e172b4f-fc79-432c-0a91-24528abf36d8",
-                                "to": "88218e81-cf65-8b25-1222-001fba8aa5ff",
-                                "relationView": {
-                                    "id": "9367fe61-e2cf-532e-63f3-e1353df149f4",
-                                    "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
-                                    "value": null,
-                                    "from": "7e172b4f-fc79-432c-0a91-24528abf36d8",
-                                    "to": "88218e81-cf65-8b25-1222-001fba8aa5ff",
-                                    "needReconnect": true
-                                }
-                            },
-                            "aa2da206-6037-28ed-9679-a57be7c67afc": {
-                                "_type": "org.uengine.modeling.model.Relation",
-                                "id": "aa2da206-6037-28ed-9679-a57be7c67afc",
-                                "name": "8",
-                                "displayName": "8",
-                                "sourceElement": {
-                                    "_type": "org.uengine.modeling.model.Event",
-                                    "id": "7e172b4f-fc79-432c-0a91-24528abf36d8",
-                                    "visibility": "public",
-                                    "name": "LoanExtended",
-                                    "oldName": "",
-                                    "displayName": "대출 연장됨",
-                                    "namePascalCase": "LoanExtended",
-                                    "nameCamelCase": "loanExtended",
-                                    "namePlural": "",
-                                    "description": "회원이 대출중인 도서의 반납예정일을 연장 신청함. 연장은 정책에 따라 1회 혹은 제한 가능.",
-                                    "author": null,
-                                    "aggregate": {},
-                                    "boundedContext": {},
-                                    "fieldDescriptors": [
-                                        {
-                                            "_type": "org.uengine.model.FieldDescriptor",
-                                            "name": "id",
-                                            "className": "Long",
-                                            "nameCamelCase": "id",
-                                            "namePascalCase": "Id",
-                                            "isKey": true
-                                        }
-                                    ],
-                                    "mirrorElement": null,
-                                    "elementView": {
-                                        "_type": "org.uengine.modeling.model.Event",
-                                        "id": "7e172b4f-fc79-432c-0a91-24528abf36d8",
+                                        "id": "24b57ad9-8842-6de1-3af4-b7d41c06f1de",
                                         "x": 900,
-                                        "y": 400,
+                                        "y": 650,
                                         "width": 100,
                                         "height": 100,
                                         "style": "{}",
@@ -2740,122 +2004,8 @@ export const aggregateDraftScenarios = {
                                     },
                                     "hexagonalView": {
                                         "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "7e172b4f-fc79-432c-0a91-24528abf36d8",
+                                        "id": "24b57ad9-8842-6de1-3af4-b7d41c06f1de",
                                         "x": 900,
-                                        "y": 400,
-                                        "subWidth": 100,
-                                        "width": 20,
-                                        "height": 20,
-                                        "style": "{}"
-                                    },
-                                    "relationPolicyInfo": [],
-                                    "relationCommandInfo": [],
-                                    "trigger": "@PostPersist"
-                                },
-                                "targetElement": {
-                                    "_type": "org.uengine.modeling.model.Event",
-                                    "id": "2591d6ce-91a8-4278-4fb5-edb44f3de821",
-                                    "visibility": "public",
-                                    "name": "LoanReturned",
-                                    "oldName": "",
-                                    "displayName": "도서 반납됨",
-                                    "namePascalCase": "LoanReturned",
-                                    "nameCamelCase": "loanReturned",
-                                    "namePlural": "",
-                                    "description": "회원이 대출 중인 도서를 반납함. 반납 후 예약자가 있으면 도서 상태는 예약중, 없으면 대출가능으로 변경됨.",
-                                    "author": null,
-                                    "aggregate": {},
-                                    "boundedContext": {},
-                                    "fieldDescriptors": [
-                                        {
-                                            "_type": "org.uengine.model.FieldDescriptor",
-                                            "name": "id",
-                                            "className": "Long",
-                                            "nameCamelCase": "id",
-                                            "namePascalCase": "Id",
-                                            "isKey": true
-                                        }
-                                    ],
-                                    "mirrorElement": null,
-                                    "elementView": {
-                                        "_type": "org.uengine.modeling.model.Event",
-                                        "id": "2591d6ce-91a8-4278-4fb5-edb44f3de821",
-                                        "x": 700,
-                                        "y": 400,
-                                        "width": 100,
-                                        "height": 100,
-                                        "style": "{}",
-                                        "angle": 0
-                                    },
-                                    "hexagonalView": {
-                                        "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "2591d6ce-91a8-4278-4fb5-edb44f3de821",
-                                        "x": 700,
-                                        "y": 400,
-                                        "subWidth": 100,
-                                        "width": 20,
-                                        "height": 20,
-                                        "style": "{}"
-                                    },
-                                    "relationPolicyInfo": [],
-                                    "relationCommandInfo": [],
-                                    "trigger": "@PostPersist"
-                                },
-                                "from": "7e172b4f-fc79-432c-0a91-24528abf36d8",
-                                "to": "2591d6ce-91a8-4278-4fb5-edb44f3de821",
-                                "relationView": {
-                                    "id": "aa2da206-6037-28ed-9679-a57be7c67afc",
-                                    "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
-                                    "value": null,
-                                    "from": "7e172b4f-fc79-432c-0a91-24528abf36d8",
-                                    "to": "2591d6ce-91a8-4278-4fb5-edb44f3de821",
-                                    "needReconnect": true
-                                }
-                            },
-                            "c45ebe16-87aa-7d48-f71e-3cec393fe765": {
-                                "_type": "org.uengine.modeling.model.Relation",
-                                "id": "c45ebe16-87aa-7d48-f71e-3cec393fe765",
-                                "name": "9",
-                                "displayName": "9",
-                                "sourceElement": {
-                                    "_type": "org.uengine.modeling.model.Event",
-                                    "id": "88218e81-cf65-8b25-1222-001fba8aa5ff",
-                                    "visibility": "public",
-                                    "name": "LoanOverdueChecked",
-                                    "oldName": "",
-                                    "displayName": "연체 확인됨",
-                                    "namePascalCase": "LoanOverdueChecked",
-                                    "nameCamelCase": "loanOverdueChecked",
-                                    "namePlural": "",
-                                    "description": "반납 예정일이 지난 도서의 연체 상태를 확인하여 연체로 표시함.",
-                                    "author": null,
-                                    "aggregate": {},
-                                    "boundedContext": {},
-                                    "fieldDescriptors": [
-                                        {
-                                            "_type": "org.uengine.model.FieldDescriptor",
-                                            "name": "id",
-                                            "className": "Long",
-                                            "nameCamelCase": "id",
-                                            "namePascalCase": "Id",
-                                            "isKey": true
-                                        }
-                                    ],
-                                    "mirrorElement": null,
-                                    "elementView": {
-                                        "_type": "org.uengine.modeling.model.Event",
-                                        "id": "88218e81-cf65-8b25-1222-001fba8aa5ff",
-                                        "x": 700,
-                                        "y": 650,
-                                        "width": 100,
-                                        "height": 100,
-                                        "style": "{}",
-                                        "angle": 0
-                                    },
-                                    "hexagonalView": {
-                                        "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "88218e81-cf65-8b25-1222-001fba8aa5ff",
-                                        "x": 700,
                                         "y": 650,
                                         "subWidth": 100,
                                         "width": 20,
@@ -2866,63 +2016,14 @@ export const aggregateDraftScenarios = {
                                     "relationCommandInfo": [],
                                     "trigger": "@PostPersist"
                                 },
-                                "targetElement": {
-                                    "_type": "org.uengine.modeling.model.Event",
-                                    "id": "2591d6ce-91a8-4278-4fb5-edb44f3de821",
-                                    "visibility": "public",
-                                    "name": "LoanReturned",
-                                    "oldName": "",
-                                    "displayName": "도서 반납됨",
-                                    "namePascalCase": "LoanReturned",
-                                    "nameCamelCase": "loanReturned",
-                                    "namePlural": "",
-                                    "description": "회원이 대출 중인 도서를 반납함. 반납 후 예약자가 있으면 도서 상태는 예약중, 없으면 대출가능으로 변경됨.",
-                                    "author": null,
-                                    "aggregate": {},
-                                    "boundedContext": {},
-                                    "fieldDescriptors": [
-                                        {
-                                            "_type": "org.uengine.model.FieldDescriptor",
-                                            "name": "id",
-                                            "className": "Long",
-                                            "nameCamelCase": "id",
-                                            "namePascalCase": "Id",
-                                            "isKey": true
-                                        }
-                                    ],
-                                    "mirrorElement": null,
-                                    "elementView": {
-                                        "_type": "org.uengine.modeling.model.Event",
-                                        "id": "2591d6ce-91a8-4278-4fb5-edb44f3de821",
-                                        "x": 700,
-                                        "y": 400,
-                                        "width": 100,
-                                        "height": 100,
-                                        "style": "{}",
-                                        "angle": 0
-                                    },
-                                    "hexagonalView": {
-                                        "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "2591d6ce-91a8-4278-4fb5-edb44f3de821",
-                                        "x": 700,
-                                        "y": 400,
-                                        "subWidth": 100,
-                                        "width": 20,
-                                        "height": 20,
-                                        "style": "{}"
-                                    },
-                                    "relationPolicyInfo": [],
-                                    "relationCommandInfo": [],
-                                    "trigger": "@PostPersist"
-                                },
-                                "from": "88218e81-cf65-8b25-1222-001fba8aa5ff",
-                                "to": "2591d6ce-91a8-4278-4fb5-edb44f3de821",
+                                "from": "c8e51c16-e742-d37e-ad1f-64e10e852042",
+                                "to": "24b57ad9-8842-6de1-3af4-b7d41c06f1de",
                                 "relationView": {
-                                    "id": "c45ebe16-87aa-7d48-f71e-3cec393fe765",
+                                    "id": "91f6e213-75cd-b1fd-e1f7-1ec4fe94198b",
                                     "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
                                     "value": null,
-                                    "from": "88218e81-cf65-8b25-1222-001fba8aa5ff",
-                                    "to": "2591d6ce-91a8-4278-4fb5-edb44f3de821",
+                                    "from": "c8e51c16-e742-d37e-ad1f-64e10e852042",
+                                    "to": "24b57ad9-8842-6de1-3af4-b7d41c06f1de",
                                     "needReconnect": true
                                 }
                             }
@@ -2933,268 +2034,304 @@ export const aggregateDraftScenarios = {
                         "events": [
                             {
                                 "name": "BookRegistered",
-                                "displayName": "도서 등록됨",
-                                "actor": "도서관리자",
+                                "displayName": "도서가 등록됨",
+                                "actor": "도서 관리자",
                                 "level": 1,
-                                "description": "관리자가 새로운 도서를 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력하여 등록함. ISBN 중복 및 13자리 유효성 검증을 통과함.",
+                                "description": "도서 관리자가 새로운 도서를 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력하여 도서를 등록함. 등록된 도서는 '대출가능' 상태가 됨.",
                                 "inputs": [
                                     "도서명",
-                                    "ISBN",
+                                    "ISBN(13자리)",
                                     "저자",
                                     "출판사",
-                                    "카테고리 (소설/비소설/학술/잡지)",
-                                    "ISBN 중복 없음",
-                                    "ISBN 13자리"
+                                    "카테고리",
+                                    "ISBN 중복 아님"
                                 ],
                                 "outputs": [
-                                    "도서 엔티티 생성",
-                                    "도서 상태: 대출가능"
-                                ],
-                                "nextEvents": [
-                                    "BookStateChanged"
-                                ]
-                            },
-                            {
-                                "name": "BookStateChanged",
-                                "displayName": "도서 상태 변경됨",
-                                "actor": "도서관리시스템",
-                                "level": 2,
-                                "description": "도서 등록/대출/반납/예약/폐기 등의 트리거에 의해 도서의 상태가 변경됨.",
-                                "inputs": [
-                                    "도서 이벤트 트리거",
-                                    "이전 도서 상태"
-                                ],
-                                "outputs": [
-                                    "도서 상태: 대출가능/대출중/예약중/폐기"
-                                ],
-                                "nextEvents": [
-                                    "BookDisposed",
-                                    "LoanRequested",
-                                    "LoanReturned",
-                                    "BookReserved"
-                                ]
-                            },
-                            {
-                                "name": "BookDisposed",
-                                "displayName": "도서 폐기됨",
-                                "actor": "도서관리자",
-                                "level": 3,
-                                "description": "관리자가 훼손/분실로 인한 도서 폐기를 처리함. 폐기된 도서는 대출 불가 상태가 됨.",
-                                "inputs": [
-                                    "도서 식별",
-                                    "훼손/분실 사유"
-                                ],
-                                "outputs": [
-                                    "도서 상태: 폐기"
+                                    "신규 도서 데이터",
+                                    "'대출가능' 상태"
                                 ],
                                 "nextEvents": []
                             },
                             {
-                                "name": "LoanRequested",
-                                "displayName": "대출 신청됨",
-                                "actor": "회원",
-                                "level": 4,
-                                "description": "회원이 도서명이나 ISBN으로 검색하여 대출 가능한 도서에 대해 대출을 신청함. 회원번호와 이름 확인 필요.",
+                                "name": "BookRegistrationFailed",
+                                "displayName": "도서 등록 실패됨",
+                                "actor": "도서 관리자",
+                                "level": 2,
+                                "description": "도서 등록 시 ISBN이 13자리가 아니거나 중복된 경우 등록이 거부됨.",
                                 "inputs": [
-                                    "회원번호",
-                                    "이름",
-                                    "도서명/ISBN",
-                                    "대출 가능 상태 도서",
-                                    "대출 기간(7/14/30일)"
+                                    "ISBN(중복 또는 13자리 아님)"
                                 ],
                                 "outputs": [
-                                    "대출 신청 생성",
-                                    "대출 대기 상태"
+                                    "에러 메시지",
+                                    "등록 거부"
+                                ],
+                                "nextEvents": []
+                            },
+                            {
+                                "name": "BookDiscarded",
+                                "displayName": "도서가 폐기됨",
+                                "actor": "도서 관리자",
+                                "level": 3,
+                                "description": "도서가 훼손되거나 분실된 경우 도서 관리자가 해당 도서를 폐기 처리함. 폐기된 도서는 더 이상 대출이 불가함.",
+                                "inputs": [
+                                    "도서 식별자",
+                                    "폐기 사유"
+                                ],
+                                "outputs": [
+                                    "도서 상태 '폐기'로 변경",
+                                    "대출 불가"
+                                ],
+                                "nextEvents": []
+                            },
+                            {
+                                "name": "BookSearched",
+                                "displayName": "도서가 검색됨",
+                                "actor": "회원",
+                                "level": 4,
+                                "description": "회원이 도서명이나 ISBN으로 도서를 검색함.",
+                                "inputs": [
+                                    "검색어(도서명 또는 ISBN)"
+                                ],
+                                "outputs": [
+                                    "검색 결과 도서 목록"
+                                ],
+                                "nextEvents": []
+                            },
+                            {
+                                "name": "MemberVerified",
+                                "displayName": "회원이 확인됨",
+                                "actor": "회원",
+                                "level": 5,
+                                "description": "회원번호와 이름으로 회원 정보가 확인됨.",
+                                "inputs": [
+                                    "회원번호",
+                                    "이름"
+                                ],
+                                "outputs": [
+                                    "회원 정보"
                                 ],
                                 "nextEvents": [
-                                    "LoanApproved",
-                                    "BookReserved"
+                                    "BookLoanRequested"
                                 ]
                             },
                             {
-                                "name": "LoanApproved",
-                                "displayName": "대출 완료됨",
-                                "actor": "도서관리시스템",
-                                "level": 5,
-                                "description": "대출 요청이 처리되어 도서가 회원에게 대출됨. 도서 상태는 대출중으로 자동 변경됨.",
+                                "name": "BookLoanRequested",
+                                "displayName": "도서 대출이 신청됨",
+                                "actor": "회원",
+                                "level": 6,
+                                "description": "회원이 대출하고자 하는 도서와 대출 기간(7일/14일/30일)을 선택하여 대출을 신청함.",
                                 "inputs": [
-                                    "대출 신청",
-                                    "대출 가능 도서",
-                                    "회원 자격 유효"
+                                    "회원 정보",
+                                    "도서 식별자",
+                                    "대출 기간"
                                 ],
                                 "outputs": [
-                                    "대출 기록 생성",
-                                    "도서 상태: 대출중",
-                                    "대출일",
-                                    "반납예정일"
+                                    "대출 신청 요청"
                                 ],
                                 "nextEvents": [
-                                    "LoanExtended",
-                                    "LoanReturned",
-                                    "LoanOverdueChecked"
+                                    "BookLoanApproved",
+                                    "BookLoanRejected"
                                 ]
+                            },
+                            {
+                                "name": "BookLoanRejected",
+                                "displayName": "도서 대출이 거부됨",
+                                "actor": "도서 대출 시스템",
+                                "level": 7,
+                                "description": "도서가 폐기되었거나 대출 불가 상태인 경우 대출이 거부됨.",
+                                "inputs": [
+                                    "도서 상태 '폐기' 또는 대출 불가"
+                                ],
+                                "outputs": [
+                                    "대출 거부 알림"
+                                ],
+                                "nextEvents": []
+                            },
+                            {
+                                "name": "BookLoanApproved",
+                                "displayName": "도서 대출이 승인됨",
+                                "actor": "도서 대출 시스템",
+                                "level": 8,
+                                "description": "도서가 대출 가능 상태라면 대출이 승인되고 대출 정보가 생성됨. 도서 상태는 '대출중'으로 변경됨.",
+                                "inputs": [
+                                    "도서 상태 '대출가능'",
+                                    "대출 신청 정보"
+                                ],
+                                "outputs": [
+                                    "대출 정보 생성",
+                                    "도서 상태 '대출중'으로 변경"
+                                ],
+                                "nextEvents": []
                             },
                             {
                                 "name": "BookReserved",
-                                "displayName": "도서 예약됨",
+                                "displayName": "도서가 예약됨",
                                 "actor": "회원",
-                                "level": 6,
-                                "description": "회원이 이미 대출중인 도서에 대해 예약 신청을 함. 예약된 도서는 예약 대기 리스트에 등록됨.",
-                                "inputs": [
-                                    "회원번호",
-                                    "이름",
-                                    "대출중 상태 도서"
-                                ],
-                                "outputs": [
-                                    "예약 기록 생성",
-                                    "도서 상태: 예약중"
-                                ],
-                                "nextEvents": [
-                                    "LoanReturned"
-                                ]
-                            },
-                            {
-                                "name": "LoanReturned",
-                                "displayName": "도서 반납됨",
-                                "actor": "회원",
-                                "level": 7,
-                                "description": "회원이 대출 중인 도서를 반납함. 반납 후 예약자가 있으면 도서 상태는 예약중, 없으면 대출가능으로 변경됨.",
-                                "inputs": [
-                                    "대출 중 도서",
-                                    "회원"
-                                ],
-                                "outputs": [
-                                    "반납 기록 생성",
-                                    "도서 상태: 대출가능/예약중"
-                                ],
-                                "nextEvents": [
-                                    "BookStateChanged",
-                                    "ReservationNotified"
-                                ]
-                            },
-                            {
-                                "name": "LoanExtended",
-                                "displayName": "대출 연장됨",
-                                "actor": "회원",
-                                "level": 8,
-                                "description": "회원이 대출중인 도서의 반납예정일을 연장 신청함. 연장은 정책에 따라 1회 혹은 제한 가능.",
-                                "inputs": [
-                                    "회원",
-                                    "대출중 상태 도서",
-                                    "연장 조건 충족"
-                                ],
-                                "outputs": [
-                                    "반납예정일 변경"
-                                ],
-                                "nextEvents": [
-                                    "LoanOverdueChecked",
-                                    "LoanReturned"
-                                ]
-                            },
-                            {
-                                "name": "LoanOverdueChecked",
-                                "displayName": "연체 확인됨",
-                                "actor": "도서관리시스템",
                                 "level": 9,
-                                "description": "반납 예정일이 지난 도서의 연체 상태를 확인하여 연체로 표시함.",
+                                "description": "대출하려는 도서가 이미 대출 중일 때 회원이 해당 도서의 예약을 신청하면 예약이 생성되고, 도서의 상태가 '예약중'으로 변경됨.",
                                 "inputs": [
-                                    "대출중 도서",
-                                    "현재 일자",
-                                    "반납예정일"
+                                    "회원 정보",
+                                    "대출 중인 도서 식별자"
                                 ],
                                 "outputs": [
-                                    "대출 상태: 연체"
-                                ],
-                                "nextEvents": [
-                                    "LoanReturned"
-                                ]
-                            },
-                            {
-                                "name": "ReservationNotified",
-                                "displayName": "예약자 통보됨",
-                                "actor": "도서관리시스템",
-                                "level": 10,
-                                "description": "예약자가 있는 도서가 반납되었을 때, 예약자에게 도서 이용 가능 안내를 통보함.",
-                                "inputs": [
-                                    "도서 반납",
-                                    "예약자 존재"
-                                ],
-                                "outputs": [
-                                    "예약자 알림"
+                                    "예약 정보 생성",
+                                    "도서 상태 '예약중'으로 변경"
                                 ],
                                 "nextEvents": []
                             },
                             {
-                                "name": "BookHistoryQueried",
-                                "displayName": "도서 이력 조회됨",
-                                "actor": "도서관리자",
+                                "name": "BookReturned",
+                                "displayName": "도서가 반납됨",
+                                "actor": "회원",
+                                "level": 10,
+                                "description": "회원이 대출한 도서를 반납함. 도서에 예약자가 있으면 상태가 '예약중'으로, 없으면 '대출가능'으로 변경됨.",
+                                "inputs": [
+                                    "반납 도서 식별자"
+                                ],
+                                "outputs": [
+                                    "반납 처리",
+                                    "도서 상태 변경"
+                                ],
+                                "nextEvents": [
+                                    "BookAvailable",
+                                    "BookReservedForNext"
+                                ]
+                            },
+                            {
+                                "name": "BookAvailable",
+                                "displayName": "도서가 대출 가능 상태로 변경됨",
+                                "actor": "도서 대출 시스템",
                                 "level": 11,
-                                "description": "관리자/회원이 도서별로 대출 및 상태 변경 이력을 조회함.",
+                                "description": "반납된 도서에 예약자가 없는 경우 도서 상태가 '대출가능'으로 변경됨.",
+                                "inputs": [
+                                    "반납 도서 식별자",
+                                    "예약자 없음"
+                                ],
+                                "outputs": [
+                                    "도서 상태 '대출가능'"
+                                ],
+                                "nextEvents": []
+                            },
+                            {
+                                "name": "BookReservedForNext",
+                                "displayName": "도서가 다음 예약자를 위해 예약중 상태로 변경됨",
+                                "actor": "도서 대출 시스템",
+                                "level": 12,
+                                "description": "반납된 도서에 예약자가 있을 경우 도서 상태가 '예약중'으로 변경됨.",
+                                "inputs": [
+                                    "반납 도서 식별자",
+                                    "예약자 존재"
+                                ],
+                                "outputs": [
+                                    "도서 상태 '예약중'"
+                                ],
+                                "nextEvents": []
+                            },
+                            {
+                                "name": "LoanExtended",
+                                "displayName": "대출 기간이 연장됨",
+                                "actor": "회원",
+                                "level": 13,
+                                "description": "회원이 대출 중인 도서의 대출 기간을 연장함. 연체 상태에서는 연장이 불가함.",
+                                "inputs": [
+                                    "회원 정보",
+                                    "대출 중인 도서 식별자",
+                                    "연장 요청"
+                                ],
+                                "outputs": [
+                                    "대출 기간 연장",
+                                    "새 반납 예정일"
+                                ],
+                                "nextEvents": []
+                            },
+                            {
+                                "name": "LoanOverdue",
+                                "displayName": "도서 대출이 연체됨",
+                                "actor": "도서 대출 시스템",
+                                "level": 14,
+                                "description": "반납 예정일이 지나도 도서가 반납되지 않은 경우, 대출 건의 상태가 '연체'로 변경됨.",
+                                "inputs": [
+                                    "반납 예정일 경과",
+                                    "반납 미처리"
+                                ],
+                                "outputs": [
+                                    "대출 상태 '연체'로 변경"
+                                ],
+                                "nextEvents": []
+                            },
+                            {
+                                "name": "BookLoanHistoryViewed",
+                                "displayName": "도서의 대출 이력이 조회됨",
+                                "actor": "도서 관리자",
+                                "level": 15,
+                                "description": "도서 관리자가 특정 도서의 대출 이력을 조회함.",
                                 "inputs": [
                                     "도서 식별자"
                                 ],
                                 "outputs": [
-                                    "도서 대출 이력 목록",
-                                    "도서 상태 변경 이력 목록"
+                                    "대출 이력 목록"
                                 ],
                                 "nextEvents": []
                             },
                             {
-                                "name": "LoanStatusQueried",
-                                "displayName": "대출 현황 조회됨",
-                                "actor": "도서관리자",
-                                "level": 12,
-                                "description": "현재 대출 중인 도서와 각 대출 건의 대출일, 반납예정일, 상태(대출중/연체/반납완료)를 조회함.",
+                                "name": "BookStatusHistoryViewed",
+                                "displayName": "도서의 상태 변경 이력이 조회됨",
+                                "actor": "도서 관리자",
+                                "level": 16,
+                                "description": "도서 관리자가 특정 도서의 상태 변경 이력을 조회함.",
                                 "inputs": [
-                                    "조회 조건 (전체/회원별/도서별)"
+                                    "도서 식별자"
                                 ],
                                 "outputs": [
-                                    "대출 건 목록",
-                                    "각 대출 상태"
+                                    "상태 변경 이력 목록"
                                 ],
                                 "nextEvents": []
                             }
                         ],
                         "actors": [
                             {
-                                "name": "도서관리자",
+                                "name": "도서 관리자",
                                 "events": [
                                     "BookRegistered",
-                                    "BookDisposed",
-                                    "BookHistoryQueried",
-                                    "LoanStatusQueried"
+                                    "BookRegistrationFailed",
+                                    "BookDiscarded",
+                                    "BookLoanHistoryViewed",
+                                    "BookStatusHistoryViewed"
                                 ],
                                 "lane": 0
                             },
                             {
                                 "name": "회원",
                                 "events": [
-                                    "LoanRequested",
+                                    "BookSearched",
+                                    "MemberVerified",
+                                    "BookLoanRequested",
                                     "BookReserved",
-                                    "LoanReturned",
+                                    "BookReturned",
                                     "LoanExtended"
                                 ],
                                 "lane": 1
                             },
                             {
-                                "name": "도서관리시스템",
+                                "name": "도서 대출 시스템",
                                 "events": [
-                                    "BookStateChanged",
-                                    "LoanApproved",
-                                    "LoanOverdueChecked",
-                                    "ReservationNotified"
+                                    "BookLoanApproved",
+                                    "BookLoanRejected",
+                                    "BookAvailable",
+                                    "BookReservedForNext",
+                                    "LoanOverdue"
                                 ],
                                 "lane": 2
                             }
                         ]
                     },
-                    "currentGeneratedLength": 5858
+                    "currentGeneratedLength": 7214
                 },
                 "currentGeneratedLength": 0,
-                "timestamp": "2025-06-02T02:24:14.450Z"
+                "timestamp": "2025-06-09T05:50:18.530Z"
             },
             {
-                "uniqueId": "ec0fd783d838635fad74985f3275e499",
+                "uniqueId": "e66bf4c2e45e592c8f8ab675f7ff5862",
                 "type": "bcGenerationOption",
                 "isSummarizeStarted": false,
                 "isGeneratingBoundedContext": false,
@@ -3211,20 +2348,20 @@ export const aggregateDraftScenarios = {
                     "isProtocolMode": true
                 },
                 "recommendedBoundedContextsNumber": 4,
-                "timestamp": "2025-06-02T02:24:46.717Z"
+                "timestamp": "2025-06-09T05:50:49.007Z"
             },
             {
-                "uniqueId": "295699341285b38ad47096f8456737b0",
+                "uniqueId": "c8a00460a2fcfce981c198c32dfde3ed",
                 "type": "boundedContextResult",
                 "result": {
                     "도메인 복잡도 분리+프로세스(value stream) 기반 분리": {
                         "boundedContexts": [
                             {
-                                "name": "LibraryBookManagement",
-                                "alias": "도서관리",
+                                "name": "BookManagement",
+                                "alias": "도서 관리",
                                 "importance": "Core Domain",
-                                "complexity": 0.8,
-                                "differentiation": 0.95,
+                                "complexity": "0.8",
+                                "differentiation": "0.9",
                                 "implementationStrategy": "Rich Domain Model",
                                 "aggregates": [
                                     {
@@ -3234,9 +2371,11 @@ export const aggregateDraftScenarios = {
                                 ],
                                 "events": [
                                     "BookRegistered",
-                                    "BookStateChanged",
-                                    "BookDisposed",
-                                    "BookHistoryQueried"
+                                    "BookRegistrationFailed",
+                                    "BookDiscarded",
+                                    "BookSearched",
+                                    "BookLoanHistoryViewed",
+                                    "BookStatusHistoryViewed"
                                 ],
                                 "requirements": [
                                     {
@@ -3245,33 +2384,49 @@ export const aggregateDraftScenarios = {
                                     },
                                     {
                                         "type": "userStory",
+                                        "text": "도서는 도서명이나 ISBN으로 검색할 수 있어야 해."
+                                    },
+                                    {
+                                        "type": "userStory",
+                                        "text": "도서가 반납되면 자동으로 해당 도서의 상태가 '대출가능'으로 변경되어야 해. 만약 예약자가 있는 도서가 반납되면, 해당 도서는 '예약중' 상태로 변경되어야 해."
+                                    },
+                                    {
+                                        "type": "userStory",
                                         "text": "각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해."
                                     },
                                     {
                                         "type": "Event",
-                                        "text": "{\"name\":\"BookRegistered\",\"displayName\":\"도서 등록됨\",\"actor\":\"도서관리자\",\"level\":1,\"description\":\"관리자가 새로운 도서를 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력하여 등록함. ISBN 중복 및 13자리 유효성 검증을 통과함.\",\"inputs\":[\"도서명\",\"ISBN\",\"저자\",\"출판사\",\"카테고리 (소설/비소설/학술/잡지)\",\"ISBN 중복 없음\",\"ISBN 13자리\"],\"outputs\":[\"도서 엔티티 생성\",\"도서 상태: 대출가능\"],\"nextEvents\":[\"BookStateChanged\"]}"
+                                        "text": "{\"name\":\"BookRegistered\",\"displayName\":\"도서가 등록됨\",\"actor\":\"도서 관리자\",\"level\":1,\"description\":\"도서 관리자가 새로운 도서를 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력하여 도서를 등록함. 등록된 도서는 '대출가능' 상태가 됨.\",\"inputs\":[\"도서명\",\"ISBN(13자리)\",\"저자\",\"출판사\",\"카테고리\",\"ISBN 중복 아님\"],\"outputs\":[\"신규 도서 데이터\",\"'대출가능' 상태\"],\"nextEvents\":[]}"
                                     },
                                     {
                                         "type": "Event",
-                                        "text": "{\"name\":\"BookStateChanged\",\"displayName\":\"도서 상태 변경됨\",\"actor\":\"도서관리시스템\",\"level\":2,\"description\":\"도서 등록/대출/반납/예약/폐기 등의 트리거에 의해 도서의 상태가 변경됨.\",\"inputs\":[\"도서 이벤트 트리거\",\"이전 도서 상태\"],\"outputs\":[\"도서 상태: 대출가능/대출중/예약중/폐기\"],\"nextEvents\":[\"BookDisposed\",\"LoanRequested\",\"LoanReturned\",\"BookReserved\"]}"
+                                        "text": "{\"name\":\"BookRegistrationFailed\",\"displayName\":\"도서 등록 실패됨\",\"actor\":\"도서 관리자\",\"level\":2,\"description\":\"도서 등록 시 ISBN이 13자리가 아니거나 중복된 경우 등록이 거부됨.\",\"inputs\":[\"ISBN(중복 또는 13자리 아님)\"],\"outputs\":[\"에러 메시지\",\"등록 거부\"],\"nextEvents\":[]}"
                                     },
                                     {
                                         "type": "Event",
-                                        "text": "{\"name\":\"BookDisposed\",\"displayName\":\"도서 폐기됨\",\"actor\":\"도서관리자\",\"level\":3,\"description\":\"관리자가 훼손/분실로 인한 도서 폐기를 처리함. 폐기된 도서는 대출 불가 상태가 됨.\",\"inputs\":[\"도서 식별\",\"훼손/분실 사유\"],\"outputs\":[\"도서 상태: 폐기\"],\"nextEvents\":[]}"
+                                        "text": "{\"name\":\"BookDiscarded\",\"displayName\":\"도서가 폐기됨\",\"actor\":\"도서 관리자\",\"level\":3,\"description\":\"도서가 훼손되거나 분실된 경우 도서 관리자가 해당 도서를 폐기 처리함. 폐기된 도서는 더 이상 대출이 불가함.\",\"inputs\":[\"도서 식별자\",\"폐기 사유\"],\"outputs\":[\"도서 상태 '폐기'로 변경\",\"대출 불가\"],\"nextEvents\":[]}"
                                     },
                                     {
                                         "type": "Event",
-                                        "text": "{\"name\":\"BookHistoryQueried\",\"displayName\":\"도서 이력 조회됨\",\"actor\":\"도서관리자\",\"level\":11,\"description\":\"관리자/회원이 도서별로 대출 및 상태 변경 이력을 조회함.\",\"inputs\":[\"도서 식별자\"],\"outputs\":[\"도서 대출 이력 목록\",\"도서 상태 변경 이력 목록\"],\"nextEvents\":[]}"
+                                        "text": "{\"name\":\"BookSearched\",\"displayName\":\"도서가 검색됨\",\"actor\":\"회원\",\"level\":4,\"description\":\"회원이 도서명이나 ISBN으로 도서를 검색함.\",\"inputs\":[\"검색어(도서명 또는 ISBN)\"],\"outputs\":[\"검색 결과 도서 목록\"],\"nextEvents\":[]}"
+                                    },
+                                    {
+                                        "type": "Event",
+                                        "text": "{\"name\":\"BookLoanHistoryViewed\",\"displayName\":\"도서의 대출 이력이 조회됨\",\"actor\":\"도서 관리자\",\"level\":15,\"description\":\"도서 관리자가 특정 도서의 대출 이력을 조회함.\",\"inputs\":[\"도서 식별자\"],\"outputs\":[\"대출 이력 목록\"],\"nextEvents\":[]}"
+                                    },
+                                    {
+                                        "type": "Event",
+                                        "text": "{\"name\":\"BookStatusHistoryViewed\",\"displayName\":\"도서의 상태 변경 이력이 조회됨\",\"actor\":\"도서 관리자\",\"level\":16,\"description\":\"도서 관리자가 특정 도서의 상태 변경 이력을 조회함.\",\"inputs\":[\"도서 식별자\"],\"outputs\":[\"상태 변경 이력 목록\"],\"nextEvents\":[]}"
                                     }
                                 ],
-                                "role": "도서 등록, ISBN 중복 및 유효성 검사, 도서 상태 관리(대출가능/대출중/예약중/폐기), 도서 상태 변경 이력 추적, 도서의 폐기 처리 등 도서의 전체 수명 주기와 관련된 업무를 담당한다. 도서와 직접적으로 연관된 복잡한 비즈니스 규칙을 다루며, 사용자가 도서 등록, 상태 관리, 이력 조회 등 주도적으로 사용할 수 있다."
+                                "role": "도서 관리자는 새로운 도서를 등록하고, 도서의 상태(대출가능/대출중/예약중/폐기)를 관리하며, 각 도서의 대출 및 상태 변경 이력을 조회한다. 도서 등록 시 중복 및 형식 검증이 포함되고, 도서의 상태는 대출 및 반납 이벤트에 따라 변경된다. 도서 검색 기능도 포함한다."
                             },
                             {
-                                "name": "LibraryLoanProcess",
-                                "alias": "대출/반납",
+                                "name": "BookLoanProcess",
+                                "alias": "도서 대출 프로세스",
                                 "importance": "Core Domain",
-                                "complexity": 0.85,
-                                "differentiation": 0.95,
+                                "complexity": "0.9",
+                                "differentiation": "0.8",
                                 "implementationStrategy": "Rich Domain Model",
                                 "aggregates": [
                                     {
@@ -3281,17 +2436,23 @@ export const aggregateDraftScenarios = {
                                     {
                                         "name": "Reservation",
                                         "alias": "예약"
+                                    },
+                                    {
+                                        "name": "Member",
+                                        "alias": "회원"
                                     }
                                 ],
                                 "events": [
-                                    "LoanRequested",
-                                    "LoanApproved",
-                                    "LoanReturned",
-                                    "LoanExtended",
-                                    "LoanOverdueChecked",
+                                    "MemberVerified",
+                                    "BookLoanRequested",
+                                    "BookLoanRejected",
+                                    "BookLoanApproved",
                                     "BookReserved",
-                                    "ReservationNotified",
-                                    "LoanStatusQueried"
+                                    "BookReturned",
+                                    "BookAvailable",
+                                    "BookReservedForNext",
+                                    "LoanExtended",
+                                    "LoanOverdue"
                                 ],
                                 "requirements": [
                                     {
@@ -3308,85 +2469,74 @@ export const aggregateDraftScenarios = {
                                     },
                                     {
                                         "type": "Event",
-                                        "text": "{\"name\":\"LoanRequested\",\"displayName\":\"대출 신청됨\",\"actor\":\"회원\",\"level\":4,\"description\":\"회원이 도서명이나 ISBN으로 검색하여 대출 가능한 도서에 대해 대출을 신청함. 회원번호와 이름 확인 필요.\",\"inputs\":[\"회원번호\",\"이름\",\"도서명/ISBN\",\"대출 가능 상태 도서\",\"대출 기간(7/14/30일)\"],\"outputs\":[\"대출 신청 생성\",\"대출 대기 상태\"],\"nextEvents\":[\"LoanApproved\",\"BookReserved\"]}"
+                                        "text": "{\"name\":\"MemberVerified\",\"displayName\":\"회원이 확인됨\",\"actor\":\"회원\",\"level\":5,\"description\":\"회원번호와 이름으로 회원 정보가 확인됨.\",\"inputs\":[\"회원번호\",\"이름\"],\"outputs\":[\"회원 정보\"],\"nextEvents\":[\"BookLoanRequested\"]}"
                                     },
                                     {
                                         "type": "Event",
-                                        "text": "{\"name\":\"LoanApproved\",\"displayName\":\"대출 완료됨\",\"actor\":\"도서관리시스템\",\"level\":5,\"description\":\"대출 요청이 처리되어 도서가 회원에게 대출됨. 도서 상태는 대출중으로 자동 변경됨.\",\"inputs\":[\"대출 신청\",\"대출 가능 도서\",\"회원 자격 유효\"],\"outputs\":[\"대출 기록 생성\",\"도서 상태: 대출중\",\"대출일\",\"반납예정일\"],\"nextEvents\":[\"LoanExtended\",\"LoanReturned\",\"LoanOverdueChecked\"]}"
+                                        "text": "{\"name\":\"BookLoanRequested\",\"displayName\":\"도서 대출이 신청됨\",\"actor\":\"회원\",\"level\":6,\"description\":\"회원이 대출하고자 하는 도서와 대출 기간(7일/14일/30일)을 선택하여 대출을 신청함.\",\"inputs\":[\"회원 정보\",\"도서 식별자\",\"대출 기간\"],\"outputs\":[\"대출 신청 요청\"],\"nextEvents\":[\"BookLoanApproved\",\"BookLoanRejected\"]}"
                                     },
                                     {
                                         "type": "Event",
-                                        "text": "{\"name\":\"BookReserved\",\"displayName\":\"도서 예약됨\",\"actor\":\"회원\",\"level\":6,\"description\":\"회원이 이미 대출중인 도서에 대해 예약 신청을 함. 예약된 도서는 예약 대기 리스트에 등록됨.\",\"inputs\":[\"회원번호\",\"이름\",\"대출중 상태 도서\"],\"outputs\":[\"예약 기록 생성\",\"도서 상태: 예약중\"],\"nextEvents\":[\"LoanReturned\"]}"
+                                        "text": "{\"name\":\"BookLoanRejected\",\"displayName\":\"도서 대출이 거부됨\",\"actor\":\"도서 대출 시스템\",\"level\":7,\"description\":\"도서가 폐기되었거나 대출 불가 상태인 경우 대출이 거부됨.\",\"inputs\":[\"도서 상태 '폐기' 또는 대출 불가\"],\"outputs\":[\"대출 거부 알림\"],\"nextEvents\":[]}"
                                     },
                                     {
                                         "type": "Event",
-                                        "text": "{\"name\":\"LoanReturned\",\"displayName\":\"도서 반납됨\",\"actor\":\"회원\",\"level\":7,\"description\":\"회원이 대출 중인 도서를 반납함. 반납 후 예약자가 있으면 도서 상태는 예약중, 없으면 대출가능으로 변경됨.\",\"inputs\":[\"대출 중 도서\",\"회원\"],\"outputs\":[\"반납 기록 생성\",\"도서 상태: 대출가능/예약중\"],\"nextEvents\":[\"BookStateChanged\",\"ReservationNotified\"]}"
+                                        "text": "{\"name\":\"BookLoanApproved\",\"displayName\":\"도서 대출이 승인됨\",\"actor\":\"도서 대출 시스템\",\"level\":8,\"description\":\"도서가 대출 가능 상태라면 대출이 승인되고 대출 정보가 생성됨. 도서 상태는 '대출중'으로 변경됨.\",\"inputs\":[\"도서 상태 '대출가능'\",\"대출 신청 정보\"],\"outputs\":[\"대출 정보 생성\",\"도서 상태 '대출중'으로 변경\"],\"nextEvents\":[]}"
                                     },
                                     {
                                         "type": "Event",
-                                        "text": "{\"name\":\"LoanExtended\",\"displayName\":\"대출 연장됨\",\"actor\":\"회원\",\"level\":8,\"description\":\"회원이 대출중인 도서의 반납예정일을 연장 신청함. 연장은 정책에 따라 1회 혹은 제한 가능.\",\"inputs\":[\"회원\",\"대출중 상태 도서\",\"연장 조건 충족\"],\"outputs\":[\"반납예정일 변경\"],\"nextEvents\":[\"LoanOverdueChecked\",\"LoanReturned\"]}"
+                                        "text": "{\"name\":\"BookReserved\",\"displayName\":\"도서가 예약됨\",\"actor\":\"회원\",\"level\":9,\"description\":\"대출하려는 도서가 이미 대출 중일 때 회원이 해당 도서의 예약을 신청하면 예약이 생성되고, 도서의 상태가 '예약중'으로 변경됨.\",\"inputs\":[\"회원 정보\",\"대출 중인 도서 식별자\"],\"outputs\":[\"예약 정보 생성\",\"도서 상태 '예약중'으로 변경\"],\"nextEvents\":[]}"
                                     },
                                     {
                                         "type": "Event",
-                                        "text": "{\"name\":\"LoanOverdueChecked\",\"displayName\":\"연체 확인됨\",\"actor\":\"도서관리시스템\",\"level\":9,\"description\":\"반납 예정일이 지난 도서의 연체 상태를 확인하여 연체로 표시함.\",\"inputs\":[\"대출중 도서\",\"현재 일자\",\"반납예정일\"],\"outputs\":[\"대출 상태: 연체\"],\"nextEvents\":[\"LoanReturned\"]}"
+                                        "text": "{\"name\":\"BookReturned\",\"displayName\":\"도서가 반납됨\",\"actor\":\"회원\",\"level\":10,\"description\":\"회원이 대출한 도서를 반납함. 도서에 예약자가 있으면 상태가 '예약중'으로, 없으면 '대출가능'으로 변경됨.\",\"inputs\":[\"반납 도서 식별자\"],\"outputs\":[\"반납 처리\",\"도서 상태 변경\"],\"nextEvents\":[\"BookAvailable\",\"BookReservedForNext\"]}"
                                     },
                                     {
                                         "type": "Event",
-                                        "text": "{\"name\":\"ReservationNotified\",\"displayName\":\"예약자 통보됨\",\"actor\":\"도서관리시스템\",\"level\":10,\"description\":\"예약자가 있는 도서가 반납되었을 때, 예약자에게 도서 이용 가능 안내를 통보함.\",\"inputs\":[\"도서 반납\",\"예약자 존재\"],\"outputs\":[\"예약자 알림\"],\"nextEvents\":[]}"
+                                        "text": "{\"name\":\"BookAvailable\",\"displayName\":\"도서가 대출 가능 상태로 변경됨\",\"actor\":\"도서 대출 시스템\",\"level\":11,\"description\":\"반납된 도서에 예약자가 없는 경우 도서 상태가 '대출가능'으로 변경됨.\",\"inputs\":[\"반납 도서 식별자\",\"예약자 없음\"],\"outputs\":[\"도서 상태 '대출가능'\"],\"nextEvents\":[]}"
                                     },
                                     {
                                         "type": "Event",
-                                        "text": "{\"name\":\"LoanStatusQueried\",\"displayName\":\"대출 현황 조회됨\",\"actor\":\"도서관리자\",\"level\":12,\"description\":\"현재 대출 중인 도서와 각 대출 건의 대출일, 반납예정일, 상태(대출중/연체/반납완료)를 조회함.\",\"inputs\":[\"조회 조건 (전체/회원별/도서별)\"],\"outputs\":[\"대출 건 목록\",\"각 대출 상태\"],\"nextEvents\":[]}"
+                                        "text": "{\"name\":\"BookReservedForNext\",\"displayName\":\"도서가 다음 예약자를 위해 예약중 상태로 변경됨\",\"actor\":\"도서 대출 시스템\",\"level\":12,\"description\":\"반납된 도서에 예약자가 있을 경우 도서 상태가 '예약중'으로 변경됨.\",\"inputs\":[\"반납 도서 식별자\",\"예약자 존재\"],\"outputs\":[\"도서 상태 '예약중'\"],\"nextEvents\":[]}"
+                                    },
+                                    {
+                                        "type": "Event",
+                                        "text": "{\"name\":\"LoanExtended\",\"displayName\":\"대출 기간이 연장됨\",\"actor\":\"회원\",\"level\":13,\"description\":\"회원이 대출 중인 도서의 대출 기간을 연장함. 연체 상태에서는 연장이 불가함.\",\"inputs\":[\"회원 정보\",\"대출 중인 도서 식별자\",\"연장 요청\"],\"outputs\":[\"대출 기간 연장\",\"새 반납 예정일\"],\"nextEvents\":[]}"
+                                    },
+                                    {
+                                        "type": "Event",
+                                        "text": "{\"name\":\"LoanOverdue\",\"displayName\":\"도서 대출이 연체됨\",\"actor\":\"도서 대출 시스템\",\"level\":14,\"description\":\"반납 예정일이 지나도 도서가 반납되지 않은 경우, 대출 건의 상태가 '연체'로 변경됨.\",\"inputs\":[\"반납 예정일 경과\",\"반납 미처리\"],\"outputs\":[\"대출 상태 '연체'로 변경\"],\"nextEvents\":[]}"
                                     }
                                 ],
-                                "role": "도서 대출 신청, 회원 확인, 도서 검색, 대출 처리 및 상태 변경, 대출 연장/반납/연체 관리, 예약 처리 및 예약자 알림, 대출 현황 조회 등 도서의 대출-반납 및 예약 관련 전체 프로세스를 책임진다. 회원과 도서의 상호작용, 대출/반납/연장/예약 등 복잡한 프로세스 흐름을 포함하며, 각종 정책과 상태 변화에 따라 동작한다."
+                                "role": "회원의 대출/반납, 예약, 대출 연장, 연체 관리 등 도서 대출 전체 프로세스를 담당한다. 회원 인증 및 도서 검색, 대출 상태 전환, 예약 처리, 반납 및 연체 상태 처리까지의 흐름을 포함한다."
                             }
                         ],
                         "relations": [
                             {
-                                "name": "BookStatusEventPubSub",
+                                "name": "BookManagementToBookLoanProcess",
                                 "type": "Pub/Sub",
                                 "upStream": {
-                                    "name": "LibraryLoanProcess",
-                                    "alias": "대출/반납"
+                                    "name": "BookManagement",
+                                    "alias": "도서 관리"
                                 },
                                 "downStream": {
-                                    "name": "LibraryBookManagement",
-                                    "alias": "도서관리"
-                                }
-                            },
-                            {
-                                "name": "BookInfoQueryPubSub",
-                                "type": "Pub/Sub",
-                                "upStream": {
-                                    "name": "LibraryBookManagement",
-                                    "alias": "도서관리"
-                                },
-                                "downStream": {
-                                    "name": "LibraryLoanProcess",
-                                    "alias": "대출/반납"
+                                    "name": "BookLoanProcess",
+                                    "alias": "도서 대출 프로세스"
                                 }
                             }
                         ],
-                        "thoughts": "본 분리는 도메인 복잡도와 value stream(업무 프로세스) 기반으로 이루어졌다. 도서관리(도서의 등록, 폐기, 상태 관리, 이력 관리)는 도서의 라이프사이클 및 마스터 데이터 관리라는 관점에서 하나의 높은 응집도를 가지는 코어 도메인으로 분리하였다. 반면, 대출/반납은 회원과 도서의 상호작용, 대출-반납-연장-예약-알림 등 일련의 업무 흐름과 정책을 주도하는 프로세스 기반의 코어 도메인으로 독립적으로 분리하였다. 두 컨텍스트 모두 고도의 비즈니스 규칙과 UI/사용자 주도 프로세스를 내포하므로 Core Domain으로 분류했다. 인프라 측면에서, 현재 요구사항과 주어진 PBC 내에서는 도메인에 직접 대응되는 PBC가 없어 독자적 Rich Domain Model 전략을 채택하였다. 각 컨텍스트 간 결합도를 낮추기 위해 Pub/Sub 이벤트 기반 통신 패턴을 도입하였다(예: 대출 완료 시 도서 상태 변경 이벤트 발행, 도서 정보 변경 시 대출 컨텍스트에 동기화 등). 이를 통해 컨텍스트별 역할과 책임의 명확한 분리와 함께 시스템 확장성 및 유지보수성을 높일 수 있다.",
+                        "thoughts": "이번 분리는 도메인 복잡도와 프로세스(밸류 스트림)를 기준으로 수행하였다. 우선, 요구사항을 PBC 매칭 규칙에 따라 확인하였으나, 도서 관리, 대출, 예약 등 도서관 특화 기능에 일치하는 PBC가 없어 모두 고유 도메인(코어 도메인)으로 분리하였다. 도서 등록/상태관리/검색/이력 등 도서 객체와 직접 관련된 복잡한 비즈니스 규칙은 '도서 관리'로, 회원 인증부터 대출/반납/예약/연장/연체 등 대출의 전체 흐름은 '도서 대출 프로세스'로 분리하였다. 이는 각 도메인의 책임과 이벤트 흐름, 데이터 일관성, 프로세스 소유권을 명확히 하기 위함이다. 두 컨텍스트는 도서의 상태 변화(대출 가능→대출중, 반납→예약중 등) 등에서 상호 이벤트를 주고받으며 Pub/Sub 패턴으로 느슨하게 연결된다. 인프라적 관점에서는 확장성 및 업무 변경의 유연성을 고려하여 단방향 이벤트 기반 연동을 선택하였다.",
                         "explanations": [
                             {
-                                "sourceContext": "대출/반납",
-                                "targetContext": "도서관리",
+                                "sourceContext": "도서 관리",
+                                "targetContext": "도서 대출 프로세스",
                                 "relationType": "Pub/Sub",
-                                "reason": "대출/반납 컨텍스트에서 대출, 반납, 예약 등의 이벤트가 발생하면 도서의 상태를 변경해야 하므로, 이벤트 발행을 통해 도서관리 컨텍스트에 상태 변경을 알린다. 이 방식은 결합도를 낮추고 유연한 확장을 가능하게 한다.",
-                                "interactionPattern": "대출/반납 컨텍스트에서 도서 상태 변경 이벤트를 발행하면 도서관리 컨텍스트가 구독하여 처리(Pub/Sub, 예: 메시지 브로커 사용)한다."
-                            },
-                            {
-                                "sourceContext": "도서관리",
-                                "targetContext": "대출/반납",
-                                "relationType": "Pub/Sub",
-                                "reason": "도서관리 컨텍스트에서 도서 정보가 변경(등록/폐기 등)될 경우, 대출/반납 컨텍스트가 해당 정보를 반영할 수 있도록 Pub/Sub 이벤트를 활용한다.",
-                                "interactionPattern": "도서관리 컨텍스트가 도서 정보 이벤트를 발행하면, 대출/반납 컨텍스트가 이를 구독해 자신의 로컬 데이터/캐시를 동기화한다."
+                                "reason": "도서의 상태 변화, 신규 등록, 폐기 등 이벤트가 발생하면 이를 대출/예약/연체 프로세스에 전달해야 하며, 두 컨텍스트가 느슨하게 결합되고 데이터 소유권이 명확히 분리됨.",
+                                "interactionPattern": "도서 상태 변경, 신규 등록, 폐기 등 이벤트를 Pub/Sub로 발행하며 대출 프로세스에서 구독하여 반영함. 예: 도서가 폐기되면 대출 프로세스에서 대출 거부 처리."
                             }
                         ],
                         "devisionAspect": "도메인 복잡도 분리+프로세스(value stream) 기반 분리",
-                        "currentGeneratedLength": 3981
+                        "currentGeneratedLength": 3347
                     }
                 },
                 "isStartMapping": false,
@@ -3394,7 +2544,7 @@ export const aggregateDraftScenarios = {
                 "isSummarizeStarted": false,
                 "isAnalizing": false,
                 "processingRate": 100,
-                "currentProcessingBoundedContext": "대출/반납",
+                "currentProcessingBoundedContext": "도서 대출 프로세스",
                 "selectedAspect": "도메인 복잡도 분리+프로세스(value stream) 기반 분리",
                 "summarizedResult": "",
                 "pbcLists": [
@@ -3520,17 +2670,17 @@ export const aggregateDraftScenarios = {
                     }
                 ],
                 "currentGeneratedLength": 0,
-                "timestamp": "2025-06-02T02:24:51.448Z"
+                "timestamp": "2025-06-09T05:51:18.521Z"
             },
             {
                 "type": "aggregateDraftDialogDto",
-                "uniqueId": "1748831135040",
+                "uniqueId": "1749448347346",
                 "isShow": true,
                 "draftOptions": [
                     {
-                        "boundedContext": "LibraryBookManagement",
-                        "boundedContextAlias": "도서관리",
-                        "description": "{\"userStories\":[{\"title\":\"도서 등록 및 관리\",\"description\":\"도서관리자는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력하여 새로운 도서를 등록할 수 있고, 등록된 도서의 상태를 관리할 수 있다.\",\"acceptance\":[\"ISBN은 13자리 숫자이며 중복되지 않아야 한다.\",\"카테고리는 소설, 비소설, 학술, 잡지 중에서 선택할 수 있다.\",\"도서 등록 시 상태는 '대출가능'이 된다.\",\"도서 상태는 대출/반납/예약/폐기 등의 이벤트에 따라 자동으로 변경된다.\",\"폐기된 도서는 대출이 불가능하다.\"]},{\"title\":\"도서별 이력 조회\",\"description\":\"도서관리자 또는 회원은 특정 도서의 대출 이력과 상태 변경 이력을 조회하여 도서의 대출 현황과 상태 변화를 파악할 수 있다.\",\"acceptance\":[\"도서별로 대출 이력과 상태 변경 이력을 각각 조회할 수 있다.\",\"이력에는 상태 변경 일시 및 사유가 명시되어야 한다.\"]}],\"entities\":{\"Book\":{\"properties\":[{\"name\":\"bookId\",\"type\":\"Long\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"title\",\"type\":\"String\",\"required\":true},{\"name\":\"isbn\",\"type\":\"String\",\"required\":true},{\"name\":\"author\",\"type\":\"String\",\"required\":true},{\"name\":\"publisher\",\"type\":\"String\",\"required\":true},{\"name\":\"category\",\"type\":\"enum\",\"required\":true,\"values\":[\"소설\",\"비소설\",\"학술\",\"잡지\"]},{\"name\":\"status\",\"type\":\"enum\",\"required\":true,\"values\":[\"대출가능\",\"대출중\",\"예약중\",\"폐기\"]}]},\"BookLoanHistory\":{\"properties\":[{\"name\":\"loanHistoryId\",\"type\":\"Long\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"bookId\",\"type\":\"Long\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"loanDate\",\"type\":\"Date\",\"required\":true},{\"name\":\"returnDate\",\"type\":\"Date\"},{\"name\":\"memberId\",\"type\":\"Long\",\"required\":true}]},\"BookStateHistory\":{\"properties\":[{\"name\":\"stateHistoryId\",\"type\":\"Long\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"bookId\",\"type\":\"Long\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"previousStatus\",\"type\":\"enum\",\"required\":true,\"values\":[\"대출가능\",\"대출중\",\"예약중\",\"폐기\"]},{\"name\":\"newStatus\",\"type\":\"enum\",\"required\":true,\"values\":[\"대출가능\",\"대출중\",\"예약중\",\"폐기\"]},{\"name\":\"changedAt\",\"type\":\"Date\",\"required\":true},{\"name\":\"reason\",\"type\":\"String\"}]}},\"businessRules\":[{\"name\":\"ISBN 유효성 검증\",\"description\":\"ISBN은 13자리 숫자여야 하며, 시스템 내에서 중복될 수 없다.\"},{\"name\":\"도서 상태 자동 전이\",\"description\":\"도서 등록 시 상태는 자동으로 '대출가능'으로 지정되고, 대출/반납/예약/폐기 등 이벤트 발생 시 상태가 자동으로 변경된다.\"},{\"name\":\"폐기 도서 대출 불가\",\"description\":\"폐기 상태의 도서는 어떠한 경우에도 대출 처리될 수 없다.\"}],\"interfaces\":{\"BookManagement\":{\"sections\":[{\"name\":\"도서 등록\",\"type\":\"form\",\"fields\":[{\"name\":\"title\",\"type\":\"text\",\"required\":true},{\"name\":\"isbn\",\"type\":\"text\",\"required\":true},{\"name\":\"author\",\"type\":\"text\",\"required\":true},{\"name\":\"publisher\",\"type\":\"text\",\"required\":true},{\"name\":\"category\",\"type\":\"select\",\"required\":true}],\"actions\":[\"중복확인\",\"도서등록\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}},{\"name\":\"도서 목록 및 상태 관리\",\"type\":\"table\",\"fields\":[],\"actions\":[\"대출처리\",\"반납처리\",\"예약처리\",\"폐기처리\"],\"filters\":[\"카테고리\",\"상태\"],\"resultTable\":{\"columns\":[\"bookId\",\"title\",\"isbn\",\"author\",\"publisher\",\"category\",\"status\"],\"actions\":[\"상세보기\"]}}]},\"BookHistory\":{\"sections\":[{\"name\":\"도서 이력 조회\",\"type\":\"table\",\"fields\":[],\"actions\":[],\"filters\":[\"도서ID\"],\"resultTable\":{\"columns\":[\"loanDate\",\"returnDate\",\"memberId\"],\"actions\":[]}},{\"name\":\"상태 변경 이력 조회\",\"type\":\"table\",\"fields\":[],\"actions\":[],\"filters\":[\"도서ID\"],\"resultTable\":{\"columns\":[\"previousStatus\",\"newStatus\",\"changedAt\",\"reason\"],\"actions\":[]}}]}},\"events\":[{\"name\":\"BookRegistered\",\"description\":\"관리자가 새로운 도서를 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력하여 등록함. ISBN 중복 및 13자리 유효성 검증을 통과함.\",\"displayName\":\"도서 등록됨\"},{\"name\":\"BookStateChanged\",\"description\":\"도서 등록/대출/반납/예약/폐기 등의 트리거에 의해 도서의 상태가 변경됨.\",\"displayName\":\"도서 상태 변경됨\"},{\"name\":\"BookDisposed\",\"description\":\"관리자가 훼손/분실로 인한 도서 폐기를 처리함. 폐기된 도서는 대출 불가 상태가 됨.\",\"displayName\":\"도서 폐기됨\"},{\"name\":\"BookHistoryQueried\",\"description\":\"관리자/회원이 도서별로 대출 및 상태 변경 이력을 조회함.\",\"displayName\":\"도서 이력 조회됨\"}]}",
+                        "boundedContext": "BookManagement",
+                        "boundedContextAlias": "도서 관리",
+                        "description": "{\"userStories\":[{\"title\":\"도서 등록 및 상태 관리\",\"description\":\"도서 관리자로서 새로운 도서를 등록하고, 보유 도서들의 상태(대출가능/대출중/예약중/폐기)를 관리할 수 있다.\",\"acceptance\":[\"도서명, ISBN(13자리), 저자, 출판사, 카테고리 입력이 필수이며, ISBN 중복 검사가 반드시 수행된다.\",\"도서 등록 시 상태는 '대출가능'이 기본값으로 설정된다.\",\"도서 상태는 대출/반납/예약/폐기 처리에 따라 자동으로 변경된다.\",\"폐기된 도서는 더 이상 대출이 불가하다.\"]},{\"title\":\"도서 검색\",\"description\":\"사용자로서 도서명이나 ISBN으로 도서를 검색할 수 있다.\",\"acceptance\":[\"검색어로 도서명 또는 ISBN 입력 시 관련 도서 목록이 출력된다.\"]},{\"title\":\"도서 반납 및 상태 전이\",\"description\":\"도서가 반납되면 해당 도서의 상태가 '대출가능' 또는 '예약중'으로 자동 전환된다.\",\"acceptance\":[\"예약자가 없으면 '대출가능', 예약자가 있으면 '예약중'으로 상태가 자동 변경된다.\"]},{\"title\":\"도서별 이력 조회\",\"description\":\"도서 관리자로서 각 도서별 대출 이력과 상태 변경 이력을 조회할 수 있다.\",\"acceptance\":[\"대출 이력과 상태 변경 이력이 조회 화면에 표시된다.\",\"이력에는 시점, 변경자, 변경 사유 등이 포함된다.\"]}],\"entities\":{\"Book\":{\"properties\":[{\"name\":\"bookId\",\"type\":\"Long\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"title\",\"type\":\"String\",\"required\":true},{\"name\":\"ISBN\",\"type\":\"String\",\"required\":true},{\"name\":\"author\",\"type\":\"String\",\"required\":true},{\"name\":\"publisher\",\"type\":\"String\",\"required\":true},{\"name\":\"category\",\"type\":\"enum\",\"required\":true,\"values\":[\"소설\",\"비소설\",\"학술\",\"잡지\"]},{\"name\":\"status\",\"type\":\"enum\",\"required\":true,\"values\":[\"대출가능\",\"대출중\",\"예약중\",\"폐기\"]}]},\"BookLoanHistory\":{\"properties\":[{\"name\":\"historyId\",\"type\":\"Long\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"bookId\",\"type\":\"Long\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"loanedBy\",\"type\":\"String\",\"required\":true},{\"name\":\"loanDate\",\"type\":\"Date\",\"required\":true},{\"name\":\"returnDate\",\"type\":\"Date\"}]},\"BookStatusHistory\":{\"properties\":[{\"name\":\"statusHistoryId\",\"type\":\"Long\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"bookId\",\"type\":\"Long\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"status\",\"type\":\"enum\",\"required\":true,\"values\":[\"대출가능\",\"대출중\",\"예약중\",\"폐기\"]},{\"name\":\"changedAt\",\"type\":\"Date\",\"required\":true},{\"name\":\"changedBy\",\"type\":\"String\",\"required\":true},{\"name\":\"reason\",\"type\":\"String\"}]}},\"businessRules\":[{\"name\":\"ISBN_Validation\",\"description\":\"ISBN은 반드시 13자리의 숫자여야 하며, 시스템 내에서 유일해야 한다.\"},{\"name\":\"BookStatus_AutoTransition\",\"description\":\"도서는 등록 시 '대출가능' 상태로 시작하며, 대출/반납/예약/폐기 상황에 따라 상태가 자동으로 변경된다.\"},{\"name\":\"BookDiscard_Restriction\",\"description\":\"폐기된 도서는 더 이상 대출이 불가하다.\"},{\"name\":\"ReturnStatusTransition\",\"description\":\"도서 반납 시 예약자가 없으면 '대출가능', 예약자가 있으면 '예약중' 상태로 자동 변경된다.\"}],\"interfaces\":{\"BookManagement\":{\"sections\":[{\"name\":\"도서 등록\",\"type\":\"form\",\"fields\":[{\"name\":\"title\",\"type\":\"text\",\"required\":true},{\"name\":\"ISBN\",\"type\":\"text\",\"required\":true},{\"name\":\"author\",\"type\":\"text\",\"required\":true},{\"name\":\"publisher\",\"type\":\"text\",\"required\":true},{\"name\":\"category\",\"type\":\"select\",\"required\":true}],\"actions\":[\"등록\",\"중복확인\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}},{\"name\":\"도서 목록\",\"type\":\"table\",\"fields\":[],\"actions\":[\"상세보기\",\"폐기처리\"],\"filters\":[\"title\",\"ISBN\",\"category\",\"status\"],\"resultTable\":{\"columns\":[\"bookId\",\"title\",\"ISBN\",\"author\",\"publisher\",\"category\",\"status\"],\"actions\":[\"상세보기\",\"폐기처리\"]}}]},\"BookDetail\":{\"sections\":[{\"name\":\"대출 이력\",\"type\":\"table\",\"fields\":[],\"actions\":[],\"filters\":[],\"resultTable\":{\"columns\":[\"loanedBy\",\"loanDate\",\"returnDate\"],\"actions\":[]}},{\"name\":\"상태 변경 이력\",\"type\":\"table\",\"fields\":[],\"actions\":[],\"filters\":[],\"resultTable\":{\"columns\":[\"status\",\"changedAt\",\"changedBy\",\"reason\"],\"actions\":[]}}]}},\"events\":[{\"name\":\"BookRegistered\",\"description\":\"도서 관리자가 새로운 도서를 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력하여 도서를 등록함. 등록된 도서는 '대출가능' 상태가 됨.\",\"displayName\":\"도서가 등록됨\"},{\"name\":\"BookRegistrationFailed\",\"description\":\"도서 등록 시 ISBN이 13자리가 아니거나 중복된 경우 등록이 거부됨.\",\"displayName\":\"도서 등록 실패됨\"},{\"name\":\"BookDiscarded\",\"description\":\"도서가 훼손되거나 분실된 경우 도서 관리자가 해당 도서를 폐기 처리함. 폐기된 도서는 더 이상 대출이 불가함.\",\"displayName\":\"도서가 폐기됨\"},{\"name\":\"BookSearched\",\"description\":\"회원이 도서명이나 ISBN으로 도서를 검색함.\",\"displayName\":\"도서가 검색됨\"},{\"name\":\"BookLoanHistoryViewed\",\"description\":\"도서 관리자가 특정 도서의 대출 이력을 조회함.\",\"displayName\":\"도서의 대출 이력이 조회됨\"},{\"name\":\"BookStatusHistoryViewed\",\"description\":\"도서 관리자가 특정 도서의 상태 변경 이력을 조회함.\",\"displayName\":\"도서의 상태 변경 이력이 조회됨\"}],\"contextRelations\":[{\"name\":\"BookManagementToBookLoanProcess\",\"type\":\"Pub/Sub\",\"direction\":\"sends to\",\"targetContext\":\"BookLoanProcess\",\"reason\":\"도서의 상태 변화, 신규 등록, 폐기 등 이벤트가 발생하면 이를 대출/예약/연체 프로세스에 전달해야 하며, 두 컨텍스트가 느슨하게 결합되고 데이터 소유권이 명확히 분리됨.\",\"interactionPattern\":\"도서 상태 변경, 신규 등록, 폐기 등 이벤트를 Pub/Sub로 발행하며 대출 프로세스에서 구독하여 반영함. 예: 도서가 폐기되면 대출 프로세스에서 대출 거부 처리.\"}]}",
                         "options": [
                             {
                                 "structure": [
@@ -3551,48 +2701,44 @@ export const aggregateDraftScenarios = {
                                         ],
                                         "valueObjects": [
                                             {
-                                                "name": "LoanReference",
-                                                "alias": "대출 참조",
+                                                "name": "BookLoanHistoryInfo",
+                                                "alias": "도서 대출 이력 정보",
                                                 "referencedAggregate": {
                                                     "name": "Loan",
                                                     "alias": "대출"
                                                 }
                                             },
                                             {
-                                                "name": "ReservationReference",
-                                                "alias": "예약 참조",
-                                                "referencedAggregate": {
-                                                    "name": "Reservation",
-                                                    "alias": "예약"
-                                                }
+                                                "name": "BookStatusHistoryInfo",
+                                                "alias": "도서 상태 변경 이력 정보"
                                             }
                                         ]
                                     }
                                 ],
                                 "pros": {
-                                    "cohesion": "도서 정보와 상태, 외부 참조(대출/예약)가 한 Aggregate에 집중되어 있어 단일 책임 원칙을 잘 지킴.",
-                                    "coupling": "이력 관리가 Book 내부에서 처리되어 다른 Aggregate와의 상호작용이 필요 없어 의존성이 낮음.",
-                                    "consistency": "도서 상태 변경 및 이력 기록을 하나의 트랜잭션으로 처리하여 도메인 불변식과 원자성을 강하게 보장함.",
-                                    "encapsulation": "비즈니스 규칙(예: ISBN 검증, 폐기 도서 대출 불가 등)을 Book 내부에서 완전하게 감춤.",
-                                    "complexity": "모든 도서 관련 기능이 하나의 Aggregate에 모여 있어 구조가 단순하고 이해하기 쉬움.",
-                                    "independence": "Book의 구조가 다른 컨텍스트(Aggregate)에 거의 영향받지 않으므로 독립적으로 진화 가능.",
-                                    "performance": "도서 및 이력 조회가 단일 Aggregate 내에서 일어나 I/O 오버헤드가 적고, 실시간 상태 변경에 유리함."
+                                    "cohesion": "도서의 핵심 정보와 이력 데이터, 상태 전이를 한 Aggregate 내에서 일관성 있게 관리하여 비즈니스 규칙을 강하게 보장한다.",
+                                    "coupling": "도서 관련 작업이 한 Aggregate 내에서 해결되므로 외부 참조와 Aggregate 간 결합이 최소화된다.",
+                                    "consistency": "ISBN 유일성, 상태 전이 등 도서 중심의 모든 비즈니스 불변성이 단일 트랜잭션에서 강하게 보장된다.",
+                                    "encapsulation": "도서의 등록, 폐기, 상태 전이, 이력 관리까지 내부에서 처리되어 외부에 복잡성을 노출하지 않는다.",
+                                    "complexity": "이력까지 모두 한 곳에서 관리되어 구현 및 유지보수가 직관적이다.",
+                                    "independence": "Book Aggregate만으로 도서 업무의 대부분이 독립적으로 처리된다.",
+                                    "performance": "도서와 연관된 이력/상태 조회가 단일 Aggregate 조회로 효율적이다."
                                 },
                                 "cons": {
-                                    "cohesion": "상태 변경/대출 이력 데이터가 쌓이면 Book의 크기가 커지고, Aggregate가 비대해질 수 있음.",
-                                    "coupling": "장기적으로 이력 테이블이 방대해질 경우 도서 데이터와 이력 데이터가 불필요하게 결합됨.",
-                                    "consistency": "고빈도 이력 변경 시 하나의 트랜잭션 범위가 커져 동시성 문제나 확장성 저하 우려.",
-                                    "encapsulation": "이력 처리 로직이 Book 내에 내포되어 있어, 이력 정책이 변경되면 도서 비즈니스 로직과 혼재될 수 있음.",
-                                    "complexity": "이력 데이터와 도서 데이터 동시 관리로 인해 일부 도메인 규칙이 복잡해질 수 있음.",
-                                    "independence": "Book 변경이 많아질수록, 이력 관련 기능을 분리·진화하기 어려움.",
-                                    "performance": "도서별 이력 데이터가 많아질수록 Book Aggregate 조회 성능이 저하될 수 있음."
+                                    "cohesion": "이력 데이터가 계속 누적되면 Aggregate가 비대해져 단일 책임 원칙이 약화될 수 있다.",
+                                    "coupling": "이력 데이터의 구조 변경이 Book 전체에 영향을 줄 수 있어 변화에 취약해진다.",
+                                    "consistency": "대량 이력 데이터로 인한 트랜잭션 부하 및 충돌 가능성이 증가한다.",
+                                    "encapsulation": "외부 시스템에서 이력 정보만 분리 활용 시 도서 전체 구조를 알아야 한다.",
+                                    "complexity": "이력 데이터, 상태 등 다양한 관심사가 한 객체에 집중되어 복잡도가 누적된다.",
+                                    "independence": "이력 처리, 조회만 확장하려면 Book 전체 구조를 함께 고려해야 한다.",
+                                    "performance": "이력 데이터 증가 시 단일 Aggregate 조회/저장 성능 저하 우려가 있다."
                                 },
                                 "isAIRecommended": false,
                                 "boundedContext": {
-                                    "name": "LibraryBookManagement",
-                                    "alias": "도서관리",
-                                    "displayName": "도서관리",
-                                    "description": "# Requirements\n\n## userStory\n\n'도서 관리' 화면에서는 새로운 도서를 등록하고 현재 보유한 도서들의 상태를 관리할 수 있어야 해. 도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해. 등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야 해.\n\n## userStory\n\n각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해.\n\n## Event\n\n{\"name\":\"BookRegistered\",\"displayName\":\"도서 등록됨\",\"actor\":\"도서관리자\",\"level\":1,\"description\":\"관리자가 새로운 도서를 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력하여 등록함. ISBN 중복 및 13자리 유효성 검증을 통과함.\",\"inputs\":[\"도서명\",\"ISBN\",\"저자\",\"출판사\",\"카테고리 (소설/비소설/학술/잡지)\",\"ISBN 중복 없음\",\"ISBN 13자리\"],\"outputs\":[\"도서 엔티티 생성\",\"도서 상태: 대출가능\"],\"nextEvents\":[\"BookStateChanged\"]}\n\n## Event\n\n{\"name\":\"BookStateChanged\",\"displayName\":\"도서 상태 변경됨\",\"actor\":\"도서관리시스템\",\"level\":2,\"description\":\"도서 등록/대출/반납/예약/폐기 등의 트리거에 의해 도서의 상태가 변경됨.\",\"inputs\":[\"도서 이벤트 트리거\",\"이전 도서 상태\"],\"outputs\":[\"도서 상태: 대출가능/대출중/예약중/폐기\"],\"nextEvents\":[\"BookDisposed\",\"LoanRequested\",\"LoanReturned\",\"BookReserved\"]}\n\n## Event\n\n{\"name\":\"BookDisposed\",\"displayName\":\"도서 폐기됨\",\"actor\":\"도서관리자\",\"level\":3,\"description\":\"관리자가 훼손/분실로 인한 도서 폐기를 처리함. 폐기된 도서는 대출 불가 상태가 됨.\",\"inputs\":[\"도서 식별\",\"훼손/분실 사유\"],\"outputs\":[\"도서 상태: 폐기\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookHistoryQueried\",\"displayName\":\"도서 이력 조회됨\",\"actor\":\"도서관리자\",\"level\":11,\"description\":\"관리자/회원이 도서별로 대출 및 상태 변경 이력을 조회함.\",\"inputs\":[\"도서 식별자\"],\"outputs\":[\"도서 대출 이력 목록\",\"도서 상태 변경 이력 목록\"],\"nextEvents\":[]}",
+                                    "name": "BookManagement",
+                                    "alias": "도서 관리",
+                                    "displayName": "도서 관리",
+                                    "description": "# Requirements\n\n## userStory\n\n'도서 관리' 화면에서는 새로운 도서를 등록하고 현재 보유한 도서들의 상태를 관리할 수 있어야 해. 도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해. 등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야 해.\n\n## userStory\n\n도서는 도서명이나 ISBN으로 검색할 수 있어야 해.\n\n## userStory\n\n도서가 반납되면 자동으로 해당 도서의 상태가 '대출가능'으로 변경되어야 해. 만약 예약자가 있는 도서가 반납되면, 해당 도서는 '예약중' 상태로 변경되어야 해.\n\n## userStory\n\n각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해.\n\n## Event\n\n{\"name\":\"BookRegistered\",\"displayName\":\"도서가 등록됨\",\"actor\":\"도서 관리자\",\"level\":1,\"description\":\"도서 관리자가 새로운 도서를 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력하여 도서를 등록함. 등록된 도서는 '대출가능' 상태가 됨.\",\"inputs\":[\"도서명\",\"ISBN(13자리)\",\"저자\",\"출판사\",\"카테고리\",\"ISBN 중복 아님\"],\"outputs\":[\"신규 도서 데이터\",\"'대출가능' 상태\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookRegistrationFailed\",\"displayName\":\"도서 등록 실패됨\",\"actor\":\"도서 관리자\",\"level\":2,\"description\":\"도서 등록 시 ISBN이 13자리가 아니거나 중복된 경우 등록이 거부됨.\",\"inputs\":[\"ISBN(중복 또는 13자리 아님)\"],\"outputs\":[\"에러 메시지\",\"등록 거부\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookDiscarded\",\"displayName\":\"도서가 폐기됨\",\"actor\":\"도서 관리자\",\"level\":3,\"description\":\"도서가 훼손되거나 분실된 경우 도서 관리자가 해당 도서를 폐기 처리함. 폐기된 도서는 더 이상 대출이 불가함.\",\"inputs\":[\"도서 식별자\",\"폐기 사유\"],\"outputs\":[\"도서 상태 '폐기'로 변경\",\"대출 불가\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookSearched\",\"displayName\":\"도서가 검색됨\",\"actor\":\"회원\",\"level\":4,\"description\":\"회원이 도서명이나 ISBN으로 도서를 검색함.\",\"inputs\":[\"검색어(도서명 또는 ISBN)\"],\"outputs\":[\"검색 결과 도서 목록\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookLoanHistoryViewed\",\"displayName\":\"도서의 대출 이력이 조회됨\",\"actor\":\"도서 관리자\",\"level\":15,\"description\":\"도서 관리자가 특정 도서의 대출 이력을 조회함.\",\"inputs\":[\"도서 식별자\"],\"outputs\":[\"대출 이력 목록\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookStatusHistoryViewed\",\"displayName\":\"도서의 상태 변경 이력이 조회됨\",\"actor\":\"도서 관리자\",\"level\":16,\"description\":\"도서 관리자가 특정 도서의 상태 변경 이력을 조회함.\",\"inputs\":[\"도서 식별자\"],\"outputs\":[\"상태 변경 이력 목록\"],\"nextEvents\":[]}\n\n\n## Context Relations\n\n### BookManagementToBookLoanProcess\n- **Type**: Pub/Sub\n- **Direction**: sends to 도서 대출 프로세스 (BookLoanProcess)\n- **Reason**: 도서의 상태 변화, 신규 등록, 폐기 등 이벤트가 발생하면 이를 대출/예약/연체 프로세스에 전달해야 하며, 두 컨텍스트가 느슨하게 결합되고 데이터 소유권이 명확히 분리됨.\n- **Interaction Pattern**: 도서 상태 변경, 신규 등록, 폐기 등 이벤트를 Pub/Sub로 발행하며 대출 프로세스에서 구독하여 반영함. 예: 도서가 폐기되면 대출 프로세스에서 대출 거부 처리.",
                                     "aggregates": [
                                         {
                                             "name": "Book",
@@ -3600,7 +2746,7 @@ export const aggregateDraftScenarios = {
                                         }
                                     ]
                                 },
-                                "description": "{\"userStories\":[{\"title\":\"도서 등록 및 관리\",\"description\":\"도서관리자는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력하여 새로운 도서를 등록할 수 있고, 등록된 도서의 상태를 관리할 수 있다.\",\"acceptance\":[\"ISBN은 13자리 숫자이며 중복되지 않아야 한다.\",\"카테고리는 소설, 비소설, 학술, 잡지 중에서 선택할 수 있다.\",\"도서 등록 시 상태는 '대출가능'이 된다.\",\"도서 상태는 대출/반납/예약/폐기 등의 이벤트에 따라 자동으로 변경된다.\",\"폐기된 도서는 대출이 불가능하다.\"]},{\"title\":\"도서별 이력 조회\",\"description\":\"도서관리자 또는 회원은 특정 도서의 대출 이력과 상태 변경 이력을 조회하여 도서의 대출 현황과 상태 변화를 파악할 수 있다.\",\"acceptance\":[\"도서별로 대출 이력과 상태 변경 이력을 각각 조회할 수 있다.\",\"이력에는 상태 변경 일시 및 사유가 명시되어야 한다.\"]}],\"entities\":{\"Book\":{\"properties\":[{\"name\":\"bookId\",\"type\":\"Long\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"title\",\"type\":\"String\",\"required\":true},{\"name\":\"isbn\",\"type\":\"String\",\"required\":true},{\"name\":\"author\",\"type\":\"String\",\"required\":true},{\"name\":\"publisher\",\"type\":\"String\",\"required\":true},{\"name\":\"category\",\"type\":\"enum\",\"required\":true,\"values\":[\"소설\",\"비소설\",\"학술\",\"잡지\"]},{\"name\":\"status\",\"type\":\"enum\",\"required\":true,\"values\":[\"대출가능\",\"대출중\",\"예약중\",\"폐기\"]}]},\"BookLoanHistory\":{\"properties\":[{\"name\":\"loanHistoryId\",\"type\":\"Long\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"bookId\",\"type\":\"Long\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"loanDate\",\"type\":\"Date\",\"required\":true},{\"name\":\"returnDate\",\"type\":\"Date\"},{\"name\":\"memberId\",\"type\":\"Long\",\"required\":true}]},\"BookStateHistory\":{\"properties\":[{\"name\":\"stateHistoryId\",\"type\":\"Long\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"bookId\",\"type\":\"Long\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"previousStatus\",\"type\":\"enum\",\"required\":true,\"values\":[\"대출가능\",\"대출중\",\"예약중\",\"폐기\"]},{\"name\":\"newStatus\",\"type\":\"enum\",\"required\":true,\"values\":[\"대출가능\",\"대출중\",\"예약중\",\"폐기\"]},{\"name\":\"changedAt\",\"type\":\"Date\",\"required\":true},{\"name\":\"reason\",\"type\":\"String\"}]}},\"businessRules\":[{\"name\":\"ISBN 유효성 검증\",\"description\":\"ISBN은 13자리 숫자여야 하며, 시스템 내에서 중복될 수 없다.\"},{\"name\":\"도서 상태 자동 전이\",\"description\":\"도서 등록 시 상태는 자동으로 '대출가능'으로 지정되고, 대출/반납/예약/폐기 등 이벤트 발생 시 상태가 자동으로 변경된다.\"},{\"name\":\"폐기 도서 대출 불가\",\"description\":\"폐기 상태의 도서는 어떠한 경우에도 대출 처리될 수 없다.\"}],\"interfaces\":{\"BookManagement\":{\"sections\":[{\"name\":\"도서 등록\",\"type\":\"form\",\"fields\":[{\"name\":\"title\",\"type\":\"text\",\"required\":true},{\"name\":\"isbn\",\"type\":\"text\",\"required\":true},{\"name\":\"author\",\"type\":\"text\",\"required\":true},{\"name\":\"publisher\",\"type\":\"text\",\"required\":true},{\"name\":\"category\",\"type\":\"select\",\"required\":true}],\"actions\":[\"중복확인\",\"도서등록\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}},{\"name\":\"도서 목록 및 상태 관리\",\"type\":\"table\",\"fields\":[],\"actions\":[\"대출처리\",\"반납처리\",\"예약처리\",\"폐기처리\"],\"filters\":[\"카테고리\",\"상태\"],\"resultTable\":{\"columns\":[\"bookId\",\"title\",\"isbn\",\"author\",\"publisher\",\"category\",\"status\"],\"actions\":[\"상세보기\"]}}]},\"BookHistory\":{\"sections\":[{\"name\":\"도서 이력 조회\",\"type\":\"table\",\"fields\":[],\"actions\":[],\"filters\":[\"도서ID\"],\"resultTable\":{\"columns\":[\"loanDate\",\"returnDate\",\"memberId\"],\"actions\":[]}},{\"name\":\"상태 변경 이력 조회\",\"type\":\"table\",\"fields\":[],\"actions\":[],\"filters\":[\"도서ID\"],\"resultTable\":{\"columns\":[\"previousStatus\",\"newStatus\",\"changedAt\",\"reason\"],\"actions\":[]}}]}},\"events\":[{\"name\":\"BookRegistered\",\"description\":\"관리자가 새로운 도서를 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력하여 등록함. ISBN 중복 및 13자리 유효성 검증을 통과함.\",\"displayName\":\"도서 등록됨\"},{\"name\":\"BookStateChanged\",\"description\":\"도서 등록/대출/반납/예약/폐기 등의 트리거에 의해 도서의 상태가 변경됨.\",\"displayName\":\"도서 상태 변경됨\"},{\"name\":\"BookDisposed\",\"description\":\"관리자가 훼손/분실로 인한 도서 폐기를 처리함. 폐기된 도서는 대출 불가 상태가 됨.\",\"displayName\":\"도서 폐기됨\"},{\"name\":\"BookHistoryQueried\",\"description\":\"관리자/회원이 도서별로 대출 및 상태 변경 이력을 조회함.\",\"displayName\":\"도서 이력 조회됨\"}]}"
+                                "description": "{\"userStories\":[{\"title\":\"도서 등록 및 상태 관리\",\"description\":\"도서 관리자로서 새로운 도서를 등록하고, 보유 도서들의 상태(대출가능/대출중/예약중/폐기)를 관리할 수 있다.\",\"acceptance\":[\"도서명, ISBN(13자리), 저자, 출판사, 카테고리 입력이 필수이며, ISBN 중복 검사가 반드시 수행된다.\",\"도서 등록 시 상태는 '대출가능'이 기본값으로 설정된다.\",\"도서 상태는 대출/반납/예약/폐기 처리에 따라 자동으로 변경된다.\",\"폐기된 도서는 더 이상 대출이 불가하다.\"]},{\"title\":\"도서 검색\",\"description\":\"사용자로서 도서명이나 ISBN으로 도서를 검색할 수 있다.\",\"acceptance\":[\"검색어로 도서명 또는 ISBN 입력 시 관련 도서 목록이 출력된다.\"]},{\"title\":\"도서 반납 및 상태 전이\",\"description\":\"도서가 반납되면 해당 도서의 상태가 '대출가능' 또는 '예약중'으로 자동 전환된다.\",\"acceptance\":[\"예약자가 없으면 '대출가능', 예약자가 있으면 '예약중'으로 상태가 자동 변경된다.\"]},{\"title\":\"도서별 이력 조회\",\"description\":\"도서 관리자로서 각 도서별 대출 이력과 상태 변경 이력을 조회할 수 있다.\",\"acceptance\":[\"대출 이력과 상태 변경 이력이 조회 화면에 표시된다.\",\"이력에는 시점, 변경자, 변경 사유 등이 포함된다.\"]}],\"entities\":{\"Book\":{\"properties\":[{\"name\":\"bookId\",\"type\":\"Long\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"title\",\"type\":\"String\",\"required\":true},{\"name\":\"ISBN\",\"type\":\"String\",\"required\":true},{\"name\":\"author\",\"type\":\"String\",\"required\":true},{\"name\":\"publisher\",\"type\":\"String\",\"required\":true},{\"name\":\"category\",\"type\":\"enum\",\"required\":true,\"values\":[\"소설\",\"비소설\",\"학술\",\"잡지\"]},{\"name\":\"status\",\"type\":\"enum\",\"required\":true,\"values\":[\"대출가능\",\"대출중\",\"예약중\",\"폐기\"]}]},\"BookLoanHistory\":{\"properties\":[{\"name\":\"historyId\",\"type\":\"Long\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"bookId\",\"type\":\"Long\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"loanedBy\",\"type\":\"String\",\"required\":true},{\"name\":\"loanDate\",\"type\":\"Date\",\"required\":true},{\"name\":\"returnDate\",\"type\":\"Date\"}]},\"BookStatusHistory\":{\"properties\":[{\"name\":\"statusHistoryId\",\"type\":\"Long\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"bookId\",\"type\":\"Long\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"status\",\"type\":\"enum\",\"required\":true,\"values\":[\"대출가능\",\"대출중\",\"예약중\",\"폐기\"]},{\"name\":\"changedAt\",\"type\":\"Date\",\"required\":true},{\"name\":\"changedBy\",\"type\":\"String\",\"required\":true},{\"name\":\"reason\",\"type\":\"String\"}]}},\"businessRules\":[{\"name\":\"ISBN_Validation\",\"description\":\"ISBN은 반드시 13자리의 숫자여야 하며, 시스템 내에서 유일해야 한다.\"},{\"name\":\"BookStatus_AutoTransition\",\"description\":\"도서는 등록 시 '대출가능' 상태로 시작하며, 대출/반납/예약/폐기 상황에 따라 상태가 자동으로 변경된다.\"},{\"name\":\"BookDiscard_Restriction\",\"description\":\"폐기된 도서는 더 이상 대출이 불가하다.\"},{\"name\":\"ReturnStatusTransition\",\"description\":\"도서 반납 시 예약자가 없으면 '대출가능', 예약자가 있으면 '예약중' 상태로 자동 변경된다.\"}],\"interfaces\":{\"BookManagement\":{\"sections\":[{\"name\":\"도서 등록\",\"type\":\"form\",\"fields\":[{\"name\":\"title\",\"type\":\"text\",\"required\":true},{\"name\":\"ISBN\",\"type\":\"text\",\"required\":true},{\"name\":\"author\",\"type\":\"text\",\"required\":true},{\"name\":\"publisher\",\"type\":\"text\",\"required\":true},{\"name\":\"category\",\"type\":\"select\",\"required\":true}],\"actions\":[\"등록\",\"중복확인\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}},{\"name\":\"도서 목록\",\"type\":\"table\",\"fields\":[],\"actions\":[\"상세보기\",\"폐기처리\"],\"filters\":[\"title\",\"ISBN\",\"category\",\"status\"],\"resultTable\":{\"columns\":[\"bookId\",\"title\",\"ISBN\",\"author\",\"publisher\",\"category\",\"status\"],\"actions\":[\"상세보기\",\"폐기처리\"]}}]},\"BookDetail\":{\"sections\":[{\"name\":\"대출 이력\",\"type\":\"table\",\"fields\":[],\"actions\":[],\"filters\":[],\"resultTable\":{\"columns\":[\"loanedBy\",\"loanDate\",\"returnDate\"],\"actions\":[]}},{\"name\":\"상태 변경 이력\",\"type\":\"table\",\"fields\":[],\"actions\":[],\"filters\":[],\"resultTable\":{\"columns\":[\"status\",\"changedAt\",\"changedBy\",\"reason\"],\"actions\":[]}}]}},\"events\":[{\"name\":\"BookRegistered\",\"description\":\"도서 관리자가 새로운 도서를 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력하여 도서를 등록함. 등록된 도서는 '대출가능' 상태가 됨.\",\"displayName\":\"도서가 등록됨\"},{\"name\":\"BookRegistrationFailed\",\"description\":\"도서 등록 시 ISBN이 13자리가 아니거나 중복된 경우 등록이 거부됨.\",\"displayName\":\"도서 등록 실패됨\"},{\"name\":\"BookDiscarded\",\"description\":\"도서가 훼손되거나 분실된 경우 도서 관리자가 해당 도서를 폐기 처리함. 폐기된 도서는 더 이상 대출이 불가함.\",\"displayName\":\"도서가 폐기됨\"},{\"name\":\"BookSearched\",\"description\":\"회원이 도서명이나 ISBN으로 도서를 검색함.\",\"displayName\":\"도서가 검색됨\"},{\"name\":\"BookLoanHistoryViewed\",\"description\":\"도서 관리자가 특정 도서의 대출 이력을 조회함.\",\"displayName\":\"도서의 대출 이력이 조회됨\"},{\"name\":\"BookStatusHistoryViewed\",\"description\":\"도서 관리자가 특정 도서의 상태 변경 이력을 조회함.\",\"displayName\":\"도서의 상태 변경 이력이 조회됨\"}],\"contextRelations\":[{\"name\":\"BookManagementToBookLoanProcess\",\"type\":\"Pub/Sub\",\"direction\":\"sends to\",\"targetContext\":\"BookLoanProcess\",\"reason\":\"도서의 상태 변화, 신규 등록, 폐기 등 이벤트가 발생하면 이를 대출/예약/연체 프로세스에 전달해야 하며, 두 컨텍스트가 느슨하게 결합되고 데이터 소유권이 명확히 분리됨.\",\"interactionPattern\":\"도서 상태 변경, 신규 등록, 폐기 등 이벤트를 Pub/Sub로 발행하며 대출 프로세스에서 구독하여 반영함. 예: 도서가 폐기되면 대출 프로세스에서 대출 거부 처리.\"}]}"
                             },
                             {
                                 "structure": [
@@ -3619,7 +2765,23 @@ export const aggregateDraftScenarios = {
                                                 "alias": "도서 상태"
                                             }
                                         ],
+                                        "valueObjects": []
+                                    },
+                                    {
+                                        "aggregate": {
+                                            "name": "BookLoanHistory",
+                                            "alias": "도서 대출 이력"
+                                        },
+                                        "enumerations": [],
                                         "valueObjects": [
+                                            {
+                                                "name": "BookReference",
+                                                "alias": "도서 참조",
+                                                "referencedAggregate": {
+                                                    "name": "Book",
+                                                    "alias": "도서"
+                                                }
+                                            },
                                             {
                                                 "name": "LoanReference",
                                                 "alias": "대출 참조",
@@ -3627,23 +2789,20 @@ export const aggregateDraftScenarios = {
                                                     "name": "Loan",
                                                     "alias": "대출"
                                                 }
-                                            },
-                                            {
-                                                "name": "ReservationReference",
-                                                "alias": "예약 참조",
-                                                "referencedAggregate": {
-                                                    "name": "Reservation",
-                                                    "alias": "예약"
-                                                }
                                             }
                                         ]
                                     },
                                     {
                                         "aggregate": {
-                                            "name": "BookHistory",
-                                            "alias": "도서 이력"
+                                            "name": "BookStatusHistory",
+                                            "alias": "도서 상태 변경 이력"
                                         },
-                                        "enumerations": [],
+                                        "enumerations": [
+                                            {
+                                                "name": "BookStatus",
+                                                "alias": "도서 상태"
+                                            }
+                                        ],
                                         "valueObjects": [
                                             {
                                                 "name": "BookReference",
@@ -3657,29 +2816,29 @@ export const aggregateDraftScenarios = {
                                     }
                                 ],
                                 "pros": {
-                                    "cohesion": "도서와 이력 기능이 분리되어 각각 핵심 역할에 집중할 수 있음.",
-                                    "coupling": "도서와 이력 간의 의존성이 ValueObject(참조) 수준으로 낮아집니다.",
-                                    "consistency": "도서 트랜잭션과 이력 기록이 분리되어, 대용량 이력에도 안정적으로 대응 가능.",
-                                    "encapsulation": "이력 관련 정책이나 확장(예: 다양한 이력 종류 추가)이 Book과 분리되어 독립적으로 변경 가능.",
-                                    "complexity": "이력 관리 로직이 별도 Aggregate에 있어 도서 관리가 단순해지고, 이해하기 쉬움.",
-                                    "independence": "이력 저장방식이나 보존정책 변경 시 도서 Aggregate에 영향 없음.",
-                                    "performance": "도서 데이터와 이력 데이터를 분리 저장 및 조회할 수 있어 대량 이력에도 성능 저하가 없음."
+                                    "cohesion": "도서, 대출 이력, 상태 이력을 각 도메인별로 Aggregate로 분리하여 각 업무가 명확하게 관리된다.",
+                                    "coupling": "이력/상태 이력의 변경이 Book Aggregate에 직접 영향을 미치지 않으므로 결합도가 낮다.",
+                                    "consistency": "각 Aggregate의 트랜잭션 범위가 작아져 대용량 이력 처리 및 확장에 유리하다.",
+                                    "encapsulation": "이력 또는 상태 변경 내역만 별도로 관리하거나 확장할 때 도서 로직과 분리해 작업할 수 있다.",
+                                    "complexity": "각 Aggregate의 책임과 구현 범위가 명확해 개발/운영 난이도가 낮다.",
+                                    "independence": "이력 관리 시스템 혹은 통계 처리 등 별도 서비스로의 확장성이 높다.",
+                                    "performance": "도서 이력, 상태 이력 쿼리가 분리돼 대량 데이터에도 효율적이다."
                                 },
                                 "cons": {
-                                    "cohesion": "상태 변경과 이력 기록이 분산되어 있어 단일 도서 관리 흐름이 단순하지 않을 수 있음.",
-                                    "coupling": "이력 기록 시 도서의 참조를 유지해야 하므로 약간의 간접적인 결합이 존재함.",
-                                    "consistency": "상태 변경과 이력 기록이 각각 별도의 트랜잭션에서 발생할 수 있어, 일시적으로 불일치 상태가 발생 가능.",
-                                    "encapsulation": "도서 상태 변경이 이력과 분리되어 이력 누락/오류를 방지하는 추가적 방어 코드가 필요함.",
-                                    "complexity": "이력 데이터 연동, 조회 시 cross-aggregate 처리 로직(조인 등)이 추가됨.",
-                                    "independence": "도서 삭제 등 라이프사이클 정책이 이력 데이터와 동기화되어야 하므로 관리 포인트가 증가함.",
-                                    "performance": "도서와 이력을 함께 조회할 경우 두 Aggregate를 동시에 접근해야 하므로 I/O가 증가함."
+                                    "cohesion": "도서 상태 전이/등록/폐기와 이력 반영이 Aggregate 간에 분산되어 흐름 파악이 어렵다.",
+                                    "coupling": "이력 추가 시 도서 참조 등 연계 작업이 필요하여 간접적인 결합이 존재한다.",
+                                    "consistency": "상태 변경/이력 기록의 원자성을 보장하려면 추가적인 트랜잭션 관리가 필요하다.",
+                                    "encapsulation": "상태 전이와 이력 동기화 로직이 외부(Application Service)로 분리될 수 있다.",
+                                    "complexity": "여러 Aggregate를 함께 다루는 오케스트레이션 및 이벤트 관리가 필요하다.",
+                                    "independence": "상태 전이와 이력의 동기화를 위해 각 Aggregate 간 인터페이스 계약이 명확해야 한다.",
+                                    "performance": "도서 상세정보와 이력정보 동시 조회 시 여러 Aggregate 접근으로 복수 쿼리가 필요하다."
                                 },
                                 "isAIRecommended": true,
                                 "boundedContext": {
-                                    "name": "LibraryBookManagement",
-                                    "alias": "도서관리",
-                                    "displayName": "도서관리",
-                                    "description": "# Requirements\n\n## userStory\n\n'도서 관리' 화면에서는 새로운 도서를 등록하고 현재 보유한 도서들의 상태를 관리할 수 있어야 해. 도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해. 등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야 해.\n\n## userStory\n\n각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해.\n\n## Event\n\n{\"name\":\"BookRegistered\",\"displayName\":\"도서 등록됨\",\"actor\":\"도서관리자\",\"level\":1,\"description\":\"관리자가 새로운 도서를 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력하여 등록함. ISBN 중복 및 13자리 유효성 검증을 통과함.\",\"inputs\":[\"도서명\",\"ISBN\",\"저자\",\"출판사\",\"카테고리 (소설/비소설/학술/잡지)\",\"ISBN 중복 없음\",\"ISBN 13자리\"],\"outputs\":[\"도서 엔티티 생성\",\"도서 상태: 대출가능\"],\"nextEvents\":[\"BookStateChanged\"]}\n\n## Event\n\n{\"name\":\"BookStateChanged\",\"displayName\":\"도서 상태 변경됨\",\"actor\":\"도서관리시스템\",\"level\":2,\"description\":\"도서 등록/대출/반납/예약/폐기 등의 트리거에 의해 도서의 상태가 변경됨.\",\"inputs\":[\"도서 이벤트 트리거\",\"이전 도서 상태\"],\"outputs\":[\"도서 상태: 대출가능/대출중/예약중/폐기\"],\"nextEvents\":[\"BookDisposed\",\"LoanRequested\",\"LoanReturned\",\"BookReserved\"]}\n\n## Event\n\n{\"name\":\"BookDisposed\",\"displayName\":\"도서 폐기됨\",\"actor\":\"도서관리자\",\"level\":3,\"description\":\"관리자가 훼손/분실로 인한 도서 폐기를 처리함. 폐기된 도서는 대출 불가 상태가 됨.\",\"inputs\":[\"도서 식별\",\"훼손/분실 사유\"],\"outputs\":[\"도서 상태: 폐기\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookHistoryQueried\",\"displayName\":\"도서 이력 조회됨\",\"actor\":\"도서관리자\",\"level\":11,\"description\":\"관리자/회원이 도서별로 대출 및 상태 변경 이력을 조회함.\",\"inputs\":[\"도서 식별자\"],\"outputs\":[\"도서 대출 이력 목록\",\"도서 상태 변경 이력 목록\"],\"nextEvents\":[]}",
+                                    "name": "BookManagement",
+                                    "alias": "도서 관리",
+                                    "displayName": "도서 관리",
+                                    "description": "# Requirements\n\n## userStory\n\n'도서 관리' 화면에서는 새로운 도서를 등록하고 현재 보유한 도서들의 상태를 관리할 수 있어야 해. 도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해. 등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야 해.\n\n## userStory\n\n도서는 도서명이나 ISBN으로 검색할 수 있어야 해.\n\n## userStory\n\n도서가 반납되면 자동으로 해당 도서의 상태가 '대출가능'으로 변경되어야 해. 만약 예약자가 있는 도서가 반납되면, 해당 도서는 '예약중' 상태로 변경되어야 해.\n\n## userStory\n\n각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해.\n\n## Event\n\n{\"name\":\"BookRegistered\",\"displayName\":\"도서가 등록됨\",\"actor\":\"도서 관리자\",\"level\":1,\"description\":\"도서 관리자가 새로운 도서를 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력하여 도서를 등록함. 등록된 도서는 '대출가능' 상태가 됨.\",\"inputs\":[\"도서명\",\"ISBN(13자리)\",\"저자\",\"출판사\",\"카테고리\",\"ISBN 중복 아님\"],\"outputs\":[\"신규 도서 데이터\",\"'대출가능' 상태\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookRegistrationFailed\",\"displayName\":\"도서 등록 실패됨\",\"actor\":\"도서 관리자\",\"level\":2,\"description\":\"도서 등록 시 ISBN이 13자리가 아니거나 중복된 경우 등록이 거부됨.\",\"inputs\":[\"ISBN(중복 또는 13자리 아님)\"],\"outputs\":[\"에러 메시지\",\"등록 거부\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookDiscarded\",\"displayName\":\"도서가 폐기됨\",\"actor\":\"도서 관리자\",\"level\":3,\"description\":\"도서가 훼손되거나 분실된 경우 도서 관리자가 해당 도서를 폐기 처리함. 폐기된 도서는 더 이상 대출이 불가함.\",\"inputs\":[\"도서 식별자\",\"폐기 사유\"],\"outputs\":[\"도서 상태 '폐기'로 변경\",\"대출 불가\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookSearched\",\"displayName\":\"도서가 검색됨\",\"actor\":\"회원\",\"level\":4,\"description\":\"회원이 도서명이나 ISBN으로 도서를 검색함.\",\"inputs\":[\"검색어(도서명 또는 ISBN)\"],\"outputs\":[\"검색 결과 도서 목록\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookLoanHistoryViewed\",\"displayName\":\"도서의 대출 이력이 조회됨\",\"actor\":\"도서 관리자\",\"level\":15,\"description\":\"도서 관리자가 특정 도서의 대출 이력을 조회함.\",\"inputs\":[\"도서 식별자\"],\"outputs\":[\"대출 이력 목록\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookStatusHistoryViewed\",\"displayName\":\"도서의 상태 변경 이력이 조회됨\",\"actor\":\"도서 관리자\",\"level\":16,\"description\":\"도서 관리자가 특정 도서의 상태 변경 이력을 조회함.\",\"inputs\":[\"도서 식별자\"],\"outputs\":[\"상태 변경 이력 목록\"],\"nextEvents\":[]}\n\n\n## Context Relations\n\n### BookManagementToBookLoanProcess\n- **Type**: Pub/Sub\n- **Direction**: sends to 도서 대출 프로세스 (BookLoanProcess)\n- **Reason**: 도서의 상태 변화, 신규 등록, 폐기 등 이벤트가 발생하면 이를 대출/예약/연체 프로세스에 전달해야 하며, 두 컨텍스트가 느슨하게 결합되고 데이터 소유권이 명확히 분리됨.\n- **Interaction Pattern**: 도서 상태 변경, 신규 등록, 폐기 등 이벤트를 Pub/Sub로 발행하며 대출 프로세스에서 구독하여 반영함. 예: 도서가 폐기되면 대출 프로세스에서 대출 거부 처리.",
                                     "aggregates": [
                                         {
                                             "name": "Book",
@@ -3687,30 +2846,43 @@ export const aggregateDraftScenarios = {
                                         }
                                     ]
                                 },
-                                "description": "{\"userStories\":[{\"title\":\"도서 등록 및 관리\",\"description\":\"도서관리자는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력하여 새로운 도서를 등록할 수 있고, 등록된 도서의 상태를 관리할 수 있다.\",\"acceptance\":[\"ISBN은 13자리 숫자이며 중복되지 않아야 한다.\",\"카테고리는 소설, 비소설, 학술, 잡지 중에서 선택할 수 있다.\",\"도서 등록 시 상태는 '대출가능'이 된다.\",\"도서 상태는 대출/반납/예약/폐기 등의 이벤트에 따라 자동으로 변경된다.\",\"폐기된 도서는 대출이 불가능하다.\"]},{\"title\":\"도서별 이력 조회\",\"description\":\"도서관리자 또는 회원은 특정 도서의 대출 이력과 상태 변경 이력을 조회하여 도서의 대출 현황과 상태 변화를 파악할 수 있다.\",\"acceptance\":[\"도서별로 대출 이력과 상태 변경 이력을 각각 조회할 수 있다.\",\"이력에는 상태 변경 일시 및 사유가 명시되어야 한다.\"]}],\"entities\":{\"Book\":{\"properties\":[{\"name\":\"bookId\",\"type\":\"Long\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"title\",\"type\":\"String\",\"required\":true},{\"name\":\"isbn\",\"type\":\"String\",\"required\":true},{\"name\":\"author\",\"type\":\"String\",\"required\":true},{\"name\":\"publisher\",\"type\":\"String\",\"required\":true},{\"name\":\"category\",\"type\":\"enum\",\"required\":true,\"values\":[\"소설\",\"비소설\",\"학술\",\"잡지\"]},{\"name\":\"status\",\"type\":\"enum\",\"required\":true,\"values\":[\"대출가능\",\"대출중\",\"예약중\",\"폐기\"]}]},\"BookLoanHistory\":{\"properties\":[{\"name\":\"loanHistoryId\",\"type\":\"Long\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"bookId\",\"type\":\"Long\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"loanDate\",\"type\":\"Date\",\"required\":true},{\"name\":\"returnDate\",\"type\":\"Date\"},{\"name\":\"memberId\",\"type\":\"Long\",\"required\":true}]},\"BookStateHistory\":{\"properties\":[{\"name\":\"stateHistoryId\",\"type\":\"Long\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"bookId\",\"type\":\"Long\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"previousStatus\",\"type\":\"enum\",\"required\":true,\"values\":[\"대출가능\",\"대출중\",\"예약중\",\"폐기\"]},{\"name\":\"newStatus\",\"type\":\"enum\",\"required\":true,\"values\":[\"대출가능\",\"대출중\",\"예약중\",\"폐기\"]},{\"name\":\"changedAt\",\"type\":\"Date\",\"required\":true},{\"name\":\"reason\",\"type\":\"String\"}]}},\"businessRules\":[{\"name\":\"ISBN 유효성 검증\",\"description\":\"ISBN은 13자리 숫자여야 하며, 시스템 내에서 중복될 수 없다.\"},{\"name\":\"도서 상태 자동 전이\",\"description\":\"도서 등록 시 상태는 자동으로 '대출가능'으로 지정되고, 대출/반납/예약/폐기 등 이벤트 발생 시 상태가 자동으로 변경된다.\"},{\"name\":\"폐기 도서 대출 불가\",\"description\":\"폐기 상태의 도서는 어떠한 경우에도 대출 처리될 수 없다.\"}],\"interfaces\":{\"BookManagement\":{\"sections\":[{\"name\":\"도서 등록\",\"type\":\"form\",\"fields\":[{\"name\":\"title\",\"type\":\"text\",\"required\":true},{\"name\":\"isbn\",\"type\":\"text\",\"required\":true},{\"name\":\"author\",\"type\":\"text\",\"required\":true},{\"name\":\"publisher\",\"type\":\"text\",\"required\":true},{\"name\":\"category\",\"type\":\"select\",\"required\":true}],\"actions\":[\"중복확인\",\"도서등록\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}},{\"name\":\"도서 목록 및 상태 관리\",\"type\":\"table\",\"fields\":[],\"actions\":[\"대출처리\",\"반납처리\",\"예약처리\",\"폐기처리\"],\"filters\":[\"카테고리\",\"상태\"],\"resultTable\":{\"columns\":[\"bookId\",\"title\",\"isbn\",\"author\",\"publisher\",\"category\",\"status\"],\"actions\":[\"상세보기\"]}}]},\"BookHistory\":{\"sections\":[{\"name\":\"도서 이력 조회\",\"type\":\"table\",\"fields\":[],\"actions\":[],\"filters\":[\"도서ID\"],\"resultTable\":{\"columns\":[\"loanDate\",\"returnDate\",\"memberId\"],\"actions\":[]}},{\"name\":\"상태 변경 이력 조회\",\"type\":\"table\",\"fields\":[],\"actions\":[],\"filters\":[\"도서ID\"],\"resultTable\":{\"columns\":[\"previousStatus\",\"newStatus\",\"changedAt\",\"reason\"],\"actions\":[]}}]}},\"events\":[{\"name\":\"BookRegistered\",\"description\":\"관리자가 새로운 도서를 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력하여 등록함. ISBN 중복 및 13자리 유효성 검증을 통과함.\",\"displayName\":\"도서 등록됨\"},{\"name\":\"BookStateChanged\",\"description\":\"도서 등록/대출/반납/예약/폐기 등의 트리거에 의해 도서의 상태가 변경됨.\",\"displayName\":\"도서 상태 변경됨\"},{\"name\":\"BookDisposed\",\"description\":\"관리자가 훼손/분실로 인한 도서 폐기를 처리함. 폐기된 도서는 대출 불가 상태가 됨.\",\"displayName\":\"도서 폐기됨\"},{\"name\":\"BookHistoryQueried\",\"description\":\"관리자/회원이 도서별로 대출 및 상태 변경 이력을 조회함.\",\"displayName\":\"도서 이력 조회됨\"}]}"
+                                "description": "{\"userStories\":[{\"title\":\"도서 등록 및 상태 관리\",\"description\":\"도서 관리자로서 새로운 도서를 등록하고, 보유 도서들의 상태(대출가능/대출중/예약중/폐기)를 관리할 수 있다.\",\"acceptance\":[\"도서명, ISBN(13자리), 저자, 출판사, 카테고리 입력이 필수이며, ISBN 중복 검사가 반드시 수행된다.\",\"도서 등록 시 상태는 '대출가능'이 기본값으로 설정된다.\",\"도서 상태는 대출/반납/예약/폐기 처리에 따라 자동으로 변경된다.\",\"폐기된 도서는 더 이상 대출이 불가하다.\"]},{\"title\":\"도서 검색\",\"description\":\"사용자로서 도서명이나 ISBN으로 도서를 검색할 수 있다.\",\"acceptance\":[\"검색어로 도서명 또는 ISBN 입력 시 관련 도서 목록이 출력된다.\"]},{\"title\":\"도서 반납 및 상태 전이\",\"description\":\"도서가 반납되면 해당 도서의 상태가 '대출가능' 또는 '예약중'으로 자동 전환된다.\",\"acceptance\":[\"예약자가 없으면 '대출가능', 예약자가 있으면 '예약중'으로 상태가 자동 변경된다.\"]},{\"title\":\"도서별 이력 조회\",\"description\":\"도서 관리자로서 각 도서별 대출 이력과 상태 변경 이력을 조회할 수 있다.\",\"acceptance\":[\"대출 이력과 상태 변경 이력이 조회 화면에 표시된다.\",\"이력에는 시점, 변경자, 변경 사유 등이 포함된다.\"]}],\"entities\":{\"Book\":{\"properties\":[{\"name\":\"bookId\",\"type\":\"Long\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"title\",\"type\":\"String\",\"required\":true},{\"name\":\"ISBN\",\"type\":\"String\",\"required\":true},{\"name\":\"author\",\"type\":\"String\",\"required\":true},{\"name\":\"publisher\",\"type\":\"String\",\"required\":true},{\"name\":\"category\",\"type\":\"enum\",\"required\":true,\"values\":[\"소설\",\"비소설\",\"학술\",\"잡지\"]},{\"name\":\"status\",\"type\":\"enum\",\"required\":true,\"values\":[\"대출가능\",\"대출중\",\"예약중\",\"폐기\"]}]},\"BookLoanHistory\":{\"properties\":[{\"name\":\"historyId\",\"type\":\"Long\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"bookId\",\"type\":\"Long\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"loanedBy\",\"type\":\"String\",\"required\":true},{\"name\":\"loanDate\",\"type\":\"Date\",\"required\":true},{\"name\":\"returnDate\",\"type\":\"Date\"}]},\"BookStatusHistory\":{\"properties\":[{\"name\":\"statusHistoryId\",\"type\":\"Long\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"bookId\",\"type\":\"Long\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"status\",\"type\":\"enum\",\"required\":true,\"values\":[\"대출가능\",\"대출중\",\"예약중\",\"폐기\"]},{\"name\":\"changedAt\",\"type\":\"Date\",\"required\":true},{\"name\":\"changedBy\",\"type\":\"String\",\"required\":true},{\"name\":\"reason\",\"type\":\"String\"}]}},\"businessRules\":[{\"name\":\"ISBN_Validation\",\"description\":\"ISBN은 반드시 13자리의 숫자여야 하며, 시스템 내에서 유일해야 한다.\"},{\"name\":\"BookStatus_AutoTransition\",\"description\":\"도서는 등록 시 '대출가능' 상태로 시작하며, 대출/반납/예약/폐기 상황에 따라 상태가 자동으로 변경된다.\"},{\"name\":\"BookDiscard_Restriction\",\"description\":\"폐기된 도서는 더 이상 대출이 불가하다.\"},{\"name\":\"ReturnStatusTransition\",\"description\":\"도서 반납 시 예약자가 없으면 '대출가능', 예약자가 있으면 '예약중' 상태로 자동 변경된다.\"}],\"interfaces\":{\"BookManagement\":{\"sections\":[{\"name\":\"도서 등록\",\"type\":\"form\",\"fields\":[{\"name\":\"title\",\"type\":\"text\",\"required\":true},{\"name\":\"ISBN\",\"type\":\"text\",\"required\":true},{\"name\":\"author\",\"type\":\"text\",\"required\":true},{\"name\":\"publisher\",\"type\":\"text\",\"required\":true},{\"name\":\"category\",\"type\":\"select\",\"required\":true}],\"actions\":[\"등록\",\"중복확인\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}},{\"name\":\"도서 목록\",\"type\":\"table\",\"fields\":[],\"actions\":[\"상세보기\",\"폐기처리\"],\"filters\":[\"title\",\"ISBN\",\"category\",\"status\"],\"resultTable\":{\"columns\":[\"bookId\",\"title\",\"ISBN\",\"author\",\"publisher\",\"category\",\"status\"],\"actions\":[\"상세보기\",\"폐기처리\"]}}]},\"BookDetail\":{\"sections\":[{\"name\":\"대출 이력\",\"type\":\"table\",\"fields\":[],\"actions\":[],\"filters\":[],\"resultTable\":{\"columns\":[\"loanedBy\",\"loanDate\",\"returnDate\"],\"actions\":[]}},{\"name\":\"상태 변경 이력\",\"type\":\"table\",\"fields\":[],\"actions\":[],\"filters\":[],\"resultTable\":{\"columns\":[\"status\",\"changedAt\",\"changedBy\",\"reason\"],\"actions\":[]}}]}},\"events\":[{\"name\":\"BookRegistered\",\"description\":\"도서 관리자가 새로운 도서를 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력하여 도서를 등록함. 등록된 도서는 '대출가능' 상태가 됨.\",\"displayName\":\"도서가 등록됨\"},{\"name\":\"BookRegistrationFailed\",\"description\":\"도서 등록 시 ISBN이 13자리가 아니거나 중복된 경우 등록이 거부됨.\",\"displayName\":\"도서 등록 실패됨\"},{\"name\":\"BookDiscarded\",\"description\":\"도서가 훼손되거나 분실된 경우 도서 관리자가 해당 도서를 폐기 처리함. 폐기된 도서는 더 이상 대출이 불가함.\",\"displayName\":\"도서가 폐기됨\"},{\"name\":\"BookSearched\",\"description\":\"회원이 도서명이나 ISBN으로 도서를 검색함.\",\"displayName\":\"도서가 검색됨\"},{\"name\":\"BookLoanHistoryViewed\",\"description\":\"도서 관리자가 특정 도서의 대출 이력을 조회함.\",\"displayName\":\"도서의 대출 이력이 조회됨\"},{\"name\":\"BookStatusHistoryViewed\",\"description\":\"도서 관리자가 특정 도서의 상태 변경 이력을 조회함.\",\"displayName\":\"도서의 상태 변경 이력이 조회됨\"}],\"contextRelations\":[{\"name\":\"BookManagementToBookLoanProcess\",\"type\":\"Pub/Sub\",\"direction\":\"sends to\",\"targetContext\":\"BookLoanProcess\",\"reason\":\"도서의 상태 변화, 신규 등록, 폐기 등 이벤트가 발생하면 이를 대출/예약/연체 프로세스에 전달해야 하며, 두 컨텍스트가 느슨하게 결합되고 데이터 소유권이 명확히 분리됨.\",\"interactionPattern\":\"도서 상태 변경, 신규 등록, 폐기 등 이벤트를 Pub/Sub로 발행하며 대출 프로세스에서 구독하여 반영함. 예: 도서가 폐기되면 대출 프로세스에서 대출 거부 처리.\"}]}"
                             }
                         ],
-                        "conclusions": "옵션1은 단일 Aggregate 내에서 도서 관리와 이력 기능까지 모두 처리할 때 적합합니다. 이 방식은 트랜잭션 일관성과 간단한 구조가 중요하거나, 이력 데이터량이 크지 않을 때 효과적입니다. 옵션2는 도서 관리와 이력 데이터 관리가 별도로 진화·확장될 필요가 있거나, 이력 데이터가 폭증할 수 있는 대규모 도서관 시스템에 적합합니다. 이 경우 도서 데이터와 이력 데이터를 독립적으로 최적화할 수 있으나, 도서 상태와 이력의 강력한 일관성이 반드시 필요할 때는 추가적인 설계 보완이 요구됩니다.",
+                        "conclusions": "Option 1은 단일 Aggregate에서 도서 및 이력, 상태 관리까지 원자적 트랜잭션과 간단한 구조가 요구될 때 적합합니다. 이 구조는 도서별 데이터가 크지 않고 일관성 유지가 최우선일 때 유리합니다. Option 2는 도서, 대출 이력, 상태 변경 이력을 분리 Aggregate로 관리하여 확장성과 대용량 데이터 처리에 탁월하며, 이력/상태 관리의 독립적인 발전 및 외부 서비스 연계가 필요한 환경에서 추천됩니다. Option 2를 기본으로 선정한 이유는 도서 정보와 이력, 상태 관리 업무의 확장성 및 독립적 유지보수에 강점을 가지기 때문입니다.",
                         "defaultOptionIndex": 1,
                         "analysisResult": {
                             "userStories": [
                                 {
-                                    "title": "도서 등록 및 관리",
-                                    "description": "도서관리자는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력하여 새로운 도서를 등록할 수 있고, 등록된 도서의 상태를 관리할 수 있다.",
+                                    "title": "도서 등록 및 상태 관리",
+                                    "description": "도서 관리자로서 새로운 도서를 등록하고, 보유 도서들의 상태(대출가능/대출중/예약중/폐기)를 관리할 수 있다.",
                                     "acceptance": [
-                                        "ISBN은 13자리 숫자이며 중복되지 않아야 한다.",
-                                        "카테고리는 소설, 비소설, 학술, 잡지 중에서 선택할 수 있다.",
-                                        "도서 등록 시 상태는 '대출가능'이 된다.",
-                                        "도서 상태는 대출/반납/예약/폐기 등의 이벤트에 따라 자동으로 변경된다.",
-                                        "폐기된 도서는 대출이 불가능하다."
+                                        "도서명, ISBN(13자리), 저자, 출판사, 카테고리 입력이 필수이며, ISBN 중복 검사가 반드시 수행된다.",
+                                        "도서 등록 시 상태는 '대출가능'이 기본값으로 설정된다.",
+                                        "도서 상태는 대출/반납/예약/폐기 처리에 따라 자동으로 변경된다.",
+                                        "폐기된 도서는 더 이상 대출이 불가하다."
+                                    ]
+                                },
+                                {
+                                    "title": "도서 검색",
+                                    "description": "사용자로서 도서명이나 ISBN으로 도서를 검색할 수 있다.",
+                                    "acceptance": [
+                                        "검색어로 도서명 또는 ISBN 입력 시 관련 도서 목록이 출력된다."
+                                    ]
+                                },
+                                {
+                                    "title": "도서 반납 및 상태 전이",
+                                    "description": "도서가 반납되면 해당 도서의 상태가 '대출가능' 또는 '예약중'으로 자동 전환된다.",
+                                    "acceptance": [
+                                        "예약자가 없으면 '대출가능', 예약자가 있으면 '예약중'으로 상태가 자동 변경된다."
                                     ]
                                 },
                                 {
                                     "title": "도서별 이력 조회",
-                                    "description": "도서관리자 또는 회원은 특정 도서의 대출 이력과 상태 변경 이력을 조회하여 도서의 대출 현황과 상태 변화를 파악할 수 있다.",
+                                    "description": "도서 관리자로서 각 도서별 대출 이력과 상태 변경 이력을 조회할 수 있다.",
                                     "acceptance": [
-                                        "도서별로 대출 이력과 상태 변경 이력을 각각 조회할 수 있다.",
-                                        "이력에는 상태 변경 일시 및 사유가 명시되어야 한다."
+                                        "대출 이력과 상태 변경 이력이 조회 화면에 표시된다.",
+                                        "이력에는 시점, 변경자, 변경 사유 등이 포함된다."
                                     ]
                                 }
                             ],
@@ -3729,7 +2901,7 @@ export const aggregateDraftScenarios = {
                                             "required": true
                                         },
                                         {
-                                            "name": "isbn",
+                                            "name": "ISBN",
                                             "type": "String",
                                             "required": true
                                         },
@@ -3770,7 +2942,7 @@ export const aggregateDraftScenarios = {
                                 "BookLoanHistory": {
                                     "properties": [
                                         {
-                                            "name": "loanHistoryId",
+                                            "name": "historyId",
                                             "type": "Long",
                                             "required": true,
                                             "isPrimaryKey": true
@@ -3781,6 +2953,11 @@ export const aggregateDraftScenarios = {
                                             "required": true,
                                             "isForeignKey": true,
                                             "foreignEntity": "Book"
+                                        },
+                                        {
+                                            "name": "loanedBy",
+                                            "type": "String",
+                                            "required": true
                                         },
                                         {
                                             "name": "loanDate",
@@ -3790,18 +2967,13 @@ export const aggregateDraftScenarios = {
                                         {
                                             "name": "returnDate",
                                             "type": "Date"
-                                        },
-                                        {
-                                            "name": "memberId",
-                                            "type": "Long",
-                                            "required": true
                                         }
                                     ]
                                 },
-                                "BookStateHistory": {
+                                "BookStatusHistory": {
                                     "properties": [
                                         {
-                                            "name": "stateHistoryId",
+                                            "name": "statusHistoryId",
                                             "type": "Long",
                                             "required": true,
                                             "isPrimaryKey": true
@@ -3814,18 +2986,7 @@ export const aggregateDraftScenarios = {
                                             "foreignEntity": "Book"
                                         },
                                         {
-                                            "name": "previousStatus",
-                                            "type": "enum",
-                                            "required": true,
-                                            "values": [
-                                                "대출가능",
-                                                "대출중",
-                                                "예약중",
-                                                "폐기"
-                                            ]
-                                        },
-                                        {
-                                            "name": "newStatus",
+                                            "name": "status",
                                             "type": "enum",
                                             "required": true,
                                             "values": [
@@ -3841,6 +3002,11 @@ export const aggregateDraftScenarios = {
                                             "required": true
                                         },
                                         {
+                                            "name": "changedBy",
+                                            "type": "String",
+                                            "required": true
+                                        },
+                                        {
                                             "name": "reason",
                                             "type": "String"
                                         }
@@ -3849,16 +3015,20 @@ export const aggregateDraftScenarios = {
                             },
                             "businessRules": [
                                 {
-                                    "name": "ISBN 유효성 검증",
-                                    "description": "ISBN은 13자리 숫자여야 하며, 시스템 내에서 중복될 수 없다."
+                                    "name": "ISBN_Validation",
+                                    "description": "ISBN은 반드시 13자리의 숫자여야 하며, 시스템 내에서 유일해야 한다."
                                 },
                                 {
-                                    "name": "도서 상태 자동 전이",
-                                    "description": "도서 등록 시 상태는 자동으로 '대출가능'으로 지정되고, 대출/반납/예약/폐기 등 이벤트 발생 시 상태가 자동으로 변경된다."
+                                    "name": "BookStatus_AutoTransition",
+                                    "description": "도서는 등록 시 '대출가능' 상태로 시작하며, 대출/반납/예약/폐기 상황에 따라 상태가 자동으로 변경된다."
                                 },
                                 {
-                                    "name": "폐기 도서 대출 불가",
-                                    "description": "폐기 상태의 도서는 어떠한 경우에도 대출 처리될 수 없다."
+                                    "name": "BookDiscard_Restriction",
+                                    "description": "폐기된 도서는 더 이상 대출이 불가하다."
+                                },
+                                {
+                                    "name": "ReturnStatusTransition",
+                                    "description": "도서 반납 시 예약자가 없으면 '대출가능', 예약자가 있으면 '예약중' 상태로 자동 변경된다."
                                 }
                             ],
                             "interfaces": {
@@ -3874,7 +3044,7 @@ export const aggregateDraftScenarios = {
                                                     "required": true
                                                 },
                                                 {
-                                                    "name": "isbn",
+                                                    "name": "ISBN",
                                                     "type": "text",
                                                     "required": true
                                                 },
@@ -3895,8 +3065,8 @@ export const aggregateDraftScenarios = {
                                                 }
                                             ],
                                             "actions": [
-                                                "중복확인",
-                                                "도서등록"
+                                                "등록",
+                                                "중복확인"
                                             ],
                                             "filters": [],
                                             "resultTable": {
@@ -3905,68 +3075,65 @@ export const aggregateDraftScenarios = {
                                             }
                                         },
                                         {
-                                            "name": "도서 목록 및 상태 관리",
+                                            "name": "도서 목록",
                                             "type": "table",
                                             "fields": [],
                                             "actions": [
-                                                "대출처리",
-                                                "반납처리",
-                                                "예약처리",
+                                                "상세보기",
                                                 "폐기처리"
                                             ],
                                             "filters": [
-                                                "카테고리",
-                                                "상태"
+                                                "title",
+                                                "ISBN",
+                                                "category",
+                                                "status"
                                             ],
                                             "resultTable": {
                                                 "columns": [
                                                     "bookId",
                                                     "title",
-                                                    "isbn",
+                                                    "ISBN",
                                                     "author",
                                                     "publisher",
                                                     "category",
                                                     "status"
                                                 ],
                                                 "actions": [
-                                                    "상세보기"
+                                                    "상세보기",
+                                                    "폐기처리"
                                                 ]
                                             }
                                         }
                                     ]
                                 },
-                                "BookHistory": {
+                                "BookDetail": {
                                     "sections": [
                                         {
-                                            "name": "도서 이력 조회",
+                                            "name": "대출 이력",
                                             "type": "table",
                                             "fields": [],
                                             "actions": [],
-                                            "filters": [
-                                                "도서ID"
-                                            ],
+                                            "filters": [],
                                             "resultTable": {
                                                 "columns": [
+                                                    "loanedBy",
                                                     "loanDate",
-                                                    "returnDate",
-                                                    "memberId"
+                                                    "returnDate"
                                                 ],
                                                 "actions": []
                                             }
                                         },
                                         {
-                                            "name": "상태 변경 이력 조회",
+                                            "name": "상태 변경 이력",
                                             "type": "table",
                                             "fields": [],
                                             "actions": [],
-                                            "filters": [
-                                                "도서ID"
-                                            ],
+                                            "filters": [],
                                             "resultTable": {
                                                 "columns": [
-                                                    "previousStatus",
-                                                    "newStatus",
+                                                    "status",
                                                     "changedAt",
+                                                    "changedBy",
                                                     "reason"
                                                 ],
                                                 "actions": []
@@ -3978,33 +3145,53 @@ export const aggregateDraftScenarios = {
                             "events": [
                                 {
                                     "name": "BookRegistered",
-                                    "description": "관리자가 새로운 도서를 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력하여 등록함. ISBN 중복 및 13자리 유효성 검증을 통과함.",
-                                    "displayName": "도서 등록됨"
+                                    "description": "도서 관리자가 새로운 도서를 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력하여 도서를 등록함. 등록된 도서는 '대출가능' 상태가 됨.",
+                                    "displayName": "도서가 등록됨"
                                 },
                                 {
-                                    "name": "BookStateChanged",
-                                    "description": "도서 등록/대출/반납/예약/폐기 등의 트리거에 의해 도서의 상태가 변경됨.",
-                                    "displayName": "도서 상태 변경됨"
+                                    "name": "BookRegistrationFailed",
+                                    "description": "도서 등록 시 ISBN이 13자리가 아니거나 중복된 경우 등록이 거부됨.",
+                                    "displayName": "도서 등록 실패됨"
                                 },
                                 {
-                                    "name": "BookDisposed",
-                                    "description": "관리자가 훼손/분실로 인한 도서 폐기를 처리함. 폐기된 도서는 대출 불가 상태가 됨.",
-                                    "displayName": "도서 폐기됨"
+                                    "name": "BookDiscarded",
+                                    "description": "도서가 훼손되거나 분실된 경우 도서 관리자가 해당 도서를 폐기 처리함. 폐기된 도서는 더 이상 대출이 불가함.",
+                                    "displayName": "도서가 폐기됨"
                                 },
                                 {
-                                    "name": "BookHistoryQueried",
-                                    "description": "관리자/회원이 도서별로 대출 및 상태 변경 이력을 조회함.",
-                                    "displayName": "도서 이력 조회됨"
+                                    "name": "BookSearched",
+                                    "description": "회원이 도서명이나 ISBN으로 도서를 검색함.",
+                                    "displayName": "도서가 검색됨"
+                                },
+                                {
+                                    "name": "BookLoanHistoryViewed",
+                                    "description": "도서 관리자가 특정 도서의 대출 이력을 조회함.",
+                                    "displayName": "도서의 대출 이력이 조회됨"
+                                },
+                                {
+                                    "name": "BookStatusHistoryViewed",
+                                    "description": "도서 관리자가 특정 도서의 상태 변경 이력을 조회함.",
+                                    "displayName": "도서의 상태 변경 이력이 조회됨"
                                 }
                             ],
-                            "inference": "사용자 요구사항에 따라 도서 등록, 상태 변경, 이력 관리 기능이 필요하며, ISBN의 13자리 숫자 및 중복 검증, 상태별 도서 대출 가능 여부, 카테고리 선택, 각 도서별 대출·상태 이력 추적이 명확하게 도출됨. 이벤트 정의로부터 시스템의 상태 전이 흐름 및 행위 주체(관리자/시스템)도 반영함. 상태 전이에 따른 도서 대출 가능/불가, 폐기 도서 예외처리, 데이터 모델에 대한 명확한 속성 정의와 검증 필요."
+                            "contextRelations": [
+                                {
+                                    "name": "BookManagementToBookLoanProcess",
+                                    "type": "Pub/Sub",
+                                    "direction": "sends to",
+                                    "targetContext": "BookLoanProcess",
+                                    "reason": "도서의 상태 변화, 신규 등록, 폐기 등 이벤트가 발생하면 이를 대출/예약/연체 프로세스에 전달해야 하며, 두 컨텍스트가 느슨하게 결합되고 데이터 소유권이 명확히 분리됨.",
+                                    "interactionPattern": "도서 상태 변경, 신규 등록, 폐기 등 이벤트를 Pub/Sub로 발행하며 대출 프로세스에서 구독하여 반영함. 예: 도서가 폐기되면 대출 프로세스에서 대출 거부 처리."
+                                }
+                            ],
+                            "inference": "요구사항 분석 결과, 도서 관리 시스템은 도서 등록, 상태 관리, 검색, 대출/반납/폐기, 이력 조회 등 복수의 업무 흐름을 갖는다. ISBN의 13자리 제약과 중복 방지, 카테고리 Enum 정의, 도서 상태 자동 변이, 폐기 도서의 대출 불가, 상세 이력 관리 등이 주요 비즈니스 규칙이다. 이벤트 및 컨텍스트 연계는 느슨한 결합 및 데이터 소유권 분리를 명확히 한다."
                         },
-                        "inference": "\n\n기능 요구사항과 비즈니스 규칙, 기존 적재된 도메인 모델을 분석하였습니다. 도서는 상태 관리와 이력 추적의 핵심 단위이므로 Book을 반드시 Aggregate로 정의해야 하며, 대출 및 예약은 이미 LibraryLoanProcess 컨텍스트에서 관리되므로 직접적으로 생성하지 않고 참조 형태로 ValueObject로 처리합니다. 이력(대출/상태변경)을 Book Aggregate에 통합하거나, 별도의 이력 Aggregate로 분리하여 설계안을 마련했습니다. 각 옵션은 Aggregate 수의 차이와 경계에 따라 이력관리의 일관성, 유지보수성, 성능 및 도메인 확장성 측면에서 명확히 구분됩니다."
+                        "inference": "\n\n요구사항, 비즈니스 규칙, 기존 컨텍스트와의 연계, 그리고 누적 설계를 검토한 결과, Book(도서) Aggregate는 반드시 생성되어야 하며, Option 1에서는 Book 단일 Aggregate로 일체화된 이력 정보를 포함하고, Option 2는 Book과 BookLoanHistory, BookStatusHistory를 별도 Aggregate로 분리하여 다양한 관리 및 확장 시나리오를 각각 반영하였다. 이미 BookLoanProcess 컨텍스트에 존재하는 Loan, Reservation, Member는 직접 생성하지 않고 참조 ValueObject로만 처리함을 준수하였다."
                     },
                     {
-                        "boundedContext": "LibraryLoanProcess",
-                        "boundedContextAlias": "대출/반납",
-                        "description": "{\"userStories\":[{\"title\":\"도서 대출 및 반납 관리\",\"description\":\"회원은 '대출/반납' 화면에서 본인의 회원번호와 이름을 통해 확인받고, 도서명 또는 ISBN으로 도서를 검색하여 대출을 신청할 수 있다. 이미 대출중인 도서는 예약 신청이 가능하다. 도서 대출 완료 시 도서 상태는 자동으로 '대출중'으로 변경된다.\",\"acceptance\":[\"회원번호와 이름으로 회원 확인이 가능하다.\",\"도서명 또는 ISBN으로 도서 검색이 가능하다.\",\"대출 가능 상태의 도서만 대출 신청이 가능하다.\",\"대출 기간은 7일/14일/30일 중 선택할 수 있다.\",\"대출 중인 도서는 예약 신청이 가능하다.\",\"대출 완료 시 도서 상태가 '대출중'으로 자동 변경된다.\"]},{\"title\":\"대출 현황 조회 및 관리\",\"description\":\"도서관리자는 '대출 현황' 화면에서 현재 대출 중인 도서의 대출일, 반납예정일, 상태(대출중/연체/반납완료)를 확인하고, 대출 건별로 연장 또는 반납 처리를 할 수 있다.\",\"acceptance\":[\"대출 건의 대출일, 반납예정일, 상태가 표시된다.\",\"대출 중인 도서에 대해 연장 및 반납 처리가 가능하다.\",\"도서 반납 시 예약자가 있으면 상태가 '예약중', 없으면 '대출가능'으로 변경된다.\",\"대출 상태는 '대출중', '연체', '반납완료'가 존재한다.\"]},{\"title\":\"도서별 대출 및 상태 이력 조회\",\"description\":\"관리자는 각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있다.\",\"acceptance\":[\"각 도서별로 대출 이력과 상태 변경 이력이 조회된다.\",\"대출 이력에는 대출일, 반납일, 연장, 연체 정보가 포함된다.\",\"상태 이력에는 상태 변경 일시와 변경 내용이 포함된다.\"]}],\"entities\":{\"Member\":{\"properties\":[{\"name\":\"memberId\",\"type\":\"String\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"name\",\"type\":\"String\",\"required\":true}]},\"Book\":{\"properties\":[{\"name\":\"bookId\",\"type\":\"String\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"title\",\"type\":\"String\",\"required\":true},{\"name\":\"isbn\",\"type\":\"String\",\"required\":true},{\"name\":\"status\",\"type\":\"enum\",\"required\":true,\"values\":[\"AVAILABLE\",\"ON_LOAN\",\"RESERVED\"]}]},\"Loan\":{\"properties\":[{\"name\":\"loanId\",\"type\":\"Long\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"bookId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"memberId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Member\"},{\"name\":\"loanDate\",\"type\":\"Date\",\"required\":true},{\"name\":\"dueDate\",\"type\":\"Date\",\"required\":true},{\"name\":\"returnDate\",\"type\":\"Date\"},{\"name\":\"loanStatus\",\"type\":\"enum\",\"required\":true,\"values\":[\"ON_LOAN\",\"OVERDUE\",\"RETURNED\"]},{\"name\":\"extendCount\",\"type\":\"Integer\"}]},\"Reservation\":{\"properties\":[{\"name\":\"reservationId\",\"type\":\"Long\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"bookId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"memberId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Member\"},{\"name\":\"reservationDate\",\"type\":\"Date\",\"required\":true}]},\"BookStatusHistory\":{\"properties\":[{\"name\":\"historyId\",\"type\":\"Long\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"bookId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"status\",\"type\":\"enum\",\"required\":true,\"values\":[\"AVAILABLE\",\"ON_LOAN\",\"RESERVED\"]},{\"name\":\"changeDate\",\"type\":\"Date\",\"required\":true}]}},\"businessRules\":[{\"name\":\"대출 가능 상태 확인\",\"description\":\"도서 상태가 AVAILABLE인 경우에만 대출 신청이 가능하다.\"},{\"name\":\"대출 중 도서 예약\",\"description\":\"도서 상태가 ON_LOAN일 때만 예약 신청이 가능하다.\"},{\"name\":\"대출 기간 선택\",\"description\":\"대출 신청 시 7일, 14일, 30일 중에서 대출 기간을 선택해야 한다.\"},{\"name\":\"연장 제한\",\"description\":\"대출 연장은 정책에 따라 1회 또는 제한 횟수만큼만 가능하다.\"},{\"name\":\"반납 시 도서 상태 전환\",\"description\":\"도서 반납 후 예약자가 있으면 상태를 RESERVED, 없으면 AVAILABLE로 변경한다.\"},{\"name\":\"연체 처리\",\"description\":\"반납 예정일이 경과하면 도서의 대출 상태를 OVERDUE로 변경한다.\"},{\"name\":\"상태 변경 이력 기록\",\"description\":\"모든 도서의 상태 변경은 BookStatusHistory에 기록된다.\"}],\"interfaces\":{\"LoanReturnScreen\":{\"sections\":[{\"name\":\"회원 확인\",\"type\":\"form\",\"fields\":[{\"name\":\"memberId\",\"type\":\"text\",\"required\":true},{\"name\":\"name\",\"type\":\"text\",\"required\":true}],\"actions\":[],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}},{\"name\":\"도서 검색 및 선택\",\"type\":\"form\",\"fields\":[{\"name\":\"titleOrIsbn\",\"type\":\"text\",\"required\":true}],\"actions\":[\"도서 검색\"],\"filters\":[],\"resultTable\":{\"columns\":[\"bookId\",\"title\",\"isbn\",\"status\"],\"actions\":[\"도서 선택\"]}},{\"name\":\"대출 신청\",\"type\":\"form\",\"fields\":[{\"name\":\"loanPeriod\",\"type\":\"select\",\"required\":true}],\"actions\":[\"대출 신청\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}},{\"name\":\"예약 신청\",\"type\":\"form\",\"fields\":[],\"actions\":[\"예약 신청\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}}]},\"LoanStatusScreen\":{\"sections\":[{\"name\":\"대출 현황 목록\",\"type\":\"table\",\"fields\":[],\"actions\":[\"연장 신청\",\"반납 처리\"],\"filters\":[\"전체/회원별/도서별\"],\"resultTable\":{\"columns\":[\"loanId\",\"memberId\",\"bookId\",\"loanDate\",\"dueDate\",\"loanStatus\"],\"actions\":[\"상세 조회\"]}}]},\"BookHistoryScreen\":{\"sections\":[{\"name\":\"대출 이력\",\"type\":\"table\",\"fields\":[],\"actions\":[],\"filters\":[\"도서별\"],\"resultTable\":{\"columns\":[\"loanId\",\"memberId\",\"loanDate\",\"dueDate\",\"returnDate\",\"loanStatus\"],\"actions\":[]}},{\"name\":\"상태 변경 이력\",\"type\":\"table\",\"fields\":[],\"actions\":[],\"filters\":[\"도서별\"],\"resultTable\":{\"columns\":[\"historyId\",\"status\",\"changeDate\"],\"actions\":[]}}]}},\"events\":[{\"name\":\"LoanRequested\",\"description\":\"회원이 도서명 또는 ISBN으로 검색하여 대출 가능한 도서에 대해 대출을 신청함. 회원번호와 이름 확인 필요.\",\"displayName\":\"대출 신청됨\"},{\"name\":\"LoanApproved\",\"description\":\"대출 요청이 처리되어 도서가 회원에게 대출됨. 도서 상태는 대출중으로 자동 변경됨.\",\"displayName\":\"대출 완료됨\"},{\"name\":\"BookReserved\",\"description\":\"회원이 이미 대출중인 도서에 대해 예약 신청을 함. 예약된 도서는 예약 대기 리스트에 등록됨.\",\"displayName\":\"도서 예약됨\"},{\"name\":\"LoanReturned\",\"description\":\"회원이 대출 중인 도서를 반납함. 반납 후 예약자가 있으면 도서 상태는 예약중, 없으면 대출가능으로 변경됨.\",\"displayName\":\"도서 반납됨\"},{\"name\":\"LoanExtended\",\"description\":\"회원이 대출중인 도서의 반납예정일을 연장 신청함. 연장은 정책에 따라 1회 혹은 제한 가능.\",\"displayName\":\"대출 연장됨\"},{\"name\":\"LoanOverdueChecked\",\"description\":\"반납 예정일이 지난 도서의 연체 상태를 확인하여 연체로 표시함.\",\"displayName\":\"연체 확인됨\"},{\"name\":\"ReservationNotified\",\"description\":\"예약자가 있는 도서가 반납되었을 때, 예약자에게 도서 이용 가능 안내를 통보함.\",\"displayName\":\"예약자 통보됨\"},{\"name\":\"LoanStatusQueried\",\"description\":\"현재 대출 중인 도서와 각 대출 건의 대출일, 반납예정일, 상태(대출중/연체/반납완료)를 조회함.\",\"displayName\":\"대출 현황 조회됨\"}]}",
+                        "boundedContext": "BookLoanProcess",
+                        "boundedContextAlias": "도서 대출 프로세스",
+                        "description": "{\"userStories\":[{\"title\":\"도서 대출 및 반납 관리\",\"description\":\"회원은 '대출/반납' 화면에서 회원 확인 후 도서를 대출하거나 반납할 수 있다. 대출 시 도서명 또는 ISBN으로 검색, 대출 기간 선택, 이미 대출 중인 경우 예약 신청이 가능하다. 반납 시 도서 상태 및 예약자 유무에 따라 자동 상태 변경이 이루어진다.\",\"acceptance\":[\"회원번호와 이름으로 회원이 확인되어야 한다.\",\"도서명 또는 ISBN으로 도서를 검색할 수 있어야 한다.\",\"대출 기간은 7일/14일/30일 중 선택할 수 있다.\",\"이미 대출 중인 도서는 예약 신청이 가능하다.\",\"대출 완료 시 도서 상태가 자동으로 '대출중'으로 변경된다.\",\"반납 완료 시 예약자 유무에 따라 도서 상태가 '예약중' 또는 '대출가능'으로 변경된다.\"]},{\"title\":\"대출 현황 및 처리\",\"description\":\"대출 현황 화면에서는 현재 대출 중인 도서들의 목록, 대출일, 반납예정일, 상태(대출중/연체/반납완료)를 확인하고, 대출 중인 도서에 대해 연장 및 반납 처리가 가능하다.\",\"acceptance\":[\"대출 건별로 대출일, 반납예정일, 현재 상태를 확인할 수 있다.\",\"대출 중인 도서에 대해 연장 및 반납 처리가 가능하다.\",\"연체 상태에서는 연장이 불가하다.\"]},{\"title\":\"도서별 이력 및 상태 변경 추적\",\"description\":\"관리자는 각 도서별 대출 이력과 상태 변경 이력을 조회할 수 있어야 하며, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있다.\",\"acceptance\":[\"도서별로 모든 대출 이력과 상태 변경 이력을 볼 수 있다.\"]}],\"entities\":{\"Member\":{\"properties\":[{\"name\":\"memberId\",\"type\":\"String\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"name\",\"type\":\"String\",\"required\":true}]},\"Book\":{\"properties\":[{\"name\":\"bookId\",\"type\":\"String\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"title\",\"type\":\"String\",\"required\":true},{\"name\":\"isbn\",\"type\":\"String\",\"required\":true},{\"name\":\"status\",\"type\":\"enum\",\"required\":true,\"values\":[\"AVAILABLE\",\"ON_LOAN\",\"RESERVED\",\"DISCARDED\"]}]},\"Loan\":{\"properties\":[{\"name\":\"loanId\",\"type\":\"String\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"memberId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Member\"},{\"name\":\"bookId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"loanDate\",\"type\":\"Date\",\"required\":true},{\"name\":\"dueDate\",\"type\":\"Date\",\"required\":true},{\"name\":\"returnDate\",\"type\":\"Date\"},{\"name\":\"status\",\"type\":\"enum\",\"required\":true,\"values\":[\"ON_LOAN\",\"OVERDUE\",\"RETURNED\"]}]},\"Reservation\":{\"properties\":[{\"name\":\"reservationId\",\"type\":\"String\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"memberId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Member\"},{\"name\":\"bookId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"reservationDate\",\"type\":\"Date\",\"required\":true}]},\"BookStatusHistory\":{\"properties\":[{\"name\":\"historyId\",\"type\":\"String\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"bookId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"beforeStatus\",\"type\":\"enum\",\"required\":true,\"values\":[\"AVAILABLE\",\"ON_LOAN\",\"RESERVED\",\"DISCARDED\"]},{\"name\":\"afterStatus\",\"type\":\"enum\",\"required\":true,\"values\":[\"AVAILABLE\",\"ON_LOAN\",\"RESERVED\",\"DISCARDED\"]},{\"name\":\"changedAt\",\"type\":\"Date\",\"required\":true}]}},\"businessRules\":[{\"name\":\"대출 기간 선택 제한\",\"description\":\"대출 기간은 7일, 14일, 30일만 선택할 수 있다.\"},{\"name\":\"연체 도서 연장 불가\",\"description\":\"연체 상태(OVERDUE)인 대출 건은 연장이 불가하다.\"},{\"name\":\"대출 상태 자동 변경\",\"description\":\"도서 대출 시 상태는 'ON_LOAN', 반납 시 예약자 없으면 'AVAILABLE', 예약자 있으면 'RESERVED'로 자동 변경된다.\"},{\"name\":\"폐기/대출 불가 도서 대출 거부\",\"description\":\"도서 상태가 'DISCARDED' 또는 대출 불가 시 대출이 거부된다.\"}],\"interfaces\":{\"LoanAndReturn\":{\"sections\":[{\"name\":\"회원 확인\",\"type\":\"form\",\"fields\":[{\"name\":\"memberId\",\"type\":\"text\",\"required\":true},{\"name\":\"name\",\"type\":\"text\",\"required\":true}],\"actions\":[\"회원 확인\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}},{\"name\":\"도서 대출 신청\",\"type\":\"form\",\"fields\":[{\"name\":\"bookSearch\",\"type\":\"text\",\"required\":true},{\"name\":\"searchType\",\"type\":\"select\",\"required\":true},{\"name\":\"loanPeriod\",\"type\":\"select\",\"required\":true}],\"actions\":[\"대출 신청\",\"예약 신청\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}},{\"name\":\"도서 반납\",\"type\":\"form\",\"fields\":[{\"name\":\"loanId\",\"type\":\"text\",\"required\":true}],\"actions\":[\"반납 처리\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}}]},\"LoanStatus\":{\"sections\":[{\"name\":\"대출 현황 목록\",\"type\":\"table\",\"fields\":[],\"actions\":[\"연장\",\"반납\"],\"filters\":[\"대출 상태\",\"대출일\",\"반납예정일\"],\"resultTable\":{\"columns\":[\"loanId\",\"bookId\",\"title\",\"loanDate\",\"dueDate\",\"status\"],\"actions\":[\"연장\",\"반납\"]}}]},\"BookHistory\":{\"sections\":[{\"name\":\"도서별 이력 조회\",\"type\":\"table\",\"fields\":[{\"name\":\"bookId\",\"type\":\"text\",\"required\":true}],\"actions\":[\"대출 이력 조회\",\"상태 변경 이력 조회\"],\"filters\":[],\"resultTable\":{\"columns\":[\"loanId\",\"memberId\",\"loanDate\",\"dueDate\",\"returnDate\",\"status\"],\"actions\":[]}},{\"name\":\"도서 상태 변경 이력\",\"type\":\"table\",\"fields\":[],\"actions\":[],\"filters\":[],\"resultTable\":{\"columns\":[\"historyId\",\"beforeStatus\",\"afterStatus\",\"changedAt\"],\"actions\":[]}}]}},\"events\":[{\"name\":\"MemberVerified\",\"description\":\"회원번호와 이름으로 회원 정보가 확인됨.\",\"displayName\":\"회원이 확인됨\"},{\"name\":\"BookLoanRequested\",\"description\":\"회원이 대출하고자 하는 도서와 대출 기간(7일/14일/30일)을 선택하여 대출을 신청함.\",\"displayName\":\"도서 대출이 신청됨\"},{\"name\":\"BookLoanRejected\",\"description\":\"도서가 폐기되었거나 대출 불가 상태인 경우 대출이 거부됨.\",\"displayName\":\"도서 대출이 거부됨\"},{\"name\":\"BookLoanApproved\",\"description\":\"도서가 대출 가능 상태라면 대출이 승인되고 대출 정보가 생성됨. 도서 상태는 '대출중'으로 변경됨.\",\"displayName\":\"도서 대출이 승인됨\"},{\"name\":\"BookReserved\",\"description\":\"대출하려는 도서가 이미 대출 중일 때 회원이 해당 도서의 예약을 신청하면 예약이 생성되고, 도서의 상태가 '예약중'으로 변경됨.\",\"displayName\":\"도서가 예약됨\"},{\"name\":\"BookReturned\",\"description\":\"회원이 대출한 도서를 반납함. 도서에 예약자가 있으면 상태가 '예약중'으로, 없으면 '대출가능'으로 변경됨.\",\"displayName\":\"도서가 반납됨\"},{\"name\":\"BookAvailable\",\"description\":\"반납된 도서에 예약자가 없는 경우 도서 상태가 '대출가능'으로 변경됨.\",\"displayName\":\"도서가 대출 가능 상태로 변경됨\"},{\"name\":\"BookReservedForNext\",\"description\":\"반납된 도서에 예약자가 있을 경우 도서 상태가 '예약중'으로 변경됨.\",\"displayName\":\"도서가 다음 예약자를 위해 예약중 상태로 변경됨\"},{\"name\":\"LoanExtended\",\"description\":\"회원이 대출 중인 도서의 대출 기간을 연장함. 연체 상태에서는 연장이 불가함.\",\"displayName\":\"대출 기간이 연장됨\"},{\"name\":\"LoanOverdue\",\"description\":\"반납 예정일이 지나도 도서가 반납되지 않은 경우, 대출 건의 상태가 '연체'로 변경됨.\",\"displayName\":\"도서 대출이 연체됨\"}],\"contextRelations\":[{\"name\":\"BookManagementToBookLoanProcess\",\"type\":\"Pub/Sub\",\"direction\":\"receives from\",\"targetContext\":\"도서 관리 (BookManagement)\",\"reason\":\"도서의 상태 변화, 신규 등록, 폐기 등 이벤트가 발생하면 이를 대출/예약/연체 프로세스에 전달해야 하며, 두 컨텍스트가 느슨하게 결합되고 데이터 소유권이 명확히 분리됨.\",\"interactionPattern\":\"도서 상태 변경, 신규 등록, 폐기 등 이벤트를 Pub/Sub로 발행하며 대출 프로세스에서 구독하여 반영함. 예: 도서가 폐기되면 대출 프로세스에서 대출 거부 처리.\"}]}",
                         "options": [
                             {
                                 "structure": [
@@ -4029,8 +3216,12 @@ export const aggregateDraftScenarios = {
                                                 }
                                             },
                                             {
-                                                "name": "Member",
-                                                "alias": "회원"
+                                                "name": "MemberReference",
+                                                "alias": "회원 참조",
+                                                "referencedAggregate": {
+                                                    "name": "Member",
+                                                    "alias": "회원"
+                                                }
                                             }
                                         ]
                                     },
@@ -4050,36 +3241,48 @@ export const aggregateDraftScenarios = {
                                                 }
                                             },
                                             {
-                                                "name": "Member",
-                                                "alias": "회원"
+                                                "name": "MemberReference",
+                                                "alias": "회원 참조",
+                                                "referencedAggregate": {
+                                                    "name": "Member",
+                                                    "alias": "회원"
+                                                }
                                             }
                                         ]
+                                    },
+                                    {
+                                        "aggregate": {
+                                            "name": "Member",
+                                            "alias": "회원"
+                                        },
+                                        "enumerations": [],
+                                        "valueObjects": []
                                     }
                                 ],
                                 "pros": {
-                                    "cohesion": "Loan은 대출 처리와 연장, 반납, 연체 등 대출과 관련된 모든 불변성을 보장하며, Reservation은 예약 업무에 집중하여 책임 분리가 명확하다.",
-                                    "coupling": "Book, Member는 ValueObject 참조로만 연결하여 도메인 간 의존성을 최소화하였다.",
-                                    "consistency": "대출-예약 각각의 트랜잭션 경계 내에서 불변성이 확실하게 보장되어, 동시성 오류나 중복 상태 변동 위험이 낮다.",
-                                    "encapsulation": "각 Aggregate 내부에 핵심 도메인 규칙을 은닉하여 외부로부터 변경이 차단된다.",
-                                    "complexity": "Aggregate 수가 적어 구조가 단순하고, 개발 및 유지보수가 용이하다.",
-                                    "independence": "대출과 예약 업무가 별개로 확장, 유지보수될 수 있다.",
-                                    "performance": "대출/예약 별로 데이터 처리 경로가 단순하여 쿼리 성능이 우수하다."
+                                    "cohesion": "각 집계는 대출, 예약, 회원 관련 책임에만 집중하여 단일 책임 원칙이 잘 지켜진다.",
+                                    "coupling": "집계 간 참조는 ValueObject를 통한 일방향 참조만 사용하여 결합도가 낮고, Book, Member 등 외부 컨텍스트와의 경계가 명확하다.",
+                                    "consistency": "Loan과 Reservation의 상태 변경, 이벤트 발행, 연체/연장 등 핵심 규칙이 각 집계 내부에서 원자적으로 보장된다.",
+                                    "encapsulation": "도메인 규칙(대출 연장 제한, 자동 상태 변경 등)이 집계 내부에 감춰져 외부에 노출되지 않는다.",
+                                    "complexity": "각 집계가 단순 명료하여 구현 및 유지보수가 용이하다.",
+                                    "independence": "Loan, Reservation, Member는 독립적으로 확장 및 개선 가능하다.",
+                                    "performance": "집계별 쿼리가 간결해지고 대출·예약 처리 시 병목이 적다."
                                 },
                                 "cons": {
-                                    "cohesion": "Book 상태 변경 및 이력 관리가 별도 Aggregate(Book, BookHistory)로 분리되어 응집도가 분산될 수 있다.",
-                                    "coupling": "Book 상태 변경, 이력 기록은 LibraryBookManagement에 위임되어, 두 컨텍스트 간 통신/연동이 필요하다.",
-                                    "consistency": "대출, 반납 등과 Book 상태변경, 이력저장이 다른 트랜잭션으로 처리되어 일관성 유지 로직이 추가적으로 필요하다.",
-                                    "encapsulation": "Book/BookHistory의 내부 규칙을 직접 캡슐화하지 못하고 외부 연동에 의존한다.",
-                                    "complexity": "업무 플로우가 컨텍스트를 넘나들 때 비즈니스 오케스트레이션 로직이 추가로 요구된다.",
-                                    "independence": "도서 상태 변경 로직에 변경이 있으면, Loan/Reservation 프로세스에도 영향이 간접적으로 미칠 수 있다.",
-                                    "performance": "트랜잭션 분리로 인해 도서 상태, 이력 동기화 시 약간의 지연이 발생할 수 있다."
+                                    "cohesion": "대출-예약-회원 간 복잡한 시나리오(예: 반납 후 예약 자동 전환)에서는 집계 간 오케스트레이션 로직이 서비스 계층에 추가된다.",
+                                    "coupling": "도서 상태 및 이력 참조가 많아질수록 ValueObject를 통한 외부 참조가 늘어 관리 포인트가 증가한다.",
+                                    "consistency": "여러 집계에 걸친 원자적 작업(예: 반납→예약 자동 승인)에서 일관성 유지가 어려워 이벤트 기반 보상 로직이 필요하다.",
+                                    "encapsulation": "업무 프로세스가 집계 밖 서비스 레이어에 분산될 수 있다.",
+                                    "complexity": "복잡한 프로세스의 경우 여러 집계 조합으로 인한 서비스 복잡도가 증가할 수 있다.",
+                                    "independence": "도서 폐기 등 외부 Pub/Sub 이벤트 반영 시 모든 관련 집계가 적절히 대응해야 한다.",
+                                    "performance": "현황 및 이력 조회시 집계별 데이터 조합이 필요해 복합 쿼리 성능 저하가 있을 수 있다."
                                 },
                                 "isAIRecommended": false,
                                 "boundedContext": {
-                                    "name": "LibraryLoanProcess",
-                                    "alias": "대출/반납",
-                                    "displayName": "대출/반납",
-                                    "description": "# Requirements\n\n## userStory\n\n'대출/반납' 화면에서는 회원이 도서를 대출하고 반납하는 것을 관리할 수 있어야 해. 대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할 도서를 선택해야 해. 도서는 도서명이나 ISBN으로 검색할 수 있어야 해. 대출 기간은 7일/14일/30일 중에서 선택할 수 있어. 만약 대출하려는 도서가 이미 대출 중이라면, 예약 신청이 가능해야 해. 대출이 완료되면 해당 도서의 상태는 자동으로 '대출중'으로 변경되어야 해.\n\n## userStory\n\n대출 현황 화면에서는 현재 대출 중인 도서들의 목록을 볼 수 있어야 해. 각 대출 건에 대해 대출일, 반납예정일, 현재 상태(대출중/연체/반납완료)를 확인할 수 있어야 하고, 대출 중인 도서는 연장이나 반납 처리가 가능해야 해. 도서가 반납되면 자동으로 해당 도서의 상태가 '대출가능'으로 변경되어야 해. 만약 예약자가 있는 도서가 반납되면, 해당 도서는 '예약중' 상태로 변경되어야 해.\n\n## userStory\n\n각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해.\n\n## Event\n\n{\"name\":\"LoanRequested\",\"displayName\":\"대출 신청됨\",\"actor\":\"회원\",\"level\":4,\"description\":\"회원이 도서명이나 ISBN으로 검색하여 대출 가능한 도서에 대해 대출을 신청함. 회원번호와 이름 확인 필요.\",\"inputs\":[\"회원번호\",\"이름\",\"도서명/ISBN\",\"대출 가능 상태 도서\",\"대출 기간(7/14/30일)\"],\"outputs\":[\"대출 신청 생성\",\"대출 대기 상태\"],\"nextEvents\":[\"LoanApproved\",\"BookReserved\"]}\n\n## Event\n\n{\"name\":\"LoanApproved\",\"displayName\":\"대출 완료됨\",\"actor\":\"도서관리시스템\",\"level\":5,\"description\":\"대출 요청이 처리되어 도서가 회원에게 대출됨. 도서 상태는 대출중으로 자동 변경됨.\",\"inputs\":[\"대출 신청\",\"대출 가능 도서\",\"회원 자격 유효\"],\"outputs\":[\"대출 기록 생성\",\"도서 상태: 대출중\",\"대출일\",\"반납예정일\"],\"nextEvents\":[\"LoanExtended\",\"LoanReturned\",\"LoanOverdueChecked\"]}\n\n## Event\n\n{\"name\":\"BookReserved\",\"displayName\":\"도서 예약됨\",\"actor\":\"회원\",\"level\":6,\"description\":\"회원이 이미 대출중인 도서에 대해 예약 신청을 함. 예약된 도서는 예약 대기 리스트에 등록됨.\",\"inputs\":[\"회원번호\",\"이름\",\"대출중 상태 도서\"],\"outputs\":[\"예약 기록 생성\",\"도서 상태: 예약중\"],\"nextEvents\":[\"LoanReturned\"]}\n\n## Event\n\n{\"name\":\"LoanReturned\",\"displayName\":\"도서 반납됨\",\"actor\":\"회원\",\"level\":7,\"description\":\"회원이 대출 중인 도서를 반납함. 반납 후 예약자가 있으면 도서 상태는 예약중, 없으면 대출가능으로 변경됨.\",\"inputs\":[\"대출 중 도서\",\"회원\"],\"outputs\":[\"반납 기록 생성\",\"도서 상태: 대출가능/예약중\"],\"nextEvents\":[\"BookStateChanged\",\"ReservationNotified\"]}\n\n## Event\n\n{\"name\":\"LoanExtended\",\"displayName\":\"대출 연장됨\",\"actor\":\"회원\",\"level\":8,\"description\":\"회원이 대출중인 도서의 반납예정일을 연장 신청함. 연장은 정책에 따라 1회 혹은 제한 가능.\",\"inputs\":[\"회원\",\"대출중 상태 도서\",\"연장 조건 충족\"],\"outputs\":[\"반납예정일 변경\"],\"nextEvents\":[\"LoanOverdueChecked\",\"LoanReturned\"]}\n\n## Event\n\n{\"name\":\"LoanOverdueChecked\",\"displayName\":\"연체 확인됨\",\"actor\":\"도서관리시스템\",\"level\":9,\"description\":\"반납 예정일이 지난 도서의 연체 상태를 확인하여 연체로 표시함.\",\"inputs\":[\"대출중 도서\",\"현재 일자\",\"반납예정일\"],\"outputs\":[\"대출 상태: 연체\"],\"nextEvents\":[\"LoanReturned\"]}\n\n## Event\n\n{\"name\":\"ReservationNotified\",\"displayName\":\"예약자 통보됨\",\"actor\":\"도서관리시스템\",\"level\":10,\"description\":\"예약자가 있는 도서가 반납되었을 때, 예약자에게 도서 이용 가능 안내를 통보함.\",\"inputs\":[\"도서 반납\",\"예약자 존재\"],\"outputs\":[\"예약자 알림\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"LoanStatusQueried\",\"displayName\":\"대출 현황 조회됨\",\"actor\":\"도서관리자\",\"level\":12,\"description\":\"현재 대출 중인 도서와 각 대출 건의 대출일, 반납예정일, 상태(대출중/연체/반납완료)를 조회함.\",\"inputs\":[\"조회 조건 (전체/회원별/도서별)\"],\"outputs\":[\"대출 건 목록\",\"각 대출 상태\"],\"nextEvents\":[]}",
+                                    "name": "BookLoanProcess",
+                                    "alias": "도서 대출 프로세스",
+                                    "displayName": "도서 대출 프로세스",
+                                    "description": "# Requirements\n\n## userStory\n\n'대출/반납' 화면에서는 회원이 도서를 대출하고 반납하는 것을 관리할 수 있어야 해. 대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할 도서를 선택해야 해. 도서는 도서명이나 ISBN으로 검색할 수 있어야 해. 대출 기간은 7일/14일/30일 중에서 선택할 수 있어. 만약 대출하려는 도서가 이미 대출 중이라면, 예약 신청이 가능해야 해. 대출이 완료되면 해당 도서의 상태는 자동으로 '대출중'으로 변경되어야 해.\n\n## userStory\n\n대출 현황 화면에서는 현재 대출 중인 도서들의 목록을 볼 수 있어야 해. 각 대출 건에 대해 대출일, 반납예정일, 현재 상태(대출중/연체/반납완료)를 확인할 수 있어야 하고, 대출 중인 도서는 연장이나 반납 처리가 가능해야 해. 도서가 반납되면 자동으로 해당 도서의 상태가 '대출가능'으로 변경되어야 해. 만약 예약자가 있는 도서가 반납되면, 해당 도서는 '예약중' 상태로 변경되어야 해.\n\n## userStory\n\n각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해.\n\n## Event\n\n{\"name\":\"MemberVerified\",\"displayName\":\"회원이 확인됨\",\"actor\":\"회원\",\"level\":5,\"description\":\"회원번호와 이름으로 회원 정보가 확인됨.\",\"inputs\":[\"회원번호\",\"이름\"],\"outputs\":[\"회원 정보\"],\"nextEvents\":[\"BookLoanRequested\"]}\n\n## Event\n\n{\"name\":\"BookLoanRequested\",\"displayName\":\"도서 대출이 신청됨\",\"actor\":\"회원\",\"level\":6,\"description\":\"회원이 대출하고자 하는 도서와 대출 기간(7일/14일/30일)을 선택하여 대출을 신청함.\",\"inputs\":[\"회원 정보\",\"도서 식별자\",\"대출 기간\"],\"outputs\":[\"대출 신청 요청\"],\"nextEvents\":[\"BookLoanApproved\",\"BookLoanRejected\"]}\n\n## Event\n\n{\"name\":\"BookLoanRejected\",\"displayName\":\"도서 대출이 거부됨\",\"actor\":\"도서 대출 시스템\",\"level\":7,\"description\":\"도서가 폐기되었거나 대출 불가 상태인 경우 대출이 거부됨.\",\"inputs\":[\"도서 상태 '폐기' 또는 대출 불가\"],\"outputs\":[\"대출 거부 알림\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookLoanApproved\",\"displayName\":\"도서 대출이 승인됨\",\"actor\":\"도서 대출 시스템\",\"level\":8,\"description\":\"도서가 대출 가능 상태라면 대출이 승인되고 대출 정보가 생성됨. 도서 상태는 '대출중'으로 변경됨.\",\"inputs\":[\"도서 상태 '대출가능'\",\"대출 신청 정보\"],\"outputs\":[\"대출 정보 생성\",\"도서 상태 '대출중'으로 변경\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookReserved\",\"displayName\":\"도서가 예약됨\",\"actor\":\"회원\",\"level\":9,\"description\":\"대출하려는 도서가 이미 대출 중일 때 회원이 해당 도서의 예약을 신청하면 예약이 생성되고, 도서의 상태가 '예약중'으로 변경됨.\",\"inputs\":[\"회원 정보\",\"대출 중인 도서 식별자\"],\"outputs\":[\"예약 정보 생성\",\"도서 상태 '예약중'으로 변경\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookReturned\",\"displayName\":\"도서가 반납됨\",\"actor\":\"회원\",\"level\":10,\"description\":\"회원이 대출한 도서를 반납함. 도서에 예약자가 있으면 상태가 '예약중'으로, 없으면 '대출가능'으로 변경됨.\",\"inputs\":[\"반납 도서 식별자\"],\"outputs\":[\"반납 처리\",\"도서 상태 변경\"],\"nextEvents\":[\"BookAvailable\",\"BookReservedForNext\"]}\n\n## Event\n\n{\"name\":\"BookAvailable\",\"displayName\":\"도서가 대출 가능 상태로 변경됨\",\"actor\":\"도서 대출 시스템\",\"level\":11,\"description\":\"반납된 도서에 예약자가 없는 경우 도서 상태가 '대출가능'으로 변경됨.\",\"inputs\":[\"반납 도서 식별자\",\"예약자 없음\"],\"outputs\":[\"도서 상태 '대출가능'\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookReservedForNext\",\"displayName\":\"도서가 다음 예약자를 위해 예약중 상태로 변경됨\",\"actor\":\"도서 대출 시스템\",\"level\":12,\"description\":\"반납된 도서에 예약자가 있을 경우 도서 상태가 '예약중'으로 변경됨.\",\"inputs\":[\"반납 도서 식별자\",\"예약자 존재\"],\"outputs\":[\"도서 상태 '예약중'\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"LoanExtended\",\"displayName\":\"대출 기간이 연장됨\",\"actor\":\"회원\",\"level\":13,\"description\":\"회원이 대출 중인 도서의 대출 기간을 연장함. 연체 상태에서는 연장이 불가함.\",\"inputs\":[\"회원 정보\",\"대출 중인 도서 식별자\",\"연장 요청\"],\"outputs\":[\"대출 기간 연장\",\"새 반납 예정일\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"LoanOverdue\",\"displayName\":\"도서 대출이 연체됨\",\"actor\":\"도서 대출 시스템\",\"level\":14,\"description\":\"반납 예정일이 지나도 도서가 반납되지 않은 경우, 대출 건의 상태가 '연체'로 변경됨.\",\"inputs\":[\"반납 예정일 경과\",\"반납 미처리\"],\"outputs\":[\"대출 상태 '연체'로 변경\"],\"nextEvents\":[]}\n\n\n## Context Relations\n\n### BookManagementToBookLoanProcess\n- **Type**: Pub/Sub\n- **Direction**: receives from 도서 관리 (BookManagement)\n- **Reason**: 도서의 상태 변화, 신규 등록, 폐기 등 이벤트가 발생하면 이를 대출/예약/연체 프로세스에 전달해야 하며, 두 컨텍스트가 느슨하게 결합되고 데이터 소유권이 명확히 분리됨.\n- **Interaction Pattern**: 도서 상태 변경, 신규 등록, 폐기 등 이벤트를 Pub/Sub로 발행하며 대출 프로세스에서 구독하여 반영함. 예: 도서가 폐기되면 대출 프로세스에서 대출 거부 처리.",
                                     "aggregates": [
                                         {
                                             "name": "Loan",
@@ -4088,10 +3291,14 @@ export const aggregateDraftScenarios = {
                                         {
                                             "name": "Reservation",
                                             "alias": "예약"
+                                        },
+                                        {
+                                            "name": "Member",
+                                            "alias": "회원"
                                         }
                                     ]
                                 },
-                                "description": "{\"userStories\":[{\"title\":\"도서 대출 및 반납 관리\",\"description\":\"회원은 '대출/반납' 화면에서 본인의 회원번호와 이름을 통해 확인받고, 도서명 또는 ISBN으로 도서를 검색하여 대출을 신청할 수 있다. 이미 대출중인 도서는 예약 신청이 가능하다. 도서 대출 완료 시 도서 상태는 자동으로 '대출중'으로 변경된다.\",\"acceptance\":[\"회원번호와 이름으로 회원 확인이 가능하다.\",\"도서명 또는 ISBN으로 도서 검색이 가능하다.\",\"대출 가능 상태의 도서만 대출 신청이 가능하다.\",\"대출 기간은 7일/14일/30일 중 선택할 수 있다.\",\"대출 중인 도서는 예약 신청이 가능하다.\",\"대출 완료 시 도서 상태가 '대출중'으로 자동 변경된다.\"]},{\"title\":\"대출 현황 조회 및 관리\",\"description\":\"도서관리자는 '대출 현황' 화면에서 현재 대출 중인 도서의 대출일, 반납예정일, 상태(대출중/연체/반납완료)를 확인하고, 대출 건별로 연장 또는 반납 처리를 할 수 있다.\",\"acceptance\":[\"대출 건의 대출일, 반납예정일, 상태가 표시된다.\",\"대출 중인 도서에 대해 연장 및 반납 처리가 가능하다.\",\"도서 반납 시 예약자가 있으면 상태가 '예약중', 없으면 '대출가능'으로 변경된다.\",\"대출 상태는 '대출중', '연체', '반납완료'가 존재한다.\"]},{\"title\":\"도서별 대출 및 상태 이력 조회\",\"description\":\"관리자는 각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있다.\",\"acceptance\":[\"각 도서별로 대출 이력과 상태 변경 이력이 조회된다.\",\"대출 이력에는 대출일, 반납일, 연장, 연체 정보가 포함된다.\",\"상태 이력에는 상태 변경 일시와 변경 내용이 포함된다.\"]}],\"entities\":{\"Member\":{\"properties\":[{\"name\":\"memberId\",\"type\":\"String\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"name\",\"type\":\"String\",\"required\":true}]},\"Book\":{\"properties\":[{\"name\":\"bookId\",\"type\":\"String\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"title\",\"type\":\"String\",\"required\":true},{\"name\":\"isbn\",\"type\":\"String\",\"required\":true},{\"name\":\"status\",\"type\":\"enum\",\"required\":true,\"values\":[\"AVAILABLE\",\"ON_LOAN\",\"RESERVED\"]}]},\"Loan\":{\"properties\":[{\"name\":\"loanId\",\"type\":\"Long\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"bookId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"memberId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Member\"},{\"name\":\"loanDate\",\"type\":\"Date\",\"required\":true},{\"name\":\"dueDate\",\"type\":\"Date\",\"required\":true},{\"name\":\"returnDate\",\"type\":\"Date\"},{\"name\":\"loanStatus\",\"type\":\"enum\",\"required\":true,\"values\":[\"ON_LOAN\",\"OVERDUE\",\"RETURNED\"]},{\"name\":\"extendCount\",\"type\":\"Integer\"}]},\"Reservation\":{\"properties\":[{\"name\":\"reservationId\",\"type\":\"Long\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"bookId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"memberId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Member\"},{\"name\":\"reservationDate\",\"type\":\"Date\",\"required\":true}]},\"BookStatusHistory\":{\"properties\":[{\"name\":\"historyId\",\"type\":\"Long\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"bookId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"status\",\"type\":\"enum\",\"required\":true,\"values\":[\"AVAILABLE\",\"ON_LOAN\",\"RESERVED\"]},{\"name\":\"changeDate\",\"type\":\"Date\",\"required\":true}]}},\"businessRules\":[{\"name\":\"대출 가능 상태 확인\",\"description\":\"도서 상태가 AVAILABLE인 경우에만 대출 신청이 가능하다.\"},{\"name\":\"대출 중 도서 예약\",\"description\":\"도서 상태가 ON_LOAN일 때만 예약 신청이 가능하다.\"},{\"name\":\"대출 기간 선택\",\"description\":\"대출 신청 시 7일, 14일, 30일 중에서 대출 기간을 선택해야 한다.\"},{\"name\":\"연장 제한\",\"description\":\"대출 연장은 정책에 따라 1회 또는 제한 횟수만큼만 가능하다.\"},{\"name\":\"반납 시 도서 상태 전환\",\"description\":\"도서 반납 후 예약자가 있으면 상태를 RESERVED, 없으면 AVAILABLE로 변경한다.\"},{\"name\":\"연체 처리\",\"description\":\"반납 예정일이 경과하면 도서의 대출 상태를 OVERDUE로 변경한다.\"},{\"name\":\"상태 변경 이력 기록\",\"description\":\"모든 도서의 상태 변경은 BookStatusHistory에 기록된다.\"}],\"interfaces\":{\"LoanReturnScreen\":{\"sections\":[{\"name\":\"회원 확인\",\"type\":\"form\",\"fields\":[{\"name\":\"memberId\",\"type\":\"text\",\"required\":true},{\"name\":\"name\",\"type\":\"text\",\"required\":true}],\"actions\":[],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}},{\"name\":\"도서 검색 및 선택\",\"type\":\"form\",\"fields\":[{\"name\":\"titleOrIsbn\",\"type\":\"text\",\"required\":true}],\"actions\":[\"도서 검색\"],\"filters\":[],\"resultTable\":{\"columns\":[\"bookId\",\"title\",\"isbn\",\"status\"],\"actions\":[\"도서 선택\"]}},{\"name\":\"대출 신청\",\"type\":\"form\",\"fields\":[{\"name\":\"loanPeriod\",\"type\":\"select\",\"required\":true}],\"actions\":[\"대출 신청\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}},{\"name\":\"예약 신청\",\"type\":\"form\",\"fields\":[],\"actions\":[\"예약 신청\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}}]},\"LoanStatusScreen\":{\"sections\":[{\"name\":\"대출 현황 목록\",\"type\":\"table\",\"fields\":[],\"actions\":[\"연장 신청\",\"반납 처리\"],\"filters\":[\"전체/회원별/도서별\"],\"resultTable\":{\"columns\":[\"loanId\",\"memberId\",\"bookId\",\"loanDate\",\"dueDate\",\"loanStatus\"],\"actions\":[\"상세 조회\"]}}]},\"BookHistoryScreen\":{\"sections\":[{\"name\":\"대출 이력\",\"type\":\"table\",\"fields\":[],\"actions\":[],\"filters\":[\"도서별\"],\"resultTable\":{\"columns\":[\"loanId\",\"memberId\",\"loanDate\",\"dueDate\",\"returnDate\",\"loanStatus\"],\"actions\":[]}},{\"name\":\"상태 변경 이력\",\"type\":\"table\",\"fields\":[],\"actions\":[],\"filters\":[\"도서별\"],\"resultTable\":{\"columns\":[\"historyId\",\"status\",\"changeDate\"],\"actions\":[]}}]}},\"events\":[{\"name\":\"LoanRequested\",\"description\":\"회원이 도서명 또는 ISBN으로 검색하여 대출 가능한 도서에 대해 대출을 신청함. 회원번호와 이름 확인 필요.\",\"displayName\":\"대출 신청됨\"},{\"name\":\"LoanApproved\",\"description\":\"대출 요청이 처리되어 도서가 회원에게 대출됨. 도서 상태는 대출중으로 자동 변경됨.\",\"displayName\":\"대출 완료됨\"},{\"name\":\"BookReserved\",\"description\":\"회원이 이미 대출중인 도서에 대해 예약 신청을 함. 예약된 도서는 예약 대기 리스트에 등록됨.\",\"displayName\":\"도서 예약됨\"},{\"name\":\"LoanReturned\",\"description\":\"회원이 대출 중인 도서를 반납함. 반납 후 예약자가 있으면 도서 상태는 예약중, 없으면 대출가능으로 변경됨.\",\"displayName\":\"도서 반납됨\"},{\"name\":\"LoanExtended\",\"description\":\"회원이 대출중인 도서의 반납예정일을 연장 신청함. 연장은 정책에 따라 1회 혹은 제한 가능.\",\"displayName\":\"대출 연장됨\"},{\"name\":\"LoanOverdueChecked\",\"description\":\"반납 예정일이 지난 도서의 연체 상태를 확인하여 연체로 표시함.\",\"displayName\":\"연체 확인됨\"},{\"name\":\"ReservationNotified\",\"description\":\"예약자가 있는 도서가 반납되었을 때, 예약자에게 도서 이용 가능 안내를 통보함.\",\"displayName\":\"예약자 통보됨\"},{\"name\":\"LoanStatusQueried\",\"description\":\"현재 대출 중인 도서와 각 대출 건의 대출일, 반납예정일, 상태(대출중/연체/반납완료)를 조회함.\",\"displayName\":\"대출 현황 조회됨\"}]}"
+                                "description": "{\"userStories\":[{\"title\":\"도서 대출 및 반납 관리\",\"description\":\"회원은 '대출/반납' 화면에서 회원 확인 후 도서를 대출하거나 반납할 수 있다. 대출 시 도서명 또는 ISBN으로 검색, 대출 기간 선택, 이미 대출 중인 경우 예약 신청이 가능하다. 반납 시 도서 상태 및 예약자 유무에 따라 자동 상태 변경이 이루어진다.\",\"acceptance\":[\"회원번호와 이름으로 회원이 확인되어야 한다.\",\"도서명 또는 ISBN으로 도서를 검색할 수 있어야 한다.\",\"대출 기간은 7일/14일/30일 중 선택할 수 있다.\",\"이미 대출 중인 도서는 예약 신청이 가능하다.\",\"대출 완료 시 도서 상태가 자동으로 '대출중'으로 변경된다.\",\"반납 완료 시 예약자 유무에 따라 도서 상태가 '예약중' 또는 '대출가능'으로 변경된다.\"]},{\"title\":\"대출 현황 및 처리\",\"description\":\"대출 현황 화면에서는 현재 대출 중인 도서들의 목록, 대출일, 반납예정일, 상태(대출중/연체/반납완료)를 확인하고, 대출 중인 도서에 대해 연장 및 반납 처리가 가능하다.\",\"acceptance\":[\"대출 건별로 대출일, 반납예정일, 현재 상태를 확인할 수 있다.\",\"대출 중인 도서에 대해 연장 및 반납 처리가 가능하다.\",\"연체 상태에서는 연장이 불가하다.\"]},{\"title\":\"도서별 이력 및 상태 변경 추적\",\"description\":\"관리자는 각 도서별 대출 이력과 상태 변경 이력을 조회할 수 있어야 하며, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있다.\",\"acceptance\":[\"도서별로 모든 대출 이력과 상태 변경 이력을 볼 수 있다.\"]}],\"entities\":{\"Member\":{\"properties\":[{\"name\":\"memberId\",\"type\":\"String\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"name\",\"type\":\"String\",\"required\":true}]},\"Book\":{\"properties\":[{\"name\":\"bookId\",\"type\":\"String\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"title\",\"type\":\"String\",\"required\":true},{\"name\":\"isbn\",\"type\":\"String\",\"required\":true},{\"name\":\"status\",\"type\":\"enum\",\"required\":true,\"values\":[\"AVAILABLE\",\"ON_LOAN\",\"RESERVED\",\"DISCARDED\"]}]},\"Loan\":{\"properties\":[{\"name\":\"loanId\",\"type\":\"String\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"memberId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Member\"},{\"name\":\"bookId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"loanDate\",\"type\":\"Date\",\"required\":true},{\"name\":\"dueDate\",\"type\":\"Date\",\"required\":true},{\"name\":\"returnDate\",\"type\":\"Date\"},{\"name\":\"status\",\"type\":\"enum\",\"required\":true,\"values\":[\"ON_LOAN\",\"OVERDUE\",\"RETURNED\"]}]},\"Reservation\":{\"properties\":[{\"name\":\"reservationId\",\"type\":\"String\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"memberId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Member\"},{\"name\":\"bookId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"reservationDate\",\"type\":\"Date\",\"required\":true}]},\"BookStatusHistory\":{\"properties\":[{\"name\":\"historyId\",\"type\":\"String\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"bookId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"beforeStatus\",\"type\":\"enum\",\"required\":true,\"values\":[\"AVAILABLE\",\"ON_LOAN\",\"RESERVED\",\"DISCARDED\"]},{\"name\":\"afterStatus\",\"type\":\"enum\",\"required\":true,\"values\":[\"AVAILABLE\",\"ON_LOAN\",\"RESERVED\",\"DISCARDED\"]},{\"name\":\"changedAt\",\"type\":\"Date\",\"required\":true}]}},\"businessRules\":[{\"name\":\"대출 기간 선택 제한\",\"description\":\"대출 기간은 7일, 14일, 30일만 선택할 수 있다.\"},{\"name\":\"연체 도서 연장 불가\",\"description\":\"연체 상태(OVERDUE)인 대출 건은 연장이 불가하다.\"},{\"name\":\"대출 상태 자동 변경\",\"description\":\"도서 대출 시 상태는 'ON_LOAN', 반납 시 예약자 없으면 'AVAILABLE', 예약자 있으면 'RESERVED'로 자동 변경된다.\"},{\"name\":\"폐기/대출 불가 도서 대출 거부\",\"description\":\"도서 상태가 'DISCARDED' 또는 대출 불가 시 대출이 거부된다.\"}],\"interfaces\":{\"LoanAndReturn\":{\"sections\":[{\"name\":\"회원 확인\",\"type\":\"form\",\"fields\":[{\"name\":\"memberId\",\"type\":\"text\",\"required\":true},{\"name\":\"name\",\"type\":\"text\",\"required\":true}],\"actions\":[\"회원 확인\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}},{\"name\":\"도서 대출 신청\",\"type\":\"form\",\"fields\":[{\"name\":\"bookSearch\",\"type\":\"text\",\"required\":true},{\"name\":\"searchType\",\"type\":\"select\",\"required\":true},{\"name\":\"loanPeriod\",\"type\":\"select\",\"required\":true}],\"actions\":[\"대출 신청\",\"예약 신청\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}},{\"name\":\"도서 반납\",\"type\":\"form\",\"fields\":[{\"name\":\"loanId\",\"type\":\"text\",\"required\":true}],\"actions\":[\"반납 처리\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}}]},\"LoanStatus\":{\"sections\":[{\"name\":\"대출 현황 목록\",\"type\":\"table\",\"fields\":[],\"actions\":[\"연장\",\"반납\"],\"filters\":[\"대출 상태\",\"대출일\",\"반납예정일\"],\"resultTable\":{\"columns\":[\"loanId\",\"bookId\",\"title\",\"loanDate\",\"dueDate\",\"status\"],\"actions\":[\"연장\",\"반납\"]}}]},\"BookHistory\":{\"sections\":[{\"name\":\"도서별 이력 조회\",\"type\":\"table\",\"fields\":[{\"name\":\"bookId\",\"type\":\"text\",\"required\":true}],\"actions\":[\"대출 이력 조회\",\"상태 변경 이력 조회\"],\"filters\":[],\"resultTable\":{\"columns\":[\"loanId\",\"memberId\",\"loanDate\",\"dueDate\",\"returnDate\",\"status\"],\"actions\":[]}},{\"name\":\"도서 상태 변경 이력\",\"type\":\"table\",\"fields\":[],\"actions\":[],\"filters\":[],\"resultTable\":{\"columns\":[\"historyId\",\"beforeStatus\",\"afterStatus\",\"changedAt\"],\"actions\":[]}}]}},\"events\":[{\"name\":\"MemberVerified\",\"description\":\"회원번호와 이름으로 회원 정보가 확인됨.\",\"displayName\":\"회원이 확인됨\"},{\"name\":\"BookLoanRequested\",\"description\":\"회원이 대출하고자 하는 도서와 대출 기간(7일/14일/30일)을 선택하여 대출을 신청함.\",\"displayName\":\"도서 대출이 신청됨\"},{\"name\":\"BookLoanRejected\",\"description\":\"도서가 폐기되었거나 대출 불가 상태인 경우 대출이 거부됨.\",\"displayName\":\"도서 대출이 거부됨\"},{\"name\":\"BookLoanApproved\",\"description\":\"도서가 대출 가능 상태라면 대출이 승인되고 대출 정보가 생성됨. 도서 상태는 '대출중'으로 변경됨.\",\"displayName\":\"도서 대출이 승인됨\"},{\"name\":\"BookReserved\",\"description\":\"대출하려는 도서가 이미 대출 중일 때 회원이 해당 도서의 예약을 신청하면 예약이 생성되고, 도서의 상태가 '예약중'으로 변경됨.\",\"displayName\":\"도서가 예약됨\"},{\"name\":\"BookReturned\",\"description\":\"회원이 대출한 도서를 반납함. 도서에 예약자가 있으면 상태가 '예약중'으로, 없으면 '대출가능'으로 변경됨.\",\"displayName\":\"도서가 반납됨\"},{\"name\":\"BookAvailable\",\"description\":\"반납된 도서에 예약자가 없는 경우 도서 상태가 '대출가능'으로 변경됨.\",\"displayName\":\"도서가 대출 가능 상태로 변경됨\"},{\"name\":\"BookReservedForNext\",\"description\":\"반납된 도서에 예약자가 있을 경우 도서 상태가 '예약중'으로 변경됨.\",\"displayName\":\"도서가 다음 예약자를 위해 예약중 상태로 변경됨\"},{\"name\":\"LoanExtended\",\"description\":\"회원이 대출 중인 도서의 대출 기간을 연장함. 연체 상태에서는 연장이 불가함.\",\"displayName\":\"대출 기간이 연장됨\"},{\"name\":\"LoanOverdue\",\"description\":\"반납 예정일이 지나도 도서가 반납되지 않은 경우, 대출 건의 상태가 '연체'로 변경됨.\",\"displayName\":\"도서 대출이 연체됨\"}],\"contextRelations\":[{\"name\":\"BookManagementToBookLoanProcess\",\"type\":\"Pub/Sub\",\"direction\":\"receives from\",\"targetContext\":\"도서 관리 (BookManagement)\",\"reason\":\"도서의 상태 변화, 신규 등록, 폐기 등 이벤트가 발생하면 이를 대출/예약/연체 프로세스에 전달해야 하며, 두 컨텍스트가 느슨하게 결합되고 데이터 소유권이 명확히 분리됨.\",\"interactionPattern\":\"도서 상태 변경, 신규 등록, 폐기 등 이벤트를 Pub/Sub로 발행하며 대출 프로세스에서 구독하여 반영함. 예: 도서가 폐기되면 대출 프로세스에서 대출 거부 처리.\"}]}"
                             },
                             {
                                 "structure": [
@@ -4116,8 +3323,20 @@ export const aggregateDraftScenarios = {
                                                 }
                                             },
                                             {
-                                                "name": "Member",
-                                                "alias": "회원"
+                                                "name": "MemberReference",
+                                                "alias": "회원 참조",
+                                                "referencedAggregate": {
+                                                    "name": "Member",
+                                                    "alias": "회원"
+                                                }
+                                            },
+                                            {
+                                                "name": "ReservationReference",
+                                                "alias": "예약 참조",
+                                                "referencedAggregate": {
+                                                    "name": "Reservation",
+                                                    "alias": "예약"
+                                                }
                                             }
                                         ]
                                     },
@@ -4137,10 +3356,22 @@ export const aggregateDraftScenarios = {
                                                 }
                                             },
                                             {
-                                                "name": "Member",
-                                                "alias": "회원"
+                                                "name": "MemberReference",
+                                                "alias": "회원 참조",
+                                                "referencedAggregate": {
+                                                    "name": "Member",
+                                                    "alias": "회원"
+                                                }
                                             }
                                         ]
+                                    },
+                                    {
+                                        "aggregate": {
+                                            "name": "Member",
+                                            "alias": "회원"
+                                        },
+                                        "enumerations": [],
+                                        "valueObjects": []
                                     },
                                     {
                                         "aggregate": {
@@ -4156,42 +3387,34 @@ export const aggregateDraftScenarios = {
                                                     "name": "Loan",
                                                     "alias": "대출"
                                                 }
-                                            },
-                                            {
-                                                "name": "BookReference",
-                                                "alias": "도서 참조",
-                                                "referencedAggregate": {
-                                                    "name": "Book",
-                                                    "alias": "도서"
-                                                }
                                             }
                                         ]
                                     }
                                 ],
                                 "pros": {
-                                    "cohesion": "LoanHistory가 별도 Aggregate로 관리되어 대출·연장·반납·연체 이력을 전문적으로 누적·조회할 수 있다.",
-                                    "coupling": "대출 흐름과 이력 관리가 분리되어 서로의 변경에 최소 영향만 받는다.",
-                                    "consistency": "Loan/Reservation과 이력 저장이 별도 트랜잭션으로 처리되어 업무별 불변성 보호가 명확하다.",
-                                    "encapsulation": "대출 이력 관련 규칙(예: 변경 불가, 조회 only 등)이 LoanHistory Aggregate 내부에 집중된다.",
-                                    "complexity": "이력 관리 로직이 Loan, Reservation에서 분리되어 각 도메인의 복잡도가 낮아진다.",
-                                    "independence": "이력 정책 변경(예: 이력 상세 항목 추가 등)이 Loan, Reservation Aggregate에 영향을 거의 미치지 않는다.",
-                                    "performance": "이력 조회/통계 연산이 대출, 예약 데이터와 분리되어 대규모 데이터 처리 시 효율적이다."
+                                    "cohesion": "LoanHistory 집계를 별도로 분리하여, 이력 저장과 검색에 최적화된 설계를 제공한다.",
+                                    "coupling": "Loan과 Reservation은 분리되고, 각 역할에 집중하여 코드 결합도가 낮다.",
+                                    "consistency": "대출-예약-이력 각각의 상태 및 변경이 독립적으로 보장된다.",
+                                    "encapsulation": "이력 관련 규칙이 LoanHistory 내부에 집중되어 이력 처리의 복잡성을 분산한다.",
+                                    "complexity": "이력 저장·조회 업무가 Loan, Reservation과 분리되어 개발 및 테스트가 쉽다.",
+                                    "independence": "이력 확장, 별도 보관, 조회 성능 개선 등 다양한 변화에 유연하게 대응 가능하다.",
+                                    "performance": "대출/예약 처리 트랜잭션과 이력 기록을 분리함으로써 주업무 흐름의 성능 저하를 방지한다."
                                 },
                                 "cons": {
-                                    "cohesion": "대출-이력 간 강한 연관에도 불구하고 트랜잭션이 분리되어 약간의 데이터 불일치 가능성이 존재한다.",
-                                    "coupling": "이력 기록 시 Loan의 상태·속성을 반드시 동기화해야 하므로 업무 서비스 계층에 추가 연동 로직이 필요하다.",
-                                    "consistency": "Loan, LoanHistory의 일관성 보장을 위한 보상 트랜잭션 또는 동기화 이벤트 관리가 필요하다.",
-                                    "encapsulation": "이력 변경 시 Loan/LoanHistory 양쪽에 수정이 필요할 수 있어 코드 추적성이 떨어질 수 있다.",
-                                    "complexity": "Aggregate가 늘어나면서 배포, 관리 포인트가 증가한다.",
-                                    "independence": "이력 데이터와 본 대출/예약 데이터 간의 비즈니스 룰 연결(예: 상태 이력 반영 등)이 추가 구현 필요.",
-                                    "performance": "이력 저장, 조회에 별도 Aggregate 접근이 필요해 단순한 구조에 비해 오버헤드가 약간 증가한다."
+                                    "cohesion": "집계가 늘어나 관리 포인트가 증가하고, 단순 케이스에서 구조가 복잡하게 느껴질 수 있다.",
+                                    "coupling": "Loan↔LoanHistory 간 참조가 추가되어 이벤트 동기화나 데이터 일관성 관리 비용이 있다.",
+                                    "consistency": "Loan과 LoanHistory 간 데이터 불일치(예: 기록 누락 등) 발생 가능성이 존재한다.",
+                                    "encapsulation": "이력 갱신을 위해 Loan 이벤트와 LoanHistory 연동이 필요해 구현 난이도가 상승한다.",
+                                    "complexity": "서비스 계층에서 여러 집계 조합 및 연계 로직(예: 대출/이력 동시 기록) 구현 필요.",
+                                    "independence": "LoanHistory가 Loan 변화에 민감하게 연동되므로 완전한 독립성은 제한된다.",
+                                    "performance": "복합 조회(현황+이력 등) 시 여러 집계 조인 및 추가 I/O가 발생할 수 있다."
                                 },
                                 "isAIRecommended": true,
                                 "boundedContext": {
-                                    "name": "LibraryLoanProcess",
-                                    "alias": "대출/반납",
-                                    "displayName": "대출/반납",
-                                    "description": "# Requirements\n\n## userStory\n\n'대출/반납' 화면에서는 회원이 도서를 대출하고 반납하는 것을 관리할 수 있어야 해. 대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할 도서를 선택해야 해. 도서는 도서명이나 ISBN으로 검색할 수 있어야 해. 대출 기간은 7일/14일/30일 중에서 선택할 수 있어. 만약 대출하려는 도서가 이미 대출 중이라면, 예약 신청이 가능해야 해. 대출이 완료되면 해당 도서의 상태는 자동으로 '대출중'으로 변경되어야 해.\n\n## userStory\n\n대출 현황 화면에서는 현재 대출 중인 도서들의 목록을 볼 수 있어야 해. 각 대출 건에 대해 대출일, 반납예정일, 현재 상태(대출중/연체/반납완료)를 확인할 수 있어야 하고, 대출 중인 도서는 연장이나 반납 처리가 가능해야 해. 도서가 반납되면 자동으로 해당 도서의 상태가 '대출가능'으로 변경되어야 해. 만약 예약자가 있는 도서가 반납되면, 해당 도서는 '예약중' 상태로 변경되어야 해.\n\n## userStory\n\n각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해.\n\n## Event\n\n{\"name\":\"LoanRequested\",\"displayName\":\"대출 신청됨\",\"actor\":\"회원\",\"level\":4,\"description\":\"회원이 도서명이나 ISBN으로 검색하여 대출 가능한 도서에 대해 대출을 신청함. 회원번호와 이름 확인 필요.\",\"inputs\":[\"회원번호\",\"이름\",\"도서명/ISBN\",\"대출 가능 상태 도서\",\"대출 기간(7/14/30일)\"],\"outputs\":[\"대출 신청 생성\",\"대출 대기 상태\"],\"nextEvents\":[\"LoanApproved\",\"BookReserved\"]}\n\n## Event\n\n{\"name\":\"LoanApproved\",\"displayName\":\"대출 완료됨\",\"actor\":\"도서관리시스템\",\"level\":5,\"description\":\"대출 요청이 처리되어 도서가 회원에게 대출됨. 도서 상태는 대출중으로 자동 변경됨.\",\"inputs\":[\"대출 신청\",\"대출 가능 도서\",\"회원 자격 유효\"],\"outputs\":[\"대출 기록 생성\",\"도서 상태: 대출중\",\"대출일\",\"반납예정일\"],\"nextEvents\":[\"LoanExtended\",\"LoanReturned\",\"LoanOverdueChecked\"]}\n\n## Event\n\n{\"name\":\"BookReserved\",\"displayName\":\"도서 예약됨\",\"actor\":\"회원\",\"level\":6,\"description\":\"회원이 이미 대출중인 도서에 대해 예약 신청을 함. 예약된 도서는 예약 대기 리스트에 등록됨.\",\"inputs\":[\"회원번호\",\"이름\",\"대출중 상태 도서\"],\"outputs\":[\"예약 기록 생성\",\"도서 상태: 예약중\"],\"nextEvents\":[\"LoanReturned\"]}\n\n## Event\n\n{\"name\":\"LoanReturned\",\"displayName\":\"도서 반납됨\",\"actor\":\"회원\",\"level\":7,\"description\":\"회원이 대출 중인 도서를 반납함. 반납 후 예약자가 있으면 도서 상태는 예약중, 없으면 대출가능으로 변경됨.\",\"inputs\":[\"대출 중 도서\",\"회원\"],\"outputs\":[\"반납 기록 생성\",\"도서 상태: 대출가능/예약중\"],\"nextEvents\":[\"BookStateChanged\",\"ReservationNotified\"]}\n\n## Event\n\n{\"name\":\"LoanExtended\",\"displayName\":\"대출 연장됨\",\"actor\":\"회원\",\"level\":8,\"description\":\"회원이 대출중인 도서의 반납예정일을 연장 신청함. 연장은 정책에 따라 1회 혹은 제한 가능.\",\"inputs\":[\"회원\",\"대출중 상태 도서\",\"연장 조건 충족\"],\"outputs\":[\"반납예정일 변경\"],\"nextEvents\":[\"LoanOverdueChecked\",\"LoanReturned\"]}\n\n## Event\n\n{\"name\":\"LoanOverdueChecked\",\"displayName\":\"연체 확인됨\",\"actor\":\"도서관리시스템\",\"level\":9,\"description\":\"반납 예정일이 지난 도서의 연체 상태를 확인하여 연체로 표시함.\",\"inputs\":[\"대출중 도서\",\"현재 일자\",\"반납예정일\"],\"outputs\":[\"대출 상태: 연체\"],\"nextEvents\":[\"LoanReturned\"]}\n\n## Event\n\n{\"name\":\"ReservationNotified\",\"displayName\":\"예약자 통보됨\",\"actor\":\"도서관리시스템\",\"level\":10,\"description\":\"예약자가 있는 도서가 반납되었을 때, 예약자에게 도서 이용 가능 안내를 통보함.\",\"inputs\":[\"도서 반납\",\"예약자 존재\"],\"outputs\":[\"예약자 알림\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"LoanStatusQueried\",\"displayName\":\"대출 현황 조회됨\",\"actor\":\"도서관리자\",\"level\":12,\"description\":\"현재 대출 중인 도서와 각 대출 건의 대출일, 반납예정일, 상태(대출중/연체/반납완료)를 조회함.\",\"inputs\":[\"조회 조건 (전체/회원별/도서별)\"],\"outputs\":[\"대출 건 목록\",\"각 대출 상태\"],\"nextEvents\":[]}",
+                                    "name": "BookLoanProcess",
+                                    "alias": "도서 대출 프로세스",
+                                    "displayName": "도서 대출 프로세스",
+                                    "description": "# Requirements\n\n## userStory\n\n'대출/반납' 화면에서는 회원이 도서를 대출하고 반납하는 것을 관리할 수 있어야 해. 대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할 도서를 선택해야 해. 도서는 도서명이나 ISBN으로 검색할 수 있어야 해. 대출 기간은 7일/14일/30일 중에서 선택할 수 있어. 만약 대출하려는 도서가 이미 대출 중이라면, 예약 신청이 가능해야 해. 대출이 완료되면 해당 도서의 상태는 자동으로 '대출중'으로 변경되어야 해.\n\n## userStory\n\n대출 현황 화면에서는 현재 대출 중인 도서들의 목록을 볼 수 있어야 해. 각 대출 건에 대해 대출일, 반납예정일, 현재 상태(대출중/연체/반납완료)를 확인할 수 있어야 하고, 대출 중인 도서는 연장이나 반납 처리가 가능해야 해. 도서가 반납되면 자동으로 해당 도서의 상태가 '대출가능'으로 변경되어야 해. 만약 예약자가 있는 도서가 반납되면, 해당 도서는 '예약중' 상태로 변경되어야 해.\n\n## userStory\n\n각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해.\n\n## Event\n\n{\"name\":\"MemberVerified\",\"displayName\":\"회원이 확인됨\",\"actor\":\"회원\",\"level\":5,\"description\":\"회원번호와 이름으로 회원 정보가 확인됨.\",\"inputs\":[\"회원번호\",\"이름\"],\"outputs\":[\"회원 정보\"],\"nextEvents\":[\"BookLoanRequested\"]}\n\n## Event\n\n{\"name\":\"BookLoanRequested\",\"displayName\":\"도서 대출이 신청됨\",\"actor\":\"회원\",\"level\":6,\"description\":\"회원이 대출하고자 하는 도서와 대출 기간(7일/14일/30일)을 선택하여 대출을 신청함.\",\"inputs\":[\"회원 정보\",\"도서 식별자\",\"대출 기간\"],\"outputs\":[\"대출 신청 요청\"],\"nextEvents\":[\"BookLoanApproved\",\"BookLoanRejected\"]}\n\n## Event\n\n{\"name\":\"BookLoanRejected\",\"displayName\":\"도서 대출이 거부됨\",\"actor\":\"도서 대출 시스템\",\"level\":7,\"description\":\"도서가 폐기되었거나 대출 불가 상태인 경우 대출이 거부됨.\",\"inputs\":[\"도서 상태 '폐기' 또는 대출 불가\"],\"outputs\":[\"대출 거부 알림\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookLoanApproved\",\"displayName\":\"도서 대출이 승인됨\",\"actor\":\"도서 대출 시스템\",\"level\":8,\"description\":\"도서가 대출 가능 상태라면 대출이 승인되고 대출 정보가 생성됨. 도서 상태는 '대출중'으로 변경됨.\",\"inputs\":[\"도서 상태 '대출가능'\",\"대출 신청 정보\"],\"outputs\":[\"대출 정보 생성\",\"도서 상태 '대출중'으로 변경\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookReserved\",\"displayName\":\"도서가 예약됨\",\"actor\":\"회원\",\"level\":9,\"description\":\"대출하려는 도서가 이미 대출 중일 때 회원이 해당 도서의 예약을 신청하면 예약이 생성되고, 도서의 상태가 '예약중'으로 변경됨.\",\"inputs\":[\"회원 정보\",\"대출 중인 도서 식별자\"],\"outputs\":[\"예약 정보 생성\",\"도서 상태 '예약중'으로 변경\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookReturned\",\"displayName\":\"도서가 반납됨\",\"actor\":\"회원\",\"level\":10,\"description\":\"회원이 대출한 도서를 반납함. 도서에 예약자가 있으면 상태가 '예약중'으로, 없으면 '대출가능'으로 변경됨.\",\"inputs\":[\"반납 도서 식별자\"],\"outputs\":[\"반납 처리\",\"도서 상태 변경\"],\"nextEvents\":[\"BookAvailable\",\"BookReservedForNext\"]}\n\n## Event\n\n{\"name\":\"BookAvailable\",\"displayName\":\"도서가 대출 가능 상태로 변경됨\",\"actor\":\"도서 대출 시스템\",\"level\":11,\"description\":\"반납된 도서에 예약자가 없는 경우 도서 상태가 '대출가능'으로 변경됨.\",\"inputs\":[\"반납 도서 식별자\",\"예약자 없음\"],\"outputs\":[\"도서 상태 '대출가능'\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookReservedForNext\",\"displayName\":\"도서가 다음 예약자를 위해 예약중 상태로 변경됨\",\"actor\":\"도서 대출 시스템\",\"level\":12,\"description\":\"반납된 도서에 예약자가 있을 경우 도서 상태가 '예약중'으로 변경됨.\",\"inputs\":[\"반납 도서 식별자\",\"예약자 존재\"],\"outputs\":[\"도서 상태 '예약중'\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"LoanExtended\",\"displayName\":\"대출 기간이 연장됨\",\"actor\":\"회원\",\"level\":13,\"description\":\"회원이 대출 중인 도서의 대출 기간을 연장함. 연체 상태에서는 연장이 불가함.\",\"inputs\":[\"회원 정보\",\"대출 중인 도서 식별자\",\"연장 요청\"],\"outputs\":[\"대출 기간 연장\",\"새 반납 예정일\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"LoanOverdue\",\"displayName\":\"도서 대출이 연체됨\",\"actor\":\"도서 대출 시스템\",\"level\":14,\"description\":\"반납 예정일이 지나도 도서가 반납되지 않은 경우, 대출 건의 상태가 '연체'로 변경됨.\",\"inputs\":[\"반납 예정일 경과\",\"반납 미처리\"],\"outputs\":[\"대출 상태 '연체'로 변경\"],\"nextEvents\":[]}\n\n\n## Context Relations\n\n### BookManagementToBookLoanProcess\n- **Type**: Pub/Sub\n- **Direction**: receives from 도서 관리 (BookManagement)\n- **Reason**: 도서의 상태 변화, 신규 등록, 폐기 등 이벤트가 발생하면 이를 대출/예약/연체 프로세스에 전달해야 하며, 두 컨텍스트가 느슨하게 결합되고 데이터 소유권이 명확히 분리됨.\n- **Interaction Pattern**: 도서 상태 변경, 신규 등록, 폐기 등 이벤트를 Pub/Sub로 발행하며 대출 프로세스에서 구독하여 반영함. 예: 도서가 폐기되면 대출 프로세스에서 대출 거부 처리.",
                                     "aggregates": [
                                         {
                                             "name": "Loan",
@@ -4200,17 +3423,21 @@ export const aggregateDraftScenarios = {
                                         {
                                             "name": "Reservation",
                                             "alias": "예약"
+                                        },
+                                        {
+                                            "name": "Member",
+                                            "alias": "회원"
                                         }
                                     ]
                                 },
-                                "description": "{\"userStories\":[{\"title\":\"도서 대출 및 반납 관리\",\"description\":\"회원은 '대출/반납' 화면에서 본인의 회원번호와 이름을 통해 확인받고, 도서명 또는 ISBN으로 도서를 검색하여 대출을 신청할 수 있다. 이미 대출중인 도서는 예약 신청이 가능하다. 도서 대출 완료 시 도서 상태는 자동으로 '대출중'으로 변경된다.\",\"acceptance\":[\"회원번호와 이름으로 회원 확인이 가능하다.\",\"도서명 또는 ISBN으로 도서 검색이 가능하다.\",\"대출 가능 상태의 도서만 대출 신청이 가능하다.\",\"대출 기간은 7일/14일/30일 중 선택할 수 있다.\",\"대출 중인 도서는 예약 신청이 가능하다.\",\"대출 완료 시 도서 상태가 '대출중'으로 자동 변경된다.\"]},{\"title\":\"대출 현황 조회 및 관리\",\"description\":\"도서관리자는 '대출 현황' 화면에서 현재 대출 중인 도서의 대출일, 반납예정일, 상태(대출중/연체/반납완료)를 확인하고, 대출 건별로 연장 또는 반납 처리를 할 수 있다.\",\"acceptance\":[\"대출 건의 대출일, 반납예정일, 상태가 표시된다.\",\"대출 중인 도서에 대해 연장 및 반납 처리가 가능하다.\",\"도서 반납 시 예약자가 있으면 상태가 '예약중', 없으면 '대출가능'으로 변경된다.\",\"대출 상태는 '대출중', '연체', '반납완료'가 존재한다.\"]},{\"title\":\"도서별 대출 및 상태 이력 조회\",\"description\":\"관리자는 각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있다.\",\"acceptance\":[\"각 도서별로 대출 이력과 상태 변경 이력이 조회된다.\",\"대출 이력에는 대출일, 반납일, 연장, 연체 정보가 포함된다.\",\"상태 이력에는 상태 변경 일시와 변경 내용이 포함된다.\"]}],\"entities\":{\"Member\":{\"properties\":[{\"name\":\"memberId\",\"type\":\"String\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"name\",\"type\":\"String\",\"required\":true}]},\"Book\":{\"properties\":[{\"name\":\"bookId\",\"type\":\"String\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"title\",\"type\":\"String\",\"required\":true},{\"name\":\"isbn\",\"type\":\"String\",\"required\":true},{\"name\":\"status\",\"type\":\"enum\",\"required\":true,\"values\":[\"AVAILABLE\",\"ON_LOAN\",\"RESERVED\"]}]},\"Loan\":{\"properties\":[{\"name\":\"loanId\",\"type\":\"Long\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"bookId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"memberId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Member\"},{\"name\":\"loanDate\",\"type\":\"Date\",\"required\":true},{\"name\":\"dueDate\",\"type\":\"Date\",\"required\":true},{\"name\":\"returnDate\",\"type\":\"Date\"},{\"name\":\"loanStatus\",\"type\":\"enum\",\"required\":true,\"values\":[\"ON_LOAN\",\"OVERDUE\",\"RETURNED\"]},{\"name\":\"extendCount\",\"type\":\"Integer\"}]},\"Reservation\":{\"properties\":[{\"name\":\"reservationId\",\"type\":\"Long\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"bookId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"memberId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Member\"},{\"name\":\"reservationDate\",\"type\":\"Date\",\"required\":true}]},\"BookStatusHistory\":{\"properties\":[{\"name\":\"historyId\",\"type\":\"Long\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"bookId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"status\",\"type\":\"enum\",\"required\":true,\"values\":[\"AVAILABLE\",\"ON_LOAN\",\"RESERVED\"]},{\"name\":\"changeDate\",\"type\":\"Date\",\"required\":true}]}},\"businessRules\":[{\"name\":\"대출 가능 상태 확인\",\"description\":\"도서 상태가 AVAILABLE인 경우에만 대출 신청이 가능하다.\"},{\"name\":\"대출 중 도서 예약\",\"description\":\"도서 상태가 ON_LOAN일 때만 예약 신청이 가능하다.\"},{\"name\":\"대출 기간 선택\",\"description\":\"대출 신청 시 7일, 14일, 30일 중에서 대출 기간을 선택해야 한다.\"},{\"name\":\"연장 제한\",\"description\":\"대출 연장은 정책에 따라 1회 또는 제한 횟수만큼만 가능하다.\"},{\"name\":\"반납 시 도서 상태 전환\",\"description\":\"도서 반납 후 예약자가 있으면 상태를 RESERVED, 없으면 AVAILABLE로 변경한다.\"},{\"name\":\"연체 처리\",\"description\":\"반납 예정일이 경과하면 도서의 대출 상태를 OVERDUE로 변경한다.\"},{\"name\":\"상태 변경 이력 기록\",\"description\":\"모든 도서의 상태 변경은 BookStatusHistory에 기록된다.\"}],\"interfaces\":{\"LoanReturnScreen\":{\"sections\":[{\"name\":\"회원 확인\",\"type\":\"form\",\"fields\":[{\"name\":\"memberId\",\"type\":\"text\",\"required\":true},{\"name\":\"name\",\"type\":\"text\",\"required\":true}],\"actions\":[],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}},{\"name\":\"도서 검색 및 선택\",\"type\":\"form\",\"fields\":[{\"name\":\"titleOrIsbn\",\"type\":\"text\",\"required\":true}],\"actions\":[\"도서 검색\"],\"filters\":[],\"resultTable\":{\"columns\":[\"bookId\",\"title\",\"isbn\",\"status\"],\"actions\":[\"도서 선택\"]}},{\"name\":\"대출 신청\",\"type\":\"form\",\"fields\":[{\"name\":\"loanPeriod\",\"type\":\"select\",\"required\":true}],\"actions\":[\"대출 신청\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}},{\"name\":\"예약 신청\",\"type\":\"form\",\"fields\":[],\"actions\":[\"예약 신청\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}}]},\"LoanStatusScreen\":{\"sections\":[{\"name\":\"대출 현황 목록\",\"type\":\"table\",\"fields\":[],\"actions\":[\"연장 신청\",\"반납 처리\"],\"filters\":[\"전체/회원별/도서별\"],\"resultTable\":{\"columns\":[\"loanId\",\"memberId\",\"bookId\",\"loanDate\",\"dueDate\",\"loanStatus\"],\"actions\":[\"상세 조회\"]}}]},\"BookHistoryScreen\":{\"sections\":[{\"name\":\"대출 이력\",\"type\":\"table\",\"fields\":[],\"actions\":[],\"filters\":[\"도서별\"],\"resultTable\":{\"columns\":[\"loanId\",\"memberId\",\"loanDate\",\"dueDate\",\"returnDate\",\"loanStatus\"],\"actions\":[]}},{\"name\":\"상태 변경 이력\",\"type\":\"table\",\"fields\":[],\"actions\":[],\"filters\":[\"도서별\"],\"resultTable\":{\"columns\":[\"historyId\",\"status\",\"changeDate\"],\"actions\":[]}}]}},\"events\":[{\"name\":\"LoanRequested\",\"description\":\"회원이 도서명 또는 ISBN으로 검색하여 대출 가능한 도서에 대해 대출을 신청함. 회원번호와 이름 확인 필요.\",\"displayName\":\"대출 신청됨\"},{\"name\":\"LoanApproved\",\"description\":\"대출 요청이 처리되어 도서가 회원에게 대출됨. 도서 상태는 대출중으로 자동 변경됨.\",\"displayName\":\"대출 완료됨\"},{\"name\":\"BookReserved\",\"description\":\"회원이 이미 대출중인 도서에 대해 예약 신청을 함. 예약된 도서는 예약 대기 리스트에 등록됨.\",\"displayName\":\"도서 예약됨\"},{\"name\":\"LoanReturned\",\"description\":\"회원이 대출 중인 도서를 반납함. 반납 후 예약자가 있으면 도서 상태는 예약중, 없으면 대출가능으로 변경됨.\",\"displayName\":\"도서 반납됨\"},{\"name\":\"LoanExtended\",\"description\":\"회원이 대출중인 도서의 반납예정일을 연장 신청함. 연장은 정책에 따라 1회 혹은 제한 가능.\",\"displayName\":\"대출 연장됨\"},{\"name\":\"LoanOverdueChecked\",\"description\":\"반납 예정일이 지난 도서의 연체 상태를 확인하여 연체로 표시함.\",\"displayName\":\"연체 확인됨\"},{\"name\":\"ReservationNotified\",\"description\":\"예약자가 있는 도서가 반납되었을 때, 예약자에게 도서 이용 가능 안내를 통보함.\",\"displayName\":\"예약자 통보됨\"},{\"name\":\"LoanStatusQueried\",\"description\":\"현재 대출 중인 도서와 각 대출 건의 대출일, 반납예정일, 상태(대출중/연체/반납완료)를 조회함.\",\"displayName\":\"대출 현황 조회됨\"}]}"
+                                "description": "{\"userStories\":[{\"title\":\"도서 대출 및 반납 관리\",\"description\":\"회원은 '대출/반납' 화면에서 회원 확인 후 도서를 대출하거나 반납할 수 있다. 대출 시 도서명 또는 ISBN으로 검색, 대출 기간 선택, 이미 대출 중인 경우 예약 신청이 가능하다. 반납 시 도서 상태 및 예약자 유무에 따라 자동 상태 변경이 이루어진다.\",\"acceptance\":[\"회원번호와 이름으로 회원이 확인되어야 한다.\",\"도서명 또는 ISBN으로 도서를 검색할 수 있어야 한다.\",\"대출 기간은 7일/14일/30일 중 선택할 수 있다.\",\"이미 대출 중인 도서는 예약 신청이 가능하다.\",\"대출 완료 시 도서 상태가 자동으로 '대출중'으로 변경된다.\",\"반납 완료 시 예약자 유무에 따라 도서 상태가 '예약중' 또는 '대출가능'으로 변경된다.\"]},{\"title\":\"대출 현황 및 처리\",\"description\":\"대출 현황 화면에서는 현재 대출 중인 도서들의 목록, 대출일, 반납예정일, 상태(대출중/연체/반납완료)를 확인하고, 대출 중인 도서에 대해 연장 및 반납 처리가 가능하다.\",\"acceptance\":[\"대출 건별로 대출일, 반납예정일, 현재 상태를 확인할 수 있다.\",\"대출 중인 도서에 대해 연장 및 반납 처리가 가능하다.\",\"연체 상태에서는 연장이 불가하다.\"]},{\"title\":\"도서별 이력 및 상태 변경 추적\",\"description\":\"관리자는 각 도서별 대출 이력과 상태 변경 이력을 조회할 수 있어야 하며, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있다.\",\"acceptance\":[\"도서별로 모든 대출 이력과 상태 변경 이력을 볼 수 있다.\"]}],\"entities\":{\"Member\":{\"properties\":[{\"name\":\"memberId\",\"type\":\"String\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"name\",\"type\":\"String\",\"required\":true}]},\"Book\":{\"properties\":[{\"name\":\"bookId\",\"type\":\"String\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"title\",\"type\":\"String\",\"required\":true},{\"name\":\"isbn\",\"type\":\"String\",\"required\":true},{\"name\":\"status\",\"type\":\"enum\",\"required\":true,\"values\":[\"AVAILABLE\",\"ON_LOAN\",\"RESERVED\",\"DISCARDED\"]}]},\"Loan\":{\"properties\":[{\"name\":\"loanId\",\"type\":\"String\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"memberId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Member\"},{\"name\":\"bookId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"loanDate\",\"type\":\"Date\",\"required\":true},{\"name\":\"dueDate\",\"type\":\"Date\",\"required\":true},{\"name\":\"returnDate\",\"type\":\"Date\"},{\"name\":\"status\",\"type\":\"enum\",\"required\":true,\"values\":[\"ON_LOAN\",\"OVERDUE\",\"RETURNED\"]}]},\"Reservation\":{\"properties\":[{\"name\":\"reservationId\",\"type\":\"String\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"memberId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Member\"},{\"name\":\"bookId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"reservationDate\",\"type\":\"Date\",\"required\":true}]},\"BookStatusHistory\":{\"properties\":[{\"name\":\"historyId\",\"type\":\"String\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"bookId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"beforeStatus\",\"type\":\"enum\",\"required\":true,\"values\":[\"AVAILABLE\",\"ON_LOAN\",\"RESERVED\",\"DISCARDED\"]},{\"name\":\"afterStatus\",\"type\":\"enum\",\"required\":true,\"values\":[\"AVAILABLE\",\"ON_LOAN\",\"RESERVED\",\"DISCARDED\"]},{\"name\":\"changedAt\",\"type\":\"Date\",\"required\":true}]}},\"businessRules\":[{\"name\":\"대출 기간 선택 제한\",\"description\":\"대출 기간은 7일, 14일, 30일만 선택할 수 있다.\"},{\"name\":\"연체 도서 연장 불가\",\"description\":\"연체 상태(OVERDUE)인 대출 건은 연장이 불가하다.\"},{\"name\":\"대출 상태 자동 변경\",\"description\":\"도서 대출 시 상태는 'ON_LOAN', 반납 시 예약자 없으면 'AVAILABLE', 예약자 있으면 'RESERVED'로 자동 변경된다.\"},{\"name\":\"폐기/대출 불가 도서 대출 거부\",\"description\":\"도서 상태가 'DISCARDED' 또는 대출 불가 시 대출이 거부된다.\"}],\"interfaces\":{\"LoanAndReturn\":{\"sections\":[{\"name\":\"회원 확인\",\"type\":\"form\",\"fields\":[{\"name\":\"memberId\",\"type\":\"text\",\"required\":true},{\"name\":\"name\",\"type\":\"text\",\"required\":true}],\"actions\":[\"회원 확인\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}},{\"name\":\"도서 대출 신청\",\"type\":\"form\",\"fields\":[{\"name\":\"bookSearch\",\"type\":\"text\",\"required\":true},{\"name\":\"searchType\",\"type\":\"select\",\"required\":true},{\"name\":\"loanPeriod\",\"type\":\"select\",\"required\":true}],\"actions\":[\"대출 신청\",\"예약 신청\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}},{\"name\":\"도서 반납\",\"type\":\"form\",\"fields\":[{\"name\":\"loanId\",\"type\":\"text\",\"required\":true}],\"actions\":[\"반납 처리\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}}]},\"LoanStatus\":{\"sections\":[{\"name\":\"대출 현황 목록\",\"type\":\"table\",\"fields\":[],\"actions\":[\"연장\",\"반납\"],\"filters\":[\"대출 상태\",\"대출일\",\"반납예정일\"],\"resultTable\":{\"columns\":[\"loanId\",\"bookId\",\"title\",\"loanDate\",\"dueDate\",\"status\"],\"actions\":[\"연장\",\"반납\"]}}]},\"BookHistory\":{\"sections\":[{\"name\":\"도서별 이력 조회\",\"type\":\"table\",\"fields\":[{\"name\":\"bookId\",\"type\":\"text\",\"required\":true}],\"actions\":[\"대출 이력 조회\",\"상태 변경 이력 조회\"],\"filters\":[],\"resultTable\":{\"columns\":[\"loanId\",\"memberId\",\"loanDate\",\"dueDate\",\"returnDate\",\"status\"],\"actions\":[]}},{\"name\":\"도서 상태 변경 이력\",\"type\":\"table\",\"fields\":[],\"actions\":[],\"filters\":[],\"resultTable\":{\"columns\":[\"historyId\",\"beforeStatus\",\"afterStatus\",\"changedAt\"],\"actions\":[]}}]}},\"events\":[{\"name\":\"MemberVerified\",\"description\":\"회원번호와 이름으로 회원 정보가 확인됨.\",\"displayName\":\"회원이 확인됨\"},{\"name\":\"BookLoanRequested\",\"description\":\"회원이 대출하고자 하는 도서와 대출 기간(7일/14일/30일)을 선택하여 대출을 신청함.\",\"displayName\":\"도서 대출이 신청됨\"},{\"name\":\"BookLoanRejected\",\"description\":\"도서가 폐기되었거나 대출 불가 상태인 경우 대출이 거부됨.\",\"displayName\":\"도서 대출이 거부됨\"},{\"name\":\"BookLoanApproved\",\"description\":\"도서가 대출 가능 상태라면 대출이 승인되고 대출 정보가 생성됨. 도서 상태는 '대출중'으로 변경됨.\",\"displayName\":\"도서 대출이 승인됨\"},{\"name\":\"BookReserved\",\"description\":\"대출하려는 도서가 이미 대출 중일 때 회원이 해당 도서의 예약을 신청하면 예약이 생성되고, 도서의 상태가 '예약중'으로 변경됨.\",\"displayName\":\"도서가 예약됨\"},{\"name\":\"BookReturned\",\"description\":\"회원이 대출한 도서를 반납함. 도서에 예약자가 있으면 상태가 '예약중'으로, 없으면 '대출가능'으로 변경됨.\",\"displayName\":\"도서가 반납됨\"},{\"name\":\"BookAvailable\",\"description\":\"반납된 도서에 예약자가 없는 경우 도서 상태가 '대출가능'으로 변경됨.\",\"displayName\":\"도서가 대출 가능 상태로 변경됨\"},{\"name\":\"BookReservedForNext\",\"description\":\"반납된 도서에 예약자가 있을 경우 도서 상태가 '예약중'으로 변경됨.\",\"displayName\":\"도서가 다음 예약자를 위해 예약중 상태로 변경됨\"},{\"name\":\"LoanExtended\",\"description\":\"회원이 대출 중인 도서의 대출 기간을 연장함. 연체 상태에서는 연장이 불가함.\",\"displayName\":\"대출 기간이 연장됨\"},{\"name\":\"LoanOverdue\",\"description\":\"반납 예정일이 지나도 도서가 반납되지 않은 경우, 대출 건의 상태가 '연체'로 변경됨.\",\"displayName\":\"도서 대출이 연체됨\"}],\"contextRelations\":[{\"name\":\"BookManagementToBookLoanProcess\",\"type\":\"Pub/Sub\",\"direction\":\"receives from\",\"targetContext\":\"도서 관리 (BookManagement)\",\"reason\":\"도서의 상태 변화, 신규 등록, 폐기 등 이벤트가 발생하면 이를 대출/예약/연체 프로세스에 전달해야 하며, 두 컨텍스트가 느슨하게 결합되고 데이터 소유권이 명확히 분리됨.\",\"interactionPattern\":\"도서 상태 변경, 신규 등록, 폐기 등 이벤트를 Pub/Sub로 발행하며 대출 프로세스에서 구독하여 반영함. 예: 도서가 폐기되면 대출 프로세스에서 대출 거부 처리.\"}]}"
                             },
                             {
                                 "structure": [
                                     {
                                         "aggregate": {
-                                            "name": "LoanReservation",
-                                            "alias": "대출·예약 통합"
+                                            "name": "Loan",
+                                            "alias": "대출"
                                         },
                                         "enumerations": [
                                             {
@@ -4232,32 +3459,53 @@ export const aggregateDraftScenarios = {
                                                 "alias": "회원"
                                             }
                                         ]
+                                    },
+                                    {
+                                        "aggregate": {
+                                            "name": "Reservation",
+                                            "alias": "예약"
+                                        },
+                                        "enumerations": [],
+                                        "valueObjects": [
+                                            {
+                                                "name": "BookReference",
+                                                "alias": "도서 참조",
+                                                "referencedAggregate": {
+                                                    "name": "Book",
+                                                    "alias": "도서"
+                                                }
+                                            },
+                                            {
+                                                "name": "Member",
+                                                "alias": "회원"
+                                            }
+                                        ]
                                     }
                                 ],
                                 "pros": {
-                                    "cohesion": "Loan과 Reservation을 통합해 한 건의 Aggregate 내에서 대출-예약 전환, 연장, 반납, 예약대기 등 복합 상태 관리를 일관성 있게 처리한다.",
-                                    "coupling": "도서(Book), 회원(Member) 외의 외부 의존성이 없고, 상태 변경이 Aggregate 내부에서 직접적으로 이뤄진다.",
-                                    "consistency": "대출-예약 상태 변동에 대한 모든 비즈니스 규칙과 트랜잭션 일관성이 단일 Aggregate 내에서 원자적으로 보장된다.",
-                                    "encapsulation": "예약대기 리스트, 연체·연장 제한 등 핵심 도메인 로직을 완전히 Aggregate 내부에 은닉 가능하다.",
-                                    "complexity": "업무 처리가 한 Aggregate 내에서 집중적으로 이루어져 흐름이 단순해진다.",
-                                    "independence": "대출/예약 업무 정책, 상태 관리의 변경이 독립적으로 가능하다.",
-                                    "performance": "상태 변경/조회시 단일 Aggregate 접근만으로 충분하여 최적의 처리 성능을 기대할 수 있다."
+                                    "cohesion": "핵심 대출·예약 업무에만 집중하여 집계 경계가 단순하다.",
+                                    "coupling": "Book, Member 등 외부 엔티티와의 참조만 유지하며 내부 결합도가 낮다.",
+                                    "consistency": "대출·예약 관련 상태 변경이 집계 내에서 일관성 있게 처리된다.",
+                                    "encapsulation": "도서 상태 자동 변경, 연체 연장 불가 등 핵심 규칙이 Loan 집계에 명확히 캡슐화된다.",
+                                    "complexity": "집계 수가 적어 전체 시스템 구조가 단순하며 이해와 유지보수가 쉽다.",
+                                    "independence": "Loan, Reservation은 별도로 발전 가능하며, 서비스 규모가 작을 때 최적화된 형태다.",
+                                    "performance": "불필요한 조인과 복잡한 트랜잭션이 최소화되어 빠른 응답이 가능하다."
                                 },
                                 "cons": {
-                                    "cohesion": "대출과 예약 도메인이 결합되어 책임 경계가 다소 모호해질 수 있다.",
-                                    "coupling": "LoanReservation이 커질 경우 도메인 논리 분할이 어려워질 수 있다.",
-                                    "consistency": "이력 관리, 도서 상태 연동이 별도의 LibraryBookManagement와 분리되어 추가 오케스트레이션이 필요하다.",
-                                    "encapsulation": "모든 도메인 로직이 한 곳에 집중되면서 Aggregate가 비대해질 위험이 있다.",
-                                    "complexity": "상태 관리, 예약대기, 연장·반납·연체 등 다양한 프로세스가 통합되어 구현 난이도가 증가한다.",
-                                    "independence": "대출과 예약 기능을 별도로 확장/변경하는 데에는 불리하다.",
-                                    "performance": "동시 다중 이용 시 충돌 가능성이 높아지고, 스케일아웃에 제한이 있을 수 있다."
+                                    "cohesion": "이력 관리, 상세 현황 등 부가 업무가 서비스 계층에 집중되어 코드 분산이 발생한다.",
+                                    "coupling": "이력·상태 추적이 외부 집계(BookLoanHistory, BookStatusHistory)에 의존해야 한다.",
+                                    "consistency": "복합 시나리오(대출→이력 동시 기록 등)에서 강한 일관성 보장이 어렵다.",
+                                    "encapsulation": "이력 및 상태 변경 규칙이 Loan 외부에 위치해 도메인 규칙이 분산될 수 있다.",
+                                    "complexity": "확장 시 부가 업무(이력, 상태변경 등) 도입을 위해 구조 변경 필요성이 생긴다.",
+                                    "independence": "외부 이력 집계와의 연동이 반드시 필요해 완전 독립 운영은 어렵다.",
+                                    "performance": "대출 및 예약 현황, 이력 동시 조회 시 성능 저하가 발생할 수 있다."
                                 },
                                 "isAIRecommended": false,
                                 "boundedContext": {
-                                    "name": "LibraryLoanProcess",
-                                    "alias": "대출/반납",
-                                    "displayName": "대출/반납",
-                                    "description": "# Requirements\n\n## userStory\n\n'대출/반납' 화면에서는 회원이 도서를 대출하고 반납하는 것을 관리할 수 있어야 해. 대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할 도서를 선택해야 해. 도서는 도서명이나 ISBN으로 검색할 수 있어야 해. 대출 기간은 7일/14일/30일 중에서 선택할 수 있어. 만약 대출하려는 도서가 이미 대출 중이라면, 예약 신청이 가능해야 해. 대출이 완료되면 해당 도서의 상태는 자동으로 '대출중'으로 변경되어야 해.\n\n## userStory\n\n대출 현황 화면에서는 현재 대출 중인 도서들의 목록을 볼 수 있어야 해. 각 대출 건에 대해 대출일, 반납예정일, 현재 상태(대출중/연체/반납완료)를 확인할 수 있어야 하고, 대출 중인 도서는 연장이나 반납 처리가 가능해야 해. 도서가 반납되면 자동으로 해당 도서의 상태가 '대출가능'으로 변경되어야 해. 만약 예약자가 있는 도서가 반납되면, 해당 도서는 '예약중' 상태로 변경되어야 해.\n\n## userStory\n\n각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해.\n\n## Event\n\n{\"name\":\"LoanRequested\",\"displayName\":\"대출 신청됨\",\"actor\":\"회원\",\"level\":4,\"description\":\"회원이 도서명이나 ISBN으로 검색하여 대출 가능한 도서에 대해 대출을 신청함. 회원번호와 이름 확인 필요.\",\"inputs\":[\"회원번호\",\"이름\",\"도서명/ISBN\",\"대출 가능 상태 도서\",\"대출 기간(7/14/30일)\"],\"outputs\":[\"대출 신청 생성\",\"대출 대기 상태\"],\"nextEvents\":[\"LoanApproved\",\"BookReserved\"]}\n\n## Event\n\n{\"name\":\"LoanApproved\",\"displayName\":\"대출 완료됨\",\"actor\":\"도서관리시스템\",\"level\":5,\"description\":\"대출 요청이 처리되어 도서가 회원에게 대출됨. 도서 상태는 대출중으로 자동 변경됨.\",\"inputs\":[\"대출 신청\",\"대출 가능 도서\",\"회원 자격 유효\"],\"outputs\":[\"대출 기록 생성\",\"도서 상태: 대출중\",\"대출일\",\"반납예정일\"],\"nextEvents\":[\"LoanExtended\",\"LoanReturned\",\"LoanOverdueChecked\"]}\n\n## Event\n\n{\"name\":\"BookReserved\",\"displayName\":\"도서 예약됨\",\"actor\":\"회원\",\"level\":6,\"description\":\"회원이 이미 대출중인 도서에 대해 예약 신청을 함. 예약된 도서는 예약 대기 리스트에 등록됨.\",\"inputs\":[\"회원번호\",\"이름\",\"대출중 상태 도서\"],\"outputs\":[\"예약 기록 생성\",\"도서 상태: 예약중\"],\"nextEvents\":[\"LoanReturned\"]}\n\n## Event\n\n{\"name\":\"LoanReturned\",\"displayName\":\"도서 반납됨\",\"actor\":\"회원\",\"level\":7,\"description\":\"회원이 대출 중인 도서를 반납함. 반납 후 예약자가 있으면 도서 상태는 예약중, 없으면 대출가능으로 변경됨.\",\"inputs\":[\"대출 중 도서\",\"회원\"],\"outputs\":[\"반납 기록 생성\",\"도서 상태: 대출가능/예약중\"],\"nextEvents\":[\"BookStateChanged\",\"ReservationNotified\"]}\n\n## Event\n\n{\"name\":\"LoanExtended\",\"displayName\":\"대출 연장됨\",\"actor\":\"회원\",\"level\":8,\"description\":\"회원이 대출중인 도서의 반납예정일을 연장 신청함. 연장은 정책에 따라 1회 혹은 제한 가능.\",\"inputs\":[\"회원\",\"대출중 상태 도서\",\"연장 조건 충족\"],\"outputs\":[\"반납예정일 변경\"],\"nextEvents\":[\"LoanOverdueChecked\",\"LoanReturned\"]}\n\n## Event\n\n{\"name\":\"LoanOverdueChecked\",\"displayName\":\"연체 확인됨\",\"actor\":\"도서관리시스템\",\"level\":9,\"description\":\"반납 예정일이 지난 도서의 연체 상태를 확인하여 연체로 표시함.\",\"inputs\":[\"대출중 도서\",\"현재 일자\",\"반납예정일\"],\"outputs\":[\"대출 상태: 연체\"],\"nextEvents\":[\"LoanReturned\"]}\n\n## Event\n\n{\"name\":\"ReservationNotified\",\"displayName\":\"예약자 통보됨\",\"actor\":\"도서관리시스템\",\"level\":10,\"description\":\"예약자가 있는 도서가 반납되었을 때, 예약자에게 도서 이용 가능 안내를 통보함.\",\"inputs\":[\"도서 반납\",\"예약자 존재\"],\"outputs\":[\"예약자 알림\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"LoanStatusQueried\",\"displayName\":\"대출 현황 조회됨\",\"actor\":\"도서관리자\",\"level\":12,\"description\":\"현재 대출 중인 도서와 각 대출 건의 대출일, 반납예정일, 상태(대출중/연체/반납완료)를 조회함.\",\"inputs\":[\"조회 조건 (전체/회원별/도서별)\"],\"outputs\":[\"대출 건 목록\",\"각 대출 상태\"],\"nextEvents\":[]}",
+                                    "name": "BookLoanProcess",
+                                    "alias": "도서 대출 프로세스",
+                                    "displayName": "도서 대출 프로세스",
+                                    "description": "# Requirements\n\n## userStory\n\n'대출/반납' 화면에서는 회원이 도서를 대출하고 반납하는 것을 관리할 수 있어야 해. 대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할 도서를 선택해야 해. 도서는 도서명이나 ISBN으로 검색할 수 있어야 해. 대출 기간은 7일/14일/30일 중에서 선택할 수 있어. 만약 대출하려는 도서가 이미 대출 중이라면, 예약 신청이 가능해야 해. 대출이 완료되면 해당 도서의 상태는 자동으로 '대출중'으로 변경되어야 해.\n\n## userStory\n\n대출 현황 화면에서는 현재 대출 중인 도서들의 목록을 볼 수 있어야 해. 각 대출 건에 대해 대출일, 반납예정일, 현재 상태(대출중/연체/반납완료)를 확인할 수 있어야 하고, 대출 중인 도서는 연장이나 반납 처리가 가능해야 해. 도서가 반납되면 자동으로 해당 도서의 상태가 '대출가능'으로 변경되어야 해. 만약 예약자가 있는 도서가 반납되면, 해당 도서는 '예약중' 상태로 변경되어야 해.\n\n## userStory\n\n각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해.\n\n## Event\n\n{\"name\":\"MemberVerified\",\"displayName\":\"회원이 확인됨\",\"actor\":\"회원\",\"level\":5,\"description\":\"회원번호와 이름으로 회원 정보가 확인됨.\",\"inputs\":[\"회원번호\",\"이름\"],\"outputs\":[\"회원 정보\"],\"nextEvents\":[\"BookLoanRequested\"]}\n\n## Event\n\n{\"name\":\"BookLoanRequested\",\"displayName\":\"도서 대출이 신청됨\",\"actor\":\"회원\",\"level\":6,\"description\":\"회원이 대출하고자 하는 도서와 대출 기간(7일/14일/30일)을 선택하여 대출을 신청함.\",\"inputs\":[\"회원 정보\",\"도서 식별자\",\"대출 기간\"],\"outputs\":[\"대출 신청 요청\"],\"nextEvents\":[\"BookLoanApproved\",\"BookLoanRejected\"]}\n\n## Event\n\n{\"name\":\"BookLoanRejected\",\"displayName\":\"도서 대출이 거부됨\",\"actor\":\"도서 대출 시스템\",\"level\":7,\"description\":\"도서가 폐기되었거나 대출 불가 상태인 경우 대출이 거부됨.\",\"inputs\":[\"도서 상태 '폐기' 또는 대출 불가\"],\"outputs\":[\"대출 거부 알림\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookLoanApproved\",\"displayName\":\"도서 대출이 승인됨\",\"actor\":\"도서 대출 시스템\",\"level\":8,\"description\":\"도서가 대출 가능 상태라면 대출이 승인되고 대출 정보가 생성됨. 도서 상태는 '대출중'으로 변경됨.\",\"inputs\":[\"도서 상태 '대출가능'\",\"대출 신청 정보\"],\"outputs\":[\"대출 정보 생성\",\"도서 상태 '대출중'으로 변경\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookReserved\",\"displayName\":\"도서가 예약됨\",\"actor\":\"회원\",\"level\":9,\"description\":\"대출하려는 도서가 이미 대출 중일 때 회원이 해당 도서의 예약을 신청하면 예약이 생성되고, 도서의 상태가 '예약중'으로 변경됨.\",\"inputs\":[\"회원 정보\",\"대출 중인 도서 식별자\"],\"outputs\":[\"예약 정보 생성\",\"도서 상태 '예약중'으로 변경\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookReturned\",\"displayName\":\"도서가 반납됨\",\"actor\":\"회원\",\"level\":10,\"description\":\"회원이 대출한 도서를 반납함. 도서에 예약자가 있으면 상태가 '예약중'으로, 없으면 '대출가능'으로 변경됨.\",\"inputs\":[\"반납 도서 식별자\"],\"outputs\":[\"반납 처리\",\"도서 상태 변경\"],\"nextEvents\":[\"BookAvailable\",\"BookReservedForNext\"]}\n\n## Event\n\n{\"name\":\"BookAvailable\",\"displayName\":\"도서가 대출 가능 상태로 변경됨\",\"actor\":\"도서 대출 시스템\",\"level\":11,\"description\":\"반납된 도서에 예약자가 없는 경우 도서 상태가 '대출가능'으로 변경됨.\",\"inputs\":[\"반납 도서 식별자\",\"예약자 없음\"],\"outputs\":[\"도서 상태 '대출가능'\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookReservedForNext\",\"displayName\":\"도서가 다음 예약자를 위해 예약중 상태로 변경됨\",\"actor\":\"도서 대출 시스템\",\"level\":12,\"description\":\"반납된 도서에 예약자가 있을 경우 도서 상태가 '예약중'으로 변경됨.\",\"inputs\":[\"반납 도서 식별자\",\"예약자 존재\"],\"outputs\":[\"도서 상태 '예약중'\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"LoanExtended\",\"displayName\":\"대출 기간이 연장됨\",\"actor\":\"회원\",\"level\":13,\"description\":\"회원이 대출 중인 도서의 대출 기간을 연장함. 연체 상태에서는 연장이 불가함.\",\"inputs\":[\"회원 정보\",\"대출 중인 도서 식별자\",\"연장 요청\"],\"outputs\":[\"대출 기간 연장\",\"새 반납 예정일\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"LoanOverdue\",\"displayName\":\"도서 대출이 연체됨\",\"actor\":\"도서 대출 시스템\",\"level\":14,\"description\":\"반납 예정일이 지나도 도서가 반납되지 않은 경우, 대출 건의 상태가 '연체'로 변경됨.\",\"inputs\":[\"반납 예정일 경과\",\"반납 미처리\"],\"outputs\":[\"대출 상태 '연체'로 변경\"],\"nextEvents\":[]}\n\n\n## Context Relations\n\n### BookManagementToBookLoanProcess\n- **Type**: Pub/Sub\n- **Direction**: receives from 도서 관리 (BookManagement)\n- **Reason**: 도서의 상태 변화, 신규 등록, 폐기 등 이벤트가 발생하면 이를 대출/예약/연체 프로세스에 전달해야 하며, 두 컨텍스트가 느슨하게 결합되고 데이터 소유권이 명확히 분리됨.\n- **Interaction Pattern**: 도서 상태 변경, 신규 등록, 폐기 등 이벤트를 Pub/Sub로 발행하며 대출 프로세스에서 구독하여 반영함. 예: 도서가 폐기되면 대출 프로세스에서 대출 거부 처리.",
                                     "aggregates": [
                                         {
                                             "name": "Loan",
@@ -4266,45 +3514,46 @@ export const aggregateDraftScenarios = {
                                         {
                                             "name": "Reservation",
                                             "alias": "예약"
+                                        },
+                                        {
+                                            "name": "Member",
+                                            "alias": "회원"
                                         }
                                     ]
                                 },
-                                "description": "{\"userStories\":[{\"title\":\"도서 대출 및 반납 관리\",\"description\":\"회원은 '대출/반납' 화면에서 본인의 회원번호와 이름을 통해 확인받고, 도서명 또는 ISBN으로 도서를 검색하여 대출을 신청할 수 있다. 이미 대출중인 도서는 예약 신청이 가능하다. 도서 대출 완료 시 도서 상태는 자동으로 '대출중'으로 변경된다.\",\"acceptance\":[\"회원번호와 이름으로 회원 확인이 가능하다.\",\"도서명 또는 ISBN으로 도서 검색이 가능하다.\",\"대출 가능 상태의 도서만 대출 신청이 가능하다.\",\"대출 기간은 7일/14일/30일 중 선택할 수 있다.\",\"대출 중인 도서는 예약 신청이 가능하다.\",\"대출 완료 시 도서 상태가 '대출중'으로 자동 변경된다.\"]},{\"title\":\"대출 현황 조회 및 관리\",\"description\":\"도서관리자는 '대출 현황' 화면에서 현재 대출 중인 도서의 대출일, 반납예정일, 상태(대출중/연체/반납완료)를 확인하고, 대출 건별로 연장 또는 반납 처리를 할 수 있다.\",\"acceptance\":[\"대출 건의 대출일, 반납예정일, 상태가 표시된다.\",\"대출 중인 도서에 대해 연장 및 반납 처리가 가능하다.\",\"도서 반납 시 예약자가 있으면 상태가 '예약중', 없으면 '대출가능'으로 변경된다.\",\"대출 상태는 '대출중', '연체', '반납완료'가 존재한다.\"]},{\"title\":\"도서별 대출 및 상태 이력 조회\",\"description\":\"관리자는 각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있다.\",\"acceptance\":[\"각 도서별로 대출 이력과 상태 변경 이력이 조회된다.\",\"대출 이력에는 대출일, 반납일, 연장, 연체 정보가 포함된다.\",\"상태 이력에는 상태 변경 일시와 변경 내용이 포함된다.\"]}],\"entities\":{\"Member\":{\"properties\":[{\"name\":\"memberId\",\"type\":\"String\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"name\",\"type\":\"String\",\"required\":true}]},\"Book\":{\"properties\":[{\"name\":\"bookId\",\"type\":\"String\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"title\",\"type\":\"String\",\"required\":true},{\"name\":\"isbn\",\"type\":\"String\",\"required\":true},{\"name\":\"status\",\"type\":\"enum\",\"required\":true,\"values\":[\"AVAILABLE\",\"ON_LOAN\",\"RESERVED\"]}]},\"Loan\":{\"properties\":[{\"name\":\"loanId\",\"type\":\"Long\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"bookId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"memberId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Member\"},{\"name\":\"loanDate\",\"type\":\"Date\",\"required\":true},{\"name\":\"dueDate\",\"type\":\"Date\",\"required\":true},{\"name\":\"returnDate\",\"type\":\"Date\"},{\"name\":\"loanStatus\",\"type\":\"enum\",\"required\":true,\"values\":[\"ON_LOAN\",\"OVERDUE\",\"RETURNED\"]},{\"name\":\"extendCount\",\"type\":\"Integer\"}]},\"Reservation\":{\"properties\":[{\"name\":\"reservationId\",\"type\":\"Long\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"bookId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"memberId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Member\"},{\"name\":\"reservationDate\",\"type\":\"Date\",\"required\":true}]},\"BookStatusHistory\":{\"properties\":[{\"name\":\"historyId\",\"type\":\"Long\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"bookId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"status\",\"type\":\"enum\",\"required\":true,\"values\":[\"AVAILABLE\",\"ON_LOAN\",\"RESERVED\"]},{\"name\":\"changeDate\",\"type\":\"Date\",\"required\":true}]}},\"businessRules\":[{\"name\":\"대출 가능 상태 확인\",\"description\":\"도서 상태가 AVAILABLE인 경우에만 대출 신청이 가능하다.\"},{\"name\":\"대출 중 도서 예약\",\"description\":\"도서 상태가 ON_LOAN일 때만 예약 신청이 가능하다.\"},{\"name\":\"대출 기간 선택\",\"description\":\"대출 신청 시 7일, 14일, 30일 중에서 대출 기간을 선택해야 한다.\"},{\"name\":\"연장 제한\",\"description\":\"대출 연장은 정책에 따라 1회 또는 제한 횟수만큼만 가능하다.\"},{\"name\":\"반납 시 도서 상태 전환\",\"description\":\"도서 반납 후 예약자가 있으면 상태를 RESERVED, 없으면 AVAILABLE로 변경한다.\"},{\"name\":\"연체 처리\",\"description\":\"반납 예정일이 경과하면 도서의 대출 상태를 OVERDUE로 변경한다.\"},{\"name\":\"상태 변경 이력 기록\",\"description\":\"모든 도서의 상태 변경은 BookStatusHistory에 기록된다.\"}],\"interfaces\":{\"LoanReturnScreen\":{\"sections\":[{\"name\":\"회원 확인\",\"type\":\"form\",\"fields\":[{\"name\":\"memberId\",\"type\":\"text\",\"required\":true},{\"name\":\"name\",\"type\":\"text\",\"required\":true}],\"actions\":[],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}},{\"name\":\"도서 검색 및 선택\",\"type\":\"form\",\"fields\":[{\"name\":\"titleOrIsbn\",\"type\":\"text\",\"required\":true}],\"actions\":[\"도서 검색\"],\"filters\":[],\"resultTable\":{\"columns\":[\"bookId\",\"title\",\"isbn\",\"status\"],\"actions\":[\"도서 선택\"]}},{\"name\":\"대출 신청\",\"type\":\"form\",\"fields\":[{\"name\":\"loanPeriod\",\"type\":\"select\",\"required\":true}],\"actions\":[\"대출 신청\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}},{\"name\":\"예약 신청\",\"type\":\"form\",\"fields\":[],\"actions\":[\"예약 신청\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}}]},\"LoanStatusScreen\":{\"sections\":[{\"name\":\"대출 현황 목록\",\"type\":\"table\",\"fields\":[],\"actions\":[\"연장 신청\",\"반납 처리\"],\"filters\":[\"전체/회원별/도서별\"],\"resultTable\":{\"columns\":[\"loanId\",\"memberId\",\"bookId\",\"loanDate\",\"dueDate\",\"loanStatus\"],\"actions\":[\"상세 조회\"]}}]},\"BookHistoryScreen\":{\"sections\":[{\"name\":\"대출 이력\",\"type\":\"table\",\"fields\":[],\"actions\":[],\"filters\":[\"도서별\"],\"resultTable\":{\"columns\":[\"loanId\",\"memberId\",\"loanDate\",\"dueDate\",\"returnDate\",\"loanStatus\"],\"actions\":[]}},{\"name\":\"상태 변경 이력\",\"type\":\"table\",\"fields\":[],\"actions\":[],\"filters\":[\"도서별\"],\"resultTable\":{\"columns\":[\"historyId\",\"status\",\"changeDate\"],\"actions\":[]}}]}},\"events\":[{\"name\":\"LoanRequested\",\"description\":\"회원이 도서명 또는 ISBN으로 검색하여 대출 가능한 도서에 대해 대출을 신청함. 회원번호와 이름 확인 필요.\",\"displayName\":\"대출 신청됨\"},{\"name\":\"LoanApproved\",\"description\":\"대출 요청이 처리되어 도서가 회원에게 대출됨. 도서 상태는 대출중으로 자동 변경됨.\",\"displayName\":\"대출 완료됨\"},{\"name\":\"BookReserved\",\"description\":\"회원이 이미 대출중인 도서에 대해 예약 신청을 함. 예약된 도서는 예약 대기 리스트에 등록됨.\",\"displayName\":\"도서 예약됨\"},{\"name\":\"LoanReturned\",\"description\":\"회원이 대출 중인 도서를 반납함. 반납 후 예약자가 있으면 도서 상태는 예약중, 없으면 대출가능으로 변경됨.\",\"displayName\":\"도서 반납됨\"},{\"name\":\"LoanExtended\",\"description\":\"회원이 대출중인 도서의 반납예정일을 연장 신청함. 연장은 정책에 따라 1회 혹은 제한 가능.\",\"displayName\":\"대출 연장됨\"},{\"name\":\"LoanOverdueChecked\",\"description\":\"반납 예정일이 지난 도서의 연체 상태를 확인하여 연체로 표시함.\",\"displayName\":\"연체 확인됨\"},{\"name\":\"ReservationNotified\",\"description\":\"예약자가 있는 도서가 반납되었을 때, 예약자에게 도서 이용 가능 안내를 통보함.\",\"displayName\":\"예약자 통보됨\"},{\"name\":\"LoanStatusQueried\",\"description\":\"현재 대출 중인 도서와 각 대출 건의 대출일, 반납예정일, 상태(대출중/연체/반납완료)를 조회함.\",\"displayName\":\"대출 현황 조회됨\"}]}"
+                                "description": "{\"userStories\":[{\"title\":\"도서 대출 및 반납 관리\",\"description\":\"회원은 '대출/반납' 화면에서 회원 확인 후 도서를 대출하거나 반납할 수 있다. 대출 시 도서명 또는 ISBN으로 검색, 대출 기간 선택, 이미 대출 중인 경우 예약 신청이 가능하다. 반납 시 도서 상태 및 예약자 유무에 따라 자동 상태 변경이 이루어진다.\",\"acceptance\":[\"회원번호와 이름으로 회원이 확인되어야 한다.\",\"도서명 또는 ISBN으로 도서를 검색할 수 있어야 한다.\",\"대출 기간은 7일/14일/30일 중 선택할 수 있다.\",\"이미 대출 중인 도서는 예약 신청이 가능하다.\",\"대출 완료 시 도서 상태가 자동으로 '대출중'으로 변경된다.\",\"반납 완료 시 예약자 유무에 따라 도서 상태가 '예약중' 또는 '대출가능'으로 변경된다.\"]},{\"title\":\"대출 현황 및 처리\",\"description\":\"대출 현황 화면에서는 현재 대출 중인 도서들의 목록, 대출일, 반납예정일, 상태(대출중/연체/반납완료)를 확인하고, 대출 중인 도서에 대해 연장 및 반납 처리가 가능하다.\",\"acceptance\":[\"대출 건별로 대출일, 반납예정일, 현재 상태를 확인할 수 있다.\",\"대출 중인 도서에 대해 연장 및 반납 처리가 가능하다.\",\"연체 상태에서는 연장이 불가하다.\"]},{\"title\":\"도서별 이력 및 상태 변경 추적\",\"description\":\"관리자는 각 도서별 대출 이력과 상태 변경 이력을 조회할 수 있어야 하며, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있다.\",\"acceptance\":[\"도서별로 모든 대출 이력과 상태 변경 이력을 볼 수 있다.\"]}],\"entities\":{\"Member\":{\"properties\":[{\"name\":\"memberId\",\"type\":\"String\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"name\",\"type\":\"String\",\"required\":true}]},\"Book\":{\"properties\":[{\"name\":\"bookId\",\"type\":\"String\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"title\",\"type\":\"String\",\"required\":true},{\"name\":\"isbn\",\"type\":\"String\",\"required\":true},{\"name\":\"status\",\"type\":\"enum\",\"required\":true,\"values\":[\"AVAILABLE\",\"ON_LOAN\",\"RESERVED\",\"DISCARDED\"]}]},\"Loan\":{\"properties\":[{\"name\":\"loanId\",\"type\":\"String\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"memberId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Member\"},{\"name\":\"bookId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"loanDate\",\"type\":\"Date\",\"required\":true},{\"name\":\"dueDate\",\"type\":\"Date\",\"required\":true},{\"name\":\"returnDate\",\"type\":\"Date\"},{\"name\":\"status\",\"type\":\"enum\",\"required\":true,\"values\":[\"ON_LOAN\",\"OVERDUE\",\"RETURNED\"]}]},\"Reservation\":{\"properties\":[{\"name\":\"reservationId\",\"type\":\"String\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"memberId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Member\"},{\"name\":\"bookId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"reservationDate\",\"type\":\"Date\",\"required\":true}]},\"BookStatusHistory\":{\"properties\":[{\"name\":\"historyId\",\"type\":\"String\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"bookId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"beforeStatus\",\"type\":\"enum\",\"required\":true,\"values\":[\"AVAILABLE\",\"ON_LOAN\",\"RESERVED\",\"DISCARDED\"]},{\"name\":\"afterStatus\",\"type\":\"enum\",\"required\":true,\"values\":[\"AVAILABLE\",\"ON_LOAN\",\"RESERVED\",\"DISCARDED\"]},{\"name\":\"changedAt\",\"type\":\"Date\",\"required\":true}]}},\"businessRules\":[{\"name\":\"대출 기간 선택 제한\",\"description\":\"대출 기간은 7일, 14일, 30일만 선택할 수 있다.\"},{\"name\":\"연체 도서 연장 불가\",\"description\":\"연체 상태(OVERDUE)인 대출 건은 연장이 불가하다.\"},{\"name\":\"대출 상태 자동 변경\",\"description\":\"도서 대출 시 상태는 'ON_LOAN', 반납 시 예약자 없으면 'AVAILABLE', 예약자 있으면 'RESERVED'로 자동 변경된다.\"},{\"name\":\"폐기/대출 불가 도서 대출 거부\",\"description\":\"도서 상태가 'DISCARDED' 또는 대출 불가 시 대출이 거부된다.\"}],\"interfaces\":{\"LoanAndReturn\":{\"sections\":[{\"name\":\"회원 확인\",\"type\":\"form\",\"fields\":[{\"name\":\"memberId\",\"type\":\"text\",\"required\":true},{\"name\":\"name\",\"type\":\"text\",\"required\":true}],\"actions\":[\"회원 확인\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}},{\"name\":\"도서 대출 신청\",\"type\":\"form\",\"fields\":[{\"name\":\"bookSearch\",\"type\":\"text\",\"required\":true},{\"name\":\"searchType\",\"type\":\"select\",\"required\":true},{\"name\":\"loanPeriod\",\"type\":\"select\",\"required\":true}],\"actions\":[\"대출 신청\",\"예약 신청\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}},{\"name\":\"도서 반납\",\"type\":\"form\",\"fields\":[{\"name\":\"loanId\",\"type\":\"text\",\"required\":true}],\"actions\":[\"반납 처리\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}}]},\"LoanStatus\":{\"sections\":[{\"name\":\"대출 현황 목록\",\"type\":\"table\",\"fields\":[],\"actions\":[\"연장\",\"반납\"],\"filters\":[\"대출 상태\",\"대출일\",\"반납예정일\"],\"resultTable\":{\"columns\":[\"loanId\",\"bookId\",\"title\",\"loanDate\",\"dueDate\",\"status\"],\"actions\":[\"연장\",\"반납\"]}}]},\"BookHistory\":{\"sections\":[{\"name\":\"도서별 이력 조회\",\"type\":\"table\",\"fields\":[{\"name\":\"bookId\",\"type\":\"text\",\"required\":true}],\"actions\":[\"대출 이력 조회\",\"상태 변경 이력 조회\"],\"filters\":[],\"resultTable\":{\"columns\":[\"loanId\",\"memberId\",\"loanDate\",\"dueDate\",\"returnDate\",\"status\"],\"actions\":[]}},{\"name\":\"도서 상태 변경 이력\",\"type\":\"table\",\"fields\":[],\"actions\":[],\"filters\":[],\"resultTable\":{\"columns\":[\"historyId\",\"beforeStatus\",\"afterStatus\",\"changedAt\"],\"actions\":[]}}]}},\"events\":[{\"name\":\"MemberVerified\",\"description\":\"회원번호와 이름으로 회원 정보가 확인됨.\",\"displayName\":\"회원이 확인됨\"},{\"name\":\"BookLoanRequested\",\"description\":\"회원이 대출하고자 하는 도서와 대출 기간(7일/14일/30일)을 선택하여 대출을 신청함.\",\"displayName\":\"도서 대출이 신청됨\"},{\"name\":\"BookLoanRejected\",\"description\":\"도서가 폐기되었거나 대출 불가 상태인 경우 대출이 거부됨.\",\"displayName\":\"도서 대출이 거부됨\"},{\"name\":\"BookLoanApproved\",\"description\":\"도서가 대출 가능 상태라면 대출이 승인되고 대출 정보가 생성됨. 도서 상태는 '대출중'으로 변경됨.\",\"displayName\":\"도서 대출이 승인됨\"},{\"name\":\"BookReserved\",\"description\":\"대출하려는 도서가 이미 대출 중일 때 회원이 해당 도서의 예약을 신청하면 예약이 생성되고, 도서의 상태가 '예약중'으로 변경됨.\",\"displayName\":\"도서가 예약됨\"},{\"name\":\"BookReturned\",\"description\":\"회원이 대출한 도서를 반납함. 도서에 예약자가 있으면 상태가 '예약중'으로, 없으면 '대출가능'으로 변경됨.\",\"displayName\":\"도서가 반납됨\"},{\"name\":\"BookAvailable\",\"description\":\"반납된 도서에 예약자가 없는 경우 도서 상태가 '대출가능'으로 변경됨.\",\"displayName\":\"도서가 대출 가능 상태로 변경됨\"},{\"name\":\"BookReservedForNext\",\"description\":\"반납된 도서에 예약자가 있을 경우 도서 상태가 '예약중'으로 변경됨.\",\"displayName\":\"도서가 다음 예약자를 위해 예약중 상태로 변경됨\"},{\"name\":\"LoanExtended\",\"description\":\"회원이 대출 중인 도서의 대출 기간을 연장함. 연체 상태에서는 연장이 불가함.\",\"displayName\":\"대출 기간이 연장됨\"},{\"name\":\"LoanOverdue\",\"description\":\"반납 예정일이 지나도 도서가 반납되지 않은 경우, 대출 건의 상태가 '연체'로 변경됨.\",\"displayName\":\"도서 대출이 연체됨\"}],\"contextRelations\":[{\"name\":\"BookManagementToBookLoanProcess\",\"type\":\"Pub/Sub\",\"direction\":\"receives from\",\"targetContext\":\"도서 관리 (BookManagement)\",\"reason\":\"도서의 상태 변화, 신규 등록, 폐기 등 이벤트가 발생하면 이를 대출/예약/연체 프로세스에 전달해야 하며, 두 컨텍스트가 느슨하게 결합되고 데이터 소유권이 명확히 분리됨.\",\"interactionPattern\":\"도서 상태 변경, 신규 등록, 폐기 등 이벤트를 Pub/Sub로 발행하며 대출 프로세스에서 구독하여 반영함. 예: 도서가 폐기되면 대출 프로세스에서 대출 거부 처리.\"}]}"
                             }
                         ],
-                        "conclusions": "옵션 1은 트랜잭션 일관성, 도메인 책임 분리, 유지보수 편의성이 뛰어나 표준적인 도서관 대출 시스템에 가장 적합합니다. 옵션 2는 대출 이력 관리가 빈번하거나 감사가 중요한 기관, 분석이 많은 환경에서 유리합니다. 옵션 3은 대출/예약 사이클이 매우 밀접하게 연결되고 단순한 구조의 소형 도서관 시스템에 적합하나, 확장성과 독립성이 필요한 경우에는 권장되지 않습니다.",
+                        "conclusions": "1번 옵션은 핵심 대출/예약/회원 중심 업무 처리와 이벤트 기반 확장에 유리하며, 대부분의 일반적인 도서관 업무에 적합하다. 2번 옵션은 대출 이력 집계를 도입하여 이력 중심 분석·감사·통계가 많은 환경이나 이력 보관 요건이 엄격한 경우에 최적이다. 3번 옵션은 시스템 규모가 작고 단순 현황 위주 관리가 필요한 환경, 초기 단계에 적합하다.",
                         "defaultOptionIndex": 1,
                         "analysisResult": {
                             "userStories": [
                                 {
                                     "title": "도서 대출 및 반납 관리",
-                                    "description": "회원은 '대출/반납' 화면에서 본인의 회원번호와 이름을 통해 확인받고, 도서명 또는 ISBN으로 도서를 검색하여 대출을 신청할 수 있다. 이미 대출중인 도서는 예약 신청이 가능하다. 도서 대출 완료 시 도서 상태는 자동으로 '대출중'으로 변경된다.",
+                                    "description": "회원은 '대출/반납' 화면에서 회원 확인 후 도서를 대출하거나 반납할 수 있다. 대출 시 도서명 또는 ISBN으로 검색, 대출 기간 선택, 이미 대출 중인 경우 예약 신청이 가능하다. 반납 시 도서 상태 및 예약자 유무에 따라 자동 상태 변경이 이루어진다.",
                                     "acceptance": [
-                                        "회원번호와 이름으로 회원 확인이 가능하다.",
-                                        "도서명 또는 ISBN으로 도서 검색이 가능하다.",
-                                        "대출 가능 상태의 도서만 대출 신청이 가능하다.",
+                                        "회원번호와 이름으로 회원이 확인되어야 한다.",
+                                        "도서명 또는 ISBN으로 도서를 검색할 수 있어야 한다.",
                                         "대출 기간은 7일/14일/30일 중 선택할 수 있다.",
-                                        "대출 중인 도서는 예약 신청이 가능하다.",
-                                        "대출 완료 시 도서 상태가 '대출중'으로 자동 변경된다."
+                                        "이미 대출 중인 도서는 예약 신청이 가능하다.",
+                                        "대출 완료 시 도서 상태가 자동으로 '대출중'으로 변경된다.",
+                                        "반납 완료 시 예약자 유무에 따라 도서 상태가 '예약중' 또는 '대출가능'으로 변경된다."
                                     ]
                                 },
                                 {
-                                    "title": "대출 현황 조회 및 관리",
-                                    "description": "도서관리자는 '대출 현황' 화면에서 현재 대출 중인 도서의 대출일, 반납예정일, 상태(대출중/연체/반납완료)를 확인하고, 대출 건별로 연장 또는 반납 처리를 할 수 있다.",
+                                    "title": "대출 현황 및 처리",
+                                    "description": "대출 현황 화면에서는 현재 대출 중인 도서들의 목록, 대출일, 반납예정일, 상태(대출중/연체/반납완료)를 확인하고, 대출 중인 도서에 대해 연장 및 반납 처리가 가능하다.",
                                     "acceptance": [
-                                        "대출 건의 대출일, 반납예정일, 상태가 표시된다.",
+                                        "대출 건별로 대출일, 반납예정일, 현재 상태를 확인할 수 있다.",
                                         "대출 중인 도서에 대해 연장 및 반납 처리가 가능하다.",
-                                        "도서 반납 시 예약자가 있으면 상태가 '예약중', 없으면 '대출가능'으로 변경된다.",
-                                        "대출 상태는 '대출중', '연체', '반납완료'가 존재한다."
+                                        "연체 상태에서는 연장이 불가하다."
                                     ]
                                 },
                                 {
-                                    "title": "도서별 대출 및 상태 이력 조회",
-                                    "description": "관리자는 각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있다.",
+                                    "title": "도서별 이력 및 상태 변경 추적",
+                                    "description": "관리자는 각 도서별 대출 이력과 상태 변경 이력을 조회할 수 있어야 하며, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있다.",
                                     "acceptance": [
-                                        "각 도서별로 대출 이력과 상태 변경 이력이 조회된다.",
-                                        "대출 이력에는 대출일, 반납일, 연장, 연체 정보가 포함된다.",
-                                        "상태 이력에는 상태 변경 일시와 변경 내용이 포함된다."
+                                        "도서별로 모든 대출 이력과 상태 변경 이력을 볼 수 있다."
                                     ]
                                 }
                             ],
@@ -4349,7 +3598,8 @@ export const aggregateDraftScenarios = {
                                             "values": [
                                                 "AVAILABLE",
                                                 "ON_LOAN",
-                                                "RESERVED"
+                                                "RESERVED",
+                                                "DISCARDED"
                                             ]
                                         }
                                     ]
@@ -4358,16 +3608,9 @@ export const aggregateDraftScenarios = {
                                     "properties": [
                                         {
                                             "name": "loanId",
-                                            "type": "Long",
-                                            "required": true,
-                                            "isPrimaryKey": true
-                                        },
-                                        {
-                                            "name": "bookId",
                                             "type": "String",
                                             "required": true,
-                                            "isForeignKey": true,
-                                            "foreignEntity": "Book"
+                                            "isPrimaryKey": true
                                         },
                                         {
                                             "name": "memberId",
@@ -4375,6 +3618,13 @@ export const aggregateDraftScenarios = {
                                             "required": true,
                                             "isForeignKey": true,
                                             "foreignEntity": "Member"
+                                        },
+                                        {
+                                            "name": "bookId",
+                                            "type": "String",
+                                            "required": true,
+                                            "isForeignKey": true,
+                                            "foreignEntity": "Book"
                                         },
                                         {
                                             "name": "loanDate",
@@ -4391,7 +3641,7 @@ export const aggregateDraftScenarios = {
                                             "type": "Date"
                                         },
                                         {
-                                            "name": "loanStatus",
+                                            "name": "status",
                                             "type": "enum",
                                             "required": true,
                                             "values": [
@@ -4399,10 +3649,6 @@ export const aggregateDraftScenarios = {
                                                 "OVERDUE",
                                                 "RETURNED"
                                             ]
-                                        },
-                                        {
-                                            "name": "extendCount",
-                                            "type": "Integer"
                                         }
                                     ]
                                 },
@@ -4410,16 +3656,9 @@ export const aggregateDraftScenarios = {
                                     "properties": [
                                         {
                                             "name": "reservationId",
-                                            "type": "Long",
-                                            "required": true,
-                                            "isPrimaryKey": true
-                                        },
-                                        {
-                                            "name": "bookId",
                                             "type": "String",
                                             "required": true,
-                                            "isForeignKey": true,
-                                            "foreignEntity": "Book"
+                                            "isPrimaryKey": true
                                         },
                                         {
                                             "name": "memberId",
@@ -4427,6 +3666,13 @@ export const aggregateDraftScenarios = {
                                             "required": true,
                                             "isForeignKey": true,
                                             "foreignEntity": "Member"
+                                        },
+                                        {
+                                            "name": "bookId",
+                                            "type": "String",
+                                            "required": true,
+                                            "isForeignKey": true,
+                                            "foreignEntity": "Book"
                                         },
                                         {
                                             "name": "reservationDate",
@@ -4439,7 +3685,7 @@ export const aggregateDraftScenarios = {
                                     "properties": [
                                         {
                                             "name": "historyId",
-                                            "type": "Long",
+                                            "type": "String",
                                             "required": true,
                                             "isPrimaryKey": true
                                         },
@@ -4451,17 +3697,29 @@ export const aggregateDraftScenarios = {
                                             "foreignEntity": "Book"
                                         },
                                         {
-                                            "name": "status",
+                                            "name": "beforeStatus",
                                             "type": "enum",
                                             "required": true,
                                             "values": [
                                                 "AVAILABLE",
                                                 "ON_LOAN",
-                                                "RESERVED"
+                                                "RESERVED",
+                                                "DISCARDED"
                                             ]
                                         },
                                         {
-                                            "name": "changeDate",
+                                            "name": "afterStatus",
+                                            "type": "enum",
+                                            "required": true,
+                                            "values": [
+                                                "AVAILABLE",
+                                                "ON_LOAN",
+                                                "RESERVED",
+                                                "DISCARDED"
+                                            ]
+                                        },
+                                        {
+                                            "name": "changedAt",
                                             "type": "Date",
                                             "required": true
                                         }
@@ -4470,36 +3728,24 @@ export const aggregateDraftScenarios = {
                             },
                             "businessRules": [
                                 {
-                                    "name": "대출 가능 상태 확인",
-                                    "description": "도서 상태가 AVAILABLE인 경우에만 대출 신청이 가능하다."
+                                    "name": "대출 기간 선택 제한",
+                                    "description": "대출 기간은 7일, 14일, 30일만 선택할 수 있다."
                                 },
                                 {
-                                    "name": "대출 중 도서 예약",
-                                    "description": "도서 상태가 ON_LOAN일 때만 예약 신청이 가능하다."
+                                    "name": "연체 도서 연장 불가",
+                                    "description": "연체 상태(OVERDUE)인 대출 건은 연장이 불가하다."
                                 },
                                 {
-                                    "name": "대출 기간 선택",
-                                    "description": "대출 신청 시 7일, 14일, 30일 중에서 대출 기간을 선택해야 한다."
+                                    "name": "대출 상태 자동 변경",
+                                    "description": "도서 대출 시 상태는 'ON_LOAN', 반납 시 예약자 없으면 'AVAILABLE', 예약자 있으면 'RESERVED'로 자동 변경된다."
                                 },
                                 {
-                                    "name": "연장 제한",
-                                    "description": "대출 연장은 정책에 따라 1회 또는 제한 횟수만큼만 가능하다."
-                                },
-                                {
-                                    "name": "반납 시 도서 상태 전환",
-                                    "description": "도서 반납 후 예약자가 있으면 상태를 RESERVED, 없으면 AVAILABLE로 변경한다."
-                                },
-                                {
-                                    "name": "연체 처리",
-                                    "description": "반납 예정일이 경과하면 도서의 대출 상태를 OVERDUE로 변경한다."
-                                },
-                                {
-                                    "name": "상태 변경 이력 기록",
-                                    "description": "모든 도서의 상태 변경은 BookStatusHistory에 기록된다."
+                                    "name": "폐기/대출 불가 도서 대출 거부",
+                                    "description": "도서 상태가 'DISCARDED' 또는 대출 불가 시 대출이 거부된다."
                                 }
                             ],
                             "interfaces": {
-                                "LoanReturnScreen": {
+                                "LoanAndReturn": {
                                     "sections": [
                                         {
                                             "name": "회원 확인",
@@ -4516,7 +3762,9 @@ export const aggregateDraftScenarios = {
                                                     "required": true
                                                 }
                                             ],
-                                            "actions": [],
+                                            "actions": [
+                                                "회원 확인"
+                                            ],
                                             "filters": [],
                                             "resultTable": {
                                                 "columns": [],
@@ -4524,35 +3772,19 @@ export const aggregateDraftScenarios = {
                                             }
                                         },
                                         {
-                                            "name": "도서 검색 및 선택",
+                                            "name": "도서 대출 신청",
                                             "type": "form",
                                             "fields": [
                                                 {
-                                                    "name": "titleOrIsbn",
+                                                    "name": "bookSearch",
                                                     "type": "text",
                                                     "required": true
-                                                }
-                                            ],
-                                            "actions": [
-                                                "도서 검색"
-                                            ],
-                                            "filters": [],
-                                            "resultTable": {
-                                                "columns": [
-                                                    "bookId",
-                                                    "title",
-                                                    "isbn",
-                                                    "status"
-                                                ],
-                                                "actions": [
-                                                    "도서 선택"
-                                                ]
-                                            }
-                                        },
-                                        {
-                                            "name": "대출 신청",
-                                            "type": "form",
-                                            "fields": [
+                                                },
+                                                {
+                                                    "name": "searchType",
+                                                    "type": "select",
+                                                    "required": true
+                                                },
                                                 {
                                                     "name": "loanPeriod",
                                                     "type": "select",
@@ -4560,19 +3792,7 @@ export const aggregateDraftScenarios = {
                                                 }
                                             ],
                                             "actions": [
-                                                "대출 신청"
-                                            ],
-                                            "filters": [],
-                                            "resultTable": {
-                                                "columns": [],
-                                                "actions": []
-                                            }
-                                        },
-                                        {
-                                            "name": "예약 신청",
-                                            "type": "form",
-                                            "fields": [],
-                                            "actions": [
+                                                "대출 신청",
                                                 "예약 신청"
                                             ],
                                             "filters": [],
@@ -4580,48 +3800,77 @@ export const aggregateDraftScenarios = {
                                                 "columns": [],
                                                 "actions": []
                                             }
+                                        },
+                                        {
+                                            "name": "도서 반납",
+                                            "type": "form",
+                                            "fields": [
+                                                {
+                                                    "name": "loanId",
+                                                    "type": "text",
+                                                    "required": true
+                                                }
+                                            ],
+                                            "actions": [
+                                                "반납 처리"
+                                            ],
+                                            "filters": [],
+                                            "resultTable": {
+                                                "columns": [],
+                                                "actions": []
+                                            }
                                         }
                                     ]
                                 },
-                                "LoanStatusScreen": {
+                                "LoanStatus": {
                                     "sections": [
                                         {
                                             "name": "대출 현황 목록",
                                             "type": "table",
                                             "fields": [],
                                             "actions": [
-                                                "연장 신청",
-                                                "반납 처리"
+                                                "연장",
+                                                "반납"
                                             ],
                                             "filters": [
-                                                "전체/회원별/도서별"
+                                                "대출 상태",
+                                                "대출일",
+                                                "반납예정일"
                                             ],
                                             "resultTable": {
                                                 "columns": [
                                                     "loanId",
-                                                    "memberId",
                                                     "bookId",
+                                                    "title",
                                                     "loanDate",
                                                     "dueDate",
-                                                    "loanStatus"
+                                                    "status"
                                                 ],
                                                 "actions": [
-                                                    "상세 조회"
+                                                    "연장",
+                                                    "반납"
                                                 ]
                                             }
                                         }
                                     ]
                                 },
-                                "BookHistoryScreen": {
+                                "BookHistory": {
                                     "sections": [
                                         {
-                                            "name": "대출 이력",
+                                            "name": "도서별 이력 조회",
                                             "type": "table",
-                                            "fields": [],
-                                            "actions": [],
-                                            "filters": [
-                                                "도서별"
+                                            "fields": [
+                                                {
+                                                    "name": "bookId",
+                                                    "type": "text",
+                                                    "required": true
+                                                }
                                             ],
+                                            "actions": [
+                                                "대출 이력 조회",
+                                                "상태 변경 이력 조회"
+                                            ],
+                                            "filters": [],
                                             "resultTable": {
                                                 "columns": [
                                                     "loanId",
@@ -4629,24 +3878,23 @@ export const aggregateDraftScenarios = {
                                                     "loanDate",
                                                     "dueDate",
                                                     "returnDate",
-                                                    "loanStatus"
+                                                    "status"
                                                 ],
                                                 "actions": []
                                             }
                                         },
                                         {
-                                            "name": "상태 변경 이력",
+                                            "name": "도서 상태 변경 이력",
                                             "type": "table",
                                             "fields": [],
                                             "actions": [],
-                                            "filters": [
-                                                "도서별"
-                                            ],
+                                            "filters": [],
                                             "resultTable": {
                                                 "columns": [
                                                     "historyId",
-                                                    "status",
-                                                    "changeDate"
+                                                    "beforeStatus",
+                                                    "afterStatus",
+                                                    "changedAt"
                                                 ],
                                                 "actions": []
                                             }
@@ -4656,54 +3904,74 @@ export const aggregateDraftScenarios = {
                             },
                             "events": [
                                 {
-                                    "name": "LoanRequested",
-                                    "description": "회원이 도서명 또는 ISBN으로 검색하여 대출 가능한 도서에 대해 대출을 신청함. 회원번호와 이름 확인 필요.",
-                                    "displayName": "대출 신청됨"
+                                    "name": "MemberVerified",
+                                    "description": "회원번호와 이름으로 회원 정보가 확인됨.",
+                                    "displayName": "회원이 확인됨"
                                 },
                                 {
-                                    "name": "LoanApproved",
-                                    "description": "대출 요청이 처리되어 도서가 회원에게 대출됨. 도서 상태는 대출중으로 자동 변경됨.",
-                                    "displayName": "대출 완료됨"
+                                    "name": "BookLoanRequested",
+                                    "description": "회원이 대출하고자 하는 도서와 대출 기간(7일/14일/30일)을 선택하여 대출을 신청함.",
+                                    "displayName": "도서 대출이 신청됨"
+                                },
+                                {
+                                    "name": "BookLoanRejected",
+                                    "description": "도서가 폐기되었거나 대출 불가 상태인 경우 대출이 거부됨.",
+                                    "displayName": "도서 대출이 거부됨"
+                                },
+                                {
+                                    "name": "BookLoanApproved",
+                                    "description": "도서가 대출 가능 상태라면 대출이 승인되고 대출 정보가 생성됨. 도서 상태는 '대출중'으로 변경됨.",
+                                    "displayName": "도서 대출이 승인됨"
                                 },
                                 {
                                     "name": "BookReserved",
-                                    "description": "회원이 이미 대출중인 도서에 대해 예약 신청을 함. 예약된 도서는 예약 대기 리스트에 등록됨.",
-                                    "displayName": "도서 예약됨"
+                                    "description": "대출하려는 도서가 이미 대출 중일 때 회원이 해당 도서의 예약을 신청하면 예약이 생성되고, 도서의 상태가 '예약중'으로 변경됨.",
+                                    "displayName": "도서가 예약됨"
                                 },
                                 {
-                                    "name": "LoanReturned",
-                                    "description": "회원이 대출 중인 도서를 반납함. 반납 후 예약자가 있으면 도서 상태는 예약중, 없으면 대출가능으로 변경됨.",
-                                    "displayName": "도서 반납됨"
+                                    "name": "BookReturned",
+                                    "description": "회원이 대출한 도서를 반납함. 도서에 예약자가 있으면 상태가 '예약중'으로, 없으면 '대출가능'으로 변경됨.",
+                                    "displayName": "도서가 반납됨"
+                                },
+                                {
+                                    "name": "BookAvailable",
+                                    "description": "반납된 도서에 예약자가 없는 경우 도서 상태가 '대출가능'으로 변경됨.",
+                                    "displayName": "도서가 대출 가능 상태로 변경됨"
+                                },
+                                {
+                                    "name": "BookReservedForNext",
+                                    "description": "반납된 도서에 예약자가 있을 경우 도서 상태가 '예약중'으로 변경됨.",
+                                    "displayName": "도서가 다음 예약자를 위해 예약중 상태로 변경됨"
                                 },
                                 {
                                     "name": "LoanExtended",
-                                    "description": "회원이 대출중인 도서의 반납예정일을 연장 신청함. 연장은 정책에 따라 1회 혹은 제한 가능.",
-                                    "displayName": "대출 연장됨"
+                                    "description": "회원이 대출 중인 도서의 대출 기간을 연장함. 연체 상태에서는 연장이 불가함.",
+                                    "displayName": "대출 기간이 연장됨"
                                 },
                                 {
-                                    "name": "LoanOverdueChecked",
-                                    "description": "반납 예정일이 지난 도서의 연체 상태를 확인하여 연체로 표시함.",
-                                    "displayName": "연체 확인됨"
-                                },
-                                {
-                                    "name": "ReservationNotified",
-                                    "description": "예약자가 있는 도서가 반납되었을 때, 예약자에게 도서 이용 가능 안내를 통보함.",
-                                    "displayName": "예약자 통보됨"
-                                },
-                                {
-                                    "name": "LoanStatusQueried",
-                                    "description": "현재 대출 중인 도서와 각 대출 건의 대출일, 반납예정일, 상태(대출중/연체/반납완료)를 조회함.",
-                                    "displayName": "대출 현황 조회됨"
+                                    "name": "LoanOverdue",
+                                    "description": "반납 예정일이 지나도 도서가 반납되지 않은 경우, 대출 건의 상태가 '연체'로 변경됨.",
+                                    "displayName": "도서 대출이 연체됨"
                                 }
                             ],
-                            "inference": "제시된 요구사항을 분석하여, 대출/반납 화면과 대출 현황 화면의 핵심 프로세스와 모든 엔터티, 비즈니스 규칙, 인터페이스 구성, 이벤트 흐름을 체계적으로 정의함. 도서 상태, 대출, 예약, 반납의 다양한 전이와 상태 변화를 추적할 수 있도록 설계하였으며, 연장 및 연체 처리 등 핵심 정책 및 사용자 시나리오를 모두 반영함."
+                            "contextRelations": [
+                                {
+                                    "name": "BookManagementToBookLoanProcess",
+                                    "type": "Pub/Sub",
+                                    "direction": "receives from",
+                                    "targetContext": "도서 관리 (BookManagement)",
+                                    "reason": "도서의 상태 변화, 신규 등록, 폐기 등 이벤트가 발생하면 이를 대출/예약/연체 프로세스에 전달해야 하며, 두 컨텍스트가 느슨하게 결합되고 데이터 소유권이 명확히 분리됨.",
+                                    "interactionPattern": "도서 상태 변경, 신규 등록, 폐기 등 이벤트를 Pub/Sub로 발행하며 대출 프로세스에서 구독하여 반영함. 예: 도서가 폐기되면 대출 프로세스에서 대출 거부 처리."
+                                }
+                            ],
+                            "inference": "요구사항을 바탕으로 대출/반납 및 대출 현황, 도서 이력 관리에 필요한 모든 명시적/암묵적 기능을 반영하였다. 엔터티 속성 및 타입, 업무 규칙, 인터페이스의 입력 유형, 도메인 이벤트, 컨텍스트 간 관계까지 구체적으로 구성하였다."
                         },
-                        "inference": "\n\n주어진 요구사항과 누적된 초안을 분석하여, 도서 대출·예약·이력관리 업무의 트랜잭션 경계와 불변성을 보장하면서, 도메인별 책임이 명확하게 구분되도록 다양한 옵션을 설계하였다. Book, BookHistory Aggregate는 이미 LibraryBookManagement 컨텍스트에서 정의되어 있으므로, ValueObject 참조로만 처리하였으며, 반드시 Loan(대출) 및 Reservation(예약) Aggregate를 포함하도록 하였다. 각 옵션마다 Aggregate의 수를 다르게 설정하여 책임 분리, 트랜잭션 일관성, 유지보수성의 균형을 고려했다."
+                        "inference": "\n\n도메인 요구사항과 누적 초안, 이벤트, 컨텍스트 관계, 집계 경계 원칙을 바탕으로, 각 옵션은 Loan(대출), Reservation(예약), Member(회원)을 반드시 포함하도록 설계했다. Book, BookLoanHistory, BookStatusHistory는 이미 존재하므로 ValueObject 참조로 처리했다. 옵션마다 집계 개수에 차별성을 두었고, 각 옵션은 트랜잭션 일관성, 상태 관리, 이벤트 발행에 맞춰 경계를 설정했다."
                     }
                 ],
                 "draftUIInfos": {
                     "leftBoundedContextCount": 0,
-                    "directMessage": "Generating options for 대출/반납 Bounded Context... (7971 characters generated)",
+                    "directMessage": "Generating options for 도서 대출 프로세스 Bounded Context... (8479 characters generated)",
                     "progress": 100
                 },
                 "isGeneratorButtonEnabled": true,
@@ -4712,10 +3980,10 @@ export const aggregateDraftScenarios = {
                     "initialInputs": [
                         {
                             "boundedContext": {
-                                "name": "LibraryBookManagement",
-                                "alias": "도서관리",
-                                "displayName": "도서관리",
-                                "description": "# Requirements\n\n## userStory\n\n'도서 관리' 화면에서는 새로운 도서를 등록하고 현재 보유한 도서들의 상태를 관리할 수 있어야 해. 도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해. 등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야 해.\n\n## userStory\n\n각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해.\n\n## Event\n\n{\"name\":\"BookRegistered\",\"displayName\":\"도서 등록됨\",\"actor\":\"도서관리자\",\"level\":1,\"description\":\"관리자가 새로운 도서를 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력하여 등록함. ISBN 중복 및 13자리 유효성 검증을 통과함.\",\"inputs\":[\"도서명\",\"ISBN\",\"저자\",\"출판사\",\"카테고리 (소설/비소설/학술/잡지)\",\"ISBN 중복 없음\",\"ISBN 13자리\"],\"outputs\":[\"도서 엔티티 생성\",\"도서 상태: 대출가능\"],\"nextEvents\":[\"BookStateChanged\"]}\n\n## Event\n\n{\"name\":\"BookStateChanged\",\"displayName\":\"도서 상태 변경됨\",\"actor\":\"도서관리시스템\",\"level\":2,\"description\":\"도서 등록/대출/반납/예약/폐기 등의 트리거에 의해 도서의 상태가 변경됨.\",\"inputs\":[\"도서 이벤트 트리거\",\"이전 도서 상태\"],\"outputs\":[\"도서 상태: 대출가능/대출중/예약중/폐기\"],\"nextEvents\":[\"BookDisposed\",\"LoanRequested\",\"LoanReturned\",\"BookReserved\"]}\n\n## Event\n\n{\"name\":\"BookDisposed\",\"displayName\":\"도서 폐기됨\",\"actor\":\"도서관리자\",\"level\":3,\"description\":\"관리자가 훼손/분실로 인한 도서 폐기를 처리함. 폐기된 도서는 대출 불가 상태가 됨.\",\"inputs\":[\"도서 식별\",\"훼손/분실 사유\"],\"outputs\":[\"도서 상태: 폐기\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookHistoryQueried\",\"displayName\":\"도서 이력 조회됨\",\"actor\":\"도서관리자\",\"level\":11,\"description\":\"관리자/회원이 도서별로 대출 및 상태 변경 이력을 조회함.\",\"inputs\":[\"도서 식별자\"],\"outputs\":[\"도서 대출 이력 목록\",\"도서 상태 변경 이력 목록\"],\"nextEvents\":[]}",
+                                "name": "BookManagement",
+                                "alias": "도서 관리",
+                                "displayName": "도서 관리",
+                                "description": "# Requirements\n\n## userStory\n\n'도서 관리' 화면에서는 새로운 도서를 등록하고 현재 보유한 도서들의 상태를 관리할 수 있어야 해. 도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해. 등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야 해.\n\n## userStory\n\n도서는 도서명이나 ISBN으로 검색할 수 있어야 해.\n\n## userStory\n\n도서가 반납되면 자동으로 해당 도서의 상태가 '대출가능'으로 변경되어야 해. 만약 예약자가 있는 도서가 반납되면, 해당 도서는 '예약중' 상태로 변경되어야 해.\n\n## userStory\n\n각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해.\n\n## Event\n\n{\"name\":\"BookRegistered\",\"displayName\":\"도서가 등록됨\",\"actor\":\"도서 관리자\",\"level\":1,\"description\":\"도서 관리자가 새로운 도서를 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력하여 도서를 등록함. 등록된 도서는 '대출가능' 상태가 됨.\",\"inputs\":[\"도서명\",\"ISBN(13자리)\",\"저자\",\"출판사\",\"카테고리\",\"ISBN 중복 아님\"],\"outputs\":[\"신규 도서 데이터\",\"'대출가능' 상태\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookRegistrationFailed\",\"displayName\":\"도서 등록 실패됨\",\"actor\":\"도서 관리자\",\"level\":2,\"description\":\"도서 등록 시 ISBN이 13자리가 아니거나 중복된 경우 등록이 거부됨.\",\"inputs\":[\"ISBN(중복 또는 13자리 아님)\"],\"outputs\":[\"에러 메시지\",\"등록 거부\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookDiscarded\",\"displayName\":\"도서가 폐기됨\",\"actor\":\"도서 관리자\",\"level\":3,\"description\":\"도서가 훼손되거나 분실된 경우 도서 관리자가 해당 도서를 폐기 처리함. 폐기된 도서는 더 이상 대출이 불가함.\",\"inputs\":[\"도서 식별자\",\"폐기 사유\"],\"outputs\":[\"도서 상태 '폐기'로 변경\",\"대출 불가\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookSearched\",\"displayName\":\"도서가 검색됨\",\"actor\":\"회원\",\"level\":4,\"description\":\"회원이 도서명이나 ISBN으로 도서를 검색함.\",\"inputs\":[\"검색어(도서명 또는 ISBN)\"],\"outputs\":[\"검색 결과 도서 목록\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookLoanHistoryViewed\",\"displayName\":\"도서의 대출 이력이 조회됨\",\"actor\":\"도서 관리자\",\"level\":15,\"description\":\"도서 관리자가 특정 도서의 대출 이력을 조회함.\",\"inputs\":[\"도서 식별자\"],\"outputs\":[\"대출 이력 목록\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookStatusHistoryViewed\",\"displayName\":\"도서의 상태 변경 이력이 조회됨\",\"actor\":\"도서 관리자\",\"level\":16,\"description\":\"도서 관리자가 특정 도서의 상태 변경 이력을 조회함.\",\"inputs\":[\"도서 식별자\"],\"outputs\":[\"상태 변경 이력 목록\"],\"nextEvents\":[]}\n\n\n## Context Relations\n\n### BookManagementToBookLoanProcess\n- **Type**: Pub/Sub\n- **Direction**: sends to 도서 대출 프로세스 (BookLoanProcess)\n- **Reason**: 도서의 상태 변화, 신규 등록, 폐기 등 이벤트가 발생하면 이를 대출/예약/연체 프로세스에 전달해야 하며, 두 컨텍스트가 느슨하게 결합되고 데이터 소유권이 명확히 분리됨.\n- **Interaction Pattern**: 도서 상태 변경, 신규 등록, 폐기 등 이벤트를 Pub/Sub로 발행하며 대출 프로세스에서 구독하여 반영함. 예: 도서가 폐기되면 대출 프로세스에서 대출 거부 처리.",
                                 "aggregates": [
                                     {
                                         "name": "Book",
@@ -4723,14 +3991,14 @@ export const aggregateDraftScenarios = {
                                     }
                                 ]
                             },
-                            "description": "# Requirements\n\n## userStory\n\n'도서 관리' 화면에서는 새로운 도서를 등록하고 현재 보유한 도서들의 상태를 관리할 수 있어야 해. 도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해. 등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야 해.\n\n## userStory\n\n각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해.\n\n## Event\n\n{\"name\":\"BookRegistered\",\"displayName\":\"도서 등록됨\",\"actor\":\"도서관리자\",\"level\":1,\"description\":\"관리자가 새로운 도서를 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력하여 등록함. ISBN 중복 및 13자리 유효성 검증을 통과함.\",\"inputs\":[\"도서명\",\"ISBN\",\"저자\",\"출판사\",\"카테고리 (소설/비소설/학술/잡지)\",\"ISBN 중복 없음\",\"ISBN 13자리\"],\"outputs\":[\"도서 엔티티 생성\",\"도서 상태: 대출가능\"],\"nextEvents\":[\"BookStateChanged\"]}\n\n## Event\n\n{\"name\":\"BookStateChanged\",\"displayName\":\"도서 상태 변경됨\",\"actor\":\"도서관리시스템\",\"level\":2,\"description\":\"도서 등록/대출/반납/예약/폐기 등의 트리거에 의해 도서의 상태가 변경됨.\",\"inputs\":[\"도서 이벤트 트리거\",\"이전 도서 상태\"],\"outputs\":[\"도서 상태: 대출가능/대출중/예약중/폐기\"],\"nextEvents\":[\"BookDisposed\",\"LoanRequested\",\"LoanReturned\",\"BookReserved\"]}\n\n## Event\n\n{\"name\":\"BookDisposed\",\"displayName\":\"도서 폐기됨\",\"actor\":\"도서관리자\",\"level\":3,\"description\":\"관리자가 훼손/분실로 인한 도서 폐기를 처리함. 폐기된 도서는 대출 불가 상태가 됨.\",\"inputs\":[\"도서 식별\",\"훼손/분실 사유\"],\"outputs\":[\"도서 상태: 폐기\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookHistoryQueried\",\"displayName\":\"도서 이력 조회됨\",\"actor\":\"도서관리자\",\"level\":11,\"description\":\"관리자/회원이 도서별로 대출 및 상태 변경 이력을 조회함.\",\"inputs\":[\"도서 식별자\"],\"outputs\":[\"도서 대출 이력 목록\",\"도서 상태 변경 이력 목록\"],\"nextEvents\":[]}"
+                            "description": "# Requirements\n\n## userStory\n\n'도서 관리' 화면에서는 새로운 도서를 등록하고 현재 보유한 도서들의 상태를 관리할 수 있어야 해. 도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해. 등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야 해.\n\n## userStory\n\n도서는 도서명이나 ISBN으로 검색할 수 있어야 해.\n\n## userStory\n\n도서가 반납되면 자동으로 해당 도서의 상태가 '대출가능'으로 변경되어야 해. 만약 예약자가 있는 도서가 반납되면, 해당 도서는 '예약중' 상태로 변경되어야 해.\n\n## userStory\n\n각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해.\n\n## Event\n\n{\"name\":\"BookRegistered\",\"displayName\":\"도서가 등록됨\",\"actor\":\"도서 관리자\",\"level\":1,\"description\":\"도서 관리자가 새로운 도서를 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력하여 도서를 등록함. 등록된 도서는 '대출가능' 상태가 됨.\",\"inputs\":[\"도서명\",\"ISBN(13자리)\",\"저자\",\"출판사\",\"카테고리\",\"ISBN 중복 아님\"],\"outputs\":[\"신규 도서 데이터\",\"'대출가능' 상태\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookRegistrationFailed\",\"displayName\":\"도서 등록 실패됨\",\"actor\":\"도서 관리자\",\"level\":2,\"description\":\"도서 등록 시 ISBN이 13자리가 아니거나 중복된 경우 등록이 거부됨.\",\"inputs\":[\"ISBN(중복 또는 13자리 아님)\"],\"outputs\":[\"에러 메시지\",\"등록 거부\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookDiscarded\",\"displayName\":\"도서가 폐기됨\",\"actor\":\"도서 관리자\",\"level\":3,\"description\":\"도서가 훼손되거나 분실된 경우 도서 관리자가 해당 도서를 폐기 처리함. 폐기된 도서는 더 이상 대출이 불가함.\",\"inputs\":[\"도서 식별자\",\"폐기 사유\"],\"outputs\":[\"도서 상태 '폐기'로 변경\",\"대출 불가\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookSearched\",\"displayName\":\"도서가 검색됨\",\"actor\":\"회원\",\"level\":4,\"description\":\"회원이 도서명이나 ISBN으로 도서를 검색함.\",\"inputs\":[\"검색어(도서명 또는 ISBN)\"],\"outputs\":[\"검색 결과 도서 목록\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookLoanHistoryViewed\",\"displayName\":\"도서의 대출 이력이 조회됨\",\"actor\":\"도서 관리자\",\"level\":15,\"description\":\"도서 관리자가 특정 도서의 대출 이력을 조회함.\",\"inputs\":[\"도서 식별자\"],\"outputs\":[\"대출 이력 목록\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookStatusHistoryViewed\",\"displayName\":\"도서의 상태 변경 이력이 조회됨\",\"actor\":\"도서 관리자\",\"level\":16,\"description\":\"도서 관리자가 특정 도서의 상태 변경 이력을 조회함.\",\"inputs\":[\"도서 식별자\"],\"outputs\":[\"상태 변경 이력 목록\"],\"nextEvents\":[]}\n\n\n## Context Relations\n\n### BookManagementToBookLoanProcess\n- **Type**: Pub/Sub\n- **Direction**: sends to 도서 대출 프로세스 (BookLoanProcess)\n- **Reason**: 도서의 상태 변화, 신규 등록, 폐기 등 이벤트가 발생하면 이를 대출/예약/연체 프로세스에 전달해야 하며, 두 컨텍스트가 느슨하게 결합되고 데이터 소유권이 명확히 분리됨.\n- **Interaction Pattern**: 도서 상태 변경, 신규 등록, 폐기 등 이벤트를 Pub/Sub로 발행하며 대출 프로세스에서 구독하여 반영함. 예: 도서가 폐기되면 대출 프로세스에서 대출 거부 처리."
                         },
                         {
                             "boundedContext": {
-                                "name": "LibraryLoanProcess",
-                                "alias": "대출/반납",
-                                "displayName": "대출/반납",
-                                "description": "# Requirements\n\n## userStory\n\n'대출/반납' 화면에서는 회원이 도서를 대출하고 반납하는 것을 관리할 수 있어야 해. 대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할 도서를 선택해야 해. 도서는 도서명이나 ISBN으로 검색할 수 있어야 해. 대출 기간은 7일/14일/30일 중에서 선택할 수 있어. 만약 대출하려는 도서가 이미 대출 중이라면, 예약 신청이 가능해야 해. 대출이 완료되면 해당 도서의 상태는 자동으로 '대출중'으로 변경되어야 해.\n\n## userStory\n\n대출 현황 화면에서는 현재 대출 중인 도서들의 목록을 볼 수 있어야 해. 각 대출 건에 대해 대출일, 반납예정일, 현재 상태(대출중/연체/반납완료)를 확인할 수 있어야 하고, 대출 중인 도서는 연장이나 반납 처리가 가능해야 해. 도서가 반납되면 자동으로 해당 도서의 상태가 '대출가능'으로 변경되어야 해. 만약 예약자가 있는 도서가 반납되면, 해당 도서는 '예약중' 상태로 변경되어야 해.\n\n## userStory\n\n각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해.\n\n## Event\n\n{\"name\":\"LoanRequested\",\"displayName\":\"대출 신청됨\",\"actor\":\"회원\",\"level\":4,\"description\":\"회원이 도서명이나 ISBN으로 검색하여 대출 가능한 도서에 대해 대출을 신청함. 회원번호와 이름 확인 필요.\",\"inputs\":[\"회원번호\",\"이름\",\"도서명/ISBN\",\"대출 가능 상태 도서\",\"대출 기간(7/14/30일)\"],\"outputs\":[\"대출 신청 생성\",\"대출 대기 상태\"],\"nextEvents\":[\"LoanApproved\",\"BookReserved\"]}\n\n## Event\n\n{\"name\":\"LoanApproved\",\"displayName\":\"대출 완료됨\",\"actor\":\"도서관리시스템\",\"level\":5,\"description\":\"대출 요청이 처리되어 도서가 회원에게 대출됨. 도서 상태는 대출중으로 자동 변경됨.\",\"inputs\":[\"대출 신청\",\"대출 가능 도서\",\"회원 자격 유효\"],\"outputs\":[\"대출 기록 생성\",\"도서 상태: 대출중\",\"대출일\",\"반납예정일\"],\"nextEvents\":[\"LoanExtended\",\"LoanReturned\",\"LoanOverdueChecked\"]}\n\n## Event\n\n{\"name\":\"BookReserved\",\"displayName\":\"도서 예약됨\",\"actor\":\"회원\",\"level\":6,\"description\":\"회원이 이미 대출중인 도서에 대해 예약 신청을 함. 예약된 도서는 예약 대기 리스트에 등록됨.\",\"inputs\":[\"회원번호\",\"이름\",\"대출중 상태 도서\"],\"outputs\":[\"예약 기록 생성\",\"도서 상태: 예약중\"],\"nextEvents\":[\"LoanReturned\"]}\n\n## Event\n\n{\"name\":\"LoanReturned\",\"displayName\":\"도서 반납됨\",\"actor\":\"회원\",\"level\":7,\"description\":\"회원이 대출 중인 도서를 반납함. 반납 후 예약자가 있으면 도서 상태는 예약중, 없으면 대출가능으로 변경됨.\",\"inputs\":[\"대출 중 도서\",\"회원\"],\"outputs\":[\"반납 기록 생성\",\"도서 상태: 대출가능/예약중\"],\"nextEvents\":[\"BookStateChanged\",\"ReservationNotified\"]}\n\n## Event\n\n{\"name\":\"LoanExtended\",\"displayName\":\"대출 연장됨\",\"actor\":\"회원\",\"level\":8,\"description\":\"회원이 대출중인 도서의 반납예정일을 연장 신청함. 연장은 정책에 따라 1회 혹은 제한 가능.\",\"inputs\":[\"회원\",\"대출중 상태 도서\",\"연장 조건 충족\"],\"outputs\":[\"반납예정일 변경\"],\"nextEvents\":[\"LoanOverdueChecked\",\"LoanReturned\"]}\n\n## Event\n\n{\"name\":\"LoanOverdueChecked\",\"displayName\":\"연체 확인됨\",\"actor\":\"도서관리시스템\",\"level\":9,\"description\":\"반납 예정일이 지난 도서의 연체 상태를 확인하여 연체로 표시함.\",\"inputs\":[\"대출중 도서\",\"현재 일자\",\"반납예정일\"],\"outputs\":[\"대출 상태: 연체\"],\"nextEvents\":[\"LoanReturned\"]}\n\n## Event\n\n{\"name\":\"ReservationNotified\",\"displayName\":\"예약자 통보됨\",\"actor\":\"도서관리시스템\",\"level\":10,\"description\":\"예약자가 있는 도서가 반납되었을 때, 예약자에게 도서 이용 가능 안내를 통보함.\",\"inputs\":[\"도서 반납\",\"예약자 존재\"],\"outputs\":[\"예약자 알림\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"LoanStatusQueried\",\"displayName\":\"대출 현황 조회됨\",\"actor\":\"도서관리자\",\"level\":12,\"description\":\"현재 대출 중인 도서와 각 대출 건의 대출일, 반납예정일, 상태(대출중/연체/반납완료)를 조회함.\",\"inputs\":[\"조회 조건 (전체/회원별/도서별)\"],\"outputs\":[\"대출 건 목록\",\"각 대출 상태\"],\"nextEvents\":[]}",
+                                "name": "BookLoanProcess",
+                                "alias": "도서 대출 프로세스",
+                                "displayName": "도서 대출 프로세스",
+                                "description": "# Requirements\n\n## userStory\n\n'대출/반납' 화면에서는 회원이 도서를 대출하고 반납하는 것을 관리할 수 있어야 해. 대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할 도서를 선택해야 해. 도서는 도서명이나 ISBN으로 검색할 수 있어야 해. 대출 기간은 7일/14일/30일 중에서 선택할 수 있어. 만약 대출하려는 도서가 이미 대출 중이라면, 예약 신청이 가능해야 해. 대출이 완료되면 해당 도서의 상태는 자동으로 '대출중'으로 변경되어야 해.\n\n## userStory\n\n대출 현황 화면에서는 현재 대출 중인 도서들의 목록을 볼 수 있어야 해. 각 대출 건에 대해 대출일, 반납예정일, 현재 상태(대출중/연체/반납완료)를 확인할 수 있어야 하고, 대출 중인 도서는 연장이나 반납 처리가 가능해야 해. 도서가 반납되면 자동으로 해당 도서의 상태가 '대출가능'으로 변경되어야 해. 만약 예약자가 있는 도서가 반납되면, 해당 도서는 '예약중' 상태로 변경되어야 해.\n\n## userStory\n\n각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해.\n\n## Event\n\n{\"name\":\"MemberVerified\",\"displayName\":\"회원이 확인됨\",\"actor\":\"회원\",\"level\":5,\"description\":\"회원번호와 이름으로 회원 정보가 확인됨.\",\"inputs\":[\"회원번호\",\"이름\"],\"outputs\":[\"회원 정보\"],\"nextEvents\":[\"BookLoanRequested\"]}\n\n## Event\n\n{\"name\":\"BookLoanRequested\",\"displayName\":\"도서 대출이 신청됨\",\"actor\":\"회원\",\"level\":6,\"description\":\"회원이 대출하고자 하는 도서와 대출 기간(7일/14일/30일)을 선택하여 대출을 신청함.\",\"inputs\":[\"회원 정보\",\"도서 식별자\",\"대출 기간\"],\"outputs\":[\"대출 신청 요청\"],\"nextEvents\":[\"BookLoanApproved\",\"BookLoanRejected\"]}\n\n## Event\n\n{\"name\":\"BookLoanRejected\",\"displayName\":\"도서 대출이 거부됨\",\"actor\":\"도서 대출 시스템\",\"level\":7,\"description\":\"도서가 폐기되었거나 대출 불가 상태인 경우 대출이 거부됨.\",\"inputs\":[\"도서 상태 '폐기' 또는 대출 불가\"],\"outputs\":[\"대출 거부 알림\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookLoanApproved\",\"displayName\":\"도서 대출이 승인됨\",\"actor\":\"도서 대출 시스템\",\"level\":8,\"description\":\"도서가 대출 가능 상태라면 대출이 승인되고 대출 정보가 생성됨. 도서 상태는 '대출중'으로 변경됨.\",\"inputs\":[\"도서 상태 '대출가능'\",\"대출 신청 정보\"],\"outputs\":[\"대출 정보 생성\",\"도서 상태 '대출중'으로 변경\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookReserved\",\"displayName\":\"도서가 예약됨\",\"actor\":\"회원\",\"level\":9,\"description\":\"대출하려는 도서가 이미 대출 중일 때 회원이 해당 도서의 예약을 신청하면 예약이 생성되고, 도서의 상태가 '예약중'으로 변경됨.\",\"inputs\":[\"회원 정보\",\"대출 중인 도서 식별자\"],\"outputs\":[\"예약 정보 생성\",\"도서 상태 '예약중'으로 변경\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookReturned\",\"displayName\":\"도서가 반납됨\",\"actor\":\"회원\",\"level\":10,\"description\":\"회원이 대출한 도서를 반납함. 도서에 예약자가 있으면 상태가 '예약중'으로, 없으면 '대출가능'으로 변경됨.\",\"inputs\":[\"반납 도서 식별자\"],\"outputs\":[\"반납 처리\",\"도서 상태 변경\"],\"nextEvents\":[\"BookAvailable\",\"BookReservedForNext\"]}\n\n## Event\n\n{\"name\":\"BookAvailable\",\"displayName\":\"도서가 대출 가능 상태로 변경됨\",\"actor\":\"도서 대출 시스템\",\"level\":11,\"description\":\"반납된 도서에 예약자가 없는 경우 도서 상태가 '대출가능'으로 변경됨.\",\"inputs\":[\"반납 도서 식별자\",\"예약자 없음\"],\"outputs\":[\"도서 상태 '대출가능'\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookReservedForNext\",\"displayName\":\"도서가 다음 예약자를 위해 예약중 상태로 변경됨\",\"actor\":\"도서 대출 시스템\",\"level\":12,\"description\":\"반납된 도서에 예약자가 있을 경우 도서 상태가 '예약중'으로 변경됨.\",\"inputs\":[\"반납 도서 식별자\",\"예약자 존재\"],\"outputs\":[\"도서 상태 '예약중'\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"LoanExtended\",\"displayName\":\"대출 기간이 연장됨\",\"actor\":\"회원\",\"level\":13,\"description\":\"회원이 대출 중인 도서의 대출 기간을 연장함. 연체 상태에서는 연장이 불가함.\",\"inputs\":[\"회원 정보\",\"대출 중인 도서 식별자\",\"연장 요청\"],\"outputs\":[\"대출 기간 연장\",\"새 반납 예정일\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"LoanOverdue\",\"displayName\":\"도서 대출이 연체됨\",\"actor\":\"도서 대출 시스템\",\"level\":14,\"description\":\"반납 예정일이 지나도 도서가 반납되지 않은 경우, 대출 건의 상태가 '연체'로 변경됨.\",\"inputs\":[\"반납 예정일 경과\",\"반납 미처리\"],\"outputs\":[\"대출 상태 '연체'로 변경\"],\"nextEvents\":[]}\n\n\n## Context Relations\n\n### BookManagementToBookLoanProcess\n- **Type**: Pub/Sub\n- **Direction**: receives from 도서 관리 (BookManagement)\n- **Reason**: 도서의 상태 변화, 신규 등록, 폐기 등 이벤트가 발생하면 이를 대출/예약/연체 프로세스에 전달해야 하며, 두 컨텍스트가 느슨하게 결합되고 데이터 소유권이 명확히 분리됨.\n- **Interaction Pattern**: 도서 상태 변경, 신규 등록, 폐기 등 이벤트를 Pub/Sub로 발행하며 대출 프로세스에서 구독하여 반영함. 예: 도서가 폐기되면 대출 프로세스에서 대출 거부 처리.",
                                 "aggregates": [
                                     {
                                         "name": "Loan",
@@ -4739,14 +4007,18 @@ export const aggregateDraftScenarios = {
                                     {
                                         "name": "Reservation",
                                         "alias": "예약"
+                                    },
+                                    {
+                                        "name": "Member",
+                                        "alias": "회원"
                                     }
                                 ]
                             },
-                            "description": "# Requirements\n\n## userStory\n\n'대출/반납' 화면에서는 회원이 도서를 대출하고 반납하는 것을 관리할 수 있어야 해. 대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할 도서를 선택해야 해. 도서는 도서명이나 ISBN으로 검색할 수 있어야 해. 대출 기간은 7일/14일/30일 중에서 선택할 수 있어. 만약 대출하려는 도서가 이미 대출 중이라면, 예약 신청이 가능해야 해. 대출이 완료되면 해당 도서의 상태는 자동으로 '대출중'으로 변경되어야 해.\n\n## userStory\n\n대출 현황 화면에서는 현재 대출 중인 도서들의 목록을 볼 수 있어야 해. 각 대출 건에 대해 대출일, 반납예정일, 현재 상태(대출중/연체/반납완료)를 확인할 수 있어야 하고, 대출 중인 도서는 연장이나 반납 처리가 가능해야 해. 도서가 반납되면 자동으로 해당 도서의 상태가 '대출가능'으로 변경되어야 해. 만약 예약자가 있는 도서가 반납되면, 해당 도서는 '예약중' 상태로 변경되어야 해.\n\n## userStory\n\n각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해.\n\n## Event\n\n{\"name\":\"LoanRequested\",\"displayName\":\"대출 신청됨\",\"actor\":\"회원\",\"level\":4,\"description\":\"회원이 도서명이나 ISBN으로 검색하여 대출 가능한 도서에 대해 대출을 신청함. 회원번호와 이름 확인 필요.\",\"inputs\":[\"회원번호\",\"이름\",\"도서명/ISBN\",\"대출 가능 상태 도서\",\"대출 기간(7/14/30일)\"],\"outputs\":[\"대출 신청 생성\",\"대출 대기 상태\"],\"nextEvents\":[\"LoanApproved\",\"BookReserved\"]}\n\n## Event\n\n{\"name\":\"LoanApproved\",\"displayName\":\"대출 완료됨\",\"actor\":\"도서관리시스템\",\"level\":5,\"description\":\"대출 요청이 처리되어 도서가 회원에게 대출됨. 도서 상태는 대출중으로 자동 변경됨.\",\"inputs\":[\"대출 신청\",\"대출 가능 도서\",\"회원 자격 유효\"],\"outputs\":[\"대출 기록 생성\",\"도서 상태: 대출중\",\"대출일\",\"반납예정일\"],\"nextEvents\":[\"LoanExtended\",\"LoanReturned\",\"LoanOverdueChecked\"]}\n\n## Event\n\n{\"name\":\"BookReserved\",\"displayName\":\"도서 예약됨\",\"actor\":\"회원\",\"level\":6,\"description\":\"회원이 이미 대출중인 도서에 대해 예약 신청을 함. 예약된 도서는 예약 대기 리스트에 등록됨.\",\"inputs\":[\"회원번호\",\"이름\",\"대출중 상태 도서\"],\"outputs\":[\"예약 기록 생성\",\"도서 상태: 예약중\"],\"nextEvents\":[\"LoanReturned\"]}\n\n## Event\n\n{\"name\":\"LoanReturned\",\"displayName\":\"도서 반납됨\",\"actor\":\"회원\",\"level\":7,\"description\":\"회원이 대출 중인 도서를 반납함. 반납 후 예약자가 있으면 도서 상태는 예약중, 없으면 대출가능으로 변경됨.\",\"inputs\":[\"대출 중 도서\",\"회원\"],\"outputs\":[\"반납 기록 생성\",\"도서 상태: 대출가능/예약중\"],\"nextEvents\":[\"BookStateChanged\",\"ReservationNotified\"]}\n\n## Event\n\n{\"name\":\"LoanExtended\",\"displayName\":\"대출 연장됨\",\"actor\":\"회원\",\"level\":8,\"description\":\"회원이 대출중인 도서의 반납예정일을 연장 신청함. 연장은 정책에 따라 1회 혹은 제한 가능.\",\"inputs\":[\"회원\",\"대출중 상태 도서\",\"연장 조건 충족\"],\"outputs\":[\"반납예정일 변경\"],\"nextEvents\":[\"LoanOverdueChecked\",\"LoanReturned\"]}\n\n## Event\n\n{\"name\":\"LoanOverdueChecked\",\"displayName\":\"연체 확인됨\",\"actor\":\"도서관리시스템\",\"level\":9,\"description\":\"반납 예정일이 지난 도서의 연체 상태를 확인하여 연체로 표시함.\",\"inputs\":[\"대출중 도서\",\"현재 일자\",\"반납예정일\"],\"outputs\":[\"대출 상태: 연체\"],\"nextEvents\":[\"LoanReturned\"]}\n\n## Event\n\n{\"name\":\"ReservationNotified\",\"displayName\":\"예약자 통보됨\",\"actor\":\"도서관리시스템\",\"level\":10,\"description\":\"예약자가 있는 도서가 반납되었을 때, 예약자에게 도서 이용 가능 안내를 통보함.\",\"inputs\":[\"도서 반납\",\"예약자 존재\"],\"outputs\":[\"예약자 알림\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"LoanStatusQueried\",\"displayName\":\"대출 현황 조회됨\",\"actor\":\"도서관리자\",\"level\":12,\"description\":\"현재 대출 중인 도서와 각 대출 건의 대출일, 반납예정일, 상태(대출중/연체/반납완료)를 조회함.\",\"inputs\":[\"조회 조건 (전체/회원별/도서별)\"],\"outputs\":[\"대출 건 목록\",\"각 대출 상태\"],\"nextEvents\":[]}"
+                            "description": "# Requirements\n\n## userStory\n\n'대출/반납' 화면에서는 회원이 도서를 대출하고 반납하는 것을 관리할 수 있어야 해. 대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할 도서를 선택해야 해. 도서는 도서명이나 ISBN으로 검색할 수 있어야 해. 대출 기간은 7일/14일/30일 중에서 선택할 수 있어. 만약 대출하려는 도서가 이미 대출 중이라면, 예약 신청이 가능해야 해. 대출이 완료되면 해당 도서의 상태는 자동으로 '대출중'으로 변경되어야 해.\n\n## userStory\n\n대출 현황 화면에서는 현재 대출 중인 도서들의 목록을 볼 수 있어야 해. 각 대출 건에 대해 대출일, 반납예정일, 현재 상태(대출중/연체/반납완료)를 확인할 수 있어야 하고, 대출 중인 도서는 연장이나 반납 처리가 가능해야 해. 도서가 반납되면 자동으로 해당 도서의 상태가 '대출가능'으로 변경되어야 해. 만약 예약자가 있는 도서가 반납되면, 해당 도서는 '예약중' 상태로 변경되어야 해.\n\n## userStory\n\n각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해.\n\n## Event\n\n{\"name\":\"MemberVerified\",\"displayName\":\"회원이 확인됨\",\"actor\":\"회원\",\"level\":5,\"description\":\"회원번호와 이름으로 회원 정보가 확인됨.\",\"inputs\":[\"회원번호\",\"이름\"],\"outputs\":[\"회원 정보\"],\"nextEvents\":[\"BookLoanRequested\"]}\n\n## Event\n\n{\"name\":\"BookLoanRequested\",\"displayName\":\"도서 대출이 신청됨\",\"actor\":\"회원\",\"level\":6,\"description\":\"회원이 대출하고자 하는 도서와 대출 기간(7일/14일/30일)을 선택하여 대출을 신청함.\",\"inputs\":[\"회원 정보\",\"도서 식별자\",\"대출 기간\"],\"outputs\":[\"대출 신청 요청\"],\"nextEvents\":[\"BookLoanApproved\",\"BookLoanRejected\"]}\n\n## Event\n\n{\"name\":\"BookLoanRejected\",\"displayName\":\"도서 대출이 거부됨\",\"actor\":\"도서 대출 시스템\",\"level\":7,\"description\":\"도서가 폐기되었거나 대출 불가 상태인 경우 대출이 거부됨.\",\"inputs\":[\"도서 상태 '폐기' 또는 대출 불가\"],\"outputs\":[\"대출 거부 알림\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookLoanApproved\",\"displayName\":\"도서 대출이 승인됨\",\"actor\":\"도서 대출 시스템\",\"level\":8,\"description\":\"도서가 대출 가능 상태라면 대출이 승인되고 대출 정보가 생성됨. 도서 상태는 '대출중'으로 변경됨.\",\"inputs\":[\"도서 상태 '대출가능'\",\"대출 신청 정보\"],\"outputs\":[\"대출 정보 생성\",\"도서 상태 '대출중'으로 변경\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookReserved\",\"displayName\":\"도서가 예약됨\",\"actor\":\"회원\",\"level\":9,\"description\":\"대출하려는 도서가 이미 대출 중일 때 회원이 해당 도서의 예약을 신청하면 예약이 생성되고, 도서의 상태가 '예약중'으로 변경됨.\",\"inputs\":[\"회원 정보\",\"대출 중인 도서 식별자\"],\"outputs\":[\"예약 정보 생성\",\"도서 상태 '예약중'으로 변경\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookReturned\",\"displayName\":\"도서가 반납됨\",\"actor\":\"회원\",\"level\":10,\"description\":\"회원이 대출한 도서를 반납함. 도서에 예약자가 있으면 상태가 '예약중'으로, 없으면 '대출가능'으로 변경됨.\",\"inputs\":[\"반납 도서 식별자\"],\"outputs\":[\"반납 처리\",\"도서 상태 변경\"],\"nextEvents\":[\"BookAvailable\",\"BookReservedForNext\"]}\n\n## Event\n\n{\"name\":\"BookAvailable\",\"displayName\":\"도서가 대출 가능 상태로 변경됨\",\"actor\":\"도서 대출 시스템\",\"level\":11,\"description\":\"반납된 도서에 예약자가 없는 경우 도서 상태가 '대출가능'으로 변경됨.\",\"inputs\":[\"반납 도서 식별자\",\"예약자 없음\"],\"outputs\":[\"도서 상태 '대출가능'\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookReservedForNext\",\"displayName\":\"도서가 다음 예약자를 위해 예약중 상태로 변경됨\",\"actor\":\"도서 대출 시스템\",\"level\":12,\"description\":\"반납된 도서에 예약자가 있을 경우 도서 상태가 '예약중'으로 변경됨.\",\"inputs\":[\"반납 도서 식별자\",\"예약자 존재\"],\"outputs\":[\"도서 상태 '예약중'\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"LoanExtended\",\"displayName\":\"대출 기간이 연장됨\",\"actor\":\"회원\",\"level\":13,\"description\":\"회원이 대출 중인 도서의 대출 기간을 연장함. 연체 상태에서는 연장이 불가함.\",\"inputs\":[\"회원 정보\",\"대출 중인 도서 식별자\",\"연장 요청\"],\"outputs\":[\"대출 기간 연장\",\"새 반납 예정일\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"LoanOverdue\",\"displayName\":\"도서 대출이 연체됨\",\"actor\":\"도서 대출 시스템\",\"level\":14,\"description\":\"반납 예정일이 지나도 도서가 반납되지 않은 경우, 대출 건의 상태가 '연체'로 변경됨.\",\"inputs\":[\"반납 예정일 경과\",\"반납 미처리\"],\"outputs\":[\"대출 상태 '연체'로 변경\"],\"nextEvents\":[]}\n\n\n## Context Relations\n\n### BookManagementToBookLoanProcess\n- **Type**: Pub/Sub\n- **Direction**: receives from 도서 관리 (BookManagement)\n- **Reason**: 도서의 상태 변화, 신규 등록, 폐기 등 이벤트가 발생하면 이를 대출/예약/연체 프로세스에 전달해야 하며, 두 컨텍스트가 느슨하게 결합되고 데이터 소유권이 명확히 분리됨.\n- **Interaction Pattern**: 도서 상태 변경, 신규 등록, 폐기 등 이벤트를 Pub/Sub로 발행하며 대출 프로세스에서 구독하여 반영함. 예: 도서가 폐기되면 대출 프로세스에서 대출 거부 처리."
                         }
                     ],
                     "initialAccumulatedDrafts": {
-                        "LibraryBookManagement": [
+                        "BookManagement": [
                             {
                                 "aggregate": {
                                     "name": "Book",
@@ -4756,7 +4028,7 @@ export const aggregateDraftScenarios = {
                                 "valueObjects": []
                             }
                         ],
-                        "LibraryLoanProcess": [
+                        "BookLoanProcess": [
                             {
                                 "aggregate": {
                                     "name": "Loan",
@@ -4772,12 +4044,20 @@ export const aggregateDraftScenarios = {
                                 },
                                 "enumerations": [],
                                 "valueObjects": []
+                            },
+                            {
+                                "aggregate": {
+                                    "name": "Member",
+                                    "alias": "회원"
+                                },
+                                "enumerations": [],
+                                "valueObjects": []
                             }
                         ]
                     }
                 },
                 "selectedOptionItem": {
-                    "LibraryBookManagement": {
+                    "BookManagement": {
                         "structure": [
                             {
                                 "aggregate": {
@@ -4796,64 +4076,44 @@ export const aggregateDraftScenarios = {
                                 ],
                                 "valueObjects": [
                                     {
-                                        "name": "LoanReference",
-                                        "alias": "대출 참조",
+                                        "name": "BookLoanHistoryInfo",
+                                        "alias": "도서 대출 이력 정보",
                                         "referencedAggregate": {
                                             "name": "Loan",
                                             "alias": "대출"
                                         }
                                     },
                                     {
-                                        "name": "ReservationReference",
-                                        "alias": "예약 참조",
-                                        "referencedAggregate": {
-                                            "name": "Reservation",
-                                            "alias": "예약"
-                                        }
-                                    }
-                                ]
-                            },
-                            {
-                                "aggregate": {
-                                    "name": "BookHistory",
-                                    "alias": "도서 이력"
-                                },
-                                "enumerations": [],
-                                "valueObjects": [
-                                    {
-                                        "name": "BookReference",
-                                        "alias": "도서 참조",
-                                        "referencedAggregate": {
-                                            "name": "Book",
-                                            "alias": "도서"
-                                        }
+                                        "name": "BookStatusHistoryInfo",
+                                        "alias": "도서 상태 변경 이력 정보"
                                     }
                                 ]
                             }
                         ],
                         "pros": {
-                            "cohesion": "도서와 이력 기능이 분리되어 각각 핵심 역할에 집중할 수 있음.",
-                            "coupling": "도서와 이력 간의 의존성이 ValueObject(참조) 수준으로 낮아집니다.",
-                            "consistency": "도서 트랜잭션과 이력 기록이 분리되어, 대용량 이력에도 안정적으로 대응 가능.",
-                            "encapsulation": "이력 관련 정책이나 확장(예: 다양한 이력 종류 추가)이 Book과 분리되어 독립적으로 변경 가능.",
-                            "complexity": "이력 관리 로직이 별도 Aggregate에 있어 도서 관리가 단순해지고, 이해하기 쉬움.",
-                            "independence": "이력 저장방식이나 보존정책 변경 시 도서 Aggregate에 영향 없음.",
-                            "performance": "도서 데이터와 이력 데이터를 분리 저장 및 조회할 수 있어 대량 이력에도 성능 저하가 없음."
+                            "cohesion": "도서의 핵심 정보와 이력 데이터, 상태 전이를 한 Aggregate 내에서 일관성 있게 관리하여 비즈니스 규칙을 강하게 보장한다.",
+                            "coupling": "도서 관련 작업이 한 Aggregate 내에서 해결되므로 외부 참조와 Aggregate 간 결합이 최소화된다.",
+                            "consistency": "ISBN 유일성, 상태 전이 등 도서 중심의 모든 비즈니스 불변성이 단일 트랜잭션에서 강하게 보장된다.",
+                            "encapsulation": "도서의 등록, 폐기, 상태 전이, 이력 관리까지 내부에서 처리되어 외부에 복잡성을 노출하지 않는다.",
+                            "complexity": "이력까지 모두 한 곳에서 관리되어 구현 및 유지보수가 직관적이다.",
+                            "independence": "Book Aggregate만으로 도서 업무의 대부분이 독립적으로 처리된다.",
+                            "performance": "도서와 연관된 이력/상태 조회가 단일 Aggregate 조회로 효율적이다."
                         },
                         "cons": {
-                            "cohesion": "상태 변경과 이력 기록이 분산되어 있어 단일 도서 관리 흐름이 단순하지 않을 수 있음.",
-                            "coupling": "이력 기록 시 도서의 참조를 유지해야 하므로 약간의 간접적인 결합이 존재함.",
-                            "consistency": "상태 변경과 이력 기록이 각각 별도의 트랜잭션에서 발생할 수 있어, 일시적으로 불일치 상태가 발생 가능.",
-                            "encapsulation": "도서 상태 변경이 이력과 분리되어 이력 누락/오류를 방지하는 추가적 방어 코드가 필요함.",
-                            "complexity": "이력 데이터 연동, 조회 시 cross-aggregate 처리 로직(조인 등)이 추가됨.",
-                            "independence": "도서 삭제 등 라이프사이클 정책이 이력 데이터와 동기화되어야 하므로 관리 포인트가 증가함.",
-                            "performance": "도서와 이력을 함께 조회할 경우 두 Aggregate를 동시에 접근해야 하므로 I/O가 증가함."
+                            "cohesion": "이력 데이터가 계속 누적되면 Aggregate가 비대해져 단일 책임 원칙이 약화될 수 있다.",
+                            "coupling": "이력 데이터의 구조 변경이 Book 전체에 영향을 줄 수 있어 변화에 취약해진다.",
+                            "consistency": "대량 이력 데이터로 인한 트랜잭션 부하 및 충돌 가능성이 증가한다.",
+                            "encapsulation": "외부 시스템에서 이력 정보만 분리 활용 시 도서 전체 구조를 알아야 한다.",
+                            "complexity": "이력 데이터, 상태 등 다양한 관심사가 한 객체에 집중되어 복잡도가 누적된다.",
+                            "independence": "이력 처리, 조회만 확장하려면 Book 전체 구조를 함께 고려해야 한다.",
+                            "performance": "이력 데이터 증가 시 단일 Aggregate 조회/저장 성능 저하 우려가 있다."
                         },
+                        "isAIRecommended": false,
                         "boundedContext": {
-                            "name": "LibraryBookManagement",
-                            "alias": "도서관리",
-                            "displayName": "도서관리",
-                            "description": "# Requirements\n\n## userStory\n\n'도서 관리' 화면에서는 새로운 도서를 등록하고 현재 보유한 도서들의 상태를 관리할 수 있어야 해. 도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해. 등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야 해.\n\n## userStory\n\n각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해.\n\n## Event\n\n{\"name\":\"BookRegistered\",\"displayName\":\"도서 등록됨\",\"actor\":\"도서관리자\",\"level\":1,\"description\":\"관리자가 새로운 도서를 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력하여 등록함. ISBN 중복 및 13자리 유효성 검증을 통과함.\",\"inputs\":[\"도서명\",\"ISBN\",\"저자\",\"출판사\",\"카테고리 (소설/비소설/학술/잡지)\",\"ISBN 중복 없음\",\"ISBN 13자리\"],\"outputs\":[\"도서 엔티티 생성\",\"도서 상태: 대출가능\"],\"nextEvents\":[\"BookStateChanged\"]}\n\n## Event\n\n{\"name\":\"BookStateChanged\",\"displayName\":\"도서 상태 변경됨\",\"actor\":\"도서관리시스템\",\"level\":2,\"description\":\"도서 등록/대출/반납/예약/폐기 등의 트리거에 의해 도서의 상태가 변경됨.\",\"inputs\":[\"도서 이벤트 트리거\",\"이전 도서 상태\"],\"outputs\":[\"도서 상태: 대출가능/대출중/예약중/폐기\"],\"nextEvents\":[\"BookDisposed\",\"LoanRequested\",\"LoanReturned\",\"BookReserved\"]}\n\n## Event\n\n{\"name\":\"BookDisposed\",\"displayName\":\"도서 폐기됨\",\"actor\":\"도서관리자\",\"level\":3,\"description\":\"관리자가 훼손/분실로 인한 도서 폐기를 처리함. 폐기된 도서는 대출 불가 상태가 됨.\",\"inputs\":[\"도서 식별\",\"훼손/분실 사유\"],\"outputs\":[\"도서 상태: 폐기\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookHistoryQueried\",\"displayName\":\"도서 이력 조회됨\",\"actor\":\"도서관리자\",\"level\":11,\"description\":\"관리자/회원이 도서별로 대출 및 상태 변경 이력을 조회함.\",\"inputs\":[\"도서 식별자\"],\"outputs\":[\"도서 대출 이력 목록\",\"도서 상태 변경 이력 목록\"],\"nextEvents\":[]}",
+                            "name": "BookManagement",
+                            "alias": "도서 관리",
+                            "displayName": "도서 관리",
+                            "description": "# Requirements\n\n## userStory\n\n'도서 관리' 화면에서는 새로운 도서를 등록하고 현재 보유한 도서들의 상태를 관리할 수 있어야 해. 도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해. 등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야 해.\n\n## userStory\n\n도서는 도서명이나 ISBN으로 검색할 수 있어야 해.\n\n## userStory\n\n도서가 반납되면 자동으로 해당 도서의 상태가 '대출가능'으로 변경되어야 해. 만약 예약자가 있는 도서가 반납되면, 해당 도서는 '예약중' 상태로 변경되어야 해.\n\n## userStory\n\n각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해.\n\n## Event\n\n{\"name\":\"BookRegistered\",\"displayName\":\"도서가 등록됨\",\"actor\":\"도서 관리자\",\"level\":1,\"description\":\"도서 관리자가 새로운 도서를 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력하여 도서를 등록함. 등록된 도서는 '대출가능' 상태가 됨.\",\"inputs\":[\"도서명\",\"ISBN(13자리)\",\"저자\",\"출판사\",\"카테고리\",\"ISBN 중복 아님\"],\"outputs\":[\"신규 도서 데이터\",\"'대출가능' 상태\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookRegistrationFailed\",\"displayName\":\"도서 등록 실패됨\",\"actor\":\"도서 관리자\",\"level\":2,\"description\":\"도서 등록 시 ISBN이 13자리가 아니거나 중복된 경우 등록이 거부됨.\",\"inputs\":[\"ISBN(중복 또는 13자리 아님)\"],\"outputs\":[\"에러 메시지\",\"등록 거부\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookDiscarded\",\"displayName\":\"도서가 폐기됨\",\"actor\":\"도서 관리자\",\"level\":3,\"description\":\"도서가 훼손되거나 분실된 경우 도서 관리자가 해당 도서를 폐기 처리함. 폐기된 도서는 더 이상 대출이 불가함.\",\"inputs\":[\"도서 식별자\",\"폐기 사유\"],\"outputs\":[\"도서 상태 '폐기'로 변경\",\"대출 불가\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookSearched\",\"displayName\":\"도서가 검색됨\",\"actor\":\"회원\",\"level\":4,\"description\":\"회원이 도서명이나 ISBN으로 도서를 검색함.\",\"inputs\":[\"검색어(도서명 또는 ISBN)\"],\"outputs\":[\"검색 결과 도서 목록\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookLoanHistoryViewed\",\"displayName\":\"도서의 대출 이력이 조회됨\",\"actor\":\"도서 관리자\",\"level\":15,\"description\":\"도서 관리자가 특정 도서의 대출 이력을 조회함.\",\"inputs\":[\"도서 식별자\"],\"outputs\":[\"대출 이력 목록\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookStatusHistoryViewed\",\"displayName\":\"도서의 상태 변경 이력이 조회됨\",\"actor\":\"도서 관리자\",\"level\":16,\"description\":\"도서 관리자가 특정 도서의 상태 변경 이력을 조회함.\",\"inputs\":[\"도서 식별자\"],\"outputs\":[\"상태 변경 이력 목록\"],\"nextEvents\":[]}\n\n\n## Context Relations\n\n### BookManagementToBookLoanProcess\n- **Type**: Pub/Sub\n- **Direction**: sends to 도서 대출 프로세스 (BookLoanProcess)\n- **Reason**: 도서의 상태 변화, 신규 등록, 폐기 등 이벤트가 발생하면 이를 대출/예약/연체 프로세스에 전달해야 하며, 두 컨텍스트가 느슨하게 결합되고 데이터 소유권이 명확히 분리됨.\n- **Interaction Pattern**: 도서 상태 변경, 신규 등록, 폐기 등 이벤트를 Pub/Sub로 발행하며 대출 프로세스에서 구독하여 반영함. 예: 도서가 폐기되면 대출 프로세스에서 대출 거부 처리.",
                             "aggregates": [
                                 {
                                     "name": "Book",
@@ -4861,9 +4121,9 @@ export const aggregateDraftScenarios = {
                                 }
                             ]
                         },
-                        "description": "{\"userStories\":[{\"title\":\"도서 등록 및 관리\",\"description\":\"도서관리자는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력하여 새로운 도서를 등록할 수 있고, 등록된 도서의 상태를 관리할 수 있다.\",\"acceptance\":[\"ISBN은 13자리 숫자이며 중복되지 않아야 한다.\",\"카테고리는 소설, 비소설, 학술, 잡지 중에서 선택할 수 있다.\",\"도서 등록 시 상태는 '대출가능'이 된다.\",\"도서 상태는 대출/반납/예약/폐기 등의 이벤트에 따라 자동으로 변경된다.\",\"폐기된 도서는 대출이 불가능하다.\"]},{\"title\":\"도서별 이력 조회\",\"description\":\"도서관리자 또는 회원은 특정 도서의 대출 이력과 상태 변경 이력을 조회하여 도서의 대출 현황과 상태 변화를 파악할 수 있다.\",\"acceptance\":[\"도서별로 대출 이력과 상태 변경 이력을 각각 조회할 수 있다.\",\"이력에는 상태 변경 일시 및 사유가 명시되어야 한다.\"]}],\"entities\":{\"Book\":{\"properties\":[{\"name\":\"bookId\",\"type\":\"Long\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"title\",\"type\":\"String\",\"required\":true},{\"name\":\"isbn\",\"type\":\"String\",\"required\":true},{\"name\":\"author\",\"type\":\"String\",\"required\":true},{\"name\":\"publisher\",\"type\":\"String\",\"required\":true},{\"name\":\"category\",\"type\":\"enum\",\"required\":true,\"values\":[\"소설\",\"비소설\",\"학술\",\"잡지\"]},{\"name\":\"status\",\"type\":\"enum\",\"required\":true,\"values\":[\"대출가능\",\"대출중\",\"예약중\",\"폐기\"]}]},\"BookLoanHistory\":{\"properties\":[{\"name\":\"loanHistoryId\",\"type\":\"Long\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"bookId\",\"type\":\"Long\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"loanDate\",\"type\":\"Date\",\"required\":true},{\"name\":\"returnDate\",\"type\":\"Date\"},{\"name\":\"memberId\",\"type\":\"Long\",\"required\":true}]},\"BookStateHistory\":{\"properties\":[{\"name\":\"stateHistoryId\",\"type\":\"Long\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"bookId\",\"type\":\"Long\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"previousStatus\",\"type\":\"enum\",\"required\":true,\"values\":[\"대출가능\",\"대출중\",\"예약중\",\"폐기\"]},{\"name\":\"newStatus\",\"type\":\"enum\",\"required\":true,\"values\":[\"대출가능\",\"대출중\",\"예약중\",\"폐기\"]},{\"name\":\"changedAt\",\"type\":\"Date\",\"required\":true},{\"name\":\"reason\",\"type\":\"String\"}]}},\"businessRules\":[{\"name\":\"ISBN 유효성 검증\",\"description\":\"ISBN은 13자리 숫자여야 하며, 시스템 내에서 중복될 수 없다.\"},{\"name\":\"도서 상태 자동 전이\",\"description\":\"도서 등록 시 상태는 자동으로 '대출가능'으로 지정되고, 대출/반납/예약/폐기 등 이벤트 발생 시 상태가 자동으로 변경된다.\"},{\"name\":\"폐기 도서 대출 불가\",\"description\":\"폐기 상태의 도서는 어떠한 경우에도 대출 처리될 수 없다.\"}],\"interfaces\":{\"BookManagement\":{\"sections\":[{\"name\":\"도서 등록\",\"type\":\"form\",\"fields\":[{\"name\":\"title\",\"type\":\"text\",\"required\":true},{\"name\":\"isbn\",\"type\":\"text\",\"required\":true},{\"name\":\"author\",\"type\":\"text\",\"required\":true},{\"name\":\"publisher\",\"type\":\"text\",\"required\":true},{\"name\":\"category\",\"type\":\"select\",\"required\":true}],\"actions\":[\"중복확인\",\"도서등록\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}},{\"name\":\"도서 목록 및 상태 관리\",\"type\":\"table\",\"fields\":[],\"actions\":[\"대출처리\",\"반납처리\",\"예약처리\",\"폐기처리\"],\"filters\":[\"카테고리\",\"상태\"],\"resultTable\":{\"columns\":[\"bookId\",\"title\",\"isbn\",\"author\",\"publisher\",\"category\",\"status\"],\"actions\":[\"상세보기\"]}}]},\"BookHistory\":{\"sections\":[{\"name\":\"도서 이력 조회\",\"type\":\"table\",\"fields\":[],\"actions\":[],\"filters\":[\"도서ID\"],\"resultTable\":{\"columns\":[\"loanDate\",\"returnDate\",\"memberId\"],\"actions\":[]}},{\"name\":\"상태 변경 이력 조회\",\"type\":\"table\",\"fields\":[],\"actions\":[],\"filters\":[\"도서ID\"],\"resultTable\":{\"columns\":[\"previousStatus\",\"newStatus\",\"changedAt\",\"reason\"],\"actions\":[]}}]}},\"events\":[{\"name\":\"BookRegistered\",\"description\":\"관리자가 새로운 도서를 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력하여 등록함. ISBN 중복 및 13자리 유효성 검증을 통과함.\",\"displayName\":\"도서 등록됨\"},{\"name\":\"BookStateChanged\",\"description\":\"도서 등록/대출/반납/예약/폐기 등의 트리거에 의해 도서의 상태가 변경됨.\",\"displayName\":\"도서 상태 변경됨\"},{\"name\":\"BookDisposed\",\"description\":\"관리자가 훼손/분실로 인한 도서 폐기를 처리함. 폐기된 도서는 대출 불가 상태가 됨.\",\"displayName\":\"도서 폐기됨\"},{\"name\":\"BookHistoryQueried\",\"description\":\"관리자/회원이 도서별로 대출 및 상태 변경 이력을 조회함.\",\"displayName\":\"도서 이력 조회됨\"}]}"
+                        "description": "{\"userStories\":[{\"title\":\"도서 등록 및 상태 관리\",\"description\":\"도서 관리자로서 새로운 도서를 등록하고, 보유 도서들의 상태(대출가능/대출중/예약중/폐기)를 관리할 수 있다.\",\"acceptance\":[\"도서명, ISBN(13자리), 저자, 출판사, 카테고리 입력이 필수이며, ISBN 중복 검사가 반드시 수행된다.\",\"도서 등록 시 상태는 '대출가능'이 기본값으로 설정된다.\",\"도서 상태는 대출/반납/예약/폐기 처리에 따라 자동으로 변경된다.\",\"폐기된 도서는 더 이상 대출이 불가하다.\"]},{\"title\":\"도서 검색\",\"description\":\"사용자로서 도서명이나 ISBN으로 도서를 검색할 수 있다.\",\"acceptance\":[\"검색어로 도서명 또는 ISBN 입력 시 관련 도서 목록이 출력된다.\"]},{\"title\":\"도서 반납 및 상태 전이\",\"description\":\"도서가 반납되면 해당 도서의 상태가 '대출가능' 또는 '예약중'으로 자동 전환된다.\",\"acceptance\":[\"예약자가 없으면 '대출가능', 예약자가 있으면 '예약중'으로 상태가 자동 변경된다.\"]},{\"title\":\"도서별 이력 조회\",\"description\":\"도서 관리자로서 각 도서별 대출 이력과 상태 변경 이력을 조회할 수 있다.\",\"acceptance\":[\"대출 이력과 상태 변경 이력이 조회 화면에 표시된다.\",\"이력에는 시점, 변경자, 변경 사유 등이 포함된다.\"]}],\"entities\":{\"Book\":{\"properties\":[{\"name\":\"bookId\",\"type\":\"Long\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"title\",\"type\":\"String\",\"required\":true},{\"name\":\"ISBN\",\"type\":\"String\",\"required\":true},{\"name\":\"author\",\"type\":\"String\",\"required\":true},{\"name\":\"publisher\",\"type\":\"String\",\"required\":true},{\"name\":\"category\",\"type\":\"enum\",\"required\":true,\"values\":[\"소설\",\"비소설\",\"학술\",\"잡지\"]},{\"name\":\"status\",\"type\":\"enum\",\"required\":true,\"values\":[\"대출가능\",\"대출중\",\"예약중\",\"폐기\"]}]},\"BookLoanHistory\":{\"properties\":[{\"name\":\"historyId\",\"type\":\"Long\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"bookId\",\"type\":\"Long\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"loanedBy\",\"type\":\"String\",\"required\":true},{\"name\":\"loanDate\",\"type\":\"Date\",\"required\":true},{\"name\":\"returnDate\",\"type\":\"Date\"}]},\"BookStatusHistory\":{\"properties\":[{\"name\":\"statusHistoryId\",\"type\":\"Long\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"bookId\",\"type\":\"Long\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"status\",\"type\":\"enum\",\"required\":true,\"values\":[\"대출가능\",\"대출중\",\"예약중\",\"폐기\"]},{\"name\":\"changedAt\",\"type\":\"Date\",\"required\":true},{\"name\":\"changedBy\",\"type\":\"String\",\"required\":true},{\"name\":\"reason\",\"type\":\"String\"}]}},\"businessRules\":[{\"name\":\"ISBN_Validation\",\"description\":\"ISBN은 반드시 13자리의 숫자여야 하며, 시스템 내에서 유일해야 한다.\"},{\"name\":\"BookStatus_AutoTransition\",\"description\":\"도서는 등록 시 '대출가능' 상태로 시작하며, 대출/반납/예약/폐기 상황에 따라 상태가 자동으로 변경된다.\"},{\"name\":\"BookDiscard_Restriction\",\"description\":\"폐기된 도서는 더 이상 대출이 불가하다.\"},{\"name\":\"ReturnStatusTransition\",\"description\":\"도서 반납 시 예약자가 없으면 '대출가능', 예약자가 있으면 '예약중' 상태로 자동 변경된다.\"}],\"interfaces\":{\"BookManagement\":{\"sections\":[{\"name\":\"도서 등록\",\"type\":\"form\",\"fields\":[{\"name\":\"title\",\"type\":\"text\",\"required\":true},{\"name\":\"ISBN\",\"type\":\"text\",\"required\":true},{\"name\":\"author\",\"type\":\"text\",\"required\":true},{\"name\":\"publisher\",\"type\":\"text\",\"required\":true},{\"name\":\"category\",\"type\":\"select\",\"required\":true}],\"actions\":[\"등록\",\"중복확인\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}},{\"name\":\"도서 목록\",\"type\":\"table\",\"fields\":[],\"actions\":[\"상세보기\",\"폐기처리\"],\"filters\":[\"title\",\"ISBN\",\"category\",\"status\"],\"resultTable\":{\"columns\":[\"bookId\",\"title\",\"ISBN\",\"author\",\"publisher\",\"category\",\"status\"],\"actions\":[\"상세보기\",\"폐기처리\"]}}]},\"BookDetail\":{\"sections\":[{\"name\":\"대출 이력\",\"type\":\"table\",\"fields\":[],\"actions\":[],\"filters\":[],\"resultTable\":{\"columns\":[\"loanedBy\",\"loanDate\",\"returnDate\"],\"actions\":[]}},{\"name\":\"상태 변경 이력\",\"type\":\"table\",\"fields\":[],\"actions\":[],\"filters\":[],\"resultTable\":{\"columns\":[\"status\",\"changedAt\",\"changedBy\",\"reason\"],\"actions\":[]}}]}},\"events\":[{\"name\":\"BookRegistered\",\"description\":\"도서 관리자가 새로운 도서를 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력하여 도서를 등록함. 등록된 도서는 '대출가능' 상태가 됨.\",\"displayName\":\"도서가 등록됨\"},{\"name\":\"BookRegistrationFailed\",\"description\":\"도서 등록 시 ISBN이 13자리가 아니거나 중복된 경우 등록이 거부됨.\",\"displayName\":\"도서 등록 실패됨\"},{\"name\":\"BookDiscarded\",\"description\":\"도서가 훼손되거나 분실된 경우 도서 관리자가 해당 도서를 폐기 처리함. 폐기된 도서는 더 이상 대출이 불가함.\",\"displayName\":\"도서가 폐기됨\"},{\"name\":\"BookSearched\",\"description\":\"회원이 도서명이나 ISBN으로 도서를 검색함.\",\"displayName\":\"도서가 검색됨\"},{\"name\":\"BookLoanHistoryViewed\",\"description\":\"도서 관리자가 특정 도서의 대출 이력을 조회함.\",\"displayName\":\"도서의 대출 이력이 조회됨\"},{\"name\":\"BookStatusHistoryViewed\",\"description\":\"도서 관리자가 특정 도서의 상태 변경 이력을 조회함.\",\"displayName\":\"도서의 상태 변경 이력이 조회됨\"}],\"contextRelations\":[{\"name\":\"BookManagementToBookLoanProcess\",\"type\":\"Pub/Sub\",\"direction\":\"sends to\",\"targetContext\":\"BookLoanProcess\",\"reason\":\"도서의 상태 변화, 신규 등록, 폐기 등 이벤트가 발생하면 이를 대출/예약/연체 프로세스에 전달해야 하며, 두 컨텍스트가 느슨하게 결합되고 데이터 소유권이 명확히 분리됨.\",\"interactionPattern\":\"도서 상태 변경, 신규 등록, 폐기 등 이벤트를 Pub/Sub로 발행하며 대출 프로세스에서 구독하여 반영함. 예: 도서가 폐기되면 대출 프로세스에서 대출 거부 처리.\"}]}"
                     },
-                    "LibraryLoanProcess": {
+                    "BookLoanProcess": {
                         "structure": [
                             {
                                 "aggregate": {
@@ -4911,56 +4171,32 @@ export const aggregateDraftScenarios = {
                                         "alias": "회원"
                                     }
                                 ]
-                            },
-                            {
-                                "aggregate": {
-                                    "name": "LoanHistory",
-                                    "alias": "대출 이력"
-                                },
-                                "enumerations": [],
-                                "valueObjects": [
-                                    {
-                                        "name": "LoanReference",
-                                        "alias": "대출 참조",
-                                        "referencedAggregate": {
-                                            "name": "Loan",
-                                            "alias": "대출"
-                                        }
-                                    },
-                                    {
-                                        "name": "BookReference",
-                                        "alias": "도서 참조",
-                                        "referencedAggregate": {
-                                            "name": "Book",
-                                            "alias": "도서"
-                                        }
-                                    }
-                                ]
                             }
                         ],
                         "pros": {
-                            "cohesion": "LoanHistory가 별도 Aggregate로 관리되어 대출·연장·반납·연체 이력을 전문적으로 누적·조회할 수 있다.",
-                            "coupling": "대출 흐름과 이력 관리가 분리되어 서로의 변경에 최소 영향만 받는다.",
-                            "consistency": "Loan/Reservation과 이력 저장이 별도 트랜잭션으로 처리되어 업무별 불변성 보호가 명확하다.",
-                            "encapsulation": "대출 이력 관련 규칙(예: 변경 불가, 조회 only 등)이 LoanHistory Aggregate 내부에 집중된다.",
-                            "complexity": "이력 관리 로직이 Loan, Reservation에서 분리되어 각 도메인의 복잡도가 낮아진다.",
-                            "independence": "이력 정책 변경(예: 이력 상세 항목 추가 등)이 Loan, Reservation Aggregate에 영향을 거의 미치지 않는다.",
-                            "performance": "이력 조회/통계 연산이 대출, 예약 데이터와 분리되어 대규모 데이터 처리 시 효율적이다."
+                            "cohesion": "핵심 대출·예약 업무에만 집중하여 집계 경계가 단순하다.",
+                            "coupling": "Book, Member 등 외부 엔티티와의 참조만 유지하며 내부 결합도가 낮다.",
+                            "consistency": "대출·예약 관련 상태 변경이 집계 내에서 일관성 있게 처리된다.",
+                            "encapsulation": "도서 상태 자동 변경, 연체 연장 불가 등 핵심 규칙이 Loan 집계에 명확히 캡슐화된다.",
+                            "complexity": "집계 수가 적어 전체 시스템 구조가 단순하며 이해와 유지보수가 쉽다.",
+                            "independence": "Loan, Reservation은 별도로 발전 가능하며, 서비스 규모가 작을 때 최적화된 형태다.",
+                            "performance": "불필요한 조인과 복잡한 트랜잭션이 최소화되어 빠른 응답이 가능하다."
                         },
                         "cons": {
-                            "cohesion": "대출-이력 간 강한 연관에도 불구하고 트랜잭션이 분리되어 약간의 데이터 불일치 가능성이 존재한다.",
-                            "coupling": "이력 기록 시 Loan의 상태·속성을 반드시 동기화해야 하므로 업무 서비스 계층에 추가 연동 로직이 필요하다.",
-                            "consistency": "Loan, LoanHistory의 일관성 보장을 위한 보상 트랜잭션 또는 동기화 이벤트 관리가 필요하다.",
-                            "encapsulation": "이력 변경 시 Loan/LoanHistory 양쪽에 수정이 필요할 수 있어 코드 추적성이 떨어질 수 있다.",
-                            "complexity": "Aggregate가 늘어나면서 배포, 관리 포인트가 증가한다.",
-                            "independence": "이력 데이터와 본 대출/예약 데이터 간의 비즈니스 룰 연결(예: 상태 이력 반영 등)이 추가 구현 필요.",
-                            "performance": "이력 저장, 조회에 별도 Aggregate 접근이 필요해 단순한 구조에 비해 오버헤드가 약간 증가한다."
+                            "cohesion": "이력 관리, 상세 현황 등 부가 업무가 서비스 계층에 집중되어 코드 분산이 발생한다.",
+                            "coupling": "이력·상태 추적이 외부 집계(BookLoanHistory, BookStatusHistory)에 의존해야 한다.",
+                            "consistency": "복합 시나리오(대출→이력 동시 기록 등)에서 강한 일관성 보장이 어렵다.",
+                            "encapsulation": "이력 및 상태 변경 규칙이 Loan 외부에 위치해 도메인 규칙이 분산될 수 있다.",
+                            "complexity": "확장 시 부가 업무(이력, 상태변경 등) 도입을 위해 구조 변경 필요성이 생긴다.",
+                            "independence": "외부 이력 집계와의 연동이 반드시 필요해 완전 독립 운영은 어렵다.",
+                            "performance": "대출 및 예약 현황, 이력 동시 조회 시 성능 저하가 발생할 수 있다."
                         },
+                        "isAIRecommended": false,
                         "boundedContext": {
-                            "name": "LibraryLoanProcess",
-                            "alias": "대출/반납",
-                            "displayName": "대출/반납",
-                            "description": "# Requirements\n\n## userStory\n\n'대출/반납' 화면에서는 회원이 도서를 대출하고 반납하는 것을 관리할 수 있어야 해. 대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할 도서를 선택해야 해. 도서는 도서명이나 ISBN으로 검색할 수 있어야 해. 대출 기간은 7일/14일/30일 중에서 선택할 수 있어. 만약 대출하려는 도서가 이미 대출 중이라면, 예약 신청이 가능해야 해. 대출이 완료되면 해당 도서의 상태는 자동으로 '대출중'으로 변경되어야 해.\n\n## userStory\n\n대출 현황 화면에서는 현재 대출 중인 도서들의 목록을 볼 수 있어야 해. 각 대출 건에 대해 대출일, 반납예정일, 현재 상태(대출중/연체/반납완료)를 확인할 수 있어야 하고, 대출 중인 도서는 연장이나 반납 처리가 가능해야 해. 도서가 반납되면 자동으로 해당 도서의 상태가 '대출가능'으로 변경되어야 해. 만약 예약자가 있는 도서가 반납되면, 해당 도서는 '예약중' 상태로 변경되어야 해.\n\n## userStory\n\n각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해.\n\n## Event\n\n{\"name\":\"LoanRequested\",\"displayName\":\"대출 신청됨\",\"actor\":\"회원\",\"level\":4,\"description\":\"회원이 도서명이나 ISBN으로 검색하여 대출 가능한 도서에 대해 대출을 신청함. 회원번호와 이름 확인 필요.\",\"inputs\":[\"회원번호\",\"이름\",\"도서명/ISBN\",\"대출 가능 상태 도서\",\"대출 기간(7/14/30일)\"],\"outputs\":[\"대출 신청 생성\",\"대출 대기 상태\"],\"nextEvents\":[\"LoanApproved\",\"BookReserved\"]}\n\n## Event\n\n{\"name\":\"LoanApproved\",\"displayName\":\"대출 완료됨\",\"actor\":\"도서관리시스템\",\"level\":5,\"description\":\"대출 요청이 처리되어 도서가 회원에게 대출됨. 도서 상태는 대출중으로 자동 변경됨.\",\"inputs\":[\"대출 신청\",\"대출 가능 도서\",\"회원 자격 유효\"],\"outputs\":[\"대출 기록 생성\",\"도서 상태: 대출중\",\"대출일\",\"반납예정일\"],\"nextEvents\":[\"LoanExtended\",\"LoanReturned\",\"LoanOverdueChecked\"]}\n\n## Event\n\n{\"name\":\"BookReserved\",\"displayName\":\"도서 예약됨\",\"actor\":\"회원\",\"level\":6,\"description\":\"회원이 이미 대출중인 도서에 대해 예약 신청을 함. 예약된 도서는 예약 대기 리스트에 등록됨.\",\"inputs\":[\"회원번호\",\"이름\",\"대출중 상태 도서\"],\"outputs\":[\"예약 기록 생성\",\"도서 상태: 예약중\"],\"nextEvents\":[\"LoanReturned\"]}\n\n## Event\n\n{\"name\":\"LoanReturned\",\"displayName\":\"도서 반납됨\",\"actor\":\"회원\",\"level\":7,\"description\":\"회원이 대출 중인 도서를 반납함. 반납 후 예약자가 있으면 도서 상태는 예약중, 없으면 대출가능으로 변경됨.\",\"inputs\":[\"대출 중 도서\",\"회원\"],\"outputs\":[\"반납 기록 생성\",\"도서 상태: 대출가능/예약중\"],\"nextEvents\":[\"BookStateChanged\",\"ReservationNotified\"]}\n\n## Event\n\n{\"name\":\"LoanExtended\",\"displayName\":\"대출 연장됨\",\"actor\":\"회원\",\"level\":8,\"description\":\"회원이 대출중인 도서의 반납예정일을 연장 신청함. 연장은 정책에 따라 1회 혹은 제한 가능.\",\"inputs\":[\"회원\",\"대출중 상태 도서\",\"연장 조건 충족\"],\"outputs\":[\"반납예정일 변경\"],\"nextEvents\":[\"LoanOverdueChecked\",\"LoanReturned\"]}\n\n## Event\n\n{\"name\":\"LoanOverdueChecked\",\"displayName\":\"연체 확인됨\",\"actor\":\"도서관리시스템\",\"level\":9,\"description\":\"반납 예정일이 지난 도서의 연체 상태를 확인하여 연체로 표시함.\",\"inputs\":[\"대출중 도서\",\"현재 일자\",\"반납예정일\"],\"outputs\":[\"대출 상태: 연체\"],\"nextEvents\":[\"LoanReturned\"]}\n\n## Event\n\n{\"name\":\"ReservationNotified\",\"displayName\":\"예약자 통보됨\",\"actor\":\"도서관리시스템\",\"level\":10,\"description\":\"예약자가 있는 도서가 반납되었을 때, 예약자에게 도서 이용 가능 안내를 통보함.\",\"inputs\":[\"도서 반납\",\"예약자 존재\"],\"outputs\":[\"예약자 알림\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"LoanStatusQueried\",\"displayName\":\"대출 현황 조회됨\",\"actor\":\"도서관리자\",\"level\":12,\"description\":\"현재 대출 중인 도서와 각 대출 건의 대출일, 반납예정일, 상태(대출중/연체/반납완료)를 조회함.\",\"inputs\":[\"조회 조건 (전체/회원별/도서별)\"],\"outputs\":[\"대출 건 목록\",\"각 대출 상태\"],\"nextEvents\":[]}",
+                            "name": "BookLoanProcess",
+                            "alias": "도서 대출 프로세스",
+                            "displayName": "도서 대출 프로세스",
+                            "description": "# Requirements\n\n## userStory\n\n'대출/반납' 화면에서는 회원이 도서를 대출하고 반납하는 것을 관리할 수 있어야 해. 대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할 도서를 선택해야 해. 도서는 도서명이나 ISBN으로 검색할 수 있어야 해. 대출 기간은 7일/14일/30일 중에서 선택할 수 있어. 만약 대출하려는 도서가 이미 대출 중이라면, 예약 신청이 가능해야 해. 대출이 완료되면 해당 도서의 상태는 자동으로 '대출중'으로 변경되어야 해.\n\n## userStory\n\n대출 현황 화면에서는 현재 대출 중인 도서들의 목록을 볼 수 있어야 해. 각 대출 건에 대해 대출일, 반납예정일, 현재 상태(대출중/연체/반납완료)를 확인할 수 있어야 하고, 대출 중인 도서는 연장이나 반납 처리가 가능해야 해. 도서가 반납되면 자동으로 해당 도서의 상태가 '대출가능'으로 변경되어야 해. 만약 예약자가 있는 도서가 반납되면, 해당 도서는 '예약중' 상태로 변경되어야 해.\n\n## userStory\n\n각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해.\n\n## Event\n\n{\"name\":\"MemberVerified\",\"displayName\":\"회원이 확인됨\",\"actor\":\"회원\",\"level\":5,\"description\":\"회원번호와 이름으로 회원 정보가 확인됨.\",\"inputs\":[\"회원번호\",\"이름\"],\"outputs\":[\"회원 정보\"],\"nextEvents\":[\"BookLoanRequested\"]}\n\n## Event\n\n{\"name\":\"BookLoanRequested\",\"displayName\":\"도서 대출이 신청됨\",\"actor\":\"회원\",\"level\":6,\"description\":\"회원이 대출하고자 하는 도서와 대출 기간(7일/14일/30일)을 선택하여 대출을 신청함.\",\"inputs\":[\"회원 정보\",\"도서 식별자\",\"대출 기간\"],\"outputs\":[\"대출 신청 요청\"],\"nextEvents\":[\"BookLoanApproved\",\"BookLoanRejected\"]}\n\n## Event\n\n{\"name\":\"BookLoanRejected\",\"displayName\":\"도서 대출이 거부됨\",\"actor\":\"도서 대출 시스템\",\"level\":7,\"description\":\"도서가 폐기되었거나 대출 불가 상태인 경우 대출이 거부됨.\",\"inputs\":[\"도서 상태 '폐기' 또는 대출 불가\"],\"outputs\":[\"대출 거부 알림\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookLoanApproved\",\"displayName\":\"도서 대출이 승인됨\",\"actor\":\"도서 대출 시스템\",\"level\":8,\"description\":\"도서가 대출 가능 상태라면 대출이 승인되고 대출 정보가 생성됨. 도서 상태는 '대출중'으로 변경됨.\",\"inputs\":[\"도서 상태 '대출가능'\",\"대출 신청 정보\"],\"outputs\":[\"대출 정보 생성\",\"도서 상태 '대출중'으로 변경\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookReserved\",\"displayName\":\"도서가 예약됨\",\"actor\":\"회원\",\"level\":9,\"description\":\"대출하려는 도서가 이미 대출 중일 때 회원이 해당 도서의 예약을 신청하면 예약이 생성되고, 도서의 상태가 '예약중'으로 변경됨.\",\"inputs\":[\"회원 정보\",\"대출 중인 도서 식별자\"],\"outputs\":[\"예약 정보 생성\",\"도서 상태 '예약중'으로 변경\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookReturned\",\"displayName\":\"도서가 반납됨\",\"actor\":\"회원\",\"level\":10,\"description\":\"회원이 대출한 도서를 반납함. 도서에 예약자가 있으면 상태가 '예약중'으로, 없으면 '대출가능'으로 변경됨.\",\"inputs\":[\"반납 도서 식별자\"],\"outputs\":[\"반납 처리\",\"도서 상태 변경\"],\"nextEvents\":[\"BookAvailable\",\"BookReservedForNext\"]}\n\n## Event\n\n{\"name\":\"BookAvailable\",\"displayName\":\"도서가 대출 가능 상태로 변경됨\",\"actor\":\"도서 대출 시스템\",\"level\":11,\"description\":\"반납된 도서에 예약자가 없는 경우 도서 상태가 '대출가능'으로 변경됨.\",\"inputs\":[\"반납 도서 식별자\",\"예약자 없음\"],\"outputs\":[\"도서 상태 '대출가능'\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"BookReservedForNext\",\"displayName\":\"도서가 다음 예약자를 위해 예약중 상태로 변경됨\",\"actor\":\"도서 대출 시스템\",\"level\":12,\"description\":\"반납된 도서에 예약자가 있을 경우 도서 상태가 '예약중'으로 변경됨.\",\"inputs\":[\"반납 도서 식별자\",\"예약자 존재\"],\"outputs\":[\"도서 상태 '예약중'\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"LoanExtended\",\"displayName\":\"대출 기간이 연장됨\",\"actor\":\"회원\",\"level\":13,\"description\":\"회원이 대출 중인 도서의 대출 기간을 연장함. 연체 상태에서는 연장이 불가함.\",\"inputs\":[\"회원 정보\",\"대출 중인 도서 식별자\",\"연장 요청\"],\"outputs\":[\"대출 기간 연장\",\"새 반납 예정일\"],\"nextEvents\":[]}\n\n## Event\n\n{\"name\":\"LoanOverdue\",\"displayName\":\"도서 대출이 연체됨\",\"actor\":\"도서 대출 시스템\",\"level\":14,\"description\":\"반납 예정일이 지나도 도서가 반납되지 않은 경우, 대출 건의 상태가 '연체'로 변경됨.\",\"inputs\":[\"반납 예정일 경과\",\"반납 미처리\"],\"outputs\":[\"대출 상태 '연체'로 변경\"],\"nextEvents\":[]}\n\n\n## Context Relations\n\n### BookManagementToBookLoanProcess\n- **Type**: Pub/Sub\n- **Direction**: receives from 도서 관리 (BookManagement)\n- **Reason**: 도서의 상태 변화, 신규 등록, 폐기 등 이벤트가 발생하면 이를 대출/예약/연체 프로세스에 전달해야 하며, 두 컨텍스트가 느슨하게 결합되고 데이터 소유권이 명확히 분리됨.\n- **Interaction Pattern**: 도서 상태 변경, 신규 등록, 폐기 등 이벤트를 Pub/Sub로 발행하며 대출 프로세스에서 구독하여 반영함. 예: 도서가 폐기되면 대출 프로세스에서 대출 거부 처리.",
                             "aggregates": [
                                 {
                                     "name": "Loan",
@@ -4969,10 +4205,14 @@ export const aggregateDraftScenarios = {
                                 {
                                     "name": "Reservation",
                                     "alias": "예약"
+                                },
+                                {
+                                    "name": "Member",
+                                    "alias": "회원"
                                 }
                             ]
                         },
-                        "description": "{\"userStories\":[{\"title\":\"도서 대출 및 반납 관리\",\"description\":\"회원은 '대출/반납' 화면에서 본인의 회원번호와 이름을 통해 확인받고, 도서명 또는 ISBN으로 도서를 검색하여 대출을 신청할 수 있다. 이미 대출중인 도서는 예약 신청이 가능하다. 도서 대출 완료 시 도서 상태는 자동으로 '대출중'으로 변경된다.\",\"acceptance\":[\"회원번호와 이름으로 회원 확인이 가능하다.\",\"도서명 또는 ISBN으로 도서 검색이 가능하다.\",\"대출 가능 상태의 도서만 대출 신청이 가능하다.\",\"대출 기간은 7일/14일/30일 중 선택할 수 있다.\",\"대출 중인 도서는 예약 신청이 가능하다.\",\"대출 완료 시 도서 상태가 '대출중'으로 자동 변경된다.\"]},{\"title\":\"대출 현황 조회 및 관리\",\"description\":\"도서관리자는 '대출 현황' 화면에서 현재 대출 중인 도서의 대출일, 반납예정일, 상태(대출중/연체/반납완료)를 확인하고, 대출 건별로 연장 또는 반납 처리를 할 수 있다.\",\"acceptance\":[\"대출 건의 대출일, 반납예정일, 상태가 표시된다.\",\"대출 중인 도서에 대해 연장 및 반납 처리가 가능하다.\",\"도서 반납 시 예약자가 있으면 상태가 '예약중', 없으면 '대출가능'으로 변경된다.\",\"대출 상태는 '대출중', '연체', '반납완료'가 존재한다.\"]},{\"title\":\"도서별 대출 및 상태 이력 조회\",\"description\":\"관리자는 각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있다.\",\"acceptance\":[\"각 도서별로 대출 이력과 상태 변경 이력이 조회된다.\",\"대출 이력에는 대출일, 반납일, 연장, 연체 정보가 포함된다.\",\"상태 이력에는 상태 변경 일시와 변경 내용이 포함된다.\"]}],\"entities\":{\"Member\":{\"properties\":[{\"name\":\"memberId\",\"type\":\"String\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"name\",\"type\":\"String\",\"required\":true}]},\"Book\":{\"properties\":[{\"name\":\"bookId\",\"type\":\"String\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"title\",\"type\":\"String\",\"required\":true},{\"name\":\"isbn\",\"type\":\"String\",\"required\":true},{\"name\":\"status\",\"type\":\"enum\",\"required\":true,\"values\":[\"AVAILABLE\",\"ON_LOAN\",\"RESERVED\"]}]},\"Loan\":{\"properties\":[{\"name\":\"loanId\",\"type\":\"Long\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"bookId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"memberId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Member\"},{\"name\":\"loanDate\",\"type\":\"Date\",\"required\":true},{\"name\":\"dueDate\",\"type\":\"Date\",\"required\":true},{\"name\":\"returnDate\",\"type\":\"Date\"},{\"name\":\"loanStatus\",\"type\":\"enum\",\"required\":true,\"values\":[\"ON_LOAN\",\"OVERDUE\",\"RETURNED\"]},{\"name\":\"extendCount\",\"type\":\"Integer\"}]},\"Reservation\":{\"properties\":[{\"name\":\"reservationId\",\"type\":\"Long\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"bookId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"memberId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Member\"},{\"name\":\"reservationDate\",\"type\":\"Date\",\"required\":true}]},\"BookStatusHistory\":{\"properties\":[{\"name\":\"historyId\",\"type\":\"Long\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"bookId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"status\",\"type\":\"enum\",\"required\":true,\"values\":[\"AVAILABLE\",\"ON_LOAN\",\"RESERVED\"]},{\"name\":\"changeDate\",\"type\":\"Date\",\"required\":true}]}},\"businessRules\":[{\"name\":\"대출 가능 상태 확인\",\"description\":\"도서 상태가 AVAILABLE인 경우에만 대출 신청이 가능하다.\"},{\"name\":\"대출 중 도서 예약\",\"description\":\"도서 상태가 ON_LOAN일 때만 예약 신청이 가능하다.\"},{\"name\":\"대출 기간 선택\",\"description\":\"대출 신청 시 7일, 14일, 30일 중에서 대출 기간을 선택해야 한다.\"},{\"name\":\"연장 제한\",\"description\":\"대출 연장은 정책에 따라 1회 또는 제한 횟수만큼만 가능하다.\"},{\"name\":\"반납 시 도서 상태 전환\",\"description\":\"도서 반납 후 예약자가 있으면 상태를 RESERVED, 없으면 AVAILABLE로 변경한다.\"},{\"name\":\"연체 처리\",\"description\":\"반납 예정일이 경과하면 도서의 대출 상태를 OVERDUE로 변경한다.\"},{\"name\":\"상태 변경 이력 기록\",\"description\":\"모든 도서의 상태 변경은 BookStatusHistory에 기록된다.\"}],\"interfaces\":{\"LoanReturnScreen\":{\"sections\":[{\"name\":\"회원 확인\",\"type\":\"form\",\"fields\":[{\"name\":\"memberId\",\"type\":\"text\",\"required\":true},{\"name\":\"name\",\"type\":\"text\",\"required\":true}],\"actions\":[],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}},{\"name\":\"도서 검색 및 선택\",\"type\":\"form\",\"fields\":[{\"name\":\"titleOrIsbn\",\"type\":\"text\",\"required\":true}],\"actions\":[\"도서 검색\"],\"filters\":[],\"resultTable\":{\"columns\":[\"bookId\",\"title\",\"isbn\",\"status\"],\"actions\":[\"도서 선택\"]}},{\"name\":\"대출 신청\",\"type\":\"form\",\"fields\":[{\"name\":\"loanPeriod\",\"type\":\"select\",\"required\":true}],\"actions\":[\"대출 신청\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}},{\"name\":\"예약 신청\",\"type\":\"form\",\"fields\":[],\"actions\":[\"예약 신청\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}}]},\"LoanStatusScreen\":{\"sections\":[{\"name\":\"대출 현황 목록\",\"type\":\"table\",\"fields\":[],\"actions\":[\"연장 신청\",\"반납 처리\"],\"filters\":[\"전체/회원별/도서별\"],\"resultTable\":{\"columns\":[\"loanId\",\"memberId\",\"bookId\",\"loanDate\",\"dueDate\",\"loanStatus\"],\"actions\":[\"상세 조회\"]}}]},\"BookHistoryScreen\":{\"sections\":[{\"name\":\"대출 이력\",\"type\":\"table\",\"fields\":[],\"actions\":[],\"filters\":[\"도서별\"],\"resultTable\":{\"columns\":[\"loanId\",\"memberId\",\"loanDate\",\"dueDate\",\"returnDate\",\"loanStatus\"],\"actions\":[]}},{\"name\":\"상태 변경 이력\",\"type\":\"table\",\"fields\":[],\"actions\":[],\"filters\":[\"도서별\"],\"resultTable\":{\"columns\":[\"historyId\",\"status\",\"changeDate\"],\"actions\":[]}}]}},\"events\":[{\"name\":\"LoanRequested\",\"description\":\"회원이 도서명 또는 ISBN으로 검색하여 대출 가능한 도서에 대해 대출을 신청함. 회원번호와 이름 확인 필요.\",\"displayName\":\"대출 신청됨\"},{\"name\":\"LoanApproved\",\"description\":\"대출 요청이 처리되어 도서가 회원에게 대출됨. 도서 상태는 대출중으로 자동 변경됨.\",\"displayName\":\"대출 완료됨\"},{\"name\":\"BookReserved\",\"description\":\"회원이 이미 대출중인 도서에 대해 예약 신청을 함. 예약된 도서는 예약 대기 리스트에 등록됨.\",\"displayName\":\"도서 예약됨\"},{\"name\":\"LoanReturned\",\"description\":\"회원이 대출 중인 도서를 반납함. 반납 후 예약자가 있으면 도서 상태는 예약중, 없으면 대출가능으로 변경됨.\",\"displayName\":\"도서 반납됨\"},{\"name\":\"LoanExtended\",\"description\":\"회원이 대출중인 도서의 반납예정일을 연장 신청함. 연장은 정책에 따라 1회 혹은 제한 가능.\",\"displayName\":\"대출 연장됨\"},{\"name\":\"LoanOverdueChecked\",\"description\":\"반납 예정일이 지난 도서의 연체 상태를 확인하여 연체로 표시함.\",\"displayName\":\"연체 확인됨\"},{\"name\":\"ReservationNotified\",\"description\":\"예약자가 있는 도서가 반납되었을 때, 예약자에게 도서 이용 가능 안내를 통보함.\",\"displayName\":\"예약자 통보됨\"},{\"name\":\"LoanStatusQueried\",\"description\":\"현재 대출 중인 도서와 각 대출 건의 대출일, 반납예정일, 상태(대출중/연체/반납완료)를 조회함.\",\"displayName\":\"대출 현황 조회됨\"}]}"
+                        "description": "{\"userStories\":[{\"title\":\"도서 대출 및 반납 관리\",\"description\":\"회원은 '대출/반납' 화면에서 회원 확인 후 도서를 대출하거나 반납할 수 있다. 대출 시 도서명 또는 ISBN으로 검색, 대출 기간 선택, 이미 대출 중인 경우 예약 신청이 가능하다. 반납 시 도서 상태 및 예약자 유무에 따라 자동 상태 변경이 이루어진다.\",\"acceptance\":[\"회원번호와 이름으로 회원이 확인되어야 한다.\",\"도서명 또는 ISBN으로 도서를 검색할 수 있어야 한다.\",\"대출 기간은 7일/14일/30일 중 선택할 수 있다.\",\"이미 대출 중인 도서는 예약 신청이 가능하다.\",\"대출 완료 시 도서 상태가 자동으로 '대출중'으로 변경된다.\",\"반납 완료 시 예약자 유무에 따라 도서 상태가 '예약중' 또는 '대출가능'으로 변경된다.\"]},{\"title\":\"대출 현황 및 처리\",\"description\":\"대출 현황 화면에서는 현재 대출 중인 도서들의 목록, 대출일, 반납예정일, 상태(대출중/연체/반납완료)를 확인하고, 대출 중인 도서에 대해 연장 및 반납 처리가 가능하다.\",\"acceptance\":[\"대출 건별로 대출일, 반납예정일, 현재 상태를 확인할 수 있다.\",\"대출 중인 도서에 대해 연장 및 반납 처리가 가능하다.\",\"연체 상태에서는 연장이 불가하다.\"]},{\"title\":\"도서별 이력 및 상태 변경 추적\",\"description\":\"관리자는 각 도서별 대출 이력과 상태 변경 이력을 조회할 수 있어야 하며, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있다.\",\"acceptance\":[\"도서별로 모든 대출 이력과 상태 변경 이력을 볼 수 있다.\"]}],\"entities\":{\"Member\":{\"properties\":[{\"name\":\"memberId\",\"type\":\"String\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"name\",\"type\":\"String\",\"required\":true}]},\"Book\":{\"properties\":[{\"name\":\"bookId\",\"type\":\"String\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"title\",\"type\":\"String\",\"required\":true},{\"name\":\"isbn\",\"type\":\"String\",\"required\":true},{\"name\":\"status\",\"type\":\"enum\",\"required\":true,\"values\":[\"AVAILABLE\",\"ON_LOAN\",\"RESERVED\",\"DISCARDED\"]}]},\"Loan\":{\"properties\":[{\"name\":\"loanId\",\"type\":\"String\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"memberId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Member\"},{\"name\":\"bookId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"loanDate\",\"type\":\"Date\",\"required\":true},{\"name\":\"dueDate\",\"type\":\"Date\",\"required\":true},{\"name\":\"returnDate\",\"type\":\"Date\"},{\"name\":\"status\",\"type\":\"enum\",\"required\":true,\"values\":[\"ON_LOAN\",\"OVERDUE\",\"RETURNED\"]}]},\"Reservation\":{\"properties\":[{\"name\":\"reservationId\",\"type\":\"String\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"memberId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Member\"},{\"name\":\"bookId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"reservationDate\",\"type\":\"Date\",\"required\":true}]},\"BookStatusHistory\":{\"properties\":[{\"name\":\"historyId\",\"type\":\"String\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"bookId\",\"type\":\"String\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Book\"},{\"name\":\"beforeStatus\",\"type\":\"enum\",\"required\":true,\"values\":[\"AVAILABLE\",\"ON_LOAN\",\"RESERVED\",\"DISCARDED\"]},{\"name\":\"afterStatus\",\"type\":\"enum\",\"required\":true,\"values\":[\"AVAILABLE\",\"ON_LOAN\",\"RESERVED\",\"DISCARDED\"]},{\"name\":\"changedAt\",\"type\":\"Date\",\"required\":true}]}},\"businessRules\":[{\"name\":\"대출 기간 선택 제한\",\"description\":\"대출 기간은 7일, 14일, 30일만 선택할 수 있다.\"},{\"name\":\"연체 도서 연장 불가\",\"description\":\"연체 상태(OVERDUE)인 대출 건은 연장이 불가하다.\"},{\"name\":\"대출 상태 자동 변경\",\"description\":\"도서 대출 시 상태는 'ON_LOAN', 반납 시 예약자 없으면 'AVAILABLE', 예약자 있으면 'RESERVED'로 자동 변경된다.\"},{\"name\":\"폐기/대출 불가 도서 대출 거부\",\"description\":\"도서 상태가 'DISCARDED' 또는 대출 불가 시 대출이 거부된다.\"}],\"interfaces\":{\"LoanAndReturn\":{\"sections\":[{\"name\":\"회원 확인\",\"type\":\"form\",\"fields\":[{\"name\":\"memberId\",\"type\":\"text\",\"required\":true},{\"name\":\"name\",\"type\":\"text\",\"required\":true}],\"actions\":[\"회원 확인\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}},{\"name\":\"도서 대출 신청\",\"type\":\"form\",\"fields\":[{\"name\":\"bookSearch\",\"type\":\"text\",\"required\":true},{\"name\":\"searchType\",\"type\":\"select\",\"required\":true},{\"name\":\"loanPeriod\",\"type\":\"select\",\"required\":true}],\"actions\":[\"대출 신청\",\"예약 신청\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}},{\"name\":\"도서 반납\",\"type\":\"form\",\"fields\":[{\"name\":\"loanId\",\"type\":\"text\",\"required\":true}],\"actions\":[\"반납 처리\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}}]},\"LoanStatus\":{\"sections\":[{\"name\":\"대출 현황 목록\",\"type\":\"table\",\"fields\":[],\"actions\":[\"연장\",\"반납\"],\"filters\":[\"대출 상태\",\"대출일\",\"반납예정일\"],\"resultTable\":{\"columns\":[\"loanId\",\"bookId\",\"title\",\"loanDate\",\"dueDate\",\"status\"],\"actions\":[\"연장\",\"반납\"]}}]},\"BookHistory\":{\"sections\":[{\"name\":\"도서별 이력 조회\",\"type\":\"table\",\"fields\":[{\"name\":\"bookId\",\"type\":\"text\",\"required\":true}],\"actions\":[\"대출 이력 조회\",\"상태 변경 이력 조회\"],\"filters\":[],\"resultTable\":{\"columns\":[\"loanId\",\"memberId\",\"loanDate\",\"dueDate\",\"returnDate\",\"status\"],\"actions\":[]}},{\"name\":\"도서 상태 변경 이력\",\"type\":\"table\",\"fields\":[],\"actions\":[],\"filters\":[],\"resultTable\":{\"columns\":[\"historyId\",\"beforeStatus\",\"afterStatus\",\"changedAt\"],\"actions\":[]}}]}},\"events\":[{\"name\":\"MemberVerified\",\"description\":\"회원번호와 이름으로 회원 정보가 확인됨.\",\"displayName\":\"회원이 확인됨\"},{\"name\":\"BookLoanRequested\",\"description\":\"회원이 대출하고자 하는 도서와 대출 기간(7일/14일/30일)을 선택하여 대출을 신청함.\",\"displayName\":\"도서 대출이 신청됨\"},{\"name\":\"BookLoanRejected\",\"description\":\"도서가 폐기되었거나 대출 불가 상태인 경우 대출이 거부됨.\",\"displayName\":\"도서 대출이 거부됨\"},{\"name\":\"BookLoanApproved\",\"description\":\"도서가 대출 가능 상태라면 대출이 승인되고 대출 정보가 생성됨. 도서 상태는 '대출중'으로 변경됨.\",\"displayName\":\"도서 대출이 승인됨\"},{\"name\":\"BookReserved\",\"description\":\"대출하려는 도서가 이미 대출 중일 때 회원이 해당 도서의 예약을 신청하면 예약이 생성되고, 도서의 상태가 '예약중'으로 변경됨.\",\"displayName\":\"도서가 예약됨\"},{\"name\":\"BookReturned\",\"description\":\"회원이 대출한 도서를 반납함. 도서에 예약자가 있으면 상태가 '예약중'으로, 없으면 '대출가능'으로 변경됨.\",\"displayName\":\"도서가 반납됨\"},{\"name\":\"BookAvailable\",\"description\":\"반납된 도서에 예약자가 없는 경우 도서 상태가 '대출가능'으로 변경됨.\",\"displayName\":\"도서가 대출 가능 상태로 변경됨\"},{\"name\":\"BookReservedForNext\",\"description\":\"반납된 도서에 예약자가 있을 경우 도서 상태가 '예약중'으로 변경됨.\",\"displayName\":\"도서가 다음 예약자를 위해 예약중 상태로 변경됨\"},{\"name\":\"LoanExtended\",\"description\":\"회원이 대출 중인 도서의 대출 기간을 연장함. 연체 상태에서는 연장이 불가함.\",\"displayName\":\"대출 기간이 연장됨\"},{\"name\":\"LoanOverdue\",\"description\":\"반납 예정일이 지나도 도서가 반납되지 않은 경우, 대출 건의 상태가 '연체'로 변경됨.\",\"displayName\":\"도서 대출이 연체됨\"}],\"contextRelations\":[{\"name\":\"BookManagementToBookLoanProcess\",\"type\":\"Pub/Sub\",\"direction\":\"receives from\",\"targetContext\":\"도서 관리 (BookManagement)\",\"reason\":\"도서의 상태 변화, 신규 등록, 폐기 등 이벤트가 발생하면 이를 대출/예약/연체 프로세스에 전달해야 하며, 두 컨텍스트가 느슨하게 결합되고 데이터 소유권이 명확히 분리됨.\",\"interactionPattern\":\"도서 상태 변경, 신규 등록, 폐기 등 이벤트를 Pub/Sub로 발행하며 대출 프로세스에서 구독하여 반영함. 예: 도서가 폐기되면 대출 프로세스에서 대출 거부 처리.\"}]}"
                     }
                 }
             }

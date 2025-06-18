@@ -55,6 +55,10 @@ export default {
                     command: () => this._mockProgressDto(),
                     description: "AI 진행 상황 UI에 대한 Mock 데이터 표시"
                 },
+                EsValueInjection: {
+                    command: () => this._EsValueInjection(),
+                    description: "이벤트 스토밍 값을 강제로 삽입"
+                },
                 TempTest: {
                     command: () => this._TempTest(),
                     description: "임시 테스트"
@@ -153,6 +157,14 @@ export default {
 
 
             return selectedScenarioName
+        },
+
+        _EsValueInjection() {
+            const esValue = prompt("이벤트 스토밍 값을 입력하세요:")
+            if(!esValue) return
+
+            this.value = JSON.parse(esValue)
+            this.forceRefreshCanvas()
         },
 
         async _TempTest() {

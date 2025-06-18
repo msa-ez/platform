@@ -171,72 +171,88 @@ Guidelines:
    - Ensure that all design proposals fully satisfy the given functional requirements.  
    - Accurately address every business rule and constraint within your design.
 
-2. Transactional Consistency  
+2. Event-Driven Design Considerations
+   - Analyze the provided events to understand the domain behaviors and state transitions that occur within the bounded context.
+   - Design aggregates that can naturally produce and handle the identified domain events.
+   - Consider how events reflect business processes and ensure aggregates align with these processes.
+   - Use events to identify aggregate boundaries - operations that should be atomic typically belong to the same aggregate.
+
+3. Context Relationship Analysis
+   - Examine contextRelations to understand how this bounded context interacts with other contexts.
+   - Design aggregates that support the identified interaction patterns (Pub/Sub, API calls, etc.).
+   - Consider the direction of relationships when defining aggregate dependencies and references.
+   - Ensure that cross-context communications are handled through well-defined aggregate interfaces.
+
+4. Transactional Consistency  
    - Consolidate transaction-critical data within a single Aggregate to preserve atomicity.  
    - Avoid splitting core transactional data (e.g., do not separate elements such as loan/loan details or order/order items).  
-   - Define Aggregate boundaries that respect inherent business invariants.
+   - Define Aggregate boundaries that respect inherent business invariants and support identified events.
 
-3. Design for Maintainability  
+5. Design for Maintainability  
    - Distribute properties across well-defined Value Objects to improve maintainability.  
    - Avoid creating Value Objects with only one property unless they represent a significant domain concept.  
    - Unless in special cases, do not create meaningless or redundant Value Objects; include related properties directly within the Aggregate.  
    - Do not derive an excessive number of Value Objects.
 
-4. Proper Use of Enumerations  
+6. Proper Use of Enumerations  
    - When storing state or similar information, always use Enumerations.  
    - Ensure that all Enumerations are directly associated with the Aggregate and are not embedded within or produced by Value Objects.
+   - Consider state transitions implied by events when defining enumeration values.
 
-5. Naming and Language Conventions  
+7. Naming and Language Conventions  
    - Use English for all object names.  
    - Do not include type information in names or aliases (e.g., use "Book" instead of "BookAggregate", "PersonInfo" instead of "PersonInfoValueObject", "책" instead of "책 애그리거트", "카테고리" instead of "카테고리 열거형").
    - Utilize the user's preferred language for aliases, descriptions, pros, cons, conclusions, and other descriptive elements to ensure clarity.
    - Within a single option, each name and alias must be unique to ensure clear identification and prevent ambiguity.
 
-6. Reference Handling and Duplication Avoidance  
+8. Reference Handling and Duplication Avoidance  
    - Before creating an Aggregate, check if an Aggregate with the same core concept already exists in either accumulated drafts or in other Bounded Contexts.  
    - If it exists, reference it using a Value Object with a foreign key rather than duplicating its definition.  
    - Ensure that any Aggregate referenced via a Value Object has a corresponding, pre-existing definition either in accumulated drafts or in the current design.
 
-7. Aggregate References  
+9. Aggregate References  
    - Aggregates that relate to other Aggregates should use Value Objects to hold these references.  
    - When referencing another Aggregate and it is a ValueObject, write the name as '<Referenced Aggregate Name> + Reference'. The same applies for aliases.
    - Avoid bidirectional references: ensure that references remain unidirectional by carefully determining which Aggregate owns the reference based on ownership and lifecycle dependencies.  
    - All Value Objects and Enumerations must be directly related to an Aggregate and should not be used to define or wrap additional independent Value Objects.
 
-8. High-Quality Evaluation of Options
-   - For each design option, provide specific and concrete pros and cons that go beyond generic statements.
-   - Evaluate options based on design quality attributes with specific consequences and examples:
-     * Cohesion: Assess how focused each aggregate is on a single responsibility or business capability
-     * Coupling: Analyze dependencies between aggregates and their impact on system flexibility
-     * Consistency: Evaluate how well business invariants are protected within transaction boundaries
-     * Encapsulation: Consider how effectively domain rules are hidden and implementation details are protected
-     * Complexity: Assess cognitive load for developers working with the design and its implementation difficulty
-     * Independence: Evaluate how autonomously each aggregate can evolve without affecting others
-     * Performance: Consider query efficiency, memory usage, and operational characteristics
-   - Ensure pros and cons are meaningfully different between options and don't contradict each other
-   - For pros, focus on genuine strengths with specific domain-relevant benefits
-   - For cons, identify actual limitations and trade-offs with real consequences for implementation
-   - Avoid vague statements like "moderate" or "high" without explaining why; instead explain the specific impact
+10. High-Quality Evaluation of Options
+    - For each design option, provide specific and concrete pros and cons that go beyond generic statements.
+    - Evaluate options based on design quality attributes with specific consequences and examples:
+      * Cohesion: Assess how focused each aggregate is on a single responsibility or business capability
+      * Coupling: Analyze dependencies between aggregates and their impact on system flexibility
+      * Consistency: Evaluate how well business invariants are protected within transaction boundaries
+      * Encapsulation: Consider how effectively domain rules are hidden and implementation details are protected
+      * Complexity: Assess cognitive load for developers working with the design and its implementation difficulty
+      * Independence: Evaluate how autonomously each aggregate can evolve without affecting others
+      * Performance: Consider query efficiency, memory usage, and operational characteristics
+    - Ensure pros and cons are meaningfully different between options and don't contradict each other
+    - For pros, focus on genuine strengths with specific domain-relevant benefits
+    - For cons, identify actual limitations and trade-offs with real consequences for implementation
+    - Avoid vague statements like "moderate" or "high" without explaining why; instead explain the specific impact
 
-9. Output Requirements  
-   - The final JSON output must not include any inline comments.  
-   - Maintain clarity and conciseness in the JSON structure.
+11. Output Requirements  
+    - The final JSON output must not include any inline comments.  
+    - Maintain clarity and conciseness in the JSON structure.
 
 Proposal Writing Recommendations:
 
 - Design Proposals:  
   - Each Aggregate should encapsulate a complete business capability and enforce its invariants.  
-  - Generate distinct design options that address transactional consistency, performance, scalability, and maintainability.  
+  - Generate distinct design options that address transactional consistency, performance, scalability, and maintainability.
+  - Consider how each aggregate supports the identified events and context relationships.
   - Clearly articulate the rationale for selecting a default option among your proposals.
 
 - Default Option Selection Criteria:  
   - Transactional Consistency: Ensure atomic operations and safeguard business invariants.  
+  - Event Alignment: Support natural event production and handling within aggregate boundaries.
+  - Context Integration: Enable smooth interactions with other bounded contexts as specified in contextRelations.
   - Performance & Scalability: Minimize inter-Aggregate dependencies to optimize querying and support independent scaling.  
   - Domain Alignment: Reflect natural business boundaries while maintaining semantic clarity.  
   - Maintainability & Flexibility: Promote clear separation of concerns and allow for anticipated growth.
 
 Priority Order:  
-Consistency > Domain Alignment > Performance > Maintainability > Flexibility
+Consistency > Event Alignment > Context Integration > Domain Alignment > Performance > Maintainability > Flexibility
 `
     }
 
@@ -437,7 +453,52 @@ Inference Guidelines:
                             }
                         ]
                     }
-                }
+                },
+                "events": [
+                    {
+                        "name": "OrderPlaced",
+                        "description": "A customer has successfully placed an order with valid products and customer information.",
+                        "displayName": "Order Placed"
+                    },
+                    {
+                        "name": "OrderConfirmed",
+                        "description": "An order has been confirmed after payment verification and inventory check.",
+                        "displayName": "Order Confirmed"
+                    },
+                    {
+                        "name": "OrderCancelled",
+                        "description": "An order has been cancelled by the customer before shipping.",
+                        "displayName": "Order Cancelled"
+                    },
+                    {
+                        "name": "PaymentProcessed",
+                        "description": "Payment for an order has been successfully processed.",
+                        "displayName": "Payment Processed"
+                    },
+                    {
+                        "name": "PaymentFailed",
+                        "description": "Payment processing has failed due to insufficient funds or invalid payment method.",
+                        "displayName": "Payment Failed"
+                    }
+                ],
+                "contextRelations": [
+                    {
+                        "name": "OrderInventorySync",
+                        "type": "API",
+                        "direction": "calls to",
+                        "targetContext": "InventoryManagement",
+                        "reason": "Order processing needs to verify product availability and reserve inventory items.",
+                        "interactionPattern": "OrderProcessing calls InventoryManagement API to check product availability and reserve items when order is placed."
+                    },
+                    {
+                        "name": "CustomerNotification",
+                        "type": "Pub/Sub",
+                        "direction": "publishes to",
+                        "targetContext": "NotificationService",
+                        "reason": "Order status changes need to be communicated to customers through various channels.",
+                        "interactionPattern": "OrderProcessing publishes order events (placed, confirmed, cancelled) that NotificationService subscribes to for sending notifications."
+                    }
+                ]
             }
         }
     }
