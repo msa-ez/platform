@@ -20,13 +20,15 @@ class EsValueLangGraphStudioProxy {
 
     static get STORAGE_KEYS() {
         return {
-            LOCAL_GENERATOR: 'is_local_eventstorming_generator'
+            LOCAL_GENERATOR: 'is_local_eventstorming_generator',
+            IS_PASS_HEALTH_CHECK: 'is_pass_health_check'
         };
     }
 
 
     static async healthCheckUsingConfig() {
         if(localStorage.getItem(this.STORAGE_KEYS.LOCAL_GENERATOR) === 'true') return true;
+        if(localStorage.getItem(this.STORAGE_KEYS.IS_PASS_HEALTH_CHECK) === 'true') return true;
 
         try {
             const storage = new Vue(StorageBase);
@@ -274,12 +276,12 @@ class EsValueLangGraphStudioProxy {
      */
     static _restoreDataFromFirebase(data) {
         const processValue = (value) => {
-            if (value === "") {
+            if (value === "@") {
                 return null;  // 빈 문자열 → null
-            } else if (Array.isArray(value) && value.length === 1 && value[0] === "__EMPTY_ARRAY__") {
+            } else if (Array.isArray(value) && value.length === 1 && value[0] === "@") {
                 return [];  // 마커 → 빈 배열
             } else if (typeof value === 'object' && value !== null && !Array.isArray(value) && 
-                       Object.keys(value).length === 1 && value["__EMPTY_OBJECT__"] === true) {
+                       Object.keys(value).length === 1 && value["@"] === true) {
                 return {};  // 마커 객체 → 빈 객체
             } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
                 // 객체인 경우 재귀적으로 처리
