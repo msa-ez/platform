@@ -3134,7 +3134,7 @@
                                         this.value.langgraphStudioInfos.esGenerator.logs = logs
                                         update_value_particaly(esValue)
                                     },
-                                    async (esValue, logs, totalPercentage) => { // onComplete
+                                    async (esValue, logs, totalPercentage, isFailed) => { // onComplete
                                         this.generatorProgressDto.generateDone = true
 
                                         update_value_particaly(esValue)
@@ -3143,7 +3143,8 @@
                                         this.value.langgraphStudioInfos.esGenerator.isCompleted = true
                                         this.value.langgraphStudioInfos.esGenerator.logs = logs
                                         await this._backupModelForcely()
-                                        await EsValueLangGraphStudioProxy.removeJob(this.value.langgraphStudioInfos.esGenerator.jobId)
+                                        if(!isFailed)
+                                            await EsValueLangGraphStudioProxy.removeJob(this.value.langgraphStudioInfos.esGenerator.jobId)
                                     },
                                     async (waitingJobCount) => { // onWaiting
                                         this.generatorProgressDto = {
@@ -3165,7 +3166,6 @@
                                         this.value.langgraphStudioInfos.esGenerator.isCompleted = true
 
                                         await this._backupModelForcely()
-                                        await EsValueLangGraphStudioProxy.removeJob(this.value.langgraphStudioInfos.esGenerator.jobId)
                                     }
                                 )
                                 return

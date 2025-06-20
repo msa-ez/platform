@@ -223,9 +223,9 @@ class EsValueLangGraphStudioProxy {
         this._addElementRefToState(state.esValue);
  
         if (state.isCompleted) {
-            await callbacks.onComplete(state.esValue, state.logs, state.totalPercentage);
+            await callbacks.onComplete(state.esValue, state.logs, state.totalPercentage, state.isFailed);
         } else {
-            await callbacks.onUpdate(state.esValue, state.logs, state.totalPercentage);
+            await callbacks.onUpdate(state.esValue, state.logs, state.totalPercentage, state.isFailed);
         }
     }
 
@@ -252,6 +252,7 @@ class EsValueLangGraphStudioProxy {
 
         return {
             isCompleted: outputs.isCompleted,
+            isFailed: outputs.isFailed,
             esValue: outputs.esValue,
             logs: outputs.logs,
             totalProgressCount: outputs.totalProgressCount,
