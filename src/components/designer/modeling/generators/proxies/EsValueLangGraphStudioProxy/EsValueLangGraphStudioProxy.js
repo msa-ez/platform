@@ -7,7 +7,8 @@ class EsValueLangGraphStudioProxy {
         return {
             CONFIG: 'db://configs/eventstorming_generator',
             JOBS: 'jobs',
-            REQUESTED_JOBS: 'requestedJobs'
+            REQUESTED_JOBS: 'requestedJobs',
+            JOB_STATES: 'jobStates'
         };
     }
 
@@ -70,6 +71,12 @@ class EsValueLangGraphStudioProxy {
         this._setupJobWatchers(storage, jobId, jobState, callbacks);
     }
 
+    static async removeJob(jobId) {
+        const storage = new Vue(StorageBase);
+        await storage.setObject(this._getJobStatePath(jobId), {
+            "isRemoveRequested": true
+        });
+    }
     
     // 작업 상태 초기화
     static _initializeJobState(storage, jobId) {
@@ -92,7 +99,7 @@ class EsValueLangGraphStudioProxy {
 
     // 모든 워처 설정
     static _setupJobWatchers(storage, jobId, jobState, callbacks) {
-        const parseState = () => this._parseAndNotifyJobState(jobState, callbacks);
+        const parseState = async () => await this._parseAndNotifyJobState(jobState, callbacks);
         
         // 대기 중인 작업 수 감시
         this._watchWaitingJobCount(storage, jobId, callbacks.onWaiting);
@@ -112,9 +119,9 @@ class EsValueLangGraphStudioProxy {
 
     // 대기 중인 작업 수 감시
     static _watchWaitingJobCount(storage, jobId, onWaiting) {
-        storage.watch(`${this._getRequestJobPath(jobId)}/waitingJobCount`, (waitingJobCount) => {
+        storage.watch(`${this._getRequestJobPath(jobId)}/waitingJobCount`, async (waitingJobCount) => {
             if (waitingJobCount && waitingJobCount > 0) {
-                onWaiting(waitingJobCount);
+                await onWaiting(waitingJobCount);
             }
         });
     }
@@ -122,49 +129,49 @@ class EsValueLangGraphStudioProxy {
     // 작업 상태 감시 (완료/실패)
     static _watchJobStatus(storage, jobId, jobState, onFailed, parseState) {
         // 실패 상태 감시
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/isFailed`, (isFailed) => {
+        storage.watch(`${this._getJobPath(jobId)}/state/outputs/isFailed`, async (isFailed) => {
             if (!isFailed) return;
             
             jobState.isFailed = isFailed;
-            parseState();
+            await parseState();
             
             const errorLogs = jobState.logs.filter(log => log.level === "error");
-            onFailed(errorLogs.join("\n"));
+            await onFailed(errorLogs.join("\n"));
         });
 
         // 완료 상태 감시
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/isCompleted`, (isCompleted) => {
+        storage.watch(`${this._getJobPath(jobId)}/state/outputs/isCompleted`, async (isCompleted) => {
             if (!isCompleted) return;
             
             jobState.isCompleted = isCompleted;
-            parseState();
+            await parseState();
         });
     }
 
     // 작업 진행률 감시
     static _watchJobProgress(storage, jobId, jobState, parseState) {
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/totalProgressCount`, (totalProgressCount) => {
+        storage.watch(`${this._getJobPath(jobId)}/state/outputs/totalProgressCount`, async (totalProgressCount) => {
             if (!totalProgressCount) return;
             
             jobState.totalProgressCount = totalProgressCount;
-            parseState();
+            await parseState();
         });
 
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/currentProgressCount`, (currentProgressCount) => {
+        storage.watch(`${this._getJobPath(jobId)}/state/outputs/currentProgressCount`, async (currentProgressCount) => {
             if (!currentProgressCount) return;
             
             jobState.currentProgressCount = currentProgressCount;
-            parseState();
+            await parseState();
         });
     }
 
     // 로그 감시
     static _watchJobLogs(storage, jobId, jobState, parseState) {
-        storage.watch_added(`${this._getJobPath(jobId)}/state/outputs/logs`, null, (log) => {
+        storage.watch_added(`${this._getJobPath(jobId)}/state/outputs/logs`, null, async (log) => {
             if (!log) return;
             
             jobState.logs.push(this._restoreDataFromFirebase(log));
-            parseState();
+            await parseState();
         });
     }
 
@@ -194,31 +201,31 @@ class EsValueLangGraphStudioProxy {
         const basePath = `${this._getJobPath(jobId)}/state/outputs/esValue/${collectionName}`;
         
         // 변경 감시
-        storage.watch_changed(basePath, (item, key) => {
+        storage.watch_changed(basePath, async (item, key) => {
             if (!item || !key) return;
             
             targetCollection[key] = this._restoreDataFromFirebase(item);
-            parseState();
+            await parseState();
         });
 
         // 추가 감시
-        storage.watch_added(basePath, null, (item) => {
+        storage.watch_added(basePath, null, async (item) => {
             if (!item || !item.id) return;
             
             targetCollection[item.id] = this._restoreDataFromFirebase(item);
-            parseState();
+            await parseState();
         });
     }
 
     // 작업 상태 파싱 및 콜백 호출
-    static _parseAndNotifyJobState(jobState, callbacks) {
+    static async _parseAndNotifyJobState(jobState, callbacks) {
         const state = this._parseJobState(jobState);
         this._addElementRefToState(state.esValue);
  
         if (state.isCompleted) {
-            callbacks.onComplete(state.esValue, state.logs, state.totalPercentage);
+            await callbacks.onComplete(state.esValue, state.logs, state.totalPercentage);
         } else {
-            callbacks.onUpdate(state.esValue, state.logs, state.totalPercentage);
+            await callbacks.onUpdate(state.esValue, state.logs, state.totalPercentage);
         }
     }
 
@@ -260,6 +267,10 @@ class EsValueLangGraphStudioProxy {
 
     static _getRequestJobPath(jobId) {
         return `db://${this.PATHS.REQUESTED_JOBS}/${this._getNamespace()}/${jobId}`;
+    }
+
+    static _getJobStatePath(jobId) {
+        return `db://${this.PATHS.JOB_STATES}/${this._getNamespace()}/${jobId}`;
     }
 
     static _getNamespace() {
