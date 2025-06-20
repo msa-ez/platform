@@ -203,7 +203,7 @@ class EsValueLangGraphStudioProxy {
 
         // 추가 감시
         storage.watch_added(basePath, null, (item) => {
-            if (!item) return;
+            if (!item || !item.id) return;
             
             targetCollection[item.id] = this._restoreDataFromFirebase(item);
             parseState();
