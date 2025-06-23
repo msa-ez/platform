@@ -915,6 +915,7 @@
                     me.projectInfo.type = me.storageCondition.type;
                     me.projectInfo.createdTimeStamp = Date.now();
                     me.projectInfo.lastModifiedTimeStamp = Date.now();
+                    me.projectInfo['comment'] = me.storageCondition.comment;
 
                     await me.putObject(`db://definitions/${settingProjectId}/information`, me.projectInfo)
                     await me.putObject(`db://definitions/${settingProjectId}/draft`, me.draft)
