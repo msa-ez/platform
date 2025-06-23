@@ -3095,9 +3095,14 @@
                            this.value.langgraphStudioInfos.esGenerator.jobId
                         ) {
                             if(await EsValueLangGraphStudioProxy.healthCheckUsingConfig()) {
-                                const stopEventStormingGeneration = () => {
+                                const stopEventStormingGeneration = async () => {
+                                    recorrect_boundedContexts()
+                                    this.generatorProgressDto.generateDone = true
                                     this.value.langgraphStudioInfos.esGenerator.isCompleted = true
-                                    this._backupModelForcely()
+                                    
+                                    await this._backupModelForcely()
+                                    await EsValueLangGraphStudioProxy.removeJob(this.value.langgraphStudioInfos.esGenerator.jobId)
+                                    
                                     this.$router.go(0)
                                 }
 
@@ -3114,7 +3119,7 @@
 
                                 EsValueLangGraphStudioProxy.watchJob(
                                     this.value.langgraphStudioInfos.esGenerator.jobId,
-                                    (esValue, logs, totalPercentage) => { // onUpdate
+                                    async (esValue, logs, totalPercentage) => { // onUpdate
                                         this.generatorProgressDto = {
                                             generateDone: false,
                                             displayMessage: logs.length > 0 ? logs.slice(-1)[0].message : "Requesting event storming creation...",
@@ -3126,18 +3131,22 @@
                                             }
                                         }
 
+                                        this.value.langgraphStudioInfos.esGenerator.logs = logs
                                         update_value_particaly(esValue)
                                     },
-                                    (esValue, logs, totalPercentage) => { // onComplete
+                                    async (esValue, logs, totalPercentage, isFailed) => { // onComplete
                                         this.generatorProgressDto.generateDone = true
 
                                         update_value_particaly(esValue)
                                         recorrect_boundedContexts()
 
                                         this.value.langgraphStudioInfos.esGenerator.isCompleted = true
-                                        this._backupModelForcely()
+                                        this.value.langgraphStudioInfos.esGenerator.logs = logs
+                                        await this._backupModelForcely()
+                                        if(!isFailed)
+                                            await EsValueLangGraphStudioProxy.removeJob(this.value.langgraphStudioInfos.esGenerator.jobId)
                                     },
-                                    (waitingJobCount) => { // onWaiting
+                                    async (waitingJobCount) => { // onWaiting
                                         this.generatorProgressDto = {
                                             generateDone: false,
                                             displayMessage: `The task will begin after completing the ${waitingJobCount} pending jobs...`,
@@ -3149,12 +3158,14 @@
                                             }
                                         }
                                     },
-                                    (errorMsg) => { // onFailed
+                                    async (errorMsg) => { // onFailed
                                         alert(`Failed to create event storming. Please try again later.: ${errorMsg}`)
 
+                                        recorrect_boundedContexts()
                                         this.generatorProgressDto.generateDone = true
                                         this.value.langgraphStudioInfos.esGenerator.isCompleted = true
-                                        this._backupModelForcely()
+
+                                        await this._backupModelForcely()
                                     }
                                 )
                                 return
@@ -4511,39 +4522,39 @@
             },
 
             _saveModelForcely() {
-                if(!this.storageCondition)
-                    this.storageCondition = {
-                        "action": "save",
-                        "title": "SAVE",
-                        "comment": "",
-                        "projectName": "untitled",
-                        "editProjectName": "untitled",
-                        "projectId": this.$route.params.projectId,
-                        "version": "v0.0.1",
-                        "connectedAssociatedProject": false,
-                        "error": null,
-                        "loading": true
-                    }
+                this.storageCondition = {
+                    "action": "save",
+                    "title": "SAVE",
+                    "comment": "",
+                    "projectName": "untitled",
+                    "editProjectName": "untitled",
+                    "projectId": this.$route.params.projectId,
+                    "version": "v0.0.1",
+                    "connectedAssociatedProject": false,
+                    "error": null,
+                    "loading": true
+                }
+                    
 
                 this.saveModel()
             },
 
-            _backupModelForcely() {
-                if(!this.storageCondition)
-                    this.storageCondition = {
-                        "action": "backup",
-                        "title": "Save New Version",
-                        "comment": "",
-                        "projectName": "untitled",
-                        "editProjectName": "untitled",
-                        "projectId": this.$route.params.projectId,
-                        "version": "v0-0-2",
-                        "connectedAssociatedProject": false,
-                        "error": null,
-                        "loading": true
-                    }
+            async _backupModelForcely() {
+                this.storageCondition = {
+                    "action": "backup",
+                    "title": "Save New Version",
+                    "comment": "",
+                    "projectName": "untitled",
+                    "editProjectName": "untitled",
+                    "projectId": this.$route.params.projectId,
+                    "version": `v0-0-2.${new Date().getTime()}`,
+                    "connectedAssociatedProject": false,
+                    "error": null,
+                    "loading": true
+                }
 
-                this.backupModel()
+
+                await this.backupModel()
             },
 
             _removeInvalidReferencedAggregateProperties(draftOptions) {
