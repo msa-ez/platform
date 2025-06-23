@@ -127,8 +127,8 @@ try{
 // algolia
 import 'instantsearch.css/themes/reset.css';
 import 'instantsearch.css/themes/satellite.css';
-// import algoliasearch from 'algoliasearch/lite';
-const algoliasearch = require('algoliasearch');
+import algoliasearch from 'algoliasearch/lite';
+// const algoliasearch = require('algoliasearch');
 import InstantSearch from 'vue-instantsearch';
 
 const ALGOLIA_POSTS_INDEX_NAME = 'definitions'
