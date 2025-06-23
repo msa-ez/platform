@@ -249,7 +249,69 @@
                             :items="resultDevideBoundedContext[selectedAspect].explanations" 
                             :headers="explanationsHeaders" 
                             :hide-default-footer="true"
-                        ></v-data-table>
+                        >
+                            <template v-slot:item="{ item }">
+                                <tr>
+                                    <td>{{ item.sourceContext }}</td>
+                                    <td>{{ item.targetContext }}</td>
+                                    <td>
+                                        <v-select
+                                            v-model="item.relationType"
+                                            :items="item.relationType.includes('Pub/Sub')|| item.relationType.includes('Request/Response') ? relationTypes : relationTypes2"
+                                            single-line
+                                            dense
+                                            @change="saveRelationEdit(item, 'relationType')"
+                                        ></v-select>
+                                    </td>
+                                    <td>
+                                        <v-edit-dialog
+                                            :return-value.sync="item.reason"
+                                            @save="saveRelationEdit(item, 'reason')"
+                                            large
+                                            persistent
+                                        >
+                                            <template v-slot:input>
+                                                <v-text-field
+                                                    v-model="item.reason"
+                                                    :label="$t('DevideBoundedContextDialog.edit.reason')"
+                                                    :rules="[v => !!v || $t('validation.required')]"
+                                                    single-line
+                                                ></v-text-field>
+                                            </template>
+                                            <span>{{ item.reason }}</span>
+                                        </v-edit-dialog>
+                                    </td>
+                                    <td>
+                                        <v-edit-dialog
+                                            :return-value.sync="item.interactionPattern"
+                                            @save="saveRelationEdit(item, 'interactionPattern')"
+                                            large
+                                            persistent
+                                        >
+                                            <template v-slot:input>
+                                                <v-text-field
+                                                    v-model="item.interactionPattern"
+                                                    :label="$t('DevideBoundedContextDialog.edit.interactionPattern')"
+                                                    :rules="[v => !!v || $t('validation.required')]"
+                                                    single-line
+                                                ></v-text-field>
+                                            </template>
+                                            <span>{{ item.interactionPattern }}</span>
+                                        </v-edit-dialog>
+                                    </td>
+                                    <td class="actions-cell">
+                                        <v-btn
+                                            icon
+                                            small
+                                            color="error"
+                                            @click="deleteRelation(item)"
+                                        >
+                                            <v-icon>mdi-delete</v-icon>
+                                        </v-btn>
+                                    </td>
+                                </tr>
+                            </template>
+                        </v-data-table>
                     </v-card>
                 </div>
 
@@ -475,7 +537,69 @@
                                 :items="resultDevideBoundedContext[aspect].explanations" 
                                 :headers="explanationsHeaders" 
                                 :hide-default-footer="true"
-                            ></v-data-table>
+                            >
+                                <template v-slot:item="{ item }">
+                                    <tr>
+                                        <td>{{ item.sourceContext }}</td>
+                                        <td>{{ item.targetContext }}</td>
+                                        <td>
+                                            <v-select
+                                                v-model="item.relationType"
+                                                :items="item.relationType.includes('Pub/Sub')|| item.relationType.includes('Request/Response') ? relationTypes : relationTypes2"
+                                                single-line
+                                                dense
+                                                @change="saveRelationEditForAspect(item, 'relationType', aspect)"
+                                            ></v-select>
+                                        </td>
+                                        <td>
+                                            <v-edit-dialog
+                                                :return-value.sync="item.reason"
+                                                @save="saveRelationEditForAspect(item, 'reason', aspect)"
+                                                large
+                                                persistent
+                                            >
+                                                <template v-slot:input>
+                                                    <v-text-field
+                                                        v-model="item.reason"
+                                                        :label="$t('DevideBoundedContextDialog.edit.reason')"
+                                                        :rules="[v => !!v || $t('validation.required')]"
+                                                        single-line
+                                                    ></v-text-field>
+                                                </template>
+                                                <span>{{ item.reason }}</span>
+                                            </v-edit-dialog>
+                                        </td>
+                                        <td>
+                                            <v-edit-dialog
+                                                :return-value.sync="item.interactionPattern"
+                                                @save="saveRelationEditForAspect(item, 'interactionPattern', aspect)"
+                                                large
+                                                persistent
+                                            >
+                                                <template v-slot:input>
+                                                    <v-text-field
+                                                        v-model="item.interactionPattern"
+                                                        :label="$t('DevideBoundedContextDialog.edit.interactionPattern')"
+                                                        :rules="[v => !!v || $t('validation.required')]"
+                                                        single-line
+                                                    ></v-text-field>
+                                                </template>
+                                                <span>{{ item.interactionPattern }}</span>
+                                            </v-edit-dialog>
+                                        </td>
+                                        <td class="actions-cell">
+                                            <v-btn
+                                                icon
+                                                small
+                                                color="error"
+                                                @click="deleteRelationForAspect(item, aspect)"
+                                            >
+                                                <v-icon>mdi-delete</v-icon>
+                                            </v-btn>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </v-data-table>
                         </v-card>
                     </div>
 
@@ -605,7 +729,7 @@
         },
         data() {
             return {
-                activeTab: null,
+                activeTab: 0,
                 mermaidNodes: [],
                 config: {
                     theme: 'default',
@@ -645,7 +769,8 @@
                     { text: this.$t('DevideBoundedContextDialog.targetContext'), value: 'targetContext' },
                     { text: this.$t('DevideBoundedContextDialog.relationType'), value: 'relationType' },
                     { text: this.$t('DevideBoundedContextDialog.reason'), value: 'reason' },
-                    { text: this.$t('DevideBoundedContextDialog.interactionPattern'), value: 'interactionPattern' }
+                    { text: this.$t('DevideBoundedContextDialog.interactionPattern'), value: 'interactionPattern' },
+                    { text: '', value: 'actions' }
                 ],
                 renderKey: 0,
                 tableRenderKey: 0,
@@ -662,6 +787,17 @@
                     { text: 'Core Domain', value: 'Core Domain' },
                     { text: 'Supporting Domain', value: 'Supporting Domain' },
                     { text: 'Generic Domain', value: 'Generic Domain' }
+                ],
+                relationTypes: [
+                    { text: 'Pub/Sub', value: 'Pub/Sub' },
+                    { text: 'Request/Response', value: 'Request/Response' }
+                ],
+                relationTypes2:[
+                    { text: 'Conformist', value: 'Conformist' },
+                    { text: 'Shared Kernel', value: 'Shared Kernel' },
+                    { text: 'Anti-corruption', value: 'Anti-corruption' },
+                    { text: 'Seperate Ways', value: 'Seperate Ways' },
+                    { text: 'Customer-Supplier', value: 'Customer-Supplier' }
                 ],
                 implementationStrategies: [
                     { text: 'Event Sourcing', value: 'Event Sourcing' },
@@ -899,22 +1035,22 @@
                                     return relation;
                                 });
 
-                            if (this.resultDevideBoundedContext[key].explanations) {
-                                this.resultDevideBoundedContext[key].explanations = 
-                                    this.resultDevideBoundedContext[key].explanations.map(explanation => {
-                                        if (explanation.sourceContext === oldAlias) {
-                                            explanation.sourceContext = this.editedFields.alias;
-                                        }
-                                        if (explanation.targetContext === oldAlias) {
-                                            explanation.targetContext = this.editedFields.alias;
-                                        }
-                                        return explanation;
-                                    });
-                            }
+                                if (this.resultDevideBoundedContext[key].explanations) {
+                                    this.resultDevideBoundedContext[key].explanations = 
+                                        this.resultDevideBoundedContext[key].explanations.map(explanation => {
+                                            if (explanation.sourceContext === oldAlias) {
+                                                explanation.sourceContext = this.editedFields.alias;
+                                            }
+                                            if (explanation.targetContext === oldAlias) {
+                                                explanation.targetContext = this.editedFields.alias;
+                                            }
+                                            return explanation;
+                                        });
+                                }
 
-                            boundedContext.name = this.editedFields.name;
-                            boundedContext.alias = this.editedFields.alias;
-                            break;
+                                boundedContext.name = this.editedFields.name;
+                                boundedContext.alias = this.editedFields.alias;
+                                break;
 
                         case 'importance':
                             boundedContext.importance = item.importance;
@@ -1069,6 +1205,184 @@
             isProcessingBC(item) {
                 return this.isStartMapping && 
                        this.currentProcessingBoundedContext === item.name;
+            },
+            saveRelationEdit(item, field) {
+                let key = this.selectedAspect;
+
+                const explanationIndex = this.resultDevideBoundedContext[key].explanations
+                    .findIndex(exp => exp.sourceContext === item.sourceContext && exp.targetContext === item.targetContext);
+                
+                if (explanationIndex > -1) {
+                    const explanation = this.resultDevideBoundedContext[key].explanations[explanationIndex];
+                    
+                    switch(field) {
+                        case 'relationType':
+                            explanation.relationType = item.relationType;
+                            explanation.interactionPattern = item.relationType;
+                            
+                            // relations 배열에서 해당 관계 찾기 (alias로 매칭)
+                            const boundedContexts = this.resultDevideBoundedContext[key].boundedContexts;
+                            const sourceBC = boundedContexts.find(bc => bc.alias === item.sourceContext);
+                            const targetBC = boundedContexts.find(bc => bc.alias === item.targetContext);
+                            
+                            if (sourceBC && targetBC) {
+                                const relationIndex = this.resultDevideBoundedContext[key].relations
+                                    .findIndex(rel => rel.upStream.name === sourceBC.name && rel.downStream.name === targetBC.name);
+                                
+                                if (relationIndex > -1) {
+                                    this.resultDevideBoundedContext[key].relations[relationIndex].type = item.relationType;
+                                }
+                            }
+                            break;
+                        case 'reason':
+                            explanation.reason = item.reason;
+                            break;
+                        case 'interactionPattern':
+                            explanation.interactionPattern = item.interactionPattern;
+                            break;
+                    }
+
+                    this.$emit('updateDevideBoundedContext', this.selectedAspect, this.resultDevideBoundedContext[this.selectedAspect]);
+
+                    this.mermaidNodes = this.generateNodes({
+                        boundedContexts: this.resultDevideBoundedContext[key].boundedContexts,
+                        relations: this.resultDevideBoundedContext[key].relations
+                    });
+                    this.renderKey++;
+                    this.tableRenderKey++;
+                }
+            },
+            deleteRelation(item) {
+                if (confirm(this.$t(item.sourceContext + '와 ' + item.targetContext + ' 사이의 관계를 삭제하시겠습니까?'))) {
+                    const key = this.selectedAspect || Object.keys(this.resultDevideBoundedContext)[0];
+                    const explanations = this.resultDevideBoundedContext[key].explanations;
+                    const index = explanations.findIndex(exp => exp.sourceContext === item.sourceContext && exp.targetContext === item.targetContext);
+                    
+                    if (index > -1) {
+                        explanations.splice(index, 1);
+                        
+                        // relations 배열에서도 해당 관계 제거 (alias로 매칭)
+                        const boundedContexts = this.resultDevideBoundedContext[key].boundedContexts;
+                        const sourceBC = boundedContexts.find(bc => bc.alias === item.sourceContext);
+                        const targetBC = boundedContexts.find(bc => bc.alias === item.targetContext);
+                        
+                        if (sourceBC && targetBC) {
+                            const relations = this.resultDevideBoundedContext[key].relations;
+                            const relationIndex = relations.findIndex(rel => 
+                                rel.upStream.name === sourceBC.name && rel.downStream.name === targetBC.name
+                            );
+                            
+                            if (relationIndex > -1) {
+                                relations.splice(relationIndex, 1);
+                            }
+                        }
+                        
+                        this.mermaidNodes = this.generateNodes({
+                            boundedContexts: this.resultDevideBoundedContext[key].boundedContexts,
+                            relations: this.resultDevideBoundedContext[key].relations
+                        });
+                        
+                        this.renderKey++;
+                        this.tableRenderKey++;
+
+                        this.$emit('updateDevideBoundedContext', key, this.resultDevideBoundedContext[key]);
+                    }
+                }
+            },
+            saveRelationEditForAspect(item, field, aspect) {
+                let key = aspect;
+
+                const explanationIndex = this.resultDevideBoundedContext[key].explanations
+                    .findIndex(exp => exp.sourceContext === item.sourceContext && exp.targetContext === item.targetContext);
+                
+                if (explanationIndex > -1) {
+                    const explanation = this.resultDevideBoundedContext[key].explanations[explanationIndex];
+                    
+                    switch(field) {
+                        case 'relationType':
+                            explanation.relationType = item.relationType;
+                            explanation.interactionPattern = item.relationType;
+                            
+                            // relations 배열에서 해당 관계 찾기 (alias로 매칭)
+                            const boundedContexts = this.resultDevideBoundedContext[key].boundedContexts;
+                            const sourceBC = boundedContexts.find(bc => bc.alias === item.sourceContext);
+                            const targetBC = boundedContexts.find(bc => bc.alias === item.targetContext);
+                            
+                            if (sourceBC && targetBC) {
+                                const relationIndex = this.resultDevideBoundedContext[key].relations
+                                    .findIndex(rel => rel.upStream.name === sourceBC.name && rel.downStream.name === targetBC.name);
+                                
+                                if (relationIndex > -1) {
+                                    this.resultDevideBoundedContext[key].relations[relationIndex].type = item.relationType;
+                                }
+                            }
+                            break;
+                        case 'reason':
+                            explanation.reason = item.reason;
+                            break;
+                        case 'interactionPattern':
+                            explanation.interactionPattern = item.interactionPattern;
+                            break;
+                    }
+
+                    this.$emit('updateDevideBoundedContext', key, this.resultDevideBoundedContext[key]);
+
+                    this.mermaidNodes = this.generateNodes({
+                        boundedContexts: this.resultDevideBoundedContext[key].boundedContexts,
+                        relations: this.resultDevideBoundedContext[key].relations
+                    });
+                    this.renderKey++;
+                    this.tableRenderKey++;
+                }
+            },
+            deleteRelationForAspect(item, aspect) {
+                if (confirm(this.$t(item.sourceContext + '와 ' + item.targetContext + ' 사이의 관계를 삭제하시겠습니까?'))) {
+                    const key = aspect || Object.keys(this.resultDevideBoundedContext)[0];
+                    const explanations = this.resultDevideBoundedContext[key].explanations;
+                    const index = explanations.findIndex(exp => exp.sourceContext === item.sourceContext && exp.targetContext === item.targetContext);
+                    
+                    if (index > -1) {
+                        explanations.splice(index, 1);
+                        
+                        // relations 배열에서도 해당 관계 제거 (alias로 매칭)
+                        const boundedContexts = this.resultDevideBoundedContext[key].boundedContexts;
+                        const sourceBC = boundedContexts.find(bc => bc.alias === item.sourceContext);
+                        const targetBC = boundedContexts.find(bc => bc.alias === item.targetContext);
+                        
+                        if (sourceBC && targetBC) {
+                            const relations = this.resultDevideBoundedContext[key].relations;
+                            const relationIndex = relations.findIndex(rel => 
+                                rel.upStream.name === sourceBC.name && rel.downStream.name === targetBC.name
+                            );
+                            
+                            if (relationIndex > -1) {
+                                relations.splice(relationIndex, 1);
+                            }
+                        }
+                        
+                        this.mermaidNodes = this.generateNodes({
+                            boundedContexts: this.resultDevideBoundedContext[key].boundedContexts,
+                            relations: this.resultDevideBoundedContext[key].relations
+                        });
+                        
+                        this.renderKey++;
+                        this.tableRenderKey++;
+
+                        this.$emit('updateDevideBoundedContext', key, this.resultDevideBoundedContext[key]);
+                    }
+                }
+            },
+            cancelRelationEdit(item) {
+                // No longer needed since we're using item values directly
+            },
+            initializeRelationEditFields(item) {
+                // No longer needed since we're using item values directly
+            },
+            cancelRelationEditForAspect(item, aspect) {
+                // No longer needed since we're using item values directly
+            },
+            initializeRelationEditFieldsForAspect(item, aspect) {
+                // No longer needed since we're using item values directly
             }
         }
     }

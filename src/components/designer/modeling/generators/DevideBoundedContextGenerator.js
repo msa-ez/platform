@@ -133,7 +133,7 @@ The format must be as follows:
             "targetContext": "Target Bounded Context alias",
             "relationType": "Relationship type",
             "reason": "Explanation of why this type was chosen",
-            "interactionPattern": "Description of how these contexts interact (e.g., Pub/Sub, Req/Res, REST, etc.)"
+            "interactionPattern": "Description of how these contexts interact"
         }
     ]
 }
