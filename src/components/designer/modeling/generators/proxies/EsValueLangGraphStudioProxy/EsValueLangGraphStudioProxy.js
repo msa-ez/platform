@@ -234,14 +234,16 @@ class EsValueLangGraphStudioProxy {
 
         const relations = esValue.relations;
         const elements = esValue.elements;
+        
+        for(const relationKey of Object.keys(relations)) {
+            const relation = relations[relationKey];
+            if(!relation.from || !elements[relation.from] || !relation.to || !elements[relation.to]) {
+                delete relations[relationKey];
+                continue;
+            }
 
-        for(const relation of Object.values(relations)) {
-            if(relation.from && elements[relation.from]) {
-                relation.sourceElement = elements[relation.from];
-            }
-            if(relation.to && elements[relation.to]) {
-                relation.targetElement = elements[relation.to];
-            }
+            relation.sourceElement = elements[relation.from];
+            relation.targetElement = elements[relation.to];
         }
     }
 
