@@ -3288,16 +3288,21 @@
                 var me = this;
                 if (me.initLoad) me.modelChanged = true;
                 var isKoreanIncluded = newVal.match(/[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/);
-                if (newVal && !isKoreanIncluded) {
-                    if (me.gitRepoName == null) {
-                        me.gitRepoName = newVal;
+                if(!newVal){
+                    me.projectNameHint = "Please enter Project Name"
+                    me.projectNameColor = "red"
+                }else{
+                    if (newVal && !isKoreanIncluded) {
+                        if (me.gitRepoName == null) {
+                            me.gitRepoName = newVal;
+                        }
+                        me.gitInfo.name = newVal;
+                        me.projectNameHint = null;
+                        me.projectNameColor = null;
+                    } else {
+                        me.projectNameHint = "Project name is required. (English only)";
+                        me.projectNameColor = "red";
                     }
-                    me.gitInfo.name = newVal;
-                    me.projectNameHint = null;
-                    me.projectNameColor = null;
-                } else {
-                    me.projectNameHint = "Project name is required. (English only)";
-                    me.projectNameColor = "red";
                 }
             }, 500),
             information: function () {

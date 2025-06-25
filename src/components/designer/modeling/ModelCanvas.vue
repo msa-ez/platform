@@ -1239,7 +1239,7 @@
                 me.information = information ? information : me.information
 
                 if( !me.projectVersion ){
-                    me.projectName = me.information && me.information.projectName ? me.information.projectName : 'untitled'
+                    me.projectName = me.information && me.information.projectName ? me.information.projectName : ''
                     me.isAutoForkModel = me.isClazzModeling ? false : Object.keys(this.$route.query).includes('fork')
                 }
 
