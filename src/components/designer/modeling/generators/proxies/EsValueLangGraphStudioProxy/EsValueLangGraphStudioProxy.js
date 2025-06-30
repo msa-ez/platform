@@ -238,7 +238,6 @@ class EsValueLangGraphStudioProxy {
         for(const relationKey of Object.keys(relations)) {
             const relation = relations[relationKey];
             if(!relation.from || !elements[relation.from] || !relation.to || !elements[relation.to]) {
-                delete relations[relationKey];
                 continue;
             }
 

@@ -22,7 +22,7 @@
                     class="mr-2"
                 >
                     <v-icon x-small left>mdi-robot</v-icon>
-                    AI 추천
+                    {{ $t('ModelDraftDialogForDistribution.aiRecommended') }}
                 </v-chip>
             </div>
             <v-chip
@@ -31,7 +31,7 @@
                 x-small
                 label
             >
-                선택됨
+                {{ $t('ModelDraftDialogForDistribution.selected') }}
             </v-chip>
         </v-card-title>
         
@@ -49,38 +49,27 @@
             </div>
 
             <div class="pl-4 pr-4 pb-4 mt-auto">
-                <div v-if="optionInfo.pros && Object.keys(optionInfo.pros).length > 0" class="text-center">
-                    <h4 @click="prosExpanded = !prosExpanded" style="cursor: pointer">
-                        {{ $t('ModelDraftDialogForDistribution.pros') }}
+                <div v-if="analysisData.length > 0" class="text-center">
+                    <h4 @click="analysisExpanded = !analysisExpanded" style="cursor: pointer">
+                        {{ $t('ModelDraftDialogForDistribution.pros') }} & {{ $t('ModelDraftDialogForDistribution.cons') }}
                         <v-icon small>
-                            {{ prosExpanded ? 'mdi-chevron-up' : 'mdi-chevron-down' }}
+                            {{ analysisExpanded ? 'mdi-chevron-up' : 'mdi-chevron-down' }}
                         </v-icon>
                     </h4>
                     <v-expand-transition>
-                        <v-simple-table v-show="prosExpanded" dense class="analysis-table mx-auto">
-                            <tbody>
-                                <tr v-for="(value, key) in optionInfo.pros" :key="`pros-${key}`">
-                                    <td class="analysis-key text-capitalize">{{ key }}</td>
-                                    <td class="analysis-value">{{ value }}</td>
+                        <v-simple-table v-show="analysisExpanded" dense class="analysis-table mx-auto">
+                            <thead>
+                                <tr>
+                                    <th class="text-center" style="width: 100px;">{{ $t('ModelDraftDialogForDistribution.category') }}</th>
+                                    <th class="text-center">{{ $t('ModelDraftDialogForDistribution.pros') }}</th>
+                                    <th class="text-center">{{ $t('ModelDraftDialogForDistribution.cons') }}</th>
                                 </tr>
-                            </tbody>
-                        </v-simple-table>
-                    </v-expand-transition>
-                </div>
-
-                <div v-if="optionInfo.cons && Object.keys(optionInfo.cons).length > 0" class="text-center">
-                    <h4 @click="consExpanded = !consExpanded" style="cursor: pointer">
-                        {{ $t('ModelDraftDialogForDistribution.cons') }}
-                        <v-icon small>
-                            {{ consExpanded ? 'mdi-chevron-up' : 'mdi-chevron-down' }}
-                        </v-icon>
-                    </h4>
-                    <v-expand-transition>
-                        <v-simple-table v-show="consExpanded" dense class="analysis-table mx-auto">
+                            </thead>
                             <tbody>
-                                <tr v-for="(value, key) in optionInfo.cons" :key="`cons-${key}`">
-                                    <td class="analysis-key text-capitalize">{{ key }}</td>
-                                    <td class="analysis-value">{{ value }}</td>
+                                <tr v-for="item in analysisData" :key="item.key">
+                                    <td class="analysis-key text-capitalize">{{ item.key }}</td>
+                                    <td class="analysis-value">{{ item.pro }}</td>
+                                    <td class="analysis-value">{{ item.con }}</td>
                                 </tr>
                             </tbody>
                         </v-simple-table>
@@ -130,8 +119,23 @@
                     mermaidString: '',
                     renderKey: 0
                 },
-                prosExpanded: false,
-                consExpanded: false
+                analysisExpanded: false,
+            }
+        },
+        computed: {
+            analysisData() {
+                if (!this.optionInfo || (!this.optionInfo.pros && !this.optionInfo.cons)) {
+                    return [];
+                }
+                const pros = this.optionInfo.pros || {};
+                const cons = this.optionInfo.cons || {};
+                const allKeys = Array.from(new Set([...Object.keys(pros), ...Object.keys(cons)]));
+
+                return allKeys.map(key => ({
+                    key: key,
+                    pro: pros[key] || '-',
+                    con: cons[key] || '-',
+                }));
             }
         },
         watch: {
@@ -269,6 +273,7 @@
 .analysis-table ::v-deep table {
     width: 100%;
     border-spacing: 0;
+    table-layout: fixed;
 }
 .analysis-table ::v-deep tbody tr:hover {
     background-color: transparent !important;
@@ -284,6 +289,7 @@
 .analysis-value {
     font-size: 0.9rem;
     line-height: 1.4;
-    padding: 4px 0 !important;
+    padding: 4px 8px !important;
+    word-break: keep-all;
 }
 </style>

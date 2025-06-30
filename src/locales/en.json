@@ -349,8 +349,11 @@
     "highlightingOff" : "Connection tracing: off"
   },
   "ModelDraftDialogForDistribution": {
+    "aiRecommended": "AI Recommended",
+    "selected": "Selected",
     "pros": "Pros",
     "cons": "Cons",
+    "category": "Category",
     "conclusions": "Conclusions:",
     "create": "Create",
     "createEventStormingModelCanvas": "Create EventStorming Model",

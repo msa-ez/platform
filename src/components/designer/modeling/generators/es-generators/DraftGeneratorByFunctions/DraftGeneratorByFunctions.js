@@ -329,7 +329,7 @@ Inference Guidelines:
     __buildJsonExampleInputFormat() {
         return {
             "Accumulated Drafts": {
-                "OrderProcessing": [],
+                "RoomManagement": [],
                 "CustomerManagement": [
                     {
                         "aggregate": {
@@ -350,185 +350,241 @@ Inference Guidelines:
                         ]
                     }
                 ],
-                "InventoryManagement": [
+                "PaymentProcessing": [
                     {
                         "aggregate": {
-                            "name": "Product",
-                            "alias": "Product Details"
+                            "name": "Payment",
+                            "alias": "Payment Information"
                         },
                         "enumerations": [
                             {
-                                "name": "ProductStatus",
-                                "alias": "Product Availability Status"
+                                "name": "PaymentStatus",
+                                "alias": "Payment Status"
                             }
                         ],
                         "valueObjects": [
                             {
-                                "name": "ProductSpecification",
-                                "alias": "Detailed Specifications"
+                                "name": "PaymentMethod",
+                                "alias": "Payment Method Details"
                             }
                         ]
                     }
                 ]
             },
-            "Target Bounded Context Name": "OrderProcessing",
-            "Functional Requirements": {
-                "userStories": [
-                    {
-                        "title": "Place an Order",
-                        "description": "As a customer, I want to place an order so that I can purchase products online.",
-                        "acceptance": [
-                            "The order must include at least one product.",
-                            "Customer information is validated.",
-                            "Order total is correctly calculated.",
-                            "Payment process is invoked and approved."
-                        ]
-                    },
-                    {
-                        "title": "Cancel an Order",
-                        "description": "As a customer, I want to cancel my order before it is processed.",
-                        "acceptance": [
-                            "Only orders that are not yet shipped can be cancelled.",
-                            "Cancellation triggers refund initiation.",
-                            "Order status reflects cancellation."
-                        ]
-                    }
-                ],
-                "entities": {
-                    "Order": {
-                        "properties": [
-                            {"name": "orderId", "type": "String", "required": true, "isPrimaryKey": true},
-                            {"name": "customerId", "type": "String", "required": true, "isForeignKey": true, "foreignEntity": "CustomerProfile"},
-                            {"name": "orderDate", "type": "Date", "required": true},
-                            {"name": "shippingAddress", "type": "String", "required": true},
-                            {"name": "totalAmount", "type": "Integer", "required": true},
-                            {"name": "orderStatus", "type": "enum", "required": true, "values": ["Pending", "Confirmed", "Shipped", "Cancelled"]}
-                        ]
-                    },
-                    "Payment": {
-                        "properties": [
-                            {"name": "paymentId", "type": "String", "required": true, "isPrimaryKey": true},
-                            {"name": "orderId", "type": "String", "required": true, "isForeignKey": true, "foreignEntity": "Order"},
-                            {"name": "paymentMethod", "type": "enum", "required": true, "values": ["CreditCard", "PayPal", "BankTransfer"]},
-                            {"name": "paymentStatus", "type": "enum", "required": true, "values": ["Successful", "Failed", "Pending"]}
-                        ]
-                    }
-                },
-                "businessRules": [
-                    {
-                        "name": "OrderValidationRule",
-                        "description": "An order must have a valid total amount greater than zero."
-                    },
-                    {
-                        "name": "CancellationPolicy",
-                        "description": "Orders can only be cancelled within 1 hour of placement if not confirmed."
-                    }
-                ],
-                "interfaces": {
-                    "OrderInterface": {
-                        "sections": [
-                            {
-                                "name": "OrderForm",
-                                "type": "form",
-                                "fields": [
-                                    {"name": "customerId", "type": "text", "required": true},
-                                    {"name": "shippingAddress", "type": "textarea", "required": true},
-                                    {"name": "orderDetails", "type": "textarea", "required": true}
-                                ],
-                                "actions": ["Submit", "Reset"]
-                            }
-                        ]
-                    },
-                    "PaymentInterface": {
-                        "sections": [
-                            {
-                                "name": "PaymentForm",
-                                "type": "form",
-                                "fields": [
-                                    {"name": "orderId", "type": "text", "required": true},
-                                    {"name": "paymentMethod", "type": "dropdown", "required": true},
-                                    {"name": "paymentAmount", "type": "decimal", "required": true}
-                                ],
-                                "actions": ["Pay", "Cancel"]
-                            }
-                        ]
-                    }
-                },
-                "events": [
-                    {
-                        "name": "OrderPlaced",
-                        "description": "A customer has successfully placed an order with valid products and customer information.",
-                        "displayName": "Order Placed"
-                    },
-                    {
-                        "name": "OrderConfirmed",
-                        "description": "An order has been confirmed after payment verification and inventory check.",
-                        "displayName": "Order Confirmed"
-                    },
-                    {
-                        "name": "OrderCancelled",
-                        "description": "An order has been cancelled by the customer before shipping.",
-                        "displayName": "Order Cancelled"
-                    },
-                    {
-                        "name": "PaymentProcessed",
-                        "description": "Payment for an order has been successfully processed.",
-                        "displayName": "Payment Processed"
-                    },
-                    {
-                        "name": "PaymentFailed",
-                        "description": "Payment processing has failed due to insufficient funds or invalid payment method.",
-                        "displayName": "Payment Failed"
-                    }
-                ],
-                "contextRelations": [
-                    {
-                        "name": "OrderInventorySync",
-                        "type": "API",
-                        "direction": "calls to",
-                        "targetContext": "InventoryManagement",
-                        "reason": "Order processing needs to verify product availability and reserve inventory items.",
-                        "interactionPattern": "OrderProcessing calls InventoryManagement API to check product availability and reserve items when order is placed."
-                    },
-                    {
-                        "name": "CustomerNotification",
-                        "type": "Pub/Sub",
-                        "direction": "publishes to",
-                        "targetContext": "NotificationService",
-                        "reason": "Order status changes need to be communicated to customers through various channels.",
-                        "interactionPattern": "OrderProcessing publishes order events (placed, confirmed, cancelled) that NotificationService subscribes to for sending notifications."
-                    }
-                ]
-            }
+            "Target Bounded Context Name": "RoomManagement",
+            "Functional Requirements": `# Bounded Context Overview: RoomManagement (Hotel Room Management)
+
+## Role
+Manages hotel room registration, availability status, maintenance scheduling, and occupancy tracking. Handles room types, pricing, cleaning status, and maintenance history. Primary users are hotel staff and housekeeping managers.
+
+## Key Events
+- RoomRegistered
+- RoomStatusChanged
+- RoomMaintenanceScheduled
+- RoomCleaningCompleted
+- RoomOccupancyUpdated
+
+# Requirements
+
+## userStory
+
+The hotel management system needs a comprehensive room management interface that handles room inventory and status tracking.
+
+The 'Room Management' screen should allow hotel staff to register new rooms and manage existing room statuses. When registering a room, staff must input room number, room type, floor level, capacity, and base price. Room numbers must be unique within the hotel. Room types include Standard, Deluxe, Suite, and Presidential Suite. Each room starts with 'Available' status and automatically changes to 'Occupied', 'Cleaning', or 'Maintenance' based on guest activities and staff actions. Rooms can be marked as 'Out of Order' when major repairs are needed, making them unavailable for booking.
+
+The 'Housekeeping' screen manages room cleaning and maintenance schedules. When guests check out, rooms automatically change to 'Cleaning Required' status. Housekeeping staff can update status to 'Cleaning in Progress' and then 'Available' once cleaning is complete. Maintenance can be scheduled for rooms requiring repairs, changing status to 'Maintenance Scheduled' and then 'Under Maintenance'. Emergency maintenance can be triggered immediately for urgent issues.
+
+The 'Occupancy Dashboard' displays current room occupancy rates and availability. Staff can view real-time status of all rooms, check-in and check-out schedules, and track cleaning progress. The system should show occupancy history and generate availability reports for different time periods.
+
+Each room should maintain a complete history of status changes, maintenance activities, and occupancy records for operational analysis and reporting purposes.
+
+## Event
+
+\`\`\`json
+{
+  "name": "RoomRegistered",
+  "displayName": "Room Registered",
+  "actor": "Hotel Staff",
+  "level": 1,
+  "description": "Hotel staff registers a new room with details like room number, type, capacity, and pricing information.",
+  "inputs": [
+    "Room Number",
+    "Room Type (Standard/Deluxe/Suite/Presidential)",
+    "Floor Level",
+    "Capacity",
+    "Base Price"
+  ],
+  "outputs": [
+    "Room Status: Available",
+    "Room Information Saved"
+  ],
+  "nextEvents": [
+    "RoomStatusChanged"
+  ]
+}
+\`\`\`
+
+\`\`\`json
+{
+  "name": "RoomStatusChanged",
+  "displayName": "Room Status Changed",
+  "actor": "System",
+  "level": 2,
+  "description": "Room status changes between Available, Occupied, Cleaning, Maintenance, and Out of Order based on various triggers.",
+  "inputs": [
+    "Room",
+    "Previous Status",
+    "New Status",
+    "Change Trigger (Check-in/Check-out/Cleaning/Maintenance)"
+  ],
+  "outputs": [
+    "Status Change History Recorded",
+    "Room Availability Updated"
+  ],
+  "nextEvents": [
+    "RoomCleaningCompleted",
+    "RoomMaintenanceScheduled"
+  ]
+}
+\`\`\`
+
+\`\`\`json
+{
+  "name": "RoomMaintenanceScheduled",
+  "displayName": "Room Maintenance Scheduled",
+  "actor": "Maintenance Staff",
+  "level": 3,
+  "description": "Maintenance is scheduled for a room due to repair needs or routine maintenance requirements.",
+  "inputs": [
+    "Room",
+    "Maintenance Type",
+    "Scheduled Date",
+    "Priority Level"
+  ],
+  "outputs": [
+    "Room Status: Maintenance Scheduled",
+    "Maintenance Record Created"
+  ],
+  "nextEvents": [
+    "RoomStatusChanged"
+  ]
+}
+\`\`\`
+
+## DDL
+
+\`\`\`sql
+-- Room table
+CREATE TABLE rooms (
+    room_id INT AUTO_INCREMENT PRIMARY KEY,
+    room_number VARCHAR(10) UNIQUE NOT NULL,
+    room_type ENUM('Standard', 'Deluxe', 'Suite', 'Presidential') NOT NULL,
+    floor_level INT NOT NULL,
+    capacity INT NOT NULL,
+    base_price DECIMAL(10,2) NOT NULL,
+    status ENUM('Available', 'Occupied', 'Cleaning', 'Maintenance', 'Out of Order') DEFAULT 'Available',
+    registration_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    last_maintenance_date DATETIME NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_room_number (room_number),
+    INDEX idx_status (status),
+    INDEX idx_room_type (room_type),
+    INDEX idx_floor_level (floor_level)
+);
+\`\`\`
+
+\`\`\`sql
+-- Room status history table
+CREATE TABLE room_status_history (
+    history_id INT AUTO_INCREMENT PRIMARY KEY,
+    room_id INT NOT NULL,
+    previous_status ENUM('Available', 'Occupied', 'Cleaning', 'Maintenance', 'Out of Order'),
+    new_status ENUM('Available', 'Occupied', 'Cleaning', 'Maintenance', 'Out of Order') NOT NULL,
+    change_reason VARCHAR(200),
+    changed_by VARCHAR(100),
+    change_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (room_id) REFERENCES rooms(room_id),
+    INDEX idx_room_id (room_id),
+    INDEX idx_change_date (change_date)
+);
+\`\`\`
+
+\`\`\`sql
+-- Room maintenance records table
+CREATE TABLE room_maintenance_records (
+    maintenance_id INT AUTO_INCREMENT PRIMARY KEY,
+    room_id INT NOT NULL,
+    maintenance_type VARCHAR(100) NOT NULL,
+    description TEXT,
+    scheduled_date DATETIME NOT NULL,
+    completed_date DATETIME NULL,
+    priority_level ENUM('Low', 'Medium', 'High', 'Emergency') NOT NULL,
+    maintenance_staff VARCHAR(100),
+    cost DECIMAL(10,2) NULL,
+    FOREIGN KEY (room_id) REFERENCES rooms(room_id),
+    INDEX idx_room_id (room_id),
+    INDEX idx_scheduled_date (scheduled_date),
+    INDEX idx_priority_level (priority_level)
+);
+\`\`\`
+
+## Context Relations
+
+### RoomBookingSync
+- **Type**: Pub/Sub
+- **Direction**: receives from Hotel Reservation System (HotelReservation)
+- **Reason**: When guests check-in or check-out, room status must be updated accordingly. The reservation system publishes booking events that trigger room status changes from Available to Occupied or vice versa.
+- **Interaction Pattern**: HotelReservation context publishes booking status events (CheckedIn, CheckedOut) and RoomManagement context subscribes to these events to update room availability and status.
+
+### MaintenanceNotification
+- **Type**: Pub/Sub
+- **Direction**: sends to Facility Management (FacilityManagement)
+- **Reason**: When rooms require maintenance or cleaning, the facility management team needs to be notified to schedule appropriate staff and resources.
+- **Interaction Pattern**: RoomManagement publishes maintenance and cleaning events that FacilityManagement subscribes to for coordinating housekeeping and maintenance activities.
+
+### OccupancyReporting
+- **Type**: API
+- **Direction**: calls to Business Intelligence (BusinessIntelligence)
+- **Reason**: Room occupancy data and status history need to be analyzed for revenue optimization and operational insights.
+- **Interaction Pattern**: RoomManagement provides APIs that BusinessIntelligence calls to retrieve occupancy rates, status change patterns, and maintenance cost analytics.`
         }
     }
 
     __buildJsonExampleOutputFormat() {
         return {
-            "inference": "After analyzing the functional requirements and existing drafts, two design options were generated. The first option integrates Order and Payment into a single aggregate, promoting transactional consistency and simplifying interactions. The second option separates Order and Payment into distinct aggregates, ensuring specialized focus on each domain concern.",
+            "inference": "After analyzing the hotel room management requirements, two design options were generated. The first option consolidates room information, status tracking, and maintenance scheduling into a single comprehensive aggregate. The second option separates room information from maintenance operations, creating specialized aggregates for different aspects of room management.",
             "result": {
                 "options": [
                     {
                         "structure": [
                             {
                                 "aggregate": {
-                                    "name": "OrderWithPayment",
-                                    "alias": "Complete Order Processing"
+                                    "name": "ComprehensiveRoom",
+                                    "alias": "Complete Room Management"
                                 },
                                 "enumerations": [
                                     {
-                                        "name": "OrderStatus",
-                                        "alias": "Order Status"
+                                        "name": "RoomStatus",
+                                        "alias": "Room Availability Status"
                                     },
                                     {
-                                        "name": "PaymentStatus",
-                                        "alias": "Payment Status"
+                                        "name": "RoomType",
+                                        "alias": "Room Category"
+                                    },
+                                    {
+                                        "name": "MaintenancePriority",
+                                        "alias": "Maintenance Priority Level"
                                     }
                                 ],
                                 "valueObjects": [
                                     {
-                                        "name": "ShippingAddress",
-                                        "alias": "Shipping Address Details"
+                                        "name": "RoomSpecification",
+                                        "alias": "Room Technical Details"
+                                    },
+                                    {
+                                        "name": "MaintenanceRecord",
+                                        "alias": "Maintenance History Record"
                                     },
                                     {
                                         "name": "CustomerProfileReference",
@@ -539,90 +595,103 @@ Inference Guidelines:
                             }
                         ],
                         "pros": {
-                            "cohesion": "All order and payment data are managed within a single transaction boundary, ensuring that critical business processes like order placement with payment are handled atomically.",
-                            "coupling": "Eliminates inter-aggregate communications for order-payment operations, removing the need for eventual consistency patterns or distributed transactions.",
-                            "consistency": "Business rules that span both order and payment (like 'payment must be verified before order confirmation') are enforced within a single transaction.",
-                            "encapsulation": "Payment verification logic and order state transitions are encapsulated together, ensuring payment rules are applied before order status changes.",
-                            "complexity": "Simplifies the domain model by merging related concepts, reducing the need for coordination mechanisms between separate aggregates.",
-                            "independence": "Changes to order or payment processing can be made in one place without coordinating changes across multiple aggregates.",
-                            "performance": "Eliminates the need for multiple database queries when accessing both order and payment data, improving read operation performance."
+                            "cohesion": "All room-related data including status, specifications, and maintenance history are managed within a single transaction boundary, ensuring atomic updates when room conditions change.",
+                            "coupling": "Eliminates the need for cross-aggregate coordination when updating room status based on maintenance activities or guest occupancy changes.",
+                            "consistency": "Business rules spanning room status and maintenance (like 'rooms under maintenance cannot be booked') are enforced within a single transaction.",
+                            "encapsulation": "Room availability logic and maintenance scheduling are encapsulated together, preventing inconsistent states between room status and maintenance activities.",
+                            "complexity": "Simplifies the domain model by combining closely related room management concepts into one cohesive unit.",
+                            "independence": "Changes to room management policies or maintenance procedures can be implemented without coordinating across multiple aggregates.",
+                            "performance": "Single aggregate access for all room operations reduces database queries and improves response times for room status checks and updates."
                         },
                         "cons": {
-                            "cohesion": "Dilutes the single responsibility principle by forcing the aggregate to handle both order management and payment processing concerns.",
-                            "coupling": "Changes to payment processing requirements will impact the entire OrderWithPayment aggregate, potentially affecting order functionality.",
-                            "consistency": "As the aggregate grows, transaction timeouts become more likely, especially with high-volume order processing.",
-                            "encapsulation": "Different teams handling order vs. payment concerns must coordinate changes to the same aggregate, creating organizational friction.",
-                            "complexity": "The aggregate will grow larger over time, making it harder to understand all the business rules contained within it.",
-                            "independence": "Cannot scale order and payment operations independently since they share the same resource constraints.",
-                            "performance": "Write operations may suffer from contention, as concurrent modifications to different aspects (order vs. payment) target the same aggregate."
+                            "cohesion": "Mixes different concerns (room information management and maintenance scheduling) that may have different lifecycles and update patterns.",
+                            "coupling": "Changes to maintenance procedures or room specification requirements will impact the entire room aggregate, affecting basic room operations.",
+                            "consistency": "Large aggregate size may lead to longer transaction times and increased lock contention during peak hotel operation periods.",
+                            "encapsulation": "Different teams responsible for housekeeping, maintenance, and front desk operations must coordinate changes to the same aggregate.",
+                            "complexity": "The aggregate becomes complex as it grows to handle various room management scenarios, maintenance types, and status transitions.",
+                            "independence": "Cannot scale room information management and maintenance operations independently based on their different usage patterns.",
+                            "performance": "Write operations may experience contention when multiple staff members update different aspects of the same room simultaneously."
                         }
                     },
                     {
                         "structure": [
                             {
                                 "aggregate": {
-                                    "name": "Order",
-                                    "alias": "Order Management"
+                                    "name": "Room",
+                                    "alias": "Basic Room Information"
                                 },
                                 "enumerations": [
                                     {
-                                        "name": "OrderStatus",
-                                        "alias": "Order Status"
+                                        "name": "RoomStatus",
+                                        "alias": "Room Availability Status"
+                                    },
+                                    {
+                                        "name": "RoomType",
+                                        "alias": "Room Category"
                                     }
                                 ],
                                 "valueObjects": [
                                     {
-                                        "name": "ShippingAddress",
-                                        "alias": "Order Shipping Address"
+                                        "name": "RoomSpecification",
+                                        "alias": "Room Technical Details"
                                     },
                                     {
-                                        "name": "PaymentReference",
-                                        "alias": "Payment Reference",
-                                        "referencedAggregateName": "Payment"
+                                        "name": "MaintenanceScheduleReference",
+                                        "alias": "Maintenance Schedule Reference",
+                                        "referencedAggregateName": "MaintenanceSchedule"
                                     }
                                 ]
                             },
                             {
                                 "aggregate": {
-                                    "name": "Payment",
-                                    "alias": "Payment Processing"
+                                    "name": "MaintenanceSchedule",
+                                    "alias": "Room Maintenance Operations"
                                 },
                                 "enumerations": [
                                     {
-                                        "name": "PaymentMethod",
-                                        "alias": "Payment Methods"
+                                        "name": "MaintenancePriority",
+                                        "alias": "Maintenance Priority Level"
+                                    },
+                                    {
+                                        "name": "MaintenanceStatus",
+                                        "alias": "Maintenance Progress Status"
                                     }
                                 ],
                                 "valueObjects": [
                                     {
-                                        "name": "PaymentDetails",
-                                        "alias": "Payment Details Info"
+                                        "name": "MaintenanceRecord",
+                                        "alias": "Maintenance Activity Record"
+                                    },
+                                    {
+                                        "name": "RoomReference",
+                                        "alias": "Room Reference",
+                                        "referencedAggregateName": "Room"
                                     }
                                 ]
                             }
                         ],
                         "pros": {
-                            "cohesion": "Each aggregate focuses on a single responsibility - Order handles order management while Payment handles payment processing exclusively.",
-                            "coupling": "Changes to payment processing (like adding new payment methods) can be made without touching the Order aggregate.",
-                            "consistency": "Each aggregate maintains its own smaller, more manageable transaction boundary, reducing the risk of long-running transactions.",
-                            "encapsulation": "Payment processing details remain hidden from Order, following interface segregation principles and protecting internal implementation.",
-                            "complexity": "Domain concepts are divided into smaller, more comprehensible units that align with specific business capabilities.",
-                            "independence": "Order and Payment can be developed, tested, and deployed independently, allowing specialized teams to work in parallel.",
-                            "performance": "Enables independent scaling of order and payment operations based on their different resource requirements and usage patterns."
+                            "cohesion": "Each aggregate focuses on a single responsibility - Room handles room information and availability while MaintenanceSchedule manages all maintenance-related operations.",
+                            "coupling": "Changes to maintenance procedures can be implemented without affecting basic room information management and vice versa.",
+                            "consistency": "Each aggregate maintains smaller, focused transaction boundaries that reduce the risk of lock contention and improve transaction performance.",
+                            "encapsulation": "Maintenance scheduling details are hidden from room management, allowing specialized teams to work on their domain expertise independently.",
+                            "complexity": "Domain concepts are divided into manageable units that align with organizational responsibilities (front desk vs. maintenance teams).",
+                            "independence": "Room information management and maintenance scheduling can be developed, deployed, and scaled independently based on their different operational patterns.",
+                            "performance": "Enables independent optimization of room lookup operations and maintenance scheduling based on their distinct access patterns and performance requirements."
                         },
                         "cons": {
-                            "cohesion": "Business processes spanning both order and payment require coordination across aggregate boundaries, complicating process flows.",
-                            "coupling": "Orders depend on Payments through references, necessitating careful handling of foreign key relationships across aggregates.",
-                            "consistency": "Ensuring that order state always reflects payment state requires eventual consistency patterns, increasing system complexity.",
-                            "encapsulation": "Cross-aggregate business rules (like 'only paid orders can be shipped') must be implemented outside the aggregates in application services.",
-                            "complexity": "Additional orchestration logic is needed to coordinate the two aggregates during order placement and payment processing.",
-                            "independence": "Changes to the interaction between orders and payments require coordinated updates across both aggregates.",
-                            "performance": "Retrieving complete order information with payment details requires joining data across aggregates, adding query complexity."
+                            "cohesion": "Business processes that affect both room status and maintenance scheduling require coordination across aggregate boundaries, complicating workflow management.",
+                            "coupling": "Room status depends on maintenance activities through references, requiring careful management of cross-aggregate relationships and data consistency.",
+                            "consistency": "Ensuring room availability accurately reflects maintenance status requires eventual consistency patterns, which may lead to temporary inconsistencies.",
+                            "encapsulation": "Business rules spanning room availability and maintenance schedules must be implemented in application services rather than within aggregates.",
+                            "complexity": "Additional orchestration logic is needed to coordinate room status updates with maintenance activities and scheduling changes.",
+                            "independence": "Changes affecting the interaction between room management and maintenance scheduling require coordinated updates across both aggregates.",
+                            "performance": "Retrieving complete room information including maintenance status requires data access across multiple aggregates, increasing query complexity."
                         }
                     }
                 ],
-                "defaultOptionIndex": 1,
-                "conclusions": "Option 1 is recommended when transactional consistency and simplified data management are prioritized, as it consolidates order and payment into a single aggregate. Option 2 may be chosen if modular separation and independent scalability of order and payment processes are preferred."
+                "defaultOptionIndex": 0,
+                "conclusions": "Option 1 is recommended when transactional consistency between room status and maintenance activities is critical, especially for hotels with frequent status changes. Option 2 is preferred when organizational separation between front desk and maintenance teams requires independent development and scaling capabilities."
             }
         }
     }
