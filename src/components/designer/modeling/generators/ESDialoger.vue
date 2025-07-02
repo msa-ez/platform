@@ -217,7 +217,6 @@
     import Usage from '../../../../utils/Usage'
     
     import { 
-        PreProcessingFunctionsGenerator,
         DraftGeneratorByFunctions 
     } from '../../modeling/generators/es-generators';
 
@@ -322,256 +321,35 @@ import { value } from 'jsonpath';
                 }
             }
 
-            this.generators.PreProcessingFunctionsGenerator.generator = new PreProcessingFunctionsGenerator({
-                onSend: (input, stopCallback) => {
-                    this.workingMessages.AggregateDraftDialogDto.isShow = true
-                    this.workingMessages.AggregateDraftDialogDto.draftUIInfos = {
-                        leftBoundedContextCount: this.generators.PreProcessingFunctionsGenerator.inputs.length + 1,
-                        directMessage: "",
-                        progress: null
-                    }
-                    this.workingMessages.AggregateDraftDialogDto.actions.stop = stopCallback
-                    createThinkingUpdateInterval(0, input.subjectText)
-                },
-
-                onFirstResponse: (returnObj) => {
-                    clearThinkingUpdateInterval()
-                    const messageUniqueId = this.workingMessages.AggregateDraftDialogDto.uniqueId
-
-                    this.workingMessages.AggregateDraftDialogDto.isShow = true
-                    this.workingMessages.AggregateDraftDialogDto.draftUIInfos = {
-                        leftBoundedContextCount: this.generators.PreProcessingFunctionsGenerator.inputs.length + 1,
-                        directMessage: "Preprocessing for generating aggregate actions...",
-                        progress: 0
-                    }
-                    this.workingMessages.AggregateDraftDialogDto.isGeneratorButtonEnabled = true
-                    this.workingMessages.AggregateDraftDialogDto.actions = {
-                        stop: () => {
-                            returnObj.actions.stopGeneration()
-                        },
-                        retry: () => {
-                            this.workingMessages.AggregateDraftDialogDto = this.messages.find(message => message.uniqueId === messageUniqueId)
-                            this.workingMessages.AggregateDraftDialogDto.draftOptions = []
-                            this.workingMessages.AggregateDraftDialogDto.draftUIInfos = {
-                                leftBoundedContextCount: this.workingMessages.AggregateDraftDialogDto.retryInputs.initialInputs.length + 1,
-                                directMessage: "Preprocessing for generating aggregate actions...",
-                                progress: 0
-                            }
-
-                            this.generators.PreProcessingFunctionsGenerator.inputs = structuredClone(
-                                this.workingMessages.AggregateDraftDialogDto.retryInputs.initialInputs
-                            )
-                            this.generators.DraftGeneratorByFunctions.accumulatedDrafts = structuredClone(
-                                this.workingMessages.AggregateDraftDialogDto.retryInputs.initialAccumulatedDrafts
-                            )
-
-                            this.generators.PreProcessingFunctionsGenerator.generateIfInputsExist()
-                        }
-                    }
-
-                    // 실시간 업데이트를 위해서 이전 전체 정보를 보존
-                    this.generators.PreProcessingFunctionsGenerator.preservedDraftOptions = structuredClone(
-                        this.workingMessages.AggregateDraftDialogDto.draftOptions.filter(
-                            option => option.boundedContext !== returnObj.inputParams.boundedContext.name
-                        )
-                    )
-                },
-
-                onThink: (returnObj, thinkText) => {
-                    clearThinkingUpdateInterval()
-
-                    this.workingMessages.AggregateDraftDialogDto.draftUIInfos.directMessage = returnObj.directMessage
-                    this.workingMessages.AggregateDraftDialogDto.draftUIInfos.progress = 0
-
-                    this.workingMessages.AggregateDraftDialogDto.draftOptions = [
-                        ...this.generators.PreProcessingFunctionsGenerator.preservedDraftOptions,
-                        {
-                            boundedContext: returnObj.inputParams.boundedContext.name,
-                            boundedContextAlias: returnObj.inputParams.boundedContext.displayName,
-                            description: returnObj.inputParams.description,
-                            options: [],
-                            conclusions: "",
-                            defaultOptionIndex: null,
-                            analysisResult: {
-                                inference: thinkText
-                            }
-                        }
-                    ]
-                },
-
-                onModelCreatedWithThinking: (returnObj) => {
-                    clearThinkingUpdateInterval()
-                    if(!returnObj.modelValue.analysisResult ||
-                       !returnObj.modelValue.analysisResult.inference ||
-                       !returnObj.modelValue.analysisResult.inference.length) return
-
-
-                    const getXAIDtoDraftOptions = (analysisResult, targetBoundedContext, description) => {
-                        return {
-                            boundedContext: targetBoundedContext.name,
-                            boundedContextAlias: targetBoundedContext.displayName,
-                            description: description,
-                            options: [],
-                            conclusions: "",
-                            defaultOptionIndex: null,
-                            analysisResult: analysisResult
-                        }
-                    }
-
-                    this.workingMessages.AggregateDraftDialogDto.draftUIInfos.directMessage = returnObj.directMessage
-                    this.workingMessages.AggregateDraftDialogDto.draftUIInfos.progress = returnObj.progress
-
-                    this.workingMessages.AggregateDraftDialogDto.draftOptions = [
-                        ...this.generators.PreProcessingFunctionsGenerator.preservedDraftOptions,
-                        getXAIDtoDraftOptions(
-                            returnObj.modelValue.analysisResult,
-                            returnObj.inputParams.boundedContext,
-                            returnObj.inputParams.description
-                        )
-                    ]
-                },
-
-                onGenerationSucceeded: (returnObj) => {
-                    clearThinkingUpdateInterval()
-                    this.workingMessages.AggregateDraftDialogDto.draftUIInfos = {
-                        leftBoundedContextCount: this.generators.PreProcessingFunctionsGenerator.inputs.length + 1,
-                        directMessage: returnObj.directMessage,
-                        progress: 100
-                    }
-
-                    this.generators.DraftGeneratorByFunctions.generate(JSON.stringify(returnObj.modelValue.output), returnObj.inputParams.boundedContext, returnObj.modelValue.analysisResult)
-                },
-
-                onRetry: (returnObj) => {
-                    clearThinkingUpdateInterval()
-                    console.warn(`[!] An error occurred while analysing your requirements, please try again..\n* Error log \n${returnObj.errorMessage}`)
-                }
-            })
-            this.generators.PreProcessingFunctionsGenerator.buildInitialInputs = (selectedStructureOption) => {
-                const getDescription = (requirements, relations, explanations, currentBcName, currentBcAlias) => {
-                    if (!requirements || !Array.isArray(requirements) || requirements.length === 0) {
-                        return "Requirements have not been specified."
-                    }
-                    let markdownOutput = "# Requirements\n\n"
-                    requirements.forEach((req) => {
-                        markdownOutput += `## ${req.type}\n\n${req.text}\n\n`
-                    })
-
-                    // Relations 정보 추가
-                    if (relations && relations.length > 0) {
-                        const relatedRelations = relations.filter(rel => 
-                            rel.upStream.name === currentBcName || 
-                            rel.downStream.name === currentBcName
-                        );
-
-                        if (relatedRelations.length > 0) {
-                            markdownOutput += "\n## Context Relations\n\n";
-                            
-                            relatedRelations.forEach(rel => {
-                                const isUpstream = rel.upStream.name === currentBcName;
-                                const targetContext = isUpstream ? rel.downStream : rel.upStream;
-                                const direction = isUpstream ? "sends to" : "receives from";
-                                
-                                markdownOutput += `### ${rel.name}\n`;
-                                markdownOutput += `- **Type**: ${rel.type}\n`;
-                                markdownOutput += `- **Direction**: ${direction} ${targetContext.alias} (${targetContext.name})\n`;
-                                
-                                // explanations에서 해당 관계의 상세 설명 찾기
-                                if (explanations && explanations.length > 0) {
-                                    const explanation = explanations.find(exp => 
-                                        (exp.sourceContext === currentBcAlias && exp.targetContext === targetContext.alias) ||
-                                        (exp.targetContext === currentBcAlias && exp.sourceContext === targetContext.alias)
-                                    );
-                                    
-                                    if (explanation) {
-                                        markdownOutput += `- **Reason**: ${explanation.reason}\n`;
-                                        markdownOutput += `- **Interaction Pattern**: ${explanation.interactionPattern}\n`;
-                                    }
-                                }
-                                markdownOutput += "\n";
-                            });
-                        }
-                    }
-
-                    return markdownOutput.trim();
-                }
-
-                const passedGeneratorInputs = selectedStructureOption.boundedContexts.map(bc => ({
-                    boundedContext: {
-                        name: bc.name,
-                        alias: bc.alias,
-                        displayName: bc.alias,
-                        description: getDescription(
-                            bc.requirements, 
-                            selectedStructureOption.relations, 
-                            selectedStructureOption.explanations, 
-                            bc.name, 
-                            bc.alias
-                        ),
-                        aggregates: bc.aggregates
-                    },
-                    description: getDescription(
-                        bc.requirements, 
-                        selectedStructureOption.relations, 
-                        selectedStructureOption.explanations, 
-                        bc.name, 
-                        bc.alias
-                    )
-                }))
-
-                this.generators.PreProcessingFunctionsGenerator.initialInputs = structuredClone(passedGeneratorInputs)
-                this.workingMessages.AggregateDraftDialogDto.retryInputs.initialInputs = structuredClone(passedGeneratorInputs)
-
-                // 제공된 정보를 기반으로 아직 생성되지는 않았으나, 참조할 수 있는 초안 정보를 미리 생성함
-                // 이 정보는 추후에 AI가 초안을 실제 생성한 경우, AI의 디폴트 선택 옵션의 내용으로 순차적으로 업데이트됨
-                const accumulatedDrafts = {};
-                passedGeneratorInputs.forEach(item => {
-                    const boundedContext = item.boundedContext;
-                    if (boundedContext && boundedContext.aggregates && boundedContext.aggregates.length > 0) {
-                        const aggregates = boundedContext.aggregates.map(aggregate => ({
-                            aggregate: {
-                                name: aggregate.name,
-                                alias: aggregate.alias
-                            },
-                            enumerations: [],
-                            valueObjects: [] 
-                        }));
-                        accumulatedDrafts[boundedContext.name] = aggregates;
-                    }
-                });
-                this.generators.DraftGeneratorByFunctions.initialAccumulatedDrafts = structuredClone(accumulatedDrafts);
-                this.workingMessages.AggregateDraftDialogDto.retryInputs.initialAccumulatedDrafts = structuredClone(accumulatedDrafts);
-            }
-            this.generators.PreProcessingFunctionsGenerator.initInputs = () => {
-                this.workingMessages.AggregateDraftDialogDto.draftOptions = []
-
-                this.generators.PreProcessingFunctionsGenerator.inputs = structuredClone(
-                    this.generators.PreProcessingFunctionsGenerator.initialInputs
-                )
-
-                this.generators.DraftGeneratorByFunctions.accumulatedDrafts = structuredClone(
-                    this.generators.DraftGeneratorByFunctions.initialAccumulatedDrafts
-                )
-            }
-            this.generators.PreProcessingFunctionsGenerator.generateIfInputsExist = () => {
-                if(this.generators.PreProcessingFunctionsGenerator.inputs.length > 0) {
-                    this.generators.PreProcessingFunctionsGenerator.generator.client.input = this.generators.PreProcessingFunctionsGenerator.inputs.shift()
-                    this.generators.PreProcessingFunctionsGenerator.generator.generate()
-                    return true
-                }
-                return false
-            }
-
-
             this.generators.DraftGeneratorByFunctions.generator = new DraftGeneratorByFunctions({
                 onSend: (input, stopCallback) => {
                     this.workingMessages.AggregateDraftDialogDto.isShow = true
                     this.workingMessages.AggregateDraftDialogDto.draftUIInfos = {
-                        leftBoundedContextCount: this.generators.PreProcessingFunctionsGenerator.inputs.length + 1,
+                        leftBoundedContextCount: this.generators.DraftGeneratorByFunctions.inputs.length + 1,
                         directMessage: "",
                         progress: null
                     }
                     this.workingMessages.AggregateDraftDialogDto.actions.stop = stopCallback
+
+                    const messageUniqueId = this.workingMessages.AggregateDraftDialogDto.uniqueId
+                    this.workingMessages.AggregateDraftDialogDto.actions.retry = () => {
+                        this.workingMessages.AggregateDraftDialogDto = this.messages.find(message => message.uniqueId === messageUniqueId)
+                        this.workingMessages.AggregateDraftDialogDto.draftOptions = []
+                        this.workingMessages.AggregateDraftDialogDto.draftUIInfos = {
+                            leftBoundedContextCount: this.workingMessages.AggregateDraftDialogDto.retryInputs.initialInputs.length + 1,
+                            directMessage: "",
+                            progress: 0
+                        }
+
+                        this.generators.DraftGeneratorByFunctions.inputs = structuredClone(
+                            this.workingMessages.AggregateDraftDialogDto.retryInputs.initialInputs
+                        )
+                        this.generators.DraftGeneratorByFunctions.accumulatedDrafts = structuredClone(
+                            this.workingMessages.AggregateDraftDialogDto.retryInputs.initialAccumulatedDrafts
+                        )
+
+                        this.generators.DraftGeneratorByFunctions.generateIfInputsExist()
+                    }
                     createThinkingUpdateInterval(0, input.subjectText)
                 },
 
@@ -579,7 +357,7 @@ import { value } from 'jsonpath';
                     clearThinkingUpdateInterval()
                     this.workingMessages.AggregateDraftDialogDto.isShow = true
                     this.workingMessages.AggregateDraftDialogDto.draftUIInfos = {
-                        leftBoundedContextCount: this.generators.PreProcessingFunctionsGenerator.inputs.length + 1,
+                        leftBoundedContextCount: this.generators.DraftGeneratorByFunctions.inputs.length + 1,
                         directMessage: "",
                         progress: 0
                     }
@@ -603,7 +381,7 @@ import { value } from 'jsonpath';
                     this.workingMessages.AggregateDraftDialogDto.draftUIInfos.progress = 0
 
                     this.workingMessages.AggregateDraftDialogDto.draftOptions = [
-                        ...this.generators.PreProcessingFunctionsGenerator.preservedDraftOptions,
+                        ...this.generators.DraftGeneratorByFunctions.preservedDraftOptions,
                         {
                             boundedContext: returnObj.inputParams.boundedContext.name,
                             boundedContextAlias: returnObj.inputParams.boundedContext.displayName,
@@ -611,7 +389,6 @@ import { value } from 'jsonpath';
                             options: [],
                             conclusions: "",
                             defaultOptionIndex: null,
-                            analysisResult: returnObj.inputParams.analysisResult,
                             inference: thinkText
                         }
                     ]
@@ -622,7 +399,7 @@ import { value } from 'jsonpath';
                     if(!returnObj.modelValue.inference ||
                        !returnObj.modelValue.inference.length) return
 
-                    const getXAIDtoDraftOptions = (output, targetBoundedContext, description, analysisResult, inference) => {
+                    const getXAIDtoDraftOptions = (output, targetBoundedContext, description, inference) => {
                         return {
                             boundedContext: targetBoundedContext.name,
                             boundedContextAlias: targetBoundedContext.displayName,
@@ -634,7 +411,6 @@ import { value } from 'jsonpath';
                             })) : [],
                             conclusions: output.conclusions,
                             defaultOptionIndex: output.defaultOptionIndex,
-                            analysisResult: analysisResult,
                             inference: inference
                         }
                     }
@@ -651,7 +427,6 @@ import { value } from 'jsonpath';
                             returnObj.modelValue.output,
                             returnObj.inputParams.boundedContext,
                             returnObj.inputParams.description,
-                            returnObj.inputParams.analysisResult,
                             returnObj.modelValue.inference
                         ))
 
@@ -666,7 +441,6 @@ import { value } from 'jsonpath';
                             returnObj.modelValue.output,
                             returnObj.inputParams.boundedContext,
                             returnObj.inputParams.description,
-                            returnObj.inputParams.analysisResult,
                             returnObj.modelValue.inference
                         )
                     ]
@@ -685,13 +459,13 @@ import { value } from 'jsonpath';
                     }
 
                     this.workingMessages.AggregateDraftDialogDto.draftUIInfos = {
-                        leftBoundedContextCount: this.generators.PreProcessingFunctionsGenerator.inputs.length,
+                        leftBoundedContextCount: this.generators.DraftGeneratorByFunctions.inputs.length,
                         directMessage: returnObj.directMessage,
                         progress: 100
                     }
 
                     this.generators.DraftGeneratorByFunctions.updateAccumulatedDrafts(returnObj.modelValue.output, returnObj.inputParams.boundedContext)
-                    if(!this.generators.PreProcessingFunctionsGenerator.generateIfInputsExist()){
+                    if(!this.generators.DraftGeneratorByFunctions.generateIfInputsExist()){
                         this.$emit("update:aggregateDrafts", this.messages)
                         return
                     }
@@ -702,15 +476,156 @@ import { value } from 'jsonpath';
                     console.warn(`[!] There was an error creating your draft, please try again.\n* Error log \n${returnObj.errorMessage}`)
                 }
             })
-            this.generators.DraftGeneratorByFunctions.generate = (structuredDescription, boundedContext, analysisResult) => {
-                this.generators.DraftGeneratorByFunctions.generator.client.input = {
-                    description: structuredDescription,
-                    boundedContext: boundedContext,
-                    accumulatedDrafts: this.generators.DraftGeneratorByFunctions.accumulatedDrafts,
-                    analysisResult: analysisResult
+
+            this.generators.DraftGeneratorByFunctions.buildInitialInputs = (selectedStructureOption) => {
+                const getDescription = (bc, relations, explanations) => {
+                    const uniqueRequirements = bc.requirements && bc.requirements.length > 0 ?
+                        [...new Map(bc.requirements.map(item => [item.text, item])).values()] : [];
+
+                    const requirementsByType = uniqueRequirements.reduce((acc, req) => {
+                        if (!acc[req.type]) {
+                            acc[req.type] = [];
+                        }
+                        acc[req.type].push(req.text);
+                        return acc;
+                    }, {});
+
+                    let markdownOutput = `# Bounded Context Overview: ${bc.name} (${bc.alias})\n\n`;
+                    if (bc.role) {
+                        markdownOutput += `## Role\n${bc.role}\n\n`;
+                    }
+
+                    if (bc.events && bc.events.length > 0) {
+                        markdownOutput += `## Key Events\n${bc.events.map(event => `- ${event}`).join('\n')}\n\n`;
+                    }
+
+                    if (Object.keys(requirementsByType).length > 0) {
+                        markdownOutput += `# Requirements\n\n`;
+                        for (const type in requirementsByType) {
+                            markdownOutput += `## ${type}\n\n`;
+                            requirementsByType[type].forEach(text => {
+                                if (type.toLowerCase() === 'ddl') {
+                                    markdownOutput += `\`\`\`sql\n${text}\n\`\`\`\n\n`;
+                                } else if (type.toLowerCase() === 'event') {
+                                    try {
+                                        const parsedEvent = JSON.parse(text);
+                                        markdownOutput += `\`\`\`json\n${JSON.stringify(parsedEvent, null, 2)}\n\`\`\`\n\n`;
+                                    } catch (e) {
+                                        markdownOutput += `${text}\n\n`;
+                                    }
+                                } else {
+                                    markdownOutput += `${text}\n\n`;
+                                }
+                            });
+                        }
+                    }
+
+                    // Relations 정보 추가
+                    if (relations && relations.length > 0) {
+                        const relatedRelations = relations.filter(rel =>
+                            rel.upStream.name === bc.name ||
+                            rel.downStream.name === bc.name
+                        );
+
+                        if (relatedRelations.length > 0) {
+                            markdownOutput += "\n## Context Relations\n\n";
+
+                            relatedRelations.forEach(rel => {
+                                const isUpstream = rel.upStream.name === bc.name;
+                                const targetContext = isUpstream ? rel.downStream : rel.upStream;
+                                const direction = isUpstream ? "sends to" : "receives from";
+
+                                markdownOutput += `### ${rel.name}\n`;
+                                markdownOutput += `- **Type**: ${rel.type}\n`;
+                                markdownOutput += `- **Direction**: ${direction} ${targetContext.alias} (${targetContext.name})\n`;
+
+                                if (explanations && explanations.length > 0) {
+                                    const explanation = explanations.find(exp =>
+                                        (exp.sourceContext === bc.alias && exp.targetContext === targetContext.alias) ||
+                                        (exp.targetContext === bc.alias && exp.sourceContext === targetContext.alias)
+                                    );
+
+                                    if (explanation) {
+                                        markdownOutput += `- **Reason**: ${explanation.reason}\n`;
+                                        markdownOutput += `- **Interaction Pattern**: ${explanation.interactionPattern}\n`;
+                                    }
+                                }
+                                markdownOutput += "\n";
+                            });
+                        }
+                    }
+
+                    return markdownOutput.trim();
                 }
-                this.generators.DraftGeneratorByFunctions.generator.generate()
+
+                const passedGeneratorInputs = selectedStructureOption.boundedContexts.map(bc => {
+                    const bcDescription = getDescription(
+                        bc,
+                        selectedStructureOption.relations,
+                        selectedStructureOption.explanations
+                    )
+
+                    return {
+                        boundedContext: {
+                            name: bc.name,
+                            alias: bc.alias,
+                            displayName: bc.alias,
+                            description: bcDescription,
+                            aggregates: bc.aggregates
+                        },
+                        description: bcDescription
+                    }
+                })
+
+                this.generators.DraftGeneratorByFunctions.initialInputs = structuredClone(passedGeneratorInputs)
+                this.workingMessages.AggregateDraftDialogDto.retryInputs.initialInputs = structuredClone(passedGeneratorInputs)
+
+
+                // 제공된 정보를 기반으로 아직 생성되지는 않았으나, 참조할 수 있는 초안 정보를 미리 생성함
+                // 이 정보는 추후에 AI가 초안을 실제 생성한 경우, AI의 디폴트 선택 옵션의 내용으로 순차적으로 업데이트됨
+                const accumulatedDrafts = {};
+                passedGeneratorInputs.forEach(item => {
+                    const boundedContext = item.boundedContext;
+                    if (boundedContext && boundedContext.aggregates && boundedContext.aggregates.length > 0) {
+                        const aggregates = boundedContext.aggregates.map(aggregate => ({
+                            aggregate: {
+                                name: aggregate.name,
+                                alias: aggregate.alias
+                            },
+                            enumerations: [],
+                            valueObjects: [] 
+                        }));
+                        accumulatedDrafts[boundedContext.name] = aggregates;
+                    }
+                });
+                this.generators.DraftGeneratorByFunctions.initialAccumulatedDrafts = structuredClone(accumulatedDrafts);
+                this.workingMessages.AggregateDraftDialogDto.retryInputs.initialAccumulatedDrafts = structuredClone(accumulatedDrafts);
             }
+            this.generators.DraftGeneratorByFunctions.initInputs = () => {
+                this.generators.DraftGeneratorByFunctions.inputs = structuredClone(
+                    this.generators.DraftGeneratorByFunctions.initialInputs
+                )
+                this.workingMessages.AggregateDraftDialogDto.draftOptions = []
+
+                this.generators.DraftGeneratorByFunctions.accumulatedDrafts = structuredClone(
+                    this.generators.DraftGeneratorByFunctions.initialAccumulatedDrafts
+                )
+            }
+            this.generators.DraftGeneratorByFunctions.generateIfInputsExist = () => {
+                if(this.generators.DraftGeneratorByFunctions.inputs.length > 0) {
+                    const input = this.generators.DraftGeneratorByFunctions.inputs.shift()
+                    this.generators.DraftGeneratorByFunctions.generator.client.input = {
+                        description: input.description,
+                        boundedContext: input.boundedContext,
+                        accumulatedDrafts: this.generators.DraftGeneratorByFunctions.accumulatedDrafts
+                    }
+
+                    this.generators.DraftGeneratorByFunctions.generator.generate()
+                    return true
+                }
+                return false
+            }
+
             this.generators.DraftGeneratorByFunctions.updateAccumulatedDrafts = (output, targetBoundedContext) => {
                 this.generators.DraftGeneratorByFunctions.accumulatedDrafts = {
                     ...this.generators.DraftGeneratorByFunctions.accumulatedDrafts,
@@ -726,9 +641,8 @@ import { value } from 'jsonpath';
                 })
                 accumulatedDrafts[boundedContextInfo.boundedContext] = []
 
-                const passedAnalysisResult = draftOptions.find(option => option.boundedContext === boundedContextInfo.boundedContext).analysisResult
                 this.generators.DraftGeneratorByFunctions.generator.client.input = {
-                    description: "",
+                    description: boundedContextInfo.description || "",
                     boundedContext: {
                         name: boundedContextInfo.boundedContext,
                         alias: boundedContextInfo.boundedContextAlias,
@@ -742,8 +656,7 @@ import { value } from 'jsonpath';
                         feedbacks: [
                             feedback
                         ]
-                    },
-                    analysisResult: passedAnalysisResult
+                    }
                 }
                 this.generators.DraftGeneratorByFunctions.generator.generate()
             }
@@ -927,23 +840,22 @@ import { value } from 'jsonpath';
                 },
 
                 generators: {
-                    PreProcessingFunctionsGenerator: {
-                        generator: null,
-                        initialInputs: [],
-                        inputs: [],
-                        preservedDraftOptions: [],
-                        buildInitialInputs: (selectedStructureOption) => {},
-                        initInputs: () => {},
-                        generateIfInputsExist: () => {}
-                    },
-
                     DraftGeneratorByFunctions: {
                         generator: null,
+
+                        initialInputs: [],
+                        inputs: [],
+
                         initialAccumulatedDrafts: {},
                         accumulatedDrafts: {},
+
                         preservedDraftOptionsForFeedback: [],
                         preservedDraftOptions: [],
-                        generate: (structuredDescription, boundedContext) => {},
+
+                        buildInitialInputs: (selectedStructureOption) => {},
+                        initInputs: () => {},
+                        generateIfInputsExist: () => {},
+
                         updateAccumulatedDrafts: (output, targetBoundedContext) => {},
                         generateWithFeedback: (boundedContextInfo, feedback, draftOptions) => {}
                     }
@@ -1618,6 +1530,9 @@ import { value } from 'jsonpath';
                 if(this.resultDevideBoundedContext){
                     this.collectedMockDatas.aggregateDraftScenarios.resultDevideBoundedContext = structuredClone(this.resultDevideBoundedContext)
                 }
+                if(this.boundedContextVersion){
+                    this.collectedMockDatas.aggregateDraftScenarios.boundedContextVersion = structuredClone(this.boundedContextVersion)
+                }
 
                 // 요약 결과가 없어도, 상세한 매핑을 위해 원본 매핑 진행
                 if(!isRequirementsMapping){
@@ -1639,9 +1554,9 @@ import { value } from 'jsonpath';
                 }
 
 
-                this.generators.PreProcessingFunctionsGenerator.buildInitialInputs(selectedStructureOption)
-                this.generators.PreProcessingFunctionsGenerator.initInputs()
-                this.generators.PreProcessingFunctionsGenerator.generateIfInputsExist()
+                this.generators.DraftGeneratorByFunctions.buildInitialInputs(selectedStructureOption)
+                this.generators.DraftGeneratorByFunctions.initInputs()
+                this.generators.DraftGeneratorByFunctions.generateIfInputsExist()
             },
 
             generateFromAggregateDrafts(draftOptions){
@@ -1729,18 +1644,18 @@ import { value } from 'jsonpath';
                             this.workingMessages.AggregateDraftDialogDto.draftOptions = []
                             this.workingMessages.AggregateDraftDialogDto.draftUIInfos = {
                                 leftBoundedContextCount: this.workingMessages.AggregateDraftDialogDto.retryInputs.initialInputs.length + 1,
-                                directMessage: "Preprocessing for generating aggregate actions...",
+                                directMessage: "",
                                 progress: 0
                             }
 
-                            this.generators.PreProcessingFunctionsGenerator.inputs = structuredClone(
+                            this.generators.DraftGeneratorByFunctions.inputs = structuredClone(
                                 this.workingMessages.AggregateDraftDialogDto.retryInputs.initialInputs
                             )
                             this.generators.DraftGeneratorByFunctions.accumulatedDrafts = structuredClone(
                                 this.workingMessages.AggregateDraftDialogDto.retryInputs.initialAccumulatedDrafts
                             )
 
-                            this.generators.PreProcessingFunctionsGenerator.generateIfInputsExist()
+                            this.generators.DraftGeneratorByFunctions.generateIfInputsExist()
                         }
                 }
                 else {

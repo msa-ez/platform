@@ -108,9 +108,11 @@ export default {
         },
 
         _initValuesFromSelectedScenario(selectedScenario) {
+            if(!this.value) this.value = {}
             this.value.userStory = selectedScenario.userStory
             this.state = selectedScenario.state
             this.resultDevideBoundedContext = selectedScenario.resultDevideBoundedContext
+            this.boundedContextVersion = selectedScenario.boundedContextVersion
         },
 
         _mermaidStringTest() {

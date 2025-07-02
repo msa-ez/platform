@@ -348,8 +348,11 @@
     "highlightingOff" : "연결선 추적 : off"
   },
   "ModelDraftDialogForDistribution": {
+    "aiRecommended": "AI 추천",
+    "selected": "선택됨",
     "pros": "장점",
     "cons": "단점",
+    "category": "구분",
     "conclusions": "결론:",
     "create": "생성",
     "createEventStormingModelCanvas": "이벤트스토밍 모델 생성",

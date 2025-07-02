@@ -26,11 +26,6 @@
             </v-tabs>
 
             <div v-if="activeContext">
-                <AnalysisResultPanel
-                    class="ml-4 mr-4 mt-4"
-                    :analysisResult="activeContext.analysisResult"
-                />
-
                 <div class="mt-4 pl-4 pr-4">
                     <CoTToggle :inference="activeContext.inference"/>
                 </div>
@@ -78,8 +73,7 @@
         ESDialogerHeader,
         ProgressInfo,
         EventStormingFooter,
-        ESDialogerFooter,
-        AnalysisResultPanel
+        ESDialogerFooter
     } from './components'
     import CoTToggle from '../CoTToggle.vue'
 
@@ -137,7 +131,6 @@
             ProgressInfo,
             EventStormingFooter,
             ESDialogerFooter,
-            AnalysisResultPanel,
             CoTToggle
         },
         props: {
