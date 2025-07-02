@@ -652,6 +652,11 @@
                 me.isOwnModel = false;
                 me.information = information ? information : me.information
 
+                // 임시 모델링처리
+                if(information.eventStorming.eventStorming && information.eventStorming.eventStorming.modelList){
+                    me.information.eventStorming = information.eventStorming.eventStorming
+                }
+
                 if( !me.projectVersion ){
                     me.projectName = me.information && me.information.projectName ? me.information.projectName : 'untitled'
                     me.isAutoForkModel = me.isClass ? false : Object.keys(this.$route.query).includes('fork')

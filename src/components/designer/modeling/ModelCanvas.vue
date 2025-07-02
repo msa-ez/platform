@@ -1726,7 +1726,7 @@
                         })
 
                         // es model list update for Project Model
-                        // localStorage.setItem('modelListUpdate', Date.now().toString())
+                        localStorage.setItem('modelListUpdate', Date.now().toString())
 
                         me.storageDialogCancel()
                     } else {

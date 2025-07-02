@@ -64,7 +64,7 @@
                                         v-bind="attrs"
                                         v-on="on"
                                         :disabled="isInitializing"
-                                        @click="openStorageDialog()"
+                                        @click="openStorageDialog('project')"
                                     >
                                         <v-icon>mdi-content-save</v-icon>
                                     </v-btn>
@@ -270,6 +270,7 @@
                                 @update:inputDDL="updateInputDDL"
                                 @update:modelList="updateModelList"
                                 @delete:modelList="deleteModelList"
+                                @open:storageDialog="openStorageDialog"
                                 :uiStyle="uiStyle"  
                             ></ESDialoger>
                             <!-- <CJMDialoger v-if="genType == 'CJM'"    ref="cjMDialoger"   v-model="projectInfo.customerJourneyMap" :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" @change="backupProject" @setPersonas="setPersonas" ></CJMDialoger>
@@ -283,7 +284,7 @@
             <ModelStorageDialog
                     :showDialog="showStorageDialog"
                     :condition="storageCondition"
-                    @save="saveProject"
+                    @save="saveStorageDialog"
                     @close="closeStorageDialog()"
             ></ModelStorageDialog>
         </v-col>
@@ -351,14 +352,14 @@
             v-model="showModelSelectionDialog"
             max-width="500"
         >
-            <v-card v-if="projectInfo && projectInfo.eventStorming && projectInfo.eventStorming.eventStorming && projectInfo.eventStorming.eventStorming.modelList">
+            <v-card v-if="projectInfo && projectInfo.modelList && projectInfo.eventStorming.modelList.length > 0">
                 <v-card-title class="headline">
                     Select Model for PDF Export
                 </v-card-title>
                 <v-card-text>
                     <v-list>
                         <v-list-item
-                            v-for="modelId in projectInfo.eventStorming.eventStorming.modelList"
+                            v-for="modelId in projectInfo.eventStorming.modelList"
                             :key="modelId"
                             @click="handleModelSelection(modelId)"
                         >
@@ -658,8 +659,7 @@
             ESModelNames() {
                 const modelList = this.projectInfo && 
                                  this.projectInfo.eventStorming && 
-                                 this.projectInfo.eventStorming.eventStorming && 
-                                 this.projectInfo.eventStorming.eventStorming.modelList || [];
+                                 this.projectInfo.eventStorming.modelList || [];
                 
                 // Load model names if not in cache
                 modelList.forEach(async (modelId) => {
@@ -669,7 +669,7 @@
                             if(model){
                                 this.$set(this.modelNamesCache, modelId, model.projectName || modelId);
                             }else{
-                                this.deleteModelList(modelId)
+                                // this.deleteModelList(modelId)
                                 throw new Error(`Model not found: ${modelId}`);
                             }
                         } catch (error) {
@@ -697,11 +697,11 @@
                 // this.openChatUI = true
             }
 
-            me.watch(`db://definitions/${me.projectInfo.projectId}/information`, function (information) {
-                if (information.permissions) {
-                    me.invitationLists = information.permissions
-                    me.participantLists = information.permissions
-                    me.requestCount = Object.keys(information.permissions).filter(key => key != 'evenyone' && information.permissions[key].request).length
+            me.watch(`db://definitions/${me.projectInfo.projectId}/information`, function (projectInfo) {
+                if (projectInfo.permissions) {
+                    me.invitationLists = projectInfo.permissions
+                    me.participantLists = projectInfo.permissions
+                    me.requestCount = Object.keys(projectInfo.permissions).filter(key => key != 'evenyone' && projectInfo.permissions[key].request).length
                 }
             })
         },
@@ -879,7 +879,7 @@
                     this.$EventBus.$emit('showLoginDialog')
                 }
             },
-            openStorageDialog(){
+            openStorageDialog(type){
                 this.storageCondition = {
                     action: 'save',
                     title: 'Save Project',
@@ -888,13 +888,21 @@
                     projectId: this.uuid(),
                     error: null,
                     loading: false,
-                    type: 'project'
+                    version: '1.0.0',
+                    type: type == 'cm' ? 'cm' : 'project'
                 }
                 this.showStorageDialog = true;
             },
             closeStorageDialog(){
                 this.storageCondition = null;
                 this.showStorageDialog = false
+            },
+            saveStorageDialog(){
+                if(this.storageCondition.type == 'project'){
+                    this.saveProject()
+                } else {
+                    this.saveDefinition()
+                }
             },
             async saveProject(){
                 var me = this
@@ -935,6 +943,81 @@
                 } else{
                     me.storageCondition.loading = false
                 }
+            },
+            async saveDefinition(){
+                var me = this
+                let validate = await me.validateStorageCondition(me.storageCondition, 'save');
+
+                if(validate){
+                    var projectVersion = me.storageCondition.version.replaceAll('.','-').trim();
+                    var settingProjectId = me.storageCondition.projectId.replaceAll(' ','-').trim();
+                    let initValue = {'elements': {}, 'relations': {}}
+
+                    let valueUrl = await me.putString(`storage://definitions/${settingProjectId}/versionLists/${projectVersion}/versionValue`, JSON.stringify(initValue));
+                    await me.pushObject(`db://definitions/${settingProjectId}/snapshotLists`, {
+                        lastSnapshotKey: '',
+                        snapshot: JSON.stringify(initValue),
+                        snapshotImg: null,
+                        timeStamp: Date.now()
+                    })
+
+                    /* 백업용 사용자의 local에서 마지막 모델링 정보 */
+                    await me.putObject(`db://definitions/${settingProjectId}/versionLists/${projectVersion}`, {
+                        saveUser: me.userInfo.uid,
+                        saveUserEmail: me.userInfo.email,
+                        saveUserName: me.userInfo.name,
+                        projectName: me.projectName,
+                        img: null,
+                        timeStamp: Date.now(),
+                        comment: me.storageCondition.comment,
+                        valueUrl: valueUrl
+                    })
+
+                    await me.putObject(`db://definitions/${settingProjectId}/information`,  {
+                        author: me.userInfo.uid,
+                        authorEmail: me.userInfo.email,
+                        lastVersionName: projectVersion,
+                        comment: me.storageCondition.comment,
+                        createdTimeStamp: Date.now(),
+                        lastModifiedTimeStamp: Date.now(),
+                        lastModifiedUser: null,
+                        lastModifiedEmail: null,
+                        projectName: me.projectName,
+                        type: me.storageCondition.type,
+                        associatedProject: me.projectId
+                    })
+
+
+                    let path = null;
+                    if(me.storageCondition.type == 'es' ){
+                        path = 'storming'
+                        if(!me.projectInfo.eventStorming ) me.projectInfo.eventStorming = {}
+                        if(!me.projectInfo.eventStorming.modelList) me.projectInfo.eventStorming.modelList = []
+                        // me.information.eventStorming.modelList.push(settingProjectId);
+                    } else if(me.storageCondition.type == 'bm') {
+                        path = 'business-model-canvas'
+                        if(!me.projectInfo.businessModel ) me.projectInfo.businessModel = {}
+                        if(!me.projectInfo.businessModel.modelList) me.projectInfo.businessModel.modelList = []
+                        me.projectInfo.businessModel.modelList.push(settingProjectId);
+                    } else if(me.storageCondition.type == 'cm'){
+                        path = me.storageCondition.type
+                        if(!me.projectInfo.contextMapping ) me.projectInfo.contextMapping = {}
+                        if(!me.projectInfo.contextMapping.modelList) me.projectInfo.contextMapping.modelList = []
+                        me.projectInfo.contextMapping.modelList.push(settingProjectId);
+                    } else if(me.storageCondition.type == 'userStoryMap'){
+                        path = me.storageCondition.type
+                        if(!me.projectInfo.userStoryMap ) me.projectInfo.userStoryMap = {}
+                        if(!me.projectInfo.userStoryMap.modelList) me.projectInfo.userStoryMap.modelList = []
+                        me.projectInfo.userStoryMap.modelList.push(settingProjectId);
+                    } 
+                    
+                    me.backupProject();
+                    window.open(`/#/${path}/${settingProjectId}`, "_blank")
+                    me.closeStorageDialog()
+                } else {
+                    me.storageCondition.loading = false;
+                }
+
             },
             async validateStorageCondition(condition, action){
                 var me = this
@@ -1112,37 +1195,33 @@
                 // }
 
                 // mounted 랑 중복.
-                // const modelCanvasChannel = new BroadcastChannel('model-canvas')//this.$vnode.tag);
-                // modelCanvasChannel.onmessage = function(e) {
-                //     if (e.data && e.data.event === "ProjectIdChanged") {
-                //         me.modifyModelList(e.data)
-                //     }
-                // };
+                const modelCanvasChannel = new BroadcastChannel('model-canvas')//this.$vnode.tag);
+                modelCanvasChannel.onmessage = function(e) {
+                    if (e.data && e.data.event === "ProjectIdChanged") {
+                        me.modifyModelList(e.data)
+                    }
+                };
                   
             },
             async backupProject(){
                 // type: eventStorming,  businessModel, customerJourneyMap
-                // var me = this
+                var me = this
 
-                // if( me.isServer ) {
-                //     if( me.isLogin ){
-                //         me.putObject(`db://definitions/${me.projectId}/information`, {
-                //             eventStorming: me.projectInfo.eventStorming,
-                //             businessModel: me.projectInfo.businessModel,
-                //             customerJourneyMap: me.projectInfo.customerJourneyMap,
-                //             userStoryMap: me.projectInfo.userStoryMap,
-                //         })
-                //     }
-                // } else  {
-                //     // local
-                //     let lists = await me.getObject(`localstorage://localLists`)
-                //     lists = lists ? lists : [];
-                //     var index = lists.findIndex(list => list.projectId == me.projectId)
-                //     if( index != -1 ){
-                //         lists[index] = me.projectInfo
-                //         me.putObject(`localstorage://localLists`, lists);
-                //     }
-                // }
+                if( me.isServer ) {
+                    if( me.isLogin ){
+                        me.setObject(`db://definitions/${me.projectInfo.projectId}/information/eventStorming`, me.projectInfo.eventStorming)
+                        me.setObject(`db://definitions/${me.projectInfo.projectId}/information/contextMapping`, me.projectInfo.contextMapping)
+                    }
+                } else  {
+                    // local
+                    let lists = await me.getObject(`localstorage://localLists`)
+                    lists = lists ? lists : [];
+                    var index = lists.findIndex(list => list.projectId == me.projectId)
+                    if( index != -1 ){
+                        lists[index] = me.projectInfo
+                        me.putObject(`localstorage://localLists`, lists);
+                    }
+                }
             },
             onUIStyleSelected(uiStyle){
                 this.uiStyle = uiStyle;
@@ -1327,10 +1406,12 @@
 
                 if(!me.projectInfo['eventStormingModelIds'].includes(`${me.userInfo.providerUid}_es_${modelId}`)){
                     me.projectInfo['eventStormingModelIds'].push(`${me.userInfo.providerUid}_es_${modelId}`)
-                    me.projectInfo['eventStorming']['eventStorming']['modelList'].push(`${me.userInfo.providerUid}_es_${modelId}`)
+                    me.projectInfo['eventStorming']['modelList'].push(`${me.userInfo.providerUid}_es_${modelId}`)
 
-                    await me.putObject(`db://definitions/${me.projectInfo.projectId}/information/eventStorming`, me.projectInfo['eventStorming'])
-                    await me.putObject(`db://definitions/${me.projectInfo.projectId}/information/eventStormingModelIds`, me.projectInfo['eventStormingModelIds'])
+                    if(me.projectInfo && me.projectInfo.projectId){
+                        await me.putObject(`db://definitions/${me.projectInfo.projectId}/information/eventStorming`, me.projectInfo['eventStorming'])
+                        await me.putObject(`db://definitions/${me.projectInfo.projectId}/information/eventStormingModelIds`, me.projectInfo['eventStormingModelIds'])
+                    }
                     
                 }
                 // this.unsavedChanges = true;
@@ -1339,9 +1420,9 @@
             async deleteModelList(modelId){
                 var me = this
                 me.projectInfo['eventStormingModelIds'] = me.projectInfo['eventStormingModelIds'].filter(id => id !== `${modelId}`)
-                me.projectInfo['eventStorming']['eventStorming']['modelList'] = me.projectInfo['eventStorming']['eventStorming']['modelList'].filter(id => id !== `${modelId}`)
+                me.projectInfo['eventStorming']['modelList'] = me.projectInfo['eventStorming']['modelList'].filter(id => id !== `${modelId}`)
                 
-                await me.setObject(`db://definitions/${me.projectInfo.projectId}/information/eventStorming/eventStorming/modelList`, me.projectInfo['eventStormingModelIds'])
+                await me.setObject(`db://definitions/${me.projectInfo.projectId}/information/eventStorming/modelList`, me.projectInfo['eventStormingModelIds'])
                 await me.setObject(`db://definitions/${me.projectInfo.projectId}/information/eventStormingModelIds`, me.projectInfo['eventStormingModelIds'])
             },
 
@@ -1442,8 +1523,7 @@
 
                     const modelList = me.projectInfo && 
                                  me.projectInfo.eventStorming && 
-                                 me.projectInfo.eventStorming.eventStorming && 
-                                 me.projectInfo.eventStorming.eventStorming.modelList || [];
+                                 me.projectInfo.eventStorming.modelList || [];
                     
                     // set permission for models that are associated with the project
                     modelList.forEach(async (modelId) => {
@@ -1556,9 +1636,8 @@
                 
                 // Check for multiple models
                 const hasMultipleModels = this.projectInfo.eventStorming && 
-                    this.projectInfo.eventStorming.eventStorming && 
-                    this.projectInfo.eventStorming.eventStorming.modelList && 
-                    this.projectInfo.eventStorming.eventStorming.modelList.length > 1;
+                    this.projectInfo.eventStorming.modelList && 
+                    this.projectInfo.eventStorming.modelList.length > 1;
                 
                 if (hasMultipleModels) {
                     // Use setTimeout to ensure state updates are processed

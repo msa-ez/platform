@@ -126,17 +126,40 @@
         </div>
         <div
             :key="modelListKey"
-            class="auto-modeling-message-card"
             style="margin-top:25px; height: 100%; width: 100%; overflow-x: auto;"
         >
-            <v-col v-if="value && value.eventStorming && value.eventStorming.modelList && value.eventStorming.modelList.length > 0"
+            <v-col v-if="value && value.modelList && value.modelList.length > 0"
                    style="height: 100%; align-items: center; margin: 2px; width: fit-content; display: flex;"
             >
-                <div v-for="id in value.eventStorming.modelList" :key="id" style="display: inline-block;">
+                <div v-for="id in value.modelList" :key="id" style="display: inline-block;">
                     <jump-to-model-lists-card :id="id" path="storming" @deleteDefinition="deleteDefinition"></jump-to-model-lists-card>
                 </div>
             </v-col>
         </div>
+
+        <v-card flat v-if="isServerProject" style="margin-top: 20px;">
+            <v-card flat>
+                <v-card-title>Context Mapping Model</v-card-title>
+                <v-card-text style="width: 100%; white-space: nowrap; overflow-x: scroll;">
+                    <v-row style="height: 100%; margin: 2px; width: max-content;">
+                        <div v-for="id in cmModelLists" :key="id">
+                            <jump-to-model-lists-card :id="id" path="cm" @deleteDefinition="deleteDefinition"></jump-to-model-lists-card>
+                        </div>
+
+                        <v-card :style="cmModelLists.length == 0 ? 'height: 150px': ''" style="text-align: center; margin-top: 5px; margin-left: 5px;" flat>
+                            <v-tooltip right>
+                                <template v-slot:activator="{ on }">
+                                    <v-btn text style="align-items: center; width: 100%; height: 100%;" @click="openStorageDialog('cm')">
+                                        <v-icon>mdi-plus</v-icon>
+                                    </v-btn>
+                                </template>
+                                <span>add Model</span>
+                            </v-tooltip>
+                        </v-card>
+                    </v-row>
+                </v-card-text>
+            </v-card>
+        </v-card>
 
         <!-- AI 및 직접생성 다이얼로그 -->
         <!-- <v-dialog v-model="generateUserStoryDialog"
@@ -233,9 +256,7 @@ import { value } from 'jsonpath';
             value: {
                 type: Object,
                 default: () => ({
-                    eventStorming: {
-                        modelList: []
-                    }
+                    modelList: []
                 })
             },
             prompt: String,
@@ -263,6 +284,12 @@ import { value } from 'jsonpath';
                     // 기본값으로 false 반환
                     return false;
                 }
+            },
+            cmModelLists(){
+                if( !this.projectInfo) return []
+                if( !this.projectInfo.contextMapping ) return []
+                if( !this.projectInfo.contextMapping.modelList) return  []
+                return this.projectInfo.contextMapping.modelList
             },
         },
         async created(){
@@ -1107,11 +1134,11 @@ import { value } from 'jsonpath';
             },
             deleteModel(id){
                 var me = this
-                var index = me.value.eventStorming.modelList.findIndex(x => x == id)
-                me.value.eventStorming.modelList.splice(index, 1)
+                var index = me.value.modelList.findIndex(x => x == id)
+                me.value.modelList.splice(index, 1)
                 
                 this.$emit("input", this.value);
-                this.$emit("change", 'eventStorming');
+                this.$emit("change", 'modelList');
             },
             setUIStyle(uiStyle){
                 this.uiStyle = uiStyle;
@@ -1663,10 +1690,8 @@ import { value } from 'jsonpath';
                         });
                     }
 
-                    if(!this.value.eventStorming) {
-                        this.$set(this.value, 'eventStorming', {
-                            modelList: []
-                        });
+                    if(!this.value.modelList) {
+                        this.$set(this.value, 'modelList', []);
                     }
 
                     this.$emit("input", this.value);
@@ -2076,7 +2101,11 @@ import { value } from 'jsonpath';
             deleteDefinition(id, information){
                 this.$emit('delete:modelList', id, information)
                 this.modelListKey++;
-            }
+            },
+
+            openStorageDialog(type){
+                this.$emit('open:storageDialog', type)
+            },
         }
     }
 </script>

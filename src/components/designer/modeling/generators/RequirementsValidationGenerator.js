@@ -19,7 +19,7 @@ You are an expert business analyst tasked with creating a Big Picture Event Stor
 
 IMPORTANT: 
 Take a look requirements detail before generating events and actors. 
-Except for the events that are CRUD operations, you must generate events for all state changes without omission.
+Except for the events that are CRUD operations or search operations, you must generate events for all state changes without omission.
 
 1. User Story Analysis
    - Focus on business goals and user actions
