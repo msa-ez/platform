@@ -3074,13 +3074,13 @@
 
                 for(const element of Object.values(esValue.elements)){
                     if(!this.value.elements[element.id] || JSON.stringify(this.value.elements[element.id]) !== JSON.stringify(element)){
-                        this.$set(this.value.elements, element.id, element)
+                        this.$set(this.value.elements, element.id, structuredClone(element))
                     }
                 }
 
                 for(const relation of Object.values(esValue.relations)){
                     if(!this.value.relations[relation.id] || JSON.stringify(this.value.relations[relation.id]) !== JSON.stringify(relation)){
-                        this.$set(this.value.relations, relation.id, relation)
+                        this.$set(this.value.relations, relation.id, structuredClone(relation))
                     }
                 }
             }
