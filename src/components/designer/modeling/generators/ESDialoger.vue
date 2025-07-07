@@ -48,16 +48,17 @@
                     <v-tab-item>
                         <!-- <div class="gs-auto-modeling-userStory-text-pc">{{$t('autoModeling.explanation.userStory')}}</div>
                         <div class="gs-auto-modeling-userStory-text-mobile">{{$t('autoModeling.explanation.userStory')}}</div> -->
-                        <v-card-text class="auto-modling-textarea">
+                        <v-card-text class="auto-modling-textarea" ref="userStoryContainer" style="overflow: hidden;">
                             <v-textarea
                                 v-model="projectInfo.userStory"
                                 flat
-                                class="elevation-0"
+                                class="elevation-0 pr-0"
                                 dense
-                                auto-grow
-                                rows="2"
+                                rows="14"
+                                no-resize
                                 solo
                                 :disabled="!done || !isEditable"
+                                style="height: auto;"
                             >
                             </v-textarea>
                             <!--                <div-->
@@ -76,12 +77,13 @@
                             <v-textarea 
                                     v-model="projectInfo.inputDDL"
                                     flat
-                                    class="elevation-0"
+                                    class="elevation-0 pr-0"
                                     dense
-                                    auto-grow
-                                    rows="2"
+                                    rows="14"
+                                    no-resize
                                     solo
                                     :disabled="!isEditable"
+                                    style="height: auto;"
                             >
                             </v-textarea>
                         </v-card-text>
@@ -675,6 +677,13 @@ import { value } from 'jsonpath';
                 deep: true,
                 handler(newVal, oldVal) {
                     this.$emit("update:userStory", newVal)
+                    
+                    // AI 생성 중일 때만 자동 스크롤
+                    if (!this.done && this.isAutoScrollEnabled) {
+                        this.$nextTick(() => {
+                            this.scrollToBottom();
+                        });
+                    }
                 }
             },
             "projectInfo.inputDDL": {
@@ -722,7 +731,19 @@ import { value } from 'jsonpath';
                     }
                 },
                 deep: true
-            }
+            },
+            activeTab: {
+                handler(newVal) {
+                    // User Story 탭(0번)이 활성화되었을 때 자동 스크롤 초기화
+                    if (newVal === 0) {
+                        this.$nextTick(() => {
+                            setTimeout(() => {
+                                this.initAutoScroll();
+                            }, 100);
+                        });
+                    }
+                }
+            },
         },
         mounted(){
             var me = this;
@@ -750,6 +771,14 @@ import { value } from 'jsonpath';
                     me.modelListKey++;
                 }
             })
+
+            // 자동 스크롤 로직 초기화
+            me.$nextTick(() => {
+                // DOM이 완전히 준비될 때까지 더 기다림
+                setTimeout(() => {
+                    me.initAutoScroll();
+                }, 100);
+            });
         },
         beforeDestroy() {
             window.removeEventListener('storage', (event) => {
@@ -757,6 +786,15 @@ import { value } from 'jsonpath';
                     me.modelListKey++;
                 }
             })
+
+            // 스크롤 이벤트 리스너 정리
+            if (this.$refs.userStoryContainer) {
+                // textarea 이벤트 리스너만 정리
+                const textarea = this.$refs.userStoryContainer.querySelector('textarea');
+                if (textarea) {
+                    textarea.removeEventListener('scroll', this.handleTextareaScroll);
+                }
+            }
         },
         data() {
             return {
@@ -873,6 +911,10 @@ import { value } from 'jsonpath';
                 pbcResults: [],
 
                 modelListKey: 0,
+                isAutoScrollEnabled: true,
+                userScrollTimeout: null,
+                isAutoScrollInProgress: false, // 자동 스크롤 진행 중 플래그
+                autoScrollRetryCount: 0,
             }
         },
         methods: {
@@ -1068,6 +1110,13 @@ import { value } from 'jsonpath';
 
                     if(content && content.length > 0){
                         this.$emit('update:userStory', content);
+                        
+                        // onReceived에서도 자동 스크롤 호출
+                        if (!this.done && this.isAutoScrollEnabled) {
+                            this.$nextTick(() => {
+                                this.scrollToBottom();
+                            });
+                        }
                     }
                 }
             },
@@ -2020,6 +2069,79 @@ import { value } from 'jsonpath';
 
             openStorageDialog(type){
                 this.$emit('open:storageDialog', type)
+            },
+
+            // 자동 스크롤 관련 메서드들
+            initAutoScroll() {
+                if (this.$refs.userStoryContainer) {
+                    // textarea 스크롤 이벤트만 추가 (컨테이너 스크롤 제거)
+                    const textarea = this.$refs.userStoryContainer.querySelector('textarea');
+                    if (textarea) {
+                        textarea.addEventListener('scroll', this.handleTextareaScroll);
+                        
+                        // 테스트를 위해 수동으로 스크롤 이벤트 발생
+                        textarea.dispatchEvent(new Event('scroll'));
+                    }
+                } else {
+                    // 재시도 (최대 3번)
+                    if (!this.autoScrollRetryCount) this.autoScrollRetryCount = 0;
+                    if (this.autoScrollRetryCount < 3) {
+                        this.autoScrollRetryCount++;
+                        setTimeout(() => {
+                            this.initAutoScroll();
+                        }, 200);
+                    }
+                }
+            },
+
+            scrollToBottom() {
+                const container = this.$refs.userStoryContainer;
+                if (!container || !this.isAutoScrollEnabled) return;
+                
+                // 자동 스크롤 시작
+                this.isAutoScrollInProgress = true;
+                
+                // textarea만 스크롤 (컨테이너 스크롤 제거)
+                const textarea = container.querySelector('textarea');
+                if (textarea) {
+                    textarea.scrollTop = textarea.scrollHeight;
+                }
+                
+                // 자동 스크롤 완료 (짧은 지연 후)
+                setTimeout(() => {
+                    this.isAutoScrollInProgress = false;
+                }, 100);
+            },
+
+            handleTextareaScroll() {
+                const container = this.$refs.userStoryContainer;
+                if (!container) {
+                    return;
+                }
+                
+                // 자동 스크롤 진행 중이면 사용자 스크롤 감지 무시
+                if (this.isAutoScrollInProgress) {
+                    return;
+                }
+                
+                const textarea = container.querySelector('textarea');
+                if (!textarea) {
+                    return;
+                }
+
+                // textarea 기준으로 스크롤 위치 확인
+                const isAtBottom = this.isTextareaAtBottom(textarea);
+                
+                if (isAtBottom) {
+                    this.isAutoScrollEnabled = true;
+                } else {
+                    this.isAutoScrollEnabled = false;
+                }
+            },
+
+            isTextareaAtBottom(textarea) {
+                const threshold = 5;
+                return Math.abs(textarea.scrollHeight - textarea.clientHeight - textarea.scrollTop) <= threshold;
             },
         }
     }
