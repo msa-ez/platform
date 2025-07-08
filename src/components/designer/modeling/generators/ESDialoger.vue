@@ -48,17 +48,15 @@
                     <v-tab-item>
                         <!-- <div class="gs-auto-modeling-userStory-text-pc">{{$t('autoModeling.explanation.userStory')}}</div>
                         <div class="gs-auto-modeling-userStory-text-mobile">{{$t('autoModeling.explanation.userStory')}}</div> -->
-                        <v-card-text class="auto-modling-textarea" ref="userStoryContainer" style="overflow: hidden;">
-                            <v-textarea
-                                v-model="projectInfo.userStory"
+                        <v-card-text class="auto-modling-textarea pa-0" ref="userStoryContainer" style="height: 100%; display: flex; flex-direction: column;">
+                            <v-textarea v-model="projectInfo.userStory"
                                 flat
-                                class="elevation-0 pr-0"
+                                class="elevation-0 pr-0 delete-input-detail user-story-auto-modling-textarea"
                                 dense
-                                rows="14"
                                 no-resize
                                 solo
                                 :disabled="!done || !isEditable"
-                                style="height: auto;"
+                                style="flex: 1; min-height: 0;"
                             >
                             </v-textarea>
                             <!--                <div-->

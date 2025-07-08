@@ -668,8 +668,18 @@ code[class*=language-]:nth-child(1) {
 }
 
 .auto-modling-textarea {
-    max-height:50vh !important;
+    height:50vh !important;
     overflow-y: auto !important;
+}
+
+.auto-modling-textarea 
+.user-story-auto-modling-textarea
+.v-input__slot {
+    flex: 1 1 0% !important;
+}
+
+.user-story-auto-modling-textarea .v-input__control {
+    min-height: 100% !important;
 }
 
 .auto-modeling-btn {
