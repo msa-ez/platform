@@ -3100,7 +3100,7 @@
                                     this.generatorProgressDto.generateDone = true
                                     this.value.langgraphStudioInfos.esGenerator.isCompleted = true
                                     
-                                    await this._backupModelForcely()
+                                    await this._sanpshotModelForcely()
                                     await EsValueLangGraphStudioProxy.removeJob(this.value.langgraphStudioInfos.esGenerator.jobId)
                                     
                                     this.$router.go(0)
@@ -3142,7 +3142,7 @@
 
                                         this.value.langgraphStudioInfos.esGenerator.isCompleted = true
                                         this.value.langgraphStudioInfos.esGenerator.logs = logs
-                                        await this._backupModelForcely()
+                                        await this._sanpshotModelForcely()
                                         if(!isFailed)
                                             await EsValueLangGraphStudioProxy.removeJob(this.value.langgraphStudioInfos.esGenerator.jobId)
                                     },
@@ -3165,7 +3165,7 @@
                                         this.generatorProgressDto.generateDone = true
                                         this.value.langgraphStudioInfos.esGenerator.isCompleted = true
 
-                                        await this._backupModelForcely()
+                                        await this._sanpshotModelForcely()
                                     }
                                 )
                                 return
@@ -4491,7 +4491,7 @@
                     this.value.langgraphStudioInfos.esGenerator = {jobId: jobId, isCompleted:false}
 
                     if(isAlreadyTried) {
-                        this._backupModelForcely()
+                        this._sanpshotModelForcely()
                     } else {
                         this._saveModelForcely()
                     }
@@ -4544,22 +4544,13 @@
                 this.saveModel()
             },
 
-            async _backupModelForcely() {
-                this.storageCondition = {
-                    "action": "backup",
-                    "title": "Save New Version",
-                    "comment": "",
-                    "projectName": "untitled",
-                    "editProjectName": "untitled",
-                    "projectId": this.$route.params.projectId,
-                    "version": `v0-0-2.${new Date().getTime()}`,
-                    "connectedAssociatedProject": false,
-                    "error": null,
-                    "loading": true
-                }
-
-
-                await this.backupModel()
+            async _sanpshotModelForcely() {
+                await this.pushObject(`db://definitions/${this.projectId}/snapshotLists`, {
+                    lastSnapshotKey: '',
+                    snapshot: JSON.stringify(this.value),
+                    snapshotImg: null,
+                    timeStamp: Date.now()
+                })
             },
 
             _removeInvalidReferencedAggregateProperties(draftOptions) {
