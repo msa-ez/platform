@@ -82,6 +82,8 @@ export default class UserStoryGenerator extends AIGenerator{
         return `
             Please generate a comprehensive analysis for ${this.client.input.title} with the following requests:
 
+            ${this.userStroyPrompt()}
+
             1. Actors:
             - List all actors (users, external systems, etc.) that interact with the system
             - Describe each actor's role and responsibilities
@@ -107,6 +109,20 @@ export default class UserStoryGenerator extends AIGenerator{
             The response must:
             - Ensure complete traceability between actors, stories, and bounded contexts
             - Avoid any missing connections between components
+        `
+    }
+
+    userStroyPrompt(){
+        // 제목만 있는 경우 가상의 유저시나리오 생성
+        if (!this.client.input.userStory || this.client.input.userStory.length < 100) {
+            return ``
+        }
+        
+        // 유저스토리가 100자 이상인 경우 해당 내용 기반으로 생성
+        return `
+            The user story is: ${this.client.input.userStory}
+            
+            Please generate user stories and scenarios based on the above content, staying within the scope and context provided.
         `
     }
 

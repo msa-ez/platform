@@ -39,6 +39,7 @@
     "bcNumberLimitError": "Must be 15 or less",
     "invalidNumberError": "Numbers only",
     "ContextMappingRelationType": "Context Mapping Relation Type",
+    "generateFrontEnd": "Generate Frontend Option",
     "domainAspectDescription": "The domain aspect separates Bounded Contexts based on business logic and rules. It groups logically related functions into a single context by considering core business concepts, business rules, and the cohesion of domain processes.",
     "processAspectDescription": "The process aspect separates Bounded Contexts based on process (value stream). It groups logically related functions into a single context by considering the flow of processes and the cohesion of business processes.",
     "organizationalAspectDescription": "The organizational aspect separates Bounded Contexts based on team structure and decision-making boundaries. It reflects organizational structure according to Conway's Law and sets contexts by considering team autonomy and areas of responsibility.",
