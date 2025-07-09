@@ -988,7 +988,7 @@ import { value } from 'jsonpath';
                                 await addPropertyWithDelay(newMessage, 'type', msg.type);
                                 await addPropertyWithDelay(newMessage, 'uniqueId', msg.uniqueId);
                                 await addPropertyWithDelay(newMessage, 'isStartMapping', msg.isStartMapping);
-                                await addPropertyWithDelay(newMessage, 'isGeneratingBoundedContext', msg.isGeneratingBoundedContext);
+                                await addPropertyWithDelay(newMessage, 'isGeneratingBoundedContext', false);
                                 await addPropertyWithDelay(newMessage, 'isAnalizing', msg.isAnalizing);
                                 await addPropertyWithDelay(newMessage, 'isSummarizeStarted', msg.isSummarizeStarted);
                                 await addPropertyWithDelay(newMessage, 'processingRate', msg.processingRate);
@@ -997,7 +997,7 @@ import { value } from 'jsonpath';
                                 await addPropertyWithDelay(newMessage, 'summarizedResult', msg.summarizedResult);
                                 await addPropertyWithDelay(newMessage, 'pbcLists', msg.pbcLists);
                                 await addPropertyWithDelay(newMessage, 'isEditable', msg.isEditable);
-                                await addPropertyWithDelay(newMessage, 'currentGeneratedLength', msg.currentGeneratedLength);
+                                await addPropertyWithDelay(newMessage, 'currentGeneratedLength', 0);
                                 
                                 // result 객체 점진적 처리
                                 if (msg.result) {
@@ -1019,11 +1019,11 @@ import { value } from 'jsonpath';
                                 await addPropertyWithDelay(newMessage, 'uniqueId', msg.uniqueId);
                                 await addPropertyWithDelay(newMessage, 'isAnalizing', msg.isAnalizing);
                                 await addPropertyWithDelay(newMessage, 'isSummarizeStarted', msg.isSummarizeStarted);
-                                await addPropertyWithDelay(newMessage, 'isGeneratingBoundedContext', msg.isGeneratingBoundedContext);
+                                await addPropertyWithDelay(newMessage, 'isGeneratingBoundedContext', false);
                                 await addPropertyWithDelay(newMessage, 'isStartMapping', msg.isStartMapping);
                                 await addPropertyWithDelay(newMessage, 'processingRate', msg.processingRate);
                                 await addPropertyWithDelay(newMessage, 'isEditable', msg.isEditable);
-                                await addPropertyWithDelay(newMessage, 'currentGeneratedLength', msg.currentGeneratedLength);
+                                await addPropertyWithDelay(newMessage, 'currentGeneratedLength', 0);
                                 
                                 // content 객체 점진적 처리
                                 if (msg.content) {
@@ -1073,7 +1073,7 @@ import { value } from 'jsonpath';
                                 await addPropertyWithDelay(newMessage, 'type', msg.type);
                                 await addPropertyWithDelay(newMessage, 'uniqueId', msg.uniqueId);
                                 await addPropertyWithDelay(newMessage, 'isSummarizeStarted', msg.isSummarizeStarted);
-                                await addPropertyWithDelay(newMessage, 'isGeneratingBoundedContext', msg.isGeneratingBoundedContext);
+                                await addPropertyWithDelay(newMessage, 'isGeneratingBoundedContext', false);
                                 await addPropertyWithDelay(newMessage, 'isStartMapping', msg.isStartMapping);
                                 await addPropertyWithDelay(newMessage, 'isAnalizing', msg.isAnalizing);
                                 await addPropertyWithDelay(newMessage, 'generateOption', msg.generateOption);
@@ -1222,6 +1222,7 @@ import { value } from 'jsonpath';
 
                 if(me.state.generator === "DevideBoundedContextGenerator"){
                     me.devisionAspectIndex = 0;
+                    me.currentGeneratedLength = 0;
                     me.processingState.isGeneratingBoundedContext = false;
                     
                     // 현재 메시지의 result를 깊은 복사로 가져옴
@@ -1236,25 +1237,33 @@ import { value } from 'jsonpath';
                         const newKey = `${baseKey}_choice${choiceCount + 1}`;
                         model.devisionAspect = newKey;
                         newResult[newKey] = model;
+                        
+                        // 프론트엔드 생성 옵션이 있으면 프론트엔드 생성 진행
+                        if(this.bcGenerationOption.isGenerateFrontEnd){
+                            newResult[newKey].boundedContexts.push(this.generateFrontEnd());
+                        }
+
                     } else {
                         // 첫 번째 결과인 경우
                         newResult[model.devisionAspect] = model;
+
+                        // 프론트엔드 생성 옵션이 있으면 프론트엔드 생성 진행
+                        if(this.bcGenerationOption.isGenerateFrontEnd){
+                            newResult[model.devisionAspect].boundedContexts.push(this.generateFrontEnd());
+                        }
                     }
                     
                     // 메시지 상태 업데이트
                     me.updateMessageState(currentMessage.uniqueId, {
                         result: newResult,
                         processingRate: me.processingRate,
-                        currentProcessingBoundedContext: me.currentProcessingBoundedContext
+                        isGeneratingBoundedContext: me.processingState.isGeneratingBoundedContext,
+                        currentGeneratedLength: me.currentGeneratedLength
                     });
 
                     me.resultDevideBoundedContext = JSON.parse(JSON.stringify(newResult));
                     me.$emit("update:boundedContextDrafts", me.messages);
 
-                    me.currentGeneratedLength = 0;
-                    me.updateMessageState(currentMessage.uniqueId, {
-                        currentGeneratedLength: me.currentGeneratedLength
-                    });
                     console.log("output: ", model)
                 }
 
@@ -1315,11 +1324,12 @@ import { value } from 'jsonpath';
 
             async generate(){
                 let issuedTimeStamp = Date.now()
-                this.projectInfo.userStory = '';
                 this.state.generator = "EventOnlyESGenerator";
                 this.generatorName = "EventOnlyESGenerator";
                 this.input.businessModel = this.cachedModels["BMGenerator"]
                 this.input.painpointAnalysis = this.cachedModels["CJMGenerator"]
+                this.input.title = this.projectInfo.prompt
+                this.input.userStory = this.projectInfo.userStory
                 this.generator = new Generator(this);
 
                 let usage = new Usage({
@@ -1338,7 +1348,8 @@ import { value } from 'jsonpath';
 
                 this.generator.generate();
                 this.state.startTemplateGenerate = true
-                this.done = false;            
+                this.done = false;
+                this.projectInfo.userStory = '';
             },
 
             stop(){
@@ -1562,6 +1573,23 @@ import { value } from 'jsonpath';
 
                 this.generator.generate();
                 this.processingState.isGeneratingBoundedContext = true;
+            },
+
+            generateFrontEnd(){
+                let frontEnd = {
+                    'aggregates':[],
+                    'alias':"프론트 엔드",
+                    'complexity':"0.0",
+                    'differentiation':"0.0",
+                    'events':[],
+                    'implementationStrategy':"Transaction Script",
+                    'importance':"Generic Domain",
+                    'name':"frontend",
+                    'requirements':[],
+                    'role':"요구사항에서 화면 관련 내용을 수집하기 위한 컨텍스트"
+                }
+
+                return frontEnd;
             },
 
             uuid: function () {
