@@ -2593,8 +2593,8 @@
                 },
 
                 selectedDraftOptions: {},
-                filteredPBCs: {},
-                filteredFrontEndResults: {},
+                // filteredPBCs: {},
+                // filteredFrontEndResults: {},
                 collectedMockDatas: {
                     aggregateDraftScenarios: {
                     }
@@ -2989,9 +2989,6 @@
                 },
 
                 onGenerationDone: async () => {
-                    this.generatePBCbyDraftOptions(this.filteredPBCs)
-                    console.log("[*] 최종 생성 후 PBC 생성 완료", {filteredPBCs: this.filteredPBCs})
-                    
                     this.collectedMockDatas.aggregateDraftScenarios.esValue = structuredClone(
                         {
                             elements: this.value.elements,
@@ -3141,14 +3138,16 @@
                                         update_value_particaly(esValue)
                                         recorrect_boundedContexts()
 
-                                        if(Object.keys(this.filteredPBCs).length > 0) {
-                                            this.generatePBCbyDraftOptions(this.filteredPBCs)
-                                            console.log("[*] 최종 생성 후 PBC 생성 완료", {filteredPBCs: this.filteredPBCs})
-                                        }
+                                        const filteredPBCs = JSON.parse(localStorage.getItem("filteredPBCs"))
+                                        const filteredFrontEndResults = JSON.parse(localStorage.getItem("filteredFrontEndResults"))
 
-                                        if(Object.keys(this.filteredFrontEndResults).length > 0) {
-                                            this.generateFrontEnd(this.filteredFrontEndResults)
-                                            console.log("[*] 최종 생성 후 FrontEnd 생성 완료", {filteredFrontEndResults: this.filteredFrontEndResults})
+                                        if(filteredPBCs && Object.keys(filteredPBCs).length > 0) {
+                                            this.generatePBCAndFrontEndbyDraftOptions(filteredPBCs)
+                                            console.log("[*] 최종 생성 후 PBC, FrontEnd 생성 완료", {'filteredPBCs': filteredPBCs, 'filteredFrontEndResults': filteredFrontEndResults})
+                                        }else {
+                                            if(filteredFrontEndResults && Object.keys(filteredFrontEndResults).length > 0) {
+                                                this.generateFrontEnd(filteredFrontEndResults, {})
+                                            }
                                         }
                                         
                                         this.value.langgraphStudioInfos.esGenerator.isCompleted = true
@@ -4353,7 +4352,7 @@
                 }
             },
 
-            async generatePBCbyDraftOptions(pbc) {
+            async generatePBCAndFrontEndbyDraftOptions(pbc) {
                 if(Object.keys(pbc).length === 0) return
 
                 const boundedContexts = Object.values(this.value.elements).filter(element => element && element._type === "org.uengine.modeling.model.BoundedContext")
@@ -4368,6 +4367,8 @@
                 // PBC 시작 좌표 설정
                 let initialX = 600  // BC와 비슷한 시작 X좌표
                 let initialY = maxBCBottom + 300  // BC들의 최하단 + 여유 공간
+
+                let pbcElements = {}
 
                 for(const [key, value] of Object.entries(pbc)) {
                     if(key.includes('PBC')) {
@@ -4418,8 +4419,8 @@
                         if (openAPIPBC) {
                             const info = {
                                 name: value.name,
-                                path: value.info.pbcPath || '',
-                                description: value.info.description || ''
+                                path: value.info.pbcPath? value.info.pbcPath : '',
+                                description: value.info.description? value.info.description : ''
                             }
                             openAPIPBC.setPBCInfo(pbc, info)
                             await openAPIPBC.appendPBC(info)
@@ -4427,7 +4428,15 @@
                         }
 
                         this.activePBCElement(pbc)
+                        pbcElements[pbc.id] = pbc
                     }
+                }
+
+                localStorage.removeItem("filteredPBCs")
+
+                let frontEnd = localStorage.getItem("filteredFrontEndResults")
+                if(frontEnd && Object.keys(JSON.parse(frontEnd)).length > 0) {
+                    this.generateFrontEnd(JSON.parse(frontEnd), pbcElements)
                 }
             },
 
@@ -4447,16 +4456,21 @@
                 this.changedByMe = true
             },
 
-            generateFrontEnd(filteredFrontEndResults) {
+            generateFrontEnd(filteredFrontEndResults, pbcElements) {
                 if(Object.keys(filteredFrontEndResults).length === 0) return
 
-                const boundedContexts = Object.values(this.value.elements).filter(element => element && element._type === "org.uengine.modeling.model.BoundedContext")
                 let maxBCBottom = 450  // 기본값
                 
-                if (boundedContexts.length > 0) {
-                    maxBCBottom = Math.max(...boundedContexts.map(bc => 
-                        bc.elementView.y + Math.round(bc.elementView.height/2)
-                    ))
+                if (pbcElements && Object.keys(pbcElements).length > 0) {
+                    maxBCBottom = Object.values(pbcElements).map(pbc => pbc.elementView.y + pbc.elementView.height).reduce((a, b) => Math.max(a, b), 0)
+                }else{
+                    const boundedContexts = Object.values(this.value.elements).filter(element => element && element._type === "org.uengine.modeling.model.BoundedContext")
+                    
+                    if (boundedContexts.length > 0) {
+                        maxBCBottom = Math.max(...boundedContexts.map(bc => 
+                            bc.elementView.y + Math.round(bc.elementView.height/2)
+                        ))
+                    }
                 }
 
                 for(const [key, value] of Object.entries(filteredFrontEndResults)) {
@@ -4465,31 +4479,43 @@
                             _type: 'org.uengine.modeling.model.BoundedContext',
                             id: `frontend-${this.uuid()}`,
                             name: value.name,
+                            oldName: '',
                             displayName: value.alias,
                             description: value.requirements.map(requirement => requirement.text).join("\n"),
                             author: null,
-                            boundedContextes: [],
                             aggregates: [],
-                            events: [],
-                            commands: [],
                             policies: [],
+                            members: [],
                             views: [],
-                            modelValue: {},
+                            gitURL: null,
                             elementView: {
                                 '_type': 'org.uengine.modeling.model.BoundedContext',
                                 'id': `frontend-${this.uuid()}`,
-                                'x': 600,
+                                'x': 650,
                                 'y': maxBCBottom + 300,
+                                'width': 500,
+                                'height': 500,
+                                'style': JSON.stringify({})
+                            },
+                            hexagonalView:{
+                                '_type': 'org.uengine.modeling.model.BoundedContext',
+                                'id': `frontend-${this.uuid()}`,
+                                'x': 0,
+                                'y': 0,
                                 'width': 0,
                                 'height': 0,
                                 'style': JSON.stringify({})
                             },
-                            hexagonalView:{
-                            }
+                            portGenerated: 0,
+                            tempId: '',
+                            templatePerElements: {},
+                            preferredPlatform: 'spring-boot',
+                            preferredPlatformConf: {},
                         }
 
-                        this.value.elements = this.$set(this.value.elements, frontEnd.id, frontEnd)
+                        this.value.elements = Object.assign(this.value.elements, {[frontEnd.id]: frontEnd})
                         this.changedByMe = true
+                        localStorage.removeItem("filteredFrontEndResults")
                     }
                 }
             },
@@ -4517,8 +4543,8 @@
                 })
 
                 this.selectedDraftOptions = boundedContexts
-                this.filteredPBCs = { ...pbc }
-                this.filteredFrontEndResults = { ...filteredFrontEndResults }
+                localStorage.setItem("filteredPBCs", JSON.stringify(pbc))
+                localStorage.setItem("filteredFrontEndResults", JSON.stringify(filteredFrontEndResults))
 
 
                 if(await EsValueLangGraphStudioProxy.healthCheckUsingConfig()) {
