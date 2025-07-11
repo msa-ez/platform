@@ -137,7 +137,7 @@
             </v-col>
         </div>
 
-        <v-card flat v-if="isServerProject" style="margin-top: 20px;">
+        <!-- <v-card flat v-if="isServerProject" style="margin-top: 20px;">
             <v-card flat>
                 <v-card-title>Context Mapping Model</v-card-title>
                 <v-card-text style="width: 100%; white-space: nowrap; overflow-x: scroll;">
@@ -159,7 +159,7 @@
                     </v-row>
                 </v-card-text>
             </v-card>
-        </v-card>
+        </v-card> -->
 
         <!-- AI 및 직접생성 다이얼로그 -->
         <!-- <v-dialog v-model="generateUserStoryDialog"
@@ -907,6 +907,7 @@ import { value } from 'jsonpath';
                 allRepoList: [],
                 pbcLists: [],
                 pbcResults: [],
+                frontEndResults: [],
 
                 modelListKey: 0,
                 isAutoScrollEnabled: true,
@@ -990,6 +991,7 @@ import { value } from 'jsonpath';
 
                                     // pbc 항목 추가
                                     this.pbcResults = this.resultDevideBoundedContext[this.selectedAspect].boundedContexts.filter(bc => bc.implementationStrategy.includes("PBC"));
+                                    this.frontEndResults = this.resultDevideBoundedContext[this.selectedAspect].boundedContexts.filter(bc => bc.name.includes("frontend"));
                                 }
                                 break;
 
@@ -1621,11 +1623,18 @@ import { value } from 'jsonpath';
                 this.workingMessages.AggregateDraftDialogDto.boundedContextVersion = this.boundedContextVersion.version
                 this.messages.push(this.workingMessages.AggregateDraftDialogDto)
 
+                // PBC 제외하고 생성
                 if(selectedStructureOption.boundedContexts.some(bc => bc.implementationStrategy.includes("PBC"))){
                     this.pbcResults = this.pbcResults.concat(selectedStructureOption.boundedContexts.filter(bc => bc.implementationStrategy.includes("PBC")))
                     selectedStructureOption.boundedContexts = selectedStructureOption.boundedContexts.filter(bc => {
                         return !(bc.implementationStrategy.includes("PBC") && bc.importance === "Generic Domain");
                     });
+                }
+
+                // frontEnd 제외하고 생성
+                if(selectedStructureOption.boundedContexts.some(bc => bc.name === "frontend")){
+                    this.frontEndResults = this.frontEndResults.concat(selectedStructureOption.boundedContexts.filter(bc => bc.name === "frontend"))
+                    selectedStructureOption.boundedContexts = selectedStructureOption.boundedContexts.filter(bc => bc.name !== "frontend");
                 }
 
 
@@ -1657,6 +1666,12 @@ import { value } from 'jsonpath';
                             })
                             draftOptions[`PBC-${pbc.name}`] = pbc
                         }
+                    })
+                }
+
+                if(this.frontEndResults.length > 0){
+                    this.frontEndResults.forEach(frontEnd => {
+                        draftOptions[`frontend`] = frontEnd
                     })
                 }
 

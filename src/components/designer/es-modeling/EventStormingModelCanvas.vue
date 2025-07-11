@@ -2594,6 +2594,7 @@
 
                 selectedDraftOptions: {},
                 filteredPBCs: {},
+                filteredFrontEndResults: {},
                 collectedMockDatas: {
                     aggregateDraftScenarios: {
                     }
@@ -3140,6 +3141,16 @@
                                         update_value_particaly(esValue)
                                         recorrect_boundedContexts()
 
+                                        if(Object.keys(this.filteredPBCs).length > 0) {
+                                            this.generatePBCbyDraftOptions(this.filteredPBCs)
+                                            console.log("[*] 최종 생성 후 PBC 생성 완료", {filteredPBCs: this.filteredPBCs})
+                                        }
+
+                                        if(Object.keys(this.filteredFrontEndResults).length > 0) {
+                                            this.generateFrontEnd(this.filteredFrontEndResults)
+                                            console.log("[*] 최종 생성 후 FrontEnd 생성 완료", {filteredFrontEndResults: this.filteredFrontEndResults})
+                                        }
+                                        
                                         this.value.langgraphStudioInfos.esGenerator.isCompleted = true
                                         this.value.langgraphStudioInfos.esGenerator.logs = logs
                                         await this._backupModelForcely()
@@ -4436,6 +4447,52 @@
                 this.changedByMe = true
             },
 
+            generateFrontEnd(filteredFrontEndResults) {
+                if(Object.keys(filteredFrontEndResults).length === 0) return
+
+                const boundedContexts = Object.values(this.value.elements).filter(element => element && element._type === "org.uengine.modeling.model.BoundedContext")
+                let maxBCBottom = 450  // 기본값
+                
+                if (boundedContexts.length > 0) {
+                    maxBCBottom = Math.max(...boundedContexts.map(bc => 
+                        bc.elementView.y + Math.round(bc.elementView.height/2)
+                    ))
+                }
+
+                for(const [key, value] of Object.entries(filteredFrontEndResults)) {
+                    if(key.includes("frontend")) {
+                        const frontEnd = {
+                            _type: 'org.uengine.modeling.model.BoundedContext',
+                            id: `frontend-${this.uuid()}`,
+                            name: value.name,
+                            displayName: value.alias,
+                            description: value.requirements.map(requirement => requirement.text).join("\n"),
+                            author: null,
+                            boundedContextes: [],
+                            aggregates: [],
+                            events: [],
+                            commands: [],
+                            policies: [],
+                            views: [],
+                            modelValue: {},
+                            elementView: {
+                                '_type': 'org.uengine.modeling.model.BoundedContext',
+                                'id': `frontend-${this.uuid()}`,
+                                'x': 600,
+                                'y': maxBCBottom + 300,
+                                'width': 0,
+                                'height': 0,
+                                'style': JSON.stringify({})
+                            },
+                            hexagonalView:{
+                            }
+                        }
+
+                        this.value.elements = this.$set(this.value.elements, frontEnd.id, frontEnd)
+                        this.changedByMe = true
+                    }
+                }
+            },
 
             async generateAggregatesFromDraft(draftOptions) {
                 console.log("[*] 유저가 선택한 초안 옵션들을 이용해서 모델 생성 로직이 실행됨",
@@ -4447,17 +4504,21 @@
                 // PBC 필터링 & 제거
                 let pbc = {}
                 let boundedContexts = {}
+                let filteredFrontEndResults = {}
                 
                 Object.keys(draftOptions).forEach(key => {
                     if(key.includes("PBC")) {
                         pbc[key] = draftOptions[key]
+                    } else if(key.includes("frontend")) {
+                        filteredFrontEndResults[key] = draftOptions[key]
                     } else {
                         boundedContexts[key] = draftOptions[key]
                     }
                 })
 
                 this.selectedDraftOptions = boundedContexts
-                this.filteredPBCs = pbc
+                this.filteredPBCs = { ...pbc }
+                this.filteredFrontEndResults = { ...filteredFrontEndResults }
 
 
                 if(await EsValueLangGraphStudioProxy.healthCheckUsingConfig()) {
