@@ -558,6 +558,26 @@ import { value } from 'jsonpath';
                     return markdownOutput.trim();
                 }
 
+                const getRequirements = (bc) => {
+                    const getRequirementsByType = (type) => {
+                        return bc.requirements.filter(requirement => requirement.type === type).map(requirement => requirement.text).join("\n")
+                    }
+
+                    const requirements = {
+                        userStory: "",
+                        ddl: "",
+                        event: "",
+                        eventNames: ""
+                    }
+
+                    requirements.userStory = getRequirementsByType("userStory")
+                    requirements.ddl = getRequirementsByType("DDL")
+                    requirements.event = getRequirementsByType("Event")
+                    if(bc.events) requirements.eventNames = bc.events.join(", ") + " 이벤트가 발생할 수 있어."
+
+                    return requirements
+                }
+
                 const passedGeneratorInputs = selectedStructureOption.boundedContexts.map(bc => {
                     const bcDescription = getDescription(
                         bc,
@@ -571,7 +591,8 @@ import { value } from 'jsonpath';
                             alias: bc.alias,
                             displayName: bc.alias,
                             description: bcDescription,
-                            aggregates: bc.aggregates
+                            aggregates: bc.aggregates,
+                            requirements: getRequirements(bc)
                         },
                         description: bcDescription
                     }
