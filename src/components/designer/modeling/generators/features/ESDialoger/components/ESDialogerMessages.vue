@@ -142,6 +142,7 @@
                             :isStartMapping="message.isStartMapping"
                             :isAnalizing="message.isAnalizing"
                             :recommendedBoundedContextsNumber="message.recommendedBoundedContextsNumber"
+                            :reasonOfRecommendedBoundedContextsNumber="message.reasonOfRecommendedBoundedContextsNumber"
                             :generateOption="message.generateOption"
                             :isEditable="isEditable"
                             @setGenerateOption="(option, boolean) => $emit('setGenerateOption', option, boolean)"

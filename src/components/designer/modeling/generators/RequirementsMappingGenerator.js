@@ -65,6 +65,7 @@ SPECIAL INSTRUCTIONS FOR UI BOUNDED CONTEXT:
             
 For ui bounded context, ONLY map requirements that are related to:
     - User interface elements (buttons, forms, tables, charts, etc.)
+    - Only non-functional requirements
     - Screen layouts and navigation
     - User interactions (clicks, inputs, selections, etc.)
     - Visual design and styling requirements
@@ -77,6 +78,7 @@ For ui bounded context, ONLY map requirements that are related to:
     
     MUST NOT mapping:
     - Events or Actors
+    - functional requirements
     - Business logic or backend processes
     - Data processing or calculations
     - API calls or data fetching logic

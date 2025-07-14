@@ -1,7 +1,7 @@
 <template>
     <div>
         <v-card v-if="activeTab !== null" class="ma-4 pa-4" outlined>
-            <v-textarea v-model="localFeedback" label="Feedback" rows="3"></v-textarea>
+            <v-textarea v-model="localFeedback" label="Feedback" :placeholder="$t('ModelDraftDialogForDistribution.feedbackPlaceholder')" rows="3"></v-textarea>
             <v-row class="pa-0 ma-0">
                 <v-spacer></v-spacer>
                 <v-btn 

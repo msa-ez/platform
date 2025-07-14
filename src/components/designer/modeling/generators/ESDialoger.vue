@@ -1041,6 +1041,7 @@ import { value } from 'jsonpath';
                                         await addPropertyWithDelay(newMessage.content.analysisResult, 'actors', msg.content.analysisResult.actors);
                                         await addPropertyWithDelay(newMessage.content.analysisResult, 'events', msg.content.analysisResult.events);
                                         await addPropertyWithDelay(newMessage.content.analysisResult, 'recommendedBoundedContextsNumber', msg.content.analysisResult.recommendedBoundedContextsNumber);
+                                        await addPropertyWithDelay(newMessage.content.analysisResult, 'reasonOfRecommendedBoundedContextsNumber', msg.content.analysisResult.reasonOfRecommendedBoundedContextsNumber);
                                     }
                                     // content 객체 처리
                                     newMessage.content.content = {};
@@ -1080,6 +1081,7 @@ import { value } from 'jsonpath';
                                 await addPropertyWithDelay(newMessage, 'isAnalizing', msg.isAnalizing);
                                 await addPropertyWithDelay(newMessage, 'generateOption', msg.generateOption);
                                 await addPropertyWithDelay(newMessage, 'recommendedBoundedContextsNumber', msg.recommendedBoundedContextsNumber);
+                                await addPropertyWithDelay(newMessage, 'reasonOfRecommendedBoundedContextsNumber', msg.reasonOfRecommendedBoundedContextsNumber);
                                 await addPropertyWithDelay(newMessage, 'isEditable', msg.isEditable);
                                 
                                 this.bcGenerationOption = JSON.parse(JSON.stringify(msg.generateOption));
@@ -1827,6 +1829,7 @@ import { value } from 'jsonpath';
                         isAnalizing: this.processingState.isAnalizing,
                         generateOption: {},
                         recommendedBoundedContextsNumber: this.requirementsValidationResult.analysisResult.recommendedBoundedContextsNumber,
+                        reasonOfRecommendedBoundedContextsNumber: this.requirementsValidationResult.analysisResult.reasonOfRecommendedBoundedContextsNumber,
                         timestamp: new Date()
                     };
                 }

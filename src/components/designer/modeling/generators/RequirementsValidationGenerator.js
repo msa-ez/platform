@@ -15,7 +15,7 @@ class RequirementsValidationGenerator extends JsonAIGenerator {
 
     createPrompt() {
         return `
-You are an expert business analyst tasked with creating a Big Picture Event Storming model from requirements.
+You are an expert business analyst and domain-driven design specialist tasked with creating a Big Picture Event Storming model from requirements.
 
 IMPORTANT: 
 Take a look requirements detail before generating events and actors. 
@@ -55,7 +55,8 @@ ${this.isValidationPrompt()}
 {
     "type": "ANALYSIS_RESULT",
     "content": {
-        "recommendedBoundedContextsNumber": "Number of recommended bounded contexts based on events processed by each actor" // type is number (at least 3, maximum 15),
+        "recommendedBoundedContextsNumber": "Number of recommended bounded contexts based on actor interactions, domain boundaries, and business capabilities" // type is number (at least 3, maximum 15),
+        "reasonOfRecommendedBoundedContextsNumber": "detailed analysis explaining: 1) which specific bounded contexts are recommended and why, 2) the business domains and responsibilities of each bounded context, 3) the rationale for the number of bounded contexts based on actor interactions, event complexity, and domain boundaries, 4) how the bounded contexts align with business capabilities and organizational structure",
         "events": [
             {
                 "name": "name of event", // PascalCase & Past Participle (e.g., OrderPlaced, PaymentProcessed)
