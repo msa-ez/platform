@@ -36,6 +36,19 @@
         </v-card-title>
         
         <v-card-text class="pa-0 flex-grow-1 d-flex flex-column">
+            <!-- 세부 속성 보기 스위치 추가 -->
+            <div v-if="optionInfo.structure && hasPreviewAttributes" class="px-4 py-2">
+                <v-switch
+                    v-model="showDetailedAttributes"
+                    :label="$t('ModelDraftDialogForDistribution.showDetailedAttributes')"
+                    dense
+                    inset
+                    hide-details
+                    class="mt-0"
+                    @change="updateMermaidDiagram"
+                ></v-switch>
+            </div>
+
             <div 
                 v-if="optionInfo.structure" 
                 class="mb-4 flex-grow-1 pointer" 
@@ -120,6 +133,7 @@
                     renderKey: 0
                 },
                 analysisExpanded: false,
+                showDetailedAttributes: false, // 세부 속성 보기 스위치 상태
             }
         },
         computed: {
@@ -136,6 +150,11 @@
                     pro: pros[key] || '-',
                     con: cons[key] || '-',
                 }));
+            },
+            hasPreviewAttributes() {
+                return this.optionInfo.structure && this.optionInfo.structure.some(item => 
+                    item.previewAttributes && Array.isArray(item.previewAttributes) && item.previewAttributes.length > 0
+                );
             }
         },
         watch: {
@@ -181,14 +200,19 @@
                     return alias.replace(/[^a-zA-Z0-9가-힣_]/g, '');
                 }
                 
-                const addClassToGroup = (groupKey, classId, label, role) => {
+                const addClassToGroup = (groupKey, classId, label, role, previewAttributes = null) => {
                     if (!groups[groupKey]) {
-                        groups[groupKey] = { id: groupKey, label: label, classes: {} };
+                        groups[groupKey] = { id: groupKey, label: label, classes: {}, previewAttributes: previewAttributes };
                     }
                     if (!groups[groupKey].classes[classId]) {
                         groups[groupKey].classes[classId] = { id: classId, label: label, role: role };
                     } else if (role === "Aggregate Root" && groups[groupKey].classes[classId].role !== "Aggregate Root") {
                         groups[groupKey].classes[classId].role = "Aggregate Root";
+                    }
+                    
+                    // Aggregate Root인 경우 previewAttributes 업데이트
+                    if (role === "Aggregate Root" && previewAttributes && Array.isArray(previewAttributes) && previewAttributes.length > 0) {
+                        groups[groupKey].previewAttributes = previewAttributes;
                     }
                 };
                 
@@ -197,7 +221,10 @@
                     if (item.aggregate && item.aggregate.alias) {
                         const aggAlias = item.aggregate.alias;
                         const aggKey = getValidAlias(aggAlias);
-                        addClassToGroup(aggKey, aggKey, aggAlias, "Aggregate Root");
+                        
+                        // previewAttributes가 있는지 확인하고 전달
+                        const previewAttributes = item.previewAttributes && Array.isArray(item.previewAttributes) ? item.previewAttributes : null;
+                        addClassToGroup(aggKey, aggKey, aggAlias, "Aggregate Root", previewAttributes);
                         
                         if (Array.isArray(item.enumerations)) {
                             item.enumerations.forEach(enumeration => {
@@ -232,7 +259,20 @@
                 Object.values(groups).forEach(group => {
                     mermaidString += `subgraph ${group.id} \n`;
                     Object.values(group.classes).forEach(cls => {
-                        mermaidString += `${cls.id}[-${cls.role}-<br/>${cls.id}]\n`
+                        let nodeContent = `[-${cls.role}-<br/>${cls.id}`;
+                        
+                        // Aggregate Root이고 previewAttributes가 있는 경우 속성 목록 추가
+                        if (cls.role === "Aggregate Root" && group.previewAttributes && group.previewAttributes.length > 0 && this.showDetailedAttributes) {               
+                            nodeContent += `<br/>___`;
+                            group.previewAttributes.forEach(attr => {
+                                // 속성명을 안전하게 처리 (특수문자 제거)
+                                const safeAttr = String(attr).replace(/[<>&"']/g, '');
+                                nodeContent += `<br/>${safeAttr}`;
+                            });
+                        }
+                        
+                        nodeContent += `]`;
+                        mermaidString += `${cls.id}${nodeContent}\n`;
                     });
                     mermaidString += `end\n`;
                 });
@@ -243,6 +283,10 @@
                 });
 
                 return mermaidString;
+            },
+            updateMermaidDiagram() {
+                this.mermaidDto.mermaidString = this.toMermaidUMLDiagramString(this.optionInfo.structure);
+                this.mermaidDto.renderKey++;
             }
         }
     }

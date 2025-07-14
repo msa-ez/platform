@@ -7,7 +7,9 @@ import { JsonParsingUtilTest } from "../../../utils"
 import { aggregateDraftScenarios } from "./mocks"
 import {
     PreProcessingFunctionsGeneratorTest,
-    DraftGeneratorByFunctionsTest
+    DraftGeneratorByFunctionsTest,
+    ExtractDDLFieldsGeneratorTest,
+    AssignDDLFieldsToAggregateDraftTest
 } from "../../../es-generators";
 
 export default {
@@ -53,6 +55,8 @@ export default {
                 PreProcessingFunctionsGeneratorTest: {command: async () => { await PreProcessingFunctionsGeneratorTest.test() }},
                 DraftGeneratorByFunctionsTest: {command: async () => { await DraftGeneratorByFunctionsTest.test("draftGeneratorByFunctionsInputs") }},
                 DraftGeneratorByFunctionsTestWithFeedback: {command: async () => { await DraftGeneratorByFunctionsTest.test("draftGeneratorByFunctionsInputsWithFeedback") }},
+                ExtractDDLFieldsGeneratorTest: {command: async () => { await ExtractDDLFieldsGeneratorTest.test("extractDDLFieldsGeneratorInputs") }},
+                AssignDDLFieldsToAggregateDraftTest: {command: async () => { await AssignDDLFieldsToAggregateDraftTest.test("assignDDLFieldsToAggregateDraftInputs") }},
             }
             
 
@@ -113,6 +117,9 @@ export default {
             this.state = selectedScenario.state
             this.resultDevideBoundedContext = selectedScenario.resultDevideBoundedContext
             this.boundedContextVersion = selectedScenario.boundedContextVersion
+            this.frontEndResults = selectedScenario.frontEndResults
+            this.pbcResults = selectedScenario.pbcResults
+            this.pbcLists = selectedScenario.pbcLists
         },
 
         _mermaidStringTest() {

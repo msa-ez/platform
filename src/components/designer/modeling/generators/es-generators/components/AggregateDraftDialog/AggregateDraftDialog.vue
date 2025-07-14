@@ -246,6 +246,8 @@
             },
 
             generateFromDraft(){
+                this.updateSelectionByDraftOptions(this.draftOptions)
+                
                 let optionsToReturn = {}
                 this.draftOptions.map(option => {
                     optionsToReturn[option.boundedContext] = this.selectedOptionItem[option.boundedContext]
@@ -279,14 +281,19 @@
 
             updateSelectionByDraftOptions(draftOptions) {      
                 if(draftOptions && draftOptions.length > 0) {
+
+                    // console.log("[~] updateSelectionByDraftOptions", structuredClone(draftOptions))
+
                     draftOptions.map(option => {  
                         if(!option.boundedContext || option.defaultOptionIndex == null) return
                         
                         if(this.selectedCardIndex[option.boundedContext] == null)
                             this.selectedCardIndex[option.boundedContext] = option.defaultOptionIndex
-                        if(this.selectedOptionItem[option.boundedContext] == null)
-                            this.selectedOptionItem[option.boundedContext] = option.options[option.defaultOptionIndex]                        
+                        
+                        this.selectedOptionItem[option.boundedContext] = option.options[this.selectedCardIndex[option.boundedContext]]  
                     })
+
+                    // console.log("[~] updateSelectionByDraftOptions", structuredClone(this.selectedCardIndex), structuredClone(this.selectedOptionItem))
 
                     this.$emit('updateSelectedOptionItem', this.selectedOptionItem)
                 }

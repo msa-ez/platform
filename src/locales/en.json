@@ -361,7 +361,8 @@
     "reconstructionDraft": "BoundedContext Reconstruction Draft",
     "reconstructionAggregateDraft": "Aggregate Design Draft",
     "reGenerate": "Regenerate",
-    "requirementAnalysisResult": "Requirement Analysis Result"
+    "requirementAnalysisResult": "Requirement Analysis Result",
+    "showDetailedAttributes": "Show Detailed Attributes"
   },
   "RequirementAnalysis": {
     "validateRequirements": "Validating requirements...",

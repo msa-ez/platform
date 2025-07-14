@@ -217,7 +217,9 @@
     import Usage from '../../../../utils/Usage'
     
     import { 
-        DraftGeneratorByFunctions 
+        DraftGeneratorByFunctions,
+        ExtractDDLFieldsGenerator,
+        AssignDDLFieldsToAggregateDraft
     } from '../../modeling/generators/es-generators';
 
     import {
@@ -321,6 +323,201 @@ import { value } from 'jsonpath';
                 }
             }
 
+            const generatePreviewAggAttributesToDraftOptions = async (options, description, allDdlFields) => {
+                // 각 옵션을 순차적으로 처리
+                if (allDdlFields.length > 0) {
+                    for (let optionIndex = 0; optionIndex < options.length; optionIndex++) {
+                        const option = options[optionIndex];
+                        
+                        if (!option.structure || option.structure.length === 0) continue;
+
+                        // structure에서 aggregateDrafts 구성
+                        const aggregateDrafts = option.structure.map(struct => ({
+                            name: struct.aggregate.name,
+                            alias: struct.aggregate.alias
+                        }));
+
+                        // 최적화: Aggregate가 1개만 있을 경우 생성기 호출 없이 직접 할당
+                        if (aggregateDrafts.length === 1) {
+                            // 직접 모든 DDL 필드를 해당 aggregate에 할당
+                            const singleAggregate = aggregateDrafts[0];
+                            option.structure.forEach(struct => {
+                                if (struct.aggregate.name === singleAggregate.name) {
+                                    struct.previewAttributes = [...allDdlFields];
+                                    console.log(`[*] Direct assignment - Added all DDL fields to single aggregate ${struct.aggregate.name}:`, struct.previewAttributes);
+                                }
+                            });
+                            
+                            // workingMessages 업데이트도 동일하게 수행
+                            if (this.workingMessages.AggregateDraftDialogDto && 
+                                this.workingMessages.AggregateDraftDialogDto.draftOptions) {
+                                
+                                const currentBoundedContext = this.generators.DraftGeneratorByFunctions.generator.client.input.boundedContext.name;
+                                const draftOption = this.workingMessages.AggregateDraftDialogDto.draftOptions.find(
+                                    opt => opt.boundedContext === currentBoundedContext
+                                );
+                                
+                                if (draftOption && draftOption.options && draftOption.options[optionIndex]) {
+                                    if (draftOption.options[optionIndex].structure) {
+                                        draftOption.options[optionIndex].structure.forEach(struct => {
+                                            if (struct.aggregate.name === singleAggregate.name) {
+                                                struct.previewAttributes = [...allDdlFields];
+                                            }
+                                        });
+                                    }
+                                }
+                            }
+                        } else {
+                            // 기존 로직 - 여러 Aggregate가 있을 경우 AssignDDLFieldsToAggregateDraft 생성기 호출
+                            const generatorKey = `option ${optionIndex + 1}`;
+                            
+                            try {
+                                const result = await new Promise((resolve, reject) => {
+                                    const generator = new AssignDDLFieldsToAggregateDraft({
+                                        onModelCreatedWithThinking: (returnObj) => {
+                                            this.workingMessages.AggregateDraftDialogDto.draftUIInfos.leftBoundedContextCount = this.generators.DraftGeneratorByFunctions.inputs.length + 1
+                                            this.workingMessages.AggregateDraftDialogDto.draftUIInfos.directMessage = returnObj.directMessage
+                                            this.workingMessages.AggregateDraftDialogDto.draftUIInfos.progress = returnObj.progress
+                                        },
+                                        onGenerationSucceeded: (returnObj) => {
+                                            try {
+                                                resolve(returnObj.modelValue.output);
+                                            } catch (error) {
+                                                console.error(`[*] Option ${optionIndex} field assignment processing error:`, error);
+                                                reject(error);
+                                            }
+                                        },
+                                        onError: (returnObj) => {
+                                            console.error(`[*] Option ${optionIndex} field assignment generation error:`, returnObj.errorMessage);
+                                            reject(new Error(returnObj.errorMessage || 'Field assignment generation failed'));
+                                        },
+                                        onRetry: (returnObj) => {
+                                            console.warn(`[*] Option ${optionIndex} field assignment retry:`, returnObj.errorMessage);
+                                            if (returnObj.isDied) {
+                                                reject(new Error(returnObj.errorMessage || 'Field assignment generation failed after retries'));
+                                            }
+                                        }
+                                    });
+
+                                    // 입력값 설정
+                                    generator.client.input = {
+                                        description: description || 'Bounded context description',
+                                        aggregateDrafts: aggregateDrafts,
+                                        allDdlFields: allDdlFields,
+                                        generatorKey: generatorKey
+                                    };
+
+                                    // 생성 실행
+                                    generator.generate();
+                                });
+
+                                // 결과를 해당 옵션의 structure에 previewAttributes로 추가
+                                if (result) {
+                                    option.structure.forEach(struct => {
+                                        const assignment = result.find(
+                                            fa => fa.aggregateName === struct.aggregate.name
+                                        );
+                                        if (assignment) {
+                                            struct.previewAttributes = assignment.ddl_fields || [];
+                                            console.log(`[*] Added previewAttributes to ${struct.aggregate.name}:`, struct.previewAttributes);
+                                        } else {
+                                            struct.previewAttributes = [];
+                                        }
+                                    });
+                                }
+
+                                // workingMessages의 draftOptions에서 해당하는 옵션 찾아서 업데이트
+                                if (this.workingMessages.AggregateDraftDialogDto && 
+                                    this.workingMessages.AggregateDraftDialogDto.draftOptions) {
+                                    
+                                    // 현재 처리 중인 bounded context 찾기
+                                    const currentBoundedContext = this.generators.DraftGeneratorByFunctions.generator.client.input.boundedContext.name;
+                                    
+                                    const draftOption = this.workingMessages.AggregateDraftDialogDto.draftOptions.find(
+                                        opt => opt.boundedContext === currentBoundedContext
+                                    );
+                                    
+                                    if (draftOption && draftOption.options && draftOption.options[optionIndex]) {
+                                        // structure의 각 aggregate에 previewAttributes 추가
+                                        if (draftOption.options[optionIndex].structure) {
+                                            draftOption.options[optionIndex].structure.forEach(struct => {
+                                                const updatedStruct = option.structure.find(
+                                                    s => s.aggregate.name === struct.aggregate.name
+                                                );
+                                                if (updatedStruct && updatedStruct.previewAttributes) {
+                                                    struct.previewAttributes = updatedStruct.previewAttributes;
+                                                }
+                                            });
+                                        }
+                                    }
+                                }
+
+                            } catch (error) {
+                                console.error(`[*] Failed to assign fields for option ${optionIndex}:`, error);
+                                // 실패한 경우 빈 previewAttributes 설정
+                                option.structure.forEach(struct => {
+                                    struct.previewAttributes = [];
+                                });
+                            }
+                        }
+                    }
+
+                    console.log('[*] Preview attributes generation completed for all options');
+                }
+
+                if(this.generators.DraftGeneratorByFunctions.inputs.length === 0) {
+                    this.workingMessages.AggregateDraftDialogDto.draftUIInfos.leftBoundedContextCount = 0
+                }
+
+                if(!this.generators.DraftGeneratorByFunctions.generateIfInputsExist()){
+                    this.$emit("update:aggregateDrafts", this.messages)
+                    return
+                }
+            }
+            const callExtractDDLFieldsGenerator = (ddl, bcName) => {
+                return new Promise((resolve, reject) => {
+                    if(!this.generators.ExtractDDLFieldsGenerator.generator) {
+                        this.generators.ExtractDDLFieldsGenerator.generator = new ExtractDDLFieldsGenerator({
+                            onSend: (input, stopCallback) => {
+                                this.workingMessages.AggregateDraftDialogDto.isShow = true
+                                this.workingMessages.AggregateDraftDialogDto.draftUIInfos = {
+                                    leftBoundedContextCount: 1,
+                                    directMessage: "Waiting for DDL fields extraction...",
+                                    progress: null
+                                }
+                                this.workingMessages.AggregateDraftDialogDto.actions.stop = stopCallback
+                            },
+
+                            onModelCreatedWithThinking: (returnObj) => {
+                                this.workingMessages.AggregateDraftDialogDto.draftUIInfos.directMessage = returnObj.directMessage
+                                this.workingMessages.AggregateDraftDialogDto.draftUIInfos.progress = returnObj.progress
+                            }
+                        })
+                    }
+
+                    this.generators.ExtractDDLFieldsGenerator.generator.client.onGenerationSucceeded = (returnObj) => {
+                        resolve(returnObj.modelValue.output)
+                    }
+
+                    this.generators.ExtractDDLFieldsGenerator.generator.client.onError = (returnObj) => {
+                        console.error('ExtractDDLFieldsGenerator Error:', returnObj.errorMessage)
+                        reject(new Error(returnObj.errorMessage || 'Error occurred while extracting DDL fields'))
+                    }
+
+                    this.generators.ExtractDDLFieldsGenerator.generator.client.onRetry = (returnObj) => {
+                        console.warn('ExtractDDLFieldsGenerator Retry:', returnObj.errorMessage)
+                        if(returnObj.isDied) {
+                            reject(new Error(returnObj.errorMessage || 'Failed to extract DDL fields'))
+                        }
+                    }
+
+                    this.generators.ExtractDDLFieldsGenerator.generator.client.input = {
+                        "ddl": ddl,
+                        "boundedContextName": bcName
+                    }
+                    this.generators.ExtractDDLFieldsGenerator.generator.generate()
+                })
+            }
             this.generators.DraftGeneratorByFunctions.generator = new DraftGeneratorByFunctions({
                 onSend: (input, stopCallback) => {
                     this.workingMessages.AggregateDraftDialogDto.isShow = true
@@ -459,16 +656,14 @@ import { value } from 'jsonpath';
                     }
 
                     this.workingMessages.AggregateDraftDialogDto.draftUIInfos = {
-                        leftBoundedContextCount: this.generators.DraftGeneratorByFunctions.inputs.length,
+                        leftBoundedContextCount: this.generators.DraftGeneratorByFunctions.inputs.length + 1,
                         directMessage: returnObj.directMessage,
                         progress: 100
                     }
 
                     this.generators.DraftGeneratorByFunctions.updateAccumulatedDrafts(returnObj.modelValue.output, returnObj.inputParams.boundedContext)
-                    if(!this.generators.DraftGeneratorByFunctions.generateIfInputsExist()){
-                        this.$emit("update:aggregateDrafts", this.messages)
-                        return
-                    }
+
+                    generatePreviewAggAttributesToDraftOptions(returnObj.modelValue.output.options, returnObj.inputParams.boundedContext.description, returnObj.inputParams.boundedContext.requirements.ddlFields || [])
                 },
 
                 onRetry: (returnObj) => {
@@ -477,7 +672,7 @@ import { value } from 'jsonpath';
                 }
             })
 
-            this.generators.DraftGeneratorByFunctions.buildInitialInputs = (selectedStructureOption) => {
+            this.generators.DraftGeneratorByFunctions.buildInitialInputs = async (selectedStructureOption) => {
                 const getDescription = (bc, relations, explanations) => {
                     const uniqueRequirements = bc.requirements && bc.requirements.length > 0 ?
                         [...new Map(bc.requirements.map(item => [item.text, item])).values()] : [];
@@ -578,25 +773,32 @@ import { value } from 'jsonpath';
                     return requirements
                 }
 
-                const passedGeneratorInputs = selectedStructureOption.boundedContexts.map(bc => {
+                let passedGeneratorInputs = []
+                for(const bc of selectedStructureOption.boundedContexts){
                     const bcDescription = getDescription(
                         bc,
                         selectedStructureOption.relations,
                         selectedStructureOption.explanations
                     )
 
-                    return {
+                    let requirements = getRequirements(bc)
+                    if(requirements.ddl)
+                        requirements.ddlFields = await callExtractDDLFieldsGenerator(requirements.ddl, bc.name)
+                    else
+                        requirements.ddlFields = []
+
+                    passedGeneratorInputs.push({
                         boundedContext: {
                             name: bc.name,
                             alias: bc.alias,
                             displayName: bc.alias,
                             description: bcDescription,
                             aggregates: bc.aggregates,
-                            requirements: getRequirements(bc)
+                            requirements: requirements
                         },
                         description: bcDescription
-                    }
-                })
+                    })
+                }
 
                 this.generators.DraftGeneratorByFunctions.initialInputs = structuredClone(passedGeneratorInputs)
                 this.workingMessages.AggregateDraftDialogDto.retryInputs.initialInputs = structuredClone(passedGeneratorInputs)
@@ -909,12 +1111,18 @@ import { value } from 'jsonpath';
                         preservedDraftOptionsForFeedback: [],
                         preservedDraftOptions: [],
 
-                        buildInitialInputs: (selectedStructureOption) => {},
+                        buildInitialInputs: async (selectedStructureOption) => {},
                         initInputs: () => {},
                         generateIfInputsExist: () => {},
 
                         updateAccumulatedDrafts: (output, targetBoundedContext) => {},
                         generateWithFeedback: (boundedContextInfo, feedback, draftOptions) => {}
+                    },
+                    ExtractDDLFieldsGenerator: {
+                        generator: null
+                    },
+                    AssignDDLFieldsToAggregateDraft: {
+                        generator: null
                     }
                 },
 
@@ -1605,7 +1813,7 @@ import { value } from 'jsonpath';
             },
 
 
-            generateAggregateDrafts(versionInfo){
+            async generateAggregateDrafts(versionInfo){
                 if(!versionInfo) return
 
                 if(!this.alertGenerateWarning("CreateAggregateActionsByFunctions")){
@@ -1659,13 +1867,14 @@ import { value } from 'jsonpath';
                 }
 
 
-                this.generators.DraftGeneratorByFunctions.buildInitialInputs(selectedStructureOption)
+                await this.generators.DraftGeneratorByFunctions.buildInitialInputs(selectedStructureOption)
                 this.generators.DraftGeneratorByFunctions.initInputs()
                 this.generators.DraftGeneratorByFunctions.generateIfInputsExist()
             },
 
             generateFromAggregateDrafts(draftOptions){
                 if(this.isServerProject) this.state.associatedProject = this.modelIds.projectId
+                
                 this.collectedMockDatas.aggregateDraftScenarios.draftOptions = structuredClone(draftOptions)
                 this.collectedMockDatas.aggregateDraftScenarios.userStory = this.projectInfo.userStory
                 this.collectedMockDatas.aggregateDraftScenarios.state = structuredClone(this.state)
@@ -1675,6 +1884,9 @@ import { value } from 'jsonpath';
                         actions: undefined
                     }))
                 )
+                this.collectedMockDatas.aggregateDraftScenarios.frontEndResults = structuredClone(this.frontEndResults)
+                this.collectedMockDatas.aggregateDraftScenarios.pbcResults = structuredClone(this.pbcResults)
+                this.collectedMockDatas.aggregateDraftScenarios.pbcLists = structuredClone(this.pbcLists)
                 console.log("[*] 시나리오별 테스트를 위한 Mock 데이터 구축 완료", {collectedMockDatas: this.collectedMockDatas.aggregateDraftScenarios})
 
                 if(this.pbcResults.length > 0){

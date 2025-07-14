@@ -360,7 +360,8 @@
     "reconstructionDraft": "바운디드 컨텍스트 재구성 초안",
     "reconstructionAggregateDraft": "어그리거트 디자인 초안",
     "reGenerate": "재생성",
-    "requirementAnalysisResult": "요구사항 분석 결과"
+    "requirementAnalysisResult": "요구사항 분석 결과",
+    "showDetailedAttributes": "상세 속성 보기"
   },
   "RequirementAnalysis": {
     "validateRequirements": "요구사항 검증 중...",
