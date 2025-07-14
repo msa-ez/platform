@@ -1012,7 +1012,7 @@ import { value } from 'jsonpath';
 
                                     // pbc 항목 추가
                                     this.pbcResults = this.resultDevideBoundedContext[this.selectedAspect].boundedContexts.filter(bc => bc.implementationStrategy.includes("PBC"));
-                                    this.frontEndResults = this.resultDevideBoundedContext[this.selectedAspect].boundedContexts.filter(bc => bc.name.includes("frontend"));
+                                    this.frontEndResults = this.resultDevideBoundedContext[this.selectedAspect].boundedContexts.filter(bc => bc.name == "ui");
                                 }
                                 break;
 
@@ -1586,7 +1586,7 @@ import { value } from 'jsonpath';
                     'events':[],
                     'implementationStrategy':"Transaction Script",
                     'importance':"Generic Domain",
-                    'name':"frontend",
+                    'name':"ui",
                     'requirements':[],
                     'role':"요구사항에서 화면 관련 내용을 수집하기 위한 컨텍스트"
                 }
@@ -1653,9 +1653,9 @@ import { value } from 'jsonpath';
                 }
 
                 // frontEnd 제외하고 생성
-                if(selectedStructureOption.boundedContexts.some(bc => bc.name === "frontend")){
-                    this.frontEndResults = this.frontEndResults.concat(selectedStructureOption.boundedContexts.filter(bc => bc.name === "frontend"))
-                    selectedStructureOption.boundedContexts = selectedStructureOption.boundedContexts.filter(bc => bc.name !== "frontend");
+                if(selectedStructureOption.boundedContexts.some(bc => bc.name === "ui")){
+                    this.frontEndResults = this.frontEndResults.concat(selectedStructureOption.boundedContexts.filter(bc => bc.name === "ui"))
+                    selectedStructureOption.boundedContexts = selectedStructureOption.boundedContexts.filter(bc => bc.name !== "ui");
                 }
 
 

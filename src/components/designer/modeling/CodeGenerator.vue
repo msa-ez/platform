@@ -7694,7 +7694,7 @@ jobs:
                     if(!me.githubTokenError){
                         var codeList = me.generateCode(rootModel, modelForElements, platforms);
                         Promise.all([codeList]).then(async function () {
-                            me.addTemplateCode();
+                            // me.addTemplateCode();
                             if(!me.reGenerateOnlyModifiedTemplate){
                                 me.treeLists = me.generateTree(options)
                             }
