@@ -318,7 +318,8 @@
                 <v-card class="mt-4 pa-4" outlined>
                     <v-textarea v-model="feedback" 
                         :disabled="isGeneratingBoundedContext" 
-                        :label="$t('DevideBoundedContextDialog.feedback')"
+                        :placeholder="$t('DevideBoundedContextDialog.feedbackPlaceholder')"
+                        label="Feedback"
                         rows="3"
                         outlined
                         auto-grow

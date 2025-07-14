@@ -4475,9 +4475,10 @@
 
                 for(const [key, value] of Object.entries(filteredFrontEndResults)) {
                     if(key.includes("frontend")) {
+                        let uuid = this.uuid()
                         const frontEnd = {
                             _type: 'org.uengine.modeling.model.BoundedContext',
-                            id: `frontend-${this.uuid()}`,
+                            id: `frontend-${uuid}`,
                             name: value.name,
                             oldName: '',
                             displayName: value.alias,
@@ -4490,7 +4491,7 @@
                             gitURL: null,
                             elementView: {
                                 '_type': 'org.uengine.modeling.model.BoundedContext',
-                                'id': `frontend-${this.uuid()}`,
+                                'id': `frontend-${uuid}`,
                                 'x': 650,
                                 'y': maxBCBottom + 300,
                                 'width': 500,
@@ -4499,7 +4500,7 @@
                             },
                             hexagonalView:{
                                 '_type': 'org.uengine.modeling.model.BoundedContext',
-                                'id': `frontend-${this.uuid()}`,
+                                'id': `frontend-${uuid}`,
                                 'x': 0,
                                 'y': 0,
                                 'width': 0,

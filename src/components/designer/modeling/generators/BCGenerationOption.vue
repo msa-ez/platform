@@ -32,6 +32,20 @@
                             <v-btn icon color="primary" @click="incrementBCs" :disabled="localOptions.numberOfBCs >= 15">
                                 <v-icon>mdi-plus</v-icon>
                             </v-btn>
+                            <v-tooltip bottom v-if="reasonOfRecommendedBoundedContextsNumber">
+                                <template v-slot:activator="{ on, attrs }">
+                                    <v-icon 
+                                        v-bind="attrs"
+                                        v-on="on"
+                                        color="primary"
+                                        size="large"
+                                        class="ml-2"
+                                    >
+                                        mdi-help-circle-outline
+                                    </v-icon>
+                                </template>
+                                <span>{{ reasonOfRecommendedBoundedContextsNumber }}</span>
+                            </v-tooltip>
                         </div>
                     </v-col>
                     
@@ -101,6 +115,7 @@
                         <v-textarea
                             v-model="localOptions.additionalOptions"
                             :label="$t('BCGenerationOption.additionalRequirements')"
+                            :placeholder="$t('BCGenerationOption.additionalRequirementsPlaceholder')"
                             rows="3"
                             outlined
                             auto-grow
@@ -136,6 +151,7 @@ export default {
         isStartMapping: Boolean,
         isAnalizing: Boolean,
         recommendedBoundedContextsNumber: {type: Number, default: 3},
+        reasonOfRecommendedBoundedContextsNumber: String,
         generateOption: Object,
         isEditable: Boolean
     },

@@ -97,17 +97,9 @@ export default class UserStoryGenerator extends AIGenerator{
             - Define core business rules and constraints
             - Include validation rules and business logic
             - Specify any regulatory or compliance requirements
-            
-            4. Bounded Contexts:
-            - Define clear boundaries between different domains
-            - Specify the responsibilities of each bounded context
-            - Include the relationships between bounded contexts
-            - Consider the separation principle: ${this.client.input.separationPrinciple}
-            
-            ${modelDescription}
 
             The response must:
-            - Ensure complete traceability between actors, stories, and bounded contexts
+            - Ensure complete traceability between actors, stories
             - Avoid any missing connections between components
         `
     }

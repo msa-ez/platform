@@ -35,6 +35,7 @@
     "numberOfBCs": "서비스 분리 (바운디드 컨텍스트) 최대 개수 (15개 이하)",
     "selectAspects": "분리 목적 선택",
     "additionalRequirements": "추가 요구사항",
+    "additionalRequirementsPlaceholder": "예시) 반드시, 사용자관리는 단일 바운디드 컨텍스트로 분리해 줘",
     "generate" : "생성",
     "bcNumberLimitError": "15개 이하여야 합니다",
     "invalidNumberError": "숫자만 입력 가능합니다.",
@@ -121,6 +122,7 @@
     "stop": "중지",
     "analysis": "분석",
     "feedback": "피드백",
+    "feedbackPlaceholder": "예시) 사용자관리와 프로필 관리는 동일 바운디드 컨텍스트로 통합해 줘",
     "createModel": "모델 생성",
     "createAggregateDraft": "어그리거트 초안 생성",
     "descriptionOfEachBoundedContext": "각 Bounded Context의 설명",
@@ -361,6 +363,7 @@
     "reconstructionAggregateDraft": "어그리거트 디자인 초안",
     "reGenerate": "재생성",
     "requirementAnalysisResult": "요구사항 분석 결과",
+    "feedbackPlaceholder": "예시) 사용자 애그리거트는 사용자관리 바운디드 컨텍스트를 참조하도록 수정해 줘",
     "showDetailedAttributes": "상세 속성 보기"
   },
   "RequirementAnalysis": {
