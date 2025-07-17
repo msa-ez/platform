@@ -4634,7 +4634,7 @@
 
             async _sanpshotModelForcely() {
                 await this.pushObject(`db://definitions/${this.projectId}/snapshotLists`, {
-                    lastSnapshotKey: '',
+                    lastSnapshotKey: this.latestQueueKey,
                     snapshot: JSON.stringify(this.value),
                     snapshotImg: null,
                     timeStamp: Date.now()

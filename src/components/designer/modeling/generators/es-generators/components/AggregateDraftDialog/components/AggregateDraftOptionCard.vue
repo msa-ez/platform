@@ -39,13 +39,12 @@
             <!-- 세부 속성 보기 스위치 추가 -->
             <div v-if="optionInfo.structure && hasPreviewAttributes" class="px-4 py-2">
                 <v-switch
-                    v-model="showDetailedAttributes"
+                    v-model="localShowDetailedAttributes"
                     :label="$t('ModelDraftDialogForDistribution.showDetailedAttributes')"
                     dense
                     inset
                     hide-details
                     class="mt-0"
-                    @change="updateMermaidDiagram"
                 ></v-switch>
             </div>
 
@@ -124,6 +123,12 @@
                 type: Boolean,
                 default: false,
                 required: false
+            },
+
+            showDetailedAttributes: {
+                type: Boolean,
+                default: false,
+                required: false
             }
         },
         data(){
@@ -133,7 +138,6 @@
                     renderKey: 0
                 },
                 analysisExpanded: false,
-                showDetailedAttributes: false, // 세부 속성 보기 스위치 상태
             }
         },
         computed: {
@@ -155,6 +159,17 @@
                 return this.optionInfo.structure && this.optionInfo.structure.some(item => 
                     item.previewAttributes && Array.isArray(item.previewAttributes) && item.previewAttributes.length > 0
                 );
+            },
+            localShowDetailedAttributes: {
+                get() {
+                    return this.showDetailedAttributes;
+                },
+                set(value) {
+                    this.$emit('update:showDetailedAttributes', value);
+                    this.$nextTick(() => {
+                        this.updateMermaidDiagram();
+                    });
+                }
             }
         },
         watch: {

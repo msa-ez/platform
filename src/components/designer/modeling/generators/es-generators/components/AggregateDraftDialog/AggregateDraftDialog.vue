@@ -41,7 +41,9 @@
                         :optionIndex="index"
                         :optionInfo="option"
                         :isSelectedCard="isSelectedCard(activeContext, index)"
+                        :showDetailedAttributes="getDetailedAttributesState(activeContext.boundedContext, index)"
                         @onCardSelected="selectedCard"
+                        @update:showDetailedAttributes="updateDetailedAttributesState(activeContext.boundedContext, index, $event)"
                     ></AggregateDraftOptionCard>
                 </v-card>
 
@@ -186,13 +188,17 @@
                 selectedOptionItem: {},
                 selectedCardIndex: {},
                 selectedCardKey: 0,
-                feedback: ''
+                feedback: '',
+                detailedAttributesState: {} // 각 bounded context별 세부 속성 보기 상태 관리
             }
         },
         watch: {
             draftOptions: {
                 handler(newVal) {
                     this.updateSelectionByDraftOptions(newVal)
+                    this.$nextTick(() => {
+                        this.selectedCardKey++
+                    })
                 },
                 deep: true
             },
@@ -289,7 +295,9 @@
                         
                         if(this.selectedCardIndex[option.boundedContext] == null)
                             this.selectedCardIndex[option.boundedContext] = option.defaultOptionIndex
-                        
+                        if(this.selectedCardIndex[option.boundedContext] >= option.options.length)
+                            this.selectedCardIndex[option.boundedContext] = option.options.length - 1
+
                         this.selectedOptionItem[option.boundedContext] = option.options[this.selectedCardIndex[option.boundedContext]]  
                     })
 
@@ -297,6 +305,14 @@
 
                     this.$emit('updateSelectedOptionItem', this.selectedOptionItem)
                 }
+            },
+            getDetailedAttributesState(boundedContext, optionIndex) {
+                const key = `${boundedContext}_${optionIndex}`;
+                return this.detailedAttributesState[key] || false;
+            },
+            updateDetailedAttributesState(boundedContext, optionIndex, value) {
+                const key = `${boundedContext}_${optionIndex}`;
+                this.$set(this.detailedAttributesState, key, value);
             }
         }
     }

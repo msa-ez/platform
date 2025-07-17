@@ -323,7 +323,7 @@ import { value } from 'jsonpath';
                 }
             }
 
-            const generatePreviewAggAttributesToDraftOptions = async (options, description, allDdlFields) => {
+            const generatePreviewAggAttributesToDraftOptions = async (options, description, allDdlFields, afterGenerateCallback) => {
                 // 각 옵션을 순차적으로 처리
                 if (allDdlFields.length > 0) {
                     for (let optionIndex = 0; optionIndex < options.length; optionIndex++) {
@@ -343,7 +343,7 @@ import { value } from 'jsonpath';
                             const singleAggregate = aggregateDrafts[0];
                             option.structure.forEach(struct => {
                                 if (struct.aggregate.name === singleAggregate.name) {
-                                    struct.previewAttributes = [...allDdlFields];
+                                    this.$set(struct, 'previewAttributes', [...allDdlFields])
                                     console.log(`[*] Direct assignment - Added all DDL fields to single aggregate ${struct.aggregate.name}:`, struct.previewAttributes);
                                 }
                             });
@@ -361,7 +361,7 @@ import { value } from 'jsonpath';
                                     if (draftOption.options[optionIndex].structure) {
                                         draftOption.options[optionIndex].structure.forEach(struct => {
                                             if (struct.aggregate.name === singleAggregate.name) {
-                                                struct.previewAttributes = [...allDdlFields];
+                                                this.$set(struct, 'previewAttributes', [...allDdlFields])
                                             }
                                         });
                                     }
@@ -374,8 +374,14 @@ import { value } from 'jsonpath';
                             try {
                                 const result = await new Promise((resolve, reject) => {
                                     const generator = new AssignDDLFieldsToAggregateDraft({
+                                        onSend: () => {
+                                            this.workingMessages.AggregateDraftDialogDto.draftUIInfos = {
+                                                leftBoundedContextCount: 1,
+                                                directMessage: "Waiting for preview attributes generation...",
+                                                progress: null
+                                            }
+                                        },
                                         onModelCreatedWithThinking: (returnObj) => {
-                                            this.workingMessages.AggregateDraftDialogDto.draftUIInfos.leftBoundedContextCount = this.generators.DraftGeneratorByFunctions.inputs.length + 1
                                             this.workingMessages.AggregateDraftDialogDto.draftUIInfos.directMessage = returnObj.directMessage
                                             this.workingMessages.AggregateDraftDialogDto.draftUIInfos.progress = returnObj.progress
                                         },
@@ -418,10 +424,10 @@ import { value } from 'jsonpath';
                                             fa => fa.aggregateName === struct.aggregate.name
                                         );
                                         if (assignment) {
-                                            struct.previewAttributes = assignment.ddl_fields || [];
+                                            this.$set(struct, 'previewAttributes', [...(assignment.ddl_fields || [])])
                                             console.log(`[*] Added previewAttributes to ${struct.aggregate.name}:`, struct.previewAttributes);
                                         } else {
-                                            struct.previewAttributes = [];
+                                            this.$set(struct, 'previewAttributes', [])
                                         }
                                     });
                                 }
@@ -432,7 +438,6 @@ import { value } from 'jsonpath';
                                     
                                     // 현재 처리 중인 bounded context 찾기
                                     const currentBoundedContext = this.generators.DraftGeneratorByFunctions.generator.client.input.boundedContext.name;
-                                    
                                     const draftOption = this.workingMessages.AggregateDraftDialogDto.draftOptions.find(
                                         opt => opt.boundedContext === currentBoundedContext
                                     );
@@ -445,7 +450,7 @@ import { value } from 'jsonpath';
                                                     s => s.aggregate.name === struct.aggregate.name
                                                 );
                                                 if (updatedStruct && updatedStruct.previewAttributes) {
-                                                    struct.previewAttributes = updatedStruct.previewAttributes;
+                                                    this.$set(struct, 'previewAttributes', [...(updatedStruct.previewAttributes || [])])
                                                 }
                                             });
                                         }
@@ -456,7 +461,7 @@ import { value } from 'jsonpath';
                                 console.error(`[*] Failed to assign fields for option ${optionIndex}:`, error);
                                 // 실패한 경우 빈 previewAttributes 설정
                                 option.structure.forEach(struct => {
-                                    struct.previewAttributes = [];
+                                    this.$set(struct, 'previewAttributes', [])
                                 });
                             }
                         }
@@ -469,10 +474,7 @@ import { value } from 'jsonpath';
                     this.workingMessages.AggregateDraftDialogDto.draftUIInfos.leftBoundedContextCount = 0
                 }
 
-                if(!this.generators.DraftGeneratorByFunctions.generateIfInputsExist()){
-                    this.$emit("update:aggregateDrafts", this.messages)
-                    return
-                }
+                afterGenerateCallback()
             }
             const callExtractDDLFieldsGenerator = (ddl, bcName) => {
                 return new Promise((resolve, reject) => {
@@ -651,7 +653,9 @@ import { value } from 'jsonpath';
                             directMessage: returnObj.directMessage,
                             progress: 100
                         }
-                        this.$emit("update:aggregateDrafts", this.messages)
+                        generatePreviewAggAttributesToDraftOptions(returnObj.modelValue.output.options, returnObj.inputParams.boundedContext.description, returnObj.inputParams.boundedContext.requirements.ddlFields || [], () => {
+                            this.$emit("update:aggregateDrafts", this.messages)
+                        })
                         return
                     }
 
@@ -663,7 +667,11 @@ import { value } from 'jsonpath';
 
                     this.generators.DraftGeneratorByFunctions.updateAccumulatedDrafts(returnObj.modelValue.output, returnObj.inputParams.boundedContext)
 
-                    generatePreviewAggAttributesToDraftOptions(returnObj.modelValue.output.options, returnObj.inputParams.boundedContext.description, returnObj.inputParams.boundedContext.requirements.ddlFields || [])
+                    generatePreviewAggAttributesToDraftOptions(returnObj.modelValue.output.options, returnObj.inputParams.boundedContext.description, returnObj.inputParams.boundedContext.requirements.ddlFields || [], () => {
+                        if(!this.generators.DraftGeneratorByFunctions.generateIfInputsExist()){
+                            this.$emit("update:aggregateDrafts", this.messages)
+                        }
+                    })
                 },
 
                 onRetry: (returnObj) => {
@@ -867,10 +875,7 @@ import { value } from 'jsonpath';
                 this.generators.DraftGeneratorByFunctions.generator.client.input = {
                     description: boundedContextInfo.description || "",
                     boundedContext: {
-                        name: boundedContextInfo.boundedContext,
-                        alias: boundedContextInfo.boundedContextAlias,
-                        displayName: boundedContextInfo.boundedContextAlias,
-                        description: boundedContextInfo.description,
+                        ...boundedContextInfo.options[0].boundedContext,
                         aggregates: []
                     },
                     accumulatedDrafts: accumulatedDrafts,
