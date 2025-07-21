@@ -9,6 +9,7 @@ export const { PreProcessingFunctionsGenerator, PreProcessingFunctionsGeneratorT
 export const { DraftGeneratorByFunctions, DraftGeneratorByFunctionsTest } = require("./DraftGeneratorByFunctions");
 export const { ExtractDDLFieldsGenerator, ExtractDDLFieldsGeneratorTest } = require("./ExtractDDLFieldsGenerator");
 export const { AssignDDLFieldsToAggregateDraft, AssignDDLFieldsToAggregateDraftTest } = require("./AssignDDLFieldsToAggregateDraft");
+export const { AssignPreviewFieldsToAggregateDraft, AssignPreviewFieldsToAggregateDraftTest } = require("./AssignPreviewFieldsToAggregateDraft");
 export const { SanityCheckGenerator, SanityCheckGeneratorTest } = require("./SanityCheckGenerator");
 export const { AggregateDraftDialog } = require("./components");
 export const { getEsValue, getEsDraft, esConfigs, getAvailableServiceNames } = require("./mocks");
