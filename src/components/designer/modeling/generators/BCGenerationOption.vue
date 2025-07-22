@@ -44,7 +44,7 @@
                                         mdi-help-circle-outline
                                     </v-icon>
                                 </template>
-                                <span>{{ reasonOfRecommendedBoundedContextsNumber }}</span>
+                                <span v-html="formattedReasonOfRecommendedBoundedContextsNumber"></span>
                             </v-tooltip>
                         </div>
                     </v-col>
@@ -204,6 +204,14 @@ export default {
                this.isAnalizing ||
                this.localOptions.numberOfBCs > 15;
         },
+        formattedReasonOfRecommendedBoundedContextsNumber() {
+            if (!this.reasonOfRecommendedBoundedContextsNumber) return '';
+            let text = this.reasonOfRecommendedBoundedContextsNumber
+                .replace(/\\n/g, '<br>')
+                .replace(/\n/g, '<br>');
+            text = text.replace(/([0-9]+)\)/g, '<br>$1)');
+            return text.replace(/^(<br>)+/, '');
+        }
     },
 
     mounted() {

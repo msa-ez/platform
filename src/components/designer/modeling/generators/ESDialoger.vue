@@ -1232,7 +1232,7 @@ import { value } from 'jsonpath';
                             case 'processAnalysis':
                                 await addPropertyWithDelay(newMessage, 'type', msg.type);
                                 await addPropertyWithDelay(newMessage, 'uniqueId', msg.uniqueId);
-                                await addPropertyWithDelay(newMessage, 'isAnalizing', msg.isAnalizing);
+                                await addPropertyWithDelay(newMessage, 'isAnalizing', false);
                                 await addPropertyWithDelay(newMessage, 'isSummarizeStarted', msg.isSummarizeStarted);
                                 await addPropertyWithDelay(newMessage, 'isGeneratingBoundedContext', false);
                                 await addPropertyWithDelay(newMessage, 'isStartMapping', msg.isStartMapping);

@@ -88,6 +88,7 @@ For ui bounded context, ONLY map requirements that are related to:
     - Data persistence or storage
     
 Focus ONLY on what users see and interact with on the screen.
+If the requirement is not related to the UI, return empty array.
             `
         }else{
             return `
