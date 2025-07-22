@@ -643,6 +643,10 @@
             drawShape: function () {
                 var me = this;
                 var now = new Date();
+                
+                // 배치 렌더링 시작 (첫 번째 drawShape 호출 시에만)
+                me.startBatchRendering();
+                
                 var shape = me.generateShape();
                 shape.clone = function () {
                     return me.generateShape();
@@ -770,6 +774,8 @@
                     this.bindElementEvents();
                     this.emitElement();
 
+                    // 배치 렌더링 종료 예약 (디바운스)
+                    me.endBatchRendering();
 
                     window.Vue.OGBus.$emit('renderingTime', this.canvasComponent.id, Date.now() - now);
                 }
@@ -1072,6 +1078,38 @@
                 }
 
                 return 's' + s4() + s4() + s4() + s4() + s4() + s4() + s4() + s4();
+            },
+
+            /**
+             * 배치 렌더링을 시작합니다. (첫 번째 drawShape 호출 시에만 실행)
+             */
+            startBatchRendering: function () {
+                var me = this;
+                if (!me.canvasComponent._batchRenderingActive) {
+                    me.canvasComponent._batchRenderingActive = true;
+                    me.canvasComponent.canvas.startBatch();
+                }
+            },
+
+            /**
+             * 배치 렌더링 종료를 예약합니다. (디바운스 방식)
+             */
+            endBatchRendering: function () {
+                var me = this;
+                
+                // 기존 타이머가 있다면 취소
+                if (me.canvasComponent._batchEndTimer) {
+                    clearTimeout(me.canvasComponent._batchEndTimer);
+                }
+                
+                // 250ms 후에 배치 렌더링 종료
+                me.canvasComponent._batchEndTimer = setTimeout(function () {
+                    if (me.canvasComponent._batchRenderingActive) {
+                        me.canvasComponent._batchRenderingActive = false;
+                        me.canvasComponent.canvas.endBatch();
+                        me.canvasComponent._batchEndTimer = null;
+                    }
+                }, 250);
             }
         }
     }

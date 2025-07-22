@@ -35817,6 +35817,17 @@ OG.graph.Canvas.prototype = {
 
     //me._CONFIG.WHEEL_SCALABLE
 
+    startBatch: function () {
+        this._CONFIG.FAST_LOADING = true;
+        this._CONFIG.AUTO_SLIDER_UPDATE = false;
+        this._CONFIG.AUTO_HISTORY = false;
+    },
+    endBatch: function () {
+        this._CONFIG.FAST_LOADING = false;
+        this._CONFIG.AUTO_SLIDER_UPDATE = true;
+        this._CONFIG.AUTO_HISTORY = true;
+        this.updateSlider();
+    },
     fastLoadingON: function () {
         this._CONFIG.FAST_LOADING = true;
         // this._CONFIG.AUTO_SLIDER_UPDATE = false;
