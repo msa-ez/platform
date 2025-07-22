@@ -219,7 +219,8 @@
     import { 
         DraftGeneratorByFunctions,
         ExtractDDLFieldsGenerator,
-        AssignDDLFieldsToAggregateDraft
+        AssignDDLFieldsToAggregateDraft,
+        AssignPreviewFieldsToAggregateDraft
     } from '../../modeling/generators/es-generators';
 
     import {
@@ -466,8 +467,116 @@ import { value } from 'jsonpath';
                             }
                         }
                     }
+                }
+                else {
+                    // 별도의 DDL 필드가 없을 경우에는 AssignPreviewFieldsToAggregateDraft를 이용해서 직접 속성을 생성
+                    for (let optionIndex = 0; optionIndex < options.length; optionIndex++) {
+                        const option = options[optionIndex];
+                        
+                        if (!option.structure || option.structure.length === 0) continue;
 
-                    console.log('[*] Preview attributes generation completed for all options');
+                        // structure에서 aggregateDrafts 구성
+                        const aggregateDrafts = option.structure.map(struct => ({
+                            name: struct.aggregate.name,
+                            alias: struct.aggregate.alias
+                        }));
+                        // 기존 로직 - 여러 Aggregate가 있을 경우 AssignDDLFieldsToAggregateDraft 생성기 호출
+                        const generatorKey = `option ${optionIndex + 1}`;
+
+                        try {
+
+                            const result = await new Promise((resolve, reject) => {
+                                const generator = new AssignPreviewFieldsToAggregateDraft({
+                                    onSend: () => {
+                                        this.workingMessages.AggregateDraftDialogDto.draftUIInfos = {
+                                            leftBoundedContextCount: 1,
+                                            directMessage: "Waiting for preview attributes generation...",
+                                            progress: null
+                                        }
+                                    },
+                                    onModelCreatedWithThinking: (returnObj) => {
+                                        this.workingMessages.AggregateDraftDialogDto.draftUIInfos.directMessage = returnObj.directMessage
+                                        this.workingMessages.AggregateDraftDialogDto.draftUIInfos.progress = returnObj.progress
+                                    },
+                                    onGenerationSucceeded: (returnObj) => {
+                                        try {
+                                            resolve(returnObj.modelValue.output);
+                                        } catch (error) {
+                                            console.error(`[*] Option ${optionIndex} field assignment processing error:`, error);
+                                            reject(error);
+                                        }
+                                    },
+                                    onError: (returnObj) => {
+                                        console.error(`[*] Option ${optionIndex} field assignment generation error:`, returnObj.errorMessage);
+                                        reject(new Error(returnObj.errorMessage || 'Field assignment generation failed'));
+                                    },
+                                    onRetry: (returnObj) => {
+                                        console.warn(`[*] Option ${optionIndex} field assignment retry:`, returnObj.errorMessage);
+                                        if (returnObj.isDied) {
+                                            reject(new Error(returnObj.errorMessage || 'Field assignment generation failed after retries'));
+                                        }
+                                    }
+                                });
+
+                                // 입력값 설정
+                                generator.client.input = {
+                                    description: description || 'Bounded context description',
+                                    aggregateDrafts: aggregateDrafts,
+                                    generatorKey: generatorKey
+                                };
+
+                                // 생성 실행
+                                generator.generate();
+                            });
+
+                            // 결과를 해당 옵션의 structure에 previewAttributes로 추가
+                            if (result) {
+                                option.structure.forEach(struct => {
+                                    const assignment = result.find(
+                                        fa => fa.aggregateName === struct.aggregate.name
+                                    );
+                                    if (assignment) {
+                                        this.$set(struct, 'previewAttributes', [...(assignment.preview_fields || [])])
+                                        console.log(`[*] Added previewAttributes to ${struct.aggregate.name}:`, struct.previewAttributes);
+                                    } else {
+                                        this.$set(struct, 'previewAttributes', [])
+                                    }
+                                });
+                            }
+
+                            // workingMessages의 draftOptions에서 해당하는 옵션 찾아서 업데이트
+                            if (this.workingMessages.AggregateDraftDialogDto && 
+                                this.workingMessages.AggregateDraftDialogDto.draftOptions) {
+                                
+                                // 현재 처리 중인 bounded context 찾기
+                                const currentBoundedContext = this.generators.DraftGeneratorByFunctions.generator.client.input.boundedContext.name;
+                                const draftOption = this.workingMessages.AggregateDraftDialogDto.draftOptions.find(
+                                    opt => opt.boundedContext === currentBoundedContext
+                                );
+                                
+                                if (draftOption && draftOption.options && draftOption.options[optionIndex]) {
+                                    // structure의 각 aggregate에 previewAttributes 추가
+                                    if (draftOption.options[optionIndex].structure) {
+                                        draftOption.options[optionIndex].structure.forEach(struct => {
+                                            const updatedStruct = option.structure.find(
+                                                s => s.aggregate.name === struct.aggregate.name
+                                            );
+                                            if (updatedStruct && updatedStruct.previewAttributes) {
+                                                this.$set(struct, 'previewAttributes', [...(updatedStruct.previewAttributes || [])])
+                                            }
+                                        });
+                                    }
+                                }
+                            }
+
+                        } catch (error) {
+                            console.error(`[*] Failed to assign fields for option ${optionIndex}:`, error);
+                            // 실패한 경우 빈 previewAttributes 설정
+                            option.structure.forEach(struct => {
+                                this.$set(struct, 'previewAttributes', [])
+                            });
+                        }
+                    }
                 }
 
                 if(this.generators.DraftGeneratorByFunctions.inputs.length === 0) {

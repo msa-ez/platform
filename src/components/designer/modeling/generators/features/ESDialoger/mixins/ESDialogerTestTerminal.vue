@@ -9,7 +9,8 @@ import {
     PreProcessingFunctionsGeneratorTest,
     DraftGeneratorByFunctionsTest,
     ExtractDDLFieldsGeneratorTest,
-    AssignDDLFieldsToAggregateDraftTest
+    AssignDDLFieldsToAggregateDraftTest,
+    AssignPreviewFieldsToAggregateDraftTest
 } from "../../../es-generators";
 
 export default {
@@ -57,6 +58,7 @@ export default {
                 DraftGeneratorByFunctionsTestWithFeedback: {command: async () => { await DraftGeneratorByFunctionsTest.test("draftGeneratorByFunctionsInputsWithFeedback") }},
                 ExtractDDLFieldsGeneratorTest: {command: async () => { await ExtractDDLFieldsGeneratorTest.test("extractDDLFieldsGeneratorInputs") }},
                 AssignDDLFieldsToAggregateDraftTest: {command: async () => { await AssignDDLFieldsToAggregateDraftTest.test("assignDDLFieldsToAggregateDraftInputs") }},
+                AssignPreviewFieldsToAggregateDraftTest: {command: async () => { await AssignPreviewFieldsToAggregateDraftTest.test("assignPreviewFieldsToAggregateDraftInputs") }},
             }
             
 
