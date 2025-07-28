@@ -125,6 +125,7 @@
     "feedbackPlaceholder": "ex) User management and profile management should be combined into the same bounded context",
     "createModel": "Create Model",
     "createAggregateDraft": "Create Draft Aggregate",
+    "createSiteMap": "Create SiteMap",
     "descriptionOfEachBoundedContext": "Description of Each Bounded Context",
     "relations": "Relations",
     "boundedContextName": "Bounded Context Name",

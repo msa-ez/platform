@@ -125,6 +125,7 @@
     "feedbackPlaceholder": "예시) 사용자관리와 프로필 관리는 동일 바운디드 컨텍스트로 통합해 줘",
     "createModel": "모델 생성",
     "createAggregateDraft": "어그리거트 초안 생성",
+    "createSiteMap": "사이트맵 생성",
     "descriptionOfEachBoundedContext": "각 Bounded Context의 설명",
     "relations": "관계",
     "boundedContextName": "Bounded Context 이름",

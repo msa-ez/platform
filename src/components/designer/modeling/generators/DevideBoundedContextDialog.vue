@@ -349,6 +349,11 @@
                         class="ml-2"
                     ></v-progress-circular>
                     <v-btn 
+                        @click="openSiteMapViewer"
+                    >
+                        {{ $t('DevideBoundedContextDialog.createSiteMap') }}
+                    </v-btn>
+                    <v-btn 
                         :disabled="isGeneratingBoundedContext || isStartMapping || !isEditable" 
                         class="auto-modeling-btn" 
                         color="primary" 
@@ -648,12 +653,31 @@
                 </v-card-text>
             </v-tab-item>
         </v-tabs-items>
+
+        <v-dialog 
+            v-model="isSiteMapViewerOpen" 
+            max-width="95%" 
+            max-height="95%"
+            persistent
+        >
+            <v-card>
+                <v-card-text>
+                    <SiteMapViewer 
+                        :userStory="userStory" 
+                        :siteMap="siteMap" 
+                        @update:siteMap="updateSiteMap" 
+                        @close:siteMapViewer="closeSiteMapViewer" 
+                    />
+                </v-card-text>
+            </v-card>
+        </v-dialog>
     </v-card>
 </template>
 
 <script>
     import VueMermaid from '@/components/VueMermaid.vue';
     import BoundedContextMatrix from './BoundedContextMatrix.vue';
+    import SiteMapViewer from './SiteMapViewer.vue';
 
     export default {
         name: 'devide-bounded-context-dialog',
@@ -722,11 +746,22 @@
                 type: Number,
                 required: false,
                 default: 0
+            },
+            userStory: {
+                type: String,
+                default: () => "",
+                required: false
+            },
+            siteMap: {
+                type: Array,
+                default: () => [],
+                required: false
             }
         },
         components: {
             VueMermaid,
-            BoundedContextMatrix
+            BoundedContextMatrix,
+            SiteMapViewer
         },
         data() {
             return {
@@ -812,7 +847,9 @@
                     }))
                 ],
                 activeTab: 0,
-                expanded: []
+                expanded: [],
+
+                isSiteMapViewerOpen: false
             }
         },
         mounted() {
@@ -1373,17 +1410,18 @@
                     }
                 }
             },
-            cancelRelationEdit(item) {
-                // No longer needed since we're using item values directly
+            openSiteMapViewer() {
+                console.log('SiteMapViewer 열기 - 현재 상태:', this.isSiteMapViewerOpen);
+                this.isSiteMapViewerOpen = true;
+                console.log('SiteMapViewer 열기 후 상태:', this.isSiteMapViewerOpen);
             },
-            initializeRelationEditFields(item) {
-                // No longer needed since we're using item values directly
+            updateSiteMap(siteMap) {
+                this.$emit('updateSiteMap', siteMap)
             },
-            cancelRelationEditForAspect(item, aspect) {
-                // No longer needed since we're using item values directly
-            },
-            initializeRelationEditFieldsForAspect(item, aspect) {
-                // No longer needed since we're using item values directly
+            closeSiteMapViewer() {
+                console.log('SiteMapViewer 닫기 - 현재 상태:', this.isSiteMapViewerOpen);
+                this.isSiteMapViewerOpen = false;
+                console.log('SiteMapViewer 닫기 후 상태:', this.isSiteMapViewerOpen);
             }
         }
     }

@@ -345,18 +345,13 @@ export default {
             
             // 1. 연결된 이벤트 그룹 찾기 (nextEvents 기반)
             const connectedGroups = this.findConnectedEventGroups(events);
-            console.log('Connected groups:', connectedGroups.length);
             
             // 2. 연결되지 않은 이벤트들을 개별 세트로 만들기
             const unconnectedGroups = this.findUnconnectedEventGroups(events, connectedGroups);
-            console.log('Unconnected groups:', unconnectedGroups.length);
             
             // 3. 단일 이벤트들을 하나의 그룹으로 합치기
             const singleEventGroups = unconnectedGroups.filter(group => group.events.length === 1);
             const multiEventGroups = unconnectedGroups.filter(group => group.events.length > 1);
-            
-            console.log('Single event groups:', singleEventGroups.length);
-            console.log('Multi event groups:', multiEventGroups.length);
             
             // 4. 단일 이벤트들을 하나의 탭으로 그룹화
             let allGroups = [...connectedGroups, ...multiEventGroups];
@@ -373,7 +368,6 @@ export default {
                         )
                     )
                 };
-                console.log('Created single events group with', singleEventsGroup.events.length, 'events');
                 allGroups.push(singleEventsGroup);
             }
             
@@ -400,19 +394,11 @@ export default {
 
             // 첫 번째 탭을 기본으로 설정
             this.activeTab = this.processSets.length > 0 ? 0 : null;
-            
-            // 첫 번째 탭이 활성화되면 computed 속성이 자동으로 BPMN XML을 생성함
-            console.log('Created', this.processSets.length, 'process sets');
-            this.processSets.forEach((set, index) => {
-                console.log(`Process Set ${index}: ${set.name} (${set.events.length} events)`);
-            });
         },
 
         findConnectedEventGroups(events) {
             const groups = [];
             const visited = new Set();
-            
-            console.log('Finding connected event groups from', events.length, 'events');
             
             // 연결된 이벤트들을 찾기 위해 각 이벤트의 nextEvents를 확인
             const connectedEventMap = new Map();
@@ -433,8 +419,6 @@ export default {
                 }
             });
             
-            console.log('Connected event map:', connectedEventMap);
-            
             // 연결된 이벤트 그룹들을 찾기
             events.forEach(event => {
                 if (visited.has(event.name)) return;
@@ -450,7 +434,6 @@ export default {
                     const group = this.findConnectedEvents(event, events, visited);
                     // 연결된 이벤트가 있으면 그룹으로 인정 (단일 이벤트라도 다른 이벤트와 연결되어 있으면 포함)
                     if (group.events.length > 0) {
-                        console.log('Found connected group:', group.name, 'with', group.events.length, 'events:', group.events.map(e => e.name));
                         groups.push(group);
                     } else {
                         // 연결되지 않은 이벤트는 visited에서 제거하여 나중에 개별 처리
@@ -462,7 +445,6 @@ export default {
                 }
             });
             
-            console.log('Total connected groups found:', groups.length);
             return groups;
         },
 
@@ -474,7 +456,6 @@ export default {
             };
             
             const queue = [startEvent];
-            console.log('Starting connected event search from:', startEvent.name, 'with nextEvents:', startEvent.nextEvents);
             
             while (queue.length > 0) {
                 const currentEvent = queue.shift();
@@ -489,10 +470,7 @@ export default {
                         // 정규화된 이름으로 이벤트 찾기
                         const nextEvent = allEvents.find(e => e.normName === nextEventName);
                         if (nextEvent && !visited.has(nextEvent.name)) {
-                            console.log('Found connected event:', currentEvent.name, '->', nextEvent.name, '(normName:', nextEventName, ')');
                             queue.push(nextEvent);
-                        } else {
-                            console.log('Could not find connected event:', currentEvent.name, '->', nextEventName);
                         }
                     });
                 }
@@ -500,7 +478,6 @@ export default {
                 // 현재 이벤트를 nextEvents로 가진 다른 이벤트들도 찾아서 추가
                 allEvents.forEach(otherEvent => {
                     if (otherEvent.nextEvents && otherEvent.nextEvents.includes(currentEvent.normName) && !visited.has(otherEvent.name)) {
-                        console.log('Found incoming connection:', otherEvent.name, '->', currentEvent.name);
                         queue.push(otherEvent);
                     }
                 });
@@ -540,8 +517,6 @@ export default {
             // 사용되지 않은 이벤트들을 개별 세트로 만들기
             const unusedEvents = events.filter(event => !usedEvents.has(event.name));
             
-            console.log('Unconnected events found:', unusedEvents.length, unusedEvents.map(e => e.name));
-            
             unusedEvents.forEach(event => {
                 groups.push({
                     name: `${event.actor} - ${event.displayName || event.name}`,
@@ -577,9 +552,6 @@ export default {
         generateProcessSetBPMN(events, actors) {
             if (!events || events.length === 0) return '';
             
-            console.log('Generating BPMN for process set with', events.length, 'events:', events.map(e => e.name));
-            console.log('Actors:', actors.map(a => a.name));
-
             const normalize = str => {
                 if (!str) return '';
                 return String(str)
@@ -1003,9 +975,7 @@ export default {
             }
         },
         onBpmnXmlUpdate(newXml) {
-            // XML이 실제로 변경된 경우에만 업데이트
             if (newXml !== this.currentBpmXml) {
-                console.log('BPMN XML updated, length:', newXml.length);
                 // 동적으로 생성되는 XML이므로 별도 저장 불필요
             }
         },

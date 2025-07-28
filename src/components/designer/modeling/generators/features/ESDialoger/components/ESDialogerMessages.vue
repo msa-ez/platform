@@ -96,6 +96,8 @@
                             :messageId="message.uniqueId"
                             :isEditable="isEditable"
                             :currentGeneratedLength="message.currentGeneratedLength"
+                            :userStory="message.userStory"
+                            :siteMap="message.siteMap"
                             @createModel="$emit('createModel', $event)"
                             @closeDialog="$emit('closeDialog')"
                             @stop="$emit('stop')"
@@ -107,6 +109,7 @@
                             @mappingRequirements="$emit('mappingRequirements', $event)"
                             @updateSelectedAspect="updateSelectedAspect"
                             @updateDevideBoundedContext="(selectedAspect, devideBoundedContext) => $emit('updateDevideBoundedContext', selectedAspect, devideBoundedContext)"
+                            @updateSiteMap="(siteMap) => $emit('updateSiteMap', siteMap)"
                         ></DevideBoundedContextDialog>
                     </v-card>
 
@@ -430,6 +433,9 @@ export default {
                 this.isProcessing = false;
                 this.processingMessage = null;
             }
+        },
+        updateSiteMap(siteMap) {
+            this.$emit('updateSiteMap', siteMap)
         }
     }
 }

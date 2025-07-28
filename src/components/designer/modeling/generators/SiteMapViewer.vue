@@ -1,0 +1,730 @@
+<template>
+    <div class="site-map-viewer">
+        <div class="toolbar">
+            <div class="toolbar-left">
+                <button class="btn btn-primary" @click="generateSiteMap" :disabled="isGenerating">
+                    재생성
+                </button>
+                <button class="btn btn-secondary" @click="addNode" :disabled="isGenerating">
+                    노드 추가
+                </button>
+                <v-progress-circular v-if="isGenerating" indeterminate color="primary" size="24" class="ml-2"></v-progress-circular>
+            </div>
+            <!-- <div class="toolbar-right">
+                <span class="node-counter">노드 수: {{ nodeCount }}</span>
+            </div> -->
+            <div class="toolbar-right">
+                <v-tooltip bottom>
+                    <template v-slot:activator="{ on, attrs }">
+                        <v-btn
+                            icon
+                            class="ml-2"
+                            v-bind="attrs"
+                            v-on="on"
+                            @click="closeSiteMapViewer()"
+                        >
+                            <v-icon>mdi-close</v-icon>
+                        </v-btn>
+                    </template>
+                    <span>Close</span>
+                </v-tooltip>
+            </div>
+        </div>
+        
+        <div class="site-map-container" ref="siteMapContainer">
+            <div class="site-map-tree">
+                <div class="root-node" v-if="siteMapData.length > 0">
+                    <div class="node-content" :data-node-id="siteMapData[0].id">
+                        <div class="node-title">
+                            <input 
+                                v-model="siteMapData[0].title" 
+                                class="node-input title-input"
+                                placeholder="사이트 제목"
+                            />
+                        </div>
+                        <div class="node-description">
+                            <input 
+                                v-model="siteMapData[0].description" 
+                                class="node-input description-input"
+                                placeholder="사이트 설명"
+                            />
+                        </div>
+                        <div class="node-actions">
+                            <button class="action-btn" @click="addChildNode(siteMapData[0].id)">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                            <button class="action-btn delete-btn" @click="deleteNode(siteMapData[0].id)">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- 하위 노드들 -->
+                    <div class="children-container" v-if="siteMapData[0].children && siteMapData[0].children.length > 0">
+                        <div class="children-wrapper">
+                            <div 
+                                v-for="(child, index) in siteMapData[0].children" 
+                                :key="child.id"
+                                class="child-node"
+                            >
+                                <SiteMapNode 
+                                    :node="child"
+                                    :parent-title="siteMapData[0].title"
+                                    @add-child="addChildNode"
+                                    @delete-node="deleteNode"
+                                    @update-node="updateNode"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 빈 상태 -->
+                <div v-else class="empty-state">
+                    <div class="empty-icon">
+                        <i class="fas fa-sitemap"></i>
+                    </div>
+                    <h3>사이트맵이 비어있습니다</h3>
+                    <p>첫 번째 노드를 추가해보세요!</p>
+                    <button class="btn btn-primary" @click="addRootNode">
+                        <i class="fas fa-plus"></i> 루트 노드 추가
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+import SiteMapNode from './SiteMapNode.vue';
+import SiteMapGenerator from './SiteMapGenerator.js';
+
+export default {
+    name: "SiteMapViewer",
+    components: {
+        SiteMapNode
+    },
+    props: {
+        initialData: {
+            type: Object,
+            default: () => ({
+                siteMap: {
+                    title: "새로운 웹사이트",
+                    description: "웹사이트 설명을 입력하세요",
+                    mainNavigation: [],
+                    secondaryNavigation: [],
+                    footerLinks: [],
+                    keyFeatures: []
+                }
+            })
+        },
+        userStory: {
+            type: String,
+            default: () => "",
+            required: false
+        },
+        siteMap: {
+            type: Array,
+            default: () => [],
+            required: false
+        }
+    },
+    data() {
+        return {
+            siteMapData: [],
+            nodeIdCounter: 1,
+            input: {
+                frontendRequirements: ""
+            },
+            generator: null,
+            isGenerating: false
+        };
+    },
+    computed: {
+        nodeCount() {
+            return this.countNodes(this.siteMapData);
+        }
+    },
+    watch: {
+        siteMap: {
+            handler(newSiteMap) {
+                if (newSiteMap && newSiteMap.length > 0) {
+                    this.siteMapData = [...newSiteMap];
+                    console.log('사이트맵 데이터 업데이트:', this.siteMapData.length, '개 노드');
+                }
+            },
+            immediate: true
+        }
+    },
+    mounted() {
+        this.initializeData();
+        if(this.siteMap && this.siteMap.length > 0) {
+            // 기존 사이트맵 데이터가 있으면 사용
+            this.siteMapData = [...this.siteMap];
+            console.log('기존 사이트맵 데이터 로드:', this.siteMapData.length, '개 노드');
+        } else {
+            // 새로운 사이트맵 생성
+            this.generator = new SiteMapGenerator(this);
+            this.generateSiteMap();
+        }
+        
+        // 루트 노드를 중앙에 위치시키기
+        this.$nextTick(() => {
+            this.centerRootNode();
+        });
+    },
+    methods: {
+        initializeData() {
+            if (this.initialData && this.initialData.treeData && Array.isArray(this.initialData.treeData)) {
+                // AI에서 생성된 트리 데이터가 있으면 사용
+                this.siteMapData = [...this.initialData.treeData];
+                console.log('초기 트리 데이터 로드:', this.siteMapData.length, '개 노드');
+            } else {
+                // 기본 루트 노드 생성
+                this.addRootNode();
+            }
+        },
+        
+
+        
+        generateId() {
+            return `node-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        },
+        
+        addRootNode() {
+            const rootNode = {
+                id: this.generateId(),
+                title: "새로운 웹사이트",
+                description: "웹사이트 설명을 입력하세요",
+                type: "root",
+                children: []
+            };
+            this.siteMapData = [rootNode];
+        },
+        
+        addNode() {
+            if (this.siteMapData.length === 0) {
+                this.addRootNode();
+            } else {
+                this.addChildNode(this.siteMapData[0].id);
+            }
+        },
+        
+        addChildNode(parentId) {
+            const parentNode = this.findNode(parentId, this.siteMapData);
+            if (parentNode) {
+                const newNode = {
+                    id: this.generateId(),
+                    title: "새 페이지",
+                    description: "페이지 설명",
+                    type: "page",
+                    url: "",
+                    children: []
+                };
+                
+                if (!parentNode.children) {
+                    parentNode.children = [];
+                }
+                parentNode.children.push(newNode);
+                
+                // 새로운 노드가 추가되면 스크롤을 오른쪽으로 이동
+                this.$nextTick(() => {
+                    this.scrollToNewNode(parentNode);
+                });
+            }
+        },
+        
+        scrollToNewNode(parentNode) {
+            // 스크롤 강제 이동 제거 - 사용자가 직접 스크롤하도록 함
+            console.log('새 노드가 추가되었습니다:', parentNode.title);
+        },
+        
+        deleteNode(nodeId) {
+            if (this.siteMapData.length === 1 && this.siteMapData[0].id === nodeId) {
+                // 루트 노드 삭제
+                this.siteMapData = [];
+            } else {
+                this.removeNodeFromTree(nodeId, this.siteMapData);
+            }
+        },
+        
+        removeNodeFromTree(nodeId, nodes) {
+            for (let i = 0; i < nodes.length; i++) {
+                if (nodes[i].id === nodeId) {
+                    nodes.splice(i, 1);
+                    return true;
+                }
+                if (nodes[i].children && nodes[i].children.length > 0) {
+                    if (this.removeNodeFromTree(nodeId, nodes[i].children)) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        },
+        
+        updateNode(nodeId, updatedData) {
+            const node = this.findNode(nodeId, this.siteMapData);
+            if (node) {
+                Object.assign(node, updatedData);
+            }
+        },
+        
+        findNode(nodeId, nodes) {
+            for (const node of nodes) {
+                if (node.id === nodeId) {
+                    return node;
+                }
+                if (node.children && node.children.length > 0) {
+                    const found = this.findNode(nodeId, node.children);
+                    if (found) return found;
+                }
+            }
+            return null;
+        },
+        
+        countNodes(nodes) {
+            let count = 0;
+            for (const node of nodes) {
+                count++;
+                if (node.children && node.children.length > 0) {
+                    count += this.countNodes(node.children);
+                }
+            }
+            return count;
+        },
+        
+        convertToExportFormat() {
+            if (this.siteMapData.length === 0) {
+                return {
+                    siteMap: {
+                        title: "빈 사이트맵",
+                        description: "",
+                        mainNavigation: [],
+                        secondaryNavigation: [],
+                        footerLinks: [],
+                        keyFeatures: []
+                    }
+                };
+            }
+            
+            const rootNode = this.siteMapData[0];
+            const mainNavigation = rootNode.children ? rootNode.children.map(child => ({
+                id: child.id,
+                title: child.title,
+                description: child.description,
+                url: child.url,
+                children: child.children ? child.children.map(subChild => ({
+                    id: subChild.id,
+                    title: subChild.title,
+                    description: subChild.description,
+                    url: subChild.url
+                })) : []
+            })) : [];
+            
+            return {
+                siteMap: {
+                    title: rootNode.title,
+                    description: rootNode.description,
+                    mainNavigation: mainNavigation,
+                    secondaryNavigation: [],
+                    footerLinks: [],
+                    keyFeatures: []
+                }
+            };
+        },
+
+        closeSiteMapViewer() {
+            this.$emit('close:siteMapViewer')
+            this.$emit('update:siteMap', this.siteMapData)
+        },
+
+        generateSiteMap() {
+            this.isGenerating = true
+            this.siteMapData = []
+            this.nodeIdCounter = 1
+            this.input.frontendRequirements = this.userStory
+            this.generator.generate();
+        },
+
+        onModelCreated(model) {
+            console.log('사이트맵 생성 중:', model);
+        },
+
+        onGenerationFinished(result) {
+            console.log('사이트맵 생성 완료:', result);
+            
+            if (result && result.treeData && Array.isArray(result.treeData)) {
+                // Generator에서 이미 변환된 트리 데이터 사용
+                this.siteMapData = [...result.treeData];
+                console.log('트리 데이터 할당 완료:', this.siteMapData.length, '개 노드');
+                this.isGenerating = false
+
+                this.$emit('update:siteMap', this.siteMapData)
+                
+                // 루트 노드를 중앙에 위치시키기
+                this.$nextTick(() => {
+                    this.centerRootNode();
+                });
+            } else {
+                console.error('유효하지 않은 사이트맵 데이터:', result);
+            }
+        },
+
+        centerRootNode() {
+            const container = this.$refs.siteMapContainer;
+            if (container && this.siteMapData.length > 0) {
+                // 컨테이너의 중앙으로 스크롤
+                const scrollLeft = (container.scrollWidth - container.clientWidth) / 2;
+                container.scrollTo({
+                    left: scrollLeft,
+                    top: 0,
+                    behavior: 'smooth'
+                });
+            }
+        }
+
+
+    }
+};
+</script>
+
+<style scoped>
+.site-map-viewer {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    min-height: 600px;
+    background: #f8f9fa;
+    overflow: hidden; /* 전체 컨테이너에서 스크롤 방지 */
+}
+
+.toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background: white;
+    border-bottom: 1px solid #e9ecef;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.toolbar-left {
+    display: flex;
+    gap: 10px;
+}
+
+.toolbar-right {
+    display: flex;
+    align-items: center;
+}
+
+.btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+}
+
+.btn-primary {
+    background: #007bff;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #0056b3;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #545b62;
+}
+
+.btn-info {
+    background: #17a2b8;
+    color: white;
+}
+
+.btn-info:hover {
+    background: #138496;
+}
+
+.node-counter {
+    font-size: 14px;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.site-map-container {
+    flex: 1;
+    overflow-x: auto; /* 가로 스크롤 활성화 */
+    overflow-y: auto; /* 세로 스크롤 활성화 */
+    padding: 20px;
+    min-height: 0; /* flex 아이템이 축소될 수 있도록 */
+    scrollbar-width: thin; /* Firefox 스크롤바 */
+    scrollbar-color: #007bff #f8f9fa; /* Firefox 스크롤바 색상 */
+    scroll-behavior: smooth; /* 부드러운 스크롤 */
+}
+
+.site-map-tree {
+    display: flex;
+    justify-content: center;
+    min-height: 100%;
+    min-width: max-content; /* 내용물 크기만큼 최소 너비 설정 */
+    padding: 0 20px; /* 좌우 여백 */
+}
+
+.root-node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.node-content {
+    background: white;
+    border: 2px solid #007bff;
+    border-radius: 12px;
+    padding: 20px;
+    min-width: 250px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    position: relative;
+}
+
+.node-title {
+    margin-bottom: 10px;
+}
+
+.node-description {
+    margin-bottom: 15px;
+}
+
+.node-input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: border-color 0.2s ease;
+}
+
+.title-input {
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.description-input {
+    font-size: 12px;
+    color: #666;
+}
+
+.node-input:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+}
+
+.node-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+.action-btn {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 50%;
+    background: #f8f9fa;
+    color: #6c757d;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.action-btn:hover {
+    background: #007bff;
+    color: white;
+}
+
+.delete-btn:hover {
+    background: #dc3545;
+}
+
+.children-container {
+    margin-top: 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+}
+
+/* 루트 노드에서 두 번째 노드로 가는 연결선 */
+.children-container::before {
+    content: '';
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 2px;
+    height: 30px;
+    background: #007bff;
+}
+
+.children-line {
+    width: 2px;
+    height: 30px;
+    background: #007bff;
+    margin-bottom: 20px;
+    position: relative;
+}
+
+.children-line::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 20px;
+    height: 2px;
+    background: #007bff;
+}
+
+.children-line::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 20px;
+    height: 2px;
+    background: #007bff;
+}
+
+.children-wrapper {
+    display: flex;
+    gap: 60px; /* 간격 증가 */
+    flex-wrap: nowrap; /* 줄바꿈 없이 가로로 배치 */
+    justify-content: flex-start; /* 왼쪽부터 배치 */
+    min-height: 100px; /* 최소 높이 보장 */
+    align-items: flex-start; /* 상단 정렬로 변경 */
+    padding: 10px 0; /* 세로 패딩만 유지 */
+    position: relative;
+}
+
+/* 연결선 추가 - 갈래로 퍼지는 형태 */
+.children-wrapper::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    height: 2px;
+    background: #007bff;
+    z-index: 1;
+}
+
+.child-node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0; /* 노드가 축소되지 않도록 */
+    position: relative;
+}
+
+/* 각 하위 노드에 연결되는 수직선 */
+.child-node::before {
+    content: '';
+    position: absolute;
+    top: 0; /* 가로선에서 시작 */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 2px;
+    height: 20px;
+    background: #007bff;
+}
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #6c757d;
+    text-align: center;
+}
+
+.empty-icon {
+    font-size: 64px;
+    margin-bottom: 20px;
+    color: #dee2e6;
+}
+
+.empty-state h3 {
+    margin-bottom: 10px;
+    color: #495057;
+}
+
+.empty-state p {
+    margin-bottom: 20px;
+    color: #6c757d;
+}
+
+/* 스크롤바 스타일링 (Chrome/Safari) */
+.site-map-container::-webkit-scrollbar {
+    width: 12px; /* 세로 스크롤바 너비 */
+    height: 12px; /* 가로 스크롤바 높이 */
+}
+
+.site-map-container::-webkit-scrollbar-track {
+    background: #f8f9fa;
+    border-radius: 6px;
+}
+
+.site-map-container::-webkit-scrollbar-thumb {
+    background: #007bff;
+    border-radius: 6px;
+}
+
+.site-map-container::-webkit-scrollbar-thumb:hover {
+    background: #0056b3;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    .toolbar {
+        flex-direction: column;
+        gap: 10px;
+        align-items: stretch;
+    }
+    
+    .toolbar-left {
+        justify-content: center;
+    }
+    
+    .btn {
+        flex: 1;
+        justify-content: center;
+    }
+    
+    .children-wrapper {
+        gap: 20px;
+    }
+    
+    .node-content {
+        min-width: 200px;
+    }
+}
+</style>

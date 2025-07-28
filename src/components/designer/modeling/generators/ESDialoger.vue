@@ -122,6 +122,7 @@
                 @updateSelectedAspect="updateSelectedAspect"
                 @updateSelectedOptionItem="updateSelectedOptionItem"
                 @updateDevideBoundedContext="updateDevideBoundedContext"
+                @updateSiteMap="updateSiteMap"
             ></ESDialogerMessages>
         </div>
         <div
@@ -1321,6 +1322,8 @@ import { value } from 'jsonpath';
                                 await addPropertyWithDelay(newMessage, 'pbcLists', msg.pbcLists);
                                 await addPropertyWithDelay(newMessage, 'isEditable', msg.isEditable);
                                 await addPropertyWithDelay(newMessage, 'currentGeneratedLength', 0);
+                                await addPropertyWithDelay(newMessage, 'userStory', this.projectInfo.userStory);
+                                await addPropertyWithDelay(newMessage, 'siteMap', this.projectInfo.siteMap);
                                 
                                 // result 객체 점진적 처리
                                 if (msg.result) {
@@ -2123,6 +2126,8 @@ import { value } from 'jsonpath';
                         summarizedResult: this.summarizedResult,
                         pbcLists: this.pbcLists,
                         currentGeneratedLength: this.currentGeneratedLength,
+                        userStory: this.projectInfo.userStory,
+                        siteMap: [],
                         timestamp: new Date()
                     };
                 } else if(type === "userMessage"){
@@ -2451,6 +2456,15 @@ import { value } from 'jsonpath';
                     result: this.resultDevideBoundedContext
                 });
                 this.draft = this.messages;
+            },
+
+            updateSiteMap(siteMap){
+                this.projectInfo.siteMap = siteMap;
+                this.updateMessageState(this.messages.find(message => message.type === 'boundedContextResult').uniqueId, {
+                    siteMap: siteMap
+                });
+                this.draft = this.messages;
+                this.$emit('update:siteMap', this.messages)
             },
 
             deleteDefinition(id, information){

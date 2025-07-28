@@ -269,6 +269,7 @@
                                 @update:userStory="updateUserStory"
                                 @update:inputDDL="updateInputDDL"
                                 @update:modelList="updateModelList"
+                                @update:siteMap="updateBoundedContextDrafts"
                                 @delete:modelList="deleteModelList"
                                 @open:storageDialog="openStorageDialog"
                                 :uiStyle="uiStyle"  
@@ -446,7 +447,8 @@
                         customerJourneyMap: null,
                         businessModel: null,
                         userStoryMap: null,
-                        prompt: ''
+                        prompt: '',
+                        siteMap: []
                     }
                 }
             },
