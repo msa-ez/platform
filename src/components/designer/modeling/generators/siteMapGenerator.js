@@ -215,4 +215,4 @@ class SiteMapGenerator extends JsonAIGenerator {
     }
 }
 
-module.exports = SiteMapGenerator;
+module.exports = SiteMapGenerator; 
