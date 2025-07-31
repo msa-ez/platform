@@ -55,7 +55,32 @@ export default {
   mounted() {
     this.bpmnModeler = new BpmnJS({
       container: this.$refs.canvas,
+      // 팔레트 완전 비활성화
+      paletteProvider: {
+        getPaletteEntries: () => ({})
+      },
+      // 속성 패널 비활성화
+      propertiesProvider: {
+        getTabs: () => []
+      },
+      // 추가 모듈 비활성화
+      additionalModules: []
     });
+    
+    // 팔레트 패널 강제로 숨기기
+    this.$nextTick(() => {
+      const palette = this.$el.querySelector('.djs-palette');
+      if (palette) {
+        palette.style.display = 'none';
+      }
+      
+      // 속성 패널도 숨기기
+      const propertiesPanel = this.$el.querySelector('.djs-properties-panel');
+      if (propertiesPanel) {
+        propertiesPanel.style.display = 'none';
+      }
+    });
+    
     this.setupChangeListener();
   },
   beforeDestroy() {
@@ -186,5 +211,15 @@ export default {
 .bpmn-canvas .djs-container .djs-lane .djs-visual rect {
   stroke-width: 0.4px !important;
   stroke: #808080 !important;
+}
+
+/* 팔레트 패널 완전 숨기기 */
+.bpmn-canvas .djs-palette {
+  display: none !important;
+}
+
+/* 속성 패널 완전 숨기기 */
+.bpmn-canvas .djs-properties-panel {
+  display: none !important;
 }
 </style> 

@@ -477,10 +477,14 @@
                                                 dense
                                                 autofocus
                                                 hide-details
+                                                @input="debouncedSearchContents"
                                                 @click:append-outer="closeSearchForContents()"
                                         ></v-text-field>
-                                        <div v-if="searchForContent.search && filteredTreeLists && filteredTreeLists.length == 0" style="margin-left: 10px;">
+                                        <div v-if="searchForContent.search && searchContentResults && searchContentResults.length == 0" style="margin-left: 10px;">
                                             No results found.
+                                        </div>
+                                        <div v-if="isSearching" style="margin-left: 10px; color: gray;">
+                                            Searching...
                                         </div>
                                     </div>
                                     <div
@@ -492,6 +496,7 @@
                                                 label="Search for files by name"
                                                 :items="filteredCodeLists"
                                                 item-text="fullPath"
+                                                :filter="filterByFileName"
                                                 return-object
                                                 append-outer-icon="mdi-close"
                                                 @update:search-input="searchForFiles"
@@ -605,8 +610,8 @@
 
                                                 <v-treeview
                                                         ref="codeTrees"
-                                                        v-if="filteredTreeLists"
-                                                        :items.sync='filteredTreeLists'
+                                                        v-if="searchForContent.search ? searchContentResults : filteredTreeLists"
+                                                        :items.sync='searchForContent.search ? searchContentResults : filteredTreeLists'
                                                         @update:active="onSelected"
                                                         :open="filteredTreeOpenList"
                                                         :active="selectedFileList"
@@ -1630,6 +1635,11 @@
                 setAutoGenerateCodetoList: null,
                 editTemplateTabNumber: 0,
                 modelData: {},
+                // 검색 성능 최적화를 위한 속성들
+                searchContentTimeout: null,
+                searchContentCache: {},
+                searchContentResults: [],
+                isSearching: false,
                 sampleData: {"glossary":{"title":"example glossary","GlossDiv":{"title":"S","GlossList":{"GlossEntry":{"ID":"SGML","SortAs":"SGML","GlossTerm":"Standard Generalized Markup Language","Acronym":"SGML","Abbrev":"ISO 8879:1986","GlossDef":{"para":"A meta-markup language, used to create markup languages such as DocBook.","GlossSeeAlso":["GML","XML"]},"GlossSee":"markup"}}}}},
                 showOpenaiToken: false,
                 openaiToken: null,
@@ -2628,6 +2638,10 @@
         beforeDestroy: function () {
             window.removeEventListener("message", this.messageProcessing);
             this.closeCodeViewer()
+            if (this.searchContentTimeout) {
+                clearTimeout(this.searchContentTimeout);
+            }
+            this.isSearching = false;
         },
         mounted: async function () { 
 
@@ -4363,7 +4377,7 @@ jobs:
                     return false
                 }else if(onOff == 'contents'){
                     this.searchForContent.onOff = true
-                     this.searchForContents()
+                    // 검색 창이 열릴 때는 즉시 검색하지 않음
                     return false
                 }
             },
@@ -4375,6 +4389,81 @@ jobs:
             closeSearchForContents(){
                 this.searchForContent.onOff = false;
                 this.searchForContent.search = '';
+                this.searchContentResults = [];
+                this.isSearching = false;
+                if (this.searchContentTimeout) {
+                    clearTimeout(this.searchContentTimeout);
+                    this.searchContentTimeout = null;
+                }
+            },
+            filterByFileName(item, queryText, itemText) {
+                return item.fileName.toLowerCase().includes(queryText.toLowerCase());
+            },
+            debouncedSearchContents() {
+                if (this.searchContentTimeout) {
+                    clearTimeout(this.searchContentTimeout);
+                }
+                this.isSearching = true;
+                this.searchContentTimeout = setTimeout(() => {
+                    this.performSearchContents();
+                }, 800);
+            },
+            performSearchContents() {
+                var me = this;
+                if (!me.searchForContent.search || me.searchForContent.search.length < 2) {
+                    me.searchContentResults = [];
+                    me.isSearching = false;
+                    return;
+                }
+
+                try {
+                    var search = me.searchForContent.search.toLowerCase();
+                    var results = [];
+
+                    // 캐시된 결과가 있는지 확인
+                    if (me.searchContentCache && me.searchContentCache[search]) {
+                        me.searchContentResults = me.searchContentCache[search];
+                        me.isSearching = false;
+                        return;
+                    }
+
+                    // 간단하고 빠른 검색 로직
+                    var count = 0;
+                    for (var i = 0; i < me.codeLists.length && count < 20; i++) {
+                        var codeObj = me.codeLists[i];
+                        if (codeObj && codeObj.code && codeObj.code.toLowerCase().includes(search)) {
+                            var resultObj = {
+                                name: codeObj.fileName,
+                                key: codeObj.key,
+                                file: codeObj.file,
+                                code: codeObj.code,
+                                path: codeObj.fullPath,
+                                changed: 0,
+                                hash: codeObj.hash,
+                                fullPath: codeObj.fullPath,
+                                template: codeObj.template,
+                                templatePath: codeObj.templatePath
+                            };
+                            results.push(resultObj);
+                            count++;
+                        }
+                    }
+
+                    // 결과 캐싱 (최대 20개 캐시 유지)
+                    if (!me.searchContentCache) me.searchContentCache = {};
+                    var cacheKeys = Object.keys(me.searchContentCache);
+                    if (cacheKeys.length > 20) {
+                        delete me.searchContentCache[cacheKeys[0]];
+                    }
+                    me.searchContentCache[search] = results;
+                    me.searchContentResults = results;
+
+                } catch (e) {
+                    console.log(`Error] Search Contents: ${e}`);
+                    me.searchContentResults = [];
+                } finally {
+                    me.isSearching = false;
+                }
             },
             searchForFiles(){
                 var me = this
@@ -4406,50 +4495,51 @@ jobs:
 
                 }
             },
-            searchForContents(){
-                var me = this
-                var resultLists = []
+            // 기존의 느린 searchForContents 메서드를 비활성화
+            // searchForContents(){
+            //     var me = this
+            //     var resultLists = []
 
-                try{
-                    if(me.searchForContent.onOff){
-                        var codeLists = JSON.parse(JSON.stringify(me.codeLists));
-                        var search = me.searchForContent.search
+            //     try{
+            //         if(me.searchForContent.onOff){
+            //             var codeLists = JSON.parse(JSON.stringify(me.codeLists));
+            //             var search = me.searchForContent.search
 
-                        if(search){
-                            search = search.toLowerCase()
+            //             if(search){
+            //                 search = search.toLowerCase()
 
-                            resultLists = codeLists.map(function(codeObj) {
-                                if(codeObj){
-                                    codeObj.name = codeObj.fileName
-                                    codeObj.path = codeObj.fullPath
-                                    var copyCodeObj = JSON.parse(JSON.stringify(codeObj));
+            //                 resultLists = codeLists.map(function(codeObj) {
+            //                     if(codeObj){
+            //                         codeObj.name = codeObj.fileName
+            //                         codeObj.path = codeObj.fullPath
+            //                         var copyCodeObj = JSON.parse(JSON.stringify(codeObj));
 
-                                    var codeSplit = codeObj.code.split('\n');
-                                    codeSplit = codeSplit.filter(x=> x && x.toLowerCase().includes(search));
-                                    if(codeSplit.length > 0){
-                                        codeObj.children = codeSplit.map(function(line){
-                                            var obj = copyCodeObj
-                                            line = line.trim();
-                                            obj.searchContentLine = line
-                                            return obj;
-                                        });
-                                        codeObj.children = _.uniqBy(codeObj.children, "hash");
-                                    }
+            //                         var codeSplit = codeObj.code.split('\n');
+            //                         codeSplit = codeSplit.filter(x=> x && x.toLowerCase().includes(search));
+            //                         if(codeSplit.length > 0){
+            //                             codeObj.children = codeSplit.map(function(line){
+            //                                 var obj = copyCodeObj
+            //                                 line = line.trim();
+            //                                 obj.searchContentLine = line
+            //                                 return obj;
+            //                             });
+            //                             codeObj.children = _.uniqBy(codeObj.children, "hash");
+            //                         }
 
-                                    return codeObj;
-                                }
-                            });
-                            resultLists = resultLists.filter(x=> x && x.code.toLowerCase().includes(search));
+            //                         return codeObj;
+            //                     }
+            //                 });
+            //                 resultLists = resultLists.filter(x=> x && x.code.toLowerCase().includes(search));
 
-                            resultLists = _.uniqBy(resultLists, "hash");
-                        }
-                    }
-                }catch (e) {
-                    console.log(`Error] Search Contents:${e} `)
-                }
+            //                 resultLists = _.uniqBy(resultLists, "hash");
+            //             }
+            //         }
+            //     }catch (e) {
+            //         console.log(`Error] Search Contents:${e} `)
+            //     }
 
-                return resultLists;
-            },
+            //     return resultLists;
+            // },
             refreshCallGenerate(){
                 var me = this
                 // me.isListSettingDone = false

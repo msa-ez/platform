@@ -76,7 +76,7 @@
                     />
                 </div>
 
-                <div class="bpmn-footer">
+                <div class="bpmn-footer" style="margin-top: 1%;">
                     <v-btn 
                         :disabled="isAnalizing || isGeneratingBoundedContext || isStartMapping || isSummarizeStarted || !isEditable"
                         @click="showBCGenerationOption()" 

@@ -62,7 +62,7 @@ ${this.isValidationPrompt()}
                 "name": "name of event", // PascalCase & Past Participle (e.g., OrderPlaced, PaymentProcessed)
                 "displayName": "display name of event", // Natural language & Past Participle (e.g., "주문 완료됨")
                 "actor": "actor of event", // Must match an actor name from actors array
-                "level": "number", // Event sequence priority (start from 1)
+                "level": "number", // Event sequence priority (start from 1), Not null
                 "description": "detailed description of what happened and why",
                 "inputs": ["required data or conditions for this event"],
                 "outputs": ["resulting data or state changes"],
