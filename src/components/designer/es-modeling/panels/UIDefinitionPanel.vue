@@ -251,7 +251,7 @@
                                     <v-spacer></v-spacer>
                                     <v-btn 
                                         v-if="genAIDto.isGenerateWithDescriptionDone" 
-                                        :disabled="!value.generateDescription || isReadOnly" 
+                                        :disabled="isReadOnly" 
                                         class="auto-modeling-btn" color="primary" 
                                         @click="handleGenerateWithDescription(value.generateDescription)">
                                         <v-icon>mdi-auto-fix</v-icon>Generate
@@ -271,7 +271,7 @@
             </v-list>
 
             <!-- Wireframe Preview Section -->
-            <v-card v-if="value.runTimeTemplateHtml && value.runTimeTemplateHtml !== ''" flat class="mb-4">
+            <v-card v-if="runTimeTemplateHtml" flat class="mb-4">
                 <v-divider></v-divider>
                 <v-card-text class="panel-title d-flex align-center">
                     <v-icon class="mr-2">mdi-eye</v-icon>
@@ -280,8 +280,8 @@
                 <v-card-text>
                     <div class="wireframe-container" style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px; background: #fafafa;">
                         <v-runtime-template 
-                            v-if="value.runTimeTemplateHtml && value.runTimeTemplateHtml !== ''" 
-                            :template="value.runTimeTemplateHtml"
+                            v-if="runTimeTemplateHtml" 
+                            :template="runTimeTemplateHtml"
                         ></v-runtime-template>
                     </div>
                 </v-card-text>
@@ -309,6 +309,11 @@
                 default: {
                     isGenerateWithDescriptionDone: true
                 }
+            },
+            runTimeTemplateHtml: {
+                type: String,
+                required: false,
+                default: null
             }
         },
         components: {

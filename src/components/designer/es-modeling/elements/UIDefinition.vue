@@ -169,7 +169,7 @@
                         subtitle: "",
                         text: ""
                     },
-                    runTimeTemplateHtml: ""
+                    runTimeTemplateHtml: null
                 }
             }
         },
@@ -240,7 +240,7 @@
             generate(generateDescription) {
                 let me = this;
 
-                me.value.runTimeTemplateHtml = "";
+                me.value.runTimeTemplateHtml = null;
 
                 me.uiDefinitionPanelDto.genAIDto.isGenerateWithDescriptionDone = false;
                 me.uiDefinitionPanelDto.generateDone = false;

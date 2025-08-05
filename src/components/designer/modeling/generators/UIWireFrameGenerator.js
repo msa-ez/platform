@@ -189,7 +189,7 @@ Generate a wireframe specification that transforms the Command metadata into a u
                 }
                 return model;
             }else{
-                console.error("Wireframe Generation :", text.length);
+                // console.error("Wireframe Generation :", text.length);
             }
         } catch(e) {
             console.error("Wireframe Generator Error:", e);
