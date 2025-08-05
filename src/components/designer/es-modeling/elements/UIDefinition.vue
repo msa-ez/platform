@@ -169,7 +169,7 @@
                         subtitle: "",
                         text: ""
                     },
-                    runTimeTemplateHtml: null
+                    runTimeTemplateHtml: ""
                 }
             }
         },
@@ -240,7 +240,11 @@
             generate(generateDescription) {
                 let me = this;
 
-                me.value.runTimeTemplateHtml = null;
+                this.$set(this.value, 'runTimeTemplateHtml', "");
+
+                this.$nextTick(() => {
+                    this.$forceUpdate();
+                });
 
                 me.uiDefinitionPanelDto.genAIDto.isGenerateWithDescriptionDone = false;
                 me.uiDefinitionPanelDto.generateDone = false;
@@ -262,12 +266,12 @@
             onModelCreated(model){
             },
             onGenerationFinished(model){
-                this.value.runTimeTemplateHtml = model;
-                
+                this.$set(this.value, 'runTimeTemplateHtml', model);
+
                 this.$nextTick(() => {
                     this.$forceUpdate();
                 });
-                
+
                 this.uiDefinitionPanelDto.genAIDto.isGenerateWithDescriptionDone = true;
                 this.uiDefinitionPanelDto.generateDone = true;
             }
