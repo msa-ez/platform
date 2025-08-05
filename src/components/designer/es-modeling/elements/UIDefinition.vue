@@ -99,6 +99,10 @@
                 :newEditUserImg="newEditUserImg"
                 :image="image"
                 :validationLists="filteredElementValidationResults"
+                :genAIDto="uiDefinitionPanelDto.genAIDto"
+                :runTimeTemplateHtml="value.runTimeTemplateHtml"
+                @generate="generate"
+                @onClickStopGenerateWithDescription="stop"
                 @close="closePanel"
                 @changedPanelValue="changedPanelValue"
         ></ui-definition-panel>
@@ -110,6 +114,7 @@
     import UIDefinitionPanel from "../panels/UIDefinitionPanel";
     import StormingSubController from "../../modeling/StormingSubController";
     import MultiUserStatusIndicator from "@/components/designer/modeling/MultiUserStatusIndicator.vue"
+    import UIWireFrameGenerator from "../../modeling/generators/UIWireFrameGenerator.js"
     
     export default {
         mixins: [Element],
@@ -163,7 +168,8 @@
                         title: "",
                         subtitle: "",
                         text: ""
-                    }
+                    },
+                    runTimeTemplateHtml: ""
                 }
             }
         },
@@ -173,9 +179,20 @@
                 titleH: (this.value.classReference ? 60 : 30),
                 reference: this.value.classReference != null,
                 referenceClassName: this.value.classReference,
+                uiDefinitionPanelDto: {
+                    genAIDto: {
+                        isGenerateWithDescriptionDone: true
+                    },
+                    generateDone: true,
+                },
+                generator: null,
+                input: {
+                    uiDefinition: null
+                },
             };
         },
         created: function () {
+            this.generator = new UIWireFrameGenerator(this);
         },
         watch: {
         },
@@ -213,6 +230,46 @@
                         me.elementValidationResults.push(me.validationFromCode(me.ESE_NOT_NAME))
                     }
                 }
+            },
+            stop() {
+                this.uiDefinitionPanelDto.genAIDto.isGenerateWithDescriptionDone = true;
+                this.uiDefinitionPanelDto.generateDone = true;
+
+                this.generator.stop();
+            },
+            generate(generateDescription) {
+                let me = this;
+
+                me.value.runTimeTemplateHtml = "";
+
+                me.uiDefinitionPanelDto.genAIDto.isGenerateWithDescriptionDone = false;
+                me.uiDefinitionPanelDto.generateDone = false;
+
+                let attachedCommand = null;
+                Object.values(me.canvas.value.elements).forEach(function(element){
+                    if(element && element._type == 'org.uengine.modeling.model.Command'){
+                        if(me.canvas._isAttached(element.elementView, me.value.elementView)){
+                            attachedCommand = element;
+                            return;
+                        }
+                    }
+                })
+
+                me.input['uiDefinition'] = attachedCommand;
+                me.input['additionalRequirements'] = generateDescription;
+                me.generator.generate();
+            },
+            onModelCreated(model){
+            },
+            onGenerationFinished(model){
+                this.value.runTimeTemplateHtml = model;
+                
+                this.$nextTick(() => {
+                    this.$forceUpdate();
+                });
+                
+                this.uiDefinitionPanelDto.genAIDto.isGenerateWithDescriptionDone = true;
+                this.uiDefinitionPanelDto.generateDone = true;
             }
         }
     }

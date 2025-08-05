@@ -2,6 +2,7 @@
 
     <common-panel
             v-model="value"
+            ref="commonPanel"
             :image="image"
             :is-read-only="isReadOnly"
             :width-style="widthStyle"
@@ -9,6 +10,10 @@
             :validation-lists="validationLists"
             :translate-obj="translateObj"
             :element-author-display="elementAuthorDisplay"
+            :isShowGenAITab="true"
+            :genAIDto="genAIDto"
+            @generateWithDescription="handleGenerateWithDescription"
+            @onClickStopGenerateWithDescription="$emit('onClickStopGenerateWithDescription')"
             @close="closePanel"
             @changeTranslate="changeTranslate"
     >
@@ -226,6 +231,62 @@
                 </v-card>
             </div>
         </template>
+
+        <template slot="gen-ai">
+            <v-list class="pt-0" dense flat>
+                <v-divider></v-divider>
+                <div>
+                    <v-card-text class="pb-0">
+                        <v-textarea class="delete-input-detail"
+                                    v-model="value.generateDescription"
+                                    label="Description to generate"
+                                    :disabled="isReadOnly"
+                                    outlined
+                                    auto-grow
+                        ></v-textarea>
+
+                        <div>
+                            <span>
+                                <v-row class="ma-0 pa-0">
+                                    <v-spacer></v-spacer>
+                                    <v-btn 
+                                        v-if="genAIDto.isGenerateWithDescriptionDone" 
+                                        :disabled="!value.generateDescription || isReadOnly" 
+                                        class="auto-modeling-btn" color="primary" 
+                                        @click="handleGenerateWithDescription(value.generateDescription)">
+                                        <v-icon>mdi-auto-fix</v-icon>Generate
+                                    </v-btn>
+
+                                    <v-progress-circular v-if="!genAIDto.isGenerateWithDescriptionDone" indeterminate color="primary"></v-progress-circular>
+                                    <v-btn 
+                                        v-if="!genAIDto.isGenerateWithDescriptionDone" class="auto-modeling-btn" color="primary" 
+                                        @click="onClickStopGenerateWithDescription">
+                                        <v-icon>mdi-auto-fix</v-icon>Stop Generation
+                                    </v-btn>
+                                </v-row>
+                            </span>
+                        </div>
+                    </v-card-text>
+                </div>
+            </v-list>
+
+            <!-- Wireframe Preview Section -->
+            <v-card v-if="value.runTimeTemplateHtml && value.runTimeTemplateHtml !== ''" flat class="mb-4">
+                <v-divider></v-divider>
+                <v-card-text class="panel-title d-flex align-center">
+                    <v-icon class="mr-2">mdi-eye</v-icon>
+                    Wireframe Preview
+                </v-card-text>
+                <v-card-text>
+                    <div class="wireframe-container" style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px; background: #fafafa;">
+                        <v-runtime-template 
+                            v-if="value.runTimeTemplateHtml && value.runTimeTemplateHtml !== ''" 
+                            :template="value.runTimeTemplateHtml"
+                        ></v-runtime-template>
+                    </div>
+                </v-card-text>
+            </v-card>
+        </template>
     </common-panel>
 </template>
 
@@ -235,13 +296,21 @@
     import EventStormingModelPanel from "../EventStormingModelPanel";
     import UIChartRecommendationGenerator from "../../modeling/generators/UIChartRecommendationGenerator.js"
     import UIChartFieldGenerator from "../../modeling/generators/UIChartFieldGenerator.js"
-    import UIGridRecommendationGenerator from "../../modeling/generators/UIGridRecommendationGenerator.js"
 
     var changeCase = require('change-case');
 
     export default {
         mixins: [EventStormingModelPanel],
         name: 'ui-definition-panel',
+        props: {
+            genAIDto: {
+                type: Object, 
+                required: true, 
+                default: {
+                    isGenerateWithDescriptionDone: true
+                }
+            }
+        },
         components: {
             CommonPanel
         },
@@ -383,9 +452,27 @@
                 me.recommending = true;
 
             },
+            handleGenerateWithDescription(generateDescription) {
+                this.$emit('generate', generateDescription);
+            },
+            onClickStopGenerateWithDescription() {
+                this.$emit('onClickStopGenerateWithDescription');
+            }
         }
     }
 </script>
 
 <style scoped>
+.wireframe-container {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.wireframe-preview {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.screen {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
 </style>

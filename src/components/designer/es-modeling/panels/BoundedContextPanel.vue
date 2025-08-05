@@ -159,7 +159,13 @@
         mixins: [EventStormingModelPanel],
         name: 'boundedcontext-panel',
         props: {
-            genAIDto: {type: Object, required: true, default: {isGenerateWithDescriptionDone: true}}
+            genAIDto: {
+                type: Object, 
+                required: true, 
+                default: {
+                    isGenerateWithDescriptionDone: true
+                }
+            }
         },
         components: {
             CommonPanel
