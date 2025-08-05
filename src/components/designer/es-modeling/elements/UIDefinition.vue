@@ -100,7 +100,7 @@
                 :image="image"
                 :validationLists="filteredElementValidationResults"
                 :genAIDto="uiDefinitionPanelDto.genAIDto"
-                :runTimeTemplateHtml="value.runTimeTemplateHtml"
+                :runTimeTemplateHtml="runTimeTemplateHtml"
                 @generate="generate"
                 @onClickStopGenerateWithDescription="stop"
                 @close="closePanel"
@@ -189,6 +189,7 @@
                 input: {
                     uiDefinition: null
                 },
+                runTimeTemplateHtml: ""
             };
         },
         created: function () {
@@ -197,6 +198,9 @@
         watch: {
         },
         mounted: function () {
+            if (this.value.runTimeTemplateHtml !== '') {
+                this.runTimeTemplateHtml = this.value.runTimeTemplateHtml;
+            }
         },
         methods: {
             openAutoModeling(){
@@ -240,8 +244,7 @@
             generate(generateDescription) {
                 let me = this;
 
-                this.$set(this.value, 'runTimeTemplateHtml', "");
-
+                this.runTimeTemplateHtml = "";
                 this.$nextTick(() => {
                     this.$forceUpdate();
                 });
@@ -266,12 +269,11 @@
             onModelCreated(model){
             },
             onGenerationFinished(model){
-                this.$set(this.value, 'runTimeTemplateHtml', model);
-
+                this.runTimeTemplateHtml = model;
                 this.$nextTick(() => {
                     this.$forceUpdate();
                 });
-
+                
                 this.uiDefinitionPanelDto.genAIDto.isGenerateWithDescriptionDone = true;
                 this.uiDefinitionPanelDto.generateDone = true;
             }

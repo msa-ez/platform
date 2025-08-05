@@ -334,7 +334,7 @@
         },
         created () { },
         mounted() {
-            if (this.runTimeTemplateHtml) {
+            if (this.runTimeTemplateHtml !== '') {
                 this.$nextTick(() => {
                     setTimeout(() => {
                         this.$forceUpdate();
@@ -352,6 +352,7 @@
                 handler(newVal, oldVal) {
                     if (newVal !== oldVal) {
                         this.$nextTick(() => {
+                            this.$set(this.value, 'runTimeTemplateHtml', newVal);
                             this.$forceUpdate();
                         });
                     }
