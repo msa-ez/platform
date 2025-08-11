@@ -492,6 +492,7 @@
 .wireframe-container {
     max-height: 400px;
     overflow-y: auto;
+    overflow-x: scroll;
 }
 
 .wireframe-preview {

@@ -252,17 +252,25 @@
                 me.uiDefinitionPanelDto.genAIDto.isGenerateWithDescriptionDone = false;
                 me.uiDefinitionPanelDto.generateDone = false;
 
-                let attachedCommand = null;
+                let attachedElement = null;
                 Object.values(me.canvas.value.elements).forEach(function(element){
                     if(element && element._type == 'org.uengine.modeling.model.Command'){
                         if(me.canvas._isAttached(element.elementView, me.value.elementView)){
-                            attachedCommand = element;
+                            attachedElement = element;
+                            return;
+                        }
+                    }
+
+                    if(element && element._type == 'org.uengine.modeling.model.View'){
+                        if(me.canvas._isAttached(element.elementView, me.value.elementView)){
+                            attachedElement = element;
                             return;
                         }
                     }
                 })
 
-                me.input['uiDefinition'] = attachedCommand;
+                me.input['attachedAggregate'] = me.canvas.value.elements[attachedElement.aggregate.id]? me.canvas.value.elements[attachedElement.aggregate.id]: null;
+                me.input['uiDefinition'] = attachedElement;
                 me.input['additionalRequirements'] = generateDescription;
                 me.generator.generate();
             },
