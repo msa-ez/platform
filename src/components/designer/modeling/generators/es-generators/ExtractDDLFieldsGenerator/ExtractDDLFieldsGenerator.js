@@ -38,16 +38,21 @@ Operational Guidelines:
     }
 
     __buildTaskGuidelinesPrompt(){
-        return `Your task is to analyze the provided DDL (Data Definition Language) string and extract every field name from it.
+        return `Your task is to analyze the provided DDL (Data Definition Language) string and extract every valid field name from it.
 
-Please adhere to the following guidelines:
+Please adhere to the following strict guidelines:
 
 1.  **Focus only on column names:** Identify all \`CREATE TABLE\` statements and extract the names of the columns defined within them.
-2.  **Ignore everything else:** Do not include data types, constraints (\`PRIMARY KEY\`, \`NOT NULL\`, etc.), table names, or comments in your output list.
+2.  **Ignore everything else:** Do not include data types, constraints (\`PRIMARY KEY\`, \`NOT NULL\`, etc.), table names, comments, or ENUM values in your output list.
 3.  **Consolidate all fields:** If there are multiple tables defined, gather all column names from all tables into one single list.
 4.  **Handle inconsistencies:** The DDL might have inconsistent formatting, comments, or vary in SQL dialect. Your process should be robust enough to handle this.
 5.  **No DDL, no fields:** If the input DDL is empty or contains no \`CREATE TABLE\` statements, return an empty list for \`ddl_fields\`.
-6.  **Uniqueness:** Ensure the final list of fields contains no duplicates. Each field name should appear only once, even if it's defined in multiple tables.`
+6.  **Uniqueness:** Ensure the final list of fields contains no duplicates. Each field name should appear only once, even if it's defined in multiple tables.
+7.  **Ignore Comments:** Do not extract any text from SQL comments (lines starting with \`--\` or blocks enclosed in \`/* ... */\`). Any potential field names within comments must be ignored.
+8.  **English Only:** Only extract field names written in English. Field names containing Korean characters or other non-ASCII characters must be ignored. For example, ignore a field named \`'회원유형'\`.
+9.  **Valid Characters:** Field names should only consist of letters, numbers, and underscores (\_). They typically start with a letter. Ignore any text quoted in backticks that does not follow this format (e.g., if it's in Korean).
+10. **Ignore ENUM values:** Do not extract the values listed within an \`ENUM(...)\` definition. For example, from \`status ENUM('ACTIVE', 'INACTIVE')\`, you should only identify \`status\` as the field, and ignore \`'ACTIVE'\` and \`'INACTIVE'\`.
+`
     }
 
     __buildInferenceGuidelinesPrompt() {

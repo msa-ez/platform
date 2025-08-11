@@ -350,5 +350,6 @@
     line-height: 1.4;
     padding: 4px 8px !important;
     word-break: keep-all;
+    text-align: left;
 }
 </style>
