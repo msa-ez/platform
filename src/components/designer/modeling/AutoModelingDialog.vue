@@ -177,7 +177,7 @@
                         class="gs-auto-modeling-box"
                     >
                         <v-row class="pt-2 pb-2">
-                            <v-btn v-if="!isServer && draft.length == 0 && hasLocalDraft()" @click="restoreLocalDraft()">{{ $t('autoModeling.restoreDraft') }}</v-btn>
+                            <!-- <v-btn v-if="!isServer && draft.length == 0 && hasLocalDraft()" @click="restoreLocalDraft()">{{ $t('autoModeling.restoreDraft') }}</v-btn> -->
                             <v-spacer></v-spacer>
                             <v-card style="width: 80%;">
                                 <v-col class="pa-0">
@@ -1155,6 +1155,7 @@
                     localStorage.setItem('noLoginPrompt', me.projectInfo.prompt)
                 } else {
                     me.startGen()
+                    me.openStorageDialog('project')
                 }
             },
             uuid: function () {
@@ -1276,11 +1277,13 @@
             onReceive(content){
                 console.log(content);
             },
-            updateUserStory(content){
+            async updateUserStory(content){
                 this.$set(this.projectInfo, 'userStory', content);
+                await this.putObject(`db://definitions/${this.projectInfo.projectId}/information`, this.projectInfo)
             },
-            updateInputDDL(content){
+            async updateInputDDL(content){
                 this.$set(this.projectInfo, 'inputDDL', content);
+                await this.putObject(`db://definitions/${this.projectInfo.projectId}/information`, this.projectInfo)
             },
             openCanvas(val){
                 var me = this
@@ -1294,7 +1297,7 @@
                     me.$router.push({path: `business-model-canvas/${dbuid}`});
                 }
             },
-            updateProcessAnalysis(messages){
+            async updateProcessAnalysis(messages){
                 if(!this.draft) {
                     this.draft = [];
                 }
@@ -1304,9 +1307,10 @@
                     type: 'processAnalysis',
                     content: messages
                 }
-                this.updateLocalDraft(draft)
+                // this.updateLocalDraft(draft)
+                await this.putObject(`db://definitions/${this.projectInfo.projectId}/draft`, this.draft)
             },
-            updateBoundedContextDrafts(messages){
+            async updateBoundedContextDrafts(messages){
                 if(!this.draft) {
                     this.draft = [];
                 }
@@ -1316,9 +1320,10 @@
                     type: 'boundedContext',
                     content: messages
                 }
-                this.updateLocalDraft(draft)
+                // this.updateLocalDraft(draft)
+                await this.putObject(`db://definitions/${this.projectInfo.projectId}/draft`, this.draft)
             },
-            updateAggregateDrafts(messages){
+            async updateAggregateDrafts(messages){
                 if(!this.draft) {
                     this.draft = [];
                 }
@@ -1355,7 +1360,8 @@
                     type: 'aggregate',
                     content: messages
                 }
-                this.updateLocalDraft(draft)
+                // this.updateLocalDraft(draft)
+                await this.putObject(`db://definitions/${this.projectInfo.projectId}/draft`, this.draft)
             },
 
             updateLocalDraft(draft){
@@ -1610,6 +1616,7 @@
                             me.applyInviteUsers(obj, true)
                         }
 
+                        me.$emit('updateJoinRequested')
                     } else {
                         me.$EventBus.$emit('showLoginDialog')
                     }

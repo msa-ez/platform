@@ -92,6 +92,9 @@
     "sessionExpired": "Your session has expired. Please log in again."
   },
   "ESDialoger" : {
+    "generatorInputTabs": {
+      "userStory": "User Story / Existing Code / Requirements"
+    },
     "tryAgain": "Try Again",
     "validateRequirements": "Validate Requirements",
     "createBoundedContext": "Create Bounded Context",

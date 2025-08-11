@@ -1174,10 +1174,7 @@ import { value } from 'jsonpath';
                 selectedAspect: "",
 
                 activeTab: null,
-                generatorInputTabs: ['User Story','DDL'
-                                        // , 'DDL', "Process"
-                                    ],
-                
+                generatorInputTabs: [this.$t('ESDialoger.generatorInputTabs.userStory'), "DDL"],
                 chunks: [],
                 summarizedResult: "",
                 userStoryChunks: [],
@@ -1826,6 +1823,7 @@ import { value } from 'jsonpath';
                 this.processingState.isSummarizeStarted = true;
 
                 try {
+                    if(!this.inputDDL) this.inputDDL = "";
                     const summarizedText = await this.generator.summarizeRecursively(this.projectInfo.userStory + "\n" + this.projectInfo.inputDDL);
                     // 요약 결과 저장
                     this.userStoryChunks = this.generator.currentChunks;

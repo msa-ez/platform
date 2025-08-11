@@ -92,6 +92,9 @@
     "sessionExpired": "세션이 만료되었습니다. 다시 로그인해주세요."
   },
   "ESDialoger" : {
+    "generatorInputTabs": {
+      "userStory": "User Story / 기존 코드 / 요구사항"
+    },
     "tryAgain": "재생성",
     "validateRequirements": "요구사항 검증",
     "createBoundedContext": "Bounded Context 생성",

@@ -200,6 +200,7 @@
                         @forceUpdateKey="forceUpdateKey"
                         @saveProject="openStorageDialog('project')"
                         @backupProject="backupProject()"
+                        @updateJoinRequested="updateJoinRequestedText"
                 ></AutoModelingDialog>
             <!-- </v-tab-item>
         </v-tabs-items> -->
@@ -345,12 +346,12 @@
             },
             joinRequestedText() {
                 var obj = {
-                    show: true,
-                    text: 'Join',
+                    show: false,
+                    text: 'Request to Join',
                 }
 
                 if (this.joinRequested) {
-                    obj.show = false
+                    obj.show = true
                     obj.text = 'Join Requested'
                     return obj
                 }
@@ -697,6 +698,7 @@
                                                 me.isDisable = true
                                             }
                                         } else if (me.information.permissions[me.userInfo.uid].request == true) {
+                                            me.joinRequested = true;
                                             if (isPublic) {
                                                 me.isEditable = false
                                             } else {
@@ -850,7 +852,15 @@
                 return currentDateNumber;
             },
 
-
+            updateJoinRequestedText(){
+                if(this.joinRequestedText.show){
+                    this.joinRequestedText.show = false;
+                    this.joinRequestedText.text = 'Request to Join';
+                }else{
+                    this.joinRequestedText.show = true;
+                    this.joinRequestedText.text = 'Join Requested';
+                }
+            }
         }
     }
 </script>
