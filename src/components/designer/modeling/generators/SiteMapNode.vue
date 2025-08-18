@@ -21,13 +21,31 @@
                     @input="updateNode"
                 />
             </div>
-            <div class="node-url" v-if="node.type !== 'root'">
-                <input 
-                    v-model="node.url" 
-                    class="node-input url-input"
-                    placeholder="URL (예: /about)"
+            <div class="node-bounded-context" v-if="node.type !== 'root'">
+                <div class="field-label">Bounded Context:</div>
+                <select 
+                    v-model="node.boundedContext"
+                    @change="updateNode"
+                >
+                    <option value="">선택하세요</option>
+                    <option 
+                        v-for="bc in availableBoundedContexts" 
+                        :key="typeof bc === 'string' ? bc : (bc.id || bc.title)"
+                        :value="typeof bc === 'string' ? bc : bc.title"
+                    >
+                        {{ typeof bc === 'string' ? bc : bc.title }}
+                    </option>
+                </select>
+            </div>
+            <div class="node-ui-requirements" v-if="node.type !== 'root'">
+                <div class="field-label">UI Requirements:</div>
+                <textarea 
+                    v-model="node.uiRequirements" 
+                    class="node-textarea ui-requirements-textarea"
+                    placeholder="UI 요구사항 (예: 테이블 레이아웃, 카드 형태, 폼 검증 등)"
                     @input="updateNode"
-                />
+                    rows="3"
+                ></textarea>
             </div>
             <div class="node-actions">
                 <span class="child-count" v-if="node.children && node.children.length > 0">
@@ -53,6 +71,7 @@
                     <SiteMapNode 
                         :node="child"
                         :parent-title="node.title"
+                        :available-bounded-contexts="availableBoundedContexts"
                         @add-child="$emit('add-child', $event)"
                         @delete-node="$emit('delete-node', $event)"
                         @update-node="$emit('update-node', $event)"
@@ -74,6 +93,10 @@ export default {
         parentTitle: {
             type: String,
             default: ''
+        },
+        availableBoundedContexts: {
+            type: Array,
+            default: () => []
         }
     },
     data() {
@@ -92,7 +115,8 @@ export default {
                 this.$emit('update-node', this.node.id, {
                     title: this.node.title,
                     description: this.node.description,
-                    url: this.node.url
+                    boundedContext: this.node.boundedContext,
+                    uiRequirements: this.node.uiRequirements
                 });
             }, 300); // 300ms 지연
         }
@@ -112,7 +136,7 @@ export default {
     border: 2px solid #28a745;
     border-radius: 10px;
     padding: 16px;
-    min-width: 220px;
+    min-width: 280px;
     box-shadow: 0 3px 10px rgba(0,0,0,0.1);
     position: relative;
     transition: all 0.2s ease;
@@ -152,8 +176,18 @@ export default {
     margin-bottom: 8px;
 }
 
-.node-url {
-    margin-bottom: 12px;
+.node-bounded-context,
+.node-ui-requirements {
+    margin-bottom: 8px;
+}
+
+.field-label {
+    font-size: 10px;
+    color: #495057;
+    font-weight: 500;
+    margin-bottom: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .node-input {
@@ -175,13 +209,37 @@ export default {
     color: #666;
 }
 
-.url-input {
+.bounded-context-input {
+    font-size: 11px;
+    color: #6f42c1;
+    font-weight: 500;
+}
+
+.node-textarea {
+    width: 100%;
+    padding: 6px 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 11px;
+    transition: border-color 0.2s ease;
+    font-family: inherit;
+    line-height: 1.4;
+}
+
+.ui-requirements-textarea {
     font-size: 11px;
     color: #007bff;
-    font-family: 'Courier New', monospace;
+    font-weight: 500;
+    resize: none; /* 텍스트 영역 크기 조절 방지 */
 }
 
 .node-input:focus {
+    outline: none;
+    border-color: #28a745;
+    box-shadow: 0 0 0 2px rgba(40,167,69,0.25);
+}
+
+.node-textarea:focus {
     outline: none;
     border-color: #28a745;
     box-shadow: 0 0 0 2px rgba(40,167,69,0.25);
@@ -321,8 +379,6 @@ export default {
     background: #28a745;
 }
 
-
-
 /* 반응형 디자인 */
 @media (max-width: 768px) {
     .children-wrapper {
@@ -330,7 +386,7 @@ export default {
     }
     
     .node-content {
-        min-width: 180px;
+        min-width: 240px;
         padding: 12px;
     }
     

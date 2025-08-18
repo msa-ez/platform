@@ -263,13 +263,11 @@
                                 :isEditable="isOwnModel || !isReadOnlyModel"
                                 :draft="draft"
                                 @change="backupProject" 
-                                @update:processAnalysis="updateProcessAnalysis"
-                                @update:boundedContextDrafts="updateBoundedContextDrafts" 
-                                @update:aggregateDrafts="updateAggregateDrafts"
+                                @update:draft="updateDraft"
                                 @update:userStory="updateUserStory"
                                 @update:inputDDL="updateInputDDL"
                                 @update:modelList="updateModelList"
-                                @update:siteMap="updateBoundedContextDrafts"
+                                @update:siteMap="updateSiteMap"
                                 @delete:modelList="deleteModelList"
                                 @open:storageDialog="openStorageDialog"
                                 :uiStyle="uiStyle"  
@@ -447,8 +445,7 @@
                         customerJourneyMap: null,
                         businessModel: null,
                         userStoryMap: null,
-                        prompt: '',
-                        siteMap: []
+                        prompt: ''
                     }
                 }
             },
@@ -1277,9 +1274,11 @@
             onReceive(content){
                 console.log(content);
             },
-            async updateUserStory(content){
+            async updateUserStory(content, isSave){
                 this.$set(this.projectInfo, 'userStory', content);
-                await this.putObject(`db://definitions/${this.projectInfo.projectId}/information`, this.projectInfo)
+                if(isSave){
+                    await this.putObject(`db://definitions/${this.projectInfo.projectId}/information`, this.projectInfo)
+                }
             },
             async updateInputDDL(content){
                 this.$set(this.projectInfo, 'inputDDL', content);
@@ -1297,71 +1296,9 @@
                     me.$router.push({path: `business-model-canvas/${dbuid}`});
                 }
             },
-            async updateProcessAnalysis(messages){
-                if(!this.draft) {
-                    this.draft = [];
-                }
-                this.draft = messages;
-
-                let draft = {
-                    type: 'processAnalysis',
-                    content: messages
-                }
-                // this.updateLocalDraft(draft)
-                await this.putObject(`db://definitions/${this.projectInfo.projectId}/draft`, this.draft)
-            },
-            async updateBoundedContextDrafts(messages){
-                if(!this.draft) {
-                    this.draft = [];
-                }
-                this.draft = messages;
-
-                let draft = {
-                    type: 'boundedContext',
-                    content: messages
-                }
-                // this.updateLocalDraft(draft)
-                await this.putObject(`db://definitions/${this.projectInfo.projectId}/draft`, this.draft)
-            },
-            async updateAggregateDrafts(messages){
-                if(!this.draft) {
-                    this.draft = [];
-                }
-                this.draft = messages.map(msg => {
-                    if (msg.type === 'aggregateDraftDialogDto') {
-                        const {
-                            analysisResult,
-                            draftOptions,
-                            draftUIInfos,
-                            selectedOptionItem,
-                            isGeneratorButtonEnabled,
-                            isShow,
-                            type,
-                            uniqueId,
-                            boundedContextVersion
-                        } = msg;
-                        
-                        return {
-                            analysisResult,
-                            draftOptions,
-                            draftUIInfos,
-                            selectedOptionItem,
-                            isGeneratorButtonEnabled,
-                            isShow,
-                            type,
-                            uniqueId,
-                            boundedContextVersion
-                        };
-                    }
-                    return msg;
-                });
-
-                let draft = {
-                    type: 'aggregate',
-                    content: messages
-                }
-                // this.updateLocalDraft(draft)
-                await this.putObject(`db://definitions/${this.projectInfo.projectId}/draft`, this.draft)
+            async updateDraft(messages){
+                this.$emit('update:draft', messages)
+                await this.putObject(`db://definitions/${this.projectInfo.projectId}/draft`, messages)
             },
 
             updateLocalDraft(draft){

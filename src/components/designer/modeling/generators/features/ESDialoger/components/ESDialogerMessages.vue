@@ -109,7 +109,7 @@
                             @mappingRequirements="$emit('mappingRequirements', $event)"
                             @updateSelectedAspect="updateSelectedAspect"
                             @updateDevideBoundedContext="(selectedAspect, devideBoundedContext) => $emit('updateDevideBoundedContext', selectedAspect, devideBoundedContext)"
-                            @updateSiteMap="(siteMap) => $emit('updateSiteMap', siteMap)"
+                            @generate:siteMap="$emit('generate:siteMap')"
                         ></DevideBoundedContextDialog>
                     </v-card>
 
@@ -151,6 +151,23 @@
                             @setGenerateOption="(option, boolean) => $emit('setGenerateOption', option, boolean)"
                         ></BCGenerationOption>
                     </v-card>
+
+                    <v-card 
+                        v-if="message.type === 'siteMapViewer'" 
+                        :key="index" 
+                        class="auto-modeling-user-story-card" 
+                        style="margin-top: 30px !important;"
+                    >
+                        <SiteMapViewer 
+                            :siteMap="message.siteMap" 
+                            :userStory="message.userStory" 
+                            :isEditable="isEditable"
+                            :isGenerating="message.isGenerating"
+                            :resultDevideBoundedContext="message.resultDevideBoundedContext"
+                            @update:siteMap="updateSiteMap"
+                            @generate:siteMap="$emit('generate:siteMap')"
+                        ></SiteMapViewer>
+                    </v-card>
                     
 
                     <div v-if="message.type === 'botMessage'" :key="index" style="margin-top: 30px !important;">
@@ -187,6 +204,7 @@ import { AggregateDraftDialog } from '../../../es-generators'
 import DevideBoundedContextDialog from '../../../../generators/DevideBoundedContextDialog.vue'
 import RequirementAnalysis from '../../../../generators/RequirementAnalysis.vue'
 import BCGenerationOption from '../../../../generators/BCGenerationOption.vue'
+import SiteMapViewer from '../../../../generators/SiteMapViewer.vue';
 import VueMermaidStringTest from './VueMermaidStringTest.vue'
 
 export default {
@@ -213,6 +231,7 @@ export default {
         DevideBoundedContextDialog,
         RequirementAnalysis,
         BCGenerationOption,
+        SiteMapViewer,
         VueMermaidStringTest
     },
     data() {
@@ -435,7 +454,7 @@ export default {
             }
         },
         updateSiteMap(siteMap) {
-            this.$emit('updateSiteMap', siteMap)
+            this.$emit('update:siteMap', siteMap)
         }
     }
 }

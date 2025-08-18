@@ -122,7 +122,8 @@
                 @updateSelectedAspect="updateSelectedAspect"
                 @updateSelectedOptionItem="updateSelectedOptionItem"
                 @updateDevideBoundedContext="updateDevideBoundedContext"
-                @updateSiteMap="updateSiteMap"
+                @update:siteMap="updateSiteMap"
+                @generate:siteMap="generateSiteMap"
             ></ESDialogerMessages>
         </div>
         <div
@@ -237,6 +238,9 @@
     // Requirements Validation Generator
     import RequirementsValidationGenerator from './RequirementsValidationGenerator.js'
     import RecursiveRequirementsValidationGenerator from './RecursiveRequirementsValidationGenerator.js';
+
+    // SiteMap Viewer
+    import SiteMapGenerator from './SiteMapGenerator.js';
 
     const axios = require('axios');
     import YAML from 'js-yaml';
@@ -764,7 +768,7 @@ import { value } from 'jsonpath';
                             progress: 100
                         }
                         generatePreviewAggAttributesToDraftOptions(returnObj.modelValue.output.options, returnObj.inputParams.boundedContext.description, returnObj.inputParams.boundedContext.requirements.ddlFields || [], () => {
-                            this.$emit("update:aggregateDrafts", this.messages)
+                            this.$emit("update:draft", this.messages)
                         })
                         return
                     }
@@ -779,7 +783,7 @@ import { value } from 'jsonpath';
 
                     generatePreviewAggAttributesToDraftOptions(returnObj.modelValue.output.options, returnObj.inputParams.boundedContext.description, returnObj.inputParams.boundedContext.requirements.ddlFields || [], () => {
                         if(!this.generators.DraftGeneratorByFunctions.generateIfInputsExist()){
-                            this.$emit("update:aggregateDrafts", this.messages)
+                            this.$emit("update:draft", this.messages)
                         }
                     })
                 },
@@ -1011,8 +1015,8 @@ import { value } from 'jsonpath';
             },
             "projectInfo.userStory": {
                 deep: true,
-                handler(newVal, oldVal) {
-                    this.$emit("update:userStory", newVal)
+                handler: _.debounce(function(newVal, oldVal) {
+                    // this.$emit("update:userStory", newVal)
                     
                     // AI 생성 중일 때만 자동 스크롤
                     if (!this.done && this.isAutoScrollEnabled) {
@@ -1020,7 +1024,7 @@ import { value } from 'jsonpath';
                             this.scrollToBottom();
                         });
                     }
-                }
+                }, 1000)
             },
             "projectInfo.inputDDL": {
                 deep: true,
@@ -1250,6 +1254,8 @@ import { value } from 'jsonpath';
                 pbcResults: [],
                 frontEndResults: [],
 
+                siteMap: [],
+
                 modelListKey: 0,
                 isAutoScrollEnabled: true,
                 userScrollTimeout: null,
@@ -1320,7 +1326,6 @@ import { value } from 'jsonpath';
                                 await addPropertyWithDelay(newMessage, 'isEditable', msg.isEditable);
                                 await addPropertyWithDelay(newMessage, 'currentGeneratedLength', 0);
                                 await addPropertyWithDelay(newMessage, 'userStory', this.projectInfo.userStory);
-                                await addPropertyWithDelay(newMessage, 'siteMap', this.projectInfo.siteMap);
                                 
                                 // result 객체 점진적 처리
                                 if (msg.result) {
@@ -1394,6 +1399,15 @@ import { value } from 'jsonpath';
                                 }
                                 break;
 
+                            case 'siteMapViewer':
+                                await addPropertyWithDelay(newMessage, 'type', msg.type);
+                                await addPropertyWithDelay(newMessage, 'uniqueId', msg.uniqueId);
+                                await addPropertyWithDelay(newMessage, 'resultDevideBoundedContext', msg.resultDevideBoundedContext);
+                                await addPropertyWithDelay(newMessage, 'siteMap', msg.siteMap.length > 0 ? msg.siteMap : []);
+
+                                this.siteMap = msg.siteMap.length > 0 ? msg.siteMap : [];
+                                break;
+
                             case 'bcGenerationOption':
                                 await addPropertyWithDelay(newMessage, 'type', msg.type);
                                 await addPropertyWithDelay(newMessage, 'uniqueId', msg.uniqueId);
@@ -1454,7 +1468,7 @@ import { value } from 'jsonpath';
                     }
 
                     if(content && content.length > 0){
-                        this.$emit('update:userStory', content);
+                        this.$emit('update:userStory', content, false);
                         
                         // onReceived에서도 자동 스크롤 호출
                         if (!this.done && this.isAutoScrollEnabled) {
@@ -1538,7 +1552,7 @@ import { value } from 'jsonpath';
                         currentGeneratedLength: me.currentGeneratedLength
                     });
 
-                    me.$emit("update:processAnalysis", me.messages);
+                    me.$emit("update:draft", me.messages);
                 }
 
                 if (me.state.generator === "RecursiveRequirementsSummarizer") {
@@ -1588,7 +1602,7 @@ import { value } from 'jsonpath';
                     });
 
                     me.resultDevideBoundedContext = JSON.parse(JSON.stringify(newResult));
-                    me.$emit("update:boundedContextDrafts", me.messages);
+                    me.$emit("update:draft", me.messages);
 
                     console.log("output: ", model)
                 }
@@ -1633,6 +1647,29 @@ import { value } from 'jsonpath';
                         me.bcInAspectIndex++;
                     }
                     me.mappingRequirements();
+                }
+
+                if(me.state.generator === "SiteMapGenerator"){
+                    me.siteMap = model.treeData;
+                    me.updateMessageState(me.messages.find(msg => msg.type === 'siteMapViewer').uniqueId, {
+                        siteMap: me.siteMap,
+                        isGenerating: false
+                    });
+
+                    // Map sitemap nodes to bounded contexts under selected aspect
+                    try {
+                        me.mapSiteMapToBoundedContexts(me.siteMap);
+                        const bcMsg = me.messages.find(msg => msg.type === 'boundedContextResult');
+                        if (bcMsg) {
+                            me.updateMessageState(bcMsg.uniqueId, {
+                                result: JSON.parse(JSON.stringify(me.resultDevideBoundedContext))
+                            });
+                        }
+                    } catch (e) {
+                        console.warn('Failed to map sitemap to bounded contexts:', e);
+                    }
+
+                    me.$emit("update:draft", me.messages)
                 }
                 
             },  
@@ -1689,6 +1726,10 @@ import { value } from 'jsonpath';
                 if(this.state.generator === "DevideBoundedContextGenerator"){
                     messageId = this.messages.find(msg => msg.type === "boundedContextResult").uniqueId;
                     this.resultDevideBoundedContext = {};
+                    this.currentGeneratedLength = 0;
+                    this.updateMessageState(messageId, {
+                        currentGeneratedLength: this.currentGeneratedLength
+                    });
                 }
 
                 if(this.state.generator === "RequirementsValidationGenerator" || 
@@ -1705,11 +1746,6 @@ import { value } from 'jsonpath';
                     this.processingRate = 0;
                     this.currentProcessingBoundedContext = "";
                 }
-
-                this.currentGeneratedLength = 0;
-                this.updateMessageState(messageId, {
-                    currentGeneratedLength: this.currentGeneratedLength
-                });
 
                 this.processingState.isAnalizing = false;
                 this.processingState.isGeneratingBoundedContext = false;
@@ -2125,7 +2161,6 @@ import { value } from 'jsonpath';
                         pbcLists: this.pbcLists,
                         currentGeneratedLength: this.currentGeneratedLength,
                         userStory: this.projectInfo.userStory,
-                        siteMap: [],
                         timestamp: new Date()
                     };
                 } else if(type === "userMessage"){
@@ -2161,6 +2196,16 @@ import { value } from 'jsonpath';
                         reasonOfRecommendedBoundedContextsNumber: this.requirementsValidationResult.analysisResult.reasonOfRecommendedBoundedContextsNumber,
                         timestamp: new Date()
                     };
+                } else if(type === "siteMapViewer") {
+                    return {
+                        uniqueId: this.uuid(),
+                        type: type,
+                        siteMap: this.siteMap,
+                        userStory: this.summarizedResult !== "" ? this.summarizedResult : this.projectInfo.userStory,
+                        resultDevideBoundedContext: this.resultDevideBoundedContext[this.selectedAspect],
+                        isGenerating: true,
+                        timestamp: new Date()
+                    };
                 }
             },
 
@@ -2176,6 +2221,7 @@ import { value } from 'jsonpath';
 
             validateRequirements() {
                 const requirements = this.projectInfo.userStory;
+                this.$emit("update:userStory", requirements, true);
 
                 if(requirements.length > 25000){
                     if(!this.alertGenerateWarning("RecursiveRequirementsValidationGenerator")){
@@ -2341,20 +2387,23 @@ import { value } from 'jsonpath';
                 // 각 단계별 경고 메시지
                 switch(generator) {
                     case "EventOnlyESGenerator":
-                        warningMessage = this.$t('ESDialoger.warnings');
+                        warningMessage = this.$t('ESDialoger.warnings.default');
                         break;
                     case "RequirementsValidationGenerator":
                     case "RecursiveRequirementsValidationGenerator":
-                        warningMessage = this.$t('ESDialoger.warnings');
+                        warningMessage = this.$t('ESDialoger.warnings.default');
                         break;
                     case "bcGenerationOption":
-                        warningMessage = this.$t('ESDialoger.warnings');
+                        warningMessage = this.$t('ESDialoger.warnings.default');
                         break;
                     case "DevideBoundedContextGenerator":
-                        warningMessage = this.$t('ESDialoger.warnings');
+                        warningMessage = this.$t('ESDialoger.warnings.default');
                         break;
                     case "CreateAggregateActionsByFunctions":
-                        warningMessage = this.$t('ESDialoger.warnings');
+                        warningMessage = this.$t('ESDialoger.warnings.default');
+                        break;
+                    case "siteMapViewer":
+                        warningMessage = this.$t('ESDialoger.warnings.siteMap');
                         break;
                 }
 
@@ -2399,6 +2448,9 @@ import { value } from 'jsonpath';
                     ],
                     "CreateAggregateActionsByFunctions": [
                         "aggregateDraftDialogDto"
+                    ],
+                    "siteMapViewer": [
+                        "siteMapViewer"
                     ]
                 };
 
@@ -2438,14 +2490,17 @@ import { value } from 'jsonpath';
                     ],
                     "CreateAggregateActionsByFunctions": [
                         "aggregateDraftDialogDto"
+                    ],
+                    "siteMapViewer": [
+                        "siteMapViewer"
                     ]
                 };
 
                 const typesToRemove = messageTypesToRemove[generator] || [];
                 let filteredMessages = this.messages.filter(msg => !typesToRemove.includes(msg.type));
                 // 해당 타입의 메시지들 제거
-                this.messages = filteredMessages;
-                this.draft = filteredMessages;
+                this.messages = [...filteredMessages];
+                this.$emit('update:draft', this.messages)
             },
 
             updateDevideBoundedContext(selectedAspect, devideBoundedContext){
@@ -2453,16 +2508,15 @@ import { value } from 'jsonpath';
                 this.updateMessageState(this.messages.find(message => message.type === 'boundedContextResult').uniqueId, {
                     result: this.resultDevideBoundedContext
                 });
-                this.draft = this.messages;
+                this.$emit('update:draft', this.messages)
             },
 
             updateSiteMap(siteMap){
-                this.projectInfo.siteMap = siteMap;
-                this.updateMessageState(this.messages.find(message => message.type === 'boundedContextResult').uniqueId, {
+                this.siteMap = siteMap;
+                this.updateMessageState(this.messages.find(message => message.type === 'siteMapViewer').uniqueId, {
                     siteMap: siteMap
                 });
-                this.draft = this.messages;
-                this.$emit('update:siteMap', this.messages)
+                this.$emit('update:draft', this.messages)
             },
 
             deleteDefinition(id, information){
@@ -2546,6 +2600,75 @@ import { value } from 'jsonpath';
                 const threshold = 5;
                 return Math.abs(textarea.scrollHeight - textarea.clientHeight - textarea.scrollTop) <= threshold;
             },
+
+            generateSiteMap(){
+                this.generator = new SiteMapGenerator(this);
+                this.state.generator = "SiteMapGenerator";
+
+                if(!this.alertGenerateWarning("siteMapViewer")){
+                    return;
+                }
+
+                this.input['requirements'] = this.projectInfo.userStory;
+                this.input['resultDevideBoundedContext'] = this.resultDevideBoundedContext[this.selectedAspect].boundedContexts.map(bc => {
+                    return {
+                        name: bc.name,
+                        role: bc.role
+                    }
+                });
+
+                this.siteMap = [];
+                const siteMapMessage = this.generateMessage("siteMapViewer", []);
+                const bcIndex = this.messages.findIndex(msg => msg.type === 'boundedContextResult');
+                if (bcIndex !== -1) {
+                    this.messages.splice(bcIndex + 1, 0, siteMapMessage);
+                } else {
+                    this.messages.push(siteMapMessage);
+                }
+                
+                this.generator.generate()
+            },
+            mapSiteMapToBoundedContexts(siteMapTree) {
+                if (!siteMapTree || !Array.isArray(siteMapTree) || siteMapTree.length === 0) return;
+                const root = siteMapTree[0];
+                const aspect = this.selectedAspect || Object.keys(this.resultDevideBoundedContext)[0];
+                if (!aspect || !this.resultDevideBoundedContext[aspect]) return;
+
+                const bcArray = this.resultDevideBoundedContext[aspect].boundedContexts || [];
+                const aliasSet = new Set(bcArray.map(bc => bc.alias).filter(Boolean));
+                const nameSet = new Set(bcArray.map(bc => bc.name).filter(Boolean));
+
+                // Reset existing siteMap fields to avoid stale data
+                bcArray.forEach(bc => { bc.siteMap = []; });
+
+                const pushNodeToBC = (node) => {
+                    if (!node || !node.boundedContext) return;
+                    let bc = null;
+                    if (aliasSet.has(node.boundedContext)) {
+                        bc = bcArray.find(b => b.alias === node.boundedContext);
+                    } else if (nameSet.has(node.boundedContext)) {
+                        bc = bcArray.find(b => b.name === node.boundedContext);
+                    }
+                    if (bc) {
+                        if (!Array.isArray(bc.siteMap)) bc.siteMap = [];
+                        bc.siteMap.push({
+                            id: node.id,
+                            title: node.title,
+                            description: node.description || '',
+                            boundedContext: node.boundedContext,
+                            uiRequirements: node.uiRequirements || '',
+                        });
+                    }
+                };
+
+                const traverse = (node) => {
+                    if (!node) return;
+                    if (node.type === 'navigation') pushNodeToBC(node);
+                    if (Array.isArray(node.children)) node.children.forEach(traverse);
+                };
+
+                traverse(root);
+            }
         }
     }
 </script>

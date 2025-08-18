@@ -331,6 +331,9 @@
                         </v-btn>
                     </v-row>
                 </v-card>
+                <div v-if="isStartMapping" style="text-align: right;">
+                    <p class="mb-0">{{ currentProcessingBoundedContext }} - {{ $t('DevideBoundedContextDialog.mappingMessage') }} ({{ processingRate }}%)</p>
+                </div>
                 <v-row class="pa-0 ma-0 pt-4">
                     <v-spacer></v-spacer>
                     <!-- <v-btn @click="reGenerate()"
@@ -338,21 +341,20 @@
                     >
                         <v-icon class="auto-modeling-btn-icon">mdi-refresh</v-icon>{{ $t('DevideBoundedContextDialog.reGenerate') }}
                     </v-btn> -->
-                    <div v-if="isStartMapping">
-                        <p class="mb-0">{{ currentProcessingBoundedContext }} - {{ $t('DevideBoundedContextDialog.mappingMessage') }} ({{ processingRate }}%)</p>
-                    </div>
-                    <v-progress-circular
+                    <v-btn 
+                        :disabled="isGeneratingBoundedContext || isStartMapping || !isEditable" 
+                        @click="generateSiteMap"
+                        class="auto-modeling-btn" 
+                    >
+                        {{ $t('DevideBoundedContextDialog.createSiteMap') }}
+                    </v-btn>
+                    <!-- <v-progress-circular
                         v-if="isStartMapping"
                         color="primary"
                         indeterminate
                         size="24"
                         class="ml-2"
-                    ></v-progress-circular>
-                    <v-btn 
-                        @click="openSiteMapViewer"
-                    >
-                        {{ $t('DevideBoundedContextDialog.createSiteMap') }}
-                    </v-btn>
+                    ></v-progress-circular> -->
                     <v-btn 
                         :disabled="isGeneratingBoundedContext || isStartMapping || !isEditable" 
                         class="auto-modeling-btn" 
@@ -653,31 +655,12 @@
                 </v-card-text>
             </v-tab-item>
         </v-tabs-items>
-
-        <v-dialog 
-            v-model="isSiteMapViewerOpen" 
-            max-width="95%" 
-            max-height="95%"
-            persistent
-        >
-            <v-card>
-                <v-card-text>
-                    <SiteMapViewer 
-                        :userStory="userStory" 
-                        :siteMap="siteMap" 
-                        @update:siteMap="updateSiteMap" 
-                        @close:siteMapViewer="closeSiteMapViewer" 
-                    />
-                </v-card-text>
-            </v-card>
-        </v-dialog>
     </v-card>
 </template>
 
 <script>
     import VueMermaid from '@/components/VueMermaid.vue';
     import BoundedContextMatrix from './BoundedContextMatrix.vue';
-    import SiteMapViewer from './SiteMapViewer.vue';
 
     export default {
         name: 'devide-bounded-context-dialog',
@@ -751,17 +734,11 @@
                 type: String,
                 default: () => "",
                 required: false
-            },
-            siteMap: {
-                type: Array,
-                default: () => [],
-                required: false
             }
         },
         components: {
             VueMermaid,
-            BoundedContextMatrix,
-            SiteMapViewer
+            BoundedContextMatrix
         },
         data() {
             return {
@@ -848,8 +825,6 @@
                 ],
                 activeTab: 0,
                 expanded: [],
-
-                isSiteMapViewerOpen: false
             }
         },
         mounted() {
@@ -1410,18 +1385,8 @@
                     }
                 }
             },
-            openSiteMapViewer() {
-                console.log('SiteMapViewer 열기 - 현재 상태:', this.isSiteMapViewerOpen);
-                this.isSiteMapViewerOpen = true;
-                console.log('SiteMapViewer 열기 후 상태:', this.isSiteMapViewerOpen);
-            },
-            updateSiteMap(siteMap) {
-                this.$emit('updateSiteMap', siteMap)
-            },
-            closeSiteMapViewer() {
-                console.log('SiteMapViewer 닫기 - 현재 상태:', this.isSiteMapViewerOpen);
-                this.isSiteMapViewerOpen = false;
-                console.log('SiteMapViewer 닫기 후 상태:', this.isSiteMapViewerOpen);
+            generateSiteMap() {
+                this.$emit('generate:siteMap');
             }
         }
     }

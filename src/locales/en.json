@@ -106,7 +106,10 @@
     "enterManually": "No, I will enter it manually",
     "confirmGeneration": "Regenerate",
     "confirmGenerationMessage": "All outputs generated based on the AI-recommended scenario and design will be deleted.",
-    "warnings": "The following outputs will be deleted and regenerated."
+    "warnings": {
+      "default": "The following outputs will be deleted and regenerated.",
+      "siteMap": "The existing results will be deleted and regenerated."
+    }
   },
   "DevideBoundedContextDialog" : {
     "boundedContextDivisionResult": "Bounded Context Division Result",

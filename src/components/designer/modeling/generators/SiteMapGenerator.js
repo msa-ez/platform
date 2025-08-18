@@ -7,81 +7,75 @@ class SiteMapGenerator extends JsonAIGenerator {
     }
 
     createPrompt() {
-        return `You are an expert UX/UI designer and information architect who creates comprehensive site maps for websites.
+        return `You are an expert DDD architect and UX designer specializing in food delivery applications.
 
-        TASK: Generate a detailed site map JSON structure for the main screen based on the user's requirements.
+        TASK: Generate a comprehensive site map JSON structure based on the user's domain analysis and user stories.
 
-        requirements:
-        ${this.client.input.frontendRequirements}
+        REQUIREMENTS:
+        ${this.client.input.requirements}
+
+        BOUNDED CONTEXTS LIST:
+        ${JSON.stringify(this.client.input.resultDevideBoundedContext)}
 
         INSTRUCTIONS:
-        1. Analyze the user's requirements carefully to understand the website's purpose, target audience, and main features
-        2. Create a hierarchical site map structure that represents the main navigation and content organization
-        3. Consider user journey and information architecture best practices
-        4. Include all major sections, subsections, and key pages that should be accessible from the main screen
-        5. Structure the JSON to be easily parseable and suitable for visualization
+        1. Analyze the provided domain context and bounded contexts list
+        2. Create a hierarchical structure that reflects the DDD bounded contexts from the list
+        3. Each navigation item should specify which bounded context it belongs to (using the exact names from the bounded contexts list)
+        4. Include command APIs and query screens based on the user stories in the domain context
+        5. Consider the user journey flow from the requirements
+        6. For uiRequirements: extract the exact text from REQUIREMENTS that describes UI/layout requirements for each navigation item. If no specific UI requirements exist, it should be an empty string "".
 
         OUTPUT FORMAT:
         Return a JSON object with the following structure:
         {
           "siteMap": {
-            "title": "Website Title",
-            "description": "Brief description of the website",
-            "mainNavigation": [
+            "title": "Application Title based on domain context",
+            "description": "Description based on the application purpose",
+            "boundedContexts": [
               {
-                "id": "unique-id",
-                "title": "Section Title",
-                "url": "/section-url",
-                "description": "Brief description of this section",
+                "id": "bounded-context-id",
+                "title": "Extract as is Bounded Context Name from the provided list",
+                "description": "Description of this bounded context's responsibility"
+              }
+            ],
+            "navigation": [
+              {
+                "id": "navigation-item-id",
+                "title": "Navigation Item Title",
+                "description": "Description of this navigation item",
+                "boundedContext": "Exact as is bounded context title from the site map bounded contexts list",
+                "uiRequirements": "Exact text from REQUIREMENTS describing UI/layout, or empty string if none",
                 "children": [
                   {
-                    "id": "sub-section-id",
-                    "title": "Sub-section Title", 
-                    "url": "/section/sub-section",
-                    "description": "Brief description",
-                    "children": []
+                    "id": "sub-item-id",
+                    "title": "Sub-item Title",
+                    "description": "Sub-item description",
+                    "boundedContext": "Bounded context name",
+                    "uiRequirements": "Exact text from REQUIREMENTS or empty string"
                   }
                 ]
-              }
-            ],
-            "secondaryNavigation": [
-              {
-                "id": "secondary-id",
-                "title": "Secondary Section",
-                "url": "/secondary-url",
-                "description": "Description"
-              }
-            ],
-            "footerLinks": [
-              {
-                "id": "footer-id",
-                "title": "Footer Link",
-                "url": "/footer-url"
-              }
-            ],
-            "keyFeatures": [
-              {
-                "id": "feature-id",
-                "title": "Feature Name",
-                "description": "Feature description",
-                "location": "Where this feature appears"
               }
             ]
           }
         }
 
         GUIDELINES:
-        - Keep section titles clear and user-friendly
-        - Use logical URL structures (e.g., /about, /products/category)
-        - Include essential pages like Home, About, Contact, etc.
+        - Generate the title and description based on the actual domain context provided
+        - Use the exact bounded context names from the provided bounded contexts list
+        - Create navigation items that reflect the actual user stories and requirements
+        - For uiRequirements: copy the exact text from REQUIREMENTS that describes UI/layout requirements. If no UI requirements are mentioned, use empty string "".
+        - Ensure each navigation item specifies its boundedContext correctly
+        - Structure the navigation logically based on user journey and business processes
         - Consider mobile-first design principles
-        - Ensure the structure supports good SEO practices
-        - Include relevant features and functionality mentioned in requirements
+        - Include essential pages and features mentioned in the requirements
         - Limit main navigation to 5-7 items for optimal UX
-        - Group related content logically
-        - Consider user goals and tasks when organizing content
+        - Group related content logically within appropriate bounded contexts
 
-        IMPORTANT: Return ONLY the JSON object, no additional text or explanations.`;
+        IMPORTANT: 
+        - Return ONLY the JSON object, no additional text or explanations
+        - Base all content on the provided domain context and bounded contexts list
+        - Do not use generic examples, use the actual requirements provided
+        - uiRequirements must contain exact text from REQUIREMENTS or be empty string ""`;
     }
 
     createModel(text) {
@@ -100,10 +94,8 @@ class SiteMapGenerator extends JsonAIGenerator {
                 siteMap: {
                     title: "Website Title",
                     description: "Brief description of the website",
-                    mainNavigation: [],
-                    secondaryNavigation: [],
-                    footerLinks: [],
-                    keyFeatures: []
+                    boundedContexts: [],
+                    navigation: []
                 }
             };
         }
@@ -120,40 +112,23 @@ class SiteMapGenerator extends JsonAIGenerator {
                 title: siteMap.title || "새로운 웹사이트",
                 description: siteMap.description || "웹사이트 설명",
                 type: "root",
+                boundedContexts: siteMap.boundedContexts || [],
                 children: []
             };
 
-            // 메인 네비게이션을 하위 노드로 변환
-            if (siteMap.mainNavigation && Array.isArray(siteMap.mainNavigation)) {
-                rootNode.children = siteMap.mainNavigation.map(item => 
+            // Navigation을 트리 구조로 변환
+            if (siteMap.navigation && Array.isArray(siteMap.navigation)) {
+                rootNode.children = siteMap.navigation.map(item => 
                     this.convertNavigationItem(item)
                 );
-            }
-
-            // 보조 네비게이션도 추가 (선택적)
-            if (siteMap.secondaryNavigation && Array.isArray(siteMap.secondaryNavigation)) {
-                const secondaryNodes = siteMap.secondaryNavigation.map(item => 
-                    this.convertNavigationItem(item, "secondary")
-                );
-                rootNode.children = [...rootNode.children, ...secondaryNodes];
-            }
-
-            // 푸터 링크도 추가 (선택적)
-            if (siteMap.footerLinks && Array.isArray(siteMap.footerLinks)) {
-                const footerNodes = siteMap.footerLinks.map(item => 
-                    this.convertNavigationItem(item, "footer")
-                );
-                rootNode.children = [...rootNode.children, ...footerNodes];
             }
 
             return {
                 siteMap: {
                     title: rootNode.title,
                     description: rootNode.description,
-                    mainNavigation: this.convertToExportFormat(rootNode.children),
-                    secondaryNavigation: siteMap.secondaryNavigation || [],
-                    footerLinks: siteMap.footerLinks || [],
-                    keyFeatures: siteMap.keyFeatures || []
+                    boundedContexts: siteMap.boundedContexts || [],
+                    navigation: siteMap.navigation || []
                 },
                 treeData: [rootNode] // SiteMapViewer에서 사용할 트리 구조
             };
@@ -164,36 +139,36 @@ class SiteMapGenerator extends JsonAIGenerator {
                 siteMap: {
                     title: "변환 오류",
                     description: "AI 응답을 사이트맵으로 변환하는 중 오류가 발생했습니다.",
-                    mainNavigation: [],
-                    secondaryNavigation: [],
-                    footerLinks: [],
-                    keyFeatures: []
+                    boundedContexts: [],
+                    navigation: []
                 },
                 treeData: [{
                     id: this.generateNodeId(),
                     title: "변환 오류",
                     description: "AI 응답을 사이트맵으로 변환하는 중 오류가 발생했습니다.",
                     type: "root",
+                    boundedContexts: [],
                     children: []
                 }]
             };
         }
     }
 
-    convertNavigationItem(item, type = "page") {
+    convertNavigationItem(item) {
         const node = {
             id: item.id || this.generateNodeId(),
             title: item.title || "새 페이지",
             description: item.description || "",
-            type: type,
-            url: item.url || "",
+            type: "navigation",
+            boundedContext: item.boundedContext || "",
+            uiRequirements: item.uiRequirements || "",
             children: []
         };
 
         // 하위 항목이 있으면 재귀적으로 변환
         if (item.children && Array.isArray(item.children)) {
             node.children = item.children.map(child => 
-                this.convertNavigationItem(child, "subpage")
+                this.convertNavigationItem(child)
             );
         }
 
@@ -205,7 +180,8 @@ class SiteMapGenerator extends JsonAIGenerator {
             id: child.id,
             title: child.title,
             description: child.description,
-            url: child.url,
+            boundedContext: child.boundedContext,
+            uiRequirements: child.uiRequirements,
             children: child.children ? this.convertToExportFormat(child.children) : []
         }));
     }

@@ -2,18 +2,20 @@
     <div class="site-map-viewer">
         <div class="toolbar">
             <div class="toolbar-left">
-                <button class="btn btn-primary" @click="generateSiteMap" :disabled="isGenerating">
-                    재생성
-                </button>
-                <button class="btn btn-secondary" @click="addNode" :disabled="isGenerating">
-                    노드 추가
-                </button>
-                <v-progress-circular v-if="isGenerating" indeterminate color="primary" size="24" class="ml-2"></v-progress-circular>
+                <v-row class="pa-0 ma-0 pt-4">
+                    <v-btn class="auto-modeling-btn" color="primary" @click="generateSiteMap" :disabled="isGenerating">
+                        재생성
+                    </v-btn>
+                    <v-btn class="auto-modeling-btn" color="secondary" @click="addNode" :disabled="isGenerating">
+                        노드 추가
+                    </v-btn>
+                    <v-progress-circular v-if="isGenerating" indeterminate color="primary" size="24" class="ml-2"></v-progress-circular>
+                </v-row>
             </div>
             <!-- <div class="toolbar-right">
                 <span class="node-counter">노드 수: {{ nodeCount }}</span>
             </div> -->
-            <div class="toolbar-right">
+            <!-- <div class="toolbar-right">
                 <v-tooltip bottom>
                     <template v-slot:activator="{ on, attrs }">
                         <v-btn
@@ -28,48 +30,49 @@
                     </template>
                     <span>Close</span>
                 </v-tooltip>
-            </div>
+            </div> -->
         </div>
         
         <div class="site-map-container" ref="siteMapContainer">
             <div class="site-map-tree">
-                <div class="root-node" v-if="siteMapData.length > 0">
-                    <div class="node-content" :data-node-id="siteMapData[0].id">
+                <div class="root-node" v-if="localSiteMap.length > 0">
+                    <div class="node-content" :data-node-id="localSiteMap[0].id">
                         <div class="node-title">
                             <input 
-                                v-model="siteMapData[0].title" 
+                                v-model="localSiteMap[0].title" 
                                 class="node-input title-input"
                                 placeholder="사이트 제목"
                             />
                         </div>
                         <div class="node-description">
                             <input 
-                                v-model="siteMapData[0].description" 
+                                v-model="localSiteMap[0].description" 
                                 class="node-input description-input"
                                 placeholder="사이트 설명"
                             />
                         </div>
                         <div class="node-actions">
-                            <button class="action-btn" @click="addChildNode(siteMapData[0].id)">
+                            <button class="action-btn" @click="addChildNode(localSiteMap[0].id)">
                                 <i class="fas fa-plus"></i>
                             </button>
-                            <button class="action-btn delete-btn" @click="deleteNode(siteMapData[0].id)">
+                            <button class="action-btn delete-btn" @click="deleteNode(localSiteMap[0].id)">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>
                     </div>
                     
                     <!-- 하위 노드들 -->
-                    <div class="children-container" v-if="siteMapData[0].children && siteMapData[0].children.length > 0">
+                    <div class="children-container" v-if="localSiteMap[0].children && localSiteMap[0].children.length > 0">
                         <div class="children-wrapper">
                             <div 
-                                v-for="(child, index) in siteMapData[0].children" 
+                                v-for="(child, index) in localSiteMap[0].children" 
                                 :key="child.id"
                                 class="child-node"
                             >
                                 <SiteMapNode 
                                     :node="child"
-                                    :parent-title="siteMapData[0].title"
+                                    :parent-title="localSiteMap[0].title"
+                                    :available-bounded-contexts="(localSiteMap[0].boundedContexts || [])"
                                     @add-child="addChildNode"
                                     @delete-node="deleteNode"
                                     @update-node="updateNode"
@@ -86,7 +89,7 @@
                     </div>
                     <h3>사이트맵이 비어있습니다</h3>
                     <p>첫 번째 노드를 추가해보세요!</p>
-                    <button class="btn btn-primary" @click="addRootNode">
+                    <button class="auto-modeling-btn" color="primary" :disabled="isGenerating" @click="addRootNode">
                         <i class="fas fa-plus"></i> 루트 노드 추가
                     </button>
                 </div>
@@ -97,7 +100,6 @@
 
 <script>
 import SiteMapNode from './SiteMapNode.vue';
-import SiteMapGenerator from './SiteMapGenerator.js';
 
 export default {
     name: "SiteMapViewer",
@@ -111,10 +113,8 @@ export default {
                 siteMap: {
                     title: "새로운 웹사이트",
                     description: "웹사이트 설명을 입력하세요",
-                    mainNavigation: [],
-                    secondaryNavigation: [],
-                    footerLinks: [],
-                    keyFeatures: []
+                    boundedContexts: [],
+                    navigation: []
                 }
             })
         },
@@ -127,45 +127,52 @@ export default {
             type: Array,
             default: () => [],
             required: false
+        },
+        resultDevideBoundedContext: {
+            type: Object,
+            default: () => ({}),
+            required: false
+        },
+        isGenerating: {
+            type: Boolean,
+            default: false,
+            required: false
         }
     },
     data() {
         return {
-            siteMapData: [],
             nodeIdCounter: 1,
             input: {
-                frontendRequirements: ""
+                frontendRequirements: "",
+                resultDevideBoundedContext: []
             },
             generator: null,
-            isGenerating: false
+            updateTimeout: null,
+            localSiteMap: []
         };
     },
     computed: {
         nodeCount() {
-            return this.countNodes(this.siteMapData);
+            return this.countNodes(this.localSiteMap);
         }
     },
     watch: {
+        // props 변경 시 지역 변수 동기화
         siteMap: {
             handler(newSiteMap) {
-                if (newSiteMap && newSiteMap.length > 0) {
-                    this.siteMapData = [...newSiteMap];
-                    console.log('사이트맵 데이터 업데이트:', this.siteMapData.length, '개 노드');
+                if (newSiteMap && Array.isArray(newSiteMap)) {
+                    this.localSiteMap = JSON.parse(JSON.stringify(newSiteMap)); // 깊은 복사
                 }
             },
-            immediate: true
+            immediate: true,
+            deep: true
         }
     },
+    created() {
+    },
     mounted() {
-        this.initializeData();
-        if(this.siteMap && this.siteMap.length > 0) {
-            // 기존 사이트맵 데이터가 있으면 사용
-            this.siteMapData = [...this.siteMap];
-            console.log('기존 사이트맵 데이터 로드:', this.siteMapData.length, '개 노드');
-        } else {
-            // 새로운 사이트맵 생성
-            this.generator = new SiteMapGenerator(this);
-            this.generateSiteMap();
+        if(this.siteMap.length == 0){
+            this.addRootNode();
         }
         
         // 루트 노드를 중앙에 위치시키기
@@ -175,17 +182,15 @@ export default {
     },
     methods: {
         initializeData() {
-            if (this.initialData && this.initialData.treeData && Array.isArray(this.initialData.treeData)) {
-                // AI에서 생성된 트리 데이터가 있으면 사용
-                this.siteMapData = [...this.initialData.treeData];
-                console.log('초기 트리 데이터 로드:', this.siteMapData.length, '개 노드');
-            } else {
-                // 기본 루트 노드 생성
-                this.addRootNode();
-            }
+            // if (this.initialData && this.initialData.treeData && Array.isArray(this.initialData.treeData)) {
+            //     // AI에서 생성된 트리 데이터가 있으면 사용
+            //     this.localSiteMap = this.initialData.treeData;
+            //     this.$emit('update:siteMap', this.localSiteMap);
+            // } else {
+            //     // 기본 루트 노드 생성
+            //     this.addRootNode();
+            // }
         },
-        
-
         
         generateId() {
             return `node-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -199,26 +204,28 @@ export default {
                 type: "root",
                 children: []
             };
-            this.siteMapData = [rootNode];
+            this.localSiteMap = [rootNode];
+            this.$emit('update:siteMap', this.localSiteMap);
         },
         
         addNode() {
-            if (this.siteMapData.length === 0) {
+            if (this.localSiteMap.length === 0) {
                 this.addRootNode();
             } else {
-                this.addChildNode(this.siteMapData[0].id);
+                this.addChildNode(this.localSiteMap[0].id);
             }
         },
         
         addChildNode(parentId) {
-            const parentNode = this.findNode(parentId, this.siteMapData);
+            const parentNode = this.findNode(parentId, this.localSiteMap);
             if (parentNode) {
                 const newNode = {
                     id: this.generateId(),
                     title: "새 페이지",
                     description: "페이지 설명",
-                    type: "page",
-                    url: "",
+                    type: "navigation",
+                    boundedContext: "",
+                    uiRequirements: "",
                     children: []
                 };
                 
@@ -226,6 +233,9 @@ export default {
                     parentNode.children = [];
                 }
                 parentNode.children.push(newNode);
+                
+                // 부모 컴포넌트에 변경사항 알림
+                this.$emit('update:siteMap', this.localSiteMap);
                 
                 // 새로운 노드가 추가되면 스크롤을 오른쪽으로 이동
                 this.$nextTick(() => {
@@ -240,12 +250,16 @@ export default {
         },
         
         deleteNode(nodeId) {
-            if (this.siteMapData.length === 1 && this.siteMapData[0].id === nodeId) {
+            if (this.localSiteMap.length === 1 && this.localSiteMap[0].id === nodeId) {
                 // 루트 노드 삭제
-                this.siteMapData = [];
+                this.localSiteMap = [];
+                this.$emit('update:siteMap', this.localSiteMap);
             } else {
-                this.removeNodeFromTree(nodeId, this.siteMapData);
+                this.removeNodeFromTree(nodeId, this.localSiteMap);
             }
+            
+            // 부모 컴포넌트에 변경사항 알림
+            this.$emit('update:siteMap', this.localSiteMap);
         },
         
         removeNodeFromTree(nodeId, nodes) {
@@ -264,9 +278,19 @@ export default {
         },
         
         updateNode(nodeId, updatedData) {
-            const node = this.findNode(nodeId, this.siteMapData);
+            const node = this.findNode(nodeId, this.localSiteMap);
             if (node) {
                 Object.assign(node, updatedData);
+                
+                // 디바운싱으로 성능 개선
+                if (this.updateTimeout) {
+                    clearTimeout(this.updateTimeout);
+                }
+                
+                this.updateTimeout = setTimeout(() => {
+                    // 부모 컴포넌트에 변경사항 알림
+                    this.$emit('update:siteMap', this.localSiteMap);
+                }, 500); // 500ms 지연
             }
         },
         
@@ -295,30 +319,30 @@ export default {
         },
         
         convertToExportFormat() {
-            if (this.siteMapData.length === 0) {
+            if (this.localSiteMap.length === 0) {
                 return {
                     siteMap: {
                         title: "빈 사이트맵",
                         description: "",
-                        mainNavigation: [],
-                        secondaryNavigation: [],
-                        footerLinks: [],
-                        keyFeatures: []
+                        boundedContexts: [],
+                        navigation: []
                     }
                 };
             }
             
-            const rootNode = this.siteMapData[0];
-            const mainNavigation = rootNode.children ? rootNode.children.map(child => ({
+            const rootNode = this.localSiteMap[0];
+            const navigation = rootNode.children ? rootNode.children.map(child => ({
                 id: child.id,
                 title: child.title,
                 description: child.description,
-                url: child.url,
+                boundedContext: child.boundedContext,
+                uiRequirements: child.uiRequirements,
                 children: child.children ? child.children.map(subChild => ({
                     id: subChild.id,
                     title: subChild.title,
                     description: subChild.description,
-                    url: subChild.url
+                    boundedContext: subChild.boundedContext,
+                    uiRequirements: subChild.uiRequirements
                 })) : []
             })) : [];
             
@@ -326,54 +350,20 @@ export default {
                 siteMap: {
                     title: rootNode.title,
                     description: rootNode.description,
-                    mainNavigation: mainNavigation,
-                    secondaryNavigation: [],
-                    footerLinks: [],
-                    keyFeatures: []
+                    boundedContexts: rootNode.boundedContexts || [],
+                    navigation: navigation
                 }
             };
         },
 
         closeSiteMapViewer() {
             this.$emit('close:siteMapViewer')
-            this.$emit('update:siteMap', this.siteMapData)
-        },
-
-        generateSiteMap() {
-            this.isGenerating = true
-            this.siteMapData = []
-            this.nodeIdCounter = 1
-            this.input.frontendRequirements = this.userStory
-            this.generator.generate();
-        },
-
-        onModelCreated(model) {
-            console.log('사이트맵 생성 중:', model);
-        },
-
-        onGenerationFinished(result) {
-            console.log('사이트맵 생성 완료:', result);
-            
-            if (result && result.treeData && Array.isArray(result.treeData)) {
-                // Generator에서 이미 변환된 트리 데이터 사용
-                this.siteMapData = [...result.treeData];
-                console.log('트리 데이터 할당 완료:', this.siteMapData.length, '개 노드');
-                this.isGenerating = false
-
-                this.$emit('update:siteMap', this.siteMapData)
-                
-                // 루트 노드를 중앙에 위치시키기
-                this.$nextTick(() => {
-                    this.centerRootNode();
-                });
-            } else {
-                console.error('유효하지 않은 사이트맵 데이터:', result);
-            }
+            this.$emit('update:siteMap', this.localSiteMap)
         },
 
         centerRootNode() {
             const container = this.$refs.siteMapContainer;
-            if (container && this.siteMapData.length > 0) {
+            if (container && this.localSiteMap.length > 0) {
                 // 컨테이너의 중앙으로 스크롤
                 const scrollLeft = (container.scrollWidth - container.clientWidth) / 2;
                 container.scrollTo({
@@ -382,6 +372,10 @@ export default {
                     behavior: 'smooth'
                 });
             }
+        },
+
+        generateSiteMap(){
+            this.$emit('generate:siteMap')
         }
 
 
@@ -525,6 +519,34 @@ export default {
 .description-input {
     font-size: 12px;
     color: #666;
+}
+
+.node-bcs {
+    margin-bottom: 10px;
+}
+
+.field-label {
+    font-size: 10px;
+    color: #495057;
+    font-weight: 500;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.bc-chips {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.bc-chip {
+    display: inline-block;
+    padding: 2px 8px;
+    background: #f1f3f5;
+    color: #343a40;
+    border-radius: 12px;
+    font-size: 11px;
 }
 
 .node-input:focus {

@@ -201,6 +201,7 @@
                         @saveProject="openStorageDialog('project')"
                         @backupProject="backupProject()"
                         @updateJoinRequested="updateJoinRequestedText"
+                        @update:draft="updateDraft"
                 ></AutoModelingDialog>
             <!-- </v-tab-item>
         </v-tabs-items> -->
@@ -588,7 +589,7 @@
 
                         // 없는 경우, 재탐색
                         if(!me.draft) {
-                            me.draft = information.draft;
+                            me.draft = information && information.draft ? information.draft : [];
                         }
 
                         me.$EventBus.$emit('progressValue', true)
@@ -633,7 +634,8 @@
                     contextMapping: null,
                     userStoryMap: null,
                     prompt: "",
-                    userStory: ""
+                    userStory: "",
+                    inputDDL: ""
                 }
 
                 me.projectName = me.information.projectName  ? me.information.projectName : me.information.prompt
@@ -652,11 +654,6 @@
                 // Only Save Server Model
                 me.isOwnModel = false;
                 me.information = information ? information : me.information
-
-                // 임시 모델링처리
-                if(information.eventStorming.eventStorming && information.eventStorming.eventStorming.modelList){
-                    me.information.eventStorming = information.eventStorming.eventStorming
-                }
 
                 if( !me.projectVersion ){
                     me.projectName = me.information && me.information.projectName ? me.information.projectName : 'untitled'
@@ -860,6 +857,10 @@
                     this.joinRequestedText.show = true;
                     this.joinRequestedText.text = 'Join Requested';
                 }
+            },
+
+            updateDraft(messages){
+                this.draft = [...messages];
             }
         }
     }

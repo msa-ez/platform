@@ -106,7 +106,10 @@
     "enterManually": "아니오, 직접 입력하겠습니다",
     "confirmGeneration": "재생성",
     "confirmGenerationMessage": "AI가 추천한 시나리오와 시나리오 기반의 설계된 이후 모든 산출물은 모두 삭제됩니다.",
-    "warnings": "하단의 생성 결과들이 삭제되고 새롭게 생성됩니다."
+    "warnings": {
+      "default": "하단의 생성 결과들이 삭제되고 새롭게 생성됩니다.",
+      "siteMap": "기존의 결과를 삭제하고 새롭게 생성됩니다."
+    }
   },
   "DevideBoundedContextDialog" : {
     "boundedContextDivisionResult": "Bounded Context 분할 결과",
