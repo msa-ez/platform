@@ -1,0 +1,21 @@
+{
+  "name": "MSAEZ",
+  "short_name": "MSAEZ",
+  "icons": [
+    {
+      "src": "./img/icons/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "./img/icons/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#4DBA87",
+  "content_security_policy": "script-src 'self' https://fonts.gstatic.com https://apis.google.com https://www.googleapis.com https://securetoken.googleapis.com https://accounts.google.com https://my-project.firebaseapp.com; object-src 'self'"
+}

@@ -1,0 +1,5182 @@
+<template>
+    <v-dialog v-model="showLoginCard"><Login :onlyGitLogin="true" @login="showLoginCard = false" /></v-dialog>
+</template>
+<script>
+    import StorageBase from "./ModelStorageBase";
+    import TenantAware from "../../labs/TenantAware"
+    // import Opengraph from "../../opengraph";
+    // import EventStormingModeling from "../es-modeling";
+    import PowerPointGenerator from "./generators/PowerPointGenerator";
+    import Login from "../../oauth/Login";
+    import Gitlab from "../../../utils/Gitlab";
+    import GitAPI from "../../../utils/GitAPI";
+    import Github from "../../../utils/Github";
+    
+    import * as io from 'socket.io-client'
+    
+    function Queue() {
+        this.elements = [];
+    }
+
+    Queue.prototype.enqueue = function (e) {
+        this.elements.push(e);
+    };
+
+    Queue.prototype.dequeue = function () {
+        return this.elements.shift();
+    };
+
+    Queue.prototype.isEmpty = function () {
+        return this.elements.length == 0;
+    };
+
+    Queue.prototype.peek = function () {
+        return !this.isEmpty() ? this.elements[0] : undefined;
+    };
+
+    Queue.prototype.clear = function () {
+        this.elements = [];
+    };
+
+    Queue.prototype.removeByIndex = function (index) {
+        this.elements.splice(index, 1);
+    }
+
+    Queue.prototype.findIndexByChildKey = function (key) {
+        return this.elements.findIndex(element => element.childKey == key)
+    }
+
+    Queue.prototype.length = function () {
+        return this.elements.length;
+    }
+
+    var queueFifo = new Queue();
+
+    var fs = require('fs');
+    var _ = require('lodash');
+    var Base64 = require('js-base64').Base64;
+    var yamlpaser = require('js-yaml');
+    var FileSaver = require('file-saver');
+    var changeCase = require('change-case');
+    var pluralize = require('pluralize');
+    var JSZip = require('jszip')
+    var path = require('path')
+
+    var jsondiffpatch = require('jsondiffpatch').create({
+        objectHash: function (obj, index) {
+            return '$$index:' + index;
+        },
+        // arrays: {
+        //     // useHash: true
+        //     // default true, detect items moved inside the array (otherwise they will be registered as remove+add)
+        //     // detectMove: true,
+        //     // default false, the value of items moved is not included in deltas
+        //     includeValueOnMove: true
+        // },
+    });
+
+    var jp = require('jsonpath');
+
+    export default {
+        mixins: [TenantAware, StorageBase],
+        name: 'model-canvas',
+        components: {
+            io,
+            Login
+        },
+        props: {
+            renderCount:{
+                type: Number,
+                default: 0
+            },
+            sliderLocationScale: {
+                type: Number,
+                default: function () {
+                    return 1;
+                }
+            },
+            value: {
+                type: Object,
+                default: function () {
+                    return {
+                        'elements': {},
+                        'relations': {},
+                        'basePlatform': null,
+                        'basePlatformConf': {},
+                        'toppingPlatforms': null,
+                        'toppingPlatformsConf': {},
+                        'scm': {}
+                    }
+                }
+            },
+            fork:{
+                type: Boolean,
+                default: function () {
+                    return false;
+                }
+            },
+            projectId: {
+                type: String,
+                default: function () {
+                    return null;
+                }
+            },
+            projectVersion: {
+                type: String,
+                default: function () {
+                    return null;
+                }
+            },
+            projectTitle: {
+                type: String,
+                default: function () {
+                    return ''
+                }
+            },
+            projectName: {
+                type: String,
+                default: function () {
+                    return ''
+                }
+            },
+            dragPageMovable: {
+                type: Boolean,
+                default: function () {
+                    return false;
+                }
+            },
+            automaticGuidance: {
+                default: function () {
+                    return false;
+                },
+                type: Boolean
+            },
+            disableModel: {
+                type: Boolean,
+                default: function () {
+                    return false;
+                }
+            },
+            embedded: {
+                type: Boolean,
+                default: function () {
+                    return false;
+                }
+            },
+
+            /**
+             * 모델 수정 여부 default: true(수정)
+             * @type Boolean
+             */
+            isEditable: {
+                type: Boolean,
+                default: function () {
+                    return true;
+                }
+            },
+            /**
+             * 모델 사용 여부(접근권한) default: false(사용)
+             * @type Boolean
+             */
+            isDisable: {
+                type: Boolean,
+                default: function () {
+                    return false;
+                }
+            },
+            /**
+             * 모델 큐 방식 여부 default: false(value 저장)
+             * @type Boolean
+             */
+            isQueueModel: {
+                type: Boolean,
+                default: function () {
+                    return false;
+                }
+            },
+            /**
+             * 서버 저장 모델 유무 default: false(local)
+             * @type Boolean
+             */
+            isServerModel: {
+                type: Boolean,
+                default: function () {
+                    return false;
+                }
+            },
+            /**
+             * 자신의 모델 유무  default: false
+             * @type Boolean
+             */
+            isOwnModel: {
+                type: Boolean,
+                default: function () {
+                    return false;
+                }
+            },
+
+
+        },
+        data() {
+            return {
+                // associatedProject mirror 
+                associatedProjectInformation: null,
+                isLoadedInitMirror: false,
+                isLoadedMirrorQueue: false,
+                mirrorValue: {
+                    'elements': {},
+                    'relations': {},
+                    'basePlatform': null,
+                    'basePlatformConf': {},
+                    'toppingPlatforms': null,
+                    'toppingPlatformsConf': {},
+                    'scm': {}
+                },
+                mirrorQueueCount: 0,
+                
+                //schedule
+                sortScheduleId: null,
+                queueScheduleId: null,
+                
+                git: null,
+                showLoginCard: false,
+                //Version
+                versionLists: null,
+                viewLists : null,
+                //sep
+                paneLengthPercent:100,
+                mainSeparatePanel:{
+                    min:5,
+                    max:95,
+                    current:100
+                },
+                // Template Code
+                changedTemplateCode: false,
+                autoSyncTemplateId: null,
+                oldTreeHashLists: null,
+                newTreeHashLists: null,
+                showTemplatePath: false,
+                changedPathLists: [],
+                changedPathListsBucket: [],
+                showChangedPathLists: false,
+                isChangedPathLists: false,
+
+                //base
+                fab: false,
+                windowWidth: window.innerWidth,
+                // user: {},
+                app: null,
+                fullPath: null,
+                params: null,
+                paramKeys: null,
+                canvas: null,
+                canvasType: 'es',
+                isAutoForkModel:  false,
+                canvasValidationResults: [],
+                canvasRenderKey: 0,
+
+                //overlay
+                overlayText: null,
+                isRendering: false,
+
+                //invite
+                invitationLists: null,
+                inviteDialog: false,
+                participantLists: [],
+                information: null,
+                // specVersion: '1.0',
+                joinRequested: false,
+
+                storageDialog: false,
+                undoDisable: false,
+                redoDisable: false,
+
+                //clusters
+                clusterItems: [
+                    // {title: 'Terminal'},
+                    // {title: 'Sync'},
+                    // {title: 'Cluster'},
+                ],
+                clusterInfo: {},
+                clusterDialog: false,
+
+                //firebase
+                lastSnapshotKey: null,
+                // snapshot 
+                lastSnapQueueKey: null,
+                latestQueueKey: null,
+                receivedQueueExistValue: false,
+                changedByMe: false,
+                changedByMeKeys: [],
+                receivedQueueItemCountAfterLastSnapshot: 0,
+                snapshotFrequency: 50,
+
+                //share - invitationLists
+                showPublicModel: false,
+                permissionTypes: ['ReadOnly', 'Write'],
+                showParticipantPanel: false,
+
+                //project
+                modelChanged: false,
+                initLoad: false,
+                title: '',
+
+                //Save,fork
+                defaultVersion: 'v0.0.1',
+                storageCondition: null,
+                /*
+                    forkLatest : 원본모델 접근시 ( 해당 유저가 최근에 포크한 모델 ID)
+                    forkOrigin : 포크모델 접근시 ( 해당 유저가 해당 모델의 원본 모델 ID)
+                */
+                forkInformation:{
+                    forkOrigin: null,
+                    forkLatest : null,
+                },
+                purchaseItemDialog: false,
+                purchaseItemDialogInfo: {
+                    mainTitle: null,
+                    title: null,
+                    subTitle: null,
+                    itemId: null,
+                    thumbnailText: null,
+                    thumbnailImg: null,
+                    resourceType: null,
+                    className: null,
+                    labName: null,
+                    period: 90,
+                    count: 0,
+                    amount: 0,
+                },
+
+                //undo,Redo
+                undoRedoArray: [],
+                undoRedoIndex: 0,
+                changedByUndoRedo: false,
+                undoRedoState: null,
+                diffToUndo: null,
+
+                //rtc
+                rtcRoomId: 'room',
+
+                //icon
+                icon: {
+                    version: 'mdi-server',
+                    code: 'mdi-code-array',
+                    save: 'mdi-content-save',
+                    open: 'mdi-book-open',
+                    md: 'mdi-language-markdown',
+                    txt: 'mdi-file-document-outline',
+                    java: 'mdi-language-java',
+                    xml: 'mdi-xml',
+                    shell: 'mdi-powershell',
+                    docker: 'mdi-docker',
+                    png: 'mdi-file-image',
+                    json: 'mdi-code-json',
+                    python: 'mdi-language-python',
+                    fork: ' mdi-silverware-fork',
+                    share: 'mdi-share-variant',
+                    join: 'mdi-account-multiple-plus',
+                    vue: 'mdi-vuejs',
+                    js: 'mdi-language-javascript',
+                    html: 'mdi-language-html5',
+                    go: 'mdi-language-go',
+                    properties: 'mdi-cog'
+                },
+                debounceTime: 0,
+                //스낵바 옵션
+                snackbar: {
+                    show: false,
+                    color: 'error',
+                    mode: 'multi-line',
+                    timeout: 6000,
+                    text: '',
+                    top: true,
+                    bottom: false,
+                    centered: false,
+                    closeBtn: true,
+                },
+                alertInfo: {
+                    show: false,
+                    type: 'warning',
+                    border: 'left',
+                    maxWidth: 550,
+                    text: '확인',
+                    submit: null,
+                    fnNum: 0,
+                    color: 'orange',
+                    link: null
+                },
+                codeModalCheck: false,
+                checkingBilling: false,
+
+                // rtc
+                rtcLogin: false,
+                webRtcDialog: false,
+
+                //internet
+                disconnect: false,
+
+                searchForFile:{
+                    onOff: false,
+                    search: null,
+                },
+                searchForContent:{
+                    onOff: false,
+                    search: '',
+                },
+                // mouse Event
+                mouseEventHandlers: {},
+                mouseEventCnt: 0,
+                valueChangedTimer: null,
+                modelCanvasChannel: null,
+                // pause queue
+                isPauseQueue: false,
+                changedPauseQueue: false, // 변화 값 처리
+                pauseValue: null, // 시작 시점의 value 저장.
+                isModelDefinitionLoaded: false
+            }
+        },
+        beforeDestroy: function () {
+            this.executeBeforeDestroy()
+        },
+        computed: {
+            projectSendable(){
+                return false
+            },
+            scmTag(){
+                if(this.value && this.value.scm && this.value.scm.tag){
+                    return this.value.scm.tag;
+                }
+                return null;
+            },
+            scmOrg(){
+                if(this.value && this.value.scm && this.value.scm.org){
+                    return this.value.scm.org;
+                }
+                return null;
+            },
+            scmRepo(){
+                if(this.value && this.value.scm && this.value.scm.repo){
+                    return this.value.scm.repo;
+                }
+                return null;
+            },
+            scmForkedOrg(){
+                if(this.value && this.value.scm && this.value.scm.forkedOrg){
+                    return this.value.scm.forkedOrg;
+                }
+                return null;
+            },
+            scmForkedRepo(){
+                if(this.value && this.value.scm && this.value.scm.forkedRepo){
+                    return this.value.scm.forkedRepo;
+                }
+                return null;
+            },
+            filteredMouseEventHandlers(){
+                try{
+                    let objs = JSON.parse(JSON.stringify(this.mouseEventHandlers));
+                    if(this.userInfo.email){
+                        let myself = this.userInfo.email.replace(/\./gi, '_');
+                        delete objs[myself];
+                    }
+                    return objs;
+                }catch (e) {
+                    return this.mouseEventHandlers
+                }
+            },
+            filteredCanvasValidationResults(){
+                var me = this
+                var levelSort = ['error','warning','info']
+                try{
+                    return me.canvasValidationResults.sort(function compare(a, b) {
+                        var aIdx = levelSort.findIndex(x=>x == a.level)
+                        var bIdx = levelSort.findIndex(x=>x == b.level)
+                        return aIdx - bIdx;
+                    });
+                }catch (e) {
+                    return me.canvasValidationResults
+                }
+            },
+            isInitRender(){
+                if(this.renderCount == 0 ){
+                    return true
+                }
+                return  false
+            },
+            getScale: {
+                getter: function () {
+                    console.log("aa")
+                    return this.sliderLocationScale
+                }
+            },
+            isForeign() {
+                try {
+                    let lang = this.$i18n.locale;
+                    return lang !== 'ko';
+                } catch (error) {
+                    console.error('Error determining locale:', error);
+                    // 기본값으로 false 반환
+                    return false;
+                }
+            },
+            isCustomMoveExist() {
+                return this.isServerModel && this.isQueueModel
+            },
+            isReadOnlyModel(){
+                // default: false (편집 가능)
+                if(this.isDisable) return true; // permissions.
+                if(!this.isEditable) return true; // write
+                if(this.projectVersion) return true; // version Mode.
+
+                return false;
+            },
+            isClazzModeling() {
+                if (this.paramKeys && this.paramKeys.includes('classId')) {
+                    return true
+                }
+                return false
+            },
+            filteredVersionLists(){
+                if(this.versionLists){
+                    let versionListsCopy = this.versionLists.slice();
+                    versionListsCopy.push({version:"latest"})
+                    return versionListsCopy;
+                }else{
+                    return []
+                }
+            },
+            isForkedModeling(){
+                // fork 했던 모델.
+                if(this.forkInformation && this.forkInformation.forkOrigin){
+                    return true
+                }
+                return false
+            },
+            joinRequestedText() {
+                var obj = {
+                    show: true,
+                    text: 'Join',
+                }
+
+                if (this.joinRequested) {
+                    obj.show = false
+                    obj.text = 'Join Requested'
+                    return obj
+                }
+                return obj
+            },
+            requestCount() {
+
+                if (this.information && this.information.permissions) {
+                    var array = Object.values(this.information.permissions)
+                    return array.filter((word) => {
+                        if (word)
+                            return word.request == true
+                    }).length
+                }
+
+                return null
+            },
+            isClosedTemplateCode() {
+                if (this.mainSeparatePanel.current > 98) {
+                    return true
+                }
+                return false
+            },
+            isMobile: function () {
+                if (this.mainSeparatePanel.current < 96)
+                    return true
+                return this.windowWidth <= 1093
+            },
+            showOverlay() {
+                return this.overlayText
+            },
+            // storage() {
+            //     var me = this
+            //     if (me.isServerModel) {
+            //         return 'db'
+            //     } else {
+            //         return 'localstorage'
+            //     }
+            // },
+            fixedDefalutStroage() {
+                return 'db'
+            },
+            isUndoDisabled(){
+                var me = this
+                if (!me.isServerModel) {
+                    if (me.undoRedoIndex == 0) {
+                        return true
+                    } else {
+                        return false
+                    }
+                } else {
+                    return me.undoDisable
+                }
+            },
+            isRedoDisabled() {
+                var me = this
+                if (!me.isServerModel) {
+                    if (me.undoRedoIndex == me.undoRedoArray.length) {
+                        return true
+                    } else {
+                        return false
+                    }
+                } else {
+                    return me.redoDisable
+                }
+            },
+            copyValue() {
+                return _.cloneDeep(this.value)
+            },
+            inviteLists() {
+                return this.invitationLists
+            },
+            showStorageDialog() {
+                return this.storageDialog
+            },
+        },
+        created: async function () {
+            var me = this
+            me.$app.try({
+                context: me,
+                async action(me){
+                    console.log("created");
+                    if (me.embedded) {
+                        return
+                    }
+                    window.io = io
+                    me.app = me.getComponent('App')
+                    me.git = new GitAPI();
+                    // URL
+                    me.fullPath = me.$route.fullPath.split('/')
+                    me.params = me.$route.params
+                    me.paramKeys = Object.keys(me.params)
+                    me.modelCanvasChannel = new BroadcastChannel('model-canvas')
+                    me.setCanvasType()
+                    me.track()
+
+                    me.$EventBus.$emit('showNewButton', false)
+                    //set userInfol
+                    await me.loginUser()
+                
+                    if (me.isMobile) {
+                        me.sliderLocationScale = 0.7
+                    }
+                    //initialize if never initialized before
+                    if (!me.value || !me.value.relations) {
+                        me.value = {}
+                        me.value.relations = {}
+                    }
+                    if (!me.value || !me.value.elements) {
+                        me.value.elements = {};
+                    }
+
+                    await me.loadDefinition()
+
+                    if(me.information.associatedProject){
+                        me.receiveAssociatedProject(me.information.associatedProject);
+                    }
+
+                    if( !me.isDisable && ((me.isServerModel && !me.isAutoForkModel) || me.projectVersion) ){
+                        me.watchInformation();
+                        me.onEventHandler();
+                    }
+
+                    if (me.isServerModel) {
+                        if (me.isQueueModel) {
+                            if (me.isDisable || me.projectVersion){
+                                me.initLoad = true
+                                me.$EventBus.$emit('progressValue', false)
+                            }else {
+                                me.receiveQueue()
+                            }
+                        } else {
+                            me.receiveValue()
+                            me.initLoad = true
+                            me.$EventBus.$emit('progressValue', false)
+                        }
+                    }
+
+                    me.isModelDefinitionLoaded = true
+                }
+            })
+        },
+        mounted: function () {
+            var me = this
+            me.$EventBus.$emit('isMounted-ModelCanvas', 'true')
+            if (!me.value.relations) {
+                me.value.relations = {}
+            }
+            if (!me.value.elements) {
+                me.value.elements = {};
+            }
+
+            me.debounceTime = 1000
+
+            me.$EventBus.$on('participantPanel', function (newVal) {
+                me.showParticipantPanel = newVal
+            })
+
+            me.$EventBus.$on('snackbar', function (newVal) {
+                me.snackbar.color = newVal.color ? newVal.color : '#000000'
+                me.snackbar.mode = newVal.mode ? newVal.mode : 'multi-line'
+                me.snackbar.timeout = newVal.timeout ? newVal.timeout : 2000
+                me.snackbar.text = newVal.text ? newVal.text : ''
+                me.snackbar.top = newVal.top ? newVal.top : false
+                me.snackbar.bottom = newVal.bottom ? newVal.bottom : false
+                me.snackbar.show = newVal.show ? newVal.show : false
+                me.snackbar.centered = newVal.centered ? newVal.centered : false
+                me.snackbar.closeBtn = newVal.closeBtn ? newVal.closeBtn : false
+            })
+
+            me.$nextTick(() => {
+                window.addEventListener('resize', this.onResize);
+            })
+
+
+            try{
+                me.isConnection('db://', function (connection) {
+                    if (!connection && me.isServerModel) {
+                        me.disconnect = true
+                        alert("현재 네트워크에 연결되어 있지 않습니다. \n" +
+                            "현재 동시편집 기능을 이용중 이라시면 동시편집의 전체적인 데이터 손실이 될수 있습니다.\n" +
+                            "네트워크 연결 후에 작업 해주시길 바랍니다. ");
+                    }
+                })
+            }catch(e){
+                console.log("failed to connect to db")
+            }
+
+
+            me.$EventBus.$on('login', async function (newVal) {
+                if (newVal) {
+                    await me.setUserInfo()
+                    if (me.information && me.isServerModel)
+                        me.settingPermission(me.information)
+                }
+            })
+
+            // 탭 닫기 && 새로고침
+            window.addEventListener('unload', me.executeBeforeDestroy);         
+            // key down
+            me.$nextTick(function () {
+
+                let startTime = Date.now()
+
+                if (me.canvas) me.canvas._CONFIG.FAST_LOADING = false;
+
+                if (me.$refs.opengraph) me.$refs.opengraph.printTimer(startTime, Date.now());
+
+                $(document).keydown((evt) => {
+                    var CkeyCode = 67;
+                    var FkeyCode = 70;
+                    var PkeyCode = 80;
+                    var VkeyCode = 86;
+                    var ZkeyCode = 90;
+
+                    if (evt.keyCode == CkeyCode && (evt.metaKey || evt.ctrlKey)) {
+                        me.copy();
+                    } else if (evt.keyCode == VkeyCode && (evt.ctrlKey || evt.metaKey)) {
+                        me.paste();
+                    } else if (evt.keyCode == ZkeyCode && (evt.metaKey || evt.ctrlKey)) {
+                        if (evt.shiftKey) {
+                            if (me.isEditable) {
+                                // me.redo();
+                            }
+                        } else {
+                            if (me.isEditable) {
+                                // me.undo();
+                            }
+
+                        }
+                    }
+                    // else if (evt.keyCode == PkeyCode && (evt.metaKey || evt.ctrlKey)) {
+                    //     if( me.mainSeparatePanel.current < 99 ){
+                    //         var result = me.searchForReady('files')
+                    //         return result  == true ? true : false;
+                    //     }
+                    // } else if (evt.keyCode == FkeyCode && (evt.metaKey || evt.ctrlKey)) {
+                    //     if(me.mainSeparatePanel.current < 99 ){
+                    //         var result = me.searchForReady('contents')
+                    //         return result == true ? true : false;
+                    //     }
+                    // }
+
+                });
+
+            });
+        },
+        watch: {
+            "initLoad":function(newVal){
+                if(newVal){
+                    this.afterLoad();
+                }
+            },
+            "sliderLocationScale": function (newVal) {
+                // console.log(newVal)
+            },
+            "projectName":{
+                handler: _.debounce(function (newVal, oldVal) {
+                    var me = this
+                    if (me.initLoad) {
+                        me.modelChanged = true
+                        if(me.information && me.information.projectName != newVal){
+                            var informationObj = {
+                                projectName : me.projectName
+                            }
+                            me.updateInformation(informationObj);
+                        }
+                    }
+                }, 500)
+            },
+            webRtcDialog: function (newVal, oldVal) {
+                if (newVal == false) {
+                    this.onLeave()
+                }
+            },
+            participantLists: {
+                deep: true,
+                handler: _.debounce(function (newVal, oldVal) {
+                    this.$EventBus.$emit('participant', newVal)
+                }, 1000)
+            },
+            "value.scm": {
+                deep: true,
+                handler: function (newVal, oldVal) {
+                    if(this.initLoad == true){
+                        this.changedByMe = true
+                    }
+                }
+            },
+            copyValue: {
+                deep: true,
+                handler: function (newVal, oldVal) {
+                    this.onChangedValue(oldVal, newVal)
+                }
+            },
+            // "changedByMe":function (newVal, oldVal) {
+            //     console.log('changedByMe', newVal, oldVal)
+            // },
+        },
+        methods: {
+            setCanvasType(){
+                var me = this
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        // Vue.use(ModelingIndex.js),
+                        // me.canvasType = 'modelingType'
+                        throw new Error('setCanvasType() must be implement')
+                    }
+                }) 
+            },
+            getComponentByClassName(){
+                var me = this
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        throw new Error('getComponentByClassName() must be implement')
+                    }
+                }) 
+            },
+            overrideElements(elementValues){
+              // use code core.
+                return elementValues
+            },
+            afterSnapshotLoad(){
+                // Loading initial snapshot
+            },
+            afterLoad() {
+                // Loading initial snapshot + init queue;
+            },
+            alertReLogin(){
+                alert(this.$t('alertMessage.sessionExpired'));
+                this.showLoginCard = true
+            },
+            async saveLocalScreenshot(){
+                var me = this
+                try {
+                    if(!me.initLoad) return;
+                    let base64Img = await me.screenshot();
+                    await me.putString(`localstorage://image_${me.projectId}`, base64Img);
+
+                    me.modelCanvasChannel.postMessage({
+                        event: "ScreenShot",
+                        model: me.projectId,
+                        image: base64Img,
+                    });
+                } catch(e){
+
+                }
+                // me.$app.try({
+                //     context: me,
+                //     async action(me){
+                //         if(!me.initLoad) return;
+                //         let base64Img = await me.screenshot();
+                //         await me.putString(`localstorage://image_${me.projectId}`, base64Img);
+
+                //         me.modelCanvasChannel.postMessage({
+                //             event: "ScreenShot",
+                //             model: me.projectId,
+                //             image: base64Img,
+                //         });
+                //     }
+                // })
+            },
+            async saveServerScreenshot(){
+                var me = this
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!me.initLoad) return;
+                        if(!me.isServerModel) return;
+                        let base64Img = await me.screenshot();
+                        await me.putString(`storage://definitions/${me.projectId}/information/image`, base64Img);
+                        if(me.information.associatedProject){
+                            await me.putString(`storage://definitions/${me.information.associatedProject}/information/image`, base64Img);
+                        }
+                        
+                        me.modelCanvasChannel.postMessage({
+                            event: "ScreenShot",
+                            model: me.projectId,
+                            image: base64Img,
+                        });
+                    }
+                })
+            },
+            async publishScreenShot(){
+                var me = this
+                if( !me.initLoad ) return;
+
+                if( me.isServerModel){
+                    await me.saveServerScreenshot()
+                } else {
+                    await me.saveLocalScreenshot()
+                }
+            },
+            executeBeforeDestroy(event){
+                var me = this
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        //embedded
+                        if (me.embedded) return
+                        if(!event || (event && event.isTrusted)){
+                            if(window && window.document) window.document.title = 'MSA Easy'
+                            localStorage.removeItem('projectId')
+
+                            me.$EventBus.$emit('isMounted-ModelCanvas', 'false');
+                            me.$EventBus.$emit('participant', []);
+
+                            if (window.opener) window.opener = null;
+                            if (me.rtcLogin) me.onLeave()
+                            if (me.sortScheduleId) clearTimeout(me.sortScheduleId)
+                            window.removeEventListener('resize', this.onResize);
+                            me.leaveUserAtion()
+                           
+
+                            await me.publishScreenShot()
+                            if( me.isServerModel  && !me.isReadOnlyModel ) {
+                                // server && permission O
+                                if( me.initLoad && me.modelChanged ){
+                                    var putObj = {
+                                        lastModifiedTimeStamp: Date.now(),
+                                        lastModifiedUser: me.userInfo.uid,
+                                        lastModifiedEmail: me.userInfo.email,
+                                        projectName: me.projectName,
+                                    }
+                                    await me.putObject(`db://definitions/${me.projectId}/information`, putObj)
+                                }
+
+                            } else if( !me.isServerModel ) {
+                                // local
+                                if( me.initLoad && me.modelChanged ){
+                                    var lists = localStorage.getItem('localLists')
+                                    if (lists) {
+                                        lists = JSON.parse(lists)
+                                        var index = lists.findIndex(list => list.projectId == me.projectId)
+                                        if (index != -1) {
+                                            if (localStorage.getItem(me.projectId)) {
+                                                lists[index].projectName = me.projectName ? me.projectName : 'untitled';
+                                                lists[index].lastModifiedTimeStamp = Date.now();
+                                            } else {
+                                                lists.splice(index, 1);
+                                            }
+                                            await me.putObject(`localstorage://localLists`, lists)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        me.releaseMoveEvents();
+                        me.releaseQueue()
+                    }
+                })
+            },
+            async screenshot( canvasInfo ){
+                var me = this
+                if(me.$refs['modeler-image-generator']){
+                    let canvas =  canvasInfo ? canvasInfo : me.canvas
+                    let base64Img = await me.$refs['modeler-image-generator'].save(me.projectName, canvas);
+                    return base64Img
+                }
+                return null;
+            },
+            convertTimeStampToDate(timeStamp) {
+                if (timeStamp) {
+                    if (typeof timeStamp == 'string')
+                        timeStamp = Number(timeStamp)
+                    var date = new Date(timeStamp);
+                    return date.getFullYear() + "년 " + (date.getMonth() + 1) + "월 " + date.getDate() + "일 " + date.getHours() + "시 " + date.getMinutes() + "분"
+                } else {
+                    return null
+                }
+            },
+            moveToView(item){
+                if(item){
+                    let route = this.$router.resolve(`${this.projectId}/${item.viewId}`);
+                    window.open(route.href, '_blank');
+                }
+            },
+            moveToVersion(item){
+                if(item){
+                    let lastIndex = this.filteredVersionLists.findIndex(x=>x.version == 'latest')
+                    let lateVersion = this.filteredVersionLists[lastIndex - 1]
+                    let version = item.version == 'latest' ? lateVersion.version : item.version
+                    // let route = this.$router.resolve(`${this.projectId}:${version}`);
+
+                    let path = this.$route.path;
+                    let route = this.$router.resolve(`${path}:${version}`);
+
+                    if(path.includes(":")){
+                        let currentVer = path.split(":")[1]
+                        path = path.replace(currentVer ,version)
+                        route = this.$router.resolve(path);
+                    }
+                   
+                    window.open(route.href, '_blank');
+                }
+            },
+            async onCreateGitTagName(storageCondition){
+                var me = this
+                // TODO: Gitlab Github 분리 필요함
+                try {
+                    var gitToken = localStorage.getItem('gitToken');
+
+                    if(gitToken && me.scmOrg && me.scmRepo && me.scmTag){
+                        const axios = require('axios');
+
+                        var gitHeaders = {
+                            Authorization: 'token ' + gitToken,
+                            Accept: 'application/vnd.github+json'
+                        }
+                        var obj ={
+                            owner: me.scmOrg,
+                            repo: me.scmRepo,
+                            tag_name: me.scmTag,
+                            body: storageCondition && storageCondition.comment ? storageCondition.comment : '',
+                        }
+                        let createRelease = me.git.createRelease(obj)
+                        // await axios.post(`https://api.github.com/repos/${me.scmOrg}/${me.scmRepo}/releases`, obj, { headers: gitHeaders }).then(function(){})
+                        // .catch(function (error) {
+                        //     if(error.response.status === 401){
+                        //         me.alertReLogin()
+                        //     }
+                        //     alert(error)
+                        // })
+                    }
+                } catch(e) {
+                    console.log(e);
+                }
+            },
+            settingChangedByMe(value){
+                this.changedByMe = value
+            },
+            openSeparatePanel(){
+                var me = this
+                var separatePanel = localStorage.getItem("separatePanel")
+                if(separatePanel) {
+                    var separatePanelInfo = JSON.parse(separatePanel)
+                    me.mainSeparatePanel.current = me.mainSeparatePanel.max < separatePanelInfo.mainSeparatePanel ? 50 : separatePanelInfo.mainSeparatePanel
+                } else {
+                    me.mainSeparatePanel.current = 30
+                }
+            },
+            closeSeparatePanel(){
+                var me = this
+
+                var separatePanel = localStorage.getItem("separatePanel")
+                var separatePanelInfo = {}
+                if(separatePanel){
+                    separatePanelInfo = JSON.parse(separatePanel);
+                    separatePanelInfo.mainSeparatePanel =  me.mainSeparatePanel.current
+                } else {
+                    separatePanelInfo['mainSeparatePanel'] = me.mainSeparatePanel.current
+                }
+                var objString = JSON.stringify(separatePanelInfo)
+                me.putObject(`localstorage://separatePanel`, objString)
+
+                me.mainSeparatePanel.current = 100
+            },
+            filteredProjectName(projectName) {
+                var me = this
+
+                var getProjectName = projectName ? projectName : me.projectName
+                var filteredName =  JSON.parse(JSON.stringify(getProjectName))
+                var pattern1 = /[\{\}\[\]\/?.,;:|\)*~`!^+<>@\#$%&\\\=\(\'\"]/gi; //특수문자 제거
+                var pattern2 = /[0-9ㄱ-ㅎ|ㅏ-ㅣ|가-힣~!@#$%^&*()_+|-|<>?:{}]/gi; // 한글 제거
+
+
+                if (filteredName) {
+
+                    if (pattern1.test(filteredName)) {
+                        filteredName = filteredName.replace(pattern1, '');
+                    }
+                    if (pattern2.test(filteredName)) {
+                        filteredName = filteredName.replace(pattern2, '');
+                    }
+                    filteredName = filteredName.toLowerCase()
+                } else{
+                    return 'untitled';
+                }
+                return filteredName == '' ? 'untitled' : filteredName;
+            },
+            updateInformation(informationObj){
+                var me = this
+                try {
+                    if( me.projectId && me.isServerModel && !me.isReadOnlyModel ){
+                        me.putObject(`db://definitions/${me.projectId}/information`,informationObj)
+                    }
+                } catch (e) {
+                    console.error(`Update information Exception: ${e}`);
+                }
+
+            },
+            clearChangedPathListsBucket(){
+                this.changedPathListsBucket = []
+                this.showChangedPathLists = false
+            },
+
+            autoForkModel(){
+                var me = this
+
+                // labs 모델 파악.
+                if(me.isServerModel){
+                    if(
+                        me.information &&
+                        ( me.information.author == me.userInfo.uid )
+                        || ( me.information.permissions && me.information.permissions['everyone'])
+                    ){
+                        //server - everyone공유된거만.
+                        if(me.isLogin){
+                            me.checkedForkModel()
+                        }else{
+                            me.$EventBus.$emit('showLoginDialog')
+                        }
+                    }else{
+                        alert('권한이 없는 모델입니다.( Public에 존재하는 모델만 가능 합니다.) ')
+                    }
+
+                }else{
+                    //local
+                    alert('로컬 모델로 해당기능 준비중 입니다.')
+                }
+            },
+            functionCluster(title) {
+                var me = this
+                if (title == 'Terminal') {
+                    me.loadTerminal = true;
+                    me.$EventBus.$once('loadTerminal', function () {
+                        me.loadTerminal = false
+                    })
+                    me.terminal()
+                } else if (title == 'Sync') {
+                    me.deployDialog = true
+                } else if (title == 'Cluster') {
+                    me.clusterDialog = true
+                } else if (title == 'Workflow Dashboard') {
+                    me.openArgoDashboard();
+                } else if (title == 'ArgoCD Dashboard') {
+                    me.openArgoCdDashboard();
+                }
+            },
+            track() {
+                if(this.$gtag){
+                    this.$gtag.pageview(
+                        {
+                            page_title: `${this.canvasType} 모델링`,
+                            page_path: this.$route.path
+                        }
+                    )
+                }
+            },
+            onJoin() {
+                this.webRtcDialog = true
+                this.rtcLogin = true
+                if (this.$refs)
+                    this.$refs.webrtc.join();
+            },
+            onLeave() {
+                this.rtcLogin = false
+                if (this.$refs)
+                    this.$refs.webrtc.leave();
+            },
+            onCapture() {
+                if (this.$refs)
+                    this.img = this.$refs.webrtc.capture();
+            },
+            onShareScreen() {
+                if (this.$refs)
+                    this.img = this.$refs.webrtc.shareScreen();
+            },
+            settingPermission(information, init) {
+                var me = this
+                // Only Save Server Model
+                me.isOwnModel = false
+                me.information = information ? information : me.information
+
+                if( !me.projectVersion ){
+                    me.projectName = me.information && me.information.projectName ? me.information.projectName : ''
+                    me.isAutoForkModel = me.isClazzModeling ? false : Object.keys(this.$route.query).includes('fork')
+                }
+
+                // console.log('project Author:', me.information.author,' Login Id: ', me.userInfo.uid)
+
+                if ( me.isClazzModeling ) {
+                    // clazz Modeling
+                    if( me.information ){
+                        if ( me.information.author == me.userInfo.uid ) {
+                            me.isOwnModel = true
+                            me.isEditable = true
+                        } else if( me.information.permissions && me.information.permissions['everyone'] ){
+                            me.isEditable = false
+                        } else {
+                            me.isEditable = false
+                            me.alertInfo.show = true
+                            me.alertInfo.text = 'This is a non-authorized or non-shared model.'
+                            me.alertInfo.fnNum = 1
+                            me.alertInfo.submit = 'Request'
+                        }
+                    } else {
+                        me.isEditable = false
+                        me.alertInfo.show = true
+                        me.alertInfo.text = 'Failed to load model. Try again.'
+                        me.alertInfo.fnNum = 1
+                        me.alertInfo.submit = 'Close'
+                    }
+                } else {
+                    // Base Modeling
+                    if (me.information.author == me.userInfo.uid) {
+                        //my project
+                        me.isOwnModel = true
+                        me.isEditable = true
+                    } else {
+                        if (me.isLogin) {
+                            if (me.information.permissions) {
+                                var isPublic = false
+                                if (me.information.permissions['everyone']) {
+                                    isPublic = true
+                                }
+                                if (me.information.permissions[me.userInfo.uid]) {
+                                    if (Object.keys(me.information.permissions[me.userInfo.uid]).includes('request')) {
+                                        me.isEditable = false
+
+                                        if (me.information.permissions[me.userInfo.uid].request == false) {
+                                            me.alertInfo.show = true
+                                            me.alertInfo.text = me.$t('ModelCanvas.requestRejected')
+                                            me.alertInfo.type = 'info'
+                                            if (isPublic) {
+                                                me.isEditable = false
+                                                me.alertInfo.fnNum = 0
+                                            } else {
+                                                me.isDisable = true
+                                                me.alertInfo.fnNum = 1
+                                                me.alertInfo.submit = me.$t('ModelCanvas.requestAgain')
+                                            }
+                                        } else if (me.information.permissions[me.userInfo.uid].request == true) {
+                                            me.joinRequested = true
+                                            me.alertInfo.show = true
+                                            me.alertInfo.text = me.$t('ModelCanvas.requestPending')
+                                            me.alertInfo.type = 'info'
+
+                                            if (isPublic) {
+                                                me.isEditable = false
+                                                me.alertInfo.fnNum = 0
+                                            } else {
+                                                me.isDisable = true
+                                                me.alertInfo.fnNum = 1
+                                                me.alertInfo.submit = me.$t('ModelCanvas.requestAgain')
+                                            }
+                                        }
+                                    } else if (me.information.permissions[me.userInfo.uid].write) {
+                                        me.isEditable = true
+                                    } else {
+                                        me.isEditable = false
+                                    }
+                                } else {
+                                    if (isPublic) {
+                                        me.isEditable = false
+                                    } else {
+                                        me.isDisable = true
+
+                                        me.alertInfo.show = true
+                                        me.alertInfo.text = me.$t('ModelCanvas.modelNotShared')
+                                        me.alertInfo.type = 'info'
+                                        me.alertInfo.fnNum = 1
+                                        me.alertInfo.submit = me.$t('buttonText.registerRequest')
+                                    }
+                                }
+                            } else {
+                                me.isDisable = true
+
+                                me.alertInfo.show = true
+                                me.alertInfo.text = me.$t('ModelCanvas.notPermittedNeedRequest')
+                                me.alertInfo.type = 'info'
+                                me.alertInfo.fnNum = 1
+                                me.alertInfo.submit = me.$t('buttonText.requestPermission')
+                            }
+                        } else {
+                            me.isDisable = true
+
+                            me.alertInfo.show = true
+                            me.alertInfo.text = me.$t('ModelCanvas.notPermittedNeedLogin')
+                            me.alertInfo.fnNum = 1
+                            me.alertInfo.submit = me.$t('buttonText.login')
+
+                            // if (me.information && me.information.permissions && me.information.permissions['everyone']) {
+                            //     me.readOnly = true
+                            // } else {
+                            //     // me.readOnly = true
+                            //     me.alertInfo.show = true
+                            //     me.alertInfo.text = 'This is an unauthorized model.(No login)'
+                            //     me.alertInfo.fnNum = 1
+                            //     me.alertInfo.submit = 'Request'
+                            // }
+
+                        }
+                    }
+                }
+            },
+            alertClose(fnNum) {
+                var me = this
+
+                if(fnNum  == -1){
+                    me.$router.push('/')
+                }
+
+                if (fnNum == 1) {
+                    // me.$router.push('/')
+                }
+
+                me.alertInfo.show = false
+                me.alertInfo.text = ''
+            },
+            alertSubmit(fnNum) {
+                var me = this
+
+                if (fnNum == 0) {
+                    // just close
+                    me.alertClose()
+                } else if (fnNum == 1) {
+                    me.requestInviteUser()
+                    me.alertClose(fnNum)
+                } else if (fnNum == 2) {
+                    me.$EventBus.$emit('showLoginDialog')
+                    me.alertClose()
+                }
+            },
+            purchaseItemDialogSubmit(itemName) {
+                console.log('root : purchaseItemDialogSubmit', itemName)
+            },
+            async purchaseItemDialogOpen(id) {
+                var me = this
+                var getItemId = id
+
+                if (me.isLogin) {
+                    var filteredProjectName = me.filteredProjectName(me.projectName)
+                    if (filteredProjectName.replace(/\s/gi, "") == '') {
+                        me.projectName = window.prompt("Please input your ProjectName(English Only)")
+                    } else {
+                        me.purchaseItemDialogInfo.mainTitle = ''
+                        me.purchaseItemDialogInfo.title = '소스코드 다운'
+                        me.purchaseItemDialogInfo.resourceType = 'downloadCode'
+                        me.purchaseItemDialogInfo.period = 10 / (24 * 60)
+                        me.purchaseItemDialogInfo.itemId = `${getItemId}`
+                        me.purchaseItemDialogInfo.relatedTo = `${me.userInfo.uid}_${getItemId}`
+                        me.purchaseItemDialogInfo.amount = 100
+                        me.purchaseItemDialog = true
+                    }
+                } else {
+                    me.alertInfo.show = true
+                    me.alertInfo.text = '해당 기능은 로그인후 사용이 가능합니다.'
+                    me.alertInfo.fnNum = 2
+                    me.alertInfo.submit = 'Login'
+                }
+
+                me.generateZipDialog = false
+            },
+            purchaseItemDialogInfoInit() {
+                this.purchaseItemDialogInfo.mainTitle = null
+                this.purchaseItemDialogInfo.title = null
+                this.purchaseItemDialogInfo.subTitle = null
+                this.purchaseItemDialogInfo.thumbnailText = null
+                this.purchaseItemDialogInfo.resourceType = null
+                this.purchaseItemDialogInfo.thumbnailImg = null
+                this.purchaseItemDialogInfo.relatedTo = null
+                this.purchaseItemDialogInfo.period = 90
+                this.purchaseItemDialogInfo.count = false
+                this.purchaseItemDialogInfo.itemId = null
+                this.purchaseItemDialogInfo.amount = null
+                this.purchaseItemDialogInfo.className = null
+                this.purchaseItemDialogInfo.labName = null
+            },
+            purchaseItemDialogClose(result) {
+                if (result != false) {
+                    this.purchaseItemDialogInfoInit()
+                }
+                this.purchaseItemDialog = false
+                this.generateZipDialog = false
+            },
+            onResize() {
+                this.windowWidth = window.innerWidth
+            },
+            _isAttached(outer, inner) {
+                if (
+                    //왼쪽 상단 모서리에 걸린 경우
+                    (outer.x < inner.x + inner.width &&
+                        outer.y < inner.y + inner.height)
+
+                    &&
+
+                    //우측 하단 모서리에 걸린 경우
+                    (inner.x < outer.x + outer.width &&
+                        inner.y < outer.y + outer.height)
+
+                    &&
+
+                    //오른쪽 상단 모서리에 걸린 경우
+                    (inner.x < outer.x + outer.width &&
+                        outer.y < inner.y + inner.height)
+
+                    &&
+
+                    //왼쪽 하단 모서리에 걸린 경우
+                    (outer.x < inner.x + inner.width &&
+                        inner.y < outer.y + outer.height)
+                ) return true;
+
+                return false;
+            },
+            closeOverlay() {
+                this.overlayText = null
+            },
+            downloadModelToJson() {
+                var me = this;
+
+                if (me.projectName.length < 1) {
+                    me.projectName = window.prompt("Please input your ProjectName")
+
+                } else {
+                    me.$refs['modeler-image-generator'].save(me.projectName, me.canvas).then(function (img) {
+
+                        var cpValue = JSON.parse(JSON.stringify(me.value))
+                        cpValue.type = me.information ? me.information.type : me.canvasType
+                        cpValue.img = img
+                        cpValue.date = Date.now()
+                        cpValue.projectName = me.projectName ? me.projectName : 'undefined'
+
+                        var filename = me.projectName + '.json';
+
+                        var modelForJsonToTextFile = new File([JSON.stringify(cpValue)], filename, {
+                            type: "text/json;charset=utf-8"
+                        });
+                        FileSaver.saveAs(modelForJsonToTextFile);
+                        alert('Successfully Saved', me.projectName, '.')
+
+                    })
+                }
+
+            },
+            saveComposition(state) {
+                var me = this
+                me.storageDialogReady(state)
+            },
+            async storageDialogReady(state) {
+                var me = this
+                if (me.isLogin) {
+                    var obj = {}
+                    var proName = me.projectName ? me.projectName : 'untitled'
+                    proName = JSON.parse(JSON.stringify(proName));
+                    var convertProjectId = proName ? me.filteredProjectName(proName) : me.dbuid()
+                    convertProjectId = convertProjectId.replaceAll(' ','-')
+
+                    if(this.projectId) {
+                        if(this.projectId.includes('_')) {
+                            convertProjectId = this.projectId.split('_')[this.projectId.split('_').length - 1]
+                        } else {
+                            convertProjectId = this.projectId
+                        }
+                    }
+
+                    obj= {
+                        action: 'save',
+                        title: 'SAVE',
+                        comment: '',
+                        projectName: proName,
+                        editProjectName :JSON.parse(JSON.stringify(proName)),
+                        projectId: convertProjectId,
+                        version: me.defaultVersion,
+                        associatedProject: me.information.associatedProject,
+                        connectedAssociatedProject : me.information.associatedProject ? true : false,
+                        error: null,
+                        loading: false,
+                    }
+
+
+                    if (state == 'save') {
+                        if (window.opener && me.canvasType == 'k8s') {
+                            obj = null;
+                            me.postParentWindow();
+                        } else if (me.isServerModel) {
+                            obj.action = 'backup'
+                            obj.title = 'Save New Version'
+
+                            let nextVer = me.information.lastVersionName ? me.information.lastVersionName : me.defaultVersion;
+                            if(me.information.lastVersionName){
+                                let nextVersion = nextVer.substr(-1);
+                                nextVersion =  !isNaN(Number(nextVersion)) ? Number(nextVersion)+1: ''
+                                nextVer = `${nextVer.substr(0, nextVer.length - 1)}${nextVersion}`
+                            }
+                            obj.version = nextVer
+                        } else{
+                            // SAVE
+                        }
+                    } else if (state == 'fork') {
+                        var forkBy ={
+                            org : me.scmOrg,
+                            repo: me.scmRepo
+                        }
+
+                        obj.action = 'fork'
+                        obj.title = 'FORK'
+                        obj.userId = me.forkInformation.forkLatest ? me.userInfo.uid : null
+                        obj.isForkModel =  me.forkInformation.forkLatest
+                        obj.forkedModelInfo = JSON.stringify(forkBy)
+
+                    } else if (state == 'duplicate') {
+                        obj.action = 'fork'
+                        obj.title = 'Duplicate'
+                        obj.userId= me.forkInformation.forkLatest ? me.userInfo.uid : null
+                        obj.isForkModel = me.forkInformation.forkLatest
+
+                    } else {
+                        obj = null;
+                    }
+
+                    this.storageCondition = obj
+                    this.storageDialog = true
+                } else {
+                    me.$EventBus.$emit('showLoginDialog')
+                    alert("로그인 후에 이용이 가능합니다. 로그인 해주세요.")
+                }
+
+            },
+            storageDialogCancel() {
+                this.storageCondition.loading = false
+                this.storageDialog = false
+                this.$EventBus.$emit('progressValue', false);
+            },
+            async validateStorageCondition(item, action){
+                var me = this
+                item.error = {};
+                
+                // get Project
+                let originProjectId = me.projectId
+                let convertProjectId = item.projectId ? item.projectId : originProjectId
+                if(action == 'fork') convertProjectId = item.projectId ? item.projectId : me.dbuid();                
+                convertProjectId = convertProjectId.replaceAll(' ','-');
+                if(action == 'save' || action == 'fork'){
+                    if(me.userInfo.providerUid && (action == 'fork' || action == 'save')){
+                        convertProjectId = `${me.userInfo.providerUid}_${me.canvasType}_${convertProjectId}`
+                    }
+                }
+               
+                if( convertProjectId.includes('/') ) item.error['projectId'] = 'ProjectId must be non-empty strings and can\'t contain  "/"'
+                
+                if( item.version == 'latest') item.error['version'] = 'The version name cannot be specified as "latest".'
+                
+
+                if(!item.connectedAssociatedProject && item.associatedProject){
+                    // new connection.
+                    var validateInfo = await me.getObject(`db://definitions/${item.associatedProject}/information`);
+                    if(!validateInfo) {
+                        item.error['associatedProject'] = 'This model does not exist.'
+                    } else {
+                        if(validateInfo.type != 'project') {
+                        item.error['associatedProject'] = 'The model is not a project type.'
+                        } else if(validateInfo.author != me.userInfo.uid){
+                            item.error['associatedProject'] = 'You can only set up your own models.'
+                        }
+                    }
+                }
+
+                // exists version
+                if( action.includes('backup') ){
+                    // BACKUP
+                    
+                    if( !item.version )item.version = me.getNowDate();
+                    // validate Path
+                    var validate = await me.isValidatePath(`db://definitions/${originProjectId}/versionLists/${item.version.replaceAll('.','-')}`)
+                    if( !(validate.status && !item.version.replaceAll('.','-').includes('/') && !item.version.replaceAll('.','-').includes(':')) ){
+                        var otherMsg = 'Paths must be non-empty strings and can\'t contain  "/" or ":"'
+                        item.error['version'] = item.version.replaceAll('.','-').includes('/') || item.version.replaceAll('.','-').includes(':') ? otherMsg : validate.msg
+                    }
+
+                    var existVersion = await me.list(`db://definitions/${originProjectId}/versionLists/${item.version.replaceAll('.','-')}`)
+                    if(existVersion){
+                        item.error['version'] = 'This version already exists.'
+                    }
+                } else {
+                    // SAVE, FORK
+
+                    var validateInfo = await me.isValidatePath(`db://definitions/${convertProjectId}/information`);
+                    if( !validateInfo.status ){
+                        item.error['projectId'] = validateInfo.msg
+                    }
+
+                    var information = await me.list(`db://definitions/${convertProjectId}/information`)
+                    if(information){
+                        item.error['projectId'] = 'This project id already exists.'
+                    }
+                }
+
+                return Object.keys(item.error).length > 0 ? false : true
+            },
+            async addView(){
+                var me = this
+
+                try {
+                    let validation = await me.validateStorageCondition(me.storageCondition, 'addView');
+                    if( validation && me.projectId){
+                        let img = await me.$refs['modeler-image-generator'].save(me.projectName, me.canvas);
+                        // let imageUrl = await me.putString(`storage://definitions/${ me.projectId}/viewLists/${me.storageCondition.viewId}/image`, img);
+
+                        var viewObj = {
+                            owner: me.userInfo.uid,
+                            ownerEmail: me.userInfo.email,
+                        }
+                        me.putObject(`db://definitions/${ me.projectId}/viewLists/${me.storageCondition.viewId}`, viewObj);
+                        me.storageDialogCancel();
+                    } else {
+                        me.storageCondition.loading = false
+                    }
+
+                } catch(e){
+                    me.storageCondition.loading = false
+                }
+            },
+            async backupModel() {
+                var me = this
+                try {
+                    var check = await me.validateStorageCondition(me.storageCondition, 'backup');
+                    if(check){
+                        let originProjectId = me.projectId;
+                        let projectVersion = me.storageCondition.version.replaceAll('.','-').trim();
+                        let associatedProject = me.storageCondition.associatedProject
+                                
+                        // set tag
+                        if(me.value.scm.org && me.value.scm.repo){
+                            me.value.scm.tag = me.storageCondition.version;
+                        }
+                        const img = await me.$refs['modeler-image-generator'].save(me.projectName, me.canvas);
+
+                        // input image storage.
+                        await me.putString(`storage://definitions/${originProjectId}/information/image`, img);
+
+                        let valueUrl = await me.putString(`storage://definitions/${originProjectId}/versionLists/${projectVersion}/versionValue`, JSON.stringify(me.value));
+                        let imagURL = await me.putString(`storage://definitions/${originProjectId}/versionLists/${projectVersion}/image`, img);
+                 
+                        if(associatedProject){ 
+                            // for project sync
+                            await me.synchronizeAssociatedProject(associatedProject, originProjectId);
+                        }
+
+                        me.projectName = me.storageCondition.editProjectName
+                        me.onCreateGitTagName(me.storageCondition);
+                        await me.putObject(`db://definitions/${originProjectId}/versionLists/${projectVersion}`, {
+                            lastQueueKey: me.latestQueueKey,
+                            saveUser: me.userInfo.uid,
+                            saveUserEmail: me.userInfo.email,
+                            saveUserName: me.userInfo.name,
+                            projectName: me.storageCondition.editProjectName,
+                            img: imagURL,
+                            timeStamp: Date.now(),
+                            comment: me.storageCondition.comment,
+                            valueUrl: valueUrl
+                        })
+                        // await me.putObject(`db://definitions/${originProjectId}/versionLists/${projectVersion}/versionValue`, versionValueObj)
+
+                        await me.putObject(`db://definitions/${originProjectId}/information`, {
+                            lastVersionName: projectVersion,
+                            projectName: me.storageCondition.editProjectName,
+                            comment: me.storageCondition.comment,
+                        })
+
+                        // es model list update for Project Model
+                        localStorage.setItem('modelListUpdate', Date.now().toString())
+
+                        me.storageDialogCancel()
+                    } else {
+                        this.storageCondition.loading = false
+                    }
+
+                } catch (e) {
+                    me.alertInfo.text = 'BACKUP-ERROR' + e
+                    me.alertInfo.show = true
+                }
+            },
+            async saveModel() {
+                var me = this
+                me.$EventBus.$emit('progressValue', true);
+                // await me.loadDefinitionLocal() ???
+                try {
+                    var check = await me.validateStorageCondition(me.storageCondition, 'save');
+                    if(check){
+                        var originProjectId = me.projectId
+                        var settingProjectId = me.storageCondition.projectId.replaceAll(' ','-').trim();
+                        var projectVersion = me.storageCondition.version.replaceAll('.','-').trim();
+                        let associatedProject = me.storageCondition.associatedProject
+                        me.projectName = me.storageCondition.projectName
+
+                        if(me.userInfo.providerUid){
+                            settingProjectId = `${me.userInfo.providerUid}_${me.canvasType}_${settingProjectId}`
+                        }
+ 
+                        if(me.value.scm.org && me.value.scm.repo){
+                            me.value.scm.tag = me.storageCondition.version;
+                        }
+
+                        let img = await me.$refs['modeler-image-generator'].save(me.projectName, me.canvas);
+
+                        var userInfoObj = {
+                            uid: me.userInfo.uid,
+                            name: me.userInfo.name,
+                            picture: me.userInfo.profile
+                        }
+                        var informationObj = {
+                            author: me.userInfo.uid,
+                            authorEmail: me.userInfo.email,
+                            lastVersionName: projectVersion,
+                            comment: me.storageCondition.comment,
+                            createdTimeStamp: Date.now(),
+                            lastModifiedTimeStamp: Date.now(),
+                            lastModifiedUser: null,
+                            lastModifiedEmail: null,
+                            projectName: me.projectName,
+                            type: me.canvasType,
+                            projectId: settingProjectId,
+                            firstCommit: me.information && me.information.firstCommit ? me.information.firstCommit:null,
+                            associatedProject: associatedProject
+                        }
+                        
+                        Object.keys(me.information).forEach(function(key) {
+                            if( !informationObj[key] ){
+                                informationObj[key] = me.information[key]
+                            }
+                        })
+
+                        let valueUrl = await me.putString(`storage://definitions/${settingProjectId}/versionLists/${projectVersion}/versionValue`, JSON.stringify(me.value));
+                        let imagURL = await me.putString(`storage://definitions/${settingProjectId}/versionLists/${projectVersion}/image`, img);
+
+                        // console.log(settingProjectId, originProjectId)
+                        var versionInfoObj = {
+                            saveUser: me.userInfo.uid,
+                            saveUserEmail: me.userInfo.email,
+                            saveUserName: me.userInfo.name,
+                            projectName: me.storageCondition.editProjectName,
+                            img: imagURL,
+                            timeStamp: Date.now(),
+                            comment: me.storageCondition.comment,
+                            valueUrl: valueUrl
+                        }
+
+
+                        var snapshotObj = {
+                            lastSnapshotKey: '',
+                            snapshot: JSON.stringify(me.value),
+                            snapshotImg: imagURL,
+                            timeStamp: Date.now()
+                        }
+
+
+                        if(associatedProject){
+                            // Sync connected associatedProject.
+                            await me.synchronizeAssociatedProject(associatedProject, settingProjectId);
+                            await me.putString(`storage://definitions/${associatedProject}/information/image`, img);
+                        }
+
+                        /** 
+                         * TODO: 분기 처리 필요
+                         * Issue: storage 자체는 설치형에서 사용 할 수 없음 (Cloud Storage)
+                         * 따라서 이미지 저장 / 호출 부분을 Acebase쪽으로 이관
+                         * */ 
+                        if(true) {
+                            await me.putString(`storage://definitions/${settingProjectId}/information/image`, img);
+                        }
+                        if ( me.isQueueModel ) {
+                            me.pushObject(`db://definitions/${settingProjectId}/snapshotLists`, snapshotObj)
+                        }
+
+                        me.onCreateGitTagName(me.storageCondition);
+                        await me.putObject(`db://definitions/${settingProjectId}/information`, informationObj)
+                        me.putObject(`db://userLists/${me.userInfo.uid}`, userInfoObj)
+
+
+                        /* 백업용 사용자의 local에서 마지막 모델링 정보 */
+                        me.putObject(`db://definitions/${settingProjectId}/versionLists/${projectVersion}`, versionInfoObj)
+                        // me.putObject(`db://definitions/${settingProjectId}/versionLists/${projectVersion}/versionValue`, versionValueObj)
+
+                        // remove Local Memory.
+                        var lists = await me.getObject(`localstorage://localLists`)
+                        var index = lists.findIndex(list => list.projectId == originProjectId)
+                        if (index != -1) {
+                            await me.delete(`localstorage://${originProjectId}`)
+                            lists.splice(index, 1)
+                            await me.putObject(`localstorage://localLists`, lists)
+                        }
+
+                        // type
+                        var location = 'storming'
+                        if(me.canvasType == 'es') {
+                            location = 'storming'
+                        }else if (me.canvasType == 'k8s') {
+                            location = 'kubernetes'
+                        } else if (me.canvasType == 'bm') {
+                            location = 'business-model-canvas'
+                        } else {
+                            location = me.canvasType
+                        }
+
+                        if (me.isClazzModeling) {
+                            me.updateClassModelingId(settingProjectId);
+                        } else {
+                            let path = me.userInfo.providerUid ? `/${me.userInfo.providerUid}/${location}/${me.storageCondition.projectId.replaceAll(' ','-').trim()}` : `/${location}/${me.storageCondition.projectId.replaceAll(' ','-').trim()}`
+                            me.$router.push({path: path});
+
+                            setTimeout(() => {
+                                me.$emit('forceUpdateKey');
+                            }, 500);
+                        
+                            // me.$emit('forceUpdateKey');
+                        }
+
+                        me.watchInformation()
+                        if (me.isQueueModel) {
+                            me.receiveQueue()
+                        } else {
+                            me.receiveValue()
+                            me.initLoad = true
+                            me.$EventBus.$emit('progressValue', false)
+                        }
+
+                        me.storageDialogCancel()
+                    } else {
+                        this.storageCondition.loading = false
+                        me.$EventBus.$emit('progressValue', false);
+                    }
+
+                    // // es model list update for Project Model
+                    localStorage.setItem('modelListUpdate', Date.now().toString())
+                } catch (e) {
+                    me.alertInfo.text = 'SAVE-ERROR: ' + e
+                    me.alertInfo.show = true
+                }
+
+            },
+            moveModelUrl(modelId){
+                this.$router.push({path: `/${this.canvasType}/${modelId}`});
+            },
+            synchronizeAssociatedProject(projectId, newId, oldId){},
+            async checkedForkModel(){
+                var me = this
+                if(me.isServerModel){
+                    if( me.forkInformation.forkLatest || me.isClazzModeling ){
+                        me.saveComposition('fork')
+                    }else{
+                        me.forkModel()
+                    }
+                }else{
+                    me.forkModel()
+                }
+            },
+            updateClassModelingId(newProjectId){
+                this.$emit('newProjectId',newProjectId);
+            },
+            async forkModel() {
+                var me = this
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        me.$EventBus.$emit('progressValue', true);
+                        var check = await me.validateStorageCondition(me.storageCondition, 'fork');
+                        if(check){
+                            var originProjectId =  me.projectId
+                            var settingProjectId = me.storageCondition.projectId.replaceAll(' ','-').trim();
+                            if( !me.storageCondition.projectId ) me.storageCondition.projectId = me.dbuid();
+                        
+                            if(me.userInfo.providerUid){
+                                settingProjectId = `${me.userInfo.providerUid}_${me.canvasType}_${settingProjectId}`
+                            }
+
+                            var projectVersion = me.storageCondition.version.replaceAll('.','-').trim();
+                            var copyValue = JSON.parse(JSON.stringify(me.value));
+
+                            // 현재 모델의 org, repo 를 저장?
+                            copyValue.scm.forkedOrg = copyValue.scm.org;
+                            copyValue.scm.forkedRepo = copyValue.scm.repo;
+                            copyValue.scm.forkedTag = copyValue.scm.tag;
+                            copyValue.scm.org = null;
+                            copyValue.scm.repo = null;
+                            copyValue.scm.tag = null;
+
+                            let img = await me.$refs['modeler-image-generator'].save(me.projectName, me.canvas);
+
+                            if (!me.isServerModel) {
+                                me.storageDialogCancel()
+                                alert('준비중 입니다.')
+                            } else {
+                                await me.putString(`storage://definitions/${settingProjectId}/information/image`, img);
+
+                                var userInfoObj = {
+                                    uid: me.userInfo.uid,
+                                    name: me.userInfo.name,
+                                    picture: me.userInfo.profile
+                                }
+
+                                var informationObj = {
+                                    author: me.userInfo.uid,
+                                    authorEmail: me.userInfo.email,
+                                    forkOrigin: originProjectId,
+                                    lastVersionName: projectVersion,
+                                    comment: me.storageCondition ? me.storageCondition.comment : '',
+                                    createdTimeStamp: Date.now(),
+                                    lastModifiedTimeStamp: Date.now(),
+                                    // img: img,
+                                    lastModifiedUser: null,
+                                    lastModifiedEmail: null,
+                                    projectName: me.storageCondition ? me.storageCondition.editProjectName : me.projectName,
+                                    type: me.information.type,
+                                }
+
+
+                                // var versionValueObj ={
+                                //     value: JSON.stringify(copyValue),
+                                // }
+                                let valueUrl = await me.putString(`storage://definitions/${settingProjectId}/versionLists/${projectVersion}/versionValue`, JSON.stringify(copyValue));
+                                let imagURL = await me.putString(`storage://definitions/${originProjectId}/versionLists/${projectVersion}/image`, img);
+
+                                console.log(settingProjectId, originProjectId)
+                                var versionInfoObj = {
+                                    saveUser: me.userInfo.uid,
+                                    saveUserEmail: me.userInfo.email,
+                                    saveUserName: me.userInfo.name,
+                                    projectName: me.storageCondition.editProjectName,
+                                    img: imagURL,
+                                    timeStamp: Date.now(),
+                                    comment: me.storageCondition.comment,
+                                    valueUrl: valueUrl
+                                }
+                                var snapshotObj = {
+                                    lastSnapshotKey: '',
+                                    snapshot: JSON.stringify(copyValue),
+                                    snapshotImg: imagURL,
+                                    timeStamp: Date.now()
+                                }
+
+
+                                var putProjectObj = {
+                                    projectId: settingProjectId,
+                                    forkOrigin: originProjectId,
+                                }
+                                let forked = await me.setForkData(settingProjectId, snapshotObj, informationObj, userInfoObj, putProjectObj, projectVersion, versionInfoObj)
+                                .then(function () {
+                                    if(me.isClazzModeling){
+                                        me.updateClassModelingId(settingProjectId);
+                                    }else{
+                                        var location = null;
+                                        if( me.canvasType == 'es' ) {
+                                            location = 'storming'
+                                        } else if (me.canvasType == 'k8s') {
+                                            location = 'kubernetes'
+                                        } else if (me.canvasType == 'bm') {
+                                            location = 'business-model-canvas'
+                                        } else {
+                                            location = me.canvasType
+                                        }
+
+                                        let path = me.userInfo.providerUid ? `/${me.userInfo.providerUid}/${location}/${me.storageCondition.projectId.replaceAll(' ','-').trim()}` : `/${location}/${me.storageCondition.projectId.replaceAll(' ','-').trim()}`
+                                        me.$router.push({path: path});
+                                        setTimeout(() => {
+                                            me.$emit('forceUpdateKey');
+                                        }, 500);
+                                    }
+                                    me.storageDialogCancel()
+                                })
+                            }
+
+                        } else {
+                            me.storageCondition.loading = false
+                        }
+                    }
+                })
+            },
+            watchInformation(){
+                var me = this
+                me.watch(`db://definitions/${me.projectId}/information`, function (information) {
+                    if (information) {
+                        me.isServerModel = true
+                        me.settingPermission(information)
+                    }
+                })
+            },
+            setForkData(settingProjectId, snapshotObj, informationObj, userInfoObj, putProjectObj, projectVersion, versionInfoObj) {
+                let me = this
+                return new Promise(function (resolve, reject) {
+                    if ( me.isQueueModel) {
+                        me.pushObject(`db://definitions/${settingProjectId}/snapshotLists`, snapshotObj)
+                        // me.putObject(`db://definitions/${settingProjectId}`, snapshotSpecObj)
+                    }
+                    me.putObject(`db://definitions/${settingProjectId}/information`, informationObj)
+                    me.putObject(`db://userLists/${me.userInfo.uid}`, userInfoObj)
+                    me.putObject(`db://userLists/${me.userInfo.uid}/mine/${settingProjectId}`, putProjectObj)
+                    // Origin Model Setting
+                    me.setString(`db://definitions/${putProjectObj.forkOrigin}/forkUserLists/${me.userInfo.uid}`, settingProjectId)
+
+                    /* 백업용 사용자의 local에서 마지막 모델링 정보 */
+                    me.putObject(`db://definitions/${settingProjectId}/versionLists/${projectVersion}`, versionInfoObj)
+                    // me.putObject(`db://definitions/${settingProjectId}/versionLists/${projectVersion}/versionValue`, versionValueObj)
+                    resolve()
+                })
+            },
+            // async getSpecVersion() {
+            //     var me = this
+            //     var getItem = '1.0'
+            //     return new Promise(async function (resolve) {
+            //         var getSpecVersion = await me.getString(`db://definitions/${me.projectId}/specVersion`)
+            //         if (getSpecVersion) {
+            //             getItem = getSpecVersion
+            //         }
+            //         resolve(getItem)
+            //     })
+            // },
+            async loadViewes(){
+                var me = this
+                let result =[]
+
+                if( !me.viewLists || me.viewLists.length == 0 ){
+                    var viewes  = await me.list(`db://definitions/${me.projectId}/viewLists`);
+                    if(viewes){
+                        result = Object.keys(viewes).map(function(version){
+                            var rObj =  viewes[version] ? viewes[version] : {}
+                            rObj['viewId'] = version.replaceAll('-','.');
+                            return rObj;
+                        });
+
+                        me.viewLists = result;
+                    }
+                }
+
+            },
+            async loadVersions(){
+                var me = this
+                let result = []
+
+                let lastVersion = null;
+                if( me.versionLists ) {
+                    lastVersion = me.versionLists[me.versionLists.length - 1];
+                    if(lastVersion.versionId == me.information.lastVersionName) {
+                        return;
+                    }
+                }
+
+                var versions  = await me.list(`db://definitions/${me.projectId}/versionLists`);
+                if(versions){
+                    await me.migrateVersions(me.projectId, versions);
+                    result = Object.keys(versions).map(function(version){
+                        var rObj =  versions[version] ? versions[version] : {}
+                        rObj['versionId'] = version;
+                        rObj['version'] = version.replaceAll('-','.');
+                        return rObj;
+                    });
+                    me.versionLists = result.sort((a, b) => a.timeStamp - b.timeStamp );
+                }
+                
+            },
+            async migrateVersions(projectId, versions){
+                var me = this
+
+                for(let version in versions){
+                    if( projectId && !versions[version].valueUrl ){
+                        let versionInfo =  versions[version].versionInfo
+                        let versionValue =  versions[version].versionValue && versions[version].versionValue.value  ? versions[version].versionValue.value : versions[version].versionValue;
+                        if(!versionInfo){
+                            versionInfo = {}
+                        }
+
+                        let valueUrl = await me.putString(`storage://definitions/${projectId}/versionLists/${version}/versionValue`, versionValue);
+                        versionInfo.valueUrl = valueUrl;
+
+                        // date -> timeStamp
+                        versionInfo.timeStamp = versionInfo.date;
+                        delete versionInfo.date;
+
+                        await me.putObject(`db://definitions/${projectId}/versionLists/${version}`, versionInfo);
+                        me.delete(`db://definitions/${projectId}/versionLists/${version}/versionValue`);
+                        me.delete(`db://definitions/${projectId}/versionLists/${version}/versionInfo`);
+                    }
+                }
+
+            },
+            async loadDefinition() {
+                var me = this
+                var loadedDefinition = null
+                var modelUrl = me.isClazzModeling ? me.projectId : me.params.projectId
+
+                if(modelUrl.includes(':')){
+                    // storming/618f299b6ce2c53313430a21be0bb094:v0.0.1 
+                    // 54785805/storming/618f299b6ce2c53313430a21be0bb094:v0.0.1
+                    me.projectId = modelUrl.split(':')[0]
+                    me.projectVersion = modelUrl.split(':')[1]
+                    me.projectVersion = me.projectVersion.replaceAll('.','-')
+                } else {
+                    // storming/618f299b6ce2c53313430a21be0bb094
+                    // 54785805/storming/618f299b6ce2c53313430a21be0bb094
+                    me.projectId = modelUrl
+                }
+                if(window && window.document) window.document.title = me.projectId
+
+                if(me.params.providerUid){
+                    me.projectId = `${me.params.providerUid}_${me.canvasType}_${me.projectId}`
+                } 
+
+                // rtc
+                me.rtcRoomId = `modelRtc_${me.projectId}`
+                localStorage.setItem('projectId', me.projectId)
+
+                if (me.projectId) {
+                    var information = await me.list(`db://definitions/${me.projectId}/information`);
+
+                    me.$EventBus.$emit('progressValue', true)
+
+                    if( information && Object.keys(information).length < 4){
+                        // local model && wrong date
+                        information = null;
+                        me.delete(`db://definitions/${me.projectId}`);
+                    }
+
+                    if (information) {
+                        me.isServerModel = true
+                    } else {
+                        // 로컬 일때는 로딩바 해제
+                        me.$EventBus.$emit('progressValue', false)
+                    }
+
+                    if (me.isServerModel) {
+                        if( information.type != me.canvasType && !information.draft){
+                            me.isDisable = true
+
+                            me.alertInfo.text = 'The wrong approach. Please check the url.'
+                            me.alertInfo.fnNum = 1
+                            me.alertInfo.submit = 'Close'
+                            me.alertInfo.show = true
+                            return;
+                        }
+
+                        me.settingPermission(information);
+
+                        if(!me.isDisable){
+                            // Authorization
+                            var forkLatest =  await me.list(`db://definitions/${me.projectId}/forkUserLists/${me.userInfo.uid}`)
+                            me.forkInformation.forkLatest = forkLatest ? forkLatest : null
+                            me.forkInformation.forkOrigin = information.forkOrigin ? information.forkOrigin : null
+
+                            await me.enterUserAction()
+                            // me.specVersion = await me.getSpecVersion()
+
+                            if (me.alertInfo.fnNum == 1) {
+                                // permission denied
+                            } else {
+                                loadedDefinition = await me.loadDefinitionVersion3orAbove()
+
+                                // if (me.specVersion == '1.0') {
+                                //     loadedDefinition = await me.loadDefinitionVersion1()
+                                // } else if (me.specVersion == '2.0') {
+                                //     loadedDefinition = await me.loadDefinitionVersion2()
+                                // } else {
+                                //     loadedDefinition = await me.loadDefinitionVersion3orAbove()
+                                // }
+                                // console.log('specVersion:', me.specVersion, ' setSnapshot:', me.lastSnapshotKey, 'snapshotLastKey:', me.lastSnapQueueKey)
+                            }
+                        }
+                    } else {
+                        me.isOwnModel = true
+                        loadedDefinition = await me.loadDefinitionLocal()
+                    }
+
+                    if (loadedDefinition) {
+                        loadedDefinition = me.migrate(loadedDefinition)
+                        // project의 draft 정보가 있으면 초기 모델링 정보를 대체
+                        if(me.information.draft){
+                            let bigPicture = me.information.draft.find(item => item.type == 'processAnalysis')
+                            loadedDefinition.elements = bigPicture.content.content.elements
+                            loadedDefinition.relations = bigPicture.content.content.relations
+                        }
+                        for(let key of Object.keys(loadedDefinition)) {
+                            me.$set(me.value, key, loadedDefinition[key])
+                        }
+                    } else if (!me.value) {
+                        me.value = {'elements': {}, 'relations': {}}
+                        me.initLoad = true
+                    }
+
+                    me.afterSnapshotLoad();
+                } else {
+                    me.isOwnModel = true
+
+                    if (!me.value)
+                        me.value = {'elements': {}, 'relations': {}}
+                }
+
+                if (!me.isServerModel) {
+                    me.$nextTick(function () {
+                        me.$EventBus.$emit('progressValue', false)
+                        me.initLoad = true
+                        console.log('# Done init load')
+                    })
+                }
+
+            },
+            loadDefinitionLocal() {
+                var me = this
+
+                return new Promise(async function (resolve, reject) {
+                    let lists = await me.getObject(`localstorage://localLists`)
+                    let value = await me.getObject(`localstorage://${me.projectId}`)
+
+                    lists = lists ? lists : [];
+                    let index = lists.findIndex(list => list.projectId == me.projectId)
+                    let basicInformation  = {
+                        author: me.userInfo.uid,
+                        authorEmail: me.userInfo.email,
+                        comment: "",
+                        createdTimeStamp: Date.now(),
+                        lastModifiedTimeStamp: Date.now(),
+                        projectName: me.projectName,
+                        projectId: me.projectId,
+                        type: me.canvasType,
+                    }
+
+                    if( index > 0 ){
+                        // 기존 정보.
+                        me.information = Object.assign(basicInformation,lists[index]);
+                    } else {
+                        me.information = me.information ? Object.assign(me.information, basicInformation) : basicInformation;
+                        me.information.projectName = me.projectName ? me.projectName : 'untitled';
+                        lists.push(me.information)
+                        me.putObject(`localstorage://localLists`, lists);
+                    }
+                    me.isEditable = true
+                    me.projectName = me.information.projectName  ? me.information.projectName : 'untitled'
+
+
+                    resolve(value ? value : {'elements': {}, 'relations': {}})
+                })
+            },
+            loadDefinitionVersion1() {
+                var me = this
+                return new Promise(async function (resolve, reject) {
+
+                    var getValue = await me.getString(`db://definitions/${me.projectId}/versionLists/${me.information.lastVersionName}`)
+
+                    if (getValue && getValue.versionValue) {
+                        resolve(JSON.parse(getValue.versionValue.value))
+                    } else {
+                        resolve({'elements': {}, 'relations': {}})
+                    }
+
+
+                })
+            },
+            loadDefinitionVersion2() {
+                var me = this
+
+                return new Promise(async function (resolve, reject) {
+
+                    var option = {
+                        sort: "desc",
+                        orderBy: null,
+                        size: 1,
+                        startAt: null,
+                        endAt: null,
+                    }
+
+
+                    var snapshots = await me.list(`db://definitions/${me.projectId}/snapshotLists`, option)
+
+                    if (snapshots) {
+                        var snapshotObj = snapshots[0]
+                        me.lastSnapshotKey = snapshotObj.key
+                        me.lastSnapQueueKey = snapshotObj.lastSnapshotKey ? snapshotObj.lastSnapshotKey : ''
+                        me.value = JSON.parse(snapshotObj.snapshot)
+                    } else {
+                        me.lastSnapQueueKey = ''
+                        me.value = {definition: [], relation: []}
+                    }
+
+                    var queueOption = {
+                        sort: null,
+                        orderBy: null,
+                        size: null,
+                        startAt: me.lastSnapQueueKey,
+                        endAt: null,
+                    }
+
+                    var queueLists = await me.list(`db://definitions/${me.projectId}/queue`, queueOption)
+
+                    if (queueLists) {
+
+                        Object.keys(queueLists).forEach(function (key) {
+                            me.latestQueueKey = key
+                            var snapValue = queueLists[key]
+
+                            var action = snapValue.action ? snapValue.action : snapValue.state
+
+                            if (!action.includes('user')) {
+                                var obj = {
+                                    childKey: key,
+                                    childValue: snapValue
+                                }
+
+                                me.receivedQueueDrawElement(obj)
+                            }
+                        })
+
+                        resolve(me.value)
+                    } else {
+                        resolve(me.value)
+                    }
+                })
+            },
+            loadDefinitionVersion3orAbove() {
+                var me = this
+                return new Promise(async function (resolve, reject) {
+
+                    if(me.projectVersion){
+
+                        if(me.projectVersion == 'latest'){
+                            await me.loadVersions();
+
+                            if(me.versionLists && me.versionLists.length  > 0){
+                                me.projectVersion = me.versionLists[me.versionLists.length-1].version.replaceAll('.','-').trim();
+                            } else {
+                                me.snackbar.show = true
+                                me.snackbar.text = "This model does not have versions."
+                                me.snackbar.color = '#E57373'
+                                resolve({'elements': {}, 'relations': {}})
+                                return;
+                            }
+                        }
+
+                        let snapshots = await me.list(`db://definitions/${me.projectId}/versionLists/${me.projectVersion}`)
+                        if(snapshots){
+                            var versionInfo = snapshots.versionInfo ? snapshots.versionInfo  : snapshots
+                            let versionValue = {'elements': {}, 'relations': {}};
+                            if( snapshots.versionInfo ){
+                                versionValue = JSON.parse(snapshots.versionValue.value);
+                            } else {
+                                versionValue = await me.getObject(`storage://${snapshots.valueUrl}`);
+                            }
+
+                            me.projectName = versionInfo && versionInfo.projectName  ? versionInfo.projectName : 'untitled'
+                            resolve(versionValue)
+                        } else {
+                            resolve({'elements': {}, 'relations': {}})
+                        }
+
+
+                    } else {
+                        var option = {
+                            sort: "desc",
+                            orderBy: null,
+                            size: 1,
+                            startAt: null,
+                            endAt: null,
+
+                        }
+                        var snapshots = await me.list(`db://definitions/${me.projectId}/snapshotLists`, option)
+
+                        if (snapshots) {
+                            var snapshotObj = snapshots[0]
+                            me.lastSnapshotKey = snapshotObj.key
+                            me.lastSnapQueueKey = snapshotObj.lastSnapshotKey ? snapshotObj.lastSnapshotKey : ''
+                            var tmp = JSON.parse(snapshotObj.snapshot)
+                            resolve(tmp)
+                        } else {
+                            me.lastSnapQueueKey = ''
+                            resolve({'elements': {}, 'relations': {}})
+                        }
+                    }
+                })
+            },
+            migrateQueue(action, item){
+                return item;
+            },
+            migrate(value) {
+                var me = this
+
+                value = me.migrate1To3(value)
+                value = me.migratePublic(value)
+                value = me.migrateModel(value)
+
+                return value
+
+            },
+            migrate1To3(value) {
+                var me = this
+
+                // if (me.specVersion != '3.0' && !value.version) {
+                if ( !value.version ) {
+                    if (!value.relations) value.relations = {}
+                    if (!value.elements) value.elements = {}
+
+                    Object.keys(value).forEach(function (key, index) {
+                        if (Array.isArray(value[key])) {
+                            if (key.includes('relation')) {
+                                Object.values(value[key]).forEach(function (relation, index) {
+                                    if (relation)
+                                        me.$set(value.relations, relation.relationView.id, relation)
+                                })
+                            } else if (key.includes('definition')) {
+                                Object.values(value[key]).forEach(function (element, index) {
+                                    if (element)
+                                        me.$set(value.elements, element.elementView.id, element)
+                                })
+                            }
+                        }
+                    })
+                    value.version = 3
+                    console.log('load 1 to3')
+                }
+                delete value['definition'];
+                delete value['relation'];
+
+
+                return value
+
+            },
+            // migrate2To3(value) {
+            //     var me = this
+            //
+            //     // if (me.storageExist && me.specVersion != '3.0' && me.paramKeys.indexOf('classId') == -1) {
+            //     // if (me.isServerModel && me.specVersion != '3.0') {
+            //     if ( me.isServerModel ) {
+            //         me.$refs['modeler-image-generator'].save(me.projectName, me.canvas).then(async function (resolve) {
+            //
+            //             var pushObj = {
+            //                 snapshot: JSON.stringify(value),
+            //                 timeStamp: Date.now(),
+            //                 snapshotImg: resolve,
+            //                 lastSnapshotKey: '',
+            //             }
+            //             // var putObj = {
+            //             //     specVersion: '3.0'
+            //             // }
+            //
+            //             await me.pushObject(`db://definitions/${me.projectId}/snapshotLists`, pushObj)
+            //             await me.delete(`db://definitions/${me.projectId}/queue`)
+            //             // await me.putObject(`db://definitions/${me.projectId}`, putObj)
+            //             setTimeout(function () {
+            //                 // me.specVersion = '3.0'
+            //                 window.location.reload(true)
+            //                 console.log('load 2 to3')
+            //             }, 500);
+            //         })
+            //
+            //     }
+            //     return value
+            // },
+            migratePublic(value){
+                var me = this
+                if( !value.scm || Object.keys(value.scm).length == 0 ){
+                    value.scm = {
+                        tag: null,
+                        org: null,
+                        repo: null,
+                        forkedOrg: null,
+                        forkedRepo: null
+                    }
+                }
+
+                if( me.information ){
+                    if(me.information.gitOrgName && !value.scm.org ){
+                        value.scm.org = me.information.gitOrgName;
+                    }
+
+                    if(me.information.gitRepoName && !value.scm.repo ){
+                        value.scm.repo = me.information.gitRepoName;
+                    }
+
+                    if(me.information.forkedByModelGitOrgName && !value.scm.forkedOrg ){
+                        value.scm.forkedOrg = me.information.forkedByModelGitOrgName;
+                    }
+
+                    if(me.information.forkedByModelGitRepoName && !value.scm.forkedRepo ){
+                        value.scm.forkedRepo = me.information.forkedByModelGitRepoName;
+                    }
+                }
+
+                return value
+            },
+            migrateModel(value){
+              return  value
+            },
+            requestInviteUser() {
+                var me = this
+                //login check
+                try {
+                    me.setUserInfo()
+                    if (me.isLogin) {
+                        if (me.information.permissions &&
+                            me.information.permissions[me.userInfo.uid] &&
+                            me.information.permissions[me.userInfo.uid].request) {
+                            alert('권한 요청된 상태입니다.')
+                        } else {
+                            var obj = {
+                                email: me.userInfo.email,
+                                permission: "Write",
+                                request: true,
+                            }
+                            me.applyInviteUsers(obj, true)
+                        }
+
+                    } else {
+                        me.$EventBus.$emit('showLoginDialog')
+                    }
+
+                } catch (e) {
+                    alert('Error: request - inviteUser :', e)
+                }
+
+            },
+            async openInviteUsers() {
+                var me = this
+                var getPermission = await me._get(`db://definitions/${me.projectId}/information/permissions`)
+                me.invitationLists = getPermission
+                if (me.invitationLists) {
+                    me.showPublicModel = Object.keys(me.invitationLists).indexOf('everyone') == -1 ? false : true
+                }
+
+                me.inviteDialog = true
+            },
+            async addPublicModel(projectId){
+                let isExist = await this.isExistServerModel(projectId);
+                if(isExist){
+                    this.putObject(`db://definitions/${projectId}/information/permissions/everyone`, {
+                        uid: 'everyone',
+                        userName: 'Everyone',
+                        write: false,
+                    } )
+                    return true;
+                }
+                return false;
+            },
+            async isExistPermission(projectId, uid){
+                if(projectId){
+                    let information = await this.list(`db://definitions/${projectId}/information`)
+                    if(information){
+                        if(uid){
+                            if(uid == information.author){
+                                return { uid: information.author, userName: information.email, write: true, isAuthor: true }
+                            } else if(information.permissions) {
+                                return information.permissions[uid]
+                            }
+                        } else {
+                           return information.permissions;
+                        }
+                    }
+                }
+                return null;
+            },
+            async isExistServerModel(projectId){
+                if(projectId){
+                    let information = await this.list(`db://definitions/${projectId}/information`)
+                    if(information) {
+                        return true;
+                    }
+                }
+                return false;
+            },
+            invitePublic(show) {
+                var me = this
+                if (!me.invitationLists) me.invitationLists = {}
+
+                if (show) {
+                    me.invitationLists['everyone'] = {
+                        uid: 'everyone',
+                        userName: 'Everyone',
+                        write: false,
+                    }
+                    me.showPublicModel = true
+                } else {
+                    me.invitationLists['everyone'] = null
+                    me.showPublicModel = false
+                }
+
+            },
+            getPodStatus(userName, userGroup, projectName) {
+                var me = this
+                return new Promise(function (resolve, reject) {
+                    var hashName;
+                    if (me.$route.params.labId) {
+                        if (me.$parent.labInfo.independent) {
+                            var hashPath = me.getClassPath('labs/' + me.$route.params.labId + '/' + me.$route.params.userId);
+                        } else {
+                            var hashPath = me.getClassPath(me.$route.params.userId);
+                        }
+                        hashName = "labs-" + me.hashCode(hashPath);
+                    } else {
+                        hashName = `ide-${me.hashCode(userGroup + "-" + userName)}`
+                    }
+                    me.$http.get(`${me.getProtocol()}//api.${me.getTenantId()}/api/v1/namespaces/default/pods/${hashName}`).then(function (result) {
+                        if (result.data.status.phase == "Running") {
+                            resolve(true)
+                        } else {
+                            resolve(false)
+                        }
+                    }).catch(function (e) {
+                        resolve(false)
+                    })
+                })
+            },
+            checkIdeOperator(hashName) {
+                var me = this
+                if (me.$parent.classInfo) {
+                    var serverToken = me.$parent.classInfo.token;
+                    var serverUrl = me.$parent.classInfo.serverUrl;
+                }
+
+                if (!serverUrl || !serverToken) {
+                    return new Promise(function (resolve) {
+                        me.$http.get(`${me.getProtocol()}//api.${me.getTenantId()}/apis/uengine.org/v1alpha1/namespaces/default/ides/${hashName}/status`).then(function (result) {
+                            console.log(result.data.status.conditions)
+                            result.data.status.conditions.forEach(function (item) {
+                                if (item.reason == "InstallSuccessful" && item.type == "Deployed") {
+                                    resolve(true)
+                                }
+                            })
+                        }).catch(function (e) {
+                            resolve(false)
+                        })
+                    })
+                } else {
+                    return new Promise(function (resolve) {
+                        me.$http.get(`http://api.${me.getTenantId()}/apis/uengine.org/v1alpha1/namespaces/default/ides/${hashName}/status?serverUrl=${serverUrl}&token=${serverToken}`).then(function (result) {
+                            console.log(result.data.status.conditions)
+                            result.data.status.conditions.forEach(function (item) {
+                                if (item.reason == "InstallSuccessful" && item.type == "Deployed") {
+                                    resolve(true)
+                                }
+                            })
+                        }).catch(function (e) {
+                            resolve(false)
+                        })
+                    })
+                }
+            },
+            deleteConfig(hashName, obj) {
+                var me = this
+                return new Promise(async function (resolve, reject) {
+                    var tenant;
+                    if(me.$parent.classInfo) {
+                        tenant = me.$parent.classInfo.ideUrl
+                    } else {
+                        tenant = window.MODE == "onprem" ? me.getTenantId() : 'kuberez.io'
+                    }
+                    me.$http.delete(`${me.getProtocol()}//file.${tenant}/api/deleteConfig`, {
+                        data: {
+                            "tenant": "eventstorming",
+                            "course": obj.course,
+                            "clazz": "users",
+                            "userId": obj.userId,
+                            "status": "running",
+                            "hashName": hashName
+                        }
+                    }, {
+                        headers: {
+                            "Content-Type": "application/json; charset=UTF-8"
+                        }
+                    }).then(function () {
+                        resolve()
+                    }).catch(error => alert(error))
+                    // await me.putObject(configPath + '/config', configJson)
+                    // resolve()
+                })
+            },
+            makeDir(path) {
+                var me = this;
+                return new Promise(function (resolve,reject) {
+                    var tenant;
+                    if(me.$parent.classInfo) {
+                        tenant = me.$parent.classInfo.ideUrl
+                    } else {
+                        tenant = window.MODE == "onprem" ? me.getTenantId() : 'kuberez.io'
+                    }
+                    me.$http.post(`${me.getProtocol()}//file.${tenant}/api/makeDir`, {
+                            "path": path
+                        }).then(function () {
+                            return resolve();
+                    }).catch(function(e) {
+                            alert(e);
+                        reject();
+                    });
+                })
+            },
+            makeConfig(hashName, obj) {
+                var me = this
+                return new Promise(async function (resolve, reject) {
+                    var serverUrl, serverToken, ideUrl;
+                    if (me.$parent.classInfo) {
+                        serverUrl = me.$parent.classInfo.serverUrl;
+                        serverToken = me.$parent.classInfo.token;
+                    } else {
+                        serverUrl = window.MODE == "onprem" ? window.CLUSTER_ADDRESS : 'https://218.236.22.12:6443';
+                    }
+
+                    var serviceAccount = await me.existServiceAccountCheck(hashName);
+
+                    function sleep(ms) {
+                        return new Promise(resolve => setTimeout(resolve, ms))
+                    }
+
+                    while (!serviceAccount) {
+                        serviceAccount = await me.existServiceAccountCheck(hashName);
+                        await sleep(3000)
+                    }
+
+                    var secretName = serviceAccount.data.secrets[0].name
+                    var secret = await me.getSecret(hashName, secretName);
+
+                    while (!secret) {
+                        secret = await me.getSecret(hashName, secretName)
+                        await sleep(3000)
+                    }
+
+                    var decodedToken = atob(secret);
+
+                    // 6. upload Config
+                    // 클러스터명, 서버ip 바꿔줄 것!
+
+                    var configJson = {
+                        "apiVersion": "v1",
+                        "clusters": [
+                            {
+                                "cluster": {
+                                    "insecure-skip-tls-verify": true,
+                                    "server": serverUrl
+                                },
+                                "name": "kcb-test2.k8s.local"
+                            }
+                        ],
+                        "contexts": [
+                            {
+                                "context": {
+                                    "cluster": "kcb-test2.k8s.local",
+                                    "namespace": hashName,
+                                    "user": hashName
+                                },
+                                "name": "kcb-test2.k8s.local"
+                            }
+                        ],
+                        "current-context": "kcb-test2.k8s.local",
+                        "kind": "Config",
+                        "preferences": {},
+                        "users": [
+                            {
+                                "name": hashName,
+                                "user": {
+                                    "token": decodedToken
+                                }
+                            }
+                        ]
+                    }
+                    var tenant;
+                    if(me.$parent.classInfo) {
+                        tenant = me.$parent.classInfo.ideUrl
+                    } else {
+                        tenant = window.MODE == "onprem" ? me.getTenantId() : 'kuberez.io'
+                    }
+                    me.$http.post(`${me.getProtocol()}//file.${tenant}/api/uploadConfig`, {
+                        "config": JSON.stringify(configJson),
+                        "tenant": me.$route.params.labId ? me.getTenantId() : "eventstorming",
+                        "course": obj.course,
+                        "clazz": me.$route.params.labId ? obj.clazz : `users`,
+                        "userId": obj.userId,
+                        "status": "running",
+                        "hashName": hashName
+                    }, {
+                        headers: {
+                            "Content-Type": "application/json; charset=UTF-8"
+                        }
+                    }).then(function () {
+                        me.$EventBus.$emit("nextStep")
+                        resolve()
+                    }).catch(error => alert(error))
+                    // await me.putObject(configPath + '/config', configJson)
+                    // resolve()
+                })
+            },
+            async addInviteUser(user, myself) {
+                var me = this
+                var write = false
+                var success = false
+                if (user.email) {
+                    return new Promise(async function (resolve, reject) {
+                        if (user.permission == 'Write') {
+                            write = true
+                        }
+
+                        var options = {
+                            sort: "desc",
+                            orderBy: 'email',
+                            size: null,
+                            startAt: `${user.email}`,
+                            endAt: `${user.email}`,
+                        }
+
+                        var snapshots = await me.list('db://users',options)
+                        if(snapshots){
+                            if (!me.invitationLists) me.invitationLists = {}
+                            snapshots.forEach(function (snapshot) {
+                                var uid = snapshot.key
+                                if( (myself && me.userInfo.uid == uid) || (!myself && me.userInfo.uid != uid) ){
+                                    var item = snapshot
+                                    me.invitationLists[uid] =
+                                        {
+                                            uid: uid,
+                                            userName: item.userName ? item.userName : ( item.username ? item.username : 'anyone'),
+                                            userPic: item.profile_picture ? item.profile_picture : '',
+                                            email: item.email ? item.email : user.email,
+                                            write: write,
+                                            request: user.request ? user.request : null
+                                        }
+                                }
+                            })
+                            me.invitationLists.__ob__.dep.notify()
+                            if(!me.invitationLists){
+                                var obj = {
+                                    msg: "공유실패: Can't find user. check email."
+                                }
+                                me.$EventBus.$emit('inviteCallBack', obj)
+                                // me.snackbar.show = true
+                                // me.snackbar.text = "공유실패: Can't find user. check email."
+                                // me.snackbar.color = '#E57373'
+                                resolve(false)
+                            }
+                            resolve(true)
+                        }else{
+                            var obj = {
+                                msg: "공유실패: 초대하려는 유저가 구글 로그인을 안했을 가능성이 높습니다."
+                            }
+                            me.$EventBus.$emit('inviteCallBack', obj)
+                            // me.snackbar.show = true
+                            // me.snackbar.text = '공유실패: 초대하려는 유저가 구글 로그인을 안했을 가능성이 높습니다.'
+                            // me.snackbar.color = '#E57373'
+                            resolve(false)
+                        }
+                    })
+                } else {
+                    var obj = {
+                        msg: "공유실패: 이메일형식에 맞춰서 넣어주세요."
+                    }
+                    me.$EventBus.$emit('inviteCallBack', obj)
+                    // me.snackbar.show = true
+                    // me.snackbar.text = '공유실패: 이메일형식에 맞춰서 넣어주세요.'
+                    // me.snackbar.color = '#E57373'
+                    resolve(false)
+                }
+            },
+            removeInviteUser(user) {
+                var me = this
+                me.invitationLists[user.uid] = null
+                if (user.uid == 'everyone') {
+                    me.showPublicModel = false
+                }
+                me.invitationLists.__ob__.dep.notify();
+            },
+            async applyInviteUsers(inputUser, request) {
+                var me = this
+                var result = true
+                if (inputUser) {
+                    result = await me.addInviteUser(inputUser, true)
+                }
+                console.log(me.invitationLists)
+
+                if (me.invitationLists) {
+                    if (!request) {
+                        Object.keys(me.invitationLists).forEach(function (invitation) {
+                            if (me.invitationLists[invitation] && me.invitationLists[invitation].request) {
+                                me.invitationLists[invitation].request = false
+                            }
+                        })
+                    }
+
+                    me.putObject(`db://definitions/${me.projectId}/information/permissions`, me.invitationLists)
+                    me.information.permissions = me.invitationLists
+                    me.modelChanged = true
+                    if (request) {
+                        me.joinRequested = true
+                    }
+                }
+
+                if (result) {
+                    var obj = {
+                        msg: null
+                    }
+                    me.$EventBus.$emit('inviteCallBack', obj)
+                    me.inviteDialog = false
+                }
+
+            }, 
+            closeInviteUsers(beforeInvitationLists) {
+                var me = this
+                console.log(beforeInvitationLists)
+                if (beforeInvitationLists) {
+                    Object.keys(beforeInvitationLists).forEach(function (invitation) {
+                        if (beforeInvitationLists[invitation] && beforeInvitationLists[invitation].request) {
+                            beforeInvitationLists[invitation].request = false
+                        }
+                    })
+                    me.putObject(`db://definitions/${me.projectId}/information/permissions`, beforeInvitationLists)
+                    me.information.permissions = beforeInvitationLists
+                    me.modelChanged = false
+                }
+                me.inviteDialog = false
+            },
+            getLastQueue() {
+                var me = this
+                return new Promise(async function (resolve, reject) {
+                    var option = {
+                        sort: 'desc',
+                        orderBy: null,
+                        size: 2,
+                        startAt: null,
+                        endAt: null,
+                    }
+
+                    var result = await me.list(`db://definitions/${me.projectId}/queue`, option)
+                    resolve(result)
+                })
+            },
+            getUndoRedoQueue(endAt) {
+                var me = this
+                return new Promise(async function (resolve) {
+                    let size = 2;
+                    let keyValue = await me.list(`db://definitions/${me.projectId}/queue`, {
+                        sort: 'desc',
+                        orderBy: null,
+                        size: size,
+                        startAt: null,
+                        endAt: endAt,
+                    })
+
+                    if (keyValue) {
+                        var prevVal = keyValue[0]
+                        var prevKey = prevVal.key
+                        var nextVal = keyValue[1]
+                        var nextKey = nextVal ? nextVal.key : null
+
+                        // 다음 큐 존재하고, 마지막 큐가 유저 큐인 경우 다음 큐를 가져온다.
+                        if (keyValue.length == size && prevKey && prevVal.action.includes('user')) {
+                            resolve(me.getUndoRedoQueue(nextKey))
+                        } else {
+                            resolve(keyValue)
+                        }
+                    } else {
+                        resolve(null)
+                    }
+                })
+            },
+            sort(lastChild, lastChildIndex) {
+                var me = this
+                var currentChild = null
+
+                if (me.sortScheduleId) return;
+                try {
+
+                    if (lastChild == null) {
+                        lastChildIndex = queueFifo.elements.length - 1;
+                        lastChild = queueFifo.elements[lastChildIndex];
+                    }
+                    var timePassed = Date.now() - lastChild.childValue.receivedTime;
+                    if (timePassed < 200 || me.changedByMe) {
+
+                        if (!me.sortScheduleId) {
+                            me.sortScheduleId = setTimeout(function () {
+                                        me.sortScheduleId = null
+                                        me.sort(lastChild, lastChildIndex);
+                                }, 300);
+                        }
+                    } else {
+                        /* receivedQueue Start */
+                        me.$EventBus.$emit('progressValue', true)
+
+                        var countOrdered = lastChildIndex + 1;
+
+                        queueFifo.elements.sort(function (a, b) { // 오름순
+                            return a.childKey < b.childKey ? -1 : a.childKey > b.childKey ? 1 : 0;
+                        });
+
+                        for (var i = 0; i < countOrdered; i++) {
+                            currentChild = queueFifo.elements[i]
+                            me.receivedQueueItemCountAfterLastSnapshot = me.receivedQueueItemCountAfterLastSnapshot + 1
+                            me.receivedQueueDrawElement(queueFifo.elements[i])
+
+                        }
+                        for (var i = 0; i < countOrdered; i++) {
+                            var firstQueue = queueFifo.dequeue()
+                            currentChild = null
+
+                            if (firstQueue &&
+                                firstQueue.childValue.editUid == me.userInfo.uid &&
+                                me.receivedQueueItemCountAfterLastSnapshot >= me.snapshotFrequency &&
+                                me.receivedQueueItemCountAfterLastSnapshot % me.snapshotFrequency == 0) {
+                                me.checkLeaderExist(firstQueue)
+                            }
+
+                        }
+
+                        if (queueFifo.isEmpty()) {
+                            /* receivedQeue End */
+                            clearTimeout(me.queueScheduleId);
+
+                            me.queueScheduleId = setTimeout(function () {
+                                console.log('#---------  End received Queue ----------------#')
+                                me.$EventBus.$emit('progressValue', false)
+                                me.overlayText = null
+                                me.initLoad = true
+                                me.isRendering = false
+                                if(me.isAutoForkModel) me.autoForkModel()
+                            }, 500)
+
+                        }
+
+                        lastChildIndex = queueFifo.elements.length - 1;
+                        lastChild = queueFifo.elements[lastChildIndex];
+                        if (lastChildIndex > -1) {
+                            me.sortScheduleId =
+                                setTimeout(function () {
+                                        me.sortScheduleId = null
+                                        me.sort(lastChild, lastChildIndex);
+                                    },
+                                    300
+                                );
+                        }
+                    }
+                } catch (e) {
+                    console.log('sortError: ', e, 'lastChild:', lastChild, 'key:', lastChild.childKey, 'action:', lastChild.childValue.action , currentChild)
+
+                    me.watch_off(`db://definitions/${me.projectId}/queue`)
+                    if( currentChild && currentChild.childKey ){
+                        me.delete(`db://definitions/${me.projectId}/queue/${currentChild.childKey}`)
+                    }
+                    var queueIds = queueFifo.findIndexByChildKey(currentChild.childKey)
+                    if(queueIds != -1){
+                        queueFifo.removeByIndex(queueIds)
+                    }
+                    me.$emit('forceUpdateKey')
+                }
+
+
+            },
+            async checkLeaderExist(child) {
+                var me = this
+                if(Object.keys(me.value.elements).length == 0) return; // Wrong data.
+
+                var lastKey = ''
+
+                var option = {
+                    sort: 'desc',
+                    orderBy: null,
+                    size: 1,
+                    startAt: null,
+                    endAt: null,
+                }
+
+                var snapshot = await me.list(`db://definitions/${me.projectId}/snapshotLists`, option)
+
+                if (snapshot) {
+                    var snapshotObj = snapshot[0]
+                    lastKey = snapshotObj.lastSnapshotKey ? snapshotObj.lastSnapshotKey : ''
+                }
+
+                if (!snapshot || lastKey < child.childKey) {
+                    me.$refs['modeler-image-generator'].save(me.id, me.canvas).then(function (resolve) {
+
+                        var obj = {
+                            snapshot: JSON.stringify(me.value),
+                            timeStamp: Date.now(),
+                            snapshotImg: resolve,
+                            lastSnapshotKey: child.childKey,
+                        }
+                        me.pushObject(`db://definitions/${me.projectId}/snapshotLists`, obj)
+                    })
+                }
+
+                me.receivedQueueItemCountAfterLastSnapshot = 0
+
+            },
+            undoRedoDraw(child, state) {
+                var me = this
+
+                var action = child.childValue.action ? child.childValue.action : child.childValue.state
+                if (state == 'undo') {
+                    if (action == 'redo') {
+                        child = JSON.parse(child.childValue.item)
+                        action = child.childValue.action
+                    }
+
+                    if (action.includes('Move')) {
+                        var orgin = JSON.parse(JSON.stringify(child.childValue.after))
+                        child.childValue.after = child.childValue.before
+                        child.childValue.before = orgin
+                    } else if (action.includes('Modify')) {
+                        child.childValue.item = JSON.stringify(jsondiffpatch.reverse(JSON.parse(child.childValue.item)))
+                    } else if (action.includes('Push')) {
+                        child.childValue.action = child.childValue.action.replace('Push', 'Delete')
+                    } else if (action.includes('Delete')) {
+                        child.childValue.action = child.childValue.action.replace('Delete', 'Push')
+                    }
+
+                } else if (state == 'redo') {
+                    child = JSON.parse(child.childValue.item)
+
+                    if (action == 'undo') {
+                        action = child.childValue.action
+                        if (action.includes('Move')) {
+                            var orgin = JSON.parse(JSON.stringify(child.childValue.after))
+                            child.childValue.after = child.childValue.before
+                            child.childValue.before = orgin
+                        } else if (action.includes('Modify')) {
+                            child.childValue.item = JSON.stringify(jsondiffpatch.reverse(JSON.parse(child.childValue.item)))
+                        } else if (action.includes('Push')) {
+                            child.childValue.action = child.childValue.action.replace('Push', 'Delete')
+                        } else if (action.includes('Delete')) {
+                            child.childValue.action = child.childValue.action.replace('Delete', 'Push')
+                        }
+                    }
+
+                }
+
+                if(action.includes('user')){
+                    me.overlayText = null
+                    me.isRendering = false
+                } else {
+                    me.pushObject(`db://definitions/${me.projectId}/queue`, {
+                        action: state,
+                        editUid: me.userInfo.uid,
+                        timeStamp: Date.now(),
+                        item: JSON.stringify(child)
+                    })
+                }
+            },
+            receivedQueueDrawElement(child, ignore) {
+                var me = this
+                ignore = ignore ? ignore : false
+
+                if (child != undefined) {
+                    var item = null
+                    var afterMove = null
+                    var action = child.childValue.action ? child.childValue.action : child.childValue.state
+
+                    if (action == 'undo' || action == 'redo') {
+                        // changedByMe
+                        ignore = true
+                        var undoRedoKey = child.childKey;
+                        child = JSON.parse(child.childValue.item);
+                        child.undoRedoKey = undoRedoKey;
+                        action = child.childValue.action
+                    }
+
+                    if (action.includes('Move')) {
+                        afterMove = child.childValue.after
+                    } else {
+                        item = child.childValue.item ? JSON.parse(child.childValue.item) : null
+                    }
+
+                    //origin
+                    if (action == 'elementPush') {
+                        if (!ignore && child.childKey < me.prevKey) {
+                            me.receiveErrorQueue('Wrong queue key.', child)
+                        }
+
+                        // Excute Element Push
+                        if (ignore || child.childKey != me.prevKey) {
+                            if(!child.isMirrorQueue) me.prevKey = child.childKey
+                            item.author = child.childValue.editUid
+
+                            //Setting added Entity ( By Queue migrate)
+                            item = me.migrateQueue(action, item);
+
+                            //add Element
+                            me.receiveAppendedQueue(item, child)
+                            if (me.initLoad) me.changedTemplateCode = true
+                        } else {
+                            console.log('reduplication Element Push')
+                        }
+                    } else if (action == 'elementDelete') {
+                        try {
+                            me.receiveRemovedQueue(item, child)
+
+                            if (me.initLoad) me.changedTemplateCode = true
+                        } catch (e) {
+                            me.receiveErrorQueue(e, child)
+                        }
+                    } else if (action == 'elementMove') {
+                        try {
+                            me.receiveMovedQueue(child.childValue.elementId, afterMove, child)
+                        } catch (e) {
+                            me.receiveErrorQueue(e, child)
+                        }
+                    } else if (action == 'valueModify') {
+                        try {
+                            //changedByMe
+                            if (!ignore && me.changedByMeKeys.includes(child.childKey)) {
+                                me.changedByMeKeys.splice(me.changedByMeKeys.indexOf(child.childKey), 1)
+                            } else {
+                                me.receiveChangedValueQueue(item, child);
+                            }
+                            if (me.initLoad) me.changedTemplateCode = true
+                        } catch (e) {
+                            me.receiveErrorQueue(e, child)
+                        }
+                    } else if (action == 'relationPush') {
+                        if (!ignore && child.childKey < me.prevKey) {
+                            me.receiveErrorQueue('Wrong queue key.', child)
+                        }
+
+                        if (ignore || child.childKey != me.prevKey) {
+                            if(!child.isMirrorQueue) me.prevKey = child.childKey
+                            if (!item._type.endsWith('Relation')) {
+                                item.author = child.childValue.editUid
+                            }
+                            me.receiveAppendedQueue(item, child)
+
+                            if (me.initLoad) me.changedTemplateCode = true
+                        } else {
+                            console.log('reduplication Relation Push')
+                        }
+                    } else if (action == 'relationDelete') {
+                        try {
+                            me.receiveRemovedQueue(item, child)
+
+                            if (me.initLoad)me.changedTemplateCode = true
+                        } catch (e) {
+                            me.receiveErrorQueue(e, child)
+                        }
+                    } else if (action == 'relationMove') {
+                        try {
+                            me.receiveMovedQueue(child.childValue.relationId, afterMove, child)
+                        } catch (e) {
+                            me.receiveErrorQueue(e, child)
+                        }
+                    }
+                }
+            },
+            async receiveValue() {
+                var me = this
+                await me.watch(`db://definitions/${me.projectId}/value`, function (callback) {
+                    // me.changedByMe = false
+                    if(callback) me.value = JSON.parse(callback)
+                })
+            },
+            releaseQueue(projectId){
+                var me = this
+                if(!projectId) return;
+
+                me.watch_off(`db://definitions/${projectId}/queue`)
+            },
+            watchProjectInformation(associatedProjectId){
+                var me = this
+                if(!associatedProjectId) return
+
+                me.watch(`db://definitions/${associatedProjectId}/information`, function (information) {
+                    let old = JSON.parse(JSON.stringify(me.associatedProjectInformation));
+                    me.associatedProjectInformation = information ? information : null
+                    me.watchDeletedModel(old);
+                })
+            },
+            watchDeletedModel(info){
+                // reload condition.
+                return;
+            },
+            receiveAssociatedProject(associatedProjectId){
+                return;
+            },
+            modelListOfassociatedProject(){
+                return []
+            },
+            syncMirrorElements() {
+                var me = this;
+                let modelLists = me.modelListOfassociatedProject()
+                let disconnectDiff = {'elements': {}}
+                Object.values(me.value.elements)
+                    .filter((ele) => ele && ele.mirrorElement)
+                    .forEach(function (mirror) {
+                        let origin = me.mirrorValue.elements[mirror.mirrorElement]
+
+                        /*
+                         CONDITION1: Not includes "definitionId" of Attribute
+                            OR
+                         CONDITION2: if includes "definitionId", includes modelLists
+                        */
+
+                        if(origin){
+                            // Exist Origin Element.
+                            if(!modelLists.includes(origin.definitionId)){
+                                // Disconnetion Model && Disconnection Element && Exist Element.
+                                me.$set(disconnectDiff.elements, origin.id, [origin,null])
+                            } else {
+                                // Connetion Model && Connection Element && Exist Element.
+                                if(mirror.elementView)
+                                    me.value.elements[mirror.elementView.id] = me.overrideMirrorValue(mirror, origin);
+                                else if(mirror.id)
+                                    me.value.elements[mirror.id] = me.overrideMirrorValue(mirror, origin);
+                                else
+                                    console.log("mirror element is corrupt: doesn't have elementView")
+                            }
+                        } else {
+                            // Removed Origin Element.
+                            if(mirror.definitionId && modelLists.includes(mirror.definitionId)) {
+                                // Connetion Model && Connection Element && Removed Element.
+                                me.$refs[`${mirror.id}`]? me.$refs[`${mirror.id}`][0].onRemoveShape() : null;
+                                me.value.elements[mirror.id] = null;
+                            } else if (mirror.mirrorElement){
+                                // Connetion Model && Disconnection Element
+                                let reOrigin = Object.values(me.mirrorValue.elements)
+                                .find(ele =>
+                                    me.validateElementFormat(ele)
+                                    && ele._type == mirror._type  // equals type.
+                                    && ele.name
+                                    && ele.name.toLowerCase() == mirror.name.toLowerCase() // equals name
+                                    && ele.elementView.id != mirror.id // myself x
+                                    && !ele.mirrorElement // connected element x
+                                )
+                                if(reOrigin) {
+                                    mirror.mirrorElement = reOrigin.elementView.id
+                                    me.changedByMe = true;
+                                }
+                            }
+                        }
+                    });
+
+                if(Object.keys(disconnectDiff.elements).length > 0){
+                    // disconnect -> definition remove.
+                    me.pushChangedValueQueue(disconnectDiff, {definitionId: me.information.associatedProject})
+                }
+            },
+            overrideMirrorValue(mirror, origin) {
+                if (!origin) return mirror;
+
+                let result = Object.assign({}, origin);
+                Object.keys(mirror).forEach(function (itemKey) {
+                    if(itemKey == "elementView" || itemKey == "relationView" || itemKey == "id" || itemKey == "mirrorElement" ) {
+                        // 원본 값에 mirror Element 정보 override.
+                        result[itemKey] = mirror[itemKey];
+                    }
+                });
+                //
+                // // Don't override.
+                // delete result['definitionId']
+
+                return result;
+            },
+            async saveAssociatedModelSnapshot(id, queue){
+                var me = this
+
+                if(!me.isLogin) return;
+                if(me.isDisable) return;
+                if(me.isReadOnlyModel) return;
+
+                if( me.mirrorQueueCount >= me.snapshotFrequency ) {
+                    if( me.mirrorQueueCount % me.snapshotFrequency == 0 && queue.editUid == me.userInfo.uid) {
+                        await me.pushObject(`db://definitions/${id}/snapshotLists`, {
+                            snapshot: JSON.stringify(me.mirrorValue),
+                            timeStamp: Date.now(),
+                            snapshotImg: null,
+                            lastSnapshotKey: queue.key,
+                        })
+                    }
+                    // other user and set Snap user.
+                    me.mirrorQueueCount = 0;
+                }
+            },
+            receiveQueue() {
+                var me = this
+                var isWaitingQueue = null
+                let waitingTime = me.lastSnapQueueKey ? 10000 : 3000
+                isWaitingQueue = setTimeout(function () {
+                    /* receivedQeue End */
+                    me.initLoad = true
+                    me.$EventBus.$emit('progressValue', false)
+                    if(me.isAutoForkModel){
+                        me.autoForkModel()
+                    }
+                },waitingTime)
+
+                let options = {
+                    sort: null,
+                    orderBy: null,
+                    size: null,
+                    startAt: me.lastSnapQueueKey,
+                    endAt: null,
+                }
+                me.watch_added(`db://definitions/${me.projectId}/queue`, options, async function (queue) {
+                    // console.log('watch_added:: ', queue)
+                    // console.log('receiveQueue: ', queue.key, me.lastSanpQueueKey, queue.key > me.lastSnapQueueKey)
+
+                    if (queue) {
+                        me.latestQueueKey = queue.key
+                    }
+                    if (  queue && (me.lastSnapQueueKey ? queue.key > me.lastSnapQueueKey : true) ) {
+                    // if (me.specVersion != '1.0' && queue && (me.lastSnapQueueKey ? queue.key > me.lastSnapQueueKey : true)) {
+                        if(queue.action.startsWith('user')){
+                            me.receiveUserInteractionQueue(queue)
+                        } else {
+                            clearTimeout(isWaitingQueue)
+
+                            if (!me.receivedQueueExistValue) {
+                                me.receivedQueueExistValue = true
+                            }
+
+                            var obj = {
+                                _ordered: false,
+                                childKey: queue.key,
+                                childValue: queue
+                            }
+                            obj.childValue.key = queue.key;
+                            obj.childValue.receivedTime = Date.now();
+
+                            queueFifo.enqueue(obj)
+                            me.sort();
+                        }
+                    }
+
+
+                })
+            },
+            removeMoveDiff(diff){
+                if(diff.elements){
+                    Object.keys(diff.elements).forEach(function(id){
+                        delete diff.elements[id]['elementView'];
+
+                        if(JSON.stringify(diff.elements[id]) == '{}') {
+                            delete diff.elements[id]
+                        }
+                    });
+
+                    if(JSON.stringify(diff.elements) == '{}') {
+                        delete diff.elements
+                    }
+                }
+
+                if(diff.relations){
+                    Object.keys(diff.relations).forEach(function(id){
+                        delete diff.relations[id]['relationView'];
+                        if(JSON.stringify(diff.relations[id]) == '{}') {
+                            delete diff.relations[id]
+                        }
+                    });
+                    if(JSON.stringify(diff.relations) == '{}') {
+                        delete diff.relations
+                    }
+                }
+
+                if(JSON.stringify(diff) == '{}') {
+                    return null;
+                }
+
+                return diff
+            },
+            bindEvents: function (opengraph) {
+                var me = this;
+                var el = me.$el;
+                var canvasEl = $(opengraph.container);
+                if (!canvasEl || !canvasEl.length) {
+                    return;
+                }
+                this.canvas = opengraph.canvas;
+
+                // 이벤트 리스너 설정을 위한 함수 호출
+                this.setupEventListeners(opengraph, canvasEl);
+
+                //아이콘 드래그 드랍 이벤트 등록
+                $(el).find('.draggable').draggable({
+                    start: function () {
+                        canvasEl.data('DRAG_SHAPE', {
+                            'component': $(this).attr('_component'),
+                            'width': $(this).attr('_width'),
+                            'height': $(this).attr('_height'),
+                            'description': $(this).attr('_description'),
+                            'label': $(this).attr('_label')
+                        });
+                    },
+                    helper: 'clone',
+                    appendTo: canvasEl
+                });
+
+                canvasEl.droppable({
+                    drop: function (event, ui) {
+                        var componentInfo = canvasEl.data('DRAG_SHAPE'),
+                            shape, element;
+                        if (componentInfo) {
+                            var dropX = event.pageX - canvasEl.offset().left + canvasEl[0].scrollLeft;
+                            var dropY = event.pageY - canvasEl.offset().top + canvasEl[0].scrollTop;
+                            var scale = opengraph.canvas._CONFIG.SLIDER[0].innerText / 100
+
+                            dropX = dropX / scale;
+                            dropY = dropY / scale;
+
+                            componentInfo = {
+                                component: componentInfo.component,
+                                x: dropX,
+                                y: dropY,
+                                width: parseInt(componentInfo.width, 10),
+                                height: parseInt(componentInfo.height, 10),
+                                label: componentInfo.label ? componentInfo.label : '',
+                                description: componentInfo.description ? componentInfo.description : ''
+                            }
+
+
+                            me.addElement(componentInfo);
+                        }
+                        canvasEl.removeData('DRAG_SHAPE');
+                    }
+                });
+            },
+            toggleGrip: function () {
+                this.dragPageMovable = !this.dragPageMovable;
+
+                if (this.dragPageMovable) {
+                    this.cursorStyle = 'cursor: url("/static/image/symbol/hands.png"), auto;';
+                    this.handsStyle = ' color: #ffc124;';
+                } else {
+                    this.cursorStyle = null;
+                    this.handsStyle = null;
+                }
+            },
+            automaticGuidanceChange: function () {
+                this.automaticGuidance = !this.automaticGuidance;
+            },
+            undo() {
+                var me = this
+                if(me.isServerModel && me.isQueueModel){
+                    me.queueUndo()
+                } else {
+                    me.localUndo()
+                }
+            },
+            redo() {
+                var me = this
+                if (me.isServerModel && me.isQueueModel) {
+                    me.queueRedo()
+                } else {
+                    me.localRedo()
+                }
+            },
+            localUndo() {
+                var me = this
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        let undoElement
+                        if (me.undoRedoArray.length > 0) {
+                            me.isRendering = true
+                            me.overlayText = 'Undoing'
+                            me.undoRedoIndex = me.undoRedoIndex - 1
+                            undoElement = me.undoRedoArray[me.undoRedoIndex] ? JSON.parse(me.undoRedoArray[me.undoRedoIndex]) : null
+
+                            if (!undoElement) {
+                                me.undoRedoIndex = 0
+                                return
+                            }
+
+                            // var type = Object.keys(undoElement)[0]
+                            // var eldiff = undoElement[type]
+                            // var id = Object.keys(undoElement[type])[0]
+                            // var value = Object.values(diff)
+                            // me.changedByUndoRedo = true
+
+                            // if (Array.isArray(value[0])) {
+                            //     if (value.length == 1 && value[0].length == 1) {
+                            //         me.value[type][id] = null
+                            //     } else if (value[0].length == 2) {
+                            //         me.$set(me.value[type], id, value[0][0])
+                            //     } else {
+                            //         jsondiffpatch.patch(me.value[type], jsondiffpatch.reverse(diff));
+                            //         me.diffToUndo = diff
+                            //     }
+                            // } else if (typeof value == 'object') {
+                            //     jsondiffpatch.patch(me.value[type], jsondiffpatch.reverse(diff));
+                            //     me.diffToUndo = diff
+                            // }
+
+                            me.changedByUndoRedo = true
+                            jsondiffpatch.patch(me.value, jsondiffpatch.reverse(undoElement));
+                            me.diffToUndo = undoElement
+                            me.overlayText = null
+                            me.isRendering = false
+                            
+                            me.canvasRenderKey++;
+                        }
+                    }
+                })
+
+            },
+            localRedo() {
+                var me = this
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        let redoElement
+                        if (me.undoRedoArray.length > 0) {
+                            me.isRendering = true
+                            me.overlayText = 'Redoing'
+                            redoElement = me.undoRedoArray[me.undoRedoIndex] ? JSON.parse(me.undoRedoArray[me.undoRedoIndex]) : null
+                            me.undoRedoIndex = me.undoRedoIndex + 1
+
+                            if (!redoElement) {
+                                me.undoRedoIndex = me.undoRedoArray.length
+                                return
+                            }
+
+                            // var type = Object.keys(redoElement)[0]
+                            // var diff = redoElement[type]
+                            // var id = Object.keys(redoElement[type])[0]
+                            // var value = Object.values(diff)
+                            // me.changedByUndoRedo = true
+
+                            // if (Array.isArray(value[0])) {
+                            //     if (value.length == 1 && value[0].length == 1) {
+                            //         me.$set(me.value[type], id, value[0][0])
+                            //     } else if (value[0].length == 2) {
+                            //         me.value[type][id] = null
+                            //     } else {
+                            //         jsondiffpatch.patch(me.value[type], diff);
+                            //     }
+                            // } else if (typeof value == 'object') {
+                            //     jsondiffpatch.patch(me.value[type], diff);
+                            // }
+
+                            me.changedByUndoRedo = true
+                            jsondiffpatch.patch(me.value, redoElement);
+                            me.overlayText = null
+                            me.isRendering = false
+
+                            me.canvasRenderKey++;
+                        }      
+                    }
+                })
+            },
+            localUndoRedoStorage(diff) {
+                var me = this
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if (me.changedByUndoRedo) {
+                            me.changedByUndoRedo = false
+                        } else {
+                            // Undo로 인한 변경사항을 다시 복구시키는 스크립트가 실행되었을 경우, Undo는 무한 루프에 빠지게 됨
+                            // 그러한 무한 루프를 방지하기 위한 조건 추가
+                            if(me.diffToUndo && diff && diff.elements &&
+                               JSON.stringify(me.diffToUndo) === JSON.stringify(diff.elements)) return;
+
+                            var lastIndex = me.undoRedoArray.length
+                            if (lastIndex != me.undoRedoIndex) {
+                                me.undoRedoArray.splice(me.undoRedoIndex, lastIndex - me.undoRedoIndex)
+                            }
+                            me.undoRedoArray.push(JSON.stringify(diff))
+                            me.undoRedoIndex = me.undoRedoIndex + 1
+
+                            console.log("Local UndoRedo Storage", diff)
+                        }      
+                    }
+                })
+            },
+            async queueUndo() {
+                var me = this
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        me.isRendering = true
+                        me.overlayText = 'Undoing'
+                        me.undoDisable = true
+                        var keySnap = await me.getLastQueue()
+                        if(keySnap){
+                            var currentKey = keySnap[0].key
+                            var prevValue = await me.getUndoTarget(currentKey)
+                            if (prevValue) {
+                                me.undoRedoDraw(prevValue, 'undo')
+                            } else {
+                                me.overlayText = null
+                                me.isRendering = false
+                            }
+                        } else {
+                            me.overlayText = null
+                            me.isRendering = false
+                        }
+                    }
+                })
+            },
+            getUndoTarget(currentKey) {
+                var me = this
+
+                return new Promise(async function (resolve, reject) {
+                    var backCount = 0;
+                    var nextKey = null
+                    var nextValue = null
+                    var drawQueue = null
+
+                    while (currentKey) {
+                        var keyValue = await me.getUndoRedoQueue(currentKey)
+                        // 0 - 다음
+                        // 1 - 현재
+                        nextValue = keyValue[0]
+                        nextKey = nextValue.key
+                        currentKey = keyValue[1] ? keyValue[1].key : null
+                        if (!nextValue) break; // last
+
+                        if (nextValue.editUid != me.userInfo.uid) continue; //다른사람 큐 는 건너 뛰기
+
+                        if (nextValue.action == 'undo') backCount = backCount + 1;
+                        else if (nextValue.action == 'redo') backCount = backCount - 1;
+                        else backCount = backCount - 1;
+
+                        if (backCount == -1) break;   //undo시 사용
+                    }
+                    // 마지막 큐
+                    if(keyValue.length == 1){
+                        me.undoDisable = true
+                    }else{
+                        me.undoDisable = false
+                        if(me.redoDisable) me.redoDisable = false //redo 활성화
+                    }
+
+                    if (nextKey && backCount == -1) {
+                        drawQueue = {
+                            childKey: nextKey,
+                            childValue: nextValue
+                        }
+                    }
+                    resolve(drawQueue)
+                })
+
+            },
+            async queueRedo() {
+                var me = this
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        me.isRendering = true
+                        me.overlayText = 'Redoing'
+                        me.redoDisable = true
+                        var keySnap = await me.getLastQueue()
+                        if(keySnap){
+                            var currentKey = keySnap[0].key
+                            var prevValue = await me.getRedoTarget(currentKey)
+                            if (prevValue) {
+                                me.undoRedoDraw(prevValue, 'redo')
+                            } else {
+                                me.overlayText = null
+                                me.isRendering = false
+                            }
+                        } else {
+                            me.overlayText = null
+                            me.isRendering = false
+                        }
+                    }
+                })
+            },
+            async getRedoTarget(nextKey) {
+                var me = this
+                return new Promise(async function (resolve, reject) {
+                    var backCount = 0;
+                    var currentKey = null
+                    var currentValue = null
+                    var drawQueue = null
+
+                    while (nextKey) {
+                        var keyValue = await me.getUndoRedoQueue(nextKey)
+                        // 0 - 현재
+                        // 1 - 다음
+                        currentValue = keyValue[0]
+                        currentKey = currentValue.key
+                        nextKey = keyValue[1] ? keyValue[1].key : null
+                        if (!currentValue) break; // last
+
+                        if (currentValue.editUid != me.userInfo.uid) continue; //다른사람 큐 는 건너 뛰기
+
+                        if (currentValue.action == 'undo') backCount = backCount - 1;
+                        else if (currentValue.action == 'redo') backCount = backCount + 1;
+                        else backCount = backCount - 1;
+
+                        if (backCount == -1) break;   //undo시 사용
+                    }
+
+                    if (currentKey && currentValue.action == 'undo') {
+                        me.redoDisable = false
+                        if(me.undoDisable) me.undoDisable = false //undo 활성화
+                        drawQueue = {
+                            childKey: currentKey,
+                            childValue: currentValue
+                        }
+                    }else{
+                        me.redoDisable = true
+                    }
+                    resolve(drawQueue)
+
+                })
+            },
+            copy: function () {
+            },
+            paste: function () {
+            },
+            unselectedAll: function (newVal) {
+                var me = this
+                Object.values(me.value.elements).forEach(function (definition) {
+                    if (definition != null) {
+                        definition.selected = false
+                    }
+                })
+                Object.values(me.value.relations).forEach(function (relation) {
+                    if (relation != null) {
+                        relation.selected = false
+                    }
+                })
+            },
+            
+            uuid: function () {
+                function s4() {
+                    return Math.floor((1 + Math.random()) * 0x10000)
+                        .toString(16)
+                        .substring(1);
+                }
+
+                return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
+                    s4() + '-' + s4() + s4() + s4();
+            },
+            dbuid: function () {
+                function s4() {
+                    return Math.floor((1 + Math.random()) * 0x10000)
+                        .toString(16)
+                        .substring(1);
+                }
+
+                return s4() + s4() + s4() + s4() + s4() + s4() + s4() + s4();
+            },
+            getComponent(componentName) {
+                let component = null
+                let parent = this.$parent
+                while (parent && !component) {
+                    if (parent.$options.name === componentName) {
+                        component = parent
+                    }
+                    parent = parent.$parent
+                }
+                return component
+            },
+            getComponentByName: function (name) {
+                var componentByName;
+                $.each(window.Vue._components, function (i, component) {
+                    if (component.name == name) {
+                        componentByName = component;
+                    }
+                });
+                return componentByName;
+            },
+            validateRelationFormat(relation){
+                if(!relation) return false
+                if(Array.isArray(relation)) return false
+                if(!relation.relationView) return false
+                if(!relation._type) return false
+                if(Object.keys(relation).indexOf('name') == -1) return false;
+
+                return true;
+            },
+            validateElementFormat(element){
+                if(!element) return false
+                if(Array.isArray(element)) return false;
+                if(element == {}) return false;
+                if(!element.elementView) return false
+                if(!element._type) return false
+                if(Object.keys(element).indexOf('name') == -1) return false;
+
+                return true;
+            },
+            getNowDate(){
+                var currentDate = new Date();
+
+                function addLeadingZeros(number, length) {
+                    var numberString = String(number);
+                    while (numberString.length < length) {
+                        numberString = "0" + numberString;
+                    }
+                    return numberString;
+                }
+
+                var year = currentDate.getYear(); // Get the current year (e.g., 2023)
+                var month = currentDate.getMonth() + 1; // Get the current month (0-11, add 1 to get 1-12)
+                var day = currentDate.getDate(); // Get the current day of the month (1-31)
+                var hours = currentDate.getHours(); // Get the current day of the month (1-31)
+                var min = currentDate.getMinutes(); // Get the current day of the month (1-31)
+                var sec = currentDate.getSeconds(); // Get the current day of the month (1-31)
+                var ms = currentDate.getMilliseconds(); // Get the current day of the month (1-31)
+
+                year = String(year).slice(-2);
+                month = addLeadingZeros(month, 2);
+                day = addLeadingZeros(day, 2);
+                hours = addLeadingZeros(hours, 2);
+                min = addLeadingZeros(min, 2);
+                sec = addLeadingZeros(sec, 2);
+
+                var currentDateNumber = year + month + day + hours + min + sec + ms;
+                console.log("Current date number: " + currentDateNumber, ms);
+
+                return currentDateNumber;
+            },
+
+            // PowerPoint Generator
+            generatePowerPoint() {
+                var me = this;
+                // Create new ppt with model canvas value
+                const modelData = [
+                    {
+                        canvasType: me.canvasType,
+                        value: {
+                            elements: JSON.parse(JSON.stringify(me.value.elements)),
+                            relations: JSON.parse(JSON.stringify(me.value.relations))
+                        }
+                    }
+                ]
+                const generator = new PowerPointGenerator(me.projectName);
+                generator.createPowerPoint(modelData);
+            },
+            ////////////////////////////////// Trigger ///////////////////////////////////
+            /** 
+             * element 추가.
+             **/
+            addElement: function (componentInfo, bounded) {
+                var me = this;
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        let vueComponent = me.getComponentByName(componentInfo.component);
+                        if(!vueComponent) return;
+
+                        let element = null
+                        if (componentInfo.isRelation && componentInfo.component.includes('relation')) {
+                            /* make Relation */
+                            element = vueComponent.computed.createNew(
+                                me.uuid(),
+                                componentInfo.sourceElement.value,
+                                componentInfo.targetElement.value,
+                                componentInfo.vertices,
+                            );
+
+                        } else {
+                            /* make Element */
+                            element = vueComponent.computed.createNew(
+                                me.uuid(),
+                                componentInfo.x,
+                                componentInfo.y,
+                                componentInfo.width,
+                                componentInfo.height,
+                                componentInfo.description,
+                                componentInfo.label
+                            );
+                        }
+
+                        if(element) me.addElementAction(element)
+                    } 
+                })
+            },
+             /** 
+             *  relation 추가.
+             **/
+            onConnectShape: function (edge, from, to) {
+                var me = this;
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        let edgeElement = edge.shape ? edge : edge.element
+                        if (edgeElement && from && to) {
+                            let vertices = '[' + edgeElement.shape.geom.vertices.toString() + ']';
+                            let componentInfo = {
+                                component: 'class-relation',
+                                sourceElement: from.$parent,
+                                targetElement: to.$parent,
+                                vertices: vertices,
+                                isFilled: true,
+                                isRelation: true,
+                                relationView: {
+                                    style: JSON.stringify({}),
+                                    value: vertices,
+                                }
+                            }
+                            from.$parent.value.elementView.id = from.id;
+                            to.$parent.value.elementView.id = to.id;
+
+                            // OG: 셀의 데이터를 및 콘텐트를 삭제한다. 기능 ????? 
+                            me.canvas.removeShape(edgeElement, true);
+                        
+                            me.addElement(componentInfo);
+                        }
+                    }
+                })
+            },
+             /** 
+             *  Watch > onChangedValue
+             *  Value 변화 인지.
+             **/
+            onChangedValue(oldVal, newVal){
+                var me = this
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        let diff = jsondiffpatch.diff(oldVal, newVal);
+                        if(me.initLoad && diff){
+                            me.changeValueAction(diff);
+
+                            clearTimeout(me.valueChangedTimer);
+                            me.valueChangedTimer = setTimeout(async function () {
+                                await me.saveLocalScreenshot()
+                            },1000)
+                        }
+                    }
+                })
+            },
+            //////////////////////////////////////////////////////////////////////////////
+            /////////////////////////////// ACTION ///////////////////////////////////////
+             /** 
+             *  addElement > addElementAction
+             *  Element 추가 호출
+             **/
+            addElementAction(element, value, options){
+                var me = this
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!options) options = {}
+                        if(!value) value = me.value
+                        let valueObj = element.relationView ? value.relations : value.elements
+                        let elementId = element.relationView ? element.relationView.id : element.elementView.id
+
+                        // duplication
+                        if(Object.keys(valueObj).includes(elementId)) return;
+
+                        // First Excution
+                        me.appendElement(element, value, options)
+                        if(me.isServerModel && me.isQueueModel){
+                            if(!me.isPauseQueue) me.pushAppendedQueue(element, options)
+                            me.$EventBus.$emit(elementId, {
+                                action: element.relationView ? 'relationPush' : 'elementPush',
+                                STATUS_COMPLETE: false
+                            })
+                        }
+                    },
+                    onFail(e){
+                        console.log(`[Error] AddElement Action: ${e}`)
+                    }
+                })
+            },
+            /** 
+             *  onRemoveShape(Element.vue) > removeElementAction
+             *  Element 삭제 호출
+             **/
+            removeElementAction(element, value, options){
+                var me = this
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!options) options = {}
+                        if(!value) {
+                            if(me.$options.name === 'kubernetes-model-canvas')
+                                value = me.embedded ? me.value.k8sValue : me.value
+                            else
+                                value = me.value
+                        }
+                        let elementId = element.relationView ? element.relationView.id : element.elementView.id
+
+                        // First Excution
+                        me.removeElement(element, value, options)
+                        if(me.isServerModel && me.isQueueModel){
+                            if(!me.isPauseQueue) me.pushRemovedQueue(element, options)
+                            me.$EventBus.$emit(elementId, {
+                                action: element.relationView ? 'relationDelete' : 'elementDelete',
+                                STATUS_COMPLETE: false
+                            })
+                        }
+                    },
+                    onFail(e){
+                        console.log(`[Error] RemoveElement Action: ${e}`)
+                    }
+                })
+            },
+             /** 
+             *  delayedMove[Element.vue] > moveElementAction
+             *  delayedRelationMove[Element.vue] > moveElementAction
+             *  Element 이동 호출
+             **/
+            moveElementAction(element, oldVal, newVal, value, options){
+                var me = this
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!options) options = {}
+                        if(!value) value = me.value
+                        let elementId = element.relationView ? element.relationView.id : element.elementView.id
+
+                        if(me.isMultipleElementsSelected()){
+                            me.setIsPauseQueue(true)
+                            me.moveElement(element, newVal, value, options)
+                        } else {
+                            // First Excution
+                            me.moveElement(element, newVal, value, options)
+                            if (me.isServerModel && me.isQueueModel) {
+                                if(!me.isPauseQueue) me.pushMovedQueue(element, oldVal, newVal, options)
+                                me.$EventBus.$emit(elementId, {
+                                    action: element.relationView ? 'relationMove' : 'elementMove',
+                                    STATUS_COMPLETE: false,
+                                    movingElement: true
+                                })
+                            }
+                        }                      
+                    },
+                    onFail(e){
+                        console.log(`[Error] MoveElement Action: ${e}`)
+                    }
+                })
+            },
+            /** 
+             *  onChangedValue > changeValueAction
+             *  Value 변경 호출
+             **/
+            async changeValueAction(diff, value, options){
+                var me = this
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!options) options = {}
+                        if(!value) value = me.value
+                        let forcePush = options.forcePush
+                        let isNotPauseQueue = !me.isPauseQueue && !me.changedPauseQueue
+
+                        if (me.isServerModel) {
+                            // server
+                            if ((me.changedByMe || forcePush) && me.isQueueModel) {
+                                // 서버o, 랩 x, 큐 o
+                                if(!forcePush){
+                                    diff = me.removeMoveDiff(diff);
+                                }
+                                if(isNotPauseQueue) {
+                                    if (!me.isReadOnlyModel && diff) {
+                                        let queueKey = await me.pushChangedValueQueue(diff, options)
+                                        me.changedByMeKeys.push(queueKey)
+
+                                        // COMMON QUEUE
+                                        if(me.projectSendable) {
+                                            options.associatedProject = me.information.associatedProject
+                                            await me.pushChangedValueQueue(diff, options)
+                                        }
+                                    }
+                                }
+                                me.changedByMe = false
+                                me.modelChanged = true
+                            } else if ( !me.isQueueModel && !me.isReadOnlyModel ) {
+                                // 서버o, 랩 x, 큐 x
+                                await me.putString(`db://definitions/${me.projectId}/value`, JSON.stringify(value));
+                                if(isNotPauseQueue) {
+                                    me.localUndoRedoStorage(diff)
+                                }
+                            } else if (me.$isElectron) {
+                                await me.putString(`db://definitions/${me.projectId}/value`, JSON.stringify(value));
+                                if(isNotPauseQueue) {
+                                    me.localUndoRedoStorage(diff)
+                                }
+                            }
+                        } else {
+                            // 서버x, 랩x, 큐x
+                            var lists = await me.getObject(`localstorage://localLists`)
+                            if (lists) {
+                                var index = lists.findIndex(list => list.projectId == me.projectId)
+
+                                if (index != -1) {
+                                    lists[index].lastModifiedTimeStamp = Date.now()
+                                    if (me.initLoad) me.changedTemplateCode = true
+                                }
+                            }
+                            me.putObject(`localstorage://localLists`, lists)
+                            me.putObject(`localstorage://${me.projectId}`, me.value)
+
+                            if(isNotPauseQueue) {
+                                me.localUndoRedoStorage(diff)
+                            }
+                        }
+                        
+                        me.changedPauseQueue = false
+                    }
+                })
+            },
+            //////////////////////////////////////////////////////////////////////////////
+            ////////////////////////////// Edit Execute //////////////////////////////////
+             /** 
+             * addElement > addElementAction > appendElement
+             * receivedQueueDrawElement > receiveAppendedQueue > appendElement
+             * Element 추가 실행.
+             **/
+            appendElement(element, value, options){
+                var me = this
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!element) return;
+                        if(!value) value = me.value
+                        if(!options) options = {}
+
+                        let id = element.relationView ? element.relationView.id : element.elementView.id
+                        let valueObj = element.relationView ? value.relations : value.elements
+                        if(valueObj[id]) return;
+
+                        me.$set(valueObj, id, element)
+
+                        me.$EventBus.$emit(id, {
+                            action: element.relationView ? 'relationPush' : 'elementPush',
+                            STATUS_COMPLETE: true
+                        })
+                    },
+                    onFail(e){
+                        console.log(`[Error] Append Element: ${e}`)
+                    }
+                })
+            },
+             /** 
+             * onRemoveShape(Element.vue) > removeElementAction > removeElement
+             * receivedQueueDrawElement > receiveRemovedQueue > removeElement
+             * Element 삭제 실행
+             **/
+            removeElement(element, value, options){
+                var me = this
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!element) return;
+                        if(!value) value = me.value
+                        if(!options) options = {}
+
+                        let id = element.relationView ? element.relationView.id : element.elementView.id
+                        let valueObj = element.relationView ? value.relations : value.elements
+                        if(!valueObj[id]) return;
+
+                        valueObj[id] = null
+
+                        me.$EventBus.$emit(id, {
+                            action: element.relationView ? 'relationDelete' : 'elementDelete',
+                            STATUS_COMPLETE: true
+                        })
+
+                        // uml delete 후처리
+                        if(element._type.includes('uml')){
+                            me.$EventBus.$emit('cascadeDelete', element)
+                        }
+                    },
+                    onFail(e){
+                        console.log(`[Error] Remove Element: ${e}`)
+                    }
+                })
+            },
+             /** 
+             * delayedMove[Element.vue] > moveElementAction > moveElement
+             * delayedRelationMove[Element.vue] > moveElementAction > moveElement
+             * receivedQueueDrawElement > receiveMovedQueue > moveElement
+             * Element 이동 실행.
+             **/
+            moveElement(element, newVal, value, options){
+                var me = this
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!element) return;
+                        if(!value) value = me.value
+                        if(!options) options = {}
+
+                        me.setIsPauseQueue(false)
+
+                        let id = element.relationView ? element.relationView.id : element.elementView.id
+                        let valueObj = element.relationView ? value.relations : value.elements
+                        if(!valueObj[id]) return;
+
+                        if(element.relationView){
+                            valueObj[id].relationView.value =  newVal.replaceAll('-','')
+                        } else {
+                            // null || minus
+                            if(!newVal.x || newVal.x < 0) newVal.x = 100
+                            if(!newVal.y || newVal.y < 0) newVal.y = 100
+
+                            valueObj[id].elementView.x = newVal.x
+                            valueObj[id].elementView.y = newVal.y
+                            valueObj[id].elementView.width = newVal.width
+                            valueObj[id].elementView.height = newVal.height
+                        }
+
+                      
+                        me.$EventBus.$emit(id, {
+                            action: element.relationView ? 'relationMove' : 'elementMove',
+                            STATUS_COMPLETE: true,
+                            movingElement: false
+                        })  
+                       
+                    },
+                    onFail(e){
+                        console.log(`[Error] Move Element: ${e}`)
+                    }
+                })
+            },
+            applyPatchValue(diff, value, options){
+                var me = this
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        const extractOnlyValueKeyData = (value, diff) => {
+                            const result = {};
+                            for (const key of Object.keys(value))
+                                if (diff.hasOwnProperty(key))
+                                    result[key] = diff[key];
+                            return result;
+                        }
+                        
+                        if(!value) value = me.value
+
+                        let valueDiff = extractOnlyValueKeyData(value, diff)
+                        if(Object.keys(valueDiff).length === 0) return;
+
+                        // 새로운 속성을 Vue의 반응성 시스템에 추가
+                        ['elements', 'relations'].forEach(type => {
+                            if (valueDiff[type]) {
+                                const newIds = Object.keys(valueDiff[type]).filter(id => !value[type][id]);
+                                if (newIds.length > 0) {
+                                    newIds.forEach(id => me.$set(value[type], id, null));
+                                }
+                            }
+                        });
+
+                        try{
+                            jsondiffpatch.patch(value, valueDiff);
+                        } catch(e){
+                            console.log(`[Warning] Apply Patch Value: ${e}`)
+                        }
+                    }
+                })
+            },
+            //////////////////////////////////////////////////////////////////////////////
+            //////////////////////////////// Push Queue //////////////////////////////////
+             /** 
+             *  addElement > addElementAction > pushAppendedQueue
+             *  Element 추가 큐 발송.
+             **/
+            pushAppendedQueue(element, options){
+                var me = this
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        let definitionId = me.projectId
+                        if(!options) options={}
+                        if(options.associatedProject) definitionId = options.associatedProject
+
+                        // console.log('Sever Queue] ADD')
+                        return me.pushObject(`db://definitions/${definitionId}/queue`, {
+                            action: element.relationView ? 'relationPush' : 'elementPush',
+                            editUid: me.userInfo.uid,
+                            timeStamp: Date.now(),
+                            item: JSON.stringify(element),
+                        })
+                    },
+                    onFail(e){
+                        console.log(`[Error] Push AppendedQueue: ${e}`)
+                    }
+                })
+            },
+            /** 
+             *  onRemoveShape(Element.vue) > removeElementAction > pushRemovedQueue
+             *  Element 삭제 큐 발송.
+             **/
+            pushRemovedQueue(element, options){
+                var me = this
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        let definitionId = me.projectId
+                        if(!options) options={}
+                        if(options.associatedProject) definitionId = options.associatedProject
+
+                        // console.log('Sever Queue] Remove')
+                        return me.pushObject(`db://definitions/${definitionId}/queue`, {
+                            action: element.relationView ? 'relationDelete' : 'elementDelete',
+                            editUid: me.userInfo.uid,
+                            timeStamp: Date.now(),
+                            item: JSON.stringify(element)
+                        })
+                    },
+                    onFail(e){
+                        console.log(`[Error] Push RemovedQueue: ${e}`)
+                    }
+                })
+            },
+            /** 
+             *  delayedMove[Element.vue] > moveElementAction > pushMovedQueue
+             *  delayedRelationMove[Element.vue] > moveElementAction > pushMovedQueue
+             *  Element 이동 큐 발송.
+             **/
+            pushMovedQueue(element, oldVal, newVal, options){
+                var me = this
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        let definitionId = me.projectId
+                        if(!options) options={}
+                        if(options.associatedProject) definitionId = options.associatedProject
+
+                        let obj = {
+                            action: element.relationView ? 'relationMove' : 'elementMove',
+                            editUid: me.userInfo.uid,
+                            before: element.relationView ? oldVal : JSON.stringify(oldVal),
+                            after: element.relationView ? newVal : JSON.stringify(newVal),
+                            timeStamp: Date.now()
+                        }
+
+                        if(element.relationView) {
+                            obj.relationId = element.relationView.id
+                        } else {
+                            var types = element._type.split('.')
+                            obj.elementType = types[types.length - 1]
+                            obj.elementId = element.elementView.id
+                            obj.elementName = element.name
+                        }
+                        return me.pushObject(`db://definitions/${definitionId}/queue`, obj)
+                    },
+                    onFail(e){
+                        console.log(`[Error] Push MovedQueue: ${e}`)
+                    }
+                })
+            },
+            async pushChangedValueQueue(diff, options){
+                var me = this
+                let definitionId = me.projectId
+                if(!options) options={}
+                if(options.associatedProject) definitionId = options.associatedProject
+
+                return await me.pushObject(`db://definitions/${definitionId}/queue`, {
+                    action: 'valueModify',
+                    editUid: me.userInfo.uid,
+                    timeStamp: Date.now(),
+                    item: JSON.stringify(diff)
+                })
+            },
+            pauseQueue(diff, options){
+                var me = this
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(me.isPauseQueue) {
+                            if(!me.pauseValue) me.pauseValue = JSON.parse(JSON.stringify(me.value))
+                        } else {
+                            let diffs = null;
+                            
+                            if(me.pauseValue) {
+                                diffs = jsondiffpatch.diff(me.pauseValue, me.value)
+                                me.pauseValue = null;
+                            }
+                            if(!diffs) return; 
+
+                            me.changedPauseQueue = true
+                            me.changedByMe = false;
+                            if(me.isServerModel && me.isQueueModel){
+                                await me.pushChangedValueQueue(diffs, options)
+                            } else {
+                                me.localUndoRedoStorage(diffs)
+                            }
+                        }
+                    }
+                });
+            },
+            //////////////////////////////////////////////////////////////////////////////
+            /////////////////////////////// USER /////////////////////////////////////////
+            isUserInteractionActive(){
+                // user의 마우스 클릭, 이동 파악 하는 조건.
+                var me = this
+                if(me.isLogin && me.isCustomMoveExist && !me.isClazzModeling && !me.isReadOnlyModel){
+                    return true
+                }
+                return false
+            },
+            /** 
+             * User 입장
+            **/
+            enterUserAction(){
+                var me = this
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!me.isUserInteractionActive()) return;
+                        await me.pushEnteredUserQueue();
+                    }
+                })
+            },
+            /** 
+             * User 퇴장
+            **/
+            leaveUserAtion(){
+                var me = this
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!me.isUserInteractionActive()) return;   
+                        await me.pushLeavedUserQueue()
+                    }
+                })
+            },
+            /** 
+             * User 입장 큐 발송 
+            **/
+            pushEnteredUserQueue(){
+                var me = this
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!me.isUserInteractionActive()) return;
+                        await me.pushObject(`db://definitions/${me.projectId}/queue`, {
+                            action: 'userEntrance',
+                            picture: me.userInfo.profile,
+                            editUid: me.userInfo.uid,
+                            email: me.userInfo.email,
+                            userName: me.userInfo.name,
+                            timeStamp: Date.now(),
+                        })
+                    }
+                })
+            },
+            /** 
+             * User 퇴장 큐 발송
+            **/
+            pushLeavedUserQueue(){
+                var me = this
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!me.isUserInteractionActive()) return;
+                        await me.pushObject(`db://definitions/${me.projectId}/queue`, {
+                            action: 'userExit',
+                            editUid: me.userInfo.uid,
+                            email: me.userInfo.email,
+                            userName: me.userInfo.name,
+                            timeStamp: Date.now(),
+                        })
+                    }
+                })
+            },
+            /** 
+             * EventBus:isMovedElement[Element.vue] > pushUserMovementActivatedQueue
+             * User 마지막 움직임 큐 설정
+             **/
+            async pushUserMovementActivatedQueue(element){
+                var me = this
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        // return;
+                        if(!me.isUserInteractionActive()) return;
+                        if(!element) return;
+                        if(element.relationView ) return; // exception relation
+                        await me.pushObject(`db://definitions/${me.projectId}/queue`, {
+                            action: 'userMovedOn',
+                            editUid: me.userInfo.uid,
+                            name: me.userInfo.name,
+                            picture: me.userInfo.profile,
+                            timeStamp: Date.now(),
+                            editElement: element.elementView.id
+                        })
+                    }
+                })
+            },
+            /** 
+             * EventBus:isMovedElement[Element.vue] >pushUserMovementDeactivatedQueue
+             * User 마지막 움직임 큐 해제
+             **/
+            async pushUserMovementDeactivatedQueue(element){
+                var me = this
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        // return;
+                        if(!me.isUserInteractionActive()) return;
+                        if(!element) return;
+                        if(element.relationView ) return; // exception relation
+                        await me.pushObject(`db://definitions/${me.projectId}/queue`, {
+                            action: 'userMovedOff',
+                            editUid: me.userInfo.uid,
+                            name: me.userInfo.name,
+                            picture: me.userInfo.profile,
+                            timeStamp: Date.now(),
+                            editElement: element.elementView.id
+                        })
+                    }
+                })
+            },
+            /** 
+             * User 클릭 유지 큐 발송
+            **/
+            pushUserSelectionStayedQueue(element){
+                var me = this
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!me.isUserInteractionActive()) return;
+                        if(!element) return;
+                        if(element.relationView ) return; // exception relation
+                        await me.pushObject(`db://definitions/${me.projectId}/queue`, {
+                            action: 'userSelectedOn',
+                            editUid: me.userInfo.uid,
+                            name: me.userInfo.name,
+                            picture: me.userInfo.profile,
+                            timeStamp: Date.now(),
+                            editElement: element.elementView.id
+                        })
+                    }
+                })
+            },
+            /** 
+             * User 클릭 해체 큐 발송
+            **/
+            pushUserSelectionReleasedQueue(element){
+                var me = this
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!me.isUserInteractionActive()) return;
+                        if(!element) return;
+                        if(element.relationView ) return; // exception relation
+                        await me.pushObject(`db://definitions/${me.projectId}/queue`, {
+                            action: 'userSelectedOff',
+                            editUid: me.userInfo.uid,
+                            name: me.userInfo.name,
+                            picture: me.userInfo.profile,
+                            timeStamp: Date.now(),
+                            editElement: element.elementView.id
+                        })
+                    }
+                })
+            },
+             /** 
+             * 마우스 날파리 send
+             **/
+             sendMoveEvents(x, y){
+                var me = this
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!me.isUserInteractionActive()) return;   
+                        let myEmail = me.userInfo && me.userInfo.email ? me.userInfo.email.replace(/\./gi, '_') : null;
+                        if(myEmail){
+                            if( !me.mouseEventHandlers[myEmail] || Object.keys(me.mouseEventHandlers).length > 1 ){
+                                let obj = {
+                                    clientX: x,
+                                    clientY: y,
+                                }
+                                if( !me.mouseEventHandlers[myEmail] ){
+                                    obj.color = '#' + Math.round(Math.random() * 0xffffff).toString(16);
+                                    obj.name = me.userInfo.name
+                                }
+                                me.putObject(`db://definitions/${me.projectId}/eventHandler/${me.userInfo.email.replace(/\./gi, '_')}`, obj)
+                            }
+                        }      
+                    }
+                })
+            },
+            /** 
+             * 마우스 날파리 연결
+             **/
+             onEventHandler(){
+                var me = this
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        let opengraph = me.$refs['opengraph']
+                        if (!opengraph) return;
+                        if (!me.isUserInteractionActive()) return;   
+                        let canvasEl = $(opengraph.container);
+
+                        me.watch(`db://definitions/${me.projectId}/eventHandler`,function (callback) {
+                            if(callback ) {
+                                me.mouseEventHandlers = callback;
+                                for(let email in callback){
+                                    if( me.userInfo.email && me.userInfo.email.replace(/\./gi, '_') != email) {
+                                        const point = document.getElementById(email);
+                                        if (point) {
+                                            let scale = opengraph.canvas._CONFIG.SLIDER[0].innerText / 100
+                                            let offsetX = (callback[email].clientX * scale) - canvasEl[0].scrollLeft + canvasEl.offset().left
+                                            let offsetY = (callback[email].clientY * scale) - canvasEl[0].scrollTop + canvasEl.offset().top
+                                            point.style.left = `${offsetX}px`;
+                                            point.style.top = `${offsetY}px`;
+                                            point.style['background-color'] = callback[email].color;
+                                        }
+                                    }
+                                };
+                            }
+                        });
+                    }
+                })
+            },
+             /** 
+             * 마우스 날파리 해제
+             **/
+            releaseMoveEvents(){
+                var me = this
+                me.$app.try({
+                    context: me,
+                    async action(me){
+                        if(!me.isUserInteractionActive()) return;   
+                        me.watch_off(`db://definitions/${me.projectId}/eventHandler`);
+                        me.delete(`db://definitions/${me.projectId}/eventHandler/${me.userInfo.email.replace(/\./gi, '_')}`)          
+                    }
+                })
+            },
+            //////////////////////////////////////////////////////////////////////////////
+            ///////////////////////// Receive QUEUE //////////////////////////////////////
+            /** 
+             *  receivedQueueDrawElement > receiveAppendedQueue
+             *  Element 추가 큐 수신
+             **/
+            receiveAppendedQueue(element, queue, options){
+                var me = this
+                if(!options) options = {}
+                me.appendElement(element, me.value, options)
+            },
+             /** 
+             *  receivedQueueDrawElement > receiveRemovedQueue
+             *  Element 삭제 큐 수신
+             **/
+            receiveRemovedQueue(element, queue, options){
+                var me = this
+                if(!options) options = {}
+                me.removeElement(element, me.value, options)
+            },
+            /** 
+             *  receivedQueueDrawElement > receiveMovedQueue
+             *  Element 이동 큐 수신
+             **/
+            receiveMovedQueue(id, newVal, queue, options){
+                var me = this
+                if(!options) options = {}
+                let element = queue.childValue.action == 'relationMove' ? me.value.relations[id] : me.value.elements[id]
+                let newValue = queue.childValue.action == 'relationMove' ? newVal : JSON.parse(newVal)
+
+                me.moveElement(element, newValue, me.value, options)
+            },
+            /** 
+             *  receivedQueueDrawElement > receiveChangedValueQueue
+             *  Value 값의 변화 된값 (diff)를 patch.
+             **/
+            receiveChangedValueQueue(diff, queue, options){
+                var me = this
+                if(!options) options = {}
+                me.applyPatchValue(diff, me.value, options)
+            },
+            /** 
+             * receiveQueue > receiveUserInteractionQueue
+             * User의 이벤트 처리.
+             **/
+            receiveUserInteractionQueue(queue) {
+                var me = this;
+                if (!queue) return
+                if (!queue.editUid) return
+
+                switch (queue.action) {
+                    case 'userEntrance':
+                        if (me.participantLists.findIndex(user => user.uid == queue.editUid) == -1) {
+                            me.participantLists.push({
+                                uid: queue.editUid,
+                                email: queue.email,
+                                userName: queue.userName,
+                                picture: queue.picture
+                            });
+                        }
+                        break;
+                    case 'userExit':
+                        let index = me.participantLists.findIndex(user => user.uid == queue.editUid);
+                        if (index != -1) me.participantLists.splice(index, 1);
+                        break;
+                    default:
+                        me.$EventBus.$emit(`${queue.editElement}`, {
+                            action: queue.action,
+                            uid: queue.editUid,
+                            picture: queue.picture,
+                            name: queue.name
+                        });
+                        break;
+                }
+            },
+            receiveErrorQueue(error, queue){
+                var me = this
+                let associatedProjectId = queue.isMirrorQueue ? me.information.associatedProject : me.projectId
+                let associatedValue = queue.isMirrorQueue ? me.mirrorValue : me.value
+
+                console.log(`Error when to '${queue.childValue.action}'\n - model is '${associatedProjectId}'\n - modelValue is `, associatedValue.elements, associatedValue.relations, `\n - queueKey is '${queue.childKey}'\n - queueValue is `, JSON.parse(queue.childValue.item), `\n - Reason is "${error}"`)
+
+                me.watch_off(`db://definitions/${associatedProjectId}/queue`)
+                if( queue && queue.childKey ){
+                    me.delete(`db://definitions/${associatedProjectId}/queue/${queue.childKey}`)
+                    if(queue.undoRedoKey){
+                        me.delete(`db://definitions/${associatedProjectId}/queue/${queue.undoRedoKey}`)
+                    }
+                }
+                var queueIds = queueFifo.findIndexByChildKey(queue.childKey)
+                if(queueIds != -1){
+                    queueFifo.removeByIndex(queueIds)
+                }
+                me.$emit('forceUpdateKey')
+            },
+            //////////////////////////////////////////////////////////////////////////////
+            setupEventListeners: function (opengraph, canvasEl) {
+                var me = this;
+                if(!opengraph) return
+                if(!canvasEl) return
+                // 마우스 이동 이벤트 리스너 설정
+                opengraph.$el.addEventListener('mousemove', function (e) {
+                    me.handleMouseMove(e, opengraph, canvasEl);
+                });
+            },
+            // 실제 마우스 이벤트 처리 로직
+            handleMouseMove: function (e, opengraph, canvasEl) {
+                this.mouseEventCnt++;
+                // Event 발생 30회 마다 1회 push.
+                if (this.mouseEventCnt % 30 == 1) {
+                    this.mouseEventCnt = 1;
+                    let scale = opengraph.canvas._CONFIG.SLIDER[0].innerText / 100;
+                    let offsetX = (e.clientX - canvasEl.offset().left + canvasEl[0].scrollLeft) / scale;
+                    let offsetY = (e.clientY - canvasEl.offset().top + canvasEl[0].scrollTop) / scale;
+                    this.sendMoveEvents(offsetX, offsetY);
+                }
+            },
+            setIsPauseQueue(val){
+                this.isPauseQueue = val
+                
+                if(this.isPauseQueue && !this.pauseValue) this.pauseValue = JSON.parse(JSON.stringify(this.value))
+            },
+            isMultipleElementsSelected(value){
+                let me = this
+                if(!value) value = me.value
+                let selectCnt = 0
+
+                Object.values(value.elements).forEach((element) => {
+                    if(!me.validateElementFormat(element)) return;
+                    let component = me.$refs[element.elementView.id];
+                    if (component && component[0] && (component[0].selected || (me.canvasType == "es" && me.isHexagonal))) {
+                        selectCnt ++;
+
+                        if(element._type.endsWith('BoundedContext')){
+                            if(Object.values(value.elements).find(ele => ele && ele.boundedContext && ele.boundedContext.id == element.id)) {
+                                selectCnt++
+                            }
+                        }
+                    }
+                    if(selectCnt > 2) return;
+                });
+
+                return selectCnt > 1 ? true : false;
+            }
+        }
+    }
+
+</script>
+
+<style scoped lang="scss" rel="stylesheet/scss">
+    .input-name {
+        background-color: #ffffff;
+        full-width: 10px;
+    }
+
+    .canvas-panel {
+        top: 0;
+        bottom: 0;
+        left: 10;
+        right: 0;
+        /*position: relative;*/
+        position: absolute;
+        overflow: hidden;
+        width: 100%;
+        height: 100%;
+
+        .fullcanvas {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            top: 10%;
+            left: 0;
+            overflow: hidden;
+        }
+
+        .fullcanvashands {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 10%;
+            left: 0;
+            overflow: hidden;
+            cursor: url('../../../../public/static/image/symbol/hands.png'), auto;
+        }
+
+        .toolsSide {
+            position: absolute;
+            width: 100px;
+            left: 20px;
+            top: 20px;
+            padding: 4px;
+            overflow: hidden;
+
+            .icons {
+                margin-top: 5px;
+                margin-bottom: 5px;
+            }
+
+            .hands {
+                margin-top: 5px;
+                margin-bottom: 5px;
+            }
+        }
+
+        .tools {
+            position: absolute;
+            width: 48px;
+            left: 20px;
+            top: 20px;
+            padding: 4px;
+            overflow: hidden;
+
+            .icons {
+                margin-top: 5px;
+                margin-bottom: 5px;
+            }
+
+            .hands {
+                margin-top: 5px;
+                margin-bottom: 5px;
+            }
+        }
+
+        .zoom {
+            position: absolute;
+            width: 42px;
+            right: 20px;
+            bottom: 120px;
+
+            .icons {
+                font-size: 25px;
+                margin-left: 10px;
+                margin-top: 5px;
+                margin-bottom: 5px;
+            }
+
+            .hands {
+                font-size: 25px;
+                margin-left: 10px;
+                margin-top: 5px;
+                margin-bottom: 5px;
+            }
+        }
+
+        .icons {
+            cursor: pointer;
+            font-size: 30px;
+
+            &:hover {
+                color: #1a76d2;
+            }
+        }
+
+        .hands {
+            cursor: pointer;
+            font-size: 30px;
+            color: #ffc124;
+        }
+
+        .export,
+        .history,
+        .import,
+        .save {
+            position: absolute;
+            padding: 8px;
+
+            .icons {
+                font-size: 25px;
+                margin-left: 10px;
+            }
+        }
+
+        .import {
+            left: 80px;
+            bottom: 20px;
+        }
+
+        .export {
+            left: 180px;
+            bottom: 20px;
+        }
+
+        .history {
+            left: 280px;
+            bottom: 20px;
+        }
+    }
+
+    .text-reader input[type="file"] { /* 파일 필드 숨기기 */
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        border: 0;
+    }
+
+    /* The whole thing */
+    .custom-menu {
+        display: none;
+        z-index: 1000;
+        position: absolute;
+        overflow: hidden;
+        border: 1px solid #CCC;
+        white-space: nowrap;
+        font-family: sans-serif;
+        background: #FFF;
+        color: #333;
+        border-radius: 5px;
+        padding: 0;
+    }
+
+    /* Each of the items in the list */
+    .custom-menu li {
+        padding: 8px 12px;
+        cursor: pointer;
+        list-style-type: none;
+        transition: all 0.3s ease;
+        user-select: none;
+    }
+
+    .custom-menu li:hover {
+        background-color: #DEF;
+    }
+    /*.moveable-line.moveable-rotation-line {*/
+    /*    height: 40px;*/
+    /*    width: 1px;*/
+    /*    transform-origin: 0.5px 39.5px;*/
+    /*}*/
+
+    /*.moveable {*/
+    /*    font-family: "Roboto", sans-serif;*/
+    /*    position: relative;*/
+    /*    width: 400px;*/
+    /*    height: 130px;*/
+    /*    text-align: center;*/
+    /*    font-size: 40px;*/
+    /*    margin: 0 auto;*/
+    /*    font-weight: 100;*/
+    /*    letter-spacing: 1px;*/
+    /*    background: white;*/
+    /*}*/
+
+
+    .video-list {
+        height: 160px;
+        width: auto;
+        margin-left: 2px;
+        background: transparent;
+    }
+
+    .video-list div {
+        padding: 2px;
+    }
+
+    .video-item {
+        display: inline-block;
+        padding: 2px;
+    }
+
+    .rtc {
+        .button {
+            color: red;
+        }
+
+        .buttonHover {
+            background-Color: white;
+        }
+
+        .content {
+            background-Color: white;
+        }
+
+        .titlebar {
+            background-color: white;
+        }
+    }
+
+    // .mouse-cursor {
+    //     // 마우스를 따라다니는 원 설정
+    //     position: absolute;
+    //     top: 0; // 초기 위치값을 설정해줍니다.
+    //     left: 0; // 초기 위치값을 설정해줍니다.
+    //     width: 10px; //원 가로사이즈
+    //     height: 10px; //원 세로사이즈
+    //     border-radius: 50%; // 원의 형태설정
+    //     background-color: #9bf50b; //원 컬러설정
+    //     transform: translate(
+    //                     -50%,
+    //                     -50%
+    //     ); // 원을 정가운데로 맞추기위해서 축을-50%이동해줍니다.
+    //     transition: all 300ms linear 0s; //soft
+    //     opacity: 50%;
+    //     z-index: 9999;
+    // }
+    // .mouse-cursor::after {
+    //     width: 40px;
+    //     height: 40px;
+    //     border: 15px solid rgba(var(--white-rbg-color), 0.2);
+    //     border-radius: 50%;
+    //     position: absolute;
+    //     top: -25px;
+    //     left: -25px;
+    //     animation: cursor-animate-2 550ms infinite alternate;
+    //     z-index: 9998; 
+    // }
+    // .mouse-cursor-name {
+    //     position: absolute;
+    //     top: 5px;
+    //     left: 10px;
+    //     width: max-content;
+    //     text-align: center;
+    //     color: #9bf50b;
+    //     z-index: 9999;
+    // }
+
+</style>

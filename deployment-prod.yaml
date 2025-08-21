@@ -1,0 +1,19 @@
+apiVersion : apps/v1
+kind: Deployment
+metadata:
+  name: msaschool-labs-prod
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: msaschool-labs-prod
+  template:
+    metadata:
+      labels:
+        app: msaschool-labs-prod
+    spec:
+      containers:
+        - name: msaschool-labs
+          image: gcr.io/eventstorming-tool/eventstorming-ui-dev
+          ports:
+            - containerPort: 8080

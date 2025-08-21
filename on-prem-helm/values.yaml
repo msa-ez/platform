@@ -1,0 +1,20 @@
+replicaCount: 1
+image:
+  repository: ghcr.io/msa-ez # Image Registry
+  eventstorming: platform:v1.0.7 # Eventstorming-tool Image URL
+  acebase: acebase:v1.0.7 # Acebase Image URL
+
+provider: gitlab # github or gitlab
+
+gitlab: 
+  url: gitlab.msafab.com # Gitlab URL
+
+oauth: 
+  id: "86e2a583ad072ae6eab5dc4c6798f49ad0c5b689e18711d0fc697e485a4186b3" # Gitlab Application OAUTH ID
+  secret: "905a1306042c19c3321842c10f0f7a05a3046462fafddd096b81bf0d8c01ee3a" # Gitlab Application OAUTH Secrets
+
+db:
+  https: true
+  host: acebase.msafab.com # DB URL
+  port: 443
+  name: mydb

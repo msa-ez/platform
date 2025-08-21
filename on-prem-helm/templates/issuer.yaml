@@ -1,0 +1,28 @@
+# apiVersion: cert-manager.io/v1
+# kind: ClusterIssuer
+# metadata:
+#  name: msastudy-prod
+#  namespace: default
+#  resourceVersion: "27007"
+#  uid: b5cbb04e-d1ab-4dab-b7d3-f8fef469c6a9
+# spec:
+#  acme:
+#    email: aws@uengine.org
+#    preferredChain: ""
+#    privateKeySecretRef:
+#      name: msastudy-prod
+#    server: https://acme-v02.api.letsencrypt.org/directory
+#    solvers:
+#    - dns01:
+#        route53: # AWS Route53 기준임 
+#          accessKeyID: AKIA6H47RAWMYXPPOGG6 # IAM KEY
+#          region: us-east-1 
+#          role: arn:aws:iam::979050235289:role/cert-manager
+#          secretAccessKeySecretRef: # IAM SECRET
+#            key: secretAccessKey
+#            name: tls-msastudy
+#      selector:
+#        dnsZones:
+#        - "msastudy.io"
+  
+  

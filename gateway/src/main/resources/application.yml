@@ -1,0 +1,68 @@
+server:
+  port: 8088
+
+---
+
+spring:
+  profiles: default
+  cloud:
+    gateway:
+      routes:
+        - id: java-reverse
+          uri: http://localhost:8099
+          predicates:
+            - Path=/java-reverse/**, 
+        - id: frontend
+          # uri: https://localhost:8081
+          uri: http://localhost:8081
+          predicates:
+            - Path=/**
+
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins:
+              - "*"
+            allowedMethods:
+              - "*"
+            allowedHeaders:
+              - "*"
+            allowCredentials: true
+
+
+# ---
+
+# spring:
+#   profiles: docker
+#   cloud:
+#     gateway:
+#       routes:
+#         - id: order
+#           uri: http://order:8080
+#           predicates:
+#             - Path=/orders/**, 
+#         - id: product
+#           uri: http://product:8080
+#           predicates:
+#             - Path=/products/**, 
+#         - id: delivery
+#           uri: http://delivery:8080
+#           predicates:
+#             - Path=/deliveries/**, 
+#         - id: frontend
+#           uri: http://frontend:8080
+#           predicates:
+#             - Path=/**
+#       globalcors:
+#         corsConfigurations:
+#           '[/**]':
+#             allowedOrigins:
+#               - "*"
+#             allowedMethods:
+#               - "*"
+#             allowedHeaders:
+#               - "*"
+#             allowCredentials: true
+
+# server:
+#   port: 8080

@@ -1,0 +1,2 @@
+export const AssignPreviewFieldsToAggregateDraft = require("./AssignPreviewFieldsToAggregateDraft");
+export const AssignPreviewFieldsToAggregateDraftTest = require("./AssignPreviewFieldsToAggregateDraftTest");

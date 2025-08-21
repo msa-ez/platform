@@ -1,0 +1,61 @@
+<template>
+    <kubernetes-common-panel
+            v-model="value"
+            :img="img"
+            :isReadOnly="isReadOnly"
+            :validation-lists="validationLists"
+            @openDesDoc="desDocOpen"
+            @close="closePanel"
+    >
+        <template slot="headline">
+            <v-list-item-title class="headline">
+                {{ value._type }}
+            </v-list-item-title>
+        </template>
+
+        <template slot="descriptionText">
+            <span>{{ descriptionText }}</span>
+        </template>
+        
+    </kubernetes-common-panel>
+
+</template>
+
+
+<script>
+    import KubeCommonPanel from "../KubeCommonPanel.vue";
+    import KubernetesPanel from "../KubernetesPanel";
+
+    export default {
+        mixins: [KubernetesPanel],
+        name: 'ns-property-panel',
+        components:{
+            KubeCommonPanel
+        },
+        computed: {
+            descriptionText() {
+                return 'Namespace'
+            },
+        },
+        data: function () {
+            return {
+                accessModeList: [],
+            }
+        },
+        watch: {
+            'value.object.metadata.name': {
+                deep: true,
+                handler: function(val) {
+                    this.value.name = val;
+                }
+            },
+        },
+        methods: {
+            desDocOpen() {
+                window.open('https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/')
+            },
+        }
+    }
+</script>
+
+
