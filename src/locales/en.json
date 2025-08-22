@@ -719,8 +719,6 @@
       "invalidAnthropicKey": "Invalid Anthropic API key. Please check your API key.",
       "validKey": "API key is valid."
     }
-<<<<<<< HEAD
-=======
   },
   "siteMap": {
     "toolbar": {
@@ -753,7 +751,6 @@
       "pageDescription": "Page Description",
       "emptySiteMap": "Empty Site Map"
     }
->>>>>>> temp-branch
   }
 }
 

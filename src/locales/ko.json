@@ -723,8 +723,6 @@
       "invalidAnthropicKey": "Anthropic API 키가 유효하지 않습니다. 다시 확인해주세요.",
       "validKey": "API 키가 유효합니다."
     }
-<<<<<<< HEAD
-=======
   },
   "siteMap": {
     "toolbar": {
@@ -757,6 +755,5 @@
       "pageDescription": "페이지 설명",
       "emptySiteMap": "빈 사이트맵"
     }
->>>>>>> temp-branch
   }
 }
