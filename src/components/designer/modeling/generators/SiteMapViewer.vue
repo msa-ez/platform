@@ -2,14 +2,17 @@
     <div class="site-map-viewer">
         <div class="toolbar">
             <div class="toolbar-left">
-                <v-row class="pa-0 ma-0 pt-4">
+                <v-row class="pa-0 ma-0 pt-4" style="align-items: center; gap: 10px;">
                     <v-btn class="auto-modeling-btn" color="primary" @click="generateSiteMap" :disabled="isGenerating">
-                        재생성
+                        {{ $t('siteMap.toolbar.regenerate') }}
                     </v-btn>
                     <v-btn class="auto-modeling-btn" color="secondary" @click="addNode" :disabled="isGenerating">
-                        노드 추가
+                        {{ $t('siteMap.toolbar.addNode') }}
                     </v-btn>
-                    <v-progress-circular v-if="isGenerating" indeterminate color="primary" size="24" class="ml-2"></v-progress-circular>
+                    <template v-if="isGenerating">
+                        <v-progress-circular indeterminate color="primary" size="24" class="mr-2"></v-progress-circular>
+                        <span class="progress-text" v-if="totalChunks > 0">{{ $t('siteMap.toolbar.progress', { rate: processingRate }) }}</span>
+                    </template>
                 </v-row>
             </div>
             <!-- <div class="toolbar-right">
@@ -41,14 +44,14 @@
                             <input 
                                 v-model="localSiteMap[0].title" 
                                 class="node-input title-input"
-                                placeholder="사이트 제목"
+                                :placeholder="$t('siteMap.node.siteTitle')"
                             />
                         </div>
                         <div class="node-description">
                             <input 
                                 v-model="localSiteMap[0].description" 
                                 class="node-input description-input"
-                                placeholder="사이트 설명"
+                                :placeholder="$t('siteMap.node.siteDescription')"
                             />
                         </div>
                         <div class="node-actions">
@@ -70,6 +73,7 @@
                                 class="child-node"
                             >
                                 <SiteMapNode 
+                                    :isGenerating="isGenerating"
                                     :node="child"
                                     :parent-title="localSiteMap[0].title"
                                     :available-bounded-contexts="(localSiteMap[0].boundedContexts || [])"
@@ -87,10 +91,10 @@
                     <div class="empty-icon">
                         <i class="fas fa-sitemap"></i>
                     </div>
-                    <h3>사이트맵이 비어있습니다</h3>
-                    <p>첫 번째 노드를 추가해보세요!</p>
+                    <h3>{{ $t('siteMap.empty.title') }}</h3>
+                    <p>{{ $t('siteMap.empty.description') }}</p>
                     <button class="auto-modeling-btn" color="primary" :disabled="isGenerating" @click="addRootNode">
-                        <i class="fas fa-plus"></i> 루트 노드 추가
+                        <i class="fas fa-plus"></i> {{ $t('siteMap.empty.addRootNode') }}
                     </button>
                 </div>
             </div>
@@ -107,17 +111,6 @@ export default {
         SiteMapNode
     },
     props: {
-        initialData: {
-            type: Object,
-            default: () => ({
-                siteMap: {
-                    title: "새로운 웹사이트",
-                    description: "웹사이트 설명을 입력하세요",
-                    boundedContexts: [],
-                    navigation: []
-                }
-            })
-        },
         userStory: {
             type: String,
             default: () => "",
@@ -136,6 +129,21 @@ export default {
         isGenerating: {
             type: Boolean,
             default: false,
+            required: false
+        },
+        processingRate: {
+            type: Number,
+            default: 0,
+            required: false
+        },
+        currentChunk: {
+            type: Number,
+            default: 0,
+            required: false
+        },
+        totalChunks: {
+            type: Number,
+            default: 0,
             required: false
         }
     },
@@ -181,17 +189,6 @@ export default {
         });
     },
     methods: {
-        initializeData() {
-            // if (this.initialData && this.initialData.treeData && Array.isArray(this.initialData.treeData)) {
-            //     // AI에서 생성된 트리 데이터가 있으면 사용
-            //     this.localSiteMap = this.initialData.treeData;
-            //     this.$emit('update:siteMap', this.localSiteMap);
-            // } else {
-            //     // 기본 루트 노드 생성
-            //     this.addRootNode();
-            // }
-        },
-        
         generateId() {
             return `node-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
         },
@@ -199,8 +196,8 @@ export default {
         addRootNode() {
             const rootNode = {
                 id: this.generateId(),
-                title: "새로운 웹사이트",
-                description: "웹사이트 설명을 입력하세요",
+                title: this.$t('siteMap.defaults.newWebsite'),
+                description: this.$t('siteMap.defaults.siteDescription'),
                 type: "root",
                 children: []
             };
@@ -221,8 +218,8 @@ export default {
             if (parentNode) {
                 const newNode = {
                     id: this.generateId(),
-                    title: "새 페이지",
-                    description: "페이지 설명",
+                    title: this.$t('siteMap.defaults.newPage'),
+                    description: this.$t('siteMap.defaults.pageDescription'),
                     type: "navigation",
                     boundedContext: "",
                     uiRequirements: "",
@@ -322,7 +319,7 @@ export default {
             if (this.localSiteMap.length === 0) {
                 return {
                     siteMap: {
-                        title: "빈 사이트맵",
+                        title: this.$t('siteMap.defaults.emptySiteMap'),
                         description: "",
                         boundedContexts: [],
                         navigation: []

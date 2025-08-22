@@ -14,6 +14,12 @@ class SiteMapGenerator extends JsonAIGenerator {
         REQUIREMENTS:
         ${this.client.input.requirements}
 
+        PREVIOUS CONTEXT (if provided):
+        EXISTING NAVIGATION:
+        ${JSON.stringify(this.client.input.existingNavigation || [])}
+        EXISTING BOUNDED CONTEXTS:
+        ${JSON.stringify(this.client.input.existingBoundedContexts || [])}
+
         BOUNDED CONTEXTS LIST:
         ${JSON.stringify(this.client.input.resultDevideBoundedContext)}
 
@@ -70,6 +76,7 @@ class SiteMapGenerator extends JsonAIGenerator {
         - Include essential pages and features mentioned in the requirements
         - Limit main navigation to 5-7 items for optimal UX
         - Group related content logically within appropriate bounded contexts
+        - If EXISTING NAVIGATION is provided, DO NOT duplicate items already present. Instead, enrich their descriptions or add missing children only. Preserve existing IDs and titles.
 
         IMPORTANT: 
         - Return ONLY the JSON object, no additional text or explanations

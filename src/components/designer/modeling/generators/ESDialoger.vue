@@ -94,7 +94,7 @@
                         <v-icon class="auto-modeling-btn-icon">mdi-refresh</v-icon>{{ $t('ESDialoger.tryAgain') }}
                     </v-btn>
                     <v-btn v-else
-                        :disabled="!isEditable"
+                        :disabled="getDisabledGenerateBtn() || !isEditable"
                         class="auto-modeling-btn"
                         @click="generate(); state.isAIModelSelected = true;"
                     >
@@ -241,6 +241,7 @@
 
     // SiteMap Viewer
     import SiteMapGenerator from './SiteMapGenerator.js';
+    import RecursiveSiteMapGenerator from './RecursiveSiteMapGenerator.js';
 
     const axios = require('axios');
     import YAML from 'js-yaml';
@@ -1270,6 +1271,8 @@ import { value } from 'jsonpath';
                 this.state.secondMessageIsTyping = false;
                 this.projectInfo.userStory = this.projectInfo.userStory || '';
                 this.projectInfo.inputDDL = this.projectInfo.inputDDL || '';
+                this.userStoryChunks = this.projectInfo.userStoryChunks || [];
+                this.summarizedResult = this.projectInfo.summarizedResult || '';
 
                 this.messages = [];
 
@@ -1557,6 +1560,53 @@ import { value } from 'jsonpath';
 
                 if (me.state.generator === "RecursiveRequirementsSummarizer") {
                     me.generator.handleGenerationFinished(model);
+                    return;
+                }
+
+                // Recursive SiteMap: 청크 단위 결과는 생성기 내부에서 누적 처리하며 진행상황/부분결과 업데이트
+                if (me.state.generator === "RecursiveSiteMapGenerator") {
+                    me.generator.handleGenerationFinished(model);
+
+                    try {
+                        const total = me.generator.currentChunks.length || 1;
+                        const done = Math.min(me.generator.currentChunkIndex, total);
+                        const processingRate = Math.round((done / total) * 100);
+
+                        // 부분 결과 구성
+                        const partialRoot = {
+                            id: me.uuid(),
+                            title: me.generator.accumulated.title || '새로운 웹사이트',
+                            description: me.generator.accumulated.description || '웹사이트 설명',
+                            type: 'root',
+                            boundedContexts: Array.from(me.generator.accumulated.boundedContextsMap.values()),
+                            children: JSON.parse(JSON.stringify(me.generator.accumulated.rootChildren || []))
+                        };
+                        const partialTree = [partialRoot];
+
+                        // 메시지 업데이트 (진행률, 부분 사이트맵)
+                        const siteMapMsg = me.messages.find(msg => msg.type === 'siteMapViewer');
+                        if (siteMapMsg) {
+                            me.updateMessageState(siteMapMsg.uniqueId, {
+                                siteMap: partialTree,
+                                isGenerating: done < total,
+                                processingRate,
+                                currentChunk: done,
+                                totalChunks: total
+                            });
+                        }
+
+                        // BC 매핑도 부분 업데이트
+                        me.mapSiteMapToBoundedContexts(partialTree);
+                        const bcMsg = me.messages.find(msg => msg.type === 'boundedContextResult');
+                        if (bcMsg) {
+                            me.updateMessageState(bcMsg.uniqueId, {
+                                result: JSON.parse(JSON.stringify(me.resultDevideBoundedContext))
+                            });
+                        }
+                        me.$emit("update:draft", me.messages);
+                    } catch(e) {
+                        console.warn('Recursive sitemap incremental update failed:', e);
+                    }
                     return;
                 }
 
@@ -1865,6 +1915,11 @@ import { value } from 'jsonpath';
                     this.userStoryChunks = this.generator.currentChunks;
                     this.userStoryChunksIndex = 0;
                     this.summarizedResult = summarizedText;
+
+                    this.$emit("update:projectInfo", {
+                        userStoryChunks: this.userStoryChunks,
+                        summarizedResult: this.summarizedResult
+                    })
                     console.log("최종 요약 결과: ", this.summarizedResult);
 
                     this.processingState.isSummarizeStarted = false;
@@ -2204,6 +2259,9 @@ import { value } from 'jsonpath';
                         userStory: this.summarizedResult !== "" ? this.summarizedResult : this.projectInfo.userStory,
                         resultDevideBoundedContext: this.resultDevideBoundedContext[this.selectedAspect],
                         isGenerating: true,
+                        processingRate: 0,
+                        currentChunk: 0,
+                        totalChunks: 0,
                         timestamp: new Date()
                     };
                 }
@@ -2602,8 +2660,11 @@ import { value } from 'jsonpath';
             },
 
             generateSiteMap(){
-                this.generator = new SiteMapGenerator(this);
-                this.state.generator = "SiteMapGenerator";
+                const requirementsText = this.projectInfo.userStory || '';
+                const shouldUseRecursive = requirementsText && requirementsText.length > 24000;
+
+                this.generator = shouldUseRecursive ? new RecursiveSiteMapGenerator(this) : new SiteMapGenerator(this);
+                this.state.generator = shouldUseRecursive ? "RecursiveSiteMapGenerator" : "SiteMapGenerator";
 
                 if(!this.alertGenerateWarning("siteMapViewer")){
                     return;
@@ -2626,7 +2687,29 @@ import { value } from 'jsonpath';
                     this.messages.push(siteMapMessage);
                 }
                 
-                this.generator.generate()
+                if (shouldUseRecursive) {
+                    this.generator.generateRecursively(this.projectInfo.userStory).then(result => {
+                        this.siteMap = result.treeData;
+                        this.updateMessageState(this.messages.find(msg => msg.type === 'siteMapViewer').uniqueId, {
+                            siteMap: this.siteMap,
+                            isGenerating: false
+                        });
+                        try {
+                            this.mapSiteMapToBoundedContexts(this.siteMap);
+                            const bcMsg = this.messages.find(msg => msg.type === 'boundedContextResult');
+                            if (bcMsg) {
+                                this.updateMessageState(bcMsg.uniqueId, {
+                                    result: JSON.parse(JSON.stringify(this.resultDevideBoundedContext))
+                                });
+                            }
+                        } catch (e) {
+                            console.warn('Failed to map sitemap to bounded contexts:', e);
+                        }
+                        this.$emit('update:draft', this.messages)
+                    });
+                } else {
+                    this.generator.generate()
+                }
             },
             mapSiteMapToBoundedContexts(siteMapTree) {
                 if (!siteMapTree || !Array.isArray(siteMapTree) || siteMapTree.length === 0) return;

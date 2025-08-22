@@ -8,53 +8,58 @@
                 </div>
                 <input 
                     v-model="node.title" 
+                    :disabled="isGenerating"
                     class="node-input title-input"
-                    placeholder="페이지 제목"
+                    :placeholder="$t('siteMap.node.pageTitle')"
                     @input="updateNode"
                 />
             </div>
             <div class="node-description">
                 <input 
                     v-model="node.description" 
+                    :disabled="isGenerating"
                     class="node-input description-input"
-                    placeholder="페이지 설명"
+                    :placeholder="$t('siteMap.node.pageDescription')"
                     @input="updateNode"
                 />
             </div>
             <div class="node-bounded-context" v-if="node.type !== 'root'">
-                <div class="field-label">Bounded Context:</div>
+                <div class="field-label">{{ $t('siteMap.node.boundedContext') }}</div>
                 <select 
                     v-model="node.boundedContext"
+                    :disabled="isGenerating"
                     @change="updateNode"
                 >
-                    <option value="">선택하세요</option>
+                    <option value="">{{ $t('siteMap.node.selectBoundedContext') }}</option>
                     <option 
                         v-for="bc in availableBoundedContexts" 
                         :key="typeof bc === 'string' ? bc : (bc.id || bc.title)"
                         :value="typeof bc === 'string' ? bc : bc.title"
+                        :disabled="isGenerating"
                     >
                         {{ typeof bc === 'string' ? bc : bc.title }}
                     </option>
                 </select>
             </div>
             <div class="node-ui-requirements" v-if="node.type !== 'root'">
-                <div class="field-label">UI Requirements:</div>
+                <div class="field-label">{{ $t('siteMap.node.uiRequirements') }}</div>
                 <textarea 
                     v-model="node.uiRequirements" 
+                    :disabled="isGenerating"
                     class="node-textarea ui-requirements-textarea"
-                    placeholder="UI 요구사항 (예: 테이블 레이아웃, 카드 형태, 폼 검증 등)"
+                    :placeholder="$t('siteMap.node.uiRequirementsPlaceholder')"
                     @input="updateNode"
                     rows="3"
                 ></textarea>
             </div>
             <div class="node-actions">
                 <span class="child-count" v-if="node.children && node.children.length > 0">
-                    {{ node.children.length }}개 하위
+                    {{ $t('siteMap.node.childCount', { count: node.children.length }) }}
                 </span>
-                <button class="action-btn" @click="$emit('add-child', node.id)" title="하위 노드 추가">
+                <button class="action-btn" @click="$emit('add-child', node.id)" :title="$t('siteMap.node.addChildNode')" :disabled="isGenerating">
                     <i class="fas fa-plus"></i>
                 </button>
-                <button class="action-btn delete-btn" @click="$emit('delete-node', node.id)" title="노드 삭제">
+                <button class="action-btn delete-btn" @click="$emit('delete-node', node.id)" :title="$t('siteMap.node.deleteNode')" :disabled="isGenerating">
                     <i class="fas fa-trash"></i>
                 </button>
             </div>
@@ -69,6 +74,7 @@
                     class="child-node"
                 >
                     <SiteMapNode 
+                        :isGenerating="isGenerating"
                         :node="child"
                         :parent-title="node.title"
                         :available-bounded-contexts="availableBoundedContexts"
@@ -97,6 +103,10 @@ export default {
         availableBoundedContexts: {
             type: Array,
             default: () => []
+        },
+        isGenerating: {
+            type: Boolean,
+            default: false
         }
     },
     data() {
