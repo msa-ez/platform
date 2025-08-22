@@ -239,7 +239,7 @@
                         
                         // previewAttributes가 있는지 확인하고 전달
                         const previewAttributes = item.previewAttributes && Array.isArray(item.previewAttributes) ? item.previewAttributes : null;
-                        addClassToGroup(aggKey, aggKey, aggAlias, "Aggregate Root", previewAttributes);
+                        addClassToGroup(aggKey, aggKey, aggAlias, "Aggregate Root", this.__sanitizePreviewAttributes(previewAttributes));
                         
                         if (Array.isArray(item.enumerations)) {
                             item.enumerations.forEach(enumeration => {
@@ -299,6 +299,11 @@
 
                 return mermaidString;
             },
+            __sanitizePreviewAttributes(previewAttributes) {
+                if(!previewAttributes || !Array.isArray(previewAttributes)) return []
+                return previewAttributes.filter(attr => typeof attr === 'string' && attr.replace(/[^a-zA-Z0-9_]/g, '') === attr)
+            },
+
             updateMermaidDiagram() {
                 this.mermaidDto.mermaidString = this.toMermaidUMLDiagramString(this.optionInfo.structure);
                 this.mermaidDto.renderKey++;

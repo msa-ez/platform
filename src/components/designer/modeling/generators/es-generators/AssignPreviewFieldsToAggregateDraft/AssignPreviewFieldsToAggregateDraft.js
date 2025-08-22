@@ -210,11 +210,19 @@ As an instructor, I want to create and manage my courses on the platform. When c
 
         // 생성이 완료되었을 때 검증 로직 수행
         if(returnObj.isFinished) {
-            this._validateFieldGeneration(returnObj.modelValue.output)
+            this.__sanitizeFieldGeneration(returnObj.modelValue.output)
+            this.__validateFieldGeneration(returnObj.modelValue.output)
         }
     }
-
-    _validateFieldGeneration(aggregateFieldAssignments) {
+    __sanitizeFieldGeneration(aggregateFieldAssignments) {
+        return aggregateFieldAssignments.map(assignment => ({
+            aggregateName: assignment.aggregateName,
+            preview_fields: assignment.preview_fields.filter(
+                field => field.replace(/[^a-zA-Z0-9_]/g, '') === field
+            )
+        }))
+    }
+    __validateFieldGeneration(aggregateFieldAssignments) {
         // 각 애그리거트가 최소한의 필드를 가지고 있는지 확인
         for(const assignment of aggregateFieldAssignments) {
             if(!assignment.preview_fields || assignment.preview_fields.length === 0) {
