@@ -1,7 +1,7 @@
 import AIGenerator from "./AIGenerator";
+import JsonAIGenerator from "./JsonAIGenerator";
 
-
-export default class UserStoryGenerator extends AIGenerator{
+export default class UserStoryGenerator extends JsonAIGenerator{
 
     constructor(client){
         super(client);
@@ -78,6 +78,8 @@ export default class UserStoryGenerator extends AIGenerator{
             modelDescription += `\n\nThe response is must be in the same language with the service name. Also, please list bounded contexts in the perspective of ${this.client.input.separationPrinciple}.`
         }
 
+        // 기존 데이터가 있는 경우 title만 참조
+        let existingDataPrompt = this.createExistingDataPrompt();
 
         return `
             Please generate a comprehensive analysis for ${this.client.input.title} with the following requests:
@@ -101,8 +103,33 @@ export default class UserStoryGenerator extends AIGenerator{
             The response must:
             - Ensure complete traceability between actors, stories
             - Avoid any missing connections between components
+            - Provide a clear, well-structured text response
         `
     }
+
+    createModel(text){
+        try{
+            if (text.startsWith('```json')) {
+                text = text.slice(7);
+            }
+            if (text.endsWith('```')) {
+                text = text.slice(0, -3);
+            }
+            
+            let model = super.createModel(text);
+
+            if(model){
+                return model;
+            }else{
+                return text;
+            }
+        }catch(e){
+            console.log(e);
+            return null;
+        }
+    }
+
+
 
     userStroyPrompt(){
         // 제목만 있는 경우 가상의 유저시나리오 생성
@@ -117,6 +144,4 @@ export default class UserStoryGenerator extends AIGenerator{
             Please generate user stories and scenarios based on the above content, staying within the scope and context provided.
         `
     }
-
-
 }
