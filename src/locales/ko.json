@@ -729,7 +729,9 @@
       "regenerate": "재생성",
       "addNode": "노드 추가",
       "generating": "사이트맵 생성 중...",
-      "progress": "사이트맵 생성 중... ({rate}%)"
+      "progress": "사이트맵 생성 중... ({rate}%)",
+      "expandAll": "전체 펼치기",
+      "collapseAll": "전체 접기"
     },
     "node": {
       "siteTitle": "사이트 제목",
@@ -742,7 +744,10 @@
       "uiRequirementsPlaceholder": "UI 요구사항 (예: 테이블 레이아웃, 카드 형태, 폼 검증 등)",
       "childCount": "{count}개 하위",
       "addChildNode": "하위 노드 추가",
-      "deleteNode": "노드 삭제"
+      "deleteNode": "노드 삭제",
+      "expand": "펼치기",
+      "collapse": "접기",
+      "collapsed": "{count}개 하위 노드 접힘"
     },
     "empty": {
       "title": "사이트맵이 비어있습니다",

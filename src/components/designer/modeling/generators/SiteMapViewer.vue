@@ -9,42 +9,64 @@
                     <v-btn class="auto-modeling-btn" color="secondary" @click="addNode" :disabled="isGenerating">
                         {{ $t('siteMap.toolbar.addNode') }}
                     </v-btn>
+                    <!-- <v-btn class="auto-modeling-btn" color="info" @click="toggleAllNodes" :disabled="isGenerating">
+                        <i class="fas fa-compress-alt"></i> {{ isAllCollapsed ? $t('siteMap.toolbar.expandAll') : $t('siteMap.toolbar.collapseAll') }}
+                    </v-btn> -->
                     <template v-if="isGenerating">
                         <v-progress-circular indeterminate color="primary" size="24" class="mr-2"></v-progress-circular>
                         <span class="progress-text" v-if="totalChunks > 0">{{ $t('siteMap.toolbar.progress', { rate: processingRate }) }}</span>
                     </template>
                 </v-row>
             </div>
-            <!-- <div class="toolbar-right">
-                <span class="node-counter">노드 수: {{ nodeCount }}</span>
-            </div> -->
-            <!-- <div class="toolbar-right">
-                <v-tooltip bottom>
-                    <template v-slot:activator="{ on, attrs }">
-                        <v-btn
-                            icon
-                            class="ml-2"
-                            v-bind="attrs"
-                            v-on="on"
-                            @click="closeSiteMapViewer()"
-                        >
-                            <v-icon>mdi-close</v-icon>
-                        </v-btn>
-                    </template>
-                    <span>Close</span>
-                </v-tooltip>
-            </div> -->
+            
+            <!-- 줌 컨트롤 추가 -->
+            <div class="zoom-controls">
+                <v-btn icon small @click="zoomOut" :disabled="currentZoom <= minZoom" class="zoom-btn">
+                    <v-icon>mdi-minus</v-icon>
+                </v-btn>
+                <span class="zoom-level">{{ Math.round(currentZoom * 100) }}%</span>
+                <v-btn icon small @click="zoomIn" :disabled="currentZoom >= maxZoom" class="zoom-btn">
+                    <v-icon>mdi-plus</v-icon>
+                </v-btn>
+                <!-- <v-btn icon small @click="resetZoom" class="zoom-btn">
+                    <v-icon>mdi-magnify-close</v-icon>
+                </v-btn> -->
+            </div>
         </div>
         
-        <div class="site-map-container" ref="siteMapContainer">
-            <div class="site-map-tree">
+        <div class="site-map-container" 
+             ref="siteMapContainer"
+             @wheel="handleWheel"
+             @mousedown="startPan"
+             @mousemove="pan"
+             @mouseup="stopPan"
+             @mouseleave="stopPan"
+             :class="{ 'dragging': isDragging }">
+            <div class="site-map-tree" 
+                 :style="{ 
+                     transform: `translate3d(${panOffset.x}px, ${panOffset.y}px, 0) scale(${currentZoom})`,
+                     transformOrigin: '0 0'
+                 }">
                 <div class="root-node" v-if="localSiteMap.length > 0">
-                    <div class="node-content" :data-node-id="localSiteMap[0].id">
+                    <div class="node-content">
+                        <!-- 접기/펼치기 버튼 (우측) -->
+                        <button 
+                            v-if="localSiteMap[0].children && localSiteMap[0].children.length > 0"
+                            class="collapse-btn" 
+                            @click="toggleRootCollapse" 
+                            :title="isRootCollapsed ? '펼치기' : '접기'"
+                            :disabled="isGenerating"
+                        >
+                            <span class="arrow-icon">{{ isRootCollapsed ? '▼' : '▲' }}</span>
+                        </button>
+                        
                         <div class="node-title">
                             <input 
                                 v-model="localSiteMap[0].title" 
+                                :disabled="isGenerating"
                                 class="node-input title-input"
                                 :placeholder="$t('siteMap.node.siteTitle')"
+                                @input="updateNode(localSiteMap[0].id, { title: localSiteMap[0].title })"
                             />
                         </div>
                         <div class="node-description">
@@ -58,6 +80,15 @@
                             <button class="action-btn" @click="addChildNode(localSiteMap[0].id)">
                                 <i class="fas fa-plus"></i>
                             </button>
+                            <button 
+                                v-if="localSiteMap[0].children && localSiteMap[0].children.length > 0"
+                                class="action-btn toggle-btn" 
+                                @click="toggleRootCollapse" 
+                                :title="isRootCollapsed ? $t('siteMap.node.expand') : $t('siteMap.node.collapse')"
+                                :disabled="isGenerating"
+                            >
+                                <i :class="isRootCollapsed ? 'fas fa-chevron-down' : 'fas fa-chevron-up'"></i>
+                            </button>
                             <button class="action-btn delete-btn" @click="deleteNode(localSiteMap[0].id)">
                                 <i class="fas fa-trash"></i>
                             </button>
@@ -65,7 +96,7 @@
                     </div>
                     
                     <!-- 하위 노드들 -->
-                    <div class="children-container" v-if="localSiteMap[0].children && localSiteMap[0].children.length > 0">
+                    <div class="children-container" v-if="localSiteMap[0].children && localSiteMap[0].children.length > 0 && !isRootCollapsed">
                         <div class="children-wrapper">
                             <div 
                                 v-for="(child, index) in localSiteMap[0].children" 
@@ -80,8 +111,20 @@
                                     @add-child="addChildNode"
                                     @delete-node="deleteNode"
                                     @update-node="updateNode"
+                                    @node-collapse-changed="handleNodeCollapseChanged"
                                 />
                             </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 접힌 상태 표시 -->
+                    <div class="collapsed-indicator" v-if="localSiteMap[0].children && localSiteMap[0].children.length > 0 && isRootCollapsed">
+                        <div class="collapsed-content">
+                            <i class="fas fa-ellipsis-h"></i>
+                            <span class="collapsed-text">{{ $t('siteMap.node.collapsed', { count: localSiteMap[0].children.length }) }}</span>
+                            <button class="expand-btn" @click="toggleRootCollapse" :disabled="isGenerating">
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -156,7 +199,21 @@ export default {
             },
             generator: null,
             updateTimeout: null,
-            localSiteMap: []
+            localSiteMap: [],
+            currentZoom: 1, // 현재 줌 레벨
+            minZoom: 0.5, // 최소 줌 레벨
+            maxZoom: 2.0, // 최대 줌 레벨
+            panOffset: { x: 0, y: 0 }, // 패닝 오프셋
+            isPanning: false, // 패닝 중인지 여부
+            lastMouseX: 0, // 마지막 마우스 X 좌표
+            lastMouseY: 0, // 마지막 마우스 Y 좌표
+            isRootCollapsed: false, // 루트 노드 접기/펼치기 상태
+            isAllCollapsed: false, // 전체 접기/펼치기 상태
+            // 성능 최적화를 위한 추가 변수들
+            rafId: null, // RequestAnimationFrame ID
+            isDragging: false, // 드래그 중인지 여부
+            lastPanTime: 0, // 마지막 패닝 시간
+            panThrottle: 16, // 60fps로 제한 (16ms)
         };
     },
     computed: {
@@ -179,14 +236,28 @@ export default {
     created() {
     },
     mounted() {
-        if(this.siteMap.length == 0){
-            this.addRootNode();
+        try {
+            if(this.siteMap.length == 0){
+                this.addRootNode();
+            }
+            
+            // 줌과 패닝 초기화
+            this.$nextTick(() => {
+                try {
+                    this.centerRootNode();
+                } catch (error) {
+                    console.warn('초기 중앙 정렬 실패:', error);
+                }
+                
+                // 휠 이벤트 리스너 추가 (Ctrl+휠로 줌)
+                const container = this.$refs.siteMapContainer;
+                if (container) {
+                    container.addEventListener('wheel', this.handleWheel, { passive: false });
+                }
+            });
+        } catch (error) {
+            console.error('컴포넌트 마운트 중 오류 발생:', error);
         }
-        
-        // 루트 노드를 중앙에 위치시키기
-        this.$nextTick(() => {
-            this.centerRootNode();
-        });
     },
     methods: {
         generateId() {
@@ -359,20 +430,300 @@ export default {
         },
 
         centerRootNode() {
-            const container = this.$refs.siteMapContainer;
-            if (container && this.localSiteMap.length > 0) {
-                // 컨테이너의 중앙으로 스크롤
-                const scrollLeft = (container.scrollWidth - container.clientWidth) / 2;
-                container.scrollTo({
-                    left: scrollLeft,
-                    top: 0,
-                    behavior: 'smooth'
-                });
-            }
+            // 기본적인 중앙 정렬만 수행 (복잡한 로직 제거)
+            if (this.localSiteMap.length === 0) return;
+            
+            this.$nextTick(() => {
+                try {
+                    const container = this.$refs.siteMapContainer;
+                    if (container) {
+                        const containerRect = container.getBoundingClientRect();
+                        const centerX = containerRect.width / 2;
+                        const centerY = containerRect.height / 2;
+                        
+                        // 간단한 중앙 정렬
+                        this.panOffset = {
+                            x: centerX - 140, // 280/2
+                            y: centerY - 50   // 기본 높이의 절반
+                        };
+                    }
+                } catch (error) {
+                    console.error('중앙 정렬 중 오류 발생:', error);
+                    this.panOffset = { x: 0, y: 0 };
+                }
+            });
         },
 
         generateSiteMap(){
             this.$emit('generate:siteMap')
+        },
+
+        // 줌 컨트롤 메서드
+        zoomIn() {
+            this.currentZoom = Math.min(this.currentZoom + 0.1, this.maxZoom);
+        },
+        zoomOut() {
+            this.currentZoom = Math.max(this.currentZoom - 0.1, this.minZoom);
+        },
+        resetZoom() {
+            this.currentZoom = 1;
+            this.panOffset = { x: 0, y: 0 };
+        },
+
+        // 패닝 기능
+        startPan(event) {
+            if (event.button === 0) { // 왼쪽 마우스 버튼
+                this.isPanning = true;
+                this.isDragging = true;
+                this.lastMouseX = event.clientX;
+                this.lastMouseY = event.clientY;
+                event.preventDefault(); // 기본 동작 방지
+            }
+        },
+        pan(event) {
+            if (this.isPanning && this.isDragging) {
+                // throttling으로 성능 최적화
+                const now = Date.now();
+                if (now - this.lastPanTime < this.panThrottle) {
+                    return;
+                }
+                this.lastPanTime = now;
+                
+                const dx = event.clientX - this.lastMouseX;
+                const dy = event.clientY - this.lastMouseY;
+                
+                // RequestAnimationFrame으로 부드러운 애니메이션
+                if (this.rafId) {
+                    cancelAnimationFrame(this.rafId);
+                }
+                
+                this.rafId = requestAnimationFrame(() => {
+                    this.panOffset.x += dx;
+                    this.panOffset.y += dy;
+                    this.lastMouseX = event.clientX;
+                    this.lastMouseY = event.clientY;
+                });
+            }
+        },
+        stopPan() {
+            this.isPanning = false;
+            this.isDragging = false;
+            if (this.rafId) {
+                cancelAnimationFrame(this.rafId);
+                this.rafId = null;
+            }
+        },
+
+        // 휠 스크롤 핸들링
+        handleWheel(event) {
+            // Ctrl+휠로 줌, 일반 휠로는 패닝
+            if (event.ctrlKey || event.metaKey) {
+                event.preventDefault();
+                const delta = event.deltaY;
+                const zoomFactor = 0.001;
+                const newZoom = this.currentZoom * (1 - delta * zoomFactor);
+                const clampedZoom = Math.max(this.minZoom, Math.min(this.maxZoom, newZoom));
+                
+                // 줌 시 마우스 포인터 위치를 중심으로 줌
+                const rect = event.currentTarget.getBoundingClientRect();
+                const mouseX = event.clientX - rect.left;
+                const mouseY = event.clientY - rect.top;
+                
+                // RequestAnimationFrame으로 부드러운 줌
+                if (this.rafId) {
+                    cancelAnimationFrame(this.rafId);
+                }
+                
+                this.rafId = requestAnimationFrame(() => {
+                    // 새로운 transform 구조에서 정확한 줌 중심점 계산
+                    // 마우스 포인터 아래의 콘텐츠 위치를 계산
+                    const contentX = (mouseX - this.panOffset.x) / this.currentZoom;
+                    const contentY = (mouseY - this.panOffset.y) / this.currentZoom;
+                    
+                    // 새로운 줌 레벨에서 같은 콘텐츠 위치를 마우스 포인터 아래에 유지
+                    const newPanX = mouseX - contentX * clampedZoom;
+                    const newPanY = mouseY - contentY * clampedZoom;
+                    
+                    // 줌 레벨과 패닝 오프셋 업데이트
+                    this.currentZoom = clampedZoom;
+                    this.panOffset.x = newPanX;
+                    this.panOffset.y = newPanY;
+                });
+            } else {
+                // 일반 휠로는 패닝 (throttling 적용)
+                event.preventDefault();
+                const now = Date.now();
+                if (now - this.lastPanTime < this.panThrottle) {
+                    return;
+                }
+                this.lastPanTime = now;
+                
+                const deltaX = event.deltaX * 0.5;
+                const deltaY = event.deltaY * 0.5;
+                
+                if (this.rafId) {
+                    cancelAnimationFrame(this.rafId);
+                }
+                
+                this.rafId = requestAnimationFrame(() => {
+                    this.panOffset.x -= deltaX;
+                    this.panOffset.y -= deltaY;
+                });
+            }
+        },
+
+        toggleRootCollapse() {
+            this.isRootCollapsed = !this.isRootCollapsed;
+            
+            // 루트 노드의 children을 숨김 처리
+            if (this.localSiteMap[0].children) {
+                this.localSiteMap[0].children.forEach(child => {
+                    child.isCollapsed = this.isRootCollapsed;
+                });
+            }
+            
+            // 시점 자동 조정 일시적으로 비활성화 (기본 기능 복구를 위해)
+            // this.$nextTick(() => {
+            //     this.adjustViewAfterCollapse();
+            // });
+            
+            this.$emit('update:siteMap', this.localSiteMap);
+        },
+
+        // 접기/펼치기 후 시점 자동 조정
+        adjustViewAfterCollapse() {
+            if (this.localSiteMap.length === 0) return;
+            
+            const container = this.$refs.siteMapContainer;
+            if (!container) return;
+            
+            const containerRect = container.getBoundingClientRect();
+            const centerX = containerRect.width / 2;
+            const centerY = containerRect.height / 2;
+            
+            // 현재 루트 노드의 위치를 계산하여 중앙에 맞춤
+            const rootNode = this.localSiteMap[0];
+            let estimatedHeight = 100; // 기본 높이
+            
+            if (!this.isRootCollapsed && rootNode.children && rootNode.children.length > 0) {
+                // 펼쳐진 상태일 때는 하위 노드들을 고려한 높이 계산
+                // 각 레벨별로 더 정확한 높이 계산
+                estimatedHeight = this.calculateTreeHeight(rootNode);
+            }
+            
+            // 줌 레벨에 따른 보정 적용 (더 정교한 보정)
+            let zoomCorrection = 1;
+            if (this.currentZoom < 0.6) {
+                // 극도로 줌 아웃된 상태에서는 더 큰 보정
+                zoomCorrection = 1.5;
+            } else if (this.currentZoom < 0.8) {
+                // 줌 아웃 상태에서는 더 정확한 위치 계산
+                zoomCorrection = 1.2;
+            } else if (this.currentZoom > 1.5) {
+                // 줌 인 상태에서는 미세 조정
+                zoomCorrection = 0.95;
+            } else if (this.currentZoom > 2.0) {
+                // 극도로 줌 인된 상태에서는 더 큰 보정
+                zoomCorrection = 0.9;
+            }
+            
+            // 목표 패닝 오프셋 계산
+            const targetPanOffset = {
+                x: centerX - (280 / 2) * this.currentZoom * zoomCorrection,
+                y: centerY - (estimatedHeight / 2) * this.currentZoom * zoomCorrection
+            };
+            
+            // 즉시 시점 조정 (애니메이션 없이)
+            this.panOffset.x = targetPanOffset.x;
+            this.panOffset.y = targetPanOffset.y;
+        },
+
+        // 부드러운 시점 조정 애니메이션 (현재는 사용하지 않음)
+        animateViewAdjustment(targetPanOffset) {
+            const startPanOffset = { ...this.panOffset };
+            const startTime = Date.now();
+            const duration = 300; // 300ms 애니메이션
+            
+            const animate = () => {
+                const elapsed = Date.now() - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                
+                // easeOutCubic 이징 함수
+                const easeProgress = 1 - Math.pow(1 - progress, 3);
+                
+                this.panOffset.x = startPanOffset.x + (targetPanOffset.x - startPanOffset.x) * easeProgress;
+                this.panOffset.y = startPanOffset.y + (targetPanOffset.y - startPanOffset.y) * easeProgress;
+                
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                }
+            };
+            
+            requestAnimationFrame(animate);
+        },
+
+        // 트리 높이를 정확하게 계산하는 메서드
+        calculateTreeHeight(node, level = 0) {
+            if (!node) return 0;
+            
+            let height = 100; // 기본 노드 높이
+            
+            // isCollapsed 속성이 정의되지 않았을 수 있으므로 안전하게 처리
+            const isCollapsed = node.isCollapsed === true;
+            
+            if (node.children && node.children.length > 0 && !isCollapsed) {
+                // 하위 노드들의 높이 계산
+                const childrenHeight = node.children.reduce((total, child) => {
+                    return total + this.calculateTreeHeight(child, level + 1);
+                }, 0);
+                
+                // 레벨에 따른 간격 추가
+                const levelSpacing = level === 0 ? 30 : 25; // 루트 레벨과 하위 레벨 간격 다르게
+                height += childrenHeight + levelSpacing;
+            }
+            
+            return height;
+        },
+
+        // 개별 노드 접기/펼치기 이벤트 처리
+        handleNodeCollapseChanged(nodeId, isCollapsed) {
+            const node = this.findNode(nodeId, this.localSiteMap);
+            if (node) {
+                node.isCollapsed = isCollapsed;
+                
+                // 시점 자동 조정 일시적으로 비활성화 (기본 기능 복구를 위해)
+                // this.$nextTick(() => {
+                //     this.adjustViewAfterCollapse();
+                // });
+                
+                this.$emit('update:siteMap', this.localSiteMap);
+            }
+        },
+
+        toggleAllNodes() {
+            this.isAllCollapsed = !this.isAllCollapsed;
+            
+            this.localSiteMap.forEach(node => {
+                if (node.type === 'root') {
+                    node.isCollapsed = this.isAllCollapsed;
+                } else if (node.type === 'navigation') {
+                    node.isCollapsed = this.isAllCollapsed;
+                }
+            });
+            
+            // 시점 자동 조정 일시적으로 비활성화 (기본 기능 복구를 위해)
+            // this.$nextTick(() => {
+            //     this.adjustViewAfterCollapse();
+            // });
+            
+            this.$emit('update:siteMap', this.localSiteMap);
+        },
+
+        // 컴포넌트 정리 시 RequestAnimationFrame 정리
+        beforeDestroy() {
+            if (this.rafId) {
+                cancelAnimationFrame(this.rafId);
+            }
         }
 
 
@@ -456,6 +807,78 @@ export default {
     font-weight: 500;
 }
 
+/* 줌 컨트롤 스타일 */
+.zoom-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: white;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.zoom-btn {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
+}
+
+.zoom-level {
+    font-size: 12px;
+    font-weight: 500;
+    color: #495057;
+    min-width: 40px;
+    text-align: center;
+}
+
+/* 줌/패닝 관련 스타일 */
+.site-map-container {
+    flex: 1;
+    overflow: hidden; /* 스크롤바 제거하고 줌/패닝으로 대체 */
+    padding: 20px;
+    min-height: 0;
+    cursor: grab;
+    position: relative;
+}
+
+.site-map-container:active {
+    cursor: grabbing;
+}
+
+.site-map-tree {
+    display: flex;
+    justify-content: center;
+    min-height: 100%;
+    min-width: max-content;
+    padding: 0 20px;
+    /* transition: transform 0.1s ease; 제거 - 성능 최적화 */
+    will-change: transform; /* GPU 가속 힌트 */
+    transform-style: preserve-3d; /* 3D 가속 */
+    backface-visibility: hidden; /* 성능 향상 */
+    perspective: 1000px; /* 3D 변환 최적화 */
+}
+
+/* 드래그 중일 때 커서 스타일 */
+.site-map-container.dragging {
+    cursor: grabbing;
+}
+
+.site-map-container:not(.dragging) {
+    cursor: grab;
+}
+
+/* 줌 레벨에 따른 커서 스타일 */
+.site-map-tree[style*="scale(0.5)"] .node-content {
+    cursor: zoom-in;
+}
+
+.site-map-tree[style*="scale(2.0)"] .node-content {
+    cursor: zoom-out;
+}
+
 .site-map-container {
     flex: 1;
     overflow-x: auto; /* 가로 스크롤 활성화 */
@@ -483,16 +906,68 @@ export default {
 
 .node-content {
     background: white;
-    border: 2px solid #007bff;
-    border-radius: 12px;
-    padding: 20px;
-    min-width: 250px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    border: 2px solid #28a745;
+    border-radius: 10px;
+    padding: 16px;
+    min-width: 280px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
     position: relative;
+    transition: all 0.2s ease;
+}
+
+/* 접기/펼치기 버튼 스타일 */
+.collapse-btn {
+    position: absolute;
+    right: -32px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 28px;
+    height: 28px;
+    background: #ffffff;
+    border: 2px solid #28a745;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: #28a745;
+    transition: all 0.2s ease;
+    z-index: 10;
+    font-weight: bold;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.collapse-btn:hover {
+    background: #28a745;
+    color: white;
+    transform: scale(1.1);
+}
+
+.collapse-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.arrow-icon {
+    display: block;
+    line-height: 1;
+    font-size: 16px;
+    font-weight: bold;
+    text-align: center;
+}
+
+.node-parent-info {
+    margin-bottom: 8px;
 }
 
 .node-title {
-    margin-bottom: 10px;
+    margin-bottom: 8px;
+}
+
+.title-input {
+    width: 100%;
 }
 
 .node-description {
@@ -721,6 +1196,53 @@ export default {
     background: #0056b3;
 }
 
+/* 접힌 상태 표시 스타일 */
+.collapsed-indicator {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.collapsed-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #f8f9fa;
+    padding: 12px 20px;
+    border-radius: 25px;
+    border: 2px dashed #dee2e6;
+    color: #6c757d;
+    font-size: 14px;
+}
+
+.collapsed-content i {
+    font-size: 12px;
+}
+
+.collapsed-text {
+    font-weight: 500;
+}
+
+.expand-btn {
+    background: none;
+    border: none;
+    color: #007bff;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.expand-btn:hover {
+    background: #007bff;
+    color: white;
+}
+
+.expand-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 /* 반응형 디자인 */
 @media (max-width: 768px) {
     .toolbar {
@@ -731,6 +1253,11 @@ export default {
     
     .toolbar-left {
         justify-content: center;
+    }
+    
+    .zoom-controls {
+        justify-content: center;
+        margin-top: 10px;
     }
     
     .btn {

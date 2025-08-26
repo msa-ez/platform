@@ -725,7 +725,9 @@
       "regenerate": "Regenerate",
       "addNode": "Add Node",
       "generating": "Generating site map...",
-      "progress": "Generating site map... ({rate}%)"
+      "progress": "Generating site map... ({rate}%)",
+      "expandAll": "Expand All",
+      "collapseAll": "Collapse All"
     },
     "node": {
       "siteTitle": "Site Title",
@@ -738,7 +740,10 @@
       "uiRequirementsPlaceholder": "UI requirements (e.g., table layout, card form, form validation, etc.)",
       "childCount": "{count} children",
       "addChildNode": "Add Child Node",
-      "deleteNode": "Delete Node"
+      "deleteNode": "Delete Node",
+      "expand": "Expand",
+      "collapse": "Collapse",
+      "collapsed": "{count} child nodes collapsed"
     },
     "empty": {
       "title": "Site map is empty",

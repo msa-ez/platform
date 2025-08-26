@@ -267,7 +267,6 @@
                                 @update:userStory="updateUserStory"
                                 @update:inputDDL="updateInputDDL"
                                 @update:modelList="updateModelList"
-                                @update:siteMap="updateSiteMap"
                                 @delete:modelList="deleteModelList"
                                 @open:storageDialog="openStorageDialog"
                                 @update:projectInfo="updateProjectInfo"
