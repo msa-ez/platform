@@ -22,6 +22,11 @@ module.exports = {
         //     },
         // },
         devtool: 'source-map',
+        resolve: {
+            alias: {
+                'fast-png': require.resolve('fast-png/lib/index.js')
+            }
+        },
         devServer: {
             port: '8081',
             // historyApiFallback: true,
@@ -87,18 +92,7 @@ module.exports = {
                 return args
             })
         
-        // fast-png 모듈을 Babel로 트랜스파일
-        config.module
-            .rule('js')
-            .include
-                .add(/node_modules\/fast-png/)
-                .end()
-            .use('babel-loader')
-                .loader('babel-loader')
-                .options({
-                    presets: ['@babel/preset-env'],
-                    plugins: ['@babel/plugin-proposal-class-properties']
-                })
+        // fast-png 모듈은 configureWebpack의 alias에서 처리됨
     },
     transpileDependencies: [
         'fast-png'
