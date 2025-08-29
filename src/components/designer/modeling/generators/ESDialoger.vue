@@ -93,7 +93,7 @@
                 </v-btn>
                 <v-btn v-if="!done && processingRate > 0" :disabled="!isEditable" @click="stop()" style="position: absolute; right:10px; top:10px;">
                     <v-progress-circular class="auto-modeling-stop-loading-icon" indeterminate></v-progress-circular>
-                    Stop generating ({{ processingRate }}%)
+                    Stop generating ({{ processingRate }}%) 
                 </v-btn>
                 <v-row v-if="done" :disabled="!isEditable" class="ma-0 pa-4">
                     <v-spacer></v-spacer>
