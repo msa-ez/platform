@@ -93,6 +93,12 @@ module.exports = {
             .include
                 .add(/node_modules\/fast-png/)
                 .end()
+            .use('babel-loader')
+                .loader('babel-loader')
+                .options({
+                    presets: ['@babel/preset-env'],
+                    plugins: ['@babel/plugin-proposal-class-properties']
+                })
     },
     transpileDependencies: [
         'fast-png'
