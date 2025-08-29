@@ -10,7 +10,7 @@ const DEFAULT_CONFIG = {
 /**
  * @description AI 응답을 JSON 형식으로 처리하고 포맷팅하는 기본 생성기 클래스입니다.
  * 이 클래스는 AI 모델의 응답을 구조화된 JSON으로 변환하고, 도메인 모델 생성에 필요한 
- * 기본적인 포맷팅 및 유효성 검사 기능을 제공합니다.
+ * 기본적인 포맷팅 및 유효성 검사 기능을 제공합니다. 
  * 
  * @example 기본적인 생성기 구현
  * class MyGenerator extends FormattedJSONAIGenerator {

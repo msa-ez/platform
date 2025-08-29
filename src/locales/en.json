@@ -387,7 +387,6 @@
     "impactAreas": "Impact areas"
   },
   "RuleExampleDialog": {
-    "generateExamples": "Generate Examples",
     "stopGenerating": "Stop Generating",
     "resetExamples": "Reset Examples",
     "generateExamples": "Configure Given-When-Then"
@@ -719,6 +718,43 @@
       "invalidOpenAIKey": "Invalid OpenAI API key. Please check your API key.",
       "invalidAnthropicKey": "Invalid Anthropic API key. Please check your API key.",
       "validKey": "API key is valid."
+    }
+  },
+  "siteMap": {
+    "toolbar": {
+      "regenerate": "Regenerate",
+      "addNode": "Add Node",
+      "generating": "Generating site map...",
+      "progress": "Generating site map... ({rate}%)",
+      "expandAll": "Expand All",
+      "collapseAll": "Collapse All"
+    },
+    "node": {
+      "siteTitle": "Site Title",
+      "siteDescription": "Enter site description",
+      "pageTitle": "Page Title",
+      "pageDescription": "Page Description",
+      "boundedContext": "Bounded Context:",
+      "selectBoundedContext": "Select",
+      "uiRequirements": "UI Requirements:",
+      "uiRequirementsPlaceholder": "UI requirements (e.g., table layout, card form, form validation, etc.)",
+      "childCount": "{count} children",
+      "addChildNode": "Add Child Node",
+      "deleteNode": "Delete Node",
+      "expand": "Expand",
+      "collapse": "Collapse",
+      "collapsed": "{count} child nodes collapsed"
+    },
+    "empty": {
+      "title": "Site map is empty",
+      "description": "Add your first node!",
+      "addRootNode": "Add Root Node"
+    },
+    "defaults": {
+      "newWebsite": "New Website",
+      "newPage": "New Page",
+      "pageDescription": "Page Description",
+      "emptySiteMap": "Empty Site Map"
     }
   }
 }

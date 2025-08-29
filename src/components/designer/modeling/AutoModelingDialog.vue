@@ -267,9 +267,9 @@
                                 @update:userStory="updateUserStory"
                                 @update:inputDDL="updateInputDDL"
                                 @update:modelList="updateModelList"
-                                @update:siteMap="updateSiteMap"
                                 @delete:modelList="deleteModelList"
                                 @open:storageDialog="openStorageDialog"
+                                @update:projectInfo="updateProjectInfo"
                                 :uiStyle="uiStyle"  
                             ></ESDialoger>
                             <!-- <CJMDialoger v-if="genType == 'CJM'"    ref="cjMDialoger"   v-model="projectInfo.customerJourneyMap" :isServerProject="isServer" :projectId="projectId" :modelIds="modelIds" :prompt="projectInfo.prompt" :cachedModels="cachedModels" @change="backupProject" @setPersonas="setPersonas" ></CJMDialoger>
@@ -445,7 +445,9 @@
                         customerJourneyMap: null,
                         businessModel: null,
                         userStoryMap: null,
-                        prompt: ''
+                        prompt: '',
+                        userStoryChunks: [],
+                        summarizedResult: ''
                     }
                 }
             },
@@ -1279,6 +1281,11 @@
                 if(isSave){
                     await this.putObject(`db://definitions/${this.projectInfo.projectId}/information`, this.projectInfo)
                 }
+            },
+            async updateProjectInfo(info){
+                this.$set(this.projectInfo, 'userStoryChunks', info.userStoryChunks);
+                this.$set(this.projectInfo, 'summarizedResult', info.summarizedResult);
+                await this.putObject(`db://definitions/${this.projectInfo.projectId}/information`, this.projectInfo)
             },
             async updateInputDDL(content){
                 this.$set(this.projectInfo, 'inputDDL', content);

@@ -1,6 +1,18 @@
 <template>
-    <div class="site-map-node">
+    <div class="site-map-node" :class="{ 'collapsed': isCollapsed }">
         <div class="node-content" :data-node-id="node.id" :data-node-type="node.type">
+            <!-- 접기/펼치기 버튼 (우측) -->
+            <button 
+                v-if="node.children && node.children.length > 0"
+                class="collapse-btn" 
+                @click="toggleCollapse" 
+                :title="isCollapsed ? '펼치기' : '접기'"
+                :disabled="isGenerating"
+                :class="{ 'collapsed': isCollapsed }"
+            >
+                <span class="arrow-icon">{{ isCollapsed ? '▶' : '▼' }}</span>
+            </button>
+            
             <div class="node-title">
                 <div class="node-parent-info" v-if="parentTitle">
                     <i class="fas fa-level-up-alt"></i>
@@ -8,60 +20,65 @@
                 </div>
                 <input 
                     v-model="node.title" 
+                    :disabled="isGenerating"
                     class="node-input title-input"
-                    placeholder="페이지 제목"
+                    :placeholder="$t('siteMap.node.pageTitle')"
                     @input="updateNode"
                 />
             </div>
             <div class="node-description">
                 <input 
                     v-model="node.description" 
+                    :disabled="isGenerating"
                     class="node-input description-input"
-                    placeholder="페이지 설명"
+                    :placeholder="$t('siteMap.node.pageDescription')"
                     @input="updateNode"
                 />
             </div>
             <div class="node-bounded-context" v-if="node.type !== 'root'">
-                <div class="field-label">Bounded Context:</div>
+                <div class="field-label">{{ $t('siteMap.node.boundedContext') }}</div>
                 <select 
                     v-model="node.boundedContext"
+                    :disabled="isGenerating"
                     @change="updateNode"
                 >
-                    <option value="">선택하세요</option>
+                    <option value="">{{ $t('siteMap.node.selectBoundedContext') }}</option>
                     <option 
                         v-for="bc in availableBoundedContexts" 
                         :key="typeof bc === 'string' ? bc : (bc.id || bc.title)"
                         :value="typeof bc === 'string' ? bc : bc.title"
+                        :disabled="isGenerating"
                     >
                         {{ typeof bc === 'string' ? bc : bc.title }}
                     </option>
                 </select>
             </div>
             <div class="node-ui-requirements" v-if="node.type !== 'root'">
-                <div class="field-label">UI Requirements:</div>
+                <div class="field-label">{{ $t('siteMap.node.uiRequirements') }}</div>
                 <textarea 
                     v-model="node.uiRequirements" 
+                    :disabled="isGenerating"
                     class="node-textarea ui-requirements-textarea"
-                    placeholder="UI 요구사항 (예: 테이블 레이아웃, 카드 형태, 폼 검증 등)"
+                    :placeholder="$t('siteMap.node.uiRequirementsPlaceholder')"
                     @input="updateNode"
                     rows="3"
                 ></textarea>
             </div>
             <div class="node-actions">
                 <span class="child-count" v-if="node.children && node.children.length > 0">
-                    {{ node.children.length }}개 하위
+                    {{ $t('siteMap.node.childCount', { count: node.children.length }) }}
                 </span>
-                <button class="action-btn" @click="$emit('add-child', node.id)" title="하위 노드 추가">
+                <button class="action-btn" @click="$emit('add-child', node.id)" :title="$t('siteMap.node.addChildNode')" :disabled="isGenerating">
                     <i class="fas fa-plus"></i>
                 </button>
-                <button class="action-btn delete-btn" @click="$emit('delete-node', node.id)" title="노드 삭제">
+                <button class="action-btn delete-btn" @click="$emit('delete-node', node.id)" :title="$t('siteMap.node.deleteNode')" :disabled="isGenerating">
                     <i class="fas fa-trash"></i>
                 </button>
             </div>
         </div>
         
         <!-- 하위 노드들 -->
-        <div class="children-container" v-if="node.children && node.children.length > 0">
+        <div class="children-container" v-if="node.children && node.children.length > 0 && !isCollapsed">
             <div class="children-wrapper">
                 <div 
                     v-for="(child, index) in node.children" 
@@ -69,13 +86,42 @@
                     class="child-node"
                 >
                     <SiteMapNode 
+                        :isGenerating="isGenerating"
                         :node="child"
                         :parent-title="node.title"
                         :available-bounded-contexts="availableBoundedContexts"
                         @add-child="$emit('add-child', $event)"
                         @delete-node="$emit('delete-node', $event)"
                         @update-node="$emit('update-node', $event)"
+                        @node-collapse-changed="$emit('node-collapse-changed', $event)"
                     />
+                </div>
+            </div>
+        </div>
+        
+        <!-- 접힌 상태 표시 -->
+        <div class="collapsed-preview" v-if="node.children && node.children.length > 0 && isCollapsed">
+            <div class="collapsed-content">
+                <div class="collapsed-header">
+                    <i class="fas fa-chevron-right"></i>
+                    <span class="collapsed-text">{{ node.children.length }}개 하위 노드 접힘</span>
+                    <button class="expand-btn" @click="toggleCollapse" :disabled="isGenerating">
+                        <i class="fas fa-chevron-down"></i> 펼치기
+                    </button>
+                </div>
+                <div class="collapsed-preview-list">
+                    <div 
+                        v-for="(child, index) in node.children.slice(0, 3)" 
+                        :key="child.id"
+                        class="preview-item"
+                    >
+                        <i class="fas fa-circle"></i>
+                        <span class="preview-title">{{ child.title }}</span>
+                    </div>
+                    <div v-if="node.children.length > 3" class="preview-more">
+                        <i class="fas fa-ellipsis-h"></i>
+                        <span>외 {{ node.children.length - 3 }}개</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -97,13 +143,19 @@ export default {
         availableBoundedContexts: {
             type: Array,
             default: () => []
+        },
+        isGenerating: {
+            type: Boolean,
+            default: false
         }
     },
     data() {
         return {
-            updateTimeout: null
+            updateTimeout: null,
+            isCollapsed: false
         };
     },
+    
     methods: {
         updateNode() {
             // 디바운싱으로 성능 개선
@@ -119,6 +171,11 @@ export default {
                     uiRequirements: this.node.uiRequirements
                 });
             }, 300); // 300ms 지연
+        },
+        toggleCollapse() {
+            this.isCollapsed = !this.isCollapsed;
+            // 접기/펼치기 상태 변경을 부모 컴포넌트에 알림
+            this.$emit('node-collapse-changed', this.node.id, this.isCollapsed);
         }
     }
 };
@@ -154,6 +211,53 @@ export default {
 
 .node-title {
     margin-bottom: 8px;
+}
+
+.title-input {
+    width: 100%;
+}
+
+/* 접기/펼치기 버튼 스타일 */
+.collapse-btn {
+    position: absolute;
+    right: -32px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 28px;
+    height: 28px;
+    background: #ffffff;
+    border: 2px solid #28a745;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: #28a745;
+    transition: all 0.2s ease;
+    z-index: 10;
+    font-weight: bold;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.collapse-btn:hover {
+    background: #28a745;
+    color: white;
+    transform: scale(1.1);
+}
+
+.collapse-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.arrow-icon {
+    display: block;
+    line-height: 1;
+    font-size: 16px;
+    font-weight: bold;
+    text-align: center;
 }
 
 .node-parent-info {
@@ -377,6 +481,161 @@ export default {
     width: 2px;
     height: 15px;
     background: #28a745;
+}
+
+/* 접힌/펼쳐진 상태에 따른 노드 스타일 */
+.site-map-node.collapsed .node-content {
+    border-color: #6c757d !important;
+    background: #f8f9fa;
+    opacity: 0.8;
+}
+
+.site-map-node.collapsed .node-content:hover {
+    border-color: #495057 !important;
+    background: #e9ecef;
+    opacity: 1;
+}
+
+/* 노드 상태 표시기 */
+.node-status-indicator {
+    position: absolute;
+    top: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    z-index: 15;
+}
+
+.children-count {
+    background: #007bff;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 9px;
+    font-weight: 500;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* 접기/펼치기 버튼 스타일 개선 */
+.collapse-btn.collapsed {
+    border-color: #6c757d;
+    color: #6c757d;
+    background: #f8f9fa;
+}
+
+.collapse-btn.collapsed:hover {
+    border-color: #495057;
+    background: #495057;
+    color: white;
+}
+
+/* 접힌 상태 미리보기 */
+.collapsed-preview {
+    margin-top: 15px;
+    display: flex;
+    justify-content: center;
+}
+
+.collapsed-content {
+    background: #f8f9fa;
+    border: 2px dashed #dee2e6;
+    border-radius: 15px;
+    padding: 12px 16px;
+    min-width: 200px;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+.collapsed-content:hover {
+    border-color: #6c757d;
+    background: #e9ecef;
+}
+
+.collapsed-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    color: #6c757d;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.collapsed-header i {
+    color: #6c757d;
+    font-size: 10px;
+}
+
+.expand-btn {
+    background: none;
+    border: none;
+    color: #007bff;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    transition: all 0.2s ease;
+    margin-left: 8px;
+}
+
+.expand-btn:hover {
+    background: #007bff;
+    color: white;
+}
+
+.expand-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* 접힌 상태 미리보기 리스트 */
+.collapsed-preview-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    align-items: flex-start;
+    text-align: left;
+}
+
+.preview-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: #495057;
+    width: 100%;
+}
+
+.preview-item i {
+    font-size: 8px;
+    color: #6c757d;
+}
+
+.preview-title {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.preview-more {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    color: #6c757d;
+    font-style: italic;
+    margin-top: 4px;
+    padding-top: 4px;
+    border-top: 1px solid #dee2e6;
+    width: 100%;
+}
+
+.preview-more i {
+    font-size: 8px;
 }
 
 /* 반응형 디자인 */

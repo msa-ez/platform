@@ -87,14 +87,21 @@
                         </v-card-text>
                     </v-tab-item>
                 </v-tabs-items>
-                <v-btn v-if="!done" :disabled="!isEditable" @click="stop()" style="position: absolute; right:10px; top:10px;"><v-progress-circular class="auto-modeling-stop-loading-icon" indeterminate></v-progress-circular>Stop generating</v-btn>
+                <v-btn v-if="!done && processingRate == 0" :disabled="!isEditable" @click="stop()" style="position: absolute; right:10px; top:10px;">
+                    <v-progress-circular class="auto-modeling-stop-loading-icon" indeterminate></v-progress-circular>
+                    Stop generating
+                </v-btn>
+                <v-btn v-if="!done && processingRate > 0" :disabled="!isEditable" @click="stop()" style="position: absolute; right:10px; top:10px;">
+                    <v-progress-circular class="auto-modeling-stop-loading-icon" indeterminate></v-progress-circular>
+                    Stop generating ({{ processingRate }}%) 
+                </v-btn>
                 <v-row v-if="done" :disabled="!isEditable" class="ma-0 pa-4">
                     <v-spacer></v-spacer>
                     <v-btn v-if="state.startTemplateGenerate" :disabled="getDisabledGenerateBtn() || !isEditable" class="auto-modeling-btn" @click="generate()">
                         <v-icon class="auto-modeling-btn-icon">mdi-refresh</v-icon>{{ $t('ESDialoger.tryAgain') }}
                     </v-btn>
                     <v-btn v-else
-                        :disabled="!isEditable"
+                        :disabled="getDisabledGenerateBtn() || !isEditable"
                         class="auto-modeling-btn"
                         @click="generate(); state.isAIModelSelected = true;"
                     >
@@ -212,6 +219,7 @@
 <script>
     import { VueTypedJs } from 'vue-typed-js'
     import Generator from './UserStoryGenerator.js'
+    import RecursiveUserStoryGenerator from './RecursiveUserStoryGenerator.js'
     //import UserStoryGenerator from './UserStoryGenerator.js'
     // import StorageBase from "../StorageBase";
     import StorageBase from '../../../CommonStorageBase.vue';
@@ -241,6 +249,7 @@
 
     // SiteMap Viewer
     import SiteMapGenerator from './SiteMapGenerator.js';
+    import RecursiveSiteMapGenerator from './RecursiveSiteMapGenerator.js';
 
     const axios = require('axios');
     import YAML from 'js-yaml';
@@ -1270,6 +1279,8 @@ import { value } from 'jsonpath';
                 this.state.secondMessageIsTyping = false;
                 this.projectInfo.userStory = this.projectInfo.userStory || '';
                 this.projectInfo.inputDDL = this.projectInfo.inputDDL || '';
+                this.userStoryChunks = this.projectInfo.userStoryChunks || [];
+                this.summarizedResult = this.projectInfo.summarizedResult || '';
 
                 this.messages = [];
 
@@ -1462,6 +1473,11 @@ import { value } from 'jsonpath';
             },
 
             onReceived(content){
+                // recursive generator일 때는 토큰마다 업데이트하지 않음 (청크가 많아서 과도하게 호출됨)
+                if (this.state.generator === "RecursiveUserStoryGenerator") {
+                    return;
+                }
+
                 if(this.state.generator === "EventOnlyESGenerator"){
                     if(!this.projectInfo.userStory){
                         this.projectInfo['userStory'] = ''
@@ -1494,11 +1510,14 @@ import { value } from 'jsonpath';
                         this.updateMessageState(currentMessage.uniqueId, {
                             currentGeneratedLength: this.currentGeneratedLength,
                         });
+                    }else if(this.state.generator === "RecursiveUserStoryGenerator"){
+                        // RecursiveUserStoryGenerator의 처리 상태는 onGenerationFinished에서 관리
+                        // 여기서는 currentGeneratedLength만 업데이트
                     }
                 }
             },
 
-            async onGenerationFinished(model){
+            onGenerationFinished(model){
                 var me = this;
                 me.done = true;
 
@@ -1557,6 +1576,83 @@ import { value } from 'jsonpath';
 
                 if (me.state.generator === "RecursiveRequirementsSummarizer") {
                     me.generator.handleGenerationFinished(model);
+                    return;
+                }
+
+                // Recursive SiteMap: 청크 단위 결과는 생성기 내부에서 누적 처리하며 진행상황/부분결과 업데이트
+                if (me.state.generator === "RecursiveSiteMapGenerator") {
+                    me.generator.handleGenerationFinished(model);
+
+                    try {
+                        const total = me.generator.currentChunks.length || 1;
+                        const done = Math.min(me.generator.currentChunkIndex, total);
+                        const processingRate = Math.round((done / total) * 100);
+
+                        // 부분 결과 구성
+                        const partialRoot = {
+                            id: me.uuid(),
+                            title: me.generator.accumulated.title || '새로운 웹사이트',
+                            description: me.generator.accumulated.description || '웹사이트 설명',
+                            type: 'root',
+                            boundedContexts: Array.from(me.generator.accumulated.boundedContextsMap.values()),
+                            children: JSON.parse(JSON.stringify(me.generator.accumulated.rootChildren || []))
+                        };
+                        const partialTree = [partialRoot];
+
+                        // 메시지 업데이트 (진행률, 부분 사이트맵)
+                        const siteMapMsg = me.messages.find(msg => msg.type === 'siteMapViewer');
+                        if (siteMapMsg) {
+                            me.updateMessageState(siteMapMsg.uniqueId, {
+                                siteMap: partialTree,
+                                isGenerating: done < total,
+                                processingRate,
+                                currentChunk: done,
+                                totalChunks: total
+                            });
+                        }
+
+                        // BC 매핑도 부분 업데이트
+                        me.mapSiteMapToBoundedContexts(partialTree);
+                        const bcMsg = me.messages.find(msg => msg.type === 'boundedContextResult');
+                        if (bcMsg) {
+                            me.updateMessageState(bcMsg.uniqueId, {
+                                result: JSON.parse(JSON.stringify(me.resultDevideBoundedContext))
+                            });
+                        }
+                        me.$emit("update:draft", me.messages);
+                    } catch(e) {
+                        console.warn('Recursive sitemap incremental update failed:', e);
+                    }
+                    return;
+                }
+
+                // Recursive UserStory: 청크 단위 결과는 생성기 내부에서 누적 처리하며 진행상황/부분결과 업데이트
+                if (me.state.generator === "RecursiveUserStoryGenerator") {
+                    me.generator.handleGenerationFinished(model);
+
+                    try {
+                        const total = me.generator.currentChunks.length || 1;
+                        const done = Math.min(me.generator.currentChunkIndex, total);
+                        
+                        // 각 청크 완료마다 누적된 결과를 userStory로 emit
+                        const accumulated = me.generator.accumulated;
+                        if (accumulated && (accumulated.userStories || accumulated.actors || accumulated.businessRules)) {
+                            const userStoryContent = me.convertUserStoriesToText(accumulated);
+                            me.$emit('update:userStory', userStoryContent, false);
+                        }
+
+                        // 현재 처리 상태 표시 (선언된 데이터 활용)
+                        me.processingRate = Math.round((done / total) * 100);
+                        if(done == total){
+                            me.done = true;
+                            me.processingRate = 0;
+                        }else{
+                            me.done = false;
+                        }
+                        
+                    } catch(e) {
+                        console.warn('Recursive user story processing failed:', e);
+                    }
                     return;
                 }
 
@@ -1687,13 +1783,38 @@ import { value } from 'jsonpath';
 
             async generate(){
                 let issuedTimeStamp = Date.now()
-                this.state.generator = "EventOnlyESGenerator";
-                this.generatorName = "EventOnlyESGenerator";
+                
+                // 요구사항 길이에 따라 적절한 generator 선택
+                const requirementsText = this.projectInfo.userStory || '';
+                const shouldUseRecursive = requirementsText && requirementsText.length > 24000;
+                
+                if (shouldUseRecursive) {
+                    this.state.generator = "RecursiveUserStoryGenerator";
+                    this.generatorName = "RecursiveUserStoryGenerator";
+                    this.generator = new RecursiveUserStoryGenerator(this);
+                    
+                    // recursive 처리 시작
+                    this.generator.generateRecursively(this.projectInfo.userStory).then(result => {
+                        console.log('Recursive user story generation completed:', result);
+                        // 최종 결과를 userStory로 설정
+                        if (result) {
+                            const userStoryContent = this.convertUserStoriesToText(result);
+                            this.$emit('update:userStory', userStoryContent, true);
+                        }
+                    }).catch(error => {
+                        console.error('Recursive generation failed:', error);
+                    });
+                } else {
+                    this.state.generator = "EventOnlyESGenerator";
+                    this.generatorName = "EventOnlyESGenerator";
+                    this.generator = new Generator(this);
+                    this.generator.generate();
+                }
+
                 this.input.businessModel = this.cachedModels["BMGenerator"]
                 this.input.painpointAnalysis = this.cachedModels["CJMGenerator"]
                 this.input.title = this.projectInfo.prompt
                 this.input.userStory = this.projectInfo.userStory
-                this.generator = new Generator(this);
 
                 let usage = new Usage({
                     serviceType: `ES_AIGeneration`,
@@ -1709,10 +1830,72 @@ import { value } from 'jsonpath';
                     return false;
                 }
 
-                this.generator.generate();
                 this.state.startTemplateGenerate = true
                 this.done = false;
                 this.projectInfo.userStory = '';
+            },
+
+            // JSON 구조화된 유저스토리를 텍스트로 변환
+            convertUserStoriesToText(accumulated) {
+                if (!accumulated || typeof accumulated !== 'object') {
+                    return '';
+                }
+
+                let result = '';
+
+                // Actors 섹션
+                if (accumulated.actors && Array.isArray(accumulated.actors) && accumulated.actors.length > 0) {
+                    result += '=== ACTORS ===\n';
+                    accumulated.actors.forEach(actor => {
+                        result += `• ${actor.title}\n`;
+                        if (actor.description) result += `  Description: ${actor.description}\n`;
+                        if (actor.role) result += `  Role: ${actor.role}\n`;
+                        result += '\n';
+                    });
+                }
+
+                // User Stories 섹션
+                if (accumulated.userStories && Array.isArray(accumulated.userStories) && accumulated.userStories.length > 0) {
+                    result += '=== USER STORIES ===\n';
+                    accumulated.userStories.forEach(story => {
+                        result += `• ${story.title}\n`;
+                        if (story.as && story.iWant && story.soThat) {
+                            result += `  ${story.as}\n`;
+                            result += `  ${story.iWant}\n`;
+                            result += `  ${story.soThat}\n`;
+                        }
+                        if (story.description) result += `  Description: ${story.description}\n`;
+                        result += '\n';
+                    });
+                }
+
+                // Business Rules 섹션
+                if (accumulated.businessRules && Array.isArray(accumulated.businessRules) && accumulated.businessRules.length > 0) {
+                    result += '=== BUSINESS RULES ===\n';
+                    accumulated.businessRules.forEach(rule => {
+                        result += `• ${rule.title}\n`;
+                        if (rule.description) result += `  ${rule.description}\n`;
+                        result += '\n';
+                    });
+                }
+
+                // Bounded Contexts 섹션
+                if (accumulated.boundedContexts && Array.isArray(accumulated.boundedContexts) && accumulated.boundedContexts.length > 0) {
+                    result += '=== BOUNDED CONTEXTS ===\n';
+                    accumulated.boundedContexts.forEach(bc => {
+                        result += `• ${bc.name || bc.title}\n`;
+                        if (bc.description) result += `  Description: ${bc.description}\n`;
+                        if (bc.role) result += `  Role: ${bc.role}\n`;
+                        result += '\n';
+                    });
+                }
+
+                // Title이 있는 경우 추가
+                if (accumulated.title) {
+                    result = `# ${accumulated.title}\n\n${result}`;
+                }
+
+                return result.trim();
             },
 
             stop(){
@@ -1737,6 +1920,13 @@ import { value } from 'jsonpath';
                     messageId = this.messages.find(msg => msg.type === "processAnalysis").uniqueId;
                     this.messages.splice(this.messages.findIndex(msg => msg.type === "processAnalysis"), 1);
                     this.requirementsValidationResult = null;
+                }
+
+                if(this.state.generator === "RecursiveUserStoryGenerator"){
+                    // recursive generator 중단 처리
+                    if (this.generator && this.generator.resolveCurrentProcess) {
+                        this.generator.resolveCurrentProcess = null;
+                    }
                 }
 
                 if(this.state.generator === "RequirementsMappingGenerator"){
@@ -1865,6 +2055,11 @@ import { value } from 'jsonpath';
                     this.userStoryChunks = this.generator.currentChunks;
                     this.userStoryChunksIndex = 0;
                     this.summarizedResult = summarizedText;
+
+                    this.$emit("update:projectInfo", {
+                        userStoryChunks: this.userStoryChunks,
+                        summarizedResult: this.summarizedResult
+                    })
                     console.log("최종 요약 결과: ", this.summarizedResult);
 
                     this.processingState.isSummarizeStarted = false;
@@ -2204,6 +2399,9 @@ import { value } from 'jsonpath';
                         userStory: this.summarizedResult !== "" ? this.summarizedResult : this.projectInfo.userStory,
                         resultDevideBoundedContext: this.resultDevideBoundedContext[this.selectedAspect],
                         isGenerating: true,
+                        processingRate: 0,
+                        currentChunk: 0,
+                        totalChunks: 0,
                         timestamp: new Date()
                     };
                 }
@@ -2270,7 +2468,7 @@ import { value } from 'jsonpath';
             },
 
             getDisabledGenerateBtn(){
-                return this.processingState.isSummarizeStarted || this.processingState.isGeneratingBoundedContext || this.processingState.isStartMapping || this.processingState.isAnalizing || !this.projectInfo.userStory
+                return this.processingState.isSummarizeStarted || this.processingState.isGeneratingBoundedContext || this.processingState.isStartMapping || this.processingState.isAnalizing || this.projectInfo.userStory==null
             },
 
             async loadAllRepoList(){
@@ -2602,8 +2800,11 @@ import { value } from 'jsonpath';
             },
 
             generateSiteMap(){
-                this.generator = new SiteMapGenerator(this);
-                this.state.generator = "SiteMapGenerator";
+                const requirementsText = this.projectInfo.userStory || '';
+                const shouldUseRecursive = requirementsText && requirementsText.length > 24000;
+
+                this.generator = shouldUseRecursive ? new RecursiveSiteMapGenerator(this) : new SiteMapGenerator(this);
+                this.state.generator = shouldUseRecursive ? "RecursiveSiteMapGenerator" : "SiteMapGenerator";
 
                 if(!this.alertGenerateWarning("siteMapViewer")){
                     return;
@@ -2626,7 +2827,29 @@ import { value } from 'jsonpath';
                     this.messages.push(siteMapMessage);
                 }
                 
-                this.generator.generate()
+                if (shouldUseRecursive) {
+                    this.generator.generateRecursively(this.projectInfo.userStory).then(result => {
+                        this.siteMap = result.treeData;
+                        this.updateMessageState(this.messages.find(msg => msg.type === 'siteMapViewer').uniqueId, {
+                            siteMap: this.siteMap,
+                            isGenerating: false
+                        });
+                        try {
+                            this.mapSiteMapToBoundedContexts(this.siteMap);
+                            const bcMsg = this.messages.find(msg => msg.type === 'boundedContextResult');
+                            if (bcMsg) {
+                                this.updateMessageState(bcMsg.uniqueId, {
+                                    result: JSON.parse(JSON.stringify(this.resultDevideBoundedContext))
+                                });
+                            }
+                        } catch (e) {
+                            console.warn('Failed to map sitemap to bounded contexts:', e);
+                        }
+                        this.$emit('update:draft', this.messages)
+                    });
+                } else {
+                    this.generator.generate()
+                }
             },
             mapSiteMapToBoundedContexts(siteMapTree) {
                 if (!siteMapTree || !Array.isArray(siteMapTree) || siteMapTree.length === 0) return;

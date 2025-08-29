@@ -585,12 +585,6 @@
                 if (me.projectId) {
                     try {
                         var information = await me.list(`db://definitions/${providerUid}_project_${me.projectId}/information`);
-                        me.draft = await me.list(`db://definitions/${providerUid}_project_${me.projectId}/draft`);
-
-                        // 없는 경우, 재탐색
-                        if(!me.draft) {
-                            me.draft = information && information.draft ? information.draft : [];
-                        }
 
                         me.$EventBus.$emit('progressValue', true)
                         if (information) {
@@ -606,6 +600,19 @@
                     } catch (error) {
                         console.error('Error loading project:', error);
                         me.$EventBus.$emit('progressValue', false)
+                    } finally {
+                        if(me.isOwnModel || !me.isReadOnlyModel) {
+                            me.draft = await me.list(`db://definitions/${providerUid}_project_${me.projectId}/draft`);
+
+                            // 없는 경우, 재탐색
+                            if(!me.draft) {
+                                me.draft = information && information.draft ? information.draft : [];
+                            }
+                        }else{
+                            me.draft = [];
+                            me.information.userStory = '';
+                            me.information.inputDDL = '';
+                        }
                     }
                 }
 
