@@ -24,14 +24,8 @@ module.exports = {
         devtool: 'source-map',
         resolve: {
             alias: {
-                'fast-png': false
-            },
-            fallback: {
-                'fast-png': false
+                'fast-png': require('path').resolve(__dirname, 'src/utils/fast-png-stub.js')
             }
-        },
-        externals: {
-            'fast-png': 'commonjs fast-png'
         },
         devServer: {
             port: '8081',
