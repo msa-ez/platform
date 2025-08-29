@@ -24,8 +24,14 @@ module.exports = {
         devtool: 'source-map',
         resolve: {
             alias: {
-                'fast-png': require.resolve('fast-png/lib/index.js')
+                'fast-png': false
+            },
+            fallback: {
+                'fast-png': false
             }
+        },
+        externals: {
+            'fast-png': 'commonjs fast-png'
         },
         devServer: {
             port: '8081',
@@ -73,6 +79,10 @@ module.exports = {
             // 빌드 버전을 전역 변수로 주입
             new (require('webpack')).DefinePlugin({
                 'process.env.VUE_APP_BUILD_VERSION': JSON.stringify(BUILD_VERSION)
+            }),
+            // fast-png 모듈을 무시
+            new (require('webpack')).IgnorePlugin({
+                resourceRegExp: /^fast-png$/
             })
         ]
         // plugins: [new BundleAnalyzerPlugin({
@@ -95,7 +105,7 @@ module.exports = {
         // fast-png 모듈은 configureWebpack의 alias에서 처리됨
     },
     transpileDependencies: [
-        'fast-png'
+        // 'fast-png' 제거됨 - IgnorePlugin으로 처리
     ],
     "runtimeCompiler": true,
     css: {
