@@ -109,7 +109,8 @@
     "warnings": {
       "default": "하단의 생성 결과들이 삭제되고 새롭게 생성됩니다.",
       "siteMap": "기존의 결과를 삭제하고 새롭게 생성됩니다."
-    }
+    },
+    "processingUserStory": "유저스토리를 재구성하고 있습니다."
   },
   "DevideBoundedContextDialog" : {
     "boundedContextDivisionResult": "Bounded Context 분할 결과",

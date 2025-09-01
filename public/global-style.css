@@ -51,6 +51,31 @@
     margin-right:5px;
 }
 
+.processing-progress-container {
+    position: relative;
+    width: 100%;
+    background-color: #f5f5f5;
+    border-top: 1px solid #e0e0e0;
+}
+
+.processing-progress-bar {
+    border-radius: 0;
+}
+
+.processing-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 12px;
+    font-weight: 1000;
+    color: #ffffff;
+    padding: 2px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    z-index: 1;
+}
+
 .gs-rule-example-chip {
     margin-right:5px;
     background:#BDBDBD !important;

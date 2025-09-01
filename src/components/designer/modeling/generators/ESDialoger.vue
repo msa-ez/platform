@@ -111,6 +111,19 @@
                         {{ $t('ESDialoger.validateRequirements') }}
                     </v-btn>
                 </v-row>
+                
+                <!-- Processing Progress Bar -->
+                <div v-if="!done && processingRate > 0" class="processing-progress-container">
+                    <v-progress-linear 
+                        :value="processingRate" 
+                        color="primary" 
+                        height="15"
+                        class="processing-progress-bar"
+                    ></v-progress-linear>
+                    <div class="processing-text">
+                        {{ $t('ESDialoger.processingUserStory') }} ( {{ processingRate }}% )
+                    </div>
+                </div>
             </v-card>
 
             <ESDialogerMessages 
@@ -2628,13 +2641,15 @@ import { value } from 'jsonpath';
                         "processAnalysis",
                         "bcGenerationOption",
                         "boundedContextResult",
-                        "aggregateDraftDialogDto"
+                        "aggregateDraftDialogDto",
+                        "siteMapViewer"
                     ],
                     "RecursiveRequirementsValidationGenerator": [
                         "processAnalysis",
                         "bcGenerationOption",
                         "boundedContextResult",
-                        "aggregateDraftDialogDto"
+                        "aggregateDraftDialogDto",
+                        "siteMapViewer"
                     ],
                     "bcGenerationOption": [
                         "boundedContextResult",
@@ -2642,12 +2657,16 @@ import { value } from 'jsonpath';
                     ],
                     "DevideBoundedContextGenerator": [
                         "boundedContextResult",
+                        "siteMapViewer",
                         "aggregateDraftDialogDto"
                     ],
                     "CreateAggregateActionsByFunctions": [
                         "aggregateDraftDialogDto"
                     ],
                     "siteMapViewer": [
+                        "siteMapViewer"
+                    ],
+                    "RecursiveSiteMapGenerator": [
                         "siteMapViewer"
                     ]
                 };
@@ -2670,13 +2689,15 @@ import { value } from 'jsonpath';
                         "processAnalysis",
                         "bcGenerationOption",
                         "boundedContextResult",
-                        "aggregateDraftDialogDto"
+                        "aggregateDraftDialogDto",
+                        "siteMapViewer"
                     ],
                     "RecursiveRequirementsValidationGenerator": [
                         "processAnalysis",
                         "bcGenerationOption",
                         "boundedContextResult",
-                        "aggregateDraftDialogDto"
+                        "aggregateDraftDialogDto",
+                        "siteMapViewer"
                     ],
                     "bcGenerationOption": [
                         "boundedContextResult",
@@ -2684,12 +2705,16 @@ import { value } from 'jsonpath';
                     ],
                     "DevideBoundedContextGenerator": [
                         "boundedContextResult",
+                        "siteMapViewer",
                         "aggregateDraftDialogDto"
                     ],
                     "CreateAggregateActionsByFunctions": [
                         "aggregateDraftDialogDto"
                     ],
                     "siteMapViewer": [
+                        "siteMapViewer"
+                    ],
+                    "RecursiveSiteMapGenerator": [
                         "siteMapViewer"
                     ]
                 };
@@ -2820,9 +2845,10 @@ import { value } from 'jsonpath';
 
                 this.siteMap = [];
                 const siteMapMessage = this.generateMessage("siteMapViewer", []);
-                const bcIndex = this.messages.findIndex(msg => msg.type === 'boundedContextResult');
-                if (bcIndex !== -1) {
-                    this.messages.splice(bcIndex + 1, 0, siteMapMessage);
+                const siteMapIndex = this.messages.findIndex(msg => msg.type === 'siteMapViewer');
+                if (siteMapIndex !== -1) {
+                    this.messages.splice(siteMapIndex, 1);
+                    this.messages.push(siteMapMessage);
                 } else {
                     this.messages.push(siteMapMessage);
                 }

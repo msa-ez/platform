@@ -109,7 +109,8 @@
     "warnings": {
       "default": "The following outputs will be deleted and regenerated.",
       "siteMap": "The existing results will be deleted and regenerated."
-    }
+    },
+    "processingUserStory": "Reconstructing user story."
   },
   "DevideBoundedContextDialog" : {
     "boundedContextDivisionResult": "Bounded Context Division Result",
