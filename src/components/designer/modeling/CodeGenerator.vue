@@ -5229,6 +5229,14 @@ jobs:
                     }
                 })
 
+                window.$HandleBars.registerHelper('currentTimestamp', function () {
+                    try {
+                        return new Date().getFullYear() + '-' + new Date().getMonth() + '-' + new Date().getDate() + ' ' + new Date().getHours() + ':' + new Date().getMinutes() + ':' + new Date().getSeconds();
+                    } catch(e){
+                        console.log(e)
+                    }
+                })
+
             },
             reverse(item, path) {
                 var me = this

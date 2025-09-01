@@ -1,5 +1,5 @@
 <template>
-    <div class="site-map-node" :class="{ 'collapsed': isCollapsed }">
+    <div class="site-map-node" :class="{ 'collapsed': isCollapsed, 'root': isRoot }">
         <div class="node-content" :data-node-id="node.id" :data-node-type="node.type">
             <!-- 접기/펼치기 버튼 (우측) -->
             <button 
@@ -14,7 +14,7 @@
             </button>
             
             <div class="node-title">
-                <div class="node-parent-info" v-if="parentTitle">
+                <div class="node-parent-info" v-if="parentTitle && parentTitle.trim() !== ''">
                     <i class="fas fa-level-up-alt"></i>
                     <span>{{ parentTitle }}</span>
                 </div>
@@ -71,7 +71,8 @@
                 <button class="action-btn" @click="$emit('add-child', node.id)" :title="$t('siteMap.node.addChildNode')" :disabled="isGenerating">
                     <i class="fas fa-plus"></i>
                 </button>
-                <button class="action-btn delete-btn" @click="$emit('delete-node', node.id)" :title="$t('siteMap.node.deleteNode')" :disabled="isGenerating">
+                <!-- 루트 노드가 아닐 때만 삭제 버튼 표시 -->
+                <button v-if="!isRoot" class="action-btn delete-btn" @click="$emit('delete-node', node.id)" :title="$t('siteMap.node.deleteNode')" :disabled="isGenerating">
                     <i class="fas fa-trash"></i>
                 </button>
             </div>
@@ -147,6 +148,10 @@ export default {
         isGenerating: {
             type: Boolean,
             default: false
+        },
+        isRoot: {
+            type: Boolean,
+            default: false
         }
     },
     data() {
@@ -199,9 +204,21 @@ export default {
     transition: all 0.2s ease;
 }
 
-/* 모든 노드를 동일한 색상으로 통일 */
+/* 루트 노드와 일반 노드 구분 */
 .node-content {
     border-color: #28a745 !important;
+}
+
+/* 루트 노드 스타일 */
+.site-map-node.root .node-content {
+    border-color: #007bff !important;
+    border-width: 3px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+}
+
+.site-map-node.root .node-content:hover {
+    border-color: #0056b3 !important;
+    box-shadow: 0 8px 25px rgba(0,123,255,0.15);
 }
 
 .node-content:hover {

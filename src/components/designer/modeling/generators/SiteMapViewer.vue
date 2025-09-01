@@ -48,85 +48,17 @@
                      transformOrigin: '0 0'
                  }">
                 <div class="root-node" v-if="localSiteMap.length > 0">
-                    <div class="node-content">
-                        <!-- 접기/펼치기 버튼 (우측) -->
-                        <button 
-                            v-if="localSiteMap[0].children && localSiteMap[0].children.length > 0"
-                            class="collapse-btn" 
-                            @click="toggleRootCollapse" 
-                            :title="isRootCollapsed ? '펼치기' : '접기'"
-                            :disabled="isGenerating"
-                        >
-                            <span class="arrow-icon">{{ isRootCollapsed ? '▼' : '▲' }}</span>
-                        </button>
-                        
-                        <div class="node-title">
-                            <input 
-                                v-model="localSiteMap[0].title" 
-                                :disabled="isGenerating"
-                                class="node-input title-input"
-                                :placeholder="$t('siteMap.node.siteTitle')"
-                                @input="updateNode(localSiteMap[0].id, { title: localSiteMap[0].title })"
-                            />
-                        </div>
-                        <div class="node-description">
-                            <input 
-                                v-model="localSiteMap[0].description" 
-                                class="node-input description-input"
-                                :placeholder="$t('siteMap.node.siteDescription')"
-                            />
-                        </div>
-                        <div class="node-actions">
-                            <button class="action-btn" @click="addChildNode(localSiteMap[0].id)">
-                                <i class="fas fa-plus"></i>
-                            </button>
-                            <button 
-                                v-if="localSiteMap[0].children && localSiteMap[0].children.length > 0"
-                                class="action-btn toggle-btn" 
-                                @click="toggleRootCollapse" 
-                                :title="isRootCollapsed ? $t('siteMap.node.expand') : $t('siteMap.node.collapse')"
-                                :disabled="isGenerating"
-                            >
-                                <i :class="isRootCollapsed ? 'fas fa-chevron-down' : 'fas fa-chevron-up'"></i>
-                            </button>
-                            <button class="action-btn delete-btn" @click="deleteNode(localSiteMap[0].id)">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <!-- 하위 노드들 -->
-                    <div class="children-container" v-if="localSiteMap[0].children && localSiteMap[0].children.length > 0 && !isRootCollapsed">
-                        <div class="children-wrapper">
-                            <div 
-                                v-for="(child, index) in localSiteMap[0].children" 
-                                :key="child.id"
-                                class="child-node"
-                            >
-                                <SiteMapNode 
-                                    :isGenerating="isGenerating"
-                                    :node="child"
-                                    :parent-title="localSiteMap[0].title"
-                                    :available-bounded-contexts="(localSiteMap[0].boundedContexts || [])"
-                                    @add-child="addChildNode"
-                                    @delete-node="deleteNode"
-                                    @update-node="updateNode"
-                                    @node-collapse-changed="handleNodeCollapseChanged"
-                                />
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- 접힌 상태 표시 -->
-                    <div class="collapsed-indicator" v-if="localSiteMap[0].children && localSiteMap[0].children.length > 0 && isRootCollapsed">
-                        <div class="collapsed-content">
-                            <i class="fas fa-ellipsis-h"></i>
-                            <span class="collapsed-text">{{ $t('siteMap.node.collapsed', { count: localSiteMap[0].children.length }) }}</span>
-                            <button class="expand-btn" @click="toggleRootCollapse" :disabled="isGenerating">
-                                <i class="fas fa-chevron-down"></i>
-                            </button>
-                        </div>
-                    </div>
+                    <SiteMapNode 
+                        :isGenerating="isGenerating"
+                        :node="localSiteMap[0]"
+                        :parent-title="null"
+                        :available-bounded-contexts="(localSiteMap[0].boundedContexts || [])"
+                        :is-root="true"
+                        @add-child="addChildNode"
+                        @delete-node="deleteNode"
+                        @update-node="updateNode"
+                        @node-collapse-changed="handleNodeCollapseChanged"
+                    />
                 </div>
                 
                 <!-- 빈 상태 -->
@@ -207,7 +139,6 @@ export default {
             isPanning: false, // 패닝 중인지 여부
             lastMouseX: 0, // 마지막 마우스 X 좌표
             lastMouseY: 0, // 마지막 마우스 Y 좌표
-            isRootCollapsed: false, // 루트 노드 접기/펼치기 상태
             isAllCollapsed: false, // 전체 접기/펼치기 상태
             // 성능 최적화를 위한 추가 변수들
             rafId: null, // RequestAnimationFrame ID
@@ -226,7 +157,17 @@ export default {
         siteMap: {
             handler(newSiteMap) {
                 if (newSiteMap && Array.isArray(newSiteMap)) {
-                    this.localSiteMap = JSON.parse(JSON.stringify(newSiteMap)); // 깊은 복사
+                    // 기존 localSiteMap의 상태를 보존하면서 새로운 데이터로 업데이트
+                    const newLocalSiteMap = JSON.parse(JSON.stringify(newSiteMap));
+                    
+                    // 기존 localSiteMap이 있고, 루트 노드의 접기/펼치기 상태가 있다면 보존
+                    if (this.localSiteMap.length > 0 && this.localSiteMap[0].hasOwnProperty('isCollapsed')) {
+                        if (newLocalSiteMap.length > 0) {
+                            newLocalSiteMap[0].isCollapsed = this.localSiteMap[0].isCollapsed;
+                        }
+                    }
+                    
+                    this.localSiteMap = newLocalSiteMap;
                 }
             },
             immediate: true,
@@ -239,6 +180,12 @@ export default {
         try {
             if(this.siteMap.length == 0){
                 this.addRootNode();
+            } else {
+                // 기존 사이트맵이 있는 경우 루트 노드의 접기/펼치기 상태 초기화
+                if (this.localSiteMap.length > 0 && !this.localSiteMap[0].hasOwnProperty('isCollapsed')) {
+                    // isCollapsed 속성이 없다면 기본값 설정
+                    this.localSiteMap[0].isCollapsed = false;
+                }
             }
             
             // 줌과 패닝 초기화
@@ -270,7 +217,8 @@ export default {
                 title: this.$t('siteMap.defaults.newWebsite'),
                 description: this.$t('siteMap.defaults.siteDescription'),
                 type: "root",
-                children: []
+                children: [],
+                isCollapsed: false
             };
             this.localSiteMap = [rootNode];
             this.$emit('update:siteMap', this.localSiteMap);
@@ -572,23 +520,7 @@ export default {
             }
         },
 
-        toggleRootCollapse() {
-            this.isRootCollapsed = !this.isRootCollapsed;
-            
-            // 루트 노드의 children을 숨김 처리
-            if (this.localSiteMap[0].children) {
-                this.localSiteMap[0].children.forEach(child => {
-                    child.isCollapsed = this.isRootCollapsed;
-                });
-            }
-            
-            // 시점 자동 조정 일시적으로 비활성화 (기본 기능 복구를 위해)
-            // this.$nextTick(() => {
-            //     this.adjustViewAfterCollapse();
-            // });
-            
-            this.$emit('update:siteMap', this.localSiteMap);
-        },
+
 
         // 접기/펼치기 후 시점 자동 조정
         adjustViewAfterCollapse() {
@@ -605,7 +537,7 @@ export default {
             const rootNode = this.localSiteMap[0];
             let estimatedHeight = 100; // 기본 높이
             
-            if (!this.isRootCollapsed && rootNode.children && rootNode.children.length > 0) {
+            if (rootNode.children && rootNode.children.length > 0 && !rootNode.isCollapsed) {
                 // 펼쳐진 상태일 때는 하위 노드들을 고려한 높이 계산
                 // 각 레벨별로 더 정확한 높이 계산
                 estimatedHeight = this.calculateTreeHeight(rootNode);
