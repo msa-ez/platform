@@ -2,7 +2,7 @@
   
   "hosting": [
     {
-      "site": "dev-msaez",
+      "site": "eventstorming-tool-db",
       "public": "dist",
       "ignore": [
         "firebase.json",
