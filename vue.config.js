@@ -74,9 +74,9 @@ module.exports = {
             new (require('webpack')).DefinePlugin({
                 'process.env.VUE_APP_BUILD_VERSION': JSON.stringify(BUILD_VERSION)
             }),
-            // fast-png 모듈을 무시
-            new (require('webpack')).IgnorePlugin({
-                resourceRegExp: /^fast-png$/
+            // fast-png를 전역적으로 스텁으로 제공
+            new (require('webpack')).ProvidePlugin({
+                'fast-png': require('path').resolve(__dirname, 'src/utils/fast-png-stub.js')
             })
         ]
         // plugins: [new BundleAnalyzerPlugin({
