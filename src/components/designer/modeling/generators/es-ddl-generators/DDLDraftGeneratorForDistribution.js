@@ -4,13 +4,8 @@ const GlobalPromptUtil = require("./modules/GlobalPromptUtil");
 class DDLDraftGeneratorForDistribution extends JsonAIGenerator{
     constructor(client){
         super(client);
-
-        this.model = "gpt-4o-2024-08-06"
         this.generatorName = 'DDLDraftGeneratorForDistribution'
         this.inputedParams = null
-
-        this.temperature = 1.0
-        this.top_p = 0.6
     }
     
 

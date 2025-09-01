@@ -7,9 +7,6 @@ class DDLDraftGenerator extends JsonAIGenerator{
 
     constructor(client){
         super(client);
-        
-        this.model = "gpt-4o-2024-08-06"
-        this.temperature = 0.5
         this.generatorName = 'DDLDraftGenerator'
     }
     

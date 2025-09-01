@@ -2,6 +2,7 @@ const FormattedJSONAIGenerator = require("../../FormattedJSONAIGenerator")
 const { ESValueSummarizeWithFilter } = require("../helpers")
 const { z } = require("zod")
 const { zodResponseFormat } = require("../../utils")
+const { RefsTraceUtil } = require("../../utils/TraceUtils")
 
 class DraftGeneratorByFunctions extends FormattedJSONAIGenerator{
     constructor(client){
@@ -117,7 +118,7 @@ class DraftGeneratorByFunctions extends FormattedJSONAIGenerator{
     }
     
     onGenerateBefore(inputParams){
-        inputParams.accumulatedDrafts = structuredClone(inputParams.accumulatedDrafts)
+        inputParams.accumulatedDrafts = this.__sanitizeAccumulatedDrafts(inputParams.accumulatedDrafts)
         inputParams.aggregateNamesToSuggest = inputParams.accumulatedDrafts[inputParams.boundedContext.name]
             .map(aggregateInfo => 
                 ({
@@ -137,6 +138,23 @@ class DraftGeneratorByFunctions extends FormattedJSONAIGenerator{
 
         inputParams.boundedContextDisplayName = inputParams.boundedContext.displayName ? inputParams.boundedContext.displayName : inputParams.boundedContext.name
         inputParams.subjectText = `Generating options for ${inputParams.boundedContextDisplayName} Bounded Context`
+    }
+    __sanitizeAccumulatedDrafts(accumulatedDrafts) {
+        accumulatedDrafts = structuredClone(accumulatedDrafts)
+        accumulatedDrafts = RefsTraceUtil.removeRefsAttributes(accumulatedDrafts)
+
+        const sanitizedAccumulatedDrafts = {}
+        for(const [boundedContextName, boundedContextDrafts] of Object.entries(accumulatedDrafts)) {
+            sanitizedAccumulatedDrafts[boundedContextName] = []
+            for(const draft of boundedContextDrafts) {
+                sanitizedAccumulatedDrafts[boundedContextName].push({
+                    aggregate: draft.aggregate,
+                    enumerations: draft.enumerations,
+                    valueObjects: draft.valueObjects
+                })
+            }
+        }
+        return sanitizedAccumulatedDrafts
     }
 
 
@@ -1011,6 +1029,8 @@ ${this.client.input.feedback.feedbacks.join("\n")}`
 
         return aggregateName
     }
+
+
 
     // 추가된 AI 추천 여부는 추후에 초안에 관련된 사항 표시에 활용됨
     _markRecommendedOption(output) {

@@ -1,41 +1,192 @@
-const JsonAIGenerator = require("./JsonAIGenerator");
+const FormattedJSONAIGenerator = require("./FormattedJSONAIGenerator");
+const { z } = require("zod")
+const { zodResponseFormat, DataValidationUtil, TextTraceUtil, RefsTraceUtil } = require("./utils");
 
-class DevideBoundedContextGenerator extends JsonAIGenerator {
-
+class DevideBoundedContextGenerator extends FormattedJSONAIGenerator {
     constructor(client){
         super(client, {}, "thinkingModel");
 
         this.generatorName = 'DevideBoundedContextGenerator'
+        this.checkInputParamsKeys = ["devisionAspect", "generateOption", "requirements"]
+        this.progressCheckStrings = ["boundedContexts", "relations", "thoughts", "explanations"]
+
+        this.initialResponseFormat = zodResponseFormat(
+            z.object({
+                boundedContexts: z.array(z.object({
+                    name: z.string(),
+                    alias: z.string(),
+                    importance: z.enum(["Core Domain", "Supporting Domain", "Generic Domain"]),
+                    complexity: z.number().min(0).max(1),
+                    differentiation: z.number().min(0).max(1),
+                    implementationStrategy: z.string(),
+                    aggregates: z.array(z.object({
+                        name: z.string(),
+                        alias: z.string()
+                    })),
+                    events: z.array(z.string()),
+                    requirements: z.array(z.string()),
+                    role: z.string(),
+                    roleRefs: z.array(z.array(z.array(z.union([z.number(), z.string()]))))
+                })),
+                relations: z.array(z.object({
+                    name: z.string(),
+                    type: z.string(),
+                    upStream: z.object({
+                        name: z.string(),
+                        alias: z.string()
+                    }),
+                    downStream: z.object({
+                        name: z.string(),
+                        alias: z.string()
+                    }),
+                    refs: z.array(z.array(z.array(z.union([z.number(), z.string()]))))
+                })),
+                thoughts: z.string(),
+                explanations: z.array(z.object({
+                    sourceContext: z.string(),
+                    targetContext: z.string(),
+                    relationType: z.string(),
+                    reason: z.string(),
+                    interactionPattern: z.string(),
+                    refs: z.array(z.array(z.array(z.union([z.number(), z.string()]))))
+                }))
+            }).strict(),
+            "instruction"
+        )
     }
 
-    createPrompt(){
-        return `
-Analyze the following requirements and divide them into multiple Bounded Contexts.
-${this.ollamaPrompt()}
+
+    async onGenerateBefore(inputParams, generatorName){
+        this.__sanitizeInputParams(inputParams);
+        this.__validateInputParams(inputParams);
+    }
+    __sanitizeInputParams(inputParams){
+        if(!inputParams.generateOption) inputParams.generateOption = {}
+        if(inputParams.generateOption.numberOfBCs === undefined) inputParams.generateOption.numberOfBCs = 3
+        if(inputParams.generateOption.additionalOptions === undefined) inputParams.generateOption.additionalOptions = ''
+        if(inputParams.generateOption.aspectDetails === undefined) inputParams.generateOption.aspectDetails = {}
+        if(inputParams.generateOption.isProtocolMode === undefined) inputParams.generateOption.isProtocolMode = true
+    }
+    __validateInputParams(inputParams){
+        DataValidationUtil.validateData(inputParams, {
+            type: 'object',
+            properties: {
+                devisionAspect: {
+                    type: 'string',
+                    required: true,
+                    minLength: 1
+                },
+                requirements: {
+                    type: 'object',
+                    required: true,
+                    properties: {
+                        userStory: {
+                            type: 'string',
+                            required: true,
+                            minLength: 1
+                        },
+                        analysisResult: {
+                            type: 'object',
+                            required: true,
+                            properties: {
+                                actors: {
+                                    type: 'array',
+                                    required: true
+                                },
+                                events: {
+                                    type: 'array',
+                                    required: true
+                                }
+                            }
+                        },
+                        pbcInfo: {
+                            type: 'array',
+                            required: true
+                        },
+                        summarizedResult: {
+                            type: 'object',
+                            required: false // optional field
+                        }
+                    }
+                },
+                generateOption: {
+                    type: 'object',
+                    required: true,
+                    properties: {
+                        numberOfBCs: {
+                            type: 'number',
+                            required: true
+                        },
+                        additionalOptions: {
+                            type: 'string',
+                            required: false // optional field, can be empty string
+                        },
+                        aspectDetails: {
+                            type: 'object',
+                            required: false // optional field
+                        },
+                        isProtocolMode: {
+                            type: 'boolean',
+                            required: false // optional field
+                        }
+                    }
+                },
+                feedback: {
+                    type: 'string',
+                    required: false // optional field for regeneration
+                },
+                previousAspectModel: {
+                    type: 'object',
+                    required: false // optional field for regeneration
+                }
+            },
+            additionalProperties: true // Allow additional properties like 'title', 'separationPrinciple' etc.
+        });
+    }
+
+
+    __buildAgentRolePrompt(){
+        return `Role: Domain-Driven Design (DDD) Architect
+
+Goal: To analyze functional requirements and divide them into appropriate Bounded Contexts following Domain-Driven Design principles.
+
+Backstory: I am a highly experienced domain architect specializing in system decomposition and bounded context design. I have extensive knowledge of:
+- Domain-driven design principles and patterns
+- Microservices architecture and context boundaries
+- Business domain modeling and strategic design
+- Event-driven architecture and system integration patterns
+
+My expertise lies in identifying natural boundaries within complex business domains and creating cohesive, loosely-coupled bounded contexts that align with organizational structure and business capabilities.`
+    }
+
+
+    __buildTaskGuidelinesPrompt(){
+        const params = {
+            ollamaPrompt: this._ollamaPrompt(),
+            devisionAspect: this.client.input['devisionAspect'],
+            aspectDetails: this._aspectDetailsPrompt(),
+            numberOfBCs: this.client.input['generateOption']['numberOfBCs'],
+            additionalOptions: this.client.input['generateOption']['additionalOptions'] ? this.client.input['generateOption']['additionalOptions'] : 'None',
+            pbcPrompt: this._getPBCPrompt(),
+            relationGuidelines: this._relationGuidelines()
+        }
+
+        return `Your task is to analyze the provided requirements and divide them into multiple Bounded Contexts following these guidelines:
+
+${params.ollamaPrompt}
 
 Focus on these aspects:
-${this.client.input['devisionAspect']}
+${params.devisionAspect}
 
-${this.aspectDetails()}
+${params.aspectDetails}
 
 Maximum Number of Bounded Contexts:
-${this.client.input['generateOption']['numberOfBCs']}
+${params.numberOfBCs}
 
 Additional requirements:
-${this.client.input['generateOption']['additionalOptions']}
+${params.additionalOptions}
 
-${this.getPBCPrompt()}
-
-Requirements:
-${this.summaryRequirements()}
-
-Actors:
-${JSON.stringify(this.client.input['requirements']['analysisResult']['actors'], null, 2)}
-
-Events:
-${JSON.stringify(this.client.input['requirements']['analysisResult']['events'], null, 2)}
-
-${this.client.input['feedback'] ? this.feedbackPrompt() : ''}
+${params.pbcPrompt}
 
 Key principles:
 - High cohesion, low coupling
@@ -80,122 +231,34 @@ Implementation Strategy Guidelines:
 - Supporting Domain: Transaction Script or Active Record
 - Generic Domain: Active Record or PBC: (pbc-name)
 
-${this.relationGuidelines()}
+${params.relationGuidelines}
 
 Language Instruction of Output:
 - Use the "same national language" as the Requirements at thoughts, context of explanations, alias, requirements.
 - When referring to bounded context in explanations, use alias.
 - name of Bounded Context must be written in English PascalCase.
 
-The format must be as follows:
-{
-    "boundedContexts":
-    [
-        {
-            "name":"name of Bounded Context in PascalCase",
-            "alias":"alias of Bounded Context in national language of Requirements",
-            "importance": "Core Domain" || "Supporting Domain" || "Generic Domain",
-            "complexity": "score of complexity", // 0.0 ~ 1.0
-            "differentiation": "score of differentiation", // 0.0 ~ 1.0
-            "implementationStrategy": "Event Sourcing" || "Rich Domain Model" || "Transaction Script" || "Active Record" || "PBC: (pbc-name)",
-            "aggregates":[ // Aggregates that can be extracted from this Bounded Context.
-                {
-                    "name":"name of Aggregate in PascalCase",
-                    "alias":"alias of Aggregate in language of Requirements"
-                }
-            ],
-            "events":[ ], // All events that composed from this Bounded Context.
-            "requirements":[ ], // Must be empty array
-            "role":"Explanation of what to do and how to works in this Bounded Context"
+EXAMPLE of refs format:
+If requirements contain:
+1: # E-commerce Platform
+2: 
+3: Users can browse and purchase products
+4: Payment processing with multiple providers
+5: Order fulfillment and tracking system
+6: Customer support chat functionality
 
-        }
-      ],
-      "relations":
-      [
-        {
-            "name":"name of relation between Bounded Contexts",
-            "type":${this.relationTypePrompt()},
-            "upStream": {
-                "name":"name of upstream Bounded Context",
-                "alias":"alias of upstream Bounded Context in language of Requirements"
-            },
-            "downStream": {
-                "name":"name of downstream Bounded Context",
-                "alias":"alias of downstream Bounded Context in language of Requirements"
-            }
-        }
-    ],
-    "thoughts": "explanations of how Bounded Contexts were derived (cohesion & coupling, domain expertise, technical cohesion, persona-based, etc.)",
-    "explanations": 
-    [
-        {
-            "sourceContext": "Source Bounded Context alias",
-            "targetContext": "Target Bounded Context alias",
-            "relationType": "Relationship type",
-            "reason": "Explanation of why this type was chosen",
-            "interactionPattern": "Description of how these contexts interact"
-        }
-    ]
-}
- `
+And you create bounded contexts like:
+- "ProductCatalog" BC with role "Manages product information and browsing" -> roleRefs: [[[3, "Users"], [3, "products"]]]
+- Relation between "Payment" and "Order" -> refs: [[[4, "Payment"], [5, "Order"]]]
+- Explanation about "CustomerSupport" interaction -> refs: [[[6, "Customer"], [6, "functionality"]]]
+
+The refs array contains ranges where each range is [[startLine, startPhrase], [endLine, endPhrase]].
+The phrases should be MINIMAL words (1-2 words) that uniquely identify the position in the line.
+Use the shortest possible phrase that can locate the specific part of requirements.
+Multiple ranges can be included if a field references multiple parts of requirements.`
     }
 
-    feedbackPrompt(){
-        return `
-You previously created a model like this: 
-${JSON.stringify(this.client.input['previousAspectModel'], null, 2)}
-
-Please refer to the added feedback below to create a new model.
-
-Feedback:
-${this.client.input['feedback']}
-`
-    }
-
-    summaryRequirements(){
-        if(this.client.input['requirements']['summarizedResult']!=""){
-            return `
-Below is the Bounded Context list that summarize the requirements.
-Should be used all of the Bounded Contexts.
-- Bounded Context list: ${this.client.input['requirements']['summarizedResult']}
-            `;
-        }else{
-            return `
-- userStory: ${JSON.stringify(this.client.input['requirements']['userStory'], null, 2)}
-            `;
-        }
-    }
-
-    requirementsPrompt(){
-        if(this.client.input['requirements']['summarizedResult']==""){
-            return `"requirements":[ // Use all of the requirements(userStory, DDL) context that are relevant to this Bounded Context.
-                    {
-                        "type":"userStory",
-                        "text":"Original requirements text, containing all of the problem domain relevant to this Bounded Context, copied verbatim"
-                    }
-            ]`;
-        }else{
-            return `"requirements":[ ] // must be empty`;
-        }
-    }
-
-    getPBCPrompt(){
-        return `
-IMPORTANT - PBC MATCHING RULE:
-Before creating any bounded context, first check if the functionality already exists in the available PBCs.
-If a functionality matches with any available PBC, you MUST:
-1. Create it as a "Generic Domain" bounded context
-2. Set its implementation strategy to "PBC: [pbc-name]"
-3. Bounded context name of PBC must be written it as is pbc name.
-This rule takes precedence over all other domain classification rules.
-
-Available Pre-Built Components (PBCs):
-The following PBCs are available for implementation strategies:
-${JSON.stringify(this.client.input['requirements']['pbcInfo'], null, 2)}
-        `
-    }
-
-    ollamaPrompt(){
+    _ollamaPrompt(){
         if(this.modelInfo.vendor === 'ollama'){
             return `
 Focus directly on generating the required JSON output with minimal intermediate thinking.
@@ -230,9 +293,10 @@ Must not be missing information that is required in the JSON format.
         }
     }
 
-    aspectDetails(){
-        if (this.client.input['generateOption']['aspectDetails']) {
-            return `Details of the aspect:
+    _aspectDetailsPrompt(){
+        if (Object.keys(this.client.input['generateOption']['aspectDetails']).length === 0) return ''
+        
+        return `Details of the aspect:
 When determining and explaining the bounded contexts to be separated, please consider and reflect the following specific requirements for each aspect:
 
 ${this.client.input['generateOption']['aspectDetails']['organizationalAspect'] ? 
@@ -245,20 +309,9 @@ ${this.client.input['generateOption']['aspectDetails']['infrastructureAspect'] ?
 
 Important: In the "thoughts" section of your response, please explicitly explain how these specific organizational and infrastructure requirements influenced your bounded context separation decisions.
 `;
-        } else {
-            return '';
-        }
     }
 
-    relationTypePrompt(){
-        if(this.client.input['generateOption']['isProtocolMode']){
-            return `"Request/Response || Pub/Sub"`;
-        }else{
-            return `"Conformist" || "Shared Kernel" || "Anti-corruption" || "Seperate Ways" || "Customer-Supplier"`;
-        }
-    }
-
-    relationGuidelines(){
+    _relationGuidelines(){
         if(this.client.input['generateOption']['isProtocolMode']){
             return `
 Relation Guidelines:
@@ -266,83 +319,249 @@ Relation Guidelines:
 - Event-driven architecture is preferred for loose coupling 
 - Relation Type Rule: All relation types must use 'Pub/Sub' pattern. But, only Generic domains as downstream MUST use 'Request/Response' pattern
         `
+        }
+            
+        return ''
+    }
+
+    _getPBCPrompt(){
+        return `
+IMPORTANT - PBC MATCHING RULE:
+Before creating any bounded context, first check if the functionality already exists in the available PBCs.
+If a functionality matches with any available PBC, you MUST:
+1. Create it as a "Generic Domain" bounded context
+2. Set its implementation strategy to "PBC: [pbc-name]"
+3. Bounded context name of PBC must be written it as is pbc name.
+This rule takes precedence over all other domain classification rules.
+
+Available Pre-Built Components (PBCs):
+The following PBCs are available for implementation strategies:
+${JSON.stringify(this.client.input['requirements']['pbcInfo'], null, 2)}
+        `
+    }    
+
+
+    __buildJsonResponseFormat(){
+        return `{
+    "boundedContexts": [
+        {
+            "name": "name of Bounded Context in PascalCase",
+            "alias": "alias of Bounded Context in national language of Requirements",
+            "importance": "Core Domain" || "Supporting Domain" || "Generic Domain",
+            "complexity": "score of complexity", // 0.0 ~ 1.0
+            "differentiation": "score of differentiation", // 0.0 ~ 1.0
+            "implementationStrategy": "Event Sourcing" || "Rich Domain Model" || "Transaction Script" || "Active Record" || "PBC: (pbc-name)",
+            "aggregates": [ // Aggregates that can be extracted from this Bounded Context.
+                {
+                    "name": "name of Aggregate in PascalCase",
+                    "alias": "alias of Aggregate in language of Requirements"
+                }
+            ],
+            "events": [], // All events that composed from this Bounded Context.
+            "requirements": [], // Must be empty array
+            "role": "Explanation of what to do and how to works in this Bounded Context",
+            "roleRefs": [[[startLineNumber, "minimal start phrase"], [endLineNumber, "minimal end phrase"]]] // Reference to source requirements for role explanation. Use minimal 1-2 word phrases that uniquely identify the position
+        }
+    ],
+    "relations": [
+        {
+            "name": "name of relation between Bounded Contexts",
+            "type": ${this._relationTypePrompt()},
+            "upStream": {
+                "name": "name of upstream Bounded Context",
+                "alias": "alias of upstream Bounded Context in language of Requirements"
+            },
+            "downStream": {
+                "name": "name of downstream Bounded Context",
+                "alias": "alias of downstream Bounded Context in language of Requirements"
+            },
+            "refs": [[[startLineNumber, "minimal start phrase"], [endLineNumber, "minimal end phrase"]]] // Use minimal 1-2 word phrases that uniquely identify the position
+        }
+    ],
+    "thoughts": "explanations of how Bounded Contexts were derived (cohesion & coupling, domain expertise, technical cohesion, persona-based, etc.)",
+    "explanations": [
+        {
+            "sourceContext": "Source Bounded Context alias",
+            "targetContext": "Target Bounded Context alias",
+            "relationType": "Relationship type",
+            "reason": "Explanation of why this type was chosen",
+            "interactionPattern": "Description of how these contexts interact",
+            "refs": [[[startLineNumber, "minimal start phrase"], [endLineNumber, "minimal end phrase"]]] // Use minimal 1-2 word phrases that uniquely identify the position
+        }
+    ]
+}`
+    }
+
+    _relationTypePrompt(){
+        if(this.client.input['generateOption']['isProtocolMode']){
+            return `"Request/Response || Pub/Sub"`;
         }else{
-            return ``
+            return `"Conformist" || "Shared Kernel" || "Anti-corruption" || "Seperate Ways" || "Customer-Supplier"`;
         }
     }
 
-    createModel(text){
-        try{
-            text = text.trim();
-            if (text.startsWith('```json')) {
-                text = text.slice(7);
-            }
-            if (text.endsWith('```')) {
-                text = text.slice(0, -3);
-            }
 
-            let model = super.createModel(text);
+    __buildJsonUserQueryInputFormat(){
+        const summaryRequirements = this._summaryRequirements()
+        const userInput = {
+            "Division Aspect": this.client.input['devisionAspect'],
+            "Actors": JSON.stringify(this.client.input['requirements']['analysisResult']['actors'], null, 2),
+            "Events": JSON.stringify(RefsTraceUtil.removeRefsAttributes(this.client.input['requirements']['analysisResult']['events']), null, 2),
+            "Requirements": summaryRequirements,
+            "Line Number Validation Note": TextTraceUtil.getLineNumberValidationPrompt(summaryRequirements)
+        }
 
-            if(model){
-                model['devisionAspect'] = this.client.input['devisionAspect'];
-                model['currentGeneratedLength'] = text.length;
-                
-                if(this.state === "end")
-                    console.log(`[*] ${this.client.input['devisionAspect']}의 모델 생성이 완료됨`, {model, text, input: this.client.input})
-                else
-                    console.log(`[*] ${this.client.input['devisionAspect']}의 모델 생성이 진행중임`, {textLength: text.length})
+        if(this.client.input['feedback']) {
+            userInput["Feedback"] = this._feedbackPrompt()
+        }
 
-                // 요약 결과가 있으면 요약 결과를 기반으로 매핑 진행하므로 제거
-                // if(this.client.input['requirements']['summarizedResult']!=""){
-                //     model['boundedContexts'].forEach(boundedContext => {
-                //         boundedContext['requirements'] = []
-                //     })
-                // }
+        return userInput
+    }
 
-                // COT 추가
-                if(this.parsedTexts.think){
-                    model['cotThink'] = this.parsedTexts.think
-                }
+    _summaryRequirements(){
+        if(!this.client.input['requirements']['summarizedResult'] || 
+           !this.client.input['requirements']['summarizedResult'].summary || 
+           this.client.input['requirements']['summarizedResult'].summary === "") {
+            return TextTraceUtil.addLineNumbers(this.client.input['requirements']['userStory'])
+        }
 
-                model['boundedContexts'].forEach(boundedContext => {
-                    if(!boundedContext['events']) boundedContext['events'] = []
-                    if(!boundedContext['requirements']) boundedContext['requirements'] = []
-                })
+        const summary = this.client.input['requirements']['summarizedResult'].summary;
+        return TextTraceUtil.addLineNumbers(summary)
+    }
 
-                return model;
-            }else{
-                let model = {
-                    [this.client.input['devisionAspect']]:{
-                        "boundedContexts":[],
-                        "relations":[],
-                        "thoughts":"",
-                        "explanations":[],
-                        "role":""
-                    }
-                }
+    _feedbackPrompt(){
+        return `
+You previously created a model like this: 
+${JSON.stringify(RefsTraceUtil.removeRefsAttributes(this.client.input['previousAspectModel']), null, 2)}
 
-                // COT 추가
-                if(this.parsedTexts.think){
-                    model[this.client.input['devisionAspect']]['cotThink'] = this.parsedTexts.think
-                }
+Please refer to the added feedback below to create a new model.
 
-                return model
-            }
-        }catch(e){
-            console.log(e)
-            let model = {
-                [this.client.input['devisionAspect']]:{
+Feedback:
+${this.client.input['feedback']}
+`
+    }
+
+    
+    onThink(returnObj, thinkText){
+        returnObj.directMessage = `Analyzing requirements for ${this.client.input['devisionAspect']}... (${this.getTotalOutputTextLength(returnObj)} characters generated)`
+    }
+
+    onModelCreatedWithThinking(returnObj){
+        returnObj.directMessage = `Generating bounded contexts for ${this.client.input['devisionAspect']}... (${this.getTotalOutputTextLength(returnObj)} characters generated)`
+        
+        if(!this.__isValidAIOutput(returnObj.modelValue.aiOutput))  {
+            returnObj.modelValue = {
+                ...returnObj.modelValue,
+                output: {
+                    "devisionAspect": this.client.input['devisionAspect'],
                     "boundedContexts":[],
                     "relations":[],
                     "thoughts":"",
                     "explanations":[],
-                    "role":""
+                    "role":"",
+                    "currentGeneratedLength": this.getTotalOutputTextLength(returnObj)
                 }
             }
-            return model
+            return
+        }
+
+        returnObj.modelValue = {
+            ...returnObj.modelValue,
+            output: this._processAIOutput(returnObj.modelValue.aiOutput, returnObj)
         }
     }
+    __isValidAIOutput(aiOutput){
+        if(!aiOutput) return false
+        if(!aiOutput.boundedContexts || !Array.isArray(aiOutput.boundedContexts)) return false
+        if(!aiOutput.relations || !Array.isArray(aiOutput.relations)) return false
+        return true
+    }
 
+    _processAIOutput(aiOutput, returnObj = null){
+        let model = structuredClone(aiOutput)
+        
+        // Set division aspect and other metadata
+        model['devisionAspect'] = this.client.input['devisionAspect'];
+        model['currentGeneratedLength'] = returnObj ? this.getTotalOutputTextLength(returnObj) : JSON.stringify(aiOutput).length;
+
+        // Convert refs to indexes
+        this._convertRefsToIndexes(model);
+
+        // Add COT if available
+        if(this.parsedTexts && this.parsedTexts.think){
+            model['cotThink'] = this.parsedTexts.think
+        }
+
+        // Initialize empty arrays for events and requirements
+        if(model['boundedContexts']) {
+            model['boundedContexts'].forEach(boundedContext => {
+                if(!boundedContext['events']) boundedContext['events'] = []
+                if(!boundedContext['requirements']) boundedContext['requirements'] = []
+            })
+        }
+
+        return model
+    }
+
+    /**
+     * Convert phrase-based refs to index-based refs for model
+     * @param {Object} model - Model object containing refs
+     */
+    _convertRefsToIndexes(model) {
+        if (!model) return;
+        
+        const lineNumberedRequirements = this._getLineNumberedRequirements();
+        if (!lineNumberedRequirements) return;
+
+        // Convert refs in boundedContexts (roleRefs)
+        if (model.boundedContexts && Array.isArray(model.boundedContexts)) {
+            if(this.__isSummarizedRequirementsRefExists()){
+                model.boundedContexts = RefsTraceUtil.convertToOriginalRefs(
+                    model.boundedContexts, 
+                    this.client.input['requirements']['summarizedResult']['refs']['summarizedRequirements']
+                );
+            }
+            else{
+                model.boundedContexts = RefsTraceUtil.sanitizeAndConvertRefs(model.boundedContexts, lineNumberedRequirements);
+            }
+        }
+
+        // Convert refs in relations
+        if (model.relations && Array.isArray(model.relations)) {
+            if(this.__isSummarizedRequirementsRefExists()){
+                model.relations = RefsTraceUtil.convertToOriginalRefs(
+                    model.relations, 
+                    this.client.input['requirements']['summarizedResult']['refs']['summarizedRequirements']
+                );
+            }else{
+                model.relations = RefsTraceUtil.sanitizeAndConvertRefs(model.relations, lineNumberedRequirements);
+            }
+        }
+
+        // Convert refs in explanations
+        if (model.explanations && Array.isArray(model.explanations)) {
+            if(this.__isSummarizedRequirementsRefExists()){
+                model.explanations = RefsTraceUtil.convertToOriginalRefs(
+                    model.explanations, 
+                    this.client.input['requirements']['summarizedResult']['refs']['summarizedRequirements']
+                );
+            }else{
+                model.explanations = RefsTraceUtil.sanitizeAndConvertRefs(model.explanations, lineNumberedRequirements);
+            }
+        }
+    }
+    __isSummarizedRequirementsRefExists(){
+        return this.client.input['requirements'] &&
+               this.client.input['requirements']['summarizedResult'] && 
+               this.client.input['requirements']['summarizedResult']["refs"] && 
+               this.client.input['requirements']['summarizedResult']["refs"]["summarizedRequirements"] && 
+               this.client.input['requirements']['summarizedResult']["refs"]["summarizedRequirements"].length > 0
+    }
+
+    _getLineNumberedRequirements() {
+        const requirements = this.client.input['requirements']['userStory'] || '';
+        return TextTraceUtil.addLineNumbers(requirements);
+    }
 }
 
 module.exports = DevideBoundedContextGenerator;

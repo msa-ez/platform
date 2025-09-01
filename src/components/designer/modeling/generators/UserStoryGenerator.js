@@ -78,9 +78,6 @@ export default class UserStoryGenerator extends JsonAIGenerator{
             modelDescription += `\n\nThe response is must be in the same language with the service name. Also, please list bounded contexts in the perspective of ${this.client.input.separationPrinciple}.`
         }
 
-        // 기존 데이터가 있는 경우 title만 참조
-        let existingDataPrompt = this.createExistingDataPrompt();
-
         return `
             Please generate a comprehensive analysis for ${this.client.input.title} with the following requests:
 

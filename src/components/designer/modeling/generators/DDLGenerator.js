@@ -8,8 +8,6 @@ class DDLGenerator extends JsonAIGenerator{
     constructor(client){
         super(client);
         
-        this.model = "gpt-4o-2024-08-06"
-        this.temperature = 0.3
         this.generateCnt = 0;
         this.modelElements = {}
         this.sequenceForUUID = 0;

@@ -7,8 +7,6 @@ class GetRelatedESValueByDDLGenerator extends JsonAIGenerator {
     constructor(client, maxLengthLimit=10000, onlyNameLengthRatio=0.8, parameterOptions={}){
         super(client);
 
-        this.model = "gpt-4o-2024-08-06"
-        this.temperature = 0.3
         this.modelName = "GetRelatedESValueByDDLGenerator"
 
         this.maxLengthLimit = maxLengthLimit

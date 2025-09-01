@@ -10,8 +10,22 @@ import {
     DraftGeneratorByFunctionsTest,
     ExtractDDLFieldsGeneratorTest,
     AssignDDLFieldsToAggregateDraftTest,
-    AssignPreviewFieldsToAggregateDraftTest
+    AssignPreviewFieldsToAggregateDraftTest,
+    AddTraceToDraftOptionsGeneratorTest
 } from "../../../es-generators";
+import {
+    DevideBoundedContextGeneratorTest,
+    RecursiveRequirementsSummarizerTest,
+    RecursiveRequirementsValidationGeneratorTest,
+    RequirementsMappingGeneratorTest,
+    RequirementsValidationGeneratorTest
+} from "../generators";
+import {
+    ESDialogerTraceUtilTest
+} from "../utils";
+import {
+     TraceUtilTest 
+} from "../../../utils";
 
 export default {
     name: "es-dialoger-test-terminal",
@@ -59,15 +73,38 @@ export default {
                 ExtractDDLFieldsGeneratorTest: {command: async () => { await ExtractDDLFieldsGeneratorTest.test("extractDDLFieldsGeneratorInputs") }},
                 AssignDDLFieldsToAggregateDraftTest: {command: async () => { await AssignDDLFieldsToAggregateDraftTest.test("assignDDLFieldsToAggregateDraftInputs") }},
                 AssignPreviewFieldsToAggregateDraftTest: {command: async () => { await AssignPreviewFieldsToAggregateDraftTest.test("assignPreviewFieldsToAggregateDraftInputs") }},
+                RequirementsValidationGeneratorTest: {command: async () => { await RequirementsValidationGeneratorTest.test() }},
+                RecursiveRequirementsValidationGeneratorTest: {command: async () => { await RecursiveRequirementsValidationGeneratorTest.test() }},
+                DevideBoundedContextGeneratorTest: {command: async () => { await DevideBoundedContextGeneratorTest.test() }},
+                DevideBoundedContextGeneratorTestWithSummarizedResult: {command: async () => { await DevideBoundedContextGeneratorTest.testWithSummarizedResult() }},
+                RecursiveRequirementsSummarizerTest: {command: async () => { await RecursiveRequirementsSummarizerTest.test() }},
+                RecursiveRequirementsSummarizerTestWithLargeText: {command: async () => { await RecursiveRequirementsSummarizerTest.testWithLargeText() }},
+                RequirementsMappingGeneratorTest: {command: async () => { await RequirementsMappingGeneratorTest.test() }},
+                AddTraceToDraftOptionsGeneratorTest: {command: async () => { await AddTraceToDraftOptionsGeneratorTest.test() }},
+                ESDialogerTraceUtilTest: {command: async () => { await ESDialogerTraceUtilTest.test() }},
+                testRefsMergeUtil: {command: async () => { await TraceUtilTest.testRefsMergeUtil() }},
             }
             
+            // 전체 명령어 목록을 콘솔에 출력
+            console.clear();
+            console.log('='.repeat(60));
+            console.log('📋 사용 가능한 테스트 커맨드 목록');
+            console.log('='.repeat(60));
+            
+            Object.keys(COMMANDS).forEach((cmd, index) => {
+                const description = COMMANDS[cmd].description || '';
+                console.log(`${index.toString().padStart(2, ' ')}. ${cmd}`);
+                if (description) {
+                    console.log(`    └─ ${description}`);
+                }
+            });
+            
+            console.log('='.repeat(60));
+            console.log('💡 위 목록에서 번호 또는 커맨드명을 입력하세요');
+            console.log('='.repeat(60));
 
-            const commandList = Object.keys(COMMANDS)
-                .map((cmd, index) => ((COMMANDS[cmd].description) ? 
-                    `${index}. ${cmd}: ${COMMANDS[cmd].description}` : `${index}. ${cmd}`))
-                .join('\n')
-
-            let inputedCommand = prompt(this._getPromptMessage(commandList))
+            // 간단한 prompt 메시지
+            let inputedCommand = prompt('테스트 커맨드 번호 또는 이름을 입력하세요:\n(전체 목록은 개발자 도구 콘솔을 확인하세요)')
             if(!inputedCommand) return
 
             if(!isNaN(inputedCommand)) {
@@ -115,13 +152,15 @@ export default {
 
         _initValuesFromSelectedScenario(selectedScenario) {
             if(!this.value) this.value = {}
-            this.value.userStory = selectedScenario.userStory
+            this.value.userStory = selectedScenario.projectInfo.userStory
             this.state = selectedScenario.state
             this.resultDevideBoundedContext = selectedScenario.resultDevideBoundedContext
             this.boundedContextVersion = selectedScenario.boundedContextVersion
             this.frontEndResults = selectedScenario.frontEndResults
             this.pbcResults = selectedScenario.pbcResults
             this.pbcLists = selectedScenario.pbcLists
+            this.projectInfo = selectedScenario.projectInfo
+            this.requirementsValidationResult = selectedScenario.requirementsValidationResult
         },
 
         _mermaidStringTest() {

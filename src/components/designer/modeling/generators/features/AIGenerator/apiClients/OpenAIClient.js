@@ -17,22 +17,9 @@ class OpenAIClient extends BaseAPIClient {
     return super.getToken(vendor);
   }
 
+
   _makeRequestParams(messages, modelInfo, token){
-    let requestData = {
-      model: modelInfo.requestModelName,
-      messages: messages,
-      temperature: modelInfo.requestArgs.temperature,
-      frequency_penalty: modelInfo.requestArgs.frequencyPenalty,
-      presence_penalty: modelInfo.requestArgs.presencePenalty,
-      top_p: modelInfo.requestArgs.topP,
-      reasoning_effort: modelInfo.requestArgs.reasoningEffort,
-      stream: true,
-      ...(modelInfo.customArgs ? modelInfo.customArgs : {})
-    }
-
-    if(modelInfo.isSupportedResponseFormat)
-      requestData.response_format = modelInfo.requestArgs.response_format
-
+    const requestData = this._makeRequestData(messages, modelInfo)
 
     this.isStream = requestData.stream
     const baseURL = (!modelInfo.baseURL) ? "https://api.openai.com" : modelInfo.baseURL
@@ -65,6 +52,26 @@ class OpenAIClient extends BaseAPIClient {
       }
     }
   }
+
+  _makeRequestData(messages, modelInfo) {
+    const requestData = {
+      model: modelInfo.requestModelName,
+      messages: messages,
+      temperature: this.aiGenerator.temperature || modelInfo.requestArgs.temperature,
+      frequency_penalty: modelInfo.requestArgs.frequencyPenalty,
+      presence_penalty: modelInfo.requestArgs.presencePenalty,
+      top_p: modelInfo.requestArgs.topP,
+      reasoning_effort: modelInfo.requestArgs.reasoningEffort,
+      stream: true,
+      ...(modelInfo.customArgs ? modelInfo.customArgs : {})
+    }
+
+    if(modelInfo.isSupportedResponseFormat)
+      requestData.response_format = modelInfo.requestArgs.response_format
+
+    return requestData
+  }
+
 
   _parseResponseText(responseText){
     let result = null

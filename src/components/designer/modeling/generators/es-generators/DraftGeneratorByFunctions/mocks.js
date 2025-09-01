@@ -3,732 +3,1858 @@
  */
 export const draftGeneratorByFunctionsInputs = [
     {
-        "description": "{\"userStories\":[{\"title\":\"UC-001: 민원 신청서 작성\",\"description\":\"민원 신청자로서, 사용자가 간편하게 민원 신청서를 작성하여 필요한 정보를 입력할 수 있도록 한다. 전제조건은 시스템에 로그인(인증) 완료와 필요한 개인정보 및 민원 관련 정보(예: 주민등록번호, 주소 등)의 준비이다. 기본 흐름은 UI에서 'newApplication' 폼 호출 후 신청서 항목 입력, 입력값 유효성 검사, 임시저장 성공 메시지 반환을 포함하며, 예외 흐름에서는 입력값 검증 실패 시 오류 메시지 출력 및 수정 요청을 한다.\",\"acceptance\":[\"필수 항목이 모두 입력되어야 임시 저장이 가능하다\",\"입력값 유효성 검사를 통해 오류가 발생하면 적절한 메시지가 표시된다\",\"임시 저장 성공 시 성공 메시지가 반환된다\"]},{\"title\":\"UC-002: 민원 신청서 제출\",\"description\":\"민원 신청자로서, 임시 저장 상태인 신청서를 불러와 최종 제출하여 민원 담당자가 검토할 수 있도록 한다. 전제조건은 UC-001을 통해 임시 저장된 신청서가 존재하는 것이다. 기본 흐름은 임시 저장된 신청서를 로드 후 'submitApplication' 호출, 필수 항목 재검증 및 제증명 처리 대기 상태 변경, 제출 완료 메시지 반환을 포함하며, 예외 흐름에서는 필수 정보 미입력 시 제출 불가 메시지를 출력하고 수정하도록 유도한다.\",\"acceptance\":[\"임시 저장된 신청서가 존재해야 한다\",\"필수 정보 재검증 후 제출이 가능해야 한다\",\"제출 완료 메시지가 반환되어야 한다\",\"필수 정보가 누락된 경우 제출 불가 메시지가 표시되어야 한다\"]},{\"title\":\"UC-003: 민원 신청서 검토 및 승인/반려\",\"description\":\"민원 담당자로서, 제출된 민원 신청서를 검토하여 승인 또는 반려 여부를 결정한다. 전제조건은 UC-002를 통해 제출된 신청서가 대기 리스트에 있으며, 민원 담당자 권한이 있는 상태여야 한다. 기본 흐름은 'listPendingApplications'를 호출하여 대기중인 신청서를 조회하고, 상세 내용을 확인한 후 'approveApplication' 또는 'rejectApplication'을 호출하여 승인 시 신청서 상태 변경 및 후속 발급 프로세스를 자동 시작하고, 반려 시 반려 사유를 기록하며 민원 신청자에게 통보하는 과정을 포함한다. 예외 흐름은 시스템 오류 발생 시 오류 로그 기록 및 재시도 요청을 포함한다.\",\"acceptance\":[\"대기중인 신청서 리스트가 정상적으로 조회되어야 한다\",\"신청서 상세 내용 확인이 가능해야 한다\",\"승인 또는 반려 후 상태가 변경되어야 한다\",\"시스템 오류 발생 시 적절한 로그 기록 및 재시도 요청이 이루어져야 한다\"]}],\"entities\":{\"Applicant\":{\"properties\":[{\"name\":\"applicantId\",\"type\":\"string\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"name\",\"type\":\"string\",\"required\":true},{\"name\":\"residentRegistrationNumber\",\"type\":\"string\",\"required\":true},{\"name\":\"address\",\"type\":\"string\",\"required\":true}]},\"Application\":{\"properties\":[{\"name\":\"applicationId\",\"type\":\"string\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"applicantId\",\"type\":\"string\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"Applicant\"},{\"name\":\"applicationData\",\"type\":\"json\",\"required\":true},{\"name\":\"status\",\"type\":\"enum\",\"required\":true,\"values\":[\"Draft\",\"Submitted\",\"Approved\",\"Rejected\"]},{\"name\":\"createdDate\",\"type\":\"date\",\"required\":true},{\"name\":\"updatedDate\",\"type\":\"date\",\"required\":true}]}},\"businessRules\":[{\"name\":\"ValidApplicationData\",\"description\":\"신청서 작성 시 모든 필수 필드가 정확히 입력되어야 하며, 유효성 검사를 통과해야 한다.\"},{\"name\":\"TemporarySaveRule\",\"description\":\"임시 저장 상태의 신청서는 추후 수정이 가능하며, 최종 제출 전에는 유효성 검증이 필요하다.\"},{\"name\":\"FinalSubmissionValidation\",\"description\":\"제출 전 필수 정보가 모두 입력되지 않은 경우 제출이 거부되어야 한다.\"},{\"name\":\"ReviewProcess\",\"description\":\"제출된 신청서에 대해서만 민원 담당자가 승인 또는 반려 조치를 수행할 수 있다.\"}],\"interfaces\":{\"ApplicationSubmissionScreen\":{\"sections\":[{\"name\":\"ApplicationForm\",\"type\":\"form\",\"fields\":[{\"name\":\"name\",\"type\":\"text\",\"required\":true},{\"name\":\"residentRegistrationNumber\",\"type\":\"text\",\"required\":true},{\"name\":\"address\",\"type\":\"text\",\"required\":true},{\"name\":\"applicationContent\",\"type\":\"textarea\",\"required\":true}],\"actions\":[\"newApplication\",\"submitApplication\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}}]},\"ApplicationReviewScreen\":{\"sections\":[{\"name\":\"PendingApplications\",\"type\":\"table\",\"fields\":[],\"actions\":[\"viewDetails\",\"approveApplication\",\"rejectApplication\"],\"filters\":[\"dateRange\",\"status\"],\"resultTable\":{\"columns\":[\"applicationId\",\"applicantName\",\"status\",\"createdDate\"],\"actions\":[\"approveApplication\",\"rejectApplication\",\"viewDetails\"]}}]}}}",
+        "description": "# Bounded Context Overview: BookManagement (도서 관리)\n\n## Role\n도서 등록, 도서 상태 관리(대출가능/대출중/예약중/폐기) 및 도서 정보(도서명, ISBN, 저자, 출판사, 카테고리) 관리를 담당한다. ISBN 중복 및 자리수 유효성 검증, 카테고리 분류, 도서의 상태 변동, 폐기 처리 등을 수행한다.\n\n## Key Events\n- BookRegistered\n- BookDiscarded\n- BookStateChanged\n\n# Requirements\n\n## userStory\n\n'도서 관리' 화면에서는 새로운 도서를 등록하고 현재 보유한 도서들의 상태를 관리할 수 있어야 해. 도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해. 등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야 해.\n\n각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해.\n\n## DDL\n\n```sql\n-- 도서 테이블\nCREATE TABLE books (\n    book_id INT AUTO_INCREMENT PRIMARY KEY,\n    title VARCHAR(500) NOT NULL,\n    isbn VARCHAR(13) UNIQUE NOT NULL,\n    author VARCHAR(200) NOT NULL,\n    publisher VARCHAR(200) NOT NULL,\n    category ENUM('소설', '비소설', '학술', '잡지') NOT NULL,\n    status ENUM('대출가능', '대출중', '예약중', '폐기') DEFAULT '대출가능',\n    registration_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    disposal_date DATETIME NULL,\n    disposal_reason TEXT NULL,\n    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,\n    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n    INDEX idx_title (title),\n    INDEX idx_isbn (isbn),\n    INDEX idx_status (status),\n    INDEX idx_category (category)\n);\n```\n```sql\n-- 도서 상태 변경 이력 테이블\nCREATE TABLE book_status_history (\n    history_id INT AUTO_INCREMENT PRIMARY KEY,\n    book_id INT NOT NULL,\n    previous_status ENUM('대출가능', '대출중', '예약중', '폐기'),\n    new_status ENUM('대출가능', '대출중', '예약중', '폐기') NOT NULL,\n    change_reason VARCHAR(200),\n    changed_by VARCHAR(100),\n    change_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    FOREIGN KEY (book_id) REFERENCES books(book_id),\n    INDEX idx_book_id (book_id),\n    INDEX idx_change_date (change_date)\n);\n```\n## Event\n\n```json\n{\n  \"name\": \"BookRegistered\",\n  \"displayName\": \"도서 등록됨\",\n  \"actor\": \"사서\",\n  \"level\": 1,\n  \"description\": \"사서가 신규 도서 정보를 입력하고, 유효성(ISBN 중복/자리수, 카테고리) 검증 후 도서를 등록하였음.\",\n  \"inputs\": [\n    \"도서명\",\n    \"ISBN(13자리)\",\n    \"저자\",\n    \"출판사\",\n    \"카테고리(소설/비소설/학술/잡지)\"\n  ],\n  \"outputs\": [\n    \"신규 도서 생성\",\n    \"도서 상태 '대출가능' 설정\"\n  ],\n  \"nextEvents\": [\n    \"BookStateChanged\"\n  ]\n}\n```\n\n```json\n{\n  \"name\": \"BookStateChanged\",\n  \"displayName\": \"도서 상태 변경됨\",\n  \"actor\": \"도서관리시스템\",\n  \"level\": 2,\n  \"description\": \"도서가 등록, 대출, 반납, 예약, 폐기 등 상황 변화에 따라 상태가 자동으로 변경됨.\",\n  \"inputs\": [\n    \"도서 상태 변경 조건 발생(대출/반납/예약/폐기)\"\n  ],\n  \"outputs\": [\n    \"도서 상태: 대출가능/대출중/예약중/폐기\"\n  ],\n  \"nextEvents\": [\n    \"BookLoaned\",\n    \"BookReturned\",\n    \"BookReserved\",\n    \"BookDiscarded\"\n  ]\n}\n```\n\n```json\n{\n  \"name\": \"BookDiscarded\",\n  \"displayName\": \"도서 폐기됨\",\n  \"actor\": \"사서\",\n  \"level\": 3,\n  \"description\": \"사서가 훼손, 분실 등으로 도서를 폐기 처리함. 폐기된 도서는 대출 불가.\",\n  \"inputs\": [\n    \"도서\",\n    \"폐기 사유\"\n  ],\n  \"outputs\": [\n    \"도서 상태 '폐기'로 변경\",\n    \"대출 불가 처리\"\n  ],\n  \"nextEvents\": [\n    \"BookStateChanged\"\n  ]\n}\n```\n\n## Context Relations\n\n### BookManagement-LoanProcessing\n- **Type**: Pub/Sub\n- **Direction**: sends to 대출/반납 처리 (LoanProcessing)\n- **Reason**: 도서 상태 변경 등 주요 이벤트가 대출/반납 프로세스에 영향을 미치므로, 느슨한 결합과 확장성을 위해 pub/sub을 적용했다.\n- **Interaction Pattern**: 도서 등록, 폐기, 상태 변경 이벤트가 발생하면 대출/반납 처리 컨텍스트가 이를 구독하여 내부 상태를 동기화한다.\n\n### BookManagement-HistoryManagement\n- **Type**: Pub/Sub\n- **Direction**: sends to 이력 관리 (HistoryManagement)\n- **Reason**: 도서 등록/상태 변경 이벤트가 이력 관리의 기록 트리거가 되므로, pub/sub을 적용해 독립성과 유연성을 보장했다.\n- **Interaction Pattern**: 도서 관리 컨텍스트에서 도서 등록/상태 변경이 발생하면 이력 관리 컨텍스트가 이를 구독해 상태 변경 이력을 기록한다.",
         "boundedContext": {
-            "name": "ApplicationManagement",
-            "alias": "민원신청관리",
-            "displayName": "민원신청관리",
-            "description": "[{\"type\":\"userStory\",\"text\":\"UC-001: 민원 신청서 작성\\n• 액터: 민원 신청자\\n• 목적: 사용자가 간편하게 민원 신청서를 작성하여 필요한 정보를 입력한다.\\n• 전제조건: 민원 신청자가 시스템에 로그인(인증) 완료되어 있어야 함, 필요한 개인정보 및 민원 관련 정보(예: 주민등록번호, 주소 등)가 준비되어 있음.\\n• 기본 흐름: 민원 신청자는 UI 화면에서 \\\"newApplication\\\" 폼을 호출 → 신청서 항목 입력 → 입력값 유효성 검사 → 임시저장 성공 메시지 반환.\\n• 예외 흐름: 입력값 검증 실패 시, 오류 메시지를 출력하고 수정 요청.\\n\\nUC-002: 민원 신청서 제출\\n• 액터: 민원 신청자\\n• 목적: 작성 완료된 민원 신청서를 최종 제출하여 민원 담당자가 검토할 수 있도록 함.\\n• 전제조건: UC-001을 통한 임시 저장 상태의 신청서 존재.\\n• 기본 흐름: 임시 저장된 신청서를 불러와 \\\"submitApplication\\\" 호출 → 필수 항목 재검증 및 제증명 처리 대기 상태 변경 → 제출 완료 메시지 반환.\\n• 예외 흐름: 필수 정보 미입력 시 제출 불가 메시지 출력 및 수정 유도.\\n\\nUC-003: 민원 신청서 검토 및 승인/반려\\n• 액터: 민원 담당자\\n• 목적: 제출된 민원 신청서를 검토하여 승인 또는 반려 여부 결정.\\n• 전제조건: UC-002를 통해 제출된 신청서가 대기 리스트에 있음, 민원 담당자 권한 보유.\\n• 기본 흐름: 민원 담당자는 \\\"listPendingApplications\\\"로 대기중인 신청서 조회 → 상세내용 확인 → \\\"approveApplication\\\" 또는 \\\"rejectApplication\\\" 호출 → 승인 시 신청서 상태 변경 및 후속 발급 프로세스 자동 시작, 반려 시 반려 사유 기록 및 민원 신청자 통보.\\n• 예외 흐름: 시스템 오류 발생 시 오류 로그 기록 및 재시도 요청.\"},{\"type\":\"ddl\",\"text\":\"민원 신청 관리 컨텍스트는 민원 신청서 작성, 임시 저장 및 제출, 그리고 검토 및 승인/반려 처리와 관련된 모든 도메인 로직과 데이터를 포함한다. 이 컨텍스트 내에서는 신청서의 상태, 검증 로직, 사용자 입력 데이터 등이 집중 관리된다.\"}]",
+            "name": "BookManagement",
+            "alias": "도서 관리",
+            "displayName": "도서 관리",
+            "description": "# Bounded Context Overview: BookManagement (도서 관리)\n\n## Role\n도서 등록, 도서 상태 관리(대출가능/대출중/예약중/폐기) 및 도서 정보(도서명, ISBN, 저자, 출판사, 카테고리) 관리를 담당한다. ISBN 중복 및 자리수 유효성 검증, 카테고리 분류, 도서의 상태 변동, 폐기 처리 등을 수행한다.\n\n## Key Events\n- BookRegistered\n- BookDiscarded\n- BookStateChanged\n\n# Requirements\n\n## userStory\n\n'도서 관리' 화면에서는 새로운 도서를 등록하고 현재 보유한 도서들의 상태를 관리할 수 있어야 해. 도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해. 등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야 해.\n\n각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해.\n\n## DDL\n\n```sql\n-- 도서 테이블\nCREATE TABLE books (\n    book_id INT AUTO_INCREMENT PRIMARY KEY,\n    title VARCHAR(500) NOT NULL,\n    isbn VARCHAR(13) UNIQUE NOT NULL,\n    author VARCHAR(200) NOT NULL,\n    publisher VARCHAR(200) NOT NULL,\n    category ENUM('소설', '비소설', '학술', '잡지') NOT NULL,\n    status ENUM('대출가능', '대출중', '예약중', '폐기') DEFAULT '대출가능',\n    registration_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    disposal_date DATETIME NULL,\n    disposal_reason TEXT NULL,\n    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,\n    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n    INDEX idx_title (title),\n    INDEX idx_isbn (isbn),\n    INDEX idx_status (status),\n    INDEX idx_category (category)\n);\n```\n```sql\n-- 도서 상태 변경 이력 테이블\nCREATE TABLE book_status_history (\n    history_id INT AUTO_INCREMENT PRIMARY KEY,\n    book_id INT NOT NULL,\n    previous_status ENUM('대출가능', '대출중', '예약중', '폐기'),\n    new_status ENUM('대출가능', '대출중', '예약중', '폐기') NOT NULL,\n    change_reason VARCHAR(200),\n    changed_by VARCHAR(100),\n    change_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    FOREIGN KEY (book_id) REFERENCES books(book_id),\n    INDEX idx_book_id (book_id),\n    INDEX idx_change_date (change_date)\n);\n```\n## Event\n\n```json\n{\n  \"name\": \"BookRegistered\",\n  \"displayName\": \"도서 등록됨\",\n  \"actor\": \"사서\",\n  \"level\": 1,\n  \"description\": \"사서가 신규 도서 정보를 입력하고, 유효성(ISBN 중복/자리수, 카테고리) 검증 후 도서를 등록하였음.\",\n  \"inputs\": [\n    \"도서명\",\n    \"ISBN(13자리)\",\n    \"저자\",\n    \"출판사\",\n    \"카테고리(소설/비소설/학술/잡지)\"\n  ],\n  \"outputs\": [\n    \"신규 도서 생성\",\n    \"도서 상태 '대출가능' 설정\"\n  ],\n  \"nextEvents\": [\n    \"BookStateChanged\"\n  ]\n}\n```\n\n```json\n{\n  \"name\": \"BookStateChanged\",\n  \"displayName\": \"도서 상태 변경됨\",\n  \"actor\": \"도서관리시스템\",\n  \"level\": 2,\n  \"description\": \"도서가 등록, 대출, 반납, 예약, 폐기 등 상황 변화에 따라 상태가 자동으로 변경됨.\",\n  \"inputs\": [\n    \"도서 상태 변경 조건 발생(대출/반납/예약/폐기)\"\n  ],\n  \"outputs\": [\n    \"도서 상태: 대출가능/대출중/예약중/폐기\"\n  ],\n  \"nextEvents\": [\n    \"BookLoaned\",\n    \"BookReturned\",\n    \"BookReserved\",\n    \"BookDiscarded\"\n  ]\n}\n```\n\n```json\n{\n  \"name\": \"BookDiscarded\",\n  \"displayName\": \"도서 폐기됨\",\n  \"actor\": \"사서\",\n  \"level\": 3,\n  \"description\": \"사서가 훼손, 분실 등으로 도서를 폐기 처리함. 폐기된 도서는 대출 불가.\",\n  \"inputs\": [\n    \"도서\",\n    \"폐기 사유\"\n  ],\n  \"outputs\": [\n    \"도서 상태 '폐기'로 변경\",\n    \"대출 불가 처리\"\n  ],\n  \"nextEvents\": [\n    \"BookStateChanged\"\n  ]\n}\n```\n\n## Context Relations\n\n### BookManagement-LoanProcessing\n- **Type**: Pub/Sub\n- **Direction**: sends to 대출/반납 처리 (LoanProcessing)\n- **Reason**: 도서 상태 변경 등 주요 이벤트가 대출/반납 프로세스에 영향을 미치므로, 느슨한 결합과 확장성을 위해 pub/sub을 적용했다.\n- **Interaction Pattern**: 도서 등록, 폐기, 상태 변경 이벤트가 발생하면 대출/반납 처리 컨텍스트가 이를 구독하여 내부 상태를 동기화한다.\n\n### BookManagement-HistoryManagement\n- **Type**: Pub/Sub\n- **Direction**: sends to 이력 관리 (HistoryManagement)\n- **Reason**: 도서 등록/상태 변경 이벤트가 이력 관리의 기록 트리거가 되므로, pub/sub을 적용해 독립성과 유연성을 보장했다.\n- **Interaction Pattern**: 도서 관리 컨텍스트에서 도서 등록/상태 변경이 발생하면 이력 관리 컨텍스트가 이를 구독해 상태 변경 이력을 기록한다.",
             "aggregates": [
                 {
-                    "name": "Application",
-                    "alias": "민원신청서"
+                    "name": "Book",
+                    "alias": "도서"
                 }
-            ]
+            ],
+            "requirements": {
+                "userStory": "'도서 관리' 화면에서는 새로운 도서를 등록하고 현재 보유한 도서들의 상태를 관리할 수 있어야 해. 도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해. 등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야 해.\n각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해.",
+                "ddl": "-- 도서 테이블\nCREATE TABLE books (\n    book_id INT AUTO_INCREMENT PRIMARY KEY,\n    title VARCHAR(500) NOT NULL,\n    isbn VARCHAR(13) UNIQUE NOT NULL,\n    author VARCHAR(200) NOT NULL,\n    publisher VARCHAR(200) NOT NULL,\n    category ENUM('소설', '비소설', '학술', '잡지') NOT NULL,\n    status ENUM('대출가능', '대출중', '예약중', '폐기') DEFAULT '대출가능',\n    registration_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    disposal_date DATETIME NULL,\n    disposal_reason TEXT NULL,\n    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,\n    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n    INDEX idx_title (title),\n    INDEX idx_isbn (isbn),\n    INDEX idx_status (status),\n    INDEX idx_category (category)\n);\n-- 도서 상태 변경 이력 테이블\nCREATE TABLE book_status_history (\n    history_id INT AUTO_INCREMENT PRIMARY KEY,\n    book_id INT NOT NULL,\n    previous_status ENUM('대출가능', '대출중', '예약중', '폐기'),\n    new_status ENUM('대출가능', '대출중', '예약중', '폐기') NOT NULL,\n    change_reason VARCHAR(200),\n    changed_by VARCHAR(100),\n    change_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    FOREIGN KEY (book_id) REFERENCES books(book_id),\n    INDEX idx_book_id (book_id),\n    INDEX idx_change_date (change_date)\n);",
+                "event": "{\n  \"name\": \"BookRegistered\",\n  \"displayName\": \"도서 등록됨\",\n  \"actor\": \"사서\",\n  \"level\": 1,\n  \"description\": \"사서가 신규 도서 정보를 입력하고, 유효성(ISBN 중복/자리수, 카테고리) 검증 후 도서를 등록하였음.\",\n  \"inputs\": [\n    \"도서명\",\n    \"ISBN(13자리)\",\n    \"저자\",\n    \"출판사\",\n    \"카테고리(소설/비소설/학술/잡지)\"\n  ],\n  \"outputs\": [\n    \"신규 도서 생성\",\n    \"도서 상태 '대출가능' 설정\"\n  ],\n  \"nextEvents\": [\n    \"BookStateChanged\"\n  ],\n  \"refs\": [\n    [\n      [\n        3,\n        15\n      ],\n      [\n        3,\n        103\n      ]\n    ]\n  ]\n}\n{\n  \"name\": \"BookStateChanged\",\n  \"displayName\": \"도서 상태 변경됨\",\n  \"actor\": \"도서관리시스템\",\n  \"level\": 2,\n  \"description\": \"도서가 등록, 대출, 반납, 예약, 폐기 등 상황 변화에 따라 상태가 자동으로 변경됨.\",\n  \"inputs\": [\n    \"도서 상태 변경 조건 발생(대출/반납/예약/폐기)\"\n  ],\n  \"outputs\": [\n    \"도서 상태: 대출가능/대출중/예약중/폐기\"\n  ],\n  \"nextEvents\": [\n    \"BookLoaned\",\n    \"BookReturned\",\n    \"BookReserved\",\n    \"BookDiscarded\"\n  ],\n  \"refs\": [\n    [\n      [\n        3,\n        40\n      ],\n      [\n        3,\n        244\n      ]\n    ]\n  ]\n}\n{\n  \"name\": \"BookDiscarded\",\n  \"displayName\": \"도서 폐기됨\",\n  \"actor\": \"사서\",\n  \"level\": 3,\n  \"description\": \"사서가 훼손, 분실 등으로 도서를 폐기 처리함. 폐기된 도서는 대출 불가.\",\n  \"inputs\": [\n    \"도서\",\n    \"폐기 사유\"\n  ],\n  \"outputs\": [\n    \"도서 상태 '폐기'로 변경\",\n    \"대출 불가 처리\"\n  ],\n  \"nextEvents\": [\n    \"BookStateChanged\"\n  ],\n  \"refs\": [\n    [\n      [\n        3,\n        246\n      ],\n      [\n        3,\n        305\n      ]\n    ]\n  ]\n}",
+                "eventNames": "BookRegistered, BookDiscarded, BookStateChanged 이벤트가 발생할 수 있어.",
+                "ddlFields": [
+                    {
+                        "field_name": "book_id",
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    5
+                                ],
+                                [
+                                    3,
+                                    31
+                                ]
+                            ],
+                            [
+                                [
+                                    23,
+                                    5
+                                ],
+                                [
+                                    23,
+                                    25
+                                ]
+                            ]
+                        ]
+                    },
+                    {
+                        "field_name": "title",
+                        "refs": [
+                            [
+                                [
+                                    4,
+                                    5
+                                ],
+                                [
+                                    4,
+                                    32
+                                ]
+                            ]
+                        ]
+                    },
+                    {
+                        "field_name": "isbn",
+                        "refs": [
+                            [
+                                [
+                                    5,
+                                    5
+                                ],
+                                [
+                                    5,
+                                    37
+                                ]
+                            ]
+                        ]
+                    },
+                    {
+                        "field_name": "author",
+                        "refs": [
+                            [
+                                [
+                                    6,
+                                    5
+                                ],
+                                [
+                                    6,
+                                    33
+                                ]
+                            ]
+                        ]
+                    },
+                    {
+                        "field_name": "publisher",
+                        "refs": [
+                            [
+                                [
+                                    7,
+                                    5
+                                ],
+                                [
+                                    7,
+                                    36
+                                ]
+                            ]
+                        ]
+                    },
+                    {
+                        "field_name": "registration_date",
+                        "refs": [
+                            [
+                                [
+                                    10,
+                                    5
+                                ],
+                                [
+                                    10,
+                                    57
+                                ]
+                            ]
+                        ]
+                    },
+                    {
+                        "field_name": "disposal_date",
+                        "refs": [
+                            [
+                                [
+                                    11,
+                                    5
+                                ],
+                                [
+                                    11,
+                                    32
+                                ]
+                            ]
+                        ]
+                    },
+                    {
+                        "field_name": "disposal_reason",
+                        "refs": [
+                            [
+                                [
+                                    12,
+                                    5
+                                ],
+                                [
+                                    12,
+                                    30
+                                ]
+                            ]
+                        ]
+                    },
+                    {
+                        "field_name": "created_at",
+                        "refs": [
+                            [
+                                [
+                                    13,
+                                    5
+                                ],
+                                [
+                                    13,
+                                    50
+                                ]
+                            ]
+                        ]
+                    },
+                    {
+                        "field_name": "updated_at",
+                        "refs": [
+                            [
+                                [
+                                    14,
+                                    5
+                                ],
+                                [
+                                    14,
+                                    78
+                                ]
+                            ]
+                        ]
+                    },
+                    {
+                        "field_name": "history_id",
+                        "refs": [
+                            [
+                                [
+                                    22,
+                                    5
+                                ],
+                                [
+                                    22,
+                                    34
+                                ]
+                            ]
+                        ]
+                    },
+                    {
+                        "field_name": "change_reason",
+                        "refs": [
+                            [
+                                [
+                                    26,
+                                    5
+                                ],
+                                [
+                                    26,
+                                    31
+                                ]
+                            ]
+                        ]
+                    },
+                    {
+                        "field_name": "changed_by",
+                        "refs": [
+                            [
+                                [
+                                    27,
+                                    5
+                                ],
+                                [
+                                    27,
+                                    28
+                                ]
+                            ]
+                        ]
+                    },
+                    {
+                        "field_name": "change_date",
+                        "refs": [
+                            [
+                                [
+                                    28,
+                                    5
+                                ],
+                                [
+                                    28,
+                                    51
+                                ]
+                            ]
+                        ]
+                    }
+                ],
+                "description": "# Bounded Context Overview: BookManagement (도서 관리)\n\n## Role\n도서 등록, 도서 상태 관리(대출가능/대출중/예약중/폐기) 및 도서 정보(도서명, ISBN, 저자, 출판사, 카테고리) 관리를 담당한다. ISBN 중복 및 자리수 유효성 검증, 카테고리 분류, 도서의 상태 변동, 폐기 처리 등을 수행한다.\n\n## Key Events\n- BookRegistered\n- BookDiscarded\n- BookStateChanged\n\n# Requirements\n\n## userStory\n\n'도서 관리' 화면에서는 새로운 도서를 등록하고 현재 보유한 도서들의 상태를 관리할 수 있어야 해. 도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해. 등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야 해.\n\n각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해.\n\n## DDL\n\n```sql\n-- 도서 테이블\nCREATE TABLE books (\n    book_id INT AUTO_INCREMENT PRIMARY KEY,\n    title VARCHAR(500) NOT NULL,\n    isbn VARCHAR(13) UNIQUE NOT NULL,\n    author VARCHAR(200) NOT NULL,\n    publisher VARCHAR(200) NOT NULL,\n    category ENUM('소설', '비소설', '학술', '잡지') NOT NULL,\n    status ENUM('대출가능', '대출중', '예약중', '폐기') DEFAULT '대출가능',\n    registration_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    disposal_date DATETIME NULL,\n    disposal_reason TEXT NULL,\n    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,\n    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n    INDEX idx_title (title),\n    INDEX idx_isbn (isbn),\n    INDEX idx_status (status),\n    INDEX idx_category (category)\n);\n```\n```sql\n-- 도서 상태 변경 이력 테이블\nCREATE TABLE book_status_history (\n    history_id INT AUTO_INCREMENT PRIMARY KEY,\n    book_id INT NOT NULL,\n    previous_status ENUM('대출가능', '대출중', '예약중', '폐기'),\n    new_status ENUM('대출가능', '대출중', '예약중', '폐기') NOT NULL,\n    change_reason VARCHAR(200),\n    changed_by VARCHAR(100),\n    change_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    FOREIGN KEY (book_id) REFERENCES books(book_id),\n    INDEX idx_book_id (book_id),\n    INDEX idx_change_date (change_date)\n);\n```\n## Event\n\n```json\n{\n  \"name\": \"BookRegistered\",\n  \"displayName\": \"도서 등록됨\",\n  \"actor\": \"사서\",\n  \"level\": 1,\n  \"description\": \"사서가 신규 도서 정보를 입력하고, 유효성(ISBN 중복/자리수, 카테고리) 검증 후 도서를 등록하였음.\",\n  \"inputs\": [\n    \"도서명\",\n    \"ISBN(13자리)\",\n    \"저자\",\n    \"출판사\",\n    \"카테고리(소설/비소설/학술/잡지)\"\n  ],\n  \"outputs\": [\n    \"신규 도서 생성\",\n    \"도서 상태 '대출가능' 설정\"\n  ],\n  \"nextEvents\": [\n    \"BookStateChanged\"\n  ]\n}\n```\n\n```json\n{\n  \"name\": \"BookStateChanged\",\n  \"displayName\": \"도서 상태 변경됨\",\n  \"actor\": \"도서관리시스템\",\n  \"level\": 2,\n  \"description\": \"도서가 등록, 대출, 반납, 예약, 폐기 등 상황 변화에 따라 상태가 자동으로 변경됨.\",\n  \"inputs\": [\n    \"도서 상태 변경 조건 발생(대출/반납/예약/폐기)\"\n  ],\n  \"outputs\": [\n    \"도서 상태: 대출가능/대출중/예약중/폐기\"\n  ],\n  \"nextEvents\": [\n    \"BookLoaned\",\n    \"BookReturned\",\n    \"BookReserved\",\n    \"BookDiscarded\"\n  ]\n}\n```\n\n```json\n{\n  \"name\": \"BookDiscarded\",\n  \"displayName\": \"도서 폐기됨\",\n  \"actor\": \"사서\",\n  \"level\": 3,\n  \"description\": \"사서가 훼손, 분실 등으로 도서를 폐기 처리함. 폐기된 도서는 대출 불가.\",\n  \"inputs\": [\n    \"도서\",\n    \"폐기 사유\"\n  ],\n  \"outputs\": [\n    \"도서 상태 '폐기'로 변경\",\n    \"대출 불가 처리\"\n  ],\n  \"nextEvents\": [\n    \"BookStateChanged\"\n  ]\n}\n```\n\n## Context Relations\n\n### BookManagement-LoanProcessing\n- **Type**: Pub/Sub\n- **Direction**: sends to 대출/반납 처리 (LoanProcessing)\n- **Reason**: 도서 상태 변경 등 주요 이벤트가 대출/반납 프로세스에 영향을 미치므로, 느슨한 결합과 확장성을 위해 pub/sub을 적용했다.\n- **Interaction Pattern**: 도서 등록, 폐기, 상태 변경 이벤트가 발생하면 대출/반납 처리 컨텍스트가 이를 구독하여 내부 상태를 동기화한다.\n\n### BookManagement-HistoryManagement\n- **Type**: Pub/Sub\n- **Direction**: sends to 이력 관리 (HistoryManagement)\n- **Reason**: 도서 등록/상태 변경 이벤트가 이력 관리의 기록 트리거가 되므로, pub/sub을 적용해 독립성과 유연성을 보장했다.\n- **Interaction Pattern**: 도서 관리 컨텍스트에서 도서 등록/상태 변경이 발생하면 이력 관리 컨텍스트가 이를 구독해 상태 변경 이력을 기록한다.",
+                "traceMap": {
+                    "4": {
+                        "refs": [
+                            [
+                                [
+                                    1,
+                                    1
+                                ],
+                                [
+                                    3,
+                                    306
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "7": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    15
+                                ],
+                                [
+                                    3,
+                                    103
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "8": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    246
+                                ],
+                                [
+                                    3,
+                                    305
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "9": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    40
+                                ],
+                                [
+                                    3,
+                                    244
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "15": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    1
+                                ],
+                                [
+                                    3,
+                                    306
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": true
+                    },
+                    "17": {
+                        "refs": [
+                            [
+                                [
+                                    9,
+                                    1
+                                ],
+                                [
+                                    9,
+                                    75
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": true
+                    },
+                    "22": {
+                        "refs": [
+                            [
+                                [
+                                    24,
+                                    1
+                                ],
+                                [
+                                    42,
+                                    3
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": true
+                    },
+                    "23": {
+                        "refs": [
+                            [
+                                [
+                                    24,
+                                    1
+                                ],
+                                [
+                                    42,
+                                    3
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": true
+                    },
+                    "24": {
+                        "refs": [
+                            [
+                                [
+                                    24,
+                                    1
+                                ],
+                                [
+                                    42,
+                                    3
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": true
+                    },
+                    "25": {
+                        "refs": [
+                            [
+                                [
+                                    24,
+                                    1
+                                ],
+                                [
+                                    42,
+                                    3
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": true
+                    },
+                    "26": {
+                        "refs": [
+                            [
+                                [
+                                    24,
+                                    1
+                                ],
+                                [
+                                    42,
+                                    3
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": true
+                    },
+                    "27": {
+                        "refs": [
+                            [
+                                [
+                                    24,
+                                    1
+                                ],
+                                [
+                                    42,
+                                    3
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": true
+                    },
+                    "28": {
+                        "refs": [
+                            [
+                                [
+                                    24,
+                                    1
+                                ],
+                                [
+                                    42,
+                                    3
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": true
+                    },
+                    "29": {
+                        "refs": [
+                            [
+                                [
+                                    24,
+                                    1
+                                ],
+                                [
+                                    42,
+                                    3
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": true
+                    },
+                    "30": {
+                        "refs": [
+                            [
+                                [
+                                    24,
+                                    1
+                                ],
+                                [
+                                    42,
+                                    3
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": true
+                    },
+                    "31": {
+                        "refs": [
+                            [
+                                [
+                                    24,
+                                    1
+                                ],
+                                [
+                                    42,
+                                    3
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": true
+                    },
+                    "32": {
+                        "refs": [
+                            [
+                                [
+                                    24,
+                                    1
+                                ],
+                                [
+                                    42,
+                                    3
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": true
+                    },
+                    "33": {
+                        "refs": [
+                            [
+                                [
+                                    24,
+                                    1
+                                ],
+                                [
+                                    42,
+                                    3
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": true
+                    },
+                    "34": {
+                        "refs": [
+                            [
+                                [
+                                    24,
+                                    1
+                                ],
+                                [
+                                    42,
+                                    3
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": true
+                    },
+                    "35": {
+                        "refs": [
+                            [
+                                [
+                                    24,
+                                    1
+                                ],
+                                [
+                                    42,
+                                    3
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": true
+                    },
+                    "36": {
+                        "refs": [
+                            [
+                                [
+                                    24,
+                                    1
+                                ],
+                                [
+                                    42,
+                                    3
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": true
+                    },
+                    "37": {
+                        "refs": [
+                            [
+                                [
+                                    24,
+                                    1
+                                ],
+                                [
+                                    42,
+                                    3
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": true
+                    },
+                    "38": {
+                        "refs": [
+                            [
+                                [
+                                    24,
+                                    1
+                                ],
+                                [
+                                    42,
+                                    3
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": true
+                    },
+                    "39": {
+                        "refs": [
+                            [
+                                [
+                                    24,
+                                    1
+                                ],
+                                [
+                                    42,
+                                    3
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": true
+                    },
+                    "40": {
+                        "refs": [
+                            [
+                                [
+                                    24,
+                                    1
+                                ],
+                                [
+                                    42,
+                                    3
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": true
+                    },
+                    "43": {
+                        "refs": [
+                            [
+                                [
+                                    84,
+                                    1
+                                ],
+                                [
+                                    96,
+                                    3
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": true
+                    },
+                    "44": {
+                        "refs": [
+                            [
+                                [
+                                    84,
+                                    1
+                                ],
+                                [
+                                    96,
+                                    3
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": true
+                    },
+                    "45": {
+                        "refs": [
+                            [
+                                [
+                                    84,
+                                    1
+                                ],
+                                [
+                                    96,
+                                    3
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": true
+                    },
+                    "46": {
+                        "refs": [
+                            [
+                                [
+                                    84,
+                                    1
+                                ],
+                                [
+                                    96,
+                                    3
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": true
+                    },
+                    "47": {
+                        "refs": [
+                            [
+                                [
+                                    84,
+                                    1
+                                ],
+                                [
+                                    96,
+                                    3
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": true
+                    },
+                    "48": {
+                        "refs": [
+                            [
+                                [
+                                    84,
+                                    1
+                                ],
+                                [
+                                    96,
+                                    3
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": true
+                    },
+                    "49": {
+                        "refs": [
+                            [
+                                [
+                                    84,
+                                    1
+                                ],
+                                [
+                                    96,
+                                    3
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": true
+                    },
+                    "50": {
+                        "refs": [
+                            [
+                                [
+                                    84,
+                                    1
+                                ],
+                                [
+                                    96,
+                                    3
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": true
+                    },
+                    "51": {
+                        "refs": [
+                            [
+                                [
+                                    84,
+                                    1
+                                ],
+                                [
+                                    96,
+                                    3
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": true
+                    },
+                    "52": {
+                        "refs": [
+                            [
+                                [
+                                    84,
+                                    1
+                                ],
+                                [
+                                    96,
+                                    3
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": true
+                    },
+                    "53": {
+                        "refs": [
+                            [
+                                [
+                                    84,
+                                    1
+                                ],
+                                [
+                                    96,
+                                    3
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": true
+                    },
+                    "54": {
+                        "refs": [
+                            [
+                                [
+                                    84,
+                                    1
+                                ],
+                                [
+                                    96,
+                                    3
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": true
+                    },
+                    "55": {
+                        "refs": [
+                            [
+                                [
+                                    84,
+                                    1
+                                ],
+                                [
+                                    96,
+                                    3
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": true
+                    },
+                    "60": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    15
+                                ],
+                                [
+                                    3,
+                                    103
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "61": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    15
+                                ],
+                                [
+                                    3,
+                                    103
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "62": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    15
+                                ],
+                                [
+                                    3,
+                                    103
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "63": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    15
+                                ],
+                                [
+                                    3,
+                                    103
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "64": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    15
+                                ],
+                                [
+                                    3,
+                                    103
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "65": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    15
+                                ],
+                                [
+                                    3,
+                                    103
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "66": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    15
+                                ],
+                                [
+                                    3,
+                                    103
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "67": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    15
+                                ],
+                                [
+                                    3,
+                                    103
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "68": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    15
+                                ],
+                                [
+                                    3,
+                                    103
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "69": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    15
+                                ],
+                                [
+                                    3,
+                                    103
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "70": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    15
+                                ],
+                                [
+                                    3,
+                                    103
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "71": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    15
+                                ],
+                                [
+                                    3,
+                                    103
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "72": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    15
+                                ],
+                                [
+                                    3,
+                                    103
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "73": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    15
+                                ],
+                                [
+                                    3,
+                                    103
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "74": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    15
+                                ],
+                                [
+                                    3,
+                                    103
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "75": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    15
+                                ],
+                                [
+                                    3,
+                                    103
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "76": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    15
+                                ],
+                                [
+                                    3,
+                                    103
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "77": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    15
+                                ],
+                                [
+                                    3,
+                                    103
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "78": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    15
+                                ],
+                                [
+                                    3,
+                                    103
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "79": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    15
+                                ],
+                                [
+                                    3,
+                                    103
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "80": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    15
+                                ],
+                                [
+                                    3,
+                                    103
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "84": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    40
+                                ],
+                                [
+                                    3,
+                                    244
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "85": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    40
+                                ],
+                                [
+                                    3,
+                                    244
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "86": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    40
+                                ],
+                                [
+                                    3,
+                                    244
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "87": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    40
+                                ],
+                                [
+                                    3,
+                                    244
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "88": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    40
+                                ],
+                                [
+                                    3,
+                                    244
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "89": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    40
+                                ],
+                                [
+                                    3,
+                                    244
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "90": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    40
+                                ],
+                                [
+                                    3,
+                                    244
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "91": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    40
+                                ],
+                                [
+                                    3,
+                                    244
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "92": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    40
+                                ],
+                                [
+                                    3,
+                                    244
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "93": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    40
+                                ],
+                                [
+                                    3,
+                                    244
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "94": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    40
+                                ],
+                                [
+                                    3,
+                                    244
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "95": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    40
+                                ],
+                                [
+                                    3,
+                                    244
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "96": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    40
+                                ],
+                                [
+                                    3,
+                                    244
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "97": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    40
+                                ],
+                                [
+                                    3,
+                                    244
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "98": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    40
+                                ],
+                                [
+                                    3,
+                                    244
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "99": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    40
+                                ],
+                                [
+                                    3,
+                                    244
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "100": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    40
+                                ],
+                                [
+                                    3,
+                                    244
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "101": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    40
+                                ],
+                                [
+                                    3,
+                                    244
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "102": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    40
+                                ],
+                                [
+                                    3,
+                                    244
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "106": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    246
+                                ],
+                                [
+                                    3,
+                                    305
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "107": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    246
+                                ],
+                                [
+                                    3,
+                                    305
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "108": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    246
+                                ],
+                                [
+                                    3,
+                                    305
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "109": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    246
+                                ],
+                                [
+                                    3,
+                                    305
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "110": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    246
+                                ],
+                                [
+                                    3,
+                                    305
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "111": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    246
+                                ],
+                                [
+                                    3,
+                                    305
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "112": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    246
+                                ],
+                                [
+                                    3,
+                                    305
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "113": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    246
+                                ],
+                                [
+                                    3,
+                                    305
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "114": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    246
+                                ],
+                                [
+                                    3,
+                                    305
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "115": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    246
+                                ],
+                                [
+                                    3,
+                                    305
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "116": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    246
+                                ],
+                                [
+                                    3,
+                                    305
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "117": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    246
+                                ],
+                                [
+                                    3,
+                                    305
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "118": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    246
+                                ],
+                                [
+                                    3,
+                                    305
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "119": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    246
+                                ],
+                                [
+                                    3,
+                                    305
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "120": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    246
+                                ],
+                                [
+                                    3,
+                                    305
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "121": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    246
+                                ],
+                                [
+                                    3,
+                                    305
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "122": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    246
+                                ],
+                                [
+                                    3,
+                                    305
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "123": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    246
+                                ],
+                                [
+                                    3,
+                                    305
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "129": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    172
+                                ],
+                                [
+                                    7,
+                                    171
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "130": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    172
+                                ],
+                                [
+                                    7,
+                                    171
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "131": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    172
+                                ],
+                                [
+                                    7,
+                                    171
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "132": {
+                        "refs": [
+                            [
+                                [
+                                    3,
+                                    172
+                                ],
+                                [
+                                    7,
+                                    171
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "135": {
+                        "refs": [
+                            [
+                                [
+                                    9,
+                                    15
+                                ],
+                                [
+                                    9,
+                                    75
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "136": {
+                        "refs": [
+                            [
+                                [
+                                    9,
+                                    15
+                                ],
+                                [
+                                    9,
+                                    75
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "137": {
+                        "refs": [
+                            [
+                                [
+                                    9,
+                                    15
+                                ],
+                                [
+                                    9,
+                                    75
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    },
+                    "138": {
+                        "refs": [
+                            [
+                                [
+                                    9,
+                                    15
+                                ],
+                                [
+                                    9,
+                                    75
+                                ]
+                            ]
+                        ],
+                        "isDirectMatching": false
+                    }
+                }
+            }
         },
         "accumulatedDrafts": {
-            "ApplicationManagement": [],
-            "DocumentIssuance": [
+            "BookManagement": [
                 {
                     "aggregate": {
-                        "name": "Document",
-                        "alias": "발급문서"
+                        "name": "Book",
+                        "alias": "도서"
                     },
                     "enumerations": [],
                     "valueObjects": []
                 }
             ],
-            "SystemOperations": [
+            "LoanProcessing": [
                 {
                     "aggregate": {
-                        "name": "SystemStatus",
-                        "alias": "시스템상태"
-                    },
-                    "enumerations": [],
-                    "valueObjects": []
-                },
-                {
-                    "aggregate": {
-                        "name": "User",
-                        "alias": "사용자"
-                    },
-                    "enumerations": [],
-                    "valueObjects": []
-                }
-            ]
-        },
-        "analysisResult": {
-            "userStories": [
-                {
-                    "title": "UC-001: 민원 신청서 작성",
-                    "description": "민원 신청자로서, 사용자가 간편하게 민원 신청서를 작성하여 필요한 정보를 입력할 수 있도록 한다. 전제조건은 시스템에 로그인(인증) 완료와 필요한 개인정보 및 민원 관련 정보(예: 주민등록번호, 주소 등)의 준비이다. 기본 흐름은 UI에서 'newApplication' 폼 호출 후 신청서 항목 입력, 입력값 유효성 검사, 임시저장 성공 메시지 반환을 포함하며, 예외 흐름에서는 입력값 검증 실패 시 오류 메시지 출력 및 수정 요청을 한다.",
-                    "acceptance": [
-                        "필수 항목이 모두 입력되어야 임시 저장이 가능하다",
-                        "입력값 유효성 검사를 통해 오류가 발생하면 적절한 메시지가 표시된다",
-                        "임시 저장 성공 시 성공 메시지가 반환된다"
-                    ]
-                },
-                {
-                    "title": "UC-002: 민원 신청서 제출",
-                    "description": "민원 신청자로서, 임시 저장 상태인 신청서를 불러와 최종 제출하여 민원 담당자가 검토할 수 있도록 한다. 전제조건은 UC-001을 통해 임시 저장된 신청서가 존재하는 것이다. 기본 흐름은 임시 저장된 신청서를 로드 후 'submitApplication' 호출, 필수 항목 재검증 및 제증명 처리 대기 상태 변경, 제출 완료 메시지 반환을 포함하며, 예외 흐름에서는 필수 정보 미입력 시 제출 불가 메시지를 출력하고 수정하도록 유도한다.",
-                    "acceptance": [
-                        "임시 저장된 신청서가 존재해야 한다",
-                        "필수 정보 재검증 후 제출이 가능해야 한다",
-                        "제출 완료 메시지가 반환되어야 한다",
-                        "필수 정보가 누락된 경우 제출 불가 메시지가 표시되어야 한다"
-                    ]
-                },
-                {
-                    "title": "UC-003: 민원 신청서 검토 및 승인/반려",
-                    "description": "민원 담당자로서, 제출된 민원 신청서를 검토하여 승인 또는 반려 여부를 결정한다. 전제조건은 UC-002를 통해 제출된 신청서가 대기 리스트에 있으며, 민원 담당자 권한이 있는 상태여야 한다. 기본 흐름은 'listPendingApplications'를 호출하여 대기중인 신청서를 조회하고, 상세 내용을 확인한 후 'approveApplication' 또는 'rejectApplication'을 호출하여 승인 시 신청서 상태 변경 및 후속 발급 프로세스를 자동 시작하고, 반려 시 반려 사유를 기록하며 민원 신청자에게 통보하는 과정을 포함한다. 예외 흐름은 시스템 오류 발생 시 오류 로그 기록 및 재시도 요청을 포함한다.",
-                    "acceptance": [
-                        "대기중인 신청서 리스트가 정상적으로 조회되어야 한다",
-                        "신청서 상세 내용 확인이 가능해야 한다",
-                        "승인 또는 반려 후 상태가 변경되어야 한다",
-                        "시스템 오류 발생 시 적절한 로그 기록 및 재시도 요청이 이루어져야 한다"
-                    ]
-                }
-            ],
-            "entities": {
-                "Applicant": {
-                    "properties": [
-                        {
-                            "name": "applicantId",
-                            "type": "string",
-                            "required": true,
-                            "isPrimaryKey": true
-                        },
-                        {
-                            "name": "name",
-                            "type": "string",
-                            "required": true
-                        },
-                        {
-                            "name": "residentRegistrationNumber",
-                            "type": "string",
-                            "required": true
-                        },
-                        {
-                            "name": "address",
-                            "type": "string",
-                            "required": true
-                        }
-                    ]
-                },
-                "Application": {
-                    "properties": [
-                        {
-                            "name": "applicationId",
-                            "type": "string",
-                            "required": true,
-                            "isPrimaryKey": true
-                        },
-                        {
-                            "name": "applicantId",
-                            "type": "string",
-                            "required": true,
-                            "isForeignKey": true,
-                            "foreignEntity": "Applicant"
-                        },
-                        {
-                            "name": "applicationData",
-                            "type": "json",
-                            "required": true
-                        },
-                        {
-                            "name": "status",
-                            "type": "enum",
-                            "required": true,
-                            "values": [
-                                "Draft",
-                                "Submitted",
-                                "Approved",
-                                "Rejected"
-                            ]
-                        },
-                        {
-                            "name": "createdDate",
-                            "type": "date",
-                            "required": true
-                        },
-                        {
-                            "name": "updatedDate",
-                            "type": "date",
-                            "required": true
-                        }
-                    ]
-                }
-            },
-            "businessRules": [
-                {
-                    "name": "ValidApplicationData",
-                    "description": "신청서 작성 시 모든 필수 필드가 정확히 입력되어야 하며, 유효성 검사를 통과해야 한다."
-                },
-                {
-                    "name": "TemporarySaveRule",
-                    "description": "임시 저장 상태의 신청서는 추후 수정이 가능하며, 최종 제출 전에는 유효성 검증이 필요하다."
-                },
-                {
-                    "name": "FinalSubmissionValidation",
-                    "description": "제출 전 필수 정보가 모두 입력되지 않은 경우 제출이 거부되어야 한다."
-                },
-                {
-                    "name": "ReviewProcess",
-                    "description": "제출된 신청서에 대해서만 민원 담당자가 승인 또는 반려 조치를 수행할 수 있다."
-                }
-            ],
-            "interfaces": {
-                "ApplicationSubmissionScreen": {
-                    "sections": [
-                        {
-                            "name": "ApplicationForm",
-                            "type": "form",
-                            "fields": [
-                                {
-                                    "name": "name",
-                                    "type": "text",
-                                    "required": true
-                                },
-                                {
-                                    "name": "residentRegistrationNumber",
-                                    "type": "text",
-                                    "required": true
-                                },
-                                {
-                                    "name": "address",
-                                    "type": "text",
-                                    "required": true
-                                },
-                                {
-                                    "name": "applicationContent",
-                                    "type": "textarea",
-                                    "required": true
-                                }
-                            ],
-                            "actions": [
-                                "newApplication",
-                                "submitApplication"
-                            ],
-                            "filters": [],
-                            "resultTable": {
-                                "columns": [],
-                                "actions": []
-                            }
-                        }
-                    ]
-                },
-                "ApplicationReviewScreen": {
-                    "sections": [
-                        {
-                            "name": "PendingApplications",
-                            "type": "table",
-                            "fields": [],
-                            "actions": [
-                                "viewDetails",
-                                "approveApplication",
-                                "rejectApplication"
-                            ],
-                            "filters": [
-                                "dateRange",
-                                "status"
-                            ],
-                            "resultTable": {
-                                "columns": [
-                                    "applicationId",
-                                    "applicantName",
-                                    "status",
-                                    "createdDate"
-                                ],
-                                "actions": [
-                                    "approveApplication",
-                                    "rejectApplication",
-                                    "viewDetails"
-                                ]
-                            }
-                        }
-                    ]
-                }
-            },
-            "inference": "제공된 요구사항은 민원 신청서 작성, 임시저장, 제출 및 검토/승인/반려를 포함하는 세 가지 유스케이스(UC-001, UC-002, UC-003)를 다루고 있다. 명시적으로 민원 신청자는 시스템에 로그인하고 필요한 개인정보와 민원 관련 정보를 준비한 상태여야 하며, 작성 과정에서는 입력값 유효성 검사가 수행되어 임시 저장을 할 수 있다. 또한, 임시 저장된 신청서가 최종 제출 전 재검증되며, 민원 담당자는 제출된 신청서를 검토 후 승인 혹은 반려를 결정해야 한다. 민원 신청 관리 컨텍스트 내에서 신청서 상태, 검증 로직, 사용자 입력 데이터 등을 집중 관리하는 도메인 모델이 필요하다."
-        },
-        "existingAggregates": [
-            "Document",
-            "SystemStatus",
-            "User"
-        ],
-        "boundedContextDisplayName": "민원신청관리",
-        "subjectText": "Generating options for 민원신청관리 Bounded Context"
-    },
-    {
-        "description": "{\"userStories\":[{\"title\":\"UC-004: 민원 신청 발급 처리\",\"description\":\"민원 담당자는 UC-003에서 승인된 민원 신청서를 확인한 후 'issueDocument'를 호출하여 PDF 또는 해당 포맷의 공식 민원 문서를 발급한다. 문서 발급은 승인 처리 후 자동 또는 수동으로 실행 가능하다. 생성된 문서는 민원 신청자의 계정에 업로드되거나 이메일로 전송되며, 발급 성공 메시지가 제공된다. 문서 생성 실패 시에는 오류 로그가 기록되고 민원 담당자에게 재시도 요청 또는 수동 발급 처리가 진행된다.\",\"acceptance\":[\"민원 신청서가 승인 상태여야 문서 발급이 진행된다.\",\"문서 발급 시 'issueDocument' 함수가 호출된다.\",\"PDF 혹은 지정된 포맷의 문서가 성공적으로 생성되어 민원 신청자에게 전달된다.\",\"문서 생성 실패 시 오류 로그가 기록되고, 민원 담당자에게 재시도 요청 또는 수동 발급 처리 옵션이 제공된다.\"]}],\"entities\":{\"IssuedDocument\":{\"properties\":[{\"name\":\"documentId\",\"type\":\"string\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"citizenApplicationId\",\"type\":\"string\",\"required\":true,\"isForeignKey\":true,\"foreignEntity\":\"CitizenApplication\"},{\"name\":\"format\",\"type\":\"enum\",\"required\":true,\"values\":[\"PDF\",\"Other\"]},{\"name\":\"issueDate\",\"type\":\"date\",\"required\":true},{\"name\":\"status\",\"type\":\"enum\",\"required\":true,\"values\":[\"Issued\",\"Failed\"]},{\"name\":\"errorLog\",\"type\":\"string\"}]}},\"businessRules\":[{\"name\":\"ApprovedApplicationRequired\",\"description\":\"문서 발급은 UC-003에서 승인된 민원 신청서만을 대상으로 진행되어야 한다.\"},{\"name\":\"IssueDocumentInvocation\",\"description\":\"민원 담당자는 승인된 신청서를 확인한 후 'issueDocument' 함수를 호출하여 문서 발급을 시작한다.\"},{\"name\":\"DocumentCreationFailureHandling\",\"description\":\"문서 생성에 실패할 경우, 오류 로그를 기록하고 민원 담당자에게 재시도 요청 또는 수동 발급 처리 옵션을 제공해야 한다.\"}],\"interfaces\":{\"DocumentIssuance\":{\"sections\":[{\"name\":\"ApprovedApplicationsList\",\"type\":\"table\",\"fields\":[{\"name\":\"applicationNumber\",\"type\":\"string\",\"required\":true},{\"name\":\"applicantName\",\"type\":\"string\",\"required\":true},{\"name\":\"approvalStatus\",\"type\":\"string\",\"required\":true}],\"actions\":[\"issueDocument\",\"retryIssue\"],\"filters\":[],\"resultTable\":{\"columns\":[\"applicationNumber\",\"applicantName\",\"approvalStatus\",\"issueDate\",\"status\"],\"actions\":[\"viewDetails\",\"issueDocument\",\"retryIssue\"]}}]}}}",
-        "boundedContext": {
-            "name": "DocumentIssuance",
-            "alias": "문서발급서비스",
-            "displayName": "문서발급서비스",
-            "description": "[{\"type\":\"userStory\",\"text\":\"UC-004: 민원 신청 발급 처리\\n• 액터: 민원 담당자 (승인 처리 후 자동 또는 수동 실행 가능)\\n• 목적: 승인된 민원 신청서를 기반으로 공식 민원 문서를 발급.\\n• 전제조건: UC-003에서 민원 신청서가 승인된 상태, 문서 발급에 필요한 서식 및 인증 로직 준비됨.\\n• 기본 흐름: 승인된 신청서를 확인 후 \\\"issueDocument\\\" 호출 → PDF 혹은 해당 포맷 문서 생성 → 생성된 문서를 민원 신청자 계정에 업로드하거나 이메일 전송 → 발급 성공 메시지 제공.\\n• 예외 흐름: 문서 생성 실패 시 오류 로그 기록, 민원 담당자에게 재시도 요청 또는 수동 발급 처리.\"},{\"type\":\"ddl\",\"text\":\"문서 발급 서비스 컨텍스트는 승인된 민원 신청서를 기반으로 문서 생성, 발급 및 전송 프로세스를 담당하며, 문서 생성의 각 단계(데이터 확인, 포맷팅, 전송 등)가 이 컨텍스트에서 집중 관리된다.\"}]",
-            "aggregates": [
-                {
-                    "name": "Document",
-                    "alias": "발급문서"
-                }
-            ]
-        },
-        "accumulatedDrafts": {
-            "ApplicationManagement": [
-                {
-                    "aggregate": {
-                        "name": "ApplicationSubmission",
-                        "alias": "신청서작성및제출"
-                    },
-                    "enumerations": [
-                        {
-                            "name": "Applicant",
-                            "alias": "민원신청자"
-                        }
-                    ],
-                    "valueObjects": [
-                        {
-                            "name": "ApplicationData",
-                            "alias": "신청서내용",
-                            "referencedAggregateName": ""
-                        },
-                        {
-                            "name": "SubmissionStatus",
-                            "alias": "제출상태",
-                            "referencedAggregateName": ""
-                        }
-                    ]
-                },
-                {
-                    "aggregate": {
-                        "name": "ApplicationReview",
-                        "alias": "신청서검토및승인"
-                    },
-                    "enumerations": [],
-                    "valueObjects": [
-                        {
-                            "name": "ApplicationReference",
-                            "alias": "신청서참조",
-                            "referencedAggregate": {
-                                "name": "ApplicationSubmission",
-                                "alias": "신청서작성및제출"
-                            }
-                        },
-                        {
-                            "name": "ReviewDecision",
-                            "alias": "검토결과",
-                            "referencedAggregateName": ""
-                        }
-                    ]
-                }
-            ],
-            "DocumentIssuance": [],
-            "SystemOperations": [
-                {
-                    "aggregate": {
-                        "name": "SystemStatus",
-                        "alias": "시스템상태"
+                        "name": "Loan",
+                        "alias": "대출"
                     },
                     "enumerations": [],
                     "valueObjects": []
                 },
                 {
                     "aggregate": {
-                        "name": "User",
-                        "alias": "사용자"
+                        "name": "Reservation",
+                        "alias": "예약"
+                    },
+                    "enumerations": [],
+                    "valueObjects": []
+                }
+            ],
+            "HistoryManagement": [
+                {
+                    "aggregate": {
+                        "name": "LoanHistory",
+                        "alias": "대출 이력"
+                    },
+                    "enumerations": [],
+                    "valueObjects": []
+                },
+                {
+                    "aggregate": {
+                        "name": "BookStatusHistory",
+                        "alias": "도서 상태 이력"
                     },
                     "enumerations": [],
                     "valueObjects": []
                 }
             ]
-        },
-        "analysisResult": {
-            "userStories": [
-                {
-                    "title": "UC-004: 민원 신청 발급 처리",
-                    "description": "민원 담당자는 UC-003에서 승인된 민원 신청서를 확인한 후 'issueDocument'를 호출하여 PDF 또는 해당 포맷의 공식 민원 문서를 발급한다. 문서 발급은 승인 처리 후 자동 또는 수동으로 실행 가능하다. 생성된 문서는 민원 신청자의 계정에 업로드되거나 이메일로 전송되며, 발급 성공 메시지가 제공된다. 문서 생성 실패 시에는 오류 로그가 기록되고 민원 담당자에게 재시도 요청 또는 수동 발급 처리가 진행된다.",
-                    "acceptance": [
-                        "민원 신청서가 승인 상태여야 문서 발급이 진행된다.",
-                        "문서 발급 시 'issueDocument' 함수가 호출된다.",
-                        "PDF 혹은 지정된 포맷의 문서가 성공적으로 생성되어 민원 신청자에게 전달된다.",
-                        "문서 생성 실패 시 오류 로그가 기록되고, 민원 담당자에게 재시도 요청 또는 수동 발급 처리 옵션이 제공된다."
-                    ]
-                }
-            ],
-            "entities": {
-                "IssuedDocument": {
-                    "properties": [
-                        {
-                            "name": "documentId",
-                            "type": "string",
-                            "required": true,
-                            "isPrimaryKey": true
-                        },
-                        {
-                            "name": "citizenApplicationId",
-                            "type": "string",
-                            "required": true,
-                            "isForeignKey": true,
-                            "foreignEntity": "CitizenApplication"
-                        },
-                        {
-                            "name": "format",
-                            "type": "enum",
-                            "required": true,
-                            "values": [
-                                "PDF",
-                                "Other"
-                            ]
-                        },
-                        {
-                            "name": "issueDate",
-                            "type": "date",
-                            "required": true
-                        },
-                        {
-                            "name": "status",
-                            "type": "enum",
-                            "required": true,
-                            "values": [
-                                "Issued",
-                                "Failed"
-                            ]
-                        },
-                        {
-                            "name": "errorLog",
-                            "type": "string"
-                        }
-                    ]
-                }
-            },
-            "businessRules": [
-                {
-                    "name": "ApprovedApplicationRequired",
-                    "description": "문서 발급은 UC-003에서 승인된 민원 신청서만을 대상으로 진행되어야 한다."
-                },
-                {
-                    "name": "IssueDocumentInvocation",
-                    "description": "민원 담당자는 승인된 신청서를 확인한 후 'issueDocument' 함수를 호출하여 문서 발급을 시작한다."
-                },
-                {
-                    "name": "DocumentCreationFailureHandling",
-                    "description": "문서 생성에 실패할 경우, 오류 로그를 기록하고 민원 담당자에게 재시도 요청 또는 수동 발급 처리 옵션을 제공해야 한다."
-                }
-            ],
-            "interfaces": {
-                "DocumentIssuance": {
-                    "sections": [
-                        {
-                            "name": "ApprovedApplicationsList",
-                            "type": "table",
-                            "fields": [
-                                {
-                                    "name": "applicationNumber",
-                                    "type": "string",
-                                    "required": true
-                                },
-                                {
-                                    "name": "applicantName",
-                                    "type": "string",
-                                    "required": true
-                                },
-                                {
-                                    "name": "approvalStatus",
-                                    "type": "string",
-                                    "required": true
-                                }
-                            ],
-                            "actions": [
-                                "issueDocument",
-                                "retryIssue"
-                            ],
-                            "filters": [],
-                            "resultTable": {
-                                "columns": [
-                                    "applicationNumber",
-                                    "applicantName",
-                                    "approvalStatus",
-                                    "issueDate",
-                                    "status"
-                                ],
-                                "actions": [
-                                    "viewDetails",
-                                    "issueDocument",
-                                    "retryIssue"
-                                ]
-                            }
-                        }
-                    ]
-                }
-            },
-            "inference": "요구사항 분석 결과, UC-004는 민원 담당자가 승인된 민원 신청서를 기반으로 공식 민원 문서를 발급하는 프로세스를 구현해야 합니다. 이 프로세스는 자동 또는 수동으로 실행 가능하며, 서식 및 인증 로직이 미리 준비되어 있어야 합니다. 또한, 문서 생성 실패 시 오류 로그를 기록하고 재시도 또는 수동 발급 처리를 할 수 있는 예외 흐름도 포함됩니다. 문서 생성의 각 단계(데이터 확인, 포맷팅, 전송 등)가 집중 관리되어야 하며, 'issueDocument' 함수 호출을 통해 문서가 생성되어 민원 신청자에게 업로드되거나 이메일로 전송되어야 합니다."
-        },
-        "existingAggregates": [
-            "ApplicationSubmission",
-            "ApplicationReview",
-            "SystemStatus",
-            "User"
-        ],
-        "boundedContextDisplayName": "문서발급서비스",
-        "subjectText": "Generating options for 문서발급서비스 Bounded Context"
-    },
-    {
-        "description": "{\"userStories\":[{\"title\":\"UC-005: 시스템 관리 및 모니터링\",\"description\":\"시스템 관리자는 monitorSystem 함수를 이용하여 전체 시스템 상태를 확인하고, 장애나 비정상 상황 발생 시 알림을 확인 후 즉각적으로 조치하거나 관련 이슈를 전달합니다. 또한, 정기적인 업데이트 및 보안 점검을 수행하며, 모니터링 도구 오류 발생 시 백업 로깅 시스템으로 전환하여 수동 모니터링을 실시합니다.\",\"acceptance\":[\"관리자는 관리자 전용 콘솔 접근 권한을 보유한다.\",\"monitorSystem 함수를 통해 시스템 상태가 정상적으로 조회되어야 한다.\",\"장애 또는 비정상 상황 발생 시 알림이 즉각적으로 나타나야 한다.\",\"모니터링 도구 오류 발생 시 백업 로깅 시스템으로 전환된다.\",\"정기적 업데이트 및 보안 점검 기능이 정상적으로 수행된다.\"]}],\"entities\":{\"SystemAdmin\":{\"properties\":[{\"name\":\"adminId\",\"type\":\"string\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"name\",\"type\":\"string\",\"required\":true},{\"name\":\"role\",\"type\":\"string\",\"required\":true}]},\"SystemStatus\":{\"properties\":[{\"name\":\"statusId\",\"type\":\"string\",\"required\":true,\"isPrimaryKey\":true},{\"name\":\"overallStatus\",\"type\":\"string\",\"required\":true,\"values\":[\"Normal\",\"Warning\",\"Critical\"]},{\"name\":\"lastChecked\",\"type\":\"datetime\",\"required\":true},{\"name\":\"alerts\",\"type\":\"string\"}]}},\"businessRules\":[{\"name\":\"BackupLoggingRule\",\"description\":\"모니터링 도구에 오류가 발생하면 자동으로 백업 로깅 시스템으로 전환하여 수동 모니터링을 가능하게 한다.\"},{\"name\":\"AccessControlRule\",\"description\":\"관리자 콘솔 및 monitorSystem 함수는 시스템 관리자 권한을 가진 사용자만 접근할 수 있다.\"},{\"name\":\"SystemIntegrityRule\",\"description\":\"시스템 상태 및 모니터링 결과는 정기적으로 업데이트되어야 하며, 보안 점검 기준을 만족해야 한다.\"}],\"interfaces\":{\"AdminConsole\":{\"sections\":[{\"name\":\"SystemStatusOverview\",\"type\":\"table\",\"fields\":[],\"actions\":[\"monitorSystem\",\"initiateBackup\",\"performSecurityUpdate\"],\"filters\":[\"dateRange\",\"overallStatus\"],\"resultTable\":{\"columns\":[\"statusId\",\"overallStatus\",\"lastChecked\",\"alerts\"],\"actions\":[\"viewDetails\"]}},{\"name\":\"AlertManagement\",\"type\":\"form\",\"fields\":[{\"name\":\"alertMessage\",\"type\":\"text\",\"required\":true},{\"name\":\"actionTaken\",\"type\":\"text\",\"required\":true}],\"actions\":[\"acknowledgeAlert\",\"dispatchIncident\"],\"filters\":[],\"resultTable\":{\"columns\":[],\"actions\":[]}}]}}}",
-        "boundedContext": {
-            "name": "SystemOperations",
-            "alias": "시스템관리",
-            "displayName": "시스템관리",
-            "description": "[{\"type\":\"userStory\",\"text\":\"UC-005: 시스템 관리 및 모니터링\\n• 액터: 시스템 관리자\\n• 목적: 서비스 안정성 확보와 운영 효율성을 위해 시스템을 관리, 모니터링.\\n• 전제조건: 관리자 전용 콘솔 접근 권한 보유.\\n• 기본 흐름: 시스템 관리자는 \\\"monitorSystem\\\" 함수를 통해 전체 시스템 상태 확인 → 장애 또는 비정상 상황 발생 시 알림 확인 및 즉각 조치 또는 이슈 전달 → 정기적 업데이트 및 보안 점검 실행.\\n• 예외 흐름: 모니터링 도구 오류 시 백업 로깅 시스템으로 전환 후 수동 모니터링 조치.\\n\\n추가적으로, 사용자 로그인, 권한 부여 및 세션 관리와 관련한 기능들은 전체 시스템에서 분리된 사용자 및 인증 관리 영역으로 취급되나, 시스템 운영 컨텍스트와 밀접하게 연계되어 관리된다.\"},{\"type\":\"ddl\",\"text\":\"시스템 운영 및 관리 컨텍스트는 시스템 관리자와 관련된 모든 운영, 모니터링, 보안 및 사용자 인증 관련 기능과 데이터를 관리하며, 서비스 전체의 안정성을 위한 인프라스트럭처적 기능들을 포함한다.\"}]",
-            "aggregates": [
-                {
-                    "name": "SystemStatus",
-                    "alias": "시스템상태"
-                },
-                {
-                    "name": "User",
-                    "alias": "사용자"
-                }
-            ]
-        },
-        "accumulatedDrafts": {
-            "ApplicationManagement": [
-                {
-                    "aggregate": {
-                        "name": "ApplicationSubmission",
-                        "alias": "신청서작성및제출"
-                    },
-                    "enumerations": [
-                        {
-                            "name": "Applicant",
-                            "alias": "민원신청자"
-                        }
-                    ],
-                    "valueObjects": [
-                        {
-                            "name": "ApplicationData",
-                            "alias": "신청서내용",
-                            "referencedAggregateName": ""
-                        },
-                        {
-                            "name": "SubmissionStatus",
-                            "alias": "제출상태",
-                            "referencedAggregateName": ""
-                        }
-                    ]
-                },
-                {
-                    "aggregate": {
-                        "name": "ApplicationReview",
-                        "alias": "신청서검토및승인"
-                    },
-                    "enumerations": [],
-                    "valueObjects": [
-                        {
-                            "name": "ApplicationReference",
-                            "alias": "신청서참조",
-                            "referencedAggregate": {
-                                "name": "ApplicationSubmission",
-                                "alias": "신청서작성및제출"
-                            }
-                        },
-                        {
-                            "name": "ReviewDecision",
-                            "alias": "검토결과",
-                            "referencedAggregateName": ""
-                        }
-                    ]
-                }
-            ],
-            "DocumentIssuance": [
-                {
-                    "aggregate": {
-                        "name": "DocumentIssuanceProcess",
-                        "alias": "문서발급프로세스"
-                    },
-                    "enumerations": [],
-                    "valueObjects": [
-                        {
-                            "name": "ApplicationReference",
-                            "alias": "신청서참조",
-                            "referencedAggregate": {
-                                "name": "ApplicationSubmission",
-                                "alias": "신청서작성및제출"
-                            }
-                        },
-                        {
-                            "name": "IssueCommand",
-                            "alias": "발급요청",
-                            "referencedAggregateName": ""
-                        },
-                        {
-                            "name": "ProcessStatus",
-                            "alias": "프로세스상태",
-                            "referencedAggregateName": ""
-                        }
-                    ]
-                },
-                {
-                    "aggregate": {
-                        "name": "IssuedDocument",
-                        "alias": "발급문서"
-                    },
-                    "enumerations": [],
-                    "valueObjects": [
-                        {
-                            "name": "DocumentFormat",
-                            "alias": "문서형식",
-                            "referencedAggregateName": ""
-                        },
-                        {
-                            "name": "IssuanceStatus",
-                            "alias": "발급상태",
-                            "referencedAggregateName": ""
-                        },
-                        {
-                            "name": "ErrorLog",
-                            "alias": "오류로그",
-                            "referencedAggregateName": ""
-                        }
-                    ]
-                }
-            ],
-            "SystemOperations": []
-        },
-        "analysisResult": {
-            "userStories": [
-                {
-                    "title": "UC-005: 시스템 관리 및 모니터링",
-                    "description": "시스템 관리자는 monitorSystem 함수를 이용하여 전체 시스템 상태를 확인하고, 장애나 비정상 상황 발생 시 알림을 확인 후 즉각적으로 조치하거나 관련 이슈를 전달합니다. 또한, 정기적인 업데이트 및 보안 점검을 수행하며, 모니터링 도구 오류 발생 시 백업 로깅 시스템으로 전환하여 수동 모니터링을 실시합니다.",
-                    "acceptance": [
-                        "관리자는 관리자 전용 콘솔 접근 권한을 보유한다.",
-                        "monitorSystem 함수를 통해 시스템 상태가 정상적으로 조회되어야 한다.",
-                        "장애 또는 비정상 상황 발생 시 알림이 즉각적으로 나타나야 한다.",
-                        "모니터링 도구 오류 발생 시 백업 로깅 시스템으로 전환된다.",
-                        "정기적 업데이트 및 보안 점검 기능이 정상적으로 수행된다."
-                    ]
-                }
-            ],
-            "entities": {
-                "SystemAdmin": {
-                    "properties": [
-                        {
-                            "name": "adminId",
-                            "type": "string",
-                            "required": true,
-                            "isPrimaryKey": true
-                        },
-                        {
-                            "name": "name",
-                            "type": "string",
-                            "required": true
-                        },
-                        {
-                            "name": "role",
-                            "type": "string",
-                            "required": true
-                        }
-                    ]
-                },
-                "SystemStatus": {
-                    "properties": [
-                        {
-                            "name": "statusId",
-                            "type": "string",
-                            "required": true,
-                            "isPrimaryKey": true
-                        },
-                        {
-                            "name": "overallStatus",
-                            "type": "string",
-                            "required": true,
-                            "values": [
-                                "Normal",
-                                "Warning",
-                                "Critical"
-                            ]
-                        },
-                        {
-                            "name": "lastChecked",
-                            "type": "datetime",
-                            "required": true
-                        },
-                        {
-                            "name": "alerts",
-                            "type": "string"
-                        }
-                    ]
-                }
-            },
-            "businessRules": [
-                {
-                    "name": "BackupLoggingRule",
-                    "description": "모니터링 도구에 오류가 발생하면 자동으로 백업 로깅 시스템으로 전환하여 수동 모니터링을 가능하게 한다."
-                },
-                {
-                    "name": "AccessControlRule",
-                    "description": "관리자 콘솔 및 monitorSystem 함수는 시스템 관리자 권한을 가진 사용자만 접근할 수 있다."
-                },
-                {
-                    "name": "SystemIntegrityRule",
-                    "description": "시스템 상태 및 모니터링 결과는 정기적으로 업데이트되어야 하며, 보안 점검 기준을 만족해야 한다."
-                }
-            ],
-            "interfaces": {
-                "AdminConsole": {
-                    "sections": [
-                        {
-                            "name": "SystemStatusOverview",
-                            "type": "table",
-                            "fields": [],
-                            "actions": [
-                                "monitorSystem",
-                                "initiateBackup",
-                                "performSecurityUpdate"
-                            ],
-                            "filters": [
-                                "dateRange",
-                                "overallStatus"
-                            ],
-                            "resultTable": {
-                                "columns": [
-                                    "statusId",
-                                    "overallStatus",
-                                    "lastChecked",
-                                    "alerts"
-                                ],
-                                "actions": [
-                                    "viewDetails"
-                                ]
-                            }
-                        },
-                        {
-                            "name": "AlertManagement",
-                            "type": "form",
-                            "fields": [
-                                {
-                                    "name": "alertMessage",
-                                    "type": "text",
-                                    "required": true
-                                },
-                                {
-                                    "name": "actionTaken",
-                                    "type": "text",
-                                    "required": true
-                                }
-                            ],
-                            "actions": [
-                                "acknowledgeAlert",
-                                "dispatchIncident"
-                            ],
-                            "filters": [],
-                            "resultTable": {
-                                "columns": [],
-                                "actions": []
-                            }
-                        }
-                    ]
-                }
-            },
-            "inference": "사용자가 제공한 요구사항은 시스템 관리자(시스템 운영 및 관리 컨텍스트)와 관련된 기능, 특히 시스템의 모니터링 및 관리에 관한 내용을 담고 있다. 여기에는 monitorSystem 함수를 통한 시스템 상태 확인, 장애 및 비정상 상황 발생 시 알림 확인, 즉각적인 조치 혹은 이슈 전달, 정기적인 업데이트 및 보안 점검, 그리고 모니터링 도구 오류 시 백업 로깅 시스템으로 전환하는 예외 흐름이 포함된다. 또한, 사용자 로그인, 권한 부여 및 세션 관리는 분리된 영역으로 취급되지만 시스템 운영과 밀접하게 연계되어 관리된다. 이를 토대로 시스템 관리 전용 사용자 스토리, 관련 엔티티, 비즈니스 규칙, 그리고 관리자 콘솔 인터페이스를 정의한다."
-        },
-        "existingAggregates": [
-            "ApplicationSubmission",
-            "ApplicationReview",
-            "DocumentIssuanceProcess",
-            "IssuedDocument"
-        ],
-        "boundedContextDisplayName": "시스템관리",
-        "subjectText": "Generating options for 시스템관리 Bounded Context"
+        }
     }
 ]
 

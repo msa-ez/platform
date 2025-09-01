@@ -1,5 +1,6 @@
 const RequirementsValidationGenerator = require("./RequirementsValidationGenerator");
 const TextChunker = require("./TextChunker");
+const { TextTraceUtil, RefsTraceUtil } = require("./utils");
 
 class RecursiveRequirementsValidationGenerator extends RequirementsValidationGenerator {
     constructor(client) {
@@ -9,8 +10,6 @@ class RecursiveRequirementsValidationGenerator extends RequirementsValidationGen
             spareSize: 2000
         });
 
-        this.recursive = true;
-        
         this.currentChunks = [];
         this.currentChunkIndex = 0;
         this.accumulatedResults = {
@@ -34,14 +33,22 @@ class RecursiveRequirementsValidationGenerator extends RequirementsValidationGen
         };
 
         this.reset();
+        
+        // 원본 요구사항과 현재 청크 시작 라인 정보
+        this.originalRequirements = '';
+        this.currentChunkStartLine = 1;
     }
 
     // 1. 메인 진입점: 전체 프로세스 제어
     async validateRecursively(text) {
-        this.currentChunks = this.textChunker.splitIntoChunks(text);
+        // 원본 텍스트 저장 (refs 계산에 필요)
+        this.originalRequirements = text;
         
-        for (const chunk of this.currentChunks) {
-            const result = await this.processChunk(chunk);
+        // 라인 인식 청킹 사용
+        this.currentChunks = this.textChunker.splitIntoChunksByLine(text);
+        
+        for (const chunkData of this.currentChunks) {
+            const result = await this.processChunk(chunkData);
             this.currentChunkIndex++;
             // validateRecursively에서는 누적하지 않음
         }
@@ -50,10 +57,13 @@ class RecursiveRequirementsValidationGenerator extends RequirementsValidationGen
     }
 
     // 2. 각 청크 처리
-    async processChunk(chunk) {
+    async processChunk(chunkData) {
+        // 현재 청크의 시작 라인 번호 저장
+        this.currentChunkStartLine = chunkData.startLine;
+        
         this.client.input = {
             requirements: {
-                userStory: chunk
+                userStory: chunkData.text
             }
         };
         
@@ -183,10 +193,10 @@ class RecursiveRequirementsValidationGenerator extends RequirementsValidationGen
                 model.analysisResult.actors
                 .filter(actor => actor.name && !existingActorNames.has(actor.name))
                 .forEach((actor, idx) => {
-                    const actorUuid = this.uuid();
+                    const actorUuid = this._uuid();
                     const newActorY = lastActorY + ((idx + 1) * 250);
                     
-                    modelElements[actorUuid] = this.createActor(
+                    modelElements[actorUuid] = this._createActor(
                         { name: actor.name },  // name 속성만 있는 객체 전달
                         actorUuid,
                         150,
@@ -195,8 +205,8 @@ class RecursiveRequirementsValidationGenerator extends RequirementsValidationGen
 
                     this.positionTracker.actorPositions[actor.name] = newActorY;
 
-                    const laneUuid = this.uuid();
-                    relations[laneUuid] = this.createSwimLane(
+                    const laneUuid = this._uuid();
+                    relations[laneUuid] = this._createSwimLane(
                         laneUuid,
                         newActorY + 125,
                         0,
@@ -234,12 +244,12 @@ class RecursiveRequirementsValidationGenerator extends RequirementsValidationGen
                             return;
                         }
                         
-                        const elementUuid = this.uuid();
+                        const elementUuid = this._uuid();
                         // 이전 이벤트 다음에 배치
                         const eventX = lastEventX + 200;
                         lastEventX = eventX;
                         
-                        const eventElement = this.createEvent(
+                        const eventElement = this._createEvent(
                             event,
                             elementUuid,
                             eventX,
@@ -285,6 +295,30 @@ class RecursiveRequirementsValidationGenerator extends RequirementsValidationGen
                 actors: []
             }
         };
+    }
+
+    /**
+     * 부모 클래스의 _getLineNumberedRequirements 오버라이드
+     * 현재 청크의 시작 라인 번호를 반영하여 라인 번호를 생성
+     */
+    _getLineNumberedRequirements() {
+        const requirements = this.client.input['requirements']['userStory'] || '';
+        return TextTraceUtil.addLineNumbers(requirements, this.currentChunkStartLine);
+    }
+
+    /**
+     * 부모 클래스의 _convertEventRefsToIndexes 오버라이드
+     * 원본 텍스트 전체를 기준으로 refs 인덱스를 계산
+     */
+    _convertEventRefsToIndexes(model) {
+        if (!model.content || !model.content.events) return;
+        if (!this.originalRequirements) return;
+
+        // 원본 텍스트 전체에 라인 번호를 부여
+        const lineNumberedOriginalRequirements = TextTraceUtil.addLineNumbers(this.originalRequirements);
+        if (!lineNumberedOriginalRequirements) return;
+
+        model.content.events = RefsTraceUtil.convertRefsToIndexes(model.content.events, lineNumberedOriginalRequirements);
     }
 }
 

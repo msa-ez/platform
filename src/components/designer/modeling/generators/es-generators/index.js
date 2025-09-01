@@ -13,3 +13,4 @@ export const { AssignPreviewFieldsToAggregateDraft, AssignPreviewFieldsToAggrega
 export const { SanityCheckGenerator, SanityCheckGeneratorTest } = require("./SanityCheckGenerator");
 export const { AggregateDraftDialog } = require("./components");
 export const { getEsValue, getEsDraft, esConfigs, getAvailableServiceNames } = require("./mocks");
+export const { AddTraceToDraftOptionsGenerator, AddTraceToDraftOptionsGeneratorTest } = require("./AddTraceToDraftOptionsGenerator");

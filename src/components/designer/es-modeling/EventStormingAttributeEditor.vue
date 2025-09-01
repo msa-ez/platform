@@ -67,11 +67,15 @@
                                     ></v-text-field>
                                 </v-col>
                                 <v-spacer></v-spacer>
-                                <v-col>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <v-icon color="grey lighten-1" style="margin-left: 8px; margin-top: 5px;" @click="openTraceInfoViewerForProperty(element)" v-if="isTraceInfoViewerUsable(element)" small>
+                                        mdi-text-box-search-outline
+                                    </v-icon>
+                                    
                                     <v-icon
                                         v-if="attributeEdit && value.indexOf(element) == attributeEditIndex "
                                         small
-                                        class="mr-2 cp-save-button"
+                                        class="cp-save-button"
                                         @click="modifyAttributeItem(element)"
                                         :disabled="isReadOnly"
                                     >
@@ -80,7 +84,6 @@
                                     <v-icon
                                             v-else-if="!attributeEdit || value.indexOf(element) != attributeEditIndex"
                                             small
-                                            class="mr-2"
                                             @click="editAttributeItem(element)"
                                             :disabled="isReadOnly"
                                     >
@@ -93,7 +96,7 @@
                                     >
                                         delete
                                     </v-icon>
-                                </v-col>
+                                </div>
                             </v-row>
                             <v-col v-if="attributeEdit && value.indexOf(element) == attributeEditIndex" style="margin-top: -30px; margin-left: 30px;">
                                 <v-row style="margin-top:10px;">
@@ -257,6 +260,7 @@
     import draggable from 'vuedraggable'
     import DetailComponent from '../../ui/DetailComponent.vue';
     import umlCanvas from '../class-modeling/UMLClassModelCanvas.vue'
+    import { TraceInfoViewerUtil } from '../modeling/generators/features/EventStormingModelCanvas'
     var changeCase = require('change-case');
 
     export default {
@@ -345,7 +349,7 @@
                 },
                 itemValue: {
                     value: ''
-                },
+                }
             }
         },
         computed: {
@@ -365,6 +369,8 @@
                     ghostClass: "ghost"
                 };
             },
+        },
+        created() {
         },
         mounted: function() {
             var me = this
@@ -837,6 +843,49 @@
                 }
 
                 return duplicated;
+            },
+
+            openTraceInfoViewerForProperty(propertyValue) {
+                if(!propertyValue) {
+                    const msg = "Failed to open trace info viewer. You can remake the property or element to fix this. Reason: propertyValue is null.";
+                    console.error(msg);
+                    alert(msg);
+                    return;
+                }
+
+                try {
+                    if(propertyValue.refs) {
+                        TraceInfoViewerUtil.openTraceInfoViewerForProperty(this, propertyValue, this.elementId);
+                        return;
+                    }            
+
+                    const idValueObjectRefs = TraceInfoViewerUtil.getIdValueObjectRefsByElementId(
+                        this, propertyValue, this.elementId
+                    );
+                    if(!idValueObjectRefs) {
+                        throw new Error("Can not find idValueObjectRefs by propertyValue.");
+                    }
+
+                    TraceInfoViewerUtil.showTraceInfoViewer(this, idValueObjectRefs);
+                }
+                catch(e) {
+                    const msg = "Failed to open trace info viewer. You can remake the property or element to fix this. Reason: " + e.message;
+                    console.error(msg, e);
+                    alert(msg);
+                    return;
+                }
+            },
+
+            isTraceInfoViewerUsable(propertyValue) {
+                if(!propertyValue) return false;
+                if(propertyValue.refs) {
+                    return TraceInfoViewerUtil.isTraceInfoViewerUsable(this) && propertyValue.refs && propertyValue.refs.length > 0;
+                }
+
+                const idValueObjectRefs = TraceInfoViewerUtil.getIdValueObjectRefsByElementId(
+                    this, propertyValue, this.elementId
+                );
+                return idValueObjectRefs && idValueObjectRefs.length > 0;
             }
         },
     }

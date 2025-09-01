@@ -26,7 +26,7 @@ import {
     ModelOptionDto
 } from "../../modeling/generators/features/AIGenerator"
 import ESActionsUtilTest from "../../modeling/generators/es-ddl-generators/modules/ESActionsUtilTest";
-import { mockedProgressDto, mockedProgressDtoUpdateCallback } from "./mocks"
+import { mockedProgressDto, mockedProgressDtoUpdateCallback, mockedTraceInfoViewerDto } from "./mocks"
 import { EsValueLangGraphStudioProxyTest, EsValueLangGraphStudioProxy } from "../../modeling/generators/proxies"
 
 export default {
@@ -63,6 +63,10 @@ export default {
                     command: () => this._TempTest(),
                     description: "임시 테스트"
                 },
+                TestTraceInfoViewer: {
+                    command: () => this._testTraceInfoViewer(),
+                    description: "TraceInfoViewer 테스트"
+                },
 
                 SanityCheckGeneratorTest: {command: async () => { await SanityCheckGeneratorTest.test() }},
                 TokenCounterTest: { command: () => {TokenCounterTest.test()} },
@@ -84,16 +88,30 @@ export default {
                         this.forceRefreshCanvas() 
                     })
                 }},
-                EsValueLangGraphStudioProxyTest: {command: async () => { await EsValueLangGraphStudioProxyTest.test() }},
+                EsValueLangGraphStudioProxyTest: {command: async () => { await EsValueLangGraphStudioProxyTest.test() }}
             }
             
 
-            const commandList = Object.keys(COMMANDS)
-                .map((cmd, index) => ((COMMANDS[cmd].description) ? 
-                    `${index}. ${cmd}: ${COMMANDS[cmd].description}` : `${index}. ${cmd}`))
-                .join('\n')
+            // 전체 명령어 목록을 콘솔에 출력
+            console.clear();
+            console.log('='.repeat(60));
+            console.log('📋 사용 가능한 테스트 커맨드 목록');
+            console.log('='.repeat(60));
+            
+            Object.keys(COMMANDS).forEach((cmd, index) => {
+                const description = COMMANDS[cmd].description || '';
+                console.log(`${index.toString().padStart(2, ' ')}. ${cmd}`);
+                if (description) {
+                    console.log(`    └─ ${description}`);
+                }
+            });
+            
+            console.log('='.repeat(60));
+            console.log('💡 위 목록에서 번호 또는 커맨드명을 입력하세요');
+            console.log('='.repeat(60));
 
-            let inputedCommand = prompt(this._getPromptMessage(commandList))
+            // 간단한 prompt 메시지
+            let inputedCommand = prompt('테스트 커맨드 번호 또는 이름을 입력하세요:\n(전체 목록은 개발자 도구 콘솔을 확인하세요)')
             if(!inputedCommand) return
 
             if(!isNaN(inputedCommand)) {
@@ -170,6 +188,10 @@ export default {
         async _TempTest() {
             const result = await EsValueLangGraphStudioProxy.healthCheckUsingConfig()
             console.log(result)
+        },
+
+        _testTraceInfoViewer() {
+            this.traceInfoViewerDto = structuredClone(mockedTraceInfoViewerDto)
         }
     }
 }

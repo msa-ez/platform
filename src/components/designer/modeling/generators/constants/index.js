@@ -1,0 +1,1 @@
+export const { traceMapSchema } = require("./eventStormingShemas");

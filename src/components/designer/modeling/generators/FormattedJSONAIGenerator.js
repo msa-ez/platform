@@ -10,7 +10,7 @@ const DEFAULT_CONFIG = {
 /**
  * @description AI 응답을 JSON 형식으로 처리하고 포맷팅하는 기본 생성기 클래스입니다.
  * 이 클래스는 AI 모델의 응답을 구조화된 JSON으로 변환하고, 도메인 모델 생성에 필요한 
- * 기본적인 포맷팅 및 유효성 검사 기능을 제공합니다. 
+ * 기본적인 포맷팅 및 유효성 검사 기능을 제공합니다.
  * 
  * @example 기본적인 생성기 구현
  * class MyGenerator extends FormattedJSONAIGenerator {
@@ -97,6 +97,7 @@ class FormattedJSONAIGenerator extends AIGenerator {
 
         this.MAX_RETRY_COUNT = DEFAULT_CONFIG.MAX_RETRY_COUNT
         this.leftRetryCount = this.MAX_RETRY_COUNT
+        this.retiedCount = 0
         this.MAX_NETWORK_RETRY_COUNT = DEFAULT_CONFIG.MAX_NETWORK_RETRY_COUNT
         this.leftNetworkRetryCount = this.MAX_NETWORK_RETRY_COUNT
         this.isStopped = false // stop이 실행되어도 계속 실행되는 경우가 있기 때문에 관련 상태를 추적함
@@ -503,7 +504,6 @@ ${afterJsonFormat.trim()}
                 .map(([key, value]) => `- ${key.trim()}\n${typeof value === 'string' ? value.trim() : JSON.stringify(value)}`).join("\n\n")
         }
 
-        let userPrompts = []
         
         const guidelines = [
             this.__buildTaskGuidelinesPrompt(),
@@ -514,14 +514,15 @@ ${afterJsonFormat.trim()}
 
         const exampleInputs = this.__buildJsonExampleInputFormat()
         const userInputs = this.__buildJsonUserQueryInputFormat()
-        if(exampleInputs && userInputs) {
-            userPrompts.push(guidelines.join("\n\n") + "\n\nNow let's process the user's input.\n" + inputsToString(exampleInputs))
-            userPrompts.push(inputsToString(userInputs))
-        }
-        else if(userInputs) {
-            userPrompts.push(guidelines.join("\n\n") + "\n\nNow let's process the user's input.\n" + inputsToString(userInputs))
-        }
+        const endComment = "\n\nThis is the entire guideline.\nWhen you're ready, please output 'Approved.' Then I will begin user input."
 
+        userInputs.retiedCount = this.retiedCount
+
+
+        let userPrompts = []
+        userPrompts.push(guidelines.join("\n\n") + endComment)
+        if(exampleInputs) userPrompts.push(inputsToString(exampleInputs))
+        if(userInputs) userPrompts.push(inputsToString(userInputs))
         return userPrompts
     }
 
@@ -530,12 +531,18 @@ ${afterJsonFormat.trim()}
 
 
     __buildAssistantPrompt(){
-        const exampleOutputs = this.__buildJsonExampleOutputFormat()
-        if(!exampleOutputs) return ""
+        const assistantPrompts = ["Approved."]
 
-        return [`\`\`\`json
+        const exampleOutputs = this.__buildJsonExampleOutputFormat()
+        if(!exampleOutputs) return assistantPrompts
+
+        assistantPrompts.push(
+`\`\`\`json
 ${JSON.stringify(exampleOutputs, null, 2)}
-\`\`\``]
+\`\`\``
+        )
+
+        return assistantPrompts
     }
 
     __buildJsonExampleOutputFormat(){ return null }
@@ -691,10 +698,10 @@ ${JSON.stringify(exampleOutputs, null, 2)}
 
             this.onCreateModelFinished(returnObj)
             if(this.client.onCreateModelFinished) this.client.onCreateModelFinished(returnObj)
-            console.log(`[*] ${this.generatorName}에서 결과 파싱 완료!`, { ...this._makeDebugObject(returnObj) })
 
             this.onModelCreatedWithThinking(returnObj)
             if(this.client.onModelCreatedWithThinking) this.client.onModelCreatedWithThinking(returnObj)
+            console.log(`[*] ${this.generatorName}에서 결과 파싱 완료!`, { ...this._makeDebugObject(returnObj) })
 
             if(!returnObj.isStopped && !returnObj.isError) {
                 this.onGenerationSucceeded(returnObj)
@@ -810,6 +817,7 @@ ${JSON.stringify(exampleOutputs, null, 2)}
         this.modelInfo.requestArgs.response_format = undefined
         this.isUseResponseFormat = false
         this.isFinishMethodCalled = false
+        this.retiedCount++
 
 
         const delay = Math.floor(Math.random() * 2001) + 1000;
@@ -817,6 +825,9 @@ ${JSON.stringify(exampleOutputs, null, 2)}
 
         await new Promise(resolve => setTimeout(resolve, delay));
 
+        if(!this.modelInfo.isInferenceModel) {
+            this.temperature = 0.7
+        }
 
         await super.generate()
     }

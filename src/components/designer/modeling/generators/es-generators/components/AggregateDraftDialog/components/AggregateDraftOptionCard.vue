@@ -94,6 +94,7 @@
 
 <script>
     import VueMermaidString from 'vue-mermaid-string'
+    import { DataValidationUtil } from '../../../../utils'
 
     export default {
         name: 'aggregate-draft-dialog',
@@ -194,20 +195,21 @@
             },
 
             toMermaidUMLDiagramString(structure){
+                if(!this.__isValidToMermaidUMLDiagramStringParams({ structure })) {
+                    throw new Error("Invalid structure params for toMermaidUMLDiagramString: " + JSON.stringify({ structure }))
+                }
+
                 const initConfig = {
                     theme: "default",
                     themeVariables: {
                         fontSize: "14px"
                     }
                 };
-                let config = "%%{init: " + JSON.stringify(initConfig) + "}%%\n";
+                const config = "%%{init: " + JSON.stringify(initConfig) + "}%%\n";
+
+
                 let mermaidString = config + "graph TD\n";
-                if (!structure || !Array.isArray(structure)) {
-                    mermaidString += "    None[None]\n";
-                    return mermaidString;
-                }
-                
-                
+
                 const groups = {}; 
                 const relSet = new Set(); 
                 
@@ -215,9 +217,9 @@
                     return alias.replace(/[^a-zA-Z0-9가-힣_]/g, '');
                 }
                 
-                const addClassToGroup = (groupKey, classId, label, role, previewAttributes = null) => {
+                const addClassToGroup = (groupKey, classId, label, role, fieldNames = null) => {
                     if (!groups[groupKey]) {
-                        groups[groupKey] = { id: groupKey, label: label, classes: {}, previewAttributes: previewAttributes };
+                        groups[groupKey] = { id: groupKey, label: label, classes: {}, fieldNames: fieldNames };
                     }
                     if (!groups[groupKey].classes[classId]) {
                         groups[groupKey].classes[classId] = { id: classId, label: label, role: role };
@@ -226,47 +228,42 @@
                     }
                     
                     // Aggregate Root인 경우 previewAttributes 업데이트
-                    if (role === "Aggregate Root" && previewAttributes && Array.isArray(previewAttributes) && previewAttributes.length > 0) {
-                        groups[groupKey].previewAttributes = previewAttributes;
+                    if (role === "Aggregate Root" && fieldNames && fieldNames.length > 0) {
+                        groups[groupKey].fieldNames = fieldNames;
                     }
                 };
                 
 
-                structure.forEach(item => {
-                    if (item.aggregate && item.aggregate.alias) {
-                        const aggAlias = item.aggregate.alias;
-                        const aggKey = getValidAlias(aggAlias);
-                        
-                        // previewAttributes가 있는지 확인하고 전달
-                        const previewAttributes = item.previewAttributes && Array.isArray(item.previewAttributes) ? item.previewAttributes : null;
-                        addClassToGroup(aggKey, aggKey, aggAlias, "Aggregate Root", this.__sanitizePreviewAttributes(previewAttributes));
-                        
-                        if (Array.isArray(item.enumerations)) {
-                            item.enumerations.forEach(enumeration => {
-                                if (!enumeration.alias) return;
-                                const enumKey = getValidAlias(enumeration.alias);
-                                addClassToGroup(aggKey, enumKey, enumeration.alias, "Enumeration");   
-                                relSet.add(`    ${aggKey} --> ${enumKey}`);
-                            });
-                        }
-                        
-                        if (Array.isArray(item.valueObjects)) {
-                            item.valueObjects.forEach(vo => {
-                                if (!vo.alias) return;
-                                const voKey = getValidAlias(vo.alias);
-                                addClassToGroup(aggKey, voKey, vo.alias, "Value Object");
-                                relSet.add(`    ${aggKey} --> ${voKey}`);
+                structure.forEach((item, aggIndex) => {
+                    const aggAlias = item.aggregate.alias || item.aggregate.name || `Temp Aggregate Root ${aggIndex + 1}`;
+                    const aggKey = getValidAlias(aggAlias);
+                    
+                    const fieldNames = (item.previewAttributes) ? item.previewAttributes.map(attr => attr.fieldName) : null;
+                    addClassToGroup(aggKey, aggKey, aggAlias, "Aggregate Root", this.__sanitizePreviewAttributes(fieldNames));
+                    
+                    if (item.enumerations) {
+                        item.enumerations.forEach((enumeration, enumIndex) => {
+                            const enumKey = getValidAlias(enumeration.alias || enumeration.name || `Temp Enumeration ${aggIndex + 1}-${enumIndex + 1}`);
+                            addClassToGroup(aggKey, enumKey, enumeration.alias || enumeration.name, "Enumeration");   
+                            relSet.add(`    ${aggKey} --> ${enumKey}`);
+                        });
+                    }
+                    
+                    if (item.valueObjects) {
+                        item.valueObjects.forEach((vo, voIndex) => {
+                            const voKey = getValidAlias(vo.alias || vo.name || `Temp Value Object ${aggIndex + 1}-${voIndex + 1}`);
+                            addClassToGroup(aggKey, voKey, vo.alias || vo.name, "Value Object");
+                            relSet.add(`    ${aggKey} --> ${voKey}`);
+                            
+                            if (vo.referencedAggregate) {
+                                const refAggAlias = vo.referencedAggregate.alias || vo.referencedAggregate.name || `Temp Referenced Aggregate Root ${aggIndex + 1}-${voIndex + 1}`;
+                                const refAggKey = getValidAlias(refAggAlias);
+                                addClassToGroup(refAggKey, refAggKey, refAggAlias, "Aggregate Root");
                                 
-                                if (vo.referencedAggregate && vo.referencedAggregate.alias) {
-                                    const refAggAlias = vo.referencedAggregate.alias;
-                                    const refAggKey = getValidAlias(refAggAlias);
-                                    addClassToGroup(refAggKey, refAggKey, refAggAlias, "Aggregate Root");
-                                    
-                                    if (aggKey !== refAggKey)
-                                        relSet.add(`    ${voKey} --> ${refAggKey}`);
-                                }
-                            });
-                        }
+                                if (aggKey !== refAggKey)
+                                    relSet.add(`    ${voKey} --> ${refAggKey}`);
+                            }
+                        });
                     }
                 });
                 
@@ -276,10 +273,10 @@
                     Object.values(group.classes).forEach(cls => {
                         let nodeContent = `[-${cls.role}-<br/>${cls.id}`;
                         
-                        // Aggregate Root이고 previewAttributes가 있는 경우 속성 목록 추가
-                        if (cls.role === "Aggregate Root" && group.previewAttributes && group.previewAttributes.length > 0 && this.showDetailedAttributes) {               
+                        // Aggregate Root이고 fieldNames가 있는 경우 속성 목록 추가
+                        if (cls.role === "Aggregate Root" && group.fieldNames && group.fieldNames.length > 0 && this.showDetailedAttributes) {               
                             nodeContent += `<br/>___`;
-                            group.previewAttributes.forEach(attr => {
+                            group.fieldNames.forEach(attr => {
                                 // 속성명을 안전하게 처리 (특수문자 제거)
                                 const safeAttr = String(attr).replace(/[<>&"']/g, '');
                                 nodeContent += `<br/>${safeAttr}`;
@@ -298,6 +295,80 @@
                 });
 
                 return mermaidString;
+            },
+            __isValidToMermaidUMLDiagramStringParams(params){
+                const structureSchema = {
+                    type: 'array',
+                    required: true,
+                    items: {
+                        type: 'object',
+                        properties: {
+                            aggregate: {
+                                type: 'object',
+                                required: true,
+                                properties: {
+                                    name: { type: 'string', required: false, minLength: 1 },
+                                    alias: { type: 'string', required: false, minLength: 1 }
+                                }
+                            },
+                            enumerations: {
+                                type: 'array',
+                                required: false,
+                                items: {
+                                    type: 'object',
+                                    properties: {
+                                        name: { type: 'string', required: false, minLength: 1 },
+                                        alias: { type: 'string', required: false, minLength: 1 }
+                                    }
+                                }
+                            },
+                            valueObjects: {
+                                type: 'array',
+                                required: false,
+                                items: {
+                                    type: 'object',
+                                    properties: {
+                                        name: { type: 'string', required: false, minLength: 1 },
+                                        alias: { type: 'string', required: false, minLength: 1 },
+                                        referencedAggregateName: { type: 'string', required: false },
+                                        referencedAggregate: {
+                                            type: 'object',
+                                            required: false,
+                                            properties: {
+                                                name: { type: 'string', required: false, minLength: 1 },
+                                                alias: { type: 'string', required: false, minLength: 1 }
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            previewAttributes: {
+                                type: 'array',
+                                required: false,
+                                items: {
+                                    type: 'object',
+                                    properties: {
+                                        fieldName: { type: 'string', required: true, minLength: 1 },
+                                        refs: {
+                                            type: 'array',
+                                            required: true,
+                                            items: {
+                                                type: 'array',
+                                                items: {
+                                                    type: 'array',
+                                                    items: { type: 'number' }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                };
+
+                // DataValidationUtil을 사용하여 검증
+                return DataValidationUtil.isValidData(params.structure, structureSchema);
             },
             __sanitizePreviewAttributes(previewAttributes) {
                 if(!previewAttributes || !Array.isArray(previewAttributes)) return []
