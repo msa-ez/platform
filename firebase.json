@@ -2,7 +2,7 @@
   
   "hosting": [
     {
-      "site": "labs-msaez",
+      "site": "dev-msaez",
       "public": "dist",
       "ignore": [
         "firebase.json",
