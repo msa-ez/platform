@@ -2,9 +2,14 @@
 const fs = require('fs');
 const os=require('os');
 const CompressionPlugin = require("compression-webpack-plugin");
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 // const MonacoEditorPlugin = require('monaco-editor-webpack-plugin')
 // const TerserPlugin = require("terser-webpack-plugin");
+
+// 빌드 버전 생성
+const BUILD_VERSION = process.env.BUILD_TIME || Date.now().toString();
+
 module.exports = {
     filenameHashing: true,
     configureWebpack: {
@@ -17,15 +22,46 @@ module.exports = {
         //     },
         // },
         devtool: 'source-map',
+        resolve: {
+            alias: {
+                'fast-png': require('path').resolve(__dirname, 'src/utils/fast-png-stub.js')
+            }
+        },
         devServer: {
             port: '8081',
             // historyApiFallback: true,
             https: true,
             disableHostCheck: true,
         },
-        output: {
-            filename: '[name].[hash].js',
-            chunkFilename: '[name].[hash].js'
+        // output: {
+        //     filename: '[name].[contenthash:8].js',
+        //     chunkFilename: '[name].[contenthash:8].js'
+        // },
+        module: {
+            rules: [
+                {
+                    test: /\.(png|jpe?g|gif|svg|webp|ico)$/,
+                    use: [
+                        {
+                            loader: 'file-loader',
+                            options: {
+                                name: 'img/[name].[contenthash:8].[ext]'
+                            }
+                        }
+                    ]
+                },
+                {
+                    test: /\.(woff2?|eot|ttf|otf)$/,
+                    use: [
+                        {
+                            loader: 'file-loader',
+                            options: {
+                                name: 'fonts/[name].[contenthash:8].[ext]'
+                            }
+                        }
+                    ]
+                }
+            ]
         },
         plugins: [
             new CompressionPlugin({
@@ -33,6 +69,14 @@ module.exports = {
                 test: /\.(js|css|html|svg)$/,
                 threshold: 10240,
                 minRatio: 0.8
+            }),
+            // 빌드 버전을 전역 변수로 주입
+            new (require('webpack')).DefinePlugin({
+                'process.env.VUE_APP_BUILD_VERSION': JSON.stringify(BUILD_VERSION)
+            }),
+            // fast-png를 전역적으로 스텁으로 제공
+            new (require('webpack')).ProvidePlugin({
+                'fast-png': require('path').resolve(__dirname, 'src/utils/fast-png-stub.js')
             })
         ]
         // plugins: [new BundleAnalyzerPlugin({
@@ -43,11 +87,25 @@ module.exports = {
         //     statsFilename: 'bundle-stats.json' // 분석파일 json 이름
         // })]
     },
+    chainWebpack: config => {
+        // HtmlWebpackPlugin에 빌드 버전 전달
+        config
+            .plugin('html')
+            .tap(args => {
+                args[0].buildVersion = BUILD_VERSION
+                return args
+            })
+        
+        // fast-png 모듈은 configureWebpack의 alias에서 처리됨
+    },
+    transpileDependencies: [
+        // 'fast-png' 제거됨 - IgnorePlugin으로 처리
+    ],
     "runtimeCompiler": true,
     css: {
         extract: {
-            filename: '[name].[hash].css',
-            chunkFilename: '[name].[hash].css'
+            filename: '[name].[contenthash:8].css',
+            chunkFilename: '[name].[contenthash:8].css'
         }
     }
 }
