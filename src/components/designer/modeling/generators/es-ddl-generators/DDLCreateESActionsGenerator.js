@@ -5,13 +5,8 @@ const ESActionUtil = require("./modules/ESActionsUtil")
 class DDLCreateESActionsGenerator extends JsonAIGenerator{
     constructor(client){
         super(client);
-        
-        this.model = "gpt-4o-2024-08-06"
         this.generatorName = 'DDLCreateESActionsGenerator'
         this.inputedParams = null
-
-        this.temperature = 1.0
-        this.top_p = 0.6
     }
     
 

@@ -34,11 +34,11 @@ const { googleModelInfos } = require("./googleModelInfos");
  */
 const modelInfos = {
     ...openaiModelInfos,
-    ...ollamaModelInfos,
-    ...anthropicModelInfos,
-    ...runpodModelInfos,
-    ...googleModelInfos
-}
+    // ...ollamaModelInfos,
+    // ...anthropicModelInfos,
+    // ...runpodModelInfos,
+    // ...googleModelInfos
+} // OPENAI 모델을 제외한 다른 모델들은 프론트엔드에서 직접 요청시 CORS 에러가 발생하므로, 추가하지 않음
 
 const defaultModelInfos = {
     vendor: "openai",

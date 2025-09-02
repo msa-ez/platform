@@ -148,7 +148,18 @@ class BaseAPIClient {
                 g.state = 'running';
                 g.messages = this._getMessages(generateOption);
                 g.abortController = new AbortController();
+
+                g.gptResponseId = null;
+                g.firstResponseTime = null
+                g.requestStartTime = new Date().getTime()
+                const requestParams = this._makeRequestParams(g.messages, g.modelInfo, token);
+    
+                const requestInfo = this._makeRequestInfo(requestParams, g.messages)
+                previousRequestInfos.push(requestInfo)
+                previousRequestInfos = previousRequestInfos.slice(-500)
+                console.log("[*] 최종적으로 요청되는 정보", { requestInfo, previousRequestInfos });
         
+
                 if(localStorage.getItem("useCache") === "true") {
                     const hashKey = HashUtil.generateHashKey(JSON.stringify(g.messages));
                     let existingResult = localStorage.getItem("cache-" + hashKey);
@@ -156,6 +167,14 @@ class BaseAPIClient {
                     if(existingResult){
                         setTimeout(()=>{
                             g.state = 'end';
+                            g.modelJson = existingResult
+                            g.requestEndTime = new Date().getTime()
+                            const responseInfo = this._makeResponseInfo(g.modelJson)
+                            previousResponseInfos.push(responseInfo)
+                            previousResponseInfos = previousResponseInfos.slice(-500)
+                            console.log("[*] AI 모델 생성이 완료됨", { responseInfo, previousResponseInfos })
+
+
                             const model = g.createModel(existingResult);
                             if(g.client.onModelCreated){
                                 g.client.onModelCreated(model);
@@ -170,16 +189,7 @@ class BaseAPIClient {
                     }
                 }
         
-                g.gptResponseId = null;
-                g.firstResponseTime = null
-                g.requestStartTime = new Date().getTime()
-                const requestParams = this._makeRequestParams(g.messages, g.modelInfo, token);
-    
-                const requestInfo = this._makeRequestInfo(requestParams, g.messages)
-                previousRequestInfos.push(requestInfo)
-                previousRequestInfos = previousRequestInfos.slice(-500)
-                console.log("[*] 최종적으로 요청되는 정보", { requestInfo, previousRequestInfos });
-    
+                
                 RequestUtil.sendPostRequest(
                     requestParams.requestUrl,
                     requestParams.requestData,

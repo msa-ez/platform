@@ -329,7 +329,6 @@ export default {
             if (!this.modelEnabled[modelType]) {
                 if (this.isLastEnabledModel(modelType)) {
                     this.$set(this.modelEnabled, modelType, true);
-                    this.$alert(this.$t('aiModelSetting.template.cannotDisableAll'));
                     return;
                 }
                 
@@ -358,7 +357,25 @@ export default {
                              previousDto = null;
                          }
                      } else {
-                         previousDto = null;
+                        const selectableOptions = this.selectableOptions.filter(opt => opt.isInferenceModel === (modelType === "thinkingModel" ? true : false))
+
+                        if(selectableOptions.length > 0) {
+                            try {
+                                const firstModelId = selectableOptions[0].defaultValue
+                                const modelInfo = ModelInfoHelper.getModelInfo(firstModelId)
+                                previousDto = new ModelOptionDto({
+                                    vendor: modelInfo.vendor,
+                                    modelID: firstModelId,
+                                    modelInfos: modelInfo
+                                });
+                            } catch (e) {
+                                console.error("Failed to create default DTO:", e);
+                                previousDto = null;
+                            }
+                        }
+                        else {
+                            previousDto = this.MODEL_FLAGS.NOT_USED;
+                        }
                      }
                 }
                 
@@ -368,7 +385,6 @@ export default {
                 } else {
                      console.error(`Cannot enable ${modelType}: No previous selection or default model found.`);
                      this.$set(this.modelEnabled, modelType, false);
-                     this.$alert(this.$t('aiModelSetting.alert.cannotEnableModel'));
                      return; 
                 }
             }

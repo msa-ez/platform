@@ -1,13 +1,23 @@
 <template>
     <v-layout wrap>
-        <v-navigation-drawer absolute permanent right width="500">
+        <v-navigation-drawer absolute permanent right width="500" style="z-index: 102;">
             <v-list class="pa-1">
                 <v-list-item>
                     <v-list-item-avatar>
                         <img :src="img">
                     </v-list-item-avatar>
                     <v-list-item-content>
-                        <v-list-item-title class="headline">{{ titleName }}</v-list-item-title>
+                        <v-list-item-title class="headline" style="display: flex; align-items: center;">
+                            {{ titleName }}
+                            <v-icon 
+                                color="grey lighten-1" 
+                                style="margin-left: 8px;" 
+                                @click="openTraceInfoViewerForEnum()" 
+                                v-if="isTraceInfoViewerUsableForEnum()"
+                            >
+                                mdi-text-box-search-outline
+                            </v-icon>
+                        </v-list-item-title>
                     </v-list-item-content>
                     <v-btn icon @click.native="closePanel()">
                         <v-icon color="grey lighten-1">mdi-close</v-icon>
@@ -69,7 +79,10 @@
                                                     ></v-text-field>
                                                 </v-col>
                                                 
-                                                <v-col cols="2">
+                                                <v-col cols="2" class="d-flex align-center justify-end">
+                                                    <v-icon color="grey lighten-1" class="mr-2" @click="openTraceInfoViewerForItem(item)" v-if="isTraceInfoViewerUsableForItem(item)" small>
+                                                        mdi-text-box-search-outline
+                                                    </v-icon>
                                                     <v-btn  v-if="itemEdit && value.items.indexOf(item) == itemEditIndex "
                                                             x-small icon
                                                             class="mr-2"
@@ -134,6 +147,7 @@
 <script>
     import draggable from 'vuedraggable'
     import UMLPropertyPanel from '../UMLPropertyPanel'
+    import { TraceInfoViewerUtil } from '../../modeling/generators/features/EventStormingModelCanvas'
 
     export default {
         mixins: [UMLPropertyPanel],
@@ -155,6 +169,8 @@
                 itemEditIndex: 0,
                 itemKey: '',
                 itemValue: '',
+                elementTraceDescription: null,
+                itemTraceDescriptionMap: null,
             }
         },
         computed: {
@@ -168,7 +184,6 @@
             },
         },
         created: function () {
-            var me = this
         },
         methods:{
             addItem() {
@@ -219,6 +234,38 @@
                     }
                 })
             },
+
+            openTraceInfoViewerForEnum() {
+                try {
+                    TraceInfoViewerUtil.openTraceInfoViewerForEnum(this, this.value);
+                }
+                catch(e) {
+                    const msg = "Failed to open trace info viewer. You can remake the element to fix this. Reason: " + e.message;
+                    console.error(msg, e);
+                    alert(msg);
+                    return;
+                }
+            },
+
+            openTraceInfoViewerForItem(item) {
+                try {
+                    TraceInfoViewerUtil.openTraceInfoViewerForEnumItem(this, this.value, item);
+                }
+                catch(e) {
+                    const msg = "Failed to open trace info viewer. You can remake the property or element to fix this. Reason: " + e.message;
+                    console.error(msg, e);
+                    alert(msg);
+                    return;
+                }
+            },
+
+            isTraceInfoViewerUsableForEnum() {
+                return TraceInfoViewerUtil.isTraceInfoViewerUsable(this) && this.value && this.value.refs && this.value.refs.length > 0;
+            },
+
+            isTraceInfoViewerUsableForItem(item) {
+                return TraceInfoViewerUtil.isTraceInfoViewerUsable(this) && item && item.refs && item.refs.length > 0;
+            }
         },
     }
 </script>

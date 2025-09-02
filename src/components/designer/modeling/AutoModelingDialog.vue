@@ -641,10 +641,12 @@
                 pendingAction: null,
 
                 initialDraft: null,
+                autoSavedDraft: null,
                 isInitializing: false,
                 unsavedChanges: false,
                 showModelSelectionDialog: false,
-                modelNamesCache: {},
+                showPublicModel: false,
+                modelNamesCache: {}
             }
         },
         computed: {
@@ -927,7 +929,8 @@
                     me.projectInfo['comment'] = me.storageCondition.comment;
 
                     await me.putObject(`db://definitions/${settingProjectId}/information`, me.projectInfo)
-                    await me.putObject(`db://definitions/${settingProjectId}/draft`, me.draft)
+                    await me.setObject(`db://definitions/${settingProjectId}/draft`, me.draft)
+                    me.autoSavedDraft = structuredClone(me.draft)
                     me.isServer = true;
 
                     let path = `/${me.userInfo.providerUid}/${me.storageCondition.type}/${originSetProjectId}`
@@ -1305,7 +1308,10 @@
             },
             async updateDraft(messages){
                 this.$emit('update:draft', messages)
-                await this.putObject(`db://definitions/${this.projectInfo.projectId}/draft`, messages)
+                if(!this.projectInfo || !this.projectInfo.projectId) return
+
+                await this.setObject(`db://definitions/${this.projectInfo.projectId}/draft`, messages)
+                this.autoSavedDraft = structuredClone(this.draft)
             },
 
             updateLocalDraft(draft){
@@ -1625,11 +1631,9 @@
                     return true;
                 }
 
+                const savedStateStr = JSON.stringify((this.autoSavedDraft ? this.autoSavedDraft : this.initialDraft));
                 const currentStateStr = JSON.stringify(this.draft);
-                const initialStateStr = JSON.stringify(this.initialDraft);
-
-                this.unsavedChanges = currentStateStr !== initialStateStr;
-                
+                this.unsavedChanges = savedStateStr !== currentStateStr;
                 return this.unsavedChanges;
             },
 

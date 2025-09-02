@@ -91,7 +91,7 @@
                             :processingRate="message.processingRate"
                             :currentProcessingBoundedContext="message.currentProcessingBoundedContext"
                             :selectedAspect="message.selectedAspect"
-                            :summarizedResult="message.summarizedResult"
+                            :summarizedResult="message.summarizedResult.summary"
                             :pbcLists="message.pbcLists"
                             :messageId="message.uniqueId"
                             :isEditable="isEditable"

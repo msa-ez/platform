@@ -243,11 +243,15 @@
         DraftGeneratorByFunctions,
         ExtractDDLFieldsGenerator,
         AssignDDLFieldsToAggregateDraft,
-        AssignPreviewFieldsToAggregateDraft
+        AssignPreviewFieldsToAggregateDraft,
+        AddTraceToDraftOptionsGenerator
     } from '../../modeling/generators/es-generators';
 
     import {
-        LocalStorageCleanUtil
+        LocalStorageCleanUtil,
+        DataValidationUtil,
+        RefsTraceUtil,
+        TraceMarkdownUtil
     } from './utils'
     
     import DevideBoundedContextGenerator from './DevideBoundedContextGenerator.js'
@@ -271,7 +275,9 @@
         ESDialogerMessages,
         ESDialogerTestTerminal,
         MessageFactory,
-        AIModelSetting
+        AIModelSetting,
+        ESDialogerTraceUtil,
+        MessageDataRestoreUtil
     } from './features/ESDialoger';
 import { value } from 'jsonpath';
 
@@ -351,7 +357,10 @@ import { value } from 'jsonpath';
                 }
             }
 
-            const generatePreviewAggAttributesToDraftOptions = async (options, description, allDdlFields, afterGenerateCallback) => {
+            const generatePreviewAggAttributesToDraftOptions = async (options, description, traceMap, allDdlFields, afterGenerateCallback) => {
+                if(!__isValidDDLFields(allDdlFields)) 
+                    throw new Error("Invalid allDdlFields: " + JSON.stringify({ allDdlFields }))
+
                 // 각 옵션을 순차적으로 처리
                 if (allDdlFields.length > 0) {
                     for (let optionIndex = 0; optionIndex < options.length; optionIndex++) {
@@ -437,7 +446,7 @@ import { value } from 'jsonpath';
                                     generator.client.input = {
                                         description: description || 'Bounded context description',
                                         aggregateDrafts: aggregateDrafts,
-                                        allDdlFields: allDdlFields,
+                                        allDdlFields: allDdlFields.map(field => field.fieldName),
                                         generatorKey: generatorKey
                                     };
 
@@ -452,7 +461,17 @@ import { value } from 'jsonpath';
                                             fa => fa.aggregateName === struct.aggregate.name
                                         );
                                         if (assignment) {
-                                            this.$set(struct, 'previewAttributes', [...(assignment.ddl_fields || [])])
+                                            const previewAttributes = []
+                                            for(const ddlField of assignment.ddl_fields) {
+                                                const ddlFieldRef = allDdlFields.find(field => field.fieldName === ddlField)
+                                                if(ddlFieldRef) {
+                                                    previewAttributes.push({
+                                                        fieldName: ddlFieldRef.fieldName,
+                                                        refs: ddlFieldRef.refs
+                                                    })
+                                                }
+                                            }
+                                            this.$set(struct, 'previewAttributes', [...(previewAttributes || [])])
                                             console.log(`[*] Added previewAttributes to ${struct.aggregate.name}:`, struct.previewAttributes);
                                         } else {
                                             this.$set(struct, 'previewAttributes', [])
@@ -548,6 +567,7 @@ import { value } from 'jsonpath';
                                 // 입력값 설정
                                 generator.client.input = {
                                     description: description || 'Bounded context description',
+                                    traceMap: traceMap,
                                     aggregateDrafts: aggregateDrafts,
                                     generatorKey: generatorKey
                                 };
@@ -563,7 +583,7 @@ import { value } from 'jsonpath';
                                         fa => fa.aggregateName === struct.aggregate.name
                                     );
                                     if (assignment) {
-                                        this.$set(struct, 'previewAttributes', [...(assignment.preview_fields || [])])
+                                        this.$set(struct, 'previewAttributes', [...(assignment.previewFields || [])])
                                         console.log(`[*] Added previewAttributes to ${struct.aggregate.name}:`, struct.previewAttributes);
                                     } else {
                                         this.$set(struct, 'previewAttributes', [])
@@ -612,7 +632,22 @@ import { value } from 'jsonpath';
 
                 afterGenerateCallback()
             }
-            const callExtractDDLFieldsGenerator = (ddl, bcName) => {
+            const __isValidDDLFields = (ddlFields) => {
+                return DataValidationUtil.isValidData(ddlFields, {
+                    type: 'array',
+                    required: true,
+                    items: { type: 'object', properties: { fieldName: { type: 'string', required: true }, refs: { type: 'array', required: true, items: { type: 'array', required: true, items: { type: 'array', required: true, items: { type: 'number', required: true } } } } } }
+                })
+            }
+
+
+            const callExtractDDLFieldsGenerator = (requirements, bcName) => {
+                const ddlRequirements = requirements.filter(requirement => requirement.type === 'DDL').map(requirement => ({
+                    text: requirement.text,
+                    refs: requirement.refs
+                }))
+                if(!ddlRequirements.length) return []
+                
                 return new Promise((resolve, reject) => {
                     if(!this.generators.ExtractDDLFieldsGenerator.generator) {
                         this.generators.ExtractDDLFieldsGenerator.generator = new ExtractDDLFieldsGenerator({
@@ -650,12 +685,14 @@ import { value } from 'jsonpath';
                     }
 
                     this.generators.ExtractDDLFieldsGenerator.generator.client.input = {
-                        "ddl": ddl,
+                        "ddlRequirements": ddlRequirements,
                         "boundedContextName": bcName
                     }
                     this.generators.ExtractDDLFieldsGenerator.generator.generate()
                 })
             }
+
+
             this.generators.DraftGeneratorByFunctions.generator = new DraftGeneratorByFunctions({
                 onSend: (input, stopCallback) => {
                     this.workingMessages.AggregateDraftDialogDto.isShow = true
@@ -734,79 +771,58 @@ import { value } from 'jsonpath';
                     if(!returnObj.modelValue.inference ||
                        !returnObj.modelValue.inference.length) return
 
-                    const getXAIDtoDraftOptions = (output, targetBoundedContext, description, inference) => {
-                        return {
-                            boundedContext: targetBoundedContext.name,
-                            boundedContextAlias: targetBoundedContext.displayName,
-                            description: description,
-                            options: (output.options) ? output.options.map(option => ({
-                                ...option,
-                                boundedContext: targetBoundedContext,
-                                description: description
-                            })) : [],
-                            conclusions: output.conclusions,
-                            defaultOptionIndex: output.defaultOptionIndex,
-                            inference: inference
-                        }
-                    }
-
                     this.workingMessages.AggregateDraftDialogDto.draftUIInfos.directMessage = returnObj.directMessage
                     this.workingMessages.AggregateDraftDialogDto.draftUIInfos.progress = returnObj.progress
                     if(!returnObj.modelValue.output) return
 
-                    if(returnObj.isFeedbackBased) {
-                        const draftOptions = structuredClone(this.generators.DraftGeneratorByFunctions.preservedDraftOptionsForFeedback)
-
-                        const replaceIndex = draftOptions.findIndex(draftOption => draftOption.boundedContext === returnObj.inputParams.boundedContext.name)
-                        draftOptions.splice(replaceIndex, 1, getXAIDtoDraftOptions(
-                            returnObj.modelValue.output,
-                            returnObj.inputParams.boundedContext,
-                            returnObj.inputParams.description,
-                            returnObj.modelValue.inference
-                        ))
-
-
-                        this.workingMessages.AggregateDraftDialogDto.draftOptions = draftOptions
-                        return
-                    }
-
-                    this.workingMessages.AggregateDraftDialogDto.draftOptions = [
-                        ...this.generators.DraftGeneratorByFunctions.preservedDraftOptions,
-                        getXAIDtoDraftOptions(
-                            returnObj.modelValue.output,
-                            returnObj.inputParams.boundedContext,
-                            returnObj.inputParams.description,
-                            returnObj.modelValue.inference
-                        )
-                    ]
+                    this.generators.DraftGeneratorByFunctions._makeDraftOptions(returnObj)
                 },
 
                 onGenerationSucceeded: (returnObj) => {
                     clearThinkingUpdateInterval()
-                    if(returnObj.isFeedbackBased) {
-                        this.workingMessages.AggregateDraftDialogDto.draftUIInfos = {
-                            leftBoundedContextCount: 0,
-                            directMessage: returnObj.directMessage,
-                            progress: 100
-                        }
-                        generatePreviewAggAttributesToDraftOptions(returnObj.modelValue.output.options, returnObj.inputParams.boundedContext.description, returnObj.inputParams.boundedContext.requirements.ddlFields || [], () => {
-                            this.$emit("update:draft", this.messages)
-                        })
-                        return
-                    }
 
                     this.workingMessages.AggregateDraftDialogDto.draftUIInfos = {
-                        leftBoundedContextCount: this.generators.DraftGeneratorByFunctions.inputs.length + 1,
+                        leftBoundedContextCount: (returnObj.isFeedbackBased) ? 1 : this.generators.DraftGeneratorByFunctions.inputs.length + 1,
                         directMessage: returnObj.directMessage,
                         progress: 100
                     }
 
-                    this.generators.DraftGeneratorByFunctions.updateAccumulatedDrafts(returnObj.modelValue.output, returnObj.inputParams.boundedContext)
-
-                    generatePreviewAggAttributesToDraftOptions(returnObj.modelValue.output.options, returnObj.inputParams.boundedContext.description, returnObj.inputParams.boundedContext.requirements.ddlFields || [], () => {
-                        if(!this.generators.DraftGeneratorByFunctions.generateIfInputsExist()){
-                            this.$emit("update:draft", this.messages)
+                    AddTraceToDraftOptionsGenerator.addTraceToDraftOptions(
+                        returnObj.modelValue.output.options,
+                        returnObj.inputParams.boundedContext.name,
+                        returnObj.inputParams.boundedContext.description,
+                        returnObj.inputParams.boundedContext.requirements.traceMap,
+                        {
+                            onModelCreatedWithThinking: (returnObj) => {
+                                this.workingMessages.AggregateDraftDialogDto.draftUIInfos.directMessage = returnObj.directMessage
+                                this.workingMessages.AggregateDraftDialogDto.draftUIInfos.progress = returnObj.progress
+                            }
                         }
+                    ).then(result => {
+                        console.log("[*] 생성된 추적성 정보 : ", result)
+
+                        returnObj.modelValue.output.options = result.generatedDraftOptionsWithTrace
+                        this.generators.DraftGeneratorByFunctions._makeDraftOptions(returnObj)
+
+                        if(!returnObj.isFeedbackBased) {
+                            this.generators.DraftGeneratorByFunctions.updateAccumulatedDrafts(returnObj.modelValue.output, returnObj.inputParams.boundedContext)
+                        }
+
+                        generatePreviewAggAttributesToDraftOptions(
+                            returnObj.modelValue.output.options, 
+                            returnObj.inputParams.boundedContext.description, 
+                            returnObj.inputParams.boundedContext.requirements.traceMap, 
+                            returnObj.inputParams.boundedContext.requirements.ddlFields, 
+                            () => {
+                                if(returnObj.isFeedbackBased) {
+                                    this.workingMessages.AggregateDraftDialogDto.draftUIInfos.leftBoundedContextCount = 0
+                                    this.$emit("update:draft", this.messages);
+                                }
+                                else if(!this.generators.DraftGeneratorByFunctions.generateIfInputsExist()){
+                                    this.$emit("update:draft", this.messages);
+                                }
+                            }
+                        )
                     })
                 },
 
@@ -816,87 +832,51 @@ import { value } from 'jsonpath';
                 }
             })
 
-            this.generators.DraftGeneratorByFunctions.buildInitialInputs = async (selectedStructureOption) => {
-                const getDescription = (bc, relations, explanations) => {
-                    const uniqueRequirements = bc.requirements && bc.requirements.length > 0 ?
-                        [...new Map(bc.requirements.map(item => [item.text, item])).values()] : [];
+            this.generators.DraftGeneratorByFunctions._makeDraftOptions = (returnObj) => {
+                if(returnObj.isFeedbackBased) {
+                    const draftOptions = structuredClone(this.generators.DraftGeneratorByFunctions.preservedDraftOptionsForFeedback)
 
-                    const requirementsByType = uniqueRequirements.reduce((acc, req) => {
-                        if (!acc[req.type]) {
-                            acc[req.type] = [];
-                        }
-                        acc[req.type].push(req.text);
-                        return acc;
-                    }, {});
+                    const replaceIndex = draftOptions.findIndex(draftOption => draftOption.boundedContext === returnObj.inputParams.boundedContext.name)
+                    draftOptions.splice(replaceIndex, 1, this.generators.DraftGeneratorByFunctions._getXAIDtoDraftOptions(
+                        returnObj.modelValue.output,
+                        returnObj.inputParams.boundedContext,
+                        returnObj.inputParams.description,
+                        returnObj.modelValue.inference
+                    ))
 
-                    let markdownOutput = `# Bounded Context Overview: ${bc.name} (${bc.alias})\n\n`;
-                    if (bc.role) {
-                        markdownOutput += `## Role\n${bc.role}\n\n`;
-                    }
 
-                    if (bc.events && bc.events.length > 0) {
-                        markdownOutput += `## Key Events\n${bc.events.map(event => `- ${event}`).join('\n')}\n\n`;
-                    }
-
-                    if (Object.keys(requirementsByType).length > 0) {
-                        markdownOutput += `# Requirements\n\n`;
-                        for (const type in requirementsByType) {
-                            markdownOutput += `## ${type}\n\n`;
-                            requirementsByType[type].forEach(text => {
-                                if (type.toLowerCase() === 'ddl') {
-                                    markdownOutput += `\`\`\`sql\n${text}\n\`\`\`\n\n`;
-                                } else if (type.toLowerCase() === 'event') {
-                                    try {
-                                        const parsedEvent = JSON.parse(text);
-                                        markdownOutput += `\`\`\`json\n${JSON.stringify(parsedEvent, null, 2)}\n\`\`\`\n\n`;
-                                    } catch (e) {
-                                        markdownOutput += `${text}\n\n`;
-                                    }
-                                } else {
-                                    markdownOutput += `${text}\n\n`;
-                                }
-                            });
-                        }
-                    }
-
-                    // Relations 정보 추가
-                    if (relations && relations.length > 0) {
-                        const relatedRelations = relations.filter(rel =>
-                            rel.upStream.name === bc.name ||
-                            rel.downStream.name === bc.name
-                        );
-
-                        if (relatedRelations.length > 0) {
-                            markdownOutput += "\n## Context Relations\n\n";
-
-                            relatedRelations.forEach(rel => {
-                                const isUpstream = rel.upStream.name === bc.name;
-                                const targetContext = isUpstream ? rel.downStream : rel.upStream;
-                                const direction = isUpstream ? "sends to" : "receives from";
-
-                                markdownOutput += `### ${rel.name}\n`;
-                                markdownOutput += `- **Type**: ${rel.type}\n`;
-                                markdownOutput += `- **Direction**: ${direction} ${targetContext.alias} (${targetContext.name})\n`;
-
-                                if (explanations && explanations.length > 0) {
-                                    const explanation = explanations.find(exp =>
-                                        (exp.sourceContext === bc.alias && exp.targetContext === targetContext.alias) ||
-                                        (exp.targetContext === bc.alias && exp.sourceContext === targetContext.alias)
-                                    );
-
-                                    if (explanation) {
-                                        markdownOutput += `- **Reason**: ${explanation.reason}\n`;
-                                        markdownOutput += `- **Interaction Pattern**: ${explanation.interactionPattern}\n`;
-                                    }
-                                }
-                                markdownOutput += "\n";
-                            });
-                        }
-                    }
-
-                    return markdownOutput.trim();
+                    this.workingMessages.AggregateDraftDialogDto.draftOptions = draftOptions
+                    return
                 }
 
+                this.workingMessages.AggregateDraftDialogDto.draftOptions = [
+                    ...this.generators.DraftGeneratorByFunctions.preservedDraftOptions,
+                    this.generators.DraftGeneratorByFunctions._getXAIDtoDraftOptions(
+                        returnObj.modelValue.output,
+                        returnObj.inputParams.boundedContext,
+                        returnObj.inputParams.description,
+                        returnObj.modelValue.inference
+                    )
+                ]
+            }
+
+            this.generators.DraftGeneratorByFunctions._getXAIDtoDraftOptions = (output, targetBoundedContext, description, inference) => {
+                return {
+                    boundedContext: targetBoundedContext.name,
+                    boundedContextAlias: targetBoundedContext.displayName,
+                    description: description,
+                    options: (output.options) ? output.options.map(option => ({
+                        ...option,
+                        boundedContext: targetBoundedContext,
+                        description: description
+                    })) : [],
+                    conclusions: output.conclusions,
+                    defaultOptionIndex: output.defaultOptionIndex,
+                    inference: inference
+                }
+            }
+
+            this.generators.DraftGeneratorByFunctions.buildInitialInputs = async (selectedStructureOption) => {
                 const getRequirements = (bc) => {
                     const getRequirementsByType = (type) => {
                         return bc.requirements.filter(requirement => requirement.type === type).map(requirement => requirement.text).join("\n")
@@ -919,28 +899,31 @@ import { value } from 'jsonpath';
 
                 let passedGeneratorInputs = []
                 for(const bc of selectedStructureOption.boundedContexts){
-                    const bcDescription = getDescription(
+                    const bcDescriptionWithMappingIndex = TraceMarkdownUtil.getDescriptionWithMappingIndex(
                         bc,
                         selectedStructureOption.relations,
-                        selectedStructureOption.explanations
+                        selectedStructureOption.explanations,
+                        this.requirementsValidationResult.analysisResult.events
                     )
 
                     let requirements = getRequirements(bc)
                     if(requirements.ddl)
-                        requirements.ddlFields = await callExtractDDLFieldsGenerator(requirements.ddl, bc.name)
+                        requirements.ddlFields = await callExtractDDLFieldsGenerator(bc.requirements, bc.name)
                     else
                         requirements.ddlFields = []
+                    requirements.description = bcDescriptionWithMappingIndex.markdown
+                    requirements.traceMap = bcDescriptionWithMappingIndex.traceMap
 
                     passedGeneratorInputs.push({
                         boundedContext: {
                             name: bc.name,
                             alias: bc.alias,
                             displayName: bc.alias,
-                            description: bcDescription,
+                            description: bcDescriptionWithMappingIndex.markdown,
                             aggregates: bc.aggregates,
                             requirements: requirements
                         },
-                        description: bcDescription
+                        description: bcDescriptionWithMappingIndex.markdown
                     })
                 }
 
@@ -1016,7 +999,11 @@ import { value } from 'jsonpath';
                     },
                     accumulatedDrafts: accumulatedDrafts,
                     feedback: {
-                        previousDraftOutput: {options: boundedContextInfo.options.map(option => option.structure)},
+                        previousDraftOutput: {options: 
+                            RefsTraceUtil.removeRefsAttributes(
+                                boundedContextInfo.options.map(option => option.structure)
+                            )
+                        },
                         feedbacks: [
                             feedback
                         ]
@@ -1202,7 +1189,11 @@ import { value } from 'jsonpath';
                 activeTab: null,
                 generatorInputTabs: [this.$t('ESDialoger.generatorInputTabs.userStory'), "DDL"],
                 chunks: [],
-                summarizedResult: "",
+                summarizedResult: {
+                    summary: "",
+                    refs: [],
+                    originalRequirements: ""
+                },
                 userStoryChunks: [],
                 userStoryChunksIndex: 0,
                 bcInAspectIndex: 0,
@@ -1214,7 +1205,6 @@ import { value } from 'jsonpath';
                     isAnalizing: false,
                     isGeneratingBoundedContext: false,
                 },
-                isAnalizeResultSetted: false,
                 isStopped: false,
 
                 boundedContextVersion: null,
@@ -1249,6 +1239,8 @@ import { value } from 'jsonpath';
                         preservedDraftOptionsForFeedback: [],
                         preservedDraftOptions: [],
 
+                        _makeDraftOptions: (returnObj) => {},
+                        _getXAIDtoDraftOptions: (output, targetBoundedContext, description, inference) => {},
                         buildInitialInputs: async (selectedStructureOption) => {},
                         initInputs: () => {},
                         generateIfInputsExist: () => {},
@@ -1293,7 +1285,11 @@ import { value } from 'jsonpath';
                 this.projectInfo.userStory = this.projectInfo.userStory || '';
                 this.projectInfo.inputDDL = this.projectInfo.inputDDL || '';
                 this.userStoryChunks = this.projectInfo.userStoryChunks || [];
-                this.summarizedResult = this.projectInfo.summarizedResult || '';
+                this.summarizedResult = this.projectInfo.summarizedResult || {
+                    summary: "",
+                    refs: [],
+                    originalRequirements: ""
+                };
 
                 this.messages = [];
 
@@ -1351,6 +1347,15 @@ import { value } from 'jsonpath';
                                 await addPropertyWithDelay(newMessage, 'currentGeneratedLength', 0);
                                 await addPropertyWithDelay(newMessage, 'userStory', this.projectInfo.userStory);
                                 
+                                // Sanitize summarizedResult
+                                if(!msg.summarizedResult) {
+                                    newMessage.summarizedResult = {
+                                        summary: "",
+                                        refs: [],
+                                        originalRequirements: ""
+                                    };
+                                }
+
                                 // result 객체 점진적 처리
                                 if (msg.result) {
                                     newMessage.result = {};
@@ -1463,7 +1468,8 @@ import { value } from 'jsonpath';
 
                     // 메시지들을 순차적으로 처리
                     for (const msg of this.draft) {
-                        const processedMessage = await processMessageData(msg);
+                        const restoredMessage = MessageDataRestoreUtil.restoreMessageData(msg);
+                        const processedMessage = await processMessageData(restoredMessage);
                         this.messages.push(processedMessage);
                         await new Promise(resolve => setTimeout(resolve, 100));
                     }
@@ -1510,6 +1516,10 @@ import { value } from 'jsonpath';
             },
 
             onModelCreated(model){
+                if(model && model.modelValue && model.modelValue.output) {
+                    model = model.modelValue.output
+                }
+
                 if(model && model.currentGeneratedLength){
                     this.currentGeneratedLength = model.currentGeneratedLength;
                     if(this.state.generator === "RequirementsValidationGenerator" || 
@@ -1539,52 +1549,8 @@ import { value } from 'jsonpath';
                     return;
                 }
 
-                if (me.state.generator === "RequirementsValidationGenerator" || 
-                    me.state.generator === "RecursiveRequirementsValidationGenerator") {
-                    
-                    const currentMessage = me.messages.find(msg => msg.type === 'processAnalysis');
-                    
-                    if (me.state.generator === "RecursiveRequirementsValidationGenerator") {
-                        // 현재 청크의 인덱스가 마지막 청크의 인덱스보다 작은 경우
-                        if (me.generator.currentChunkIndex < me.generator.currentChunks.length - 1) {
-                            me.generator.handleGenerationFinished(model);
-                            me.processingState.isAnalizing = true;
-                            me.processingRate = Math.round((me.generator.currentChunkIndex + 1) / 
-                                                            me.generator.currentChunks.length * 100)
-                            me.updateMessageState(currentMessage.uniqueId, {
-                                content: me.generator.accumulatedResults,
-                                processingRate: me.processingRate
-                            });
-                            
-                        } else {
-                            me.generator.handleGenerationFinished(model);
-                            me.processingState.isAnalizing = false;
-                            me.processingRate = 0;
-                            me.updateMessageState(currentMessage.uniqueId, {
-                                content: me.generator.accumulatedResults,
-                                processingRate: me.processingRate
-                            });
-                            me.requirementsValidationResult = me.generator.accumulatedResults;
-                        }
-                    } else {
-                        // 일반 검증인 경우 (기존 로직)
-                        if (model) {
-                            me.processingState.isAnalizing = false;
-                            me.processingRate = 0;
-                            me.updateMessageState(currentMessage.uniqueId, {
-                                content: model,
-                                processingRate: me.processingRate
-                            });
-                            me.requirementsValidationResult = model;
-                        }
-                    }
-
-                    this.currentGeneratedLength = 0;
-                    me.updateMessageState(currentMessage.uniqueId, {
-                        currentGeneratedLength: me.currentGeneratedLength
-                    });
-
-                    me.$emit("update:draft", me.messages);
+                if(model && model.modelValue && model.modelValue.output) {
+                    model = model.modelValue.output
                 }
 
                 if (me.state.generator === "RecursiveRequirementsSummarizer") {
@@ -1637,6 +1603,131 @@ import { value } from 'jsonpath';
                         console.warn('Recursive sitemap incremental update failed:', e);
                     }
                     return;
+                }
+
+                if(me.state.generator === "SiteMapGenerator"){
+                    me.siteMap = model.treeData;
+                    me.updateMessageState(me.messages.find(msg => msg.type === 'siteMapViewer').uniqueId, {
+                        siteMap: me.siteMap,
+                        isGenerating: false
+                    });
+
+                    // Map sitemap nodes to bounded contexts under selected aspect
+                    try {
+                        me.mapSiteMapToBoundedContexts(me.siteMap);
+                        const bcMsg = me.messages.find(msg => msg.type === 'boundedContextResult');
+                        if (bcMsg) {
+                            me.updateMessageState(bcMsg.uniqueId, {
+                                result: JSON.parse(JSON.stringify(me.resultDevideBoundedContext))
+                            });
+                        }
+                    } catch (e) {
+                        console.warn('Failed to map sitemap to bounded contexts:', e);
+                    }
+
+                    me.$emit("update:draft", me.messages)
+                }
+            },  
+
+            async onGenerationSucceeded(returnObj) {
+                var me = this;
+                me.done = true;
+
+                if(me.isStopped){
+                    me.isStopped = false;
+                    return;
+                }
+
+                const model = returnObj.modelValue.output
+
+                if(me.state.generator === "RequirementsValidationGenerator" || 
+                    me.state.generator === "RecursiveRequirementsValidationGenerator") {
+                    
+                    const currentMessage = me.messages.find(msg => msg.type === 'processAnalysis');
+                    
+                    if (me.state.generator === "RecursiveRequirementsValidationGenerator") {
+                        // 현재 청크의 인덱스가 마지막 청크의 인덱스보다 작은 경우
+                        if (me.generator.currentChunkIndex < me.generator.currentChunks.length - 1) {
+                            me.generator.handleGenerationFinished(model);
+                            me.processingState.isAnalizing = true;
+                            me.processingRate = Math.round((me.generator.currentChunkIndex + 1) / 
+                                                            me.generator.currentChunks.length * 100)
+                            me.updateMessageState(currentMessage.uniqueId, {
+                                content: me.generator.accumulatedResults,
+                                processingRate: me.processingRate
+                            });
+                            
+                        } else {
+                            me.generator.handleGenerationFinished(model);
+                            me.processingState.isAnalizing = false;
+                            me.processingRate = 0;
+                            me.updateMessageState(currentMessage.uniqueId, {
+                                content: me.generator.accumulatedResults,
+                                processingRate: me.processingRate
+                            });
+                            me.requirementsValidationResult = me.generator.accumulatedResults;
+                        }
+                    } else {
+                        // 일반 검증인 경우 (기존 로직)
+                        if (model) {
+                            me.processingState.isAnalizing = false;
+                            me.processingRate = 0;
+                            me.updateMessageState(currentMessage.uniqueId, {
+                                content: model,
+                                processingRate: me.processingRate
+                            });
+                            me.requirementsValidationResult = model;
+                        }
+                    }
+
+                    this.currentGeneratedLength = 0;
+                    me.updateMessageState(currentMessage.uniqueId, {
+                        currentGeneratedLength: me.currentGeneratedLength
+                    });
+
+                    me.$emit("update:draft", me.messages);
+                }
+
+                if(me.state.generator === "RequirementsMappingGenerator"){
+                    console.log("currentChunk: ", me.userStoryChunksIndex+1, "/", me.userStoryChunks.length);
+                    console.log("Aspect: ", me.selectedAspect);
+                    console.log("BoundedContext: ", me.resultDevideBoundedContext[me.selectedAspect].boundedContexts[me.bcInAspectIndex]);
+                    console.log("Requirements: ", model.requirements);
+
+                    me.processingRate = Math.round((me.userStoryChunksIndex+1) / me.userStoryChunks.length * 100);
+                    me.currentProcessingBoundedContext = me.resultDevideBoundedContext[me.selectedAspect].boundedContexts[me.bcInAspectIndex].alias;
+
+                    // 현재 메시지의 result를 깊은 복사로 가져옴
+                    const currentMessage = me.messages.find(msg => msg.type === 'boundedContextResult');
+                    me.updateMessageState(currentMessage.uniqueId, {
+                        result: JSON.parse(JSON.stringify(me.resultDevideBoundedContext)),
+                        processingRate: me.processingRate,
+                        currentProcessingBoundedContext: me.currentProcessingBoundedContext
+                    });
+                    
+                    me.resultDevideBoundedContext[me.selectedAspect]
+                    .boundedContexts[me.bcInAspectIndex].requirements = [
+                        ...(me.resultDevideBoundedContext[me.selectedAspect]
+                            .boundedContexts[me.bcInAspectIndex].requirements || []),
+                        ...model.requirements.filter(req => req.type != undefined)
+                    ];
+                    if(me.userStoryChunksIndex < me.userStoryChunks.length - 1){
+                        me.userStoryChunksIndex++;
+                    }else{
+                        if(me.bcInAspectIndex == me.resultDevideBoundedContext[me.selectedAspect].boundedContexts.length-1){
+                            me.bcInAspectIndex = 0;
+                            me.userStoryChunksIndex = 0;
+                            me.processingRate = 0;
+                            me.currentProcessingBoundedContext = "";
+                            me.processingState.isStartMapping = false;
+
+                            me.generateAggregateDrafts(me.resultDevideBoundedContext[me.selectedAspect]);
+                            return;
+                        }
+                        me.userStoryChunksIndex = 0;
+                        me.bcInAspectIndex++;
+                    }
+                    me.mappingRequirements();
                 }
 
                 // Recursive UserStory: 청크 단위 결과는 생성기 내부에서 누적 처리하며 진행상황/부분결과 업데이트
@@ -1715,73 +1806,7 @@ import { value } from 'jsonpath';
 
                     console.log("output: ", model)
                 }
-
-                if(me.state.generator === "RequirementsMappingGenerator"){
-                    console.log("currentChunk: ", me.userStoryChunksIndex+1, "/", me.userStoryChunks.length);
-                    console.log("Aspect: ", me.selectedAspect);
-                    console.log("BoundedContext: ", me.resultDevideBoundedContext[me.selectedAspect].boundedContexts[me.bcInAspectIndex]);
-                    console.log("Requirements: ", model.requirements);
-
-                    me.processingRate = Math.round((me.userStoryChunksIndex+1) / me.userStoryChunks.length * 100);
-                    me.currentProcessingBoundedContext = me.resultDevideBoundedContext[me.selectedAspect].boundedContexts[me.bcInAspectIndex].alias;
-
-                    // 현재 메시지의 result를 깊은 복사로 가져옴
-                    const currentMessage = me.messages.find(msg => msg.type === 'boundedContextResult');
-                    me.updateMessageState(currentMessage.uniqueId, {
-                        result: JSON.parse(JSON.stringify(me.resultDevideBoundedContext)),
-                        processingRate: me.processingRate,
-                        currentProcessingBoundedContext: me.currentProcessingBoundedContext
-                    });
-                    
-                    me.resultDevideBoundedContext[me.selectedAspect]
-                    .boundedContexts[me.bcInAspectIndex].requirements = [
-                        ...(me.resultDevideBoundedContext[me.selectedAspect]
-                            .boundedContexts[me.bcInAspectIndex].requirements || []),
-                        ...model.requirements.filter(req => req.type != undefined)
-                    ];
-                    if(me.userStoryChunksIndex < me.userStoryChunks.length - 1){
-                        me.userStoryChunksIndex++;
-                    }else{
-                        if(me.bcInAspectIndex == me.resultDevideBoundedContext[me.selectedAspect].boundedContexts.length-1){
-                            me.bcInAspectIndex = 0;
-                            me.userStoryChunksIndex = 0;
-                            me.processingRate = 0;
-                            me.currentProcessingBoundedContext = "";
-                            me.processingState.isStartMapping = false;
-
-                            me.generateAggregateDrafts(me.resultDevideBoundedContext[me.selectedAspect]);
-                            return;
-                        }
-                        me.userStoryChunksIndex = 0;
-                        me.bcInAspectIndex++;
-                    }
-                    me.mappingRequirements();
-                }
-
-                if(me.state.generator === "SiteMapGenerator"){
-                    me.siteMap = model.treeData;
-                    me.updateMessageState(me.messages.find(msg => msg.type === 'siteMapViewer').uniqueId, {
-                        siteMap: me.siteMap,
-                        isGenerating: false
-                    });
-
-                    // Map sitemap nodes to bounded contexts under selected aspect
-                    try {
-                        me.mapSiteMapToBoundedContexts(me.siteMap);
-                        const bcMsg = me.messages.find(msg => msg.type === 'boundedContextResult');
-                        if (bcMsg) {
-                            me.updateMessageState(bcMsg.uniqueId, {
-                                result: JSON.parse(JSON.stringify(me.resultDevideBoundedContext))
-                            });
-                        }
-                    } catch (e) {
-                        console.warn('Failed to map sitemap to bounded contexts:', e);
-                    }
-
-                    me.$emit("update:draft", me.messages)
-                }
-                
-            },  
+            },
 
             generateUserStory(){
                 if(!this.projectInfo.userStory){
@@ -1988,7 +2013,7 @@ import { value } from 'jsonpath';
                 this.input.previousAspectModel = targetMessage.result[targetMessage.selectedAspect];
                 this.input['requirements'] = {
                     userStory: this.projectInfo.userStory,
-                    summarizedResult: this.summarizedResult,
+                    summarizedResult: this.summarizedResult || {},
                     analysisResult: this.requirementsValidationResult.analysisResult,
                     pbcInfo: this.pbcLists.map(pbc => ({
                         name: pbc.name,
@@ -2062,12 +2087,12 @@ import { value } from 'jsonpath';
                 this.processingState.isSummarizeStarted = true;
 
                 try {
-                    if(!this.inputDDL) this.inputDDL = "";
-                    const summarizedText = await this.generator.summarizeRecursively(this.projectInfo.userStory + "\n" + this.projectInfo.inputDDL);
+                    const summarizedResult = await this.generator.summarizeRecursively(this.projectInfo.userStory);
                     // 요약 결과 저장
-                    this.userStoryChunks = this.generator.currentChunks;
+                    this.userStoryChunks = this.generator.makeUserStoryChunks(this.projectInfo.userStory + "\n" + this.projectInfo.inputDDL);
                     this.userStoryChunksIndex = 0;
-                    this.summarizedResult = summarizedText;
+                    
+                    this.summarizedResult = summarizedResult;
 
                     this.$emit("update:projectInfo", {
                         userStoryChunks: this.userStoryChunks,
@@ -2096,13 +2121,27 @@ import { value } from 'jsonpath';
 
                 // 요약 결과가 없어도 원본 매핑 진행을 위해 원본 요구사항을 청크로 넣어줌
                 if(this.userStoryChunks.length == 0){
-                    this.userStoryChunks.push(this.projectInfo.userStory);
+                    if(this.projectInfo.userStory) {
+                        this.userStoryChunks.push({
+                            text: this.projectInfo.userStory,
+                            startLine: 1
+                        });
+                    }
+
+                    if(this.projectInfo.inputDDL) {
+                        this.userStoryChunks.push({
+                            text: this.projectInfo.inputDDL,
+                            startLine: this.projectInfo.userStory.split("\n").length + 1
+                        });
+                    }
                 }
 
-                if(this.requirementsValidationResult.analysisResult && this.userStoryChunksIndex == 0 && !this.isAnalizeResultSetted){
-                    this.userStoryChunks.push(this.requirementsValidationResult.analysisResult)
-                    this.userStoryChunks.push(this.projectInfo.inputDDL)
-                    this.isAnalizeResultSetted = true;
+                const isAnalysisResultExist = this.userStoryChunks.some(chunk => chunk.type === "analysisResult");
+                if(this.requirementsValidationResult.analysisResult && this.userStoryChunksIndex == 0 && !isAnalysisResultExist){
+                    this.userStoryChunks.push({
+                        events: this.requirementsValidationResult.analysisResult.events,
+                        type: "analysisResult"
+                    })
                 }
 
                 this.input['boundedContext'] = this.resultDevideBoundedContext[this.selectedAspect].boundedContexts[this.bcInAspectIndex];
@@ -2116,7 +2155,7 @@ import { value } from 'jsonpath';
                 }
 
                 // 현재 요약본이 너무 길면 먼저 요약 진행
-                if (this.projectInfo.userStory.length + this.projectInfo.inputDDL.length > 25000 && this.summarizedResult.length == 0) {
+                if (this.projectInfo.userStory.length + this.projectInfo.inputDDL.length > 25000 && !this.summarizedResult.summary) {
                     this.pendingBCGeneration = true;
                     this.summarizeRequirements();
                     return;
@@ -2134,7 +2173,7 @@ import { value } from 'jsonpath';
                 
                 this.input['requirements'] = {
                     userStory: this.projectInfo.userStory,
-                    summarizedResult: this.summarizedResult,
+                    summarizedResult: this.summarizedResult || {},
                     analysisResult: this.requirementsValidationResult.analysisResult,
                     pbcInfo: this.pbcLists.map(pbc => ({
                         name: pbc.name,
@@ -2144,6 +2183,7 @@ import { value } from 'jsonpath';
 
                 this.generator.generate();
                 this.processingState.isGeneratingBoundedContext = true;
+                this.currentGeneratedLength = 0;
             },
 
             generateFrontEnd(){
@@ -2233,51 +2273,46 @@ import { value } from 'jsonpath';
                 this.generators.DraftGeneratorByFunctions.generateIfInputsExist()
             },
 
+            
             generateFromAggregateDrafts(draftOptions){
-                if(this.isServerProject) this.state.associatedProject = this.modelIds.projectId
-                
-                this.collectedMockDatas.aggregateDraftScenarios.draftOptions = structuredClone(draftOptions)
-                this.collectedMockDatas.aggregateDraftScenarios.userStory = this.projectInfo.userStory
-                this.collectedMockDatas.aggregateDraftScenarios.state = structuredClone(this.state)
-                this.collectedMockDatas.aggregateDraftScenarios.messages = structuredClone(
-                    this.messages.map(message => ({
-                        ...message,
-                        actions: undefined
-                    }))
-                )
-                this.collectedMockDatas.aggregateDraftScenarios.frontEndResults = structuredClone(this.frontEndResults)
-                this.collectedMockDatas.aggregateDraftScenarios.pbcResults = structuredClone(this.pbcResults)
-                this.collectedMockDatas.aggregateDraftScenarios.pbcLists = structuredClone(this.pbcLists)
-                console.log("[*] 시나리오별 테스트를 위한 Mock 데이터 구축 완료", {collectedMockDatas: this.collectedMockDatas.aggregateDraftScenarios})
-
-                if(this.pbcResults.length > 0){
-                    this.pbcResults.forEach(pbc => {
-                        if(!draftOptions[`PBC-${pbc.name}`]){
-                            this.pbcLists.forEach(pbcList => {
-                                if(pbcList.name === pbc.implementationStrategy.replace("PBC:", "").trim()){
-                                    pbc['info'] = pbcList
-                                }
-                            })
-                            draftOptions[`PBC-${pbc.name}`] = pbc
-                        }
-                    })
-                }
-
-                if(this.frontEndResults.length > 0){
-                    this.frontEndResults.forEach(frontEnd => {
-                        draftOptions[`frontend`] = frontEnd
-                    })
-                }
-
-                this.state = {
-                    ...this.state,
-                    userStory: this.projectInfo.userStory,
-                    draftOptions: draftOptions,
-                    generator: "CreateAggregateActionsByFunctions"
-                }
-                console.log("[*] 생성 준비를 위한 입력값 구축 완료", {state: this.state})
-
                 try {
+
+                    if(this.isServerProject) this.state.associatedProject = this.modelIds.projectId
+                    this._makeCollectedMockDatas(draftOptions)
+
+                    draftOptions = ESDialogerTraceUtil.extractTraceInfoFromDraftOptions(draftOptions, {
+                        userStory: this.projectInfo.userStory,
+                        ddl: this.projectInfo.inputDDL,
+                    })
+
+                    
+                    if(this.pbcResults.length > 0){
+                        this.pbcResults.forEach(pbc => {
+                            if(!draftOptions[`PBC-${pbc.name}`]){
+                                this.pbcLists.forEach(pbcList => {
+                                    if(pbcList.name === pbc.implementationStrategy.replace("PBC:", "").trim()){
+                                        pbc['info'] = pbcList
+                                    }
+                                })
+                                draftOptions[`PBC-${pbc.name}`] = pbc
+                            }
+                        })
+                    }
+
+                    if(this.frontEndResults.length > 0){
+                        this.frontEndResults.forEach(frontEnd => {
+                            draftOptions[`frontend`] = frontEnd
+                        })
+                    }
+
+                    
+                    this.state = {
+                        ...this.state,
+                        userStory: this.projectInfo.userStory,
+                        draftOptions: draftOptions,
+                        generator: "CreateAggregateActionsByFunctions"
+                    }
+                    console.log("[*] 생성 준비를 위한 입력값 구축 완료", {state: this.state})
 
                     LocalStorageCleanUtil.clean()
 
@@ -2306,12 +2341,30 @@ import { value } from 'jsonpath';
 
                 }
                 catch(e) {
-
-                    console.log("[*] 생성 준비를 위한 입력값 구축과정에서 에러 발생", {error: e, state: this.state})
-
+                    console.error("[*] 생성 준비를 위한 입력값 구축과정에서 에러 발생", {error: e, state: this.state})
+                    alert(`[!] Error occured while building inputs: ${e.message}`)
                 }
             },
 
+            _makeCollectedMockDatas(draftOptions){
+                this.collectedMockDatas.aggregateDraftScenarios.draftOptions = structuredClone(draftOptions)
+                this.collectedMockDatas.aggregateDraftScenarios.userStory = this.projectInfo.userStory
+                this.collectedMockDatas.aggregateDraftScenarios.state = structuredClone(this.state)
+                this.collectedMockDatas.aggregateDraftScenarios.messages = structuredClone(
+                    this.messages.map(message => ({
+                        ...message,
+                        actions: undefined
+                    }))
+                )
+                this.collectedMockDatas.aggregateDraftScenarios.frontEndResults = structuredClone(this.frontEndResults)
+                this.collectedMockDatas.aggregateDraftScenarios.pbcResults = structuredClone(this.pbcResults)
+                this.collectedMockDatas.aggregateDraftScenarios.pbcLists = structuredClone(this.pbcLists)
+                this.collectedMockDatas.aggregateDraftScenarios.projectInfo = structuredClone(this.projectInfo)
+                this.collectedMockDatas.aggregateDraftScenarios.requirementsValidationResult = structuredClone(this.requirementsValidationResult)
+                console.log("[*] 시나리오별 테스트를 위한 Mock 데이터 구축 완료", {collectedMockDatas: this.collectedMockDatas.aggregateDraftScenarios})
+            },
+
+            
             feedbackFromAggregateDrafts(boundedContextInfo, feedback, draftOptions, messageUniqueId){
                 console.log("[*] 주어진 피드백을 기반으로 새로운 Aggregate 초안 생성", {boundedContextInfo, feedback, draftOptions, messageUniqueId})
 
@@ -2409,7 +2462,7 @@ import { value } from 'jsonpath';
                         uniqueId: this.uuid(),
                         type: type,
                         siteMap: this.siteMap,
-                        userStory: this.summarizedResult !== "" ? this.summarizedResult : this.projectInfo.userStory,
+                        userStory: (this.summarizedResult && this.summarizedResult.summary) ? this.summarizedResult.summary : this.projectInfo.userStory,
                         resultDevideBoundedContext: this.resultDevideBoundedContext[this.selectedAspect],
                         isGenerating: true,
                         processingRate: 0,
@@ -2431,6 +2484,12 @@ import { value } from 'jsonpath';
             },
 
             validateRequirements() {
+                if(!this.projectInfo || !this.projectInfo.userStory){
+                    alert("Can not found User Story. You need to input User Story to proceed.");
+                    return;
+                }
+
+                
                 const requirements = this.projectInfo.userStory;
                 this.$emit("update:userStory", requirements, true);
 
@@ -2481,7 +2540,7 @@ import { value } from 'jsonpath';
             },
 
             getDisabledGenerateBtn(){
-                return this.processingState.isSummarizeStarted || this.processingState.isGeneratingBoundedContext || this.processingState.isStartMapping || this.processingState.isAnalizing || this.projectInfo.userStory==null
+                return this.processingState.isSummarizeStarted || this.processingState.isGeneratingBoundedContext || this.processingState.isStartMapping || this.processingState.isAnalizing || !this.projectInfo.userStory
             },
 
             async loadAllRepoList(){

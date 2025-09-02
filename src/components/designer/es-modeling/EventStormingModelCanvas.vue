@@ -695,6 +695,30 @@
                                                             </div>
                                                         </template>
                                                     </v-menu>
+
+												    <v-menu
+                                                            class="pa-2"
+                                                            open-on-hover
+                                                            offset-y
+                                                            left
+                                                            v-if="traceInfoViewerDto.isUsable"
+                                                    >
+                                                        <template
+                                                            v-slot:activator="{ on, }"
+                                                        >
+                                                            <div>
+                                                                <v-btn
+                                                                        class="gs-model-z-index-1 es-hide-trace-btn"
+                                                                        text
+                                                                        style="margin-right: 5px;"
+                                                                        :disabled="disableBtn"
+                                                                        @click="openTraceInfoViewer()"
+                                                                >
+                                                                    <v-icon>mdi-text-box-search</v-icon>
+                                                                </v-btn>
+                                                            </div>
+                                                        </template>
+                                                    </v-menu>
                                                 </slot>
                                             </v-row>
                                         </div>
@@ -2003,6 +2027,24 @@
         <OpenAPIPBC
             ref="openAPIPBC"
         ></OpenAPIPBC>
+
+        <v-dialog
+            v-model="traceInfoViewerDto.isShow"
+            persistent
+            content-class="trace-info-dialog"
+            overlay-opacity="0.2"
+            :retain-focus="false"
+            hide-overlay
+            @click:outside="closeTraceInfoViewer"
+        >
+            <TraceInfoViewer 
+                v-if="traceInfoViewerDto.isShow"
+                @onClose="closeTraceInfoViewer"
+                :userInputs="traceInfoViewerDto.userInputs"
+                :directRefInfos="traceInfoViewerDto.directRefInfos"
+            >
+            </TraceInfoViewer>
+        </v-dialog>
     </div>
 </template>
 
@@ -2064,6 +2106,10 @@
     import GeneratorProgress from "./components/GeneratorProgress.vue"
     import ESActionsUtil from "../modeling/generators/es-ddl-generators/modules/ESActionsUtil"
     import EsValueLangGraphStudioProxy from "../modeling/generators/proxies/EsValueLangGraphStudioProxy/EsValueLangGraphStudioProxy";
+
+    import {
+        TraceInfoViewer
+    } from "../modeling/generators/features/EventStormingModelCanvas"
 
 
 
@@ -2139,7 +2185,8 @@
             ModelDraftDialogForDistribution,
             AggregateDraftDialog,
             GeneratorProgress,
-            OpenAPIPBC
+            OpenAPIPBC,
+            TraceInfoViewer
             // ModelCodeGenerator
         },
         props: {
@@ -2607,6 +2654,13 @@
                 },
 
                 processMode: true,
+
+                traceInfoViewerDto: {
+                    isUsable: false,
+                    isShow: false,
+                    userInputs: {userStory: "", ddl: ""},
+                    directRefInfos: {refs: []}
+                }
             };
         },
         computed: {
@@ -3088,6 +3142,7 @@
                     if(this.isModelDefinitionLoaded && this.initLoad) {
                         console.log("[*] 모델 정의 로드 완료", this.value)
 
+                        this._initializeTraceInfoViewerDto()
                         if(this.value.langgraphStudioInfos && this.value.langgraphStudioInfos.esGenerator &&
                            this.value.langgraphStudioInfos.esGenerator.isCompleted === false &&
                            this.value.langgraphStudioInfos.esGenerator.jobId
@@ -4565,6 +4620,12 @@
                         preferedLanguage = COUNTRY_CODE_LANG_MAP[window.countryCode]
 
 
+                    let traceInfo = null
+                    if(this.selectedDraftOptions.traceInfo) {
+                        traceInfo = this.selectedDraftOptions.traceInfo
+                        delete this.selectedDraftOptions.traceInfo
+                    }
+
                     const jobId = this.uuid()
                     await EsValueLangGraphStudioProxy.makeNewJob(
                         jobId,
@@ -4576,12 +4637,12 @@
 
                     
                     if(!this.value.langgraphStudioInfos) this.value.langgraphStudioInfos = {}
-                    this.value.langgraphStudioInfos.esGenerator = {jobId: jobId, isCompleted:false}
+                    this.value.langgraphStudioInfos.esGenerator = {jobId: jobId, isCompleted:false, traceInfo: traceInfo}
 
                     if(isAlreadyTried) {
-                        this._sanpshotModelForcely()
+                        await this._sanpshotModelForcely()
                     } else {
-                        this._saveModelForcely()
+                        await this._saveModelForcely()
                     }
                     return
                 }
@@ -4614,7 +4675,7 @@
                 this.generators.CreateAggregateActionsByFunctions.generator.generateIfInputsExist()
             },
 
-            _saveModelForcely() {
+            async _saveModelForcely() {
                 this.storageCondition = {
                     "action": "save",
                     "title": "SAVE",
@@ -4629,7 +4690,7 @@
                 }
                     
 
-                this.saveModel()
+                await this.saveModel()
             },
 
             async _sanpshotModelForcely() {
@@ -8782,6 +8843,37 @@
                    this.generatorsInGeneratorUI[returnObj.generatorName].callbacks && 
                    this.generatorsInGeneratorUI[returnObj.generatorName].callbacks.onStopped)
                     this.generatorsInGeneratorUI[returnObj.generatorName].callbacks.onStopped(returnObj)
+            },
+
+
+            openTraceInfoViewer(){
+                if(!this.traceInfoViewerDto.isUsable) {
+                    console.error("TraceInfoViewer is not available. Something is wrong. It can't be executed.")
+                    alert("TraceInfoViewer is not available")
+                    return
+                }
+                this.traceInfoViewerDto.directRefInfos = {
+                    refs: []
+                }
+                this.traceInfoViewerDto.isShow = true
+            },
+
+            closeTraceInfoViewer(){
+                this.traceInfoViewerDto.isShow = false
+            },
+
+            _initializeTraceInfoViewerDto(){
+                if(this.value && 
+                   this.value.langgraphStudioInfos && 
+                   this.value.langgraphStudioInfos.esGenerator && 
+                   this.value.langgraphStudioInfos.esGenerator.traceInfo &&
+                   this.value.langgraphStudioInfos.esGenerator.traceInfo.userInputs) {
+                    this.traceInfoViewerDto.userInputs = this.value.langgraphStudioInfos.esGenerator.traceInfo.userInputs
+                    this.traceInfoViewerDto.isUsable = true
+                }
+                else {
+                    this.traceInfoViewerDto.isUsable = false
+                }
             }
         },
     };
@@ -9115,7 +9207,8 @@
         .es-hide-save-btn,
         .es-hide-share-btn,
         .es-hide-monitoring-btn,
-        .es-hide-code-btn {
+        .es-hide-code-btn,
+        .es-hide-trace-btn {
             min-width: 10px !important;
             max-width: 10px !important;
         }
@@ -9206,5 +9299,15 @@
             margin: 20px -60px 0px 5px !important;
             max-width: 90px !important;
         }
+    }
+
+    .v-dialog__content.trace-info-dialog {
+        justify-content: flex-start;
+        align-items: flex-start;
+    }
+    .v-dialog.trace-info-dialog {
+        box-shadow: none;
+        overflow: visible;
+        background: transparent;
     }
 </style>

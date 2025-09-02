@@ -151,7 +151,9 @@
       "boundedContextName": "Bounded Context 이름",
       "boundedContextAlias": "별칭",
       "importance": "중요도",
-      "implementationStrategy": "구현 전략"
+      "implementationStrategy": "구현 전략",
+      "reason": "이유",
+      "interactionPattern": "상호작용 패턴"
     },
     "selectAspects": "관점 선택",
     "requirementsMappingResult": "요구사항 매핑 결과"
@@ -346,7 +348,8 @@
     "description": "설명"
   },
   "DetailComponent": {
-    "allDetails": "가이드 보기"
+    "allDetails": "가이드 보기",
+    "tooltipText": "상세보기"
   },
   "modelingPanelTool": {
     "draggableOn": "화면 드래그 : on",

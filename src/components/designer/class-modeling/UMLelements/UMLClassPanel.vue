@@ -7,7 +7,17 @@
                         <img :src="img">
                     </v-list-item-avatar>
                     <v-list-item-content>
-                        <v-list-item-title class="headline">{{ titleName }}</v-list-item-title>
+                        <v-list-item-title class="headline" style="display: flex; align-items: center;">
+                            {{ titleName }}
+                            <v-icon 
+                                color="grey lighten-1" 
+                                style="margin-left: 8px;" 
+                                @click="openTraceInfoViewer()" 
+                                v-if="isTraceInfoViewerUsable()"
+                            >
+                                mdi-text-box-search-outline
+                            </v-icon>
+                        </v-list-item-title>
                     </v-list-item-content>
                     <v-btn icon @click.native="closePanel()">
                         <v-icon color="grey lighten-1">mdi-close</v-icon>
@@ -336,6 +346,7 @@
     import draggable from 'vuedraggable'
     import UMLPropertyPanel from '../UMLPropertyPanel'
     import AttributeEditor from '../../es-modeling/EventStormingAttributeEditor'
+    import { TraceInfoViewerUtil } from '../../modeling/generators/features/EventStormingModelCanvas'
 
     var jsondiffpatch = require('jsondiffpatch').create({
         objectHash: function (obj, index) {
@@ -393,7 +404,7 @@
                 operationsDialog: false,
                 addParameter: false,
 
-                classType: 'Class',
+                classType: 'Class'
             }
         },
         computed: {
@@ -416,7 +427,6 @@
         beforeDestroy() {
         },
         created: function () {
-            // var me = this
         },
         mounted() {
             var me = this
@@ -738,6 +748,53 @@
                 me.returnTypeList = [...primitiveTypes, ...complexTypes]
 
             },
+
+            openTraceInfoViewer() {
+                if(!this.value || !this.value._type) {
+                    const msg = "Failed to open trace info viewer. You can remake the element to fix this. Reason: value or value._type is null.";
+                    console.error(msg);
+                    alert(msg);
+                    return;
+                }
+
+                try {
+                    switch(this.value._type) {
+                        case "org.uengine.uml.model.Class":
+                            TraceInfoViewerUtil.openTraceInfoViewerForModelClass(this, this.value);
+                            break;
+                        default:
+                            const idValueObjectRefs = TraceInfoViewerUtil.getIdValueObjectRefsByCanvas(
+                                this, this.value, this.canvas
+                            );
+                            if(idValueObjectRefs && idValueObjectRefs.length > 0) {
+                                TraceInfoViewerUtil.showTraceInfoViewer(this, idValueObjectRefs);
+                                return;
+                            }
+
+                            TraceInfoViewerUtil.openTraceInfoViewerForEntity(this, this.value);
+                            break;
+                    }
+                }
+                catch(e) {
+                    const msg = "Failed to open trace info viewer. You can remake the element to fix this. Reason: " + e.message;
+                    console.error(msg, e);
+                    alert(msg);
+                    return;
+                }
+            },
+
+            isTraceInfoViewerUsable() {
+                const idValueObjectRefs = TraceInfoViewerUtil.getIdValueObjectRefsByCanvas(
+                    this, this.value, this.canvas
+                );
+                if(!idValueObjectRefs) {
+                    return TraceInfoViewerUtil.isTraceInfoViewerUsable(this) && this.value && 
+                           this.value.refs && this.value.refs.length > 0;
+                }
+
+                return idValueObjectRefs && idValueObjectRefs.length > 0;
+            },
+
         },
     }
 </script>

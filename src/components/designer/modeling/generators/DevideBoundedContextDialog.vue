@@ -15,6 +15,7 @@
             <v-tab 
                 v-for="(_, index) in Object.keys(resultDevideBoundedContext)" 
                 :key="index"
+                :disabled="isStartMapping"
             >
                 version {{ index + 1 }}
             </v-tab>
@@ -1204,7 +1205,7 @@
             },
             convertText(text) {
                 if(text.includes('"name":') && text.includes('"actor":') && text.includes('"description":')) {
-                    const json = JSON.parse(text);
+                    const json = JSON.parse(text.replaceAll("<br>", ""));
                     let result = '';
                     result += `Event: ${json.name} (${json.displayName})<br>`;
                     result += `Actor: ${json.actor}<br>`;

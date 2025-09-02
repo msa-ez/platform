@@ -53,6 +53,57 @@ class TextChunker {
         return chunks;
     }
 
+    /**
+     * 텍스트를 라인 단위로 청크로 분할하고 시작 라인 번호를 함께 반환
+     * @param {string} text - 분할할 텍스트
+     * @returns {Array<{text: string, startLine: number}>} 청크 배열 (텍스트와 시작 라인 번호 포함)
+     */
+    splitIntoChunksByLine(text) {
+        const lines = text.split('\n');
+        const chunks = [];
+        let currentChunk = '';
+        let currentStartLine = 1;
+        let currentLineCount = 0;
+        
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            const lineWithNewline = i < lines.length - 1 ? line + '\n' : line;
+            
+            // 청크 사이즈 체크
+            if ((currentChunk + lineWithNewline).length > this.chunkSize && currentChunk) {
+                // 현재 청크를 저장
+                chunks.push({
+                    text: currentChunk,
+                    startLine: currentStartLine
+                });
+                
+                // 중첩(overlap) 처리: 마지막 몇 줄을 다음 청크 시작에 포함
+                const overlapLines = this.getLastLines(currentChunk, this.spareSize);
+                const overlapLineCount = overlapLines.split('\n').length - 1; // 마지막 빈 줄 제외
+                
+                currentChunk = overlapLines + lineWithNewline;
+                currentStartLine = currentStartLine + currentLineCount - overlapLineCount;
+                currentLineCount = overlapLineCount + 1;
+            } else {
+                currentChunk += lineWithNewline;
+                if (currentLineCount === 0) {
+                    currentStartLine = i + 1; // 라인 번호는 1부터 시작
+                }
+                currentLineCount++;
+            }
+        }
+        
+        // 마지막 청크 처리
+        if (currentChunk.trim()) {
+            chunks.push({
+                text: currentChunk,
+                startLine: currentStartLine
+            });
+        }
+        
+        return chunks;
+    }
+
     // 지정된 크기만큼의 마지막 문장들을 가져오는 헬퍼 메서드
     getLastSentences(text, targetSize) {
         const sentences = text.split(/(?<=;)|(?<=[.!?])/).map(s => s.trim()).filter(s => s);
@@ -67,6 +118,28 @@ class TextChunker {
         }
         
         return result.trim();
+    }
+
+    /**
+     * 지정된 크기만큼의 마지막 라인들을 가져오는 헬퍼 메서드
+     * @param {string} text - 텍스트
+     * @param {number} targetSize - 목표 크기
+     * @returns {string} 마지막 라인들
+     */
+    getLastLines(text, targetSize) {
+        const lines = text.split('\n');
+        let result = '';
+        
+        for (let i = lines.length - 1; i >= 0; i--) {
+            const line = lines[i];
+            const lineWithNewline = i > 0 ? line + '\n' : line;
+            if ((result + lineWithNewline).length > targetSize) {
+                break;
+            }
+            result = lineWithNewline + result;
+        }
+        
+        return result;
     }
 
     /**

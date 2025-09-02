@@ -18,15 +18,24 @@
                                             <v-row>
                                                 <v-tooltip top>
                                                     <template v-slot:activator="{ on }">
-                                                        <slot name="t-img">
-                                                            <v-list-item-avatar class="gs-model-panel-sticker">
-                                                                <img :src="getImage">
-                                                            </v-list-item-avatar>
-                                                        </slot>
-                                                        <v-list-item-title v-on="on" class="headline" style="max-width: 280px;"> <slot name="t-title-name">{{ titleName }}</slot> </v-list-item-title>
+                                                        <div v-on="on" style="display: flex; align-items: center;">
+                                                            <slot name="t-img">
+                                                                <v-list-item-avatar class="gs-model-panel-sticker">
+                                                                    <img :src="getImage">
+                                                                </v-list-item-avatar>
+                                                            </slot>
+                                                            <v-list-item-title class="headline" style="max-width: 280px;"> 
+                                                                <slot name="t-title-name">{{ titleName }}</slot> 
+                                                            </v-list-item-title>
+                                                        </div>
                                                     </template>
                                                     <span><slot name="t-generation-text"></slot></span>
                                                 </v-tooltip>
+                                                
+                                                <v-icon color="grey lighten-1" style="margin-left: 8px; margin-top: 5px;" @click="openTraceInfoViewer()" v-if="isTraceInfoViewerUsable()">
+                                                    mdi-text-box-search-outline
+                                                </v-icon>
+                                                
                                                 <v-spacer></v-spacer>
 
                                                 <slot name="t-information">
@@ -236,6 +245,7 @@
 
 <script>
     import RuleExampleDialog from "../RuleExampleDialog.vue";
+    import { TraceInfoViewerUtil } from "../../modeling/generators/features/EventStormingModelCanvas";
 
     export default {
         name: 'common-panel',
@@ -332,7 +342,6 @@
             var me = this;
             me.$EventBus.$on('policyDescriptionUpdated', function (newDescription) {
                 me.value.description = newDescription;
-                console.log("Description 변경됨:", newDescription);
             })
         },
         computed: {
@@ -431,6 +440,36 @@
                 if(this.relatedUrl){
                     this.relatedUrlDialog = true
                 }
+            },
+
+            openTraceInfoViewer() {
+                if(!this.value || !this.value._type) {
+                    const msg = "Failed to open trace info viewer. You can remake the element to fix this. Reason: value or value._type is null.";
+                    console.error(msg);
+                    alert(msg);
+                    return;
+                }
+
+                try {
+                    switch(this.value._type) {
+                        case "org.uengine.modeling.model.Aggregate":
+                            TraceInfoViewerUtil.openTraceInfoViewerForAggregate(this, this.value);
+                            break;
+                        default:
+                            TraceInfoViewerUtil.openTraceInfoViewerForElement(this, this.value);
+                            break;
+                    }
+                }
+                catch(e) {
+                    const msg = "Failed to open trace info viewer. You can remake the element to fix this. Reason: " + e.message;
+                    console.error(msg, e);
+                    alert(msg);
+                    return;
+                }
+            },
+
+            isTraceInfoViewerUsable() {
+                return TraceInfoViewerUtil.isTraceInfoViewerUsable(this) && this.value && this.value.refs && this.value.refs.length > 0;
             }
         }
     }

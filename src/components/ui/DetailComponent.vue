@@ -16,7 +16,7 @@
                 <v-spacer></v-spacer>
                 <!-- 오른쪽의 토글 아이콘 -->
                 <v-col v-if="details" cols="1" class="pa-0 pt-1" style="align-self: flex-start; max-width:24px; margin-top:-6px;">
-                    <v-tooltip :text="$t('details')">
+                    <v-tooltip :text="$t('DetailComponent.tooltipText')">
                         <template v-slot:activator="{ props }">
                             <v-icon v-bind="props"
                                 @click="extendedStatus = !extendedStatus" 

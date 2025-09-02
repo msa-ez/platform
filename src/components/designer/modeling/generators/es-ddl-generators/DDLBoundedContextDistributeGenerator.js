@@ -5,15 +5,9 @@ const DDLManager = require("./managers/DDLManager");
 class DDLBoundedContextDistributeGenerator extends JsonAIGenerator{
     constructor(client){
         super(client);
-        
         this.maxDDLForEachBoundedContext = 12
-
-        this.model = "gpt-4o-2024-08-06"
         this.generatorName = 'DDLBoundedContextDistributeGenerator'
         this.inputedParams = null
-
-        this.temperature = 1.0
-        this.top_p = 0.6
     }
     
 

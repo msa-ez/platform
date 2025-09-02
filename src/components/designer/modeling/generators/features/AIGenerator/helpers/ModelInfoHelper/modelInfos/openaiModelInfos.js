@@ -1,40 +1,144 @@
 export const openaiModelInfos = {
-    // 가능한 설정 옵션들: o4-mini-2025-04-16, o4-mini-2025-04-16-high
-    "o4-mini": { 
-        label: "O4-Mini",
-        defaultValue: "o4-mini-2025-04-16",
+    // 가능한 설정 옵션들: gpt-5-2025-08-07
+    "gpt-5": {
+        label: "GPT-5-Minimal",
+        defaultValue: "gpt-5-2025-08-07",
         vendor: "openai",
-        contextWindowTokenLimit: 200000,
-        outputTokenLimit: 100000,
-        outputTokenLimitReasoningMargin: 25000,
-        isInferenceModel: true,
+        contextWindowTokenLimit: 4000000,
+        outputTokenLimit: 128000,
         isSupportedResponseFormat: true,
         requestArgs: {
-            reasoningEffort: "medium",
+            reasoningEffort : "minimal",
+            temperature: 1.0, // 변경 불가능한 파라미터
+            topP: 1.0, // 변경 불가능한 파라미터
             frequencyPenalty: 0,
             presencePenalty: 0
         },
         transforms: {
             "-high": {
-                label: "O4-Mini-High",
-                defaultValue: "o4-mini-2025-04-16-high",
+                label: "GPT-5-High",
+                defaultValue: "gpt-5-2025-08-07-high",
                 requestArgs: {
-                    reasoningEffort: "high"
-                }
+                    reasoningEffort : "high",
+                },
+                isInferenceModel: true,
+                useThinkParseStrategy: true
             },
+
             "-medium": {
-                label: "O4-Mini-Medium",
-                defaultValue: "o4-mini-2025-04-16-medium",
+                label: "GPT-5-Medium",
+                defaultValue: "gpt-5-2025-08-07-medium",
                 requestArgs: {
-                    reasoningEffort: "medium"
-                }
+                    reasoningEffort : "medium",
+                },
+                isInferenceModel: true,
+                useThinkParseStrategy: true
             },
+
             "-low": {
-                label: "O4-Mini-Low",
-                defaultValue: "o4-mini-2025-04-16-low",
+                label: "GPT-5-Low",
+                defaultValue: "gpt-5-2025-08-07-low",
                 requestArgs: {
-                    reasoningEffort: "low"
-                }
+                    reasoningEffort : "low",
+                },
+                isInferenceModel: true,
+                useThinkParseStrategy: true
+            }
+        }
+    },
+
+    // 가능한 설정 옵션들: gpt-5-mini-2025-08-07
+    "gpt-5-mini": {
+        label: "GPT-5-Mini-Minimal",
+        defaultValue: "gpt-5-mini-2025-08-07",
+        vendor: "openai",
+        contextWindowTokenLimit: 4000000,
+        outputTokenLimit: 128000,
+        isSupportedResponseFormat: true,
+        requestArgs: {
+            reasoningEffort : "minimal",
+            temperature: 1.0, // 변경 불가능한 파라미터
+            topP: 1.0, // 변경 불가능한 파라미터
+            frequencyPenalty: 0,
+            presencePenalty: 0
+        },
+        transforms: {
+            "-high": {
+                label: "GPT-5-Mini-High",
+                defaultValue: "gpt-5-mini-2025-08-07-high",
+                requestArgs: {
+                    reasoningEffort : "high",
+                },
+                isInferenceModel: true,
+                useThinkParseStrategy: true
+            },
+
+            "-medium": {
+                label: "GPT-5-Mini-Medium",
+                defaultValue: "gpt-5-mini-2025-08-07-medium",
+                requestArgs: {
+                    reasoningEffort : "medium",
+                },
+                isInferenceModel: true,
+                useThinkParseStrategy: true
+            },
+
+            "-low": {
+                label: "GPT-5-Mini-Low",
+                defaultValue: "gpt-5-mini-2025-08-07-low",
+                requestArgs: {
+                    reasoningEffort : "low",
+                },
+                isInferenceModel: true,
+                useThinkParseStrategy: true
+            }
+        }
+    },
+
+    // 가능한 설정 옵션들: gpt-5-nano-2025-08-07
+    "gpt-5-nano": {
+        label: "GPT-5-Nano-Minimal",
+        defaultValue: "gpt-5-nano-2025-08-07",
+        vendor: "openai",
+        contextWindowTokenLimit: 4000000,
+        outputTokenLimit: 128000,
+        isSupportedResponseFormat: true,
+        requestArgs: {
+            reasoningEffort : "minimal",
+            temperature: 1.0, // 변경 불가능한 파라미터
+            topP: 1.0, // 변경 불가능한 파라미터
+            frequencyPenalty: 0,
+            presencePenalty: 0
+        },
+        transforms: {
+            "-high": {
+                label: "GPT-5-Nano-High",
+                defaultValue: "gpt-5-nano-2025-08-07-high",
+                requestArgs: {
+                    reasoningEffort : "high",
+                },
+                isInferenceModel: true,
+                useThinkParseStrategy: true
+            },
+
+            "-medium": {
+                label: "GPT-5-Nano-Medium",
+                defaultValue: "gpt-5-nano-2025-08-07-medium",
+                requestArgs: {
+                    reasoningEffort : "medium",
+                },
+                isInferenceModel: true,
+                useThinkParseStrategy: true
+            },
+
+            "-low": {
+                label: "GPT-5-Nano-Low",
+                defaultValue: "gpt-5-nano-2025-08-07-low",
+                requestArgs: {
+                    reasoningEffort : "low",
+                },
+                isInferenceModel: true,
+                useThinkParseStrategy: true
             }
         }
     },
@@ -48,8 +152,8 @@ export const openaiModelInfos = {
         outputTokenLimit: 32768,
         isSupportedResponseFormat: true,
         requestArgs: {
-            temperature: 1.0,
-            topP: 0.9,
+            temperature: 0.2,
+            topP: 1.0,
             frequencyPenalty: 0,
             presencePenalty: 0
         }

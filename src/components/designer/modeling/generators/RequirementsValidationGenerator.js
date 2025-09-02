@@ -1,157 +1,199 @@
-const JsonAIGenerator = require("./JsonAIGenerator");
+const FormattedJSONAIGenerator = require("./FormattedJSONAIGenerator");
+const { z } = require("zod")
+const { zodResponseFormat, DataValidationUtil, TextTraceUtil, RefsTraceUtil } = require("./utils");
 
-class RequirementsValidationGenerator extends JsonAIGenerator {
+class RequirementsValidationGenerator extends FormattedJSONAIGenerator {
     constructor(client) {
         super(client, {}, "thinkingModel");
+        
         this.generatorName = 'RequirementsValidationGenerator';
-
-        this.recursive = false;
-
+        this.checkInputParamsKeys = ["requirements"];
+        this.progressCheckStrings = ["type", "content", "events", "actors"];
+        
         this.previousChunkSummary = {
             events: [],
             actors: []
         };
+
+        this.initialResponseFormat = zodResponseFormat(
+            z.object({
+                type: z.enum(["ANALYSIS_RESULT", "ENHANCEMENT_GUIDE"]),
+                content: z.object({
+                    recommendedBoundedContextsNumber: z.number().min(3).max(15),
+                    reasonOfRecommendedBoundedContextsNumber: z.string(),
+                    events: z.array(z.object({
+                        name: z.string(),
+                        displayName: z.string(),
+                        actor: z.string(),
+                        level: z.number(),
+                        description: z.string(),
+                        inputs: z.array(z.string()),
+                        outputs: z.array(z.string()),
+                        nextEvents: z.array(z.string()),
+                        refs: z.array(z.array(z.array(z.union([z.number(), z.string()]))))
+                    })),
+                    actors: z.array(z.object({
+                        name: z.string(),
+                        events: z.array(z.string()),
+                        lane: z.number()
+                    }))
+                }).strict()
+            }).strict(),
+            "instruction"
+        )
     }
 
-    createPrompt() {
-        return `
-You are an expert business analyst and domain-driven design specialist tasked with creating a Big Picture Event Storming model from requirements.
 
-IMPORTANT: 
-Take a look requirements detail before generating events and actors. 
-Except for the events that are CRUD operations or search operations, you must generate events for all state changes without omission.
+    async onGenerateBefore(inputParams, generatorName) {
+        DataValidationUtil.validateData(inputParams, {
+            type: 'object',
+            properties: {
+                requirements: {
+                    type: 'object',
+                    properties: {
+                        userStory: {
+                            type: 'string',
+                            required: true,
+                            minLength: 1
+                        }
+                    }
+                }
+            }
+        });
+    }
 
-1. User Story Analysis
-   - Focus on business goals and user actions
-   - Extract key user scenarios and workflows
-   - Identify business rules and constraints
-   - Map dependencies between processes
 
-2. Event Discovery
-   - Convert EVERY significant business moment into domain events
-   - Do not skip or summarize any processes
-   - Ensure ALL state changes are captured as events
-   - Include ALL happy path and exception flows
-   - Use past participle form for event names (e.g., OrderPlaced)
+    __buildAgentRolePrompt() {
+        return `You are an expert business analyst and domain-driven design specialist. Your primary mission is to transform requirements into a comprehensive Big Picture Event Storming model. You possess deep expertise in:
+- Business process analysis and requirements decomposition
+- Domain-driven design principles and event storming methodologies
+- Actor identification and responsibility mapping
+- Event flow orchestration and bounded context design`;
+    }
 
-3. Actor Identification
-   - Group events by responsible actors
-   - Establish clear process ownership
-   - Define interaction points between actors
-   - Create clear swimlanes for visualization
+    __buildTaskGuidelinesPrompt() {
+        return `## User Story Analysis Process
+- **Business Goals Focus**: Prioritize business objectives and user value delivery
+- **Scenario Extraction**: Identify and document all user scenarios and workflows
+- **Business Rules**: Capture implicit and explicit business rules and constraints
+- **Process Dependencies**: Map relationships and dependencies between processes
 
-4. Event Flow Validation
-   - Ensure each user story is represented by events
-   - Verify business rules are reflected in events
-   - Validate complete process coverage
-   - Check event chain completeness
+## Event Discovery Methodology
+- **Comprehensive Coverage**: Convert EVERY significant business moment into domain events
+- **Complete State Capture**: Ensure ALL state changes are represented as events
+- **Flow Completeness**: Include ALL happy path scenarios AND exception flows
+- **Naming Convention**: Use past participle form for event names (e.g., OrderPlaced, PaymentProcessed)
+- **No Omissions**: Do not skip or summarize any business processes
 
-Requirements to analyze:
-${this.client.input['requirements']['userStory']}
+## Actor Identification Strategy
+- **Event Ownership**: Group events by their responsible actors (human or system)
+- **Process Ownership**: Establish clear accountability for each business process
+- **Interaction Mapping**: Define clear interaction points between different actors
+- **Swimlane Organization**: Create logical swimlanes for visual organization
 
-${this.getPreviousChunkSummary()}
+## Event Flow Validation Rules
+- **Story Representation**: Ensure every user story is reflected through events
+- **Business Rule Compliance**: Verify that business rules are properly represented
+- **Coverage Validation**: Confirm complete process coverage without gaps
+- **Chain Completeness**: Validate that event chains are logically complete
 
-${this.isValidationPrompt()}
-{
+## Quality Standards
+1. **Business Significance**: Focus on business-significant state changes
+2. **Clarity**: Use clear, action-oriented event names
+3. **Completeness**: Ensure comprehensive process coverage
+4. **Exception Handling**: Include exception scenarios in the model
+5. **Sequence Logic**: Maintain clear and logical event sequences
+6. **Actor Separation**: Keep actor responsibilities distinct and non-overlapping
+7. **Rule Reflection**: Ensure all business rules are reflected in the event model
+8. **Traceability**: Always include refs linking events to specific requirement lines
+
+## Requirements Analysis Priority
+- **Detailed Examination**: Thoroughly examine requirements details before generating events and actors
+- **State Change Focus**: Generate events for ALL state changes (excluding simple CRUD operations or search operations)
+- **No Omissions**: Every business-significant state change must be captured
+
+## Consistency Requirements
+- **Actor Naming**: Ensure actor names are consistent (exact spacing and case matching)
+- **Event Connections**: Consider connections to existing events when defining nextEvents
+- **Bounded Context Alignment**: Align event groupings with recommended bounded contexts
+
+## Format Requirements
+- All field names must match exactly as shown
+- Event names must be PascalCase and past participle
+- Actor names must be consistent across events and actors arrays
+- Refs must reference valid line numbers from the requirements section
+- Level numbers should indicate event sequence/priority
+
+## EXAMPLE of refs format
+If requirements contain:
+1: # Course Management System
+2: 
+3: Students can enroll in courses
+4: Instructors can create course content
+5: System validates enrollment prerequisites
+
+And you generate events like:
+- "StudentEnrolled" event -> refs: [[[3, "Students"], [3, "enroll"]]]
+- "CourseContentCreated" event -> refs: [[[4, "Instructors"], [4, "content"]]]
+- "EnrollmentValidated" event -> refs: [[[5, "validates"], [5, "prerequisites"]]]
+
+The refs array contains ranges where each range is [[startLine, startPhrase], [endLine, endPhrase]].
+The phrases should be MINIMAL words (1-2 words) that uniquely identify the position in the line.
+Use the shortest possible phrase that can locate the specific part of requirements.
+Multiple ranges can be included if an event references multiple parts of requirements.
+`;
+    }
+
+    __buildJsonResponseFormat() {
+        return `{
     "type": "ANALYSIS_RESULT",
     "content": {
-        "recommendedBoundedContextsNumber": "Number of recommended bounded contexts based on actor interactions, domain boundaries, and business capabilities" // type is number (at least 3, maximum 15),
-        "reasonOfRecommendedBoundedContextsNumber": "detailed analysis explaining: 1) which specific bounded contexts are recommended and why, 2) the business domains and responsibilities of each bounded context, 3) the rationale for the number of bounded contexts based on actor interactions, event complexity, and domain boundaries, 4) how the bounded contexts align with business capabilities and organizational structure",
+        "recommendedBoundedContextsNumber": "Number of recommended bounded contexts based on actor interactions, domain boundaries, and business capabilities", // type: number (minimum 3, maximum 15)
+        "reasonOfRecommendedBoundedContextsNumber": "Detailed analysis explaining: 1) Which specific bounded contexts are recommended and why, 2) The business domains and responsibilities of each bounded context, 3) The rationale for the number of bounded contexts based on actor interactions, event complexity, and domain boundaries, 4) How the bounded contexts align with business capabilities and organizational structure",
         "events": [
             {
-                "name": "name of event", // PascalCase & Past Participle (e.g., OrderPlaced, PaymentProcessed)
-                "displayName": "display name of event", // Natural language & Past Participle (e.g., "주문 완료됨")
-                "actor": "actor of event", // Must match an actor name from actors array
-                "level": "number", // Event sequence priority (start from 1), Not null
-                "description": "detailed description of what happened and why",
-                "inputs": ["required data or conditions for this event"],
-                "outputs": ["resulting data or state changes"],
-                "nextEvents": ["subsequent event names in the process flow"]
+                "name": "EventName", // PascalCase & Past Participle (e.g., OrderPlaced, PaymentProcessed)
+                "displayName": "Event Display Name", // Natural language & Past Participle (e.g., "주문 완료됨")
+                "actor": "ActorName", // Must exactly match an actor name from actors array
+                "level": 1, // Event sequence priority (start from 1)
+                "description": "Detailed description of what happened and why this event occurred",
+                "inputs": ["Required data or conditions for this event to occur"],
+                "outputs": ["Resulting data or state changes from this event"],
+                "nextEvents": ["SubsequentEventName1", "SubsequentEventName2"], // Names of subsequent events in the process flow
+                "refs": [[[startLineNumber, "minimal start phrase"], [endLineNumber, "minimal end phrase"]]] // Reference to source requirements. Use minimal 1-2 word phrases that uniquely identify the position
             }
         ],
         "actors": [
             {
-                "name": "actor name", // Human or System name
-                "events": ["associated event names"], // Events owned by this actor
-                "lane": number // Vertical position for swimlane (0-based index)
+                "name": "ActorName", // Human or System name (exact match with event.actor values)
+                "events": ["AssociatedEventName1", "AssociatedEventName2"], // Event names owned by this actor
+                "lane": 0 // Vertical position for swimlane (0-based index)
             }
         ]
     }
-}
-
-Guidelines:
-1. Focus on business-significant state changes
-2. Use clear, action-oriented event names
-3. Ensure complete process coverage
-4. Include exception scenarios
-5. Maintain clear event sequences
-6. Keep actor responsibilities distinct
-7. Reflect all business rules
-`
+}`;
     }
 
-    isValidationPrompt() {
-        // if(!this.recursive) {
-        if(false) {
-            return `
-Validation Criteria (ALL must be met for complete requirements):
-1. Clarity
-   - Each requirement must have a single, unambiguous interpretation
-   - All terms and concepts must be clearly defined
-   - Process flows must be explicitly stated
 
-2. Completeness
-   - All essential actors must be identified
-   - All key processes must be described
-   - Input/output for each process must be specified
-   - Business rules and constraints must be defined
-
-3. Consistency
-   - No contradictions between requirements
-   - Process flows must be logically connected
-   - Actor responsibilities must not overlap
-
-4. Verifiability
-   - All processes must have measurable outcomes
-   - Success criteria must be clearly defined
-   - Time constraints and performance metrics must be specified
-
-5. Modifiability
-   - Requirements must be modular
-   - Dependencies must be clearly identified
-   - Configuration parameters should be separate from core logic
-
-6. Traceability
-   - Each process must link to business objectives
-   - Actor roles must align with organizational structure
-   - Process flows must show clear end-to-end paths
-
-Based on these criteria, provide ONE of these responses:
-
-IF requirements are incomplete:
-{
-    "type": "ENHANCEMENT_GUIDE",
-    "content": {
-        "missingElements": {
-            "processes": ["missing processes"],
-            "flows": ["missing flows"],
-            "teams": ["missing team interactions"]
-        },
-        "recommendations": {
-            "immediate": ["what to add"],
-            "questions": ["questions to ask stakeholders"]
-        }
-    }
-}
-
-IF requirements are complete:`
-        } else {
-            return `
-JSON format must be follow:`
-        }
+    __buildJsonUserQueryInputFormat() {
+        const lineNumberedRequirements = this._getLineNumberedRequirements();
+        const lineNumberValidationPrompt = TextTraceUtil.getLineNumberValidationPrompt(lineNumberedRequirements);
+        const previousChunkSummary = this._getPreviousChunkSummary();
+        
+        return {
+            "Requirements Document": lineNumberedRequirements,
+            "Context from Previous Analysis": previousChunkSummary,
+            "Line Number Validation Note": lineNumberValidationPrompt
+        };
     }
 
-    getPreviousChunkSummary() {
+    _getLineNumberedRequirements() {
+        return TextTraceUtil.addLineNumbers(
+            this.client.input['requirements']['userStory']
+        );
+    }
+
+    _getPreviousChunkSummary() {
         if (!this.previousChunkSummary.events.length) {
             return "None (this is the first chunk)";
         }
@@ -178,29 +220,148 @@ Consider potential connections to these existing events when defining nextEvents
 `;
     }
 
-    updatePreviousChunkSummary(model) {
-        if (!model || !model.analysisResult) return;
-    
-        // 이벤트 정보 수집
-        const events = model.analysisResult.events.map(e => ({
-            name: e.name,
-            actor: e.actor,
-            nextEvents: e.nextEvents || []
-        }));
-    
-        // 액터 정보 수집
-        const actors = model.analysisResult.actors.map(a => ({
-            name: a.name,
-            events: a.events || []
-        }));
-    
-        this.previousChunkSummary = {
-            events: [...this.previousChunkSummary.events, ...events],
-            actors: [...this.previousChunkSummary.actors, ...actors]
+
+    onModelCreatedWithThinking(returnObj) {
+        if (!this.__isValidAIOutput(returnObj.modelValue.aiOutput)) return;
+        
+        const model = returnObj.modelValue.aiOutput;
+        
+        if (!model || !model.type) {
+            returnObj.modelValue.output = model;
+            return;
+        }
+
+        if (model.type === "ENHANCEMENT_GUIDE") {
+            console.log("[*] 요구사항이 불충분하여 개선 가이드를 생성했습니다.");
+            returnObj.modelValue.output = model;
+            return;
+        }
+        
+        if (model.type !== "ANALYSIS_RESULT") {
+            returnObj.modelValue.output = model;
+            return;
+        }
+
+        if (model.content && model.content.events && model.content.events.length > 0) {
+            const lineNumberedRequirements = this._getLineNumberedRequirements();
+            model.content = RefsTraceUtil.sanitizeAndConvertRefs(model.content, lineNumberedRequirements);
+        }
+
+        // 모델 요소 생성
+        const modelElements = this._createModelElements(model);
+        
+        const esvalue = {
+            elements: modelElements.elements,
+            relations: modelElements.relations,
+        };
+
+        returnObj.modelValue.output = {
+            type: "ANALYSIS_RESULT",
+            projectName: "Requirements Analysis",
+            content: esvalue,
+            analysisResult: model.content,
+            currentGeneratedLength: returnObj.modelRawValue ? returnObj.modelRawValue.length : 0
         };
     }
 
-    uuid() {
+    __isValidAIOutput(aiOutput) {
+        return aiOutput && typeof aiOutput === 'object';
+    }
+
+    _createModelElements(model) {
+        // 간격 설정
+        const LANE_HEIGHT = 250;
+        const ACTOR_MARGIN_LEFT = 150;
+        const EVENT_START_X = 300;
+        const EVENT_SPACING = 200;
+        const INITIAL_Y = 150;
+        
+        let actorLanes = {};
+        let modelElements = {};
+        let relations = {}; 
+        let eventElements = {}; 
+
+        
+        if (model.content && model.content.actors && model.content.events) {
+            // Actor 생성 및 위치 설정
+            model.content.actors.forEach((actor, idx) => {
+                const actorUuid = this._uuid();
+                const laneY = INITIAL_Y + idx * LANE_HEIGHT;
+                actorLanes[actor.name] = idx;
+                
+                // Actor 생성
+                modelElements[actorUuid] = this._createActor(
+                    actor,
+                    actorUuid,
+                    ACTOR_MARGIN_LEFT,
+                    laneY
+                );
+
+                // 스위레인 라인 생성
+                if (idx < model.content.actors.length) {
+                    const laneUuid = this._uuid();
+                    relations[laneUuid] = this._createSwimLane(
+                        laneUuid,
+                        laneY + LANE_HEIGHT/2,
+                        0,
+                        2000
+                    );
+                }
+            });
+
+            // 각 Actor별 이벤트 그룹화
+            let eventsByActor = {};
+            model.content.events.forEach(event => {
+                if (!eventsByActor[event.actor]) {
+                    eventsByActor[event.actor] = [];
+                }
+                eventsByActor[event.actor].push(event);
+            });
+
+            // 이벤트 생성 및 배치
+            Object.entries(eventsByActor).forEach(([actorName, events]) => {
+                const actorLane = actorLanes[actorName];
+                events.forEach((event, eventIdx) => {
+                    const elementUuid = this._uuid();
+                    const eventElement = this._createEvent(
+                        event,
+                        elementUuid,
+                        EVENT_START_X + eventIdx * EVENT_SPACING,
+                        INITIAL_Y + actorLane * LANE_HEIGHT
+                    );
+                    modelElements[elementUuid] = eventElement;
+                    eventElements[event.name] = eventElement;
+                });
+            });
+
+            // 이벤트 간 관계 생성
+            model.content.events.forEach(event => {
+                if (event.nextEvents && event.nextEvents.length > 0) {
+                    const sourceEvent = eventElements[event.name];
+                    
+                    event.nextEvents.forEach(nextEventName => {
+                        const targetEvent = eventElements[nextEventName];
+                        if (sourceEvent && targetEvent) {
+                            const relationId = this._uuid();
+                            relations[relationId] = this._createRelation(
+                                sourceEvent,
+                                targetEvent,
+                                relationId,
+                                event.level 
+                            );
+                        }
+                    });
+                }
+            });
+        }
+
+        return {
+            elements: modelElements,
+            relations: relations
+        };
+    }
+
+    _uuid() {
         function s4() {
             return Math.floor((1 + Math.random()) * 0x10000)
                 .toString(16)
@@ -210,7 +371,7 @@ Consider potential connections to these existing events when defining nextEvents
             s4() + '-' + s4() + s4() + s4();
     }
 
-    createEvent(event, elementId, x, y) {
+    _createEvent(event, elementId, x, y) {
         return {
             _type: 'org.uengine.modeling.model.Event',
             id: elementId,
@@ -262,7 +423,7 @@ Consider potential connections to these existing events when defining nextEvents
         };
     }
 
-    createActor(actor, actorId, x, y) {
+    _createActor(actor, actorId, x, y) {
         return {
             _type: 'org.uengine.modeling.model.Actor',
             id: actorId,
@@ -284,7 +445,7 @@ Consider potential connections to these existing events when defining nextEvents
         };
     }
 
-    createSwimLane(laneId, y, startX, endX) {
+    _createSwimLane(laneId, y, startX, endX) {
         return {
             _type: 'org.uengine.modeling.model.Line',
             id: laneId,
@@ -307,7 +468,7 @@ Consider potential connections to these existing events when defining nextEvents
         };
     }
 
-    createRelation(fromEvent, toEvent, relationId, level) {
+    _createRelation(fromEvent, toEvent, relationId, level) {
         return {
             _type: 'org.uengine.modeling.model.Relation',
             id: relationId,
@@ -335,133 +496,27 @@ Consider potential connections to these existing events when defining nextEvents
         };
     }
 
-    createModel(text) {
-        try {
-            let model = super.createModel(text);
-            
-            if(model && model.type === "ANALYSIS_RESULT") {
-                if(this.state === "end")
-                    console.log(`[*] 요구사항이 충분하여 프로세스 분석 결과를 생성을 완료했습니다.`, {model, text, input: this.client.input})
-                else
-                    console.log(`[*] 요구사항이 충분하여 프로세스 분석 결과를 생성 중입니다.`, {textLength: text.length})
-                
-                // 간격 설정
-                const LANE_HEIGHT = 250;
-                const ACTOR_MARGIN_LEFT = 150;
-                const EVENT_START_X = 300;
-                const EVENT_SPACING = 200;
-                const INITIAL_Y = 150;
-                
-                let actorLanes = {};
-                let modelElements = {};
-                let relations = {}; 
-                let eventElements = {}; 
 
-                
-                if(model.content && model.content.actors && model.content.events) {
-                    // Actor 생성 및 위치 설정
-                    model.content.actors.forEach((actor, idx) => {
-                        const actorUuid = this.uuid();
-                        const laneY = INITIAL_Y + idx * LANE_HEIGHT;
-                        actorLanes[actor.name] = idx;
-                        
-                        // Actor 생성
-                        modelElements[actorUuid] = this.createActor(
-                            actor,
-                            actorUuid,
-                            ACTOR_MARGIN_LEFT,
-                            laneY
-                        );
-        
-                        // 스윔레인 라인 생성
-                        if (idx < model.content.actors.length) {
-                            const laneUuid = this.uuid();
-                            relations[laneUuid] = this.createSwimLane(
-                                laneUuid,
-                                laneY + LANE_HEIGHT/2,
-                                0,
-                                2000
-                            );
-                        }
-                    });
-        
-                    // 각 Actor별 이벤트 그룹화
-                    let eventsByActor = {};
-                    model.content.events.forEach(event => {
-                        if (!eventsByActor[event.actor]) {
-                            eventsByActor[event.actor] = [];
-                        }
-                        eventsByActor[event.actor].push(event);
-                    });
-        
-                    // 이벤트 생성 및 배치
-                    Object.entries(eventsByActor).forEach(([actorName, events]) => {
-                        const actorLane = actorLanes[actorName];
-                        events.forEach((event, eventIdx) => {
-                            const elementUuid = this.uuid();
-                            const eventElement = this.createEvent(
-                                event,
-                                elementUuid,
-                                EVENT_START_X + eventIdx * EVENT_SPACING,
-                                INITIAL_Y + actorLane * LANE_HEIGHT
-                            );
-                            modelElements[elementUuid] = eventElement;
-                            eventElements[event.name] = eventElement;
-                        });
-                    });
-
-                    // 이벤트 간 관계 생성
-                    model.content.events.forEach(event => {
-                        if (event.nextEvents && event.nextEvents.length > 0) {
-                            const sourceEvent = eventElements[event.name];
-                            
-                            event.nextEvents.forEach(nextEventName => {
-                                const targetEvent = eventElements[nextEventName];
-                                if (sourceEvent && targetEvent) {
-                                    const relationId = this.uuid();
-                                    relations[relationId] = this.createRelation(
-                                        sourceEvent,
-                                        targetEvent,
-                                        relationId,
-                                        event.level 
-                                    );
-                                }
-                            });
-                        }
-                    });
-                }
+    updatePreviousChunkSummary(model) {
+        if (!model || !model.analysisResult) return;
     
-                let esvalue = {
-                    elements: modelElements,
-                    relations: relations,
-                };
+        // 이벤트 정보 수집
+        const events = model.analysisResult.events.map(e => ({
+            name: e.name,
+            actor: e.actor,
+            nextEvents: e.nextEvents || []
+        }));
     
-                return {
-                    type: "ANALYSIS_RESULT",
-                    projectName: "Requirements Analysis",
-                    content: esvalue,
-                    analysisResult: model.content,
-                    currentGeneratedLength: text.length
-                };
-            } else if (model.type === "ENHANCEMENT_GUIDE") {
-                console.log("[*] 요구사항이 불충분하여 개선 가이드를 생성했습니다.");
-                return model;
-            }
+        // 액터 정보 수집
+        const actors = model.analysisResult.actors.map(a => ({
+            name: a.name,
+            events: a.events || []
+        }));
     
-            return model;
-        } catch(e) {
-            console.log(e);
-            return {
-                type: "ENHANCEMENT_GUIDE",
-                content: {
-                    missingElements: {
-                        processes: [],
-                        flows: [],
-                        teams: []
-                    }
-                }
-            };
-        }
+        this.previousChunkSummary = {
+            events: [...this.previousChunkSummary.events, ...events],
+            actors: [...this.previousChunkSummary.actors, ...actors]
+        };
     }
 }
 
