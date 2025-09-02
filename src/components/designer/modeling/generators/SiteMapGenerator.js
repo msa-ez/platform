@@ -7,82 +7,53 @@ class SiteMapGenerator extends JsonAIGenerator {
     }
 
     createPrompt() {
-        return `You are an expert DDD architect and UX designer specializing in food delivery applications.
-
-        TASK: Generate a comprehensive site map JSON structure based on the user's domain analysis and user stories.
+        return `You are an expert DDD architect and UX designer. Generate a comprehensive site map JSON structure.
 
         REQUIREMENTS:
         ${this.client.input.requirements}
 
-        PREVIOUS CONTEXT (if provided):
-        EXISTING NAVIGATION:
-        ${JSON.stringify(this.client.input.existingNavigation || [])}
-        EXISTING BOUNDED CONTEXTS:
-        ${JSON.stringify(this.client.input.existingBoundedContexts || [])}
+        EXISTING DATA:
+        Navigation: ${JSON.stringify(this.client.input.existingNavigation || [])}
+        Bounded Contexts: ${JSON.stringify(this.client.input.existingBoundedContexts || [])}
+        Bounded Contexts List: ${JSON.stringify(this.client.input.resultDevideBoundedContext)}
 
-        BOUNDED CONTEXTS LIST:
-        ${JSON.stringify(this.client.input.resultDevideBoundedContext)}
+        TASK:
+        1. Create hierarchical navigation reflecting DDD bounded contexts
+        2. Map each navigation item to exact bounded context names from the list
+        3. Extract UI requirements from REQUIREMENTS text (or use empty string "")
+        4. Preserve existing navigation items, only enrich or add missing children
+        5. Limit main navigation to 5-7 items for optimal UX
 
-        INSTRUCTIONS:
-        1. Analyze the provided domain context and bounded contexts list
-        2. Create a hierarchical structure that reflects the DDD bounded contexts from the list
-        3. Each navigation item should specify which bounded context it belongs to (using the exact names from the bounded contexts list)
-        4. Include command APIs and query screens based on the user stories in the domain context
-        5. Consider the user journey flow from the requirements
-        6. For uiRequirements: extract the exact text from REQUIREMENTS that describes UI/layout requirements for each navigation item. If no specific UI requirements exist, it should be an empty string "".
-
-        OUTPUT FORMAT:
-        Return a JSON object with the following structure:
+        OUTPUT FORMAT (JSON only):
         {
           "siteMap": {
-            "title": "Application Title based on domain context",
-            "description": "Description based on the application purpose",
+            "title": "Application Title",
+            "description": "Application purpose",
             "boundedContexts": [
               {
-                "id": "bounded-context-id",
-                "title": "Extract as is Bounded Context Name from the provided list",
-                "description": "Description of this bounded context's responsibility"
+                "id": "context-id",
+                "title": "Exact bounded context name from list",
+                "description": "Context responsibility"
               }
             ],
             "navigation": [
               {
-                "id": "navigation-item-id",
-                "title": "Navigation Item Title",
-                "description": "Description of this navigation item",
-                "boundedContext": "Exact as is bounded context title from the site map bounded contexts list",
-                "uiRequirements": "Exact text from REQUIREMENTS describing UI/layout, or empty string if none",
-                "children": [
-                  {
-                    "id": "sub-item-id",
-                    "title": "Sub-item Title",
-                    "description": "Sub-item description",
-                    "boundedContext": "Bounded context name",
-                    "uiRequirements": "Exact text from REQUIREMENTS or empty string"
-                  }
-                ]
+                "id": "nav-id",
+                "title": "Navigation Title",
+                "description": "Item description",
+                "boundedContext": "Exact bounded context name",
+                "uiRequirements": "Exact text from REQUIREMENTS or \"\"",
+                "children": []
               }
             ]
           }
         }
 
-        GUIDELINES:
-        - Generate the title and description based on the actual domain context provided
-        - Use the exact bounded context names from the provided bounded contexts list
-        - Create navigation items that reflect the actual user stories and requirements
-        - For uiRequirements: copy the exact text from REQUIREMENTS that describes UI/layout requirements. If no UI requirements are mentioned, use empty string "".
-        - Ensure each navigation item specifies its boundedContext correctly
-        - Structure the navigation logically based on user journey and business processes
-        - Consider mobile-first design principles
-        - Include essential pages and features mentioned in the requirements
-        - Limit main navigation to 5-7 items for optimal UX
-        - Group related content logically within appropriate bounded contexts
-        - If EXISTING NAVIGATION is provided, DO NOT duplicate items already present. Instead, enrich their descriptions or add missing children only. Preserve existing IDs and titles.
-
-        IMPORTANT: 
-        - Return ONLY the JSON object, no additional text or explanations
-        - Base all content on the provided domain context and bounded contexts list
-        - Do not use generic examples, use the actual requirements provided
-        - uiRequirements must contain exact text from REQUIREMENTS or be empty string ""`;
+        CRITICAL RULES:
+        - Use exact bounded context names from provided list
+        - uiRequirements: copy exact text from REQUIREMENTS or use ""
+        - Don't duplicate existing navigation items
+        - Return ONLY JSON, no explanations`;
     }
 
     createModel(text) {
