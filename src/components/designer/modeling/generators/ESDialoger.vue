@@ -1627,6 +1627,36 @@ import { value } from 'jsonpath';
 
                     me.$emit("update:draft", me.messages)
                 }
+
+                // Recursive UserStory: 청크 단위 결과는 생성기 내부에서 누적 처리하며 진행상황/부분결과 업데이트
+                if (me.state.generator === "RecursiveUserStoryGenerator") {
+                    me.generator.handleGenerationFinished(model);
+
+                    try {
+                        const total = me.generator.currentChunks.length || 1;
+                        const done = Math.min(me.generator.currentChunkIndex, total);
+                        
+                        // 각 청크 완료마다 누적된 결과를 userStory로 emit
+                        const accumulated = me.generator.accumulated;
+                        if (accumulated && (accumulated.userStories || accumulated.actors || accumulated.businessRules)) {
+                            const userStoryContent = me.convertUserStoriesToText(accumulated);
+                            me.$emit('update:userStory', userStoryContent, false);
+                        }
+
+                        // 현재 처리 상태 표시 (선언된 데이터 활용)
+                        me.processingRate = Math.round((done / total) * 100);
+                        if(done == total){
+                            me.done = true;
+                            me.processingRate = 0;
+                        }else{
+                            me.done = false;
+                        }
+                        
+                    } catch(e) {
+                        console.warn('Recursive user story processing failed:', e);
+                    }
+                    return;
+                }
             },  
 
             async onGenerationSucceeded(returnObj) {
@@ -1728,36 +1758,6 @@ import { value } from 'jsonpath';
                         me.bcInAspectIndex++;
                     }
                     me.mappingRequirements();
-                }
-
-                // Recursive UserStory: 청크 단위 결과는 생성기 내부에서 누적 처리하며 진행상황/부분결과 업데이트
-                if (me.state.generator === "RecursiveUserStoryGenerator") {
-                    me.generator.handleGenerationFinished(model);
-
-                    try {
-                        const total = me.generator.currentChunks.length || 1;
-                        const done = Math.min(me.generator.currentChunkIndex, total);
-                        
-                        // 각 청크 완료마다 누적된 결과를 userStory로 emit
-                        const accumulated = me.generator.accumulated;
-                        if (accumulated && (accumulated.userStories || accumulated.actors || accumulated.businessRules)) {
-                            const userStoryContent = me.convertUserStoriesToText(accumulated);
-                            me.$emit('update:userStory', userStoryContent, false);
-                        }
-
-                        // 현재 처리 상태 표시 (선언된 데이터 활용)
-                        me.processingRate = Math.round((done / total) * 100);
-                        if(done == total){
-                            me.done = true;
-                            me.processingRate = 0;
-                        }else{
-                            me.done = false;
-                        }
-                        
-                    } catch(e) {
-                        console.warn('Recursive user story processing failed:', e);
-                    }
-                    return;
                 }
 
                 if(me.state.generator === "DevideBoundedContextGenerator"){
