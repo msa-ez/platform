@@ -4404,6 +4404,16 @@
                         if(!options) options={}
                         if(options.associatedProject) definitionId = options.associatedProject
 
+                        // history
+                        if(element){
+                            await me.pushObject(`db://definitions/${definitionId}/history/${element.id}`, {
+                                action: element.relationView ? 'relationPush' : 'elementPush',
+                                editUid: me.userInfo.email,
+                                timeStamp: Date.now(),
+                                item: JSON.stringify(element)
+                            })
+                        }
+
                         // console.log('Sever Queue] ADD')
                         return me.pushObject(`db://definitions/${definitionId}/queue`, {
                             action: element.relationView ? 'relationPush' : 'elementPush',
@@ -4429,6 +4439,16 @@
                         let definitionId = me.projectId
                         if(!options) options={}
                         if(options.associatedProject) definitionId = options.associatedProject
+
+                        // history
+                        if(element){
+                            await me.pushObject(`db://definitions/${definitionId}/history/${element.id}`, {
+                                action: element.relationView ? 'relationDelete' : 'elementDelete',
+                                editUid: me.userInfo.email,
+                                timeStamp: Date.now(),
+                                item: JSON.stringify(element)
+                            })
+                        }
 
                         // console.log('Sever Queue] Remove')
                         return me.pushObject(`db://definitions/${definitionId}/queue`, {
@@ -4485,6 +4505,16 @@
                 let definitionId = me.projectId
                 if(!options) options={}
                 if(options.associatedProject) definitionId = options.associatedProject
+
+                // history
+                if(diff.elements){
+                    await me.pushObject(`db://definitions/${definitionId}/history/${Object.getOwnPropertyNames(diff.elements)[0]}`, {
+                        action: 'valueModify',
+                        editUid: me.userInfo.email,
+                        timeStamp: Date.now(),
+                        item: JSON.stringify(diff)
+                    })
+                }
 
                 return await me.pushObject(`db://definitions/${definitionId}/queue`, {
                     action: 'valueModify',

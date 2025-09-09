@@ -65,10 +65,23 @@
                             </v-list>
                         </slot>
 
-                        <v-tabs v-model="activeTab">
-                            <v-tab>Basic Info</v-tab>
-                            <v-tab v-if="isShowGenAITab">Gen AI</v-tab>
-                        </v-tabs>
+                        <div style="display: flex;">
+                            <v-tabs v-model="activeTab">
+                                <v-tab>Basic Info</v-tab>
+                                <v-tab v-if="isShowGenAITab">Gen AI</v-tab>
+                            </v-tabs>
+
+                            <v-btn
+                                class="gs-model-z-index-1 es-hide-replay-btn"
+                                text
+                                style="margin-right: 5px;"
+                                @click="openHistory()"
+                                :disabled="isReadOnly"
+                            >
+                                <v-icon>mdi-history</v-icon>
+                                <div class="es-hide-replay">View History</div>
+                            </v-btn>
+                        </div>
 
                         <v-tabs-items v-model="activeTab">
                             <v-tab-item>
@@ -470,6 +483,11 @@
 
             isTraceInfoViewerUsable() {
                 return TraceInfoViewerUtil.isTraceInfoViewerUsable(this) && this.value && this.value.refs && this.value.refs.length > 0;
+            },
+
+            openHistory() {
+                var me = this
+                me.$EventBus.$emit('openHistory', me.value)
             }
         }
     }

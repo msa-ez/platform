@@ -580,6 +580,16 @@
                                                                     <v-icon>mdi-restart</v-icon>
                                                                     <div class="es-hide-replay">Versions</div>
                                                                 </v-btn>
+                                                                <!-- <v-btn
+                                                                    class="gs-model-z-index-1 es-hide-replay-btn"
+                                                                    text
+                                                                    style="margin-right: 5px;"
+                                                                    @click="viewHistory()"
+                                                                    :disabled="disableBtn"
+                                                                >
+                                                                    <v-icon>mdi-history</v-icon>
+                                                                    <div class="es-hide-replay">View History</div>
+                                                                </v-btn> -->
                                                             </div>
                                                         </template>
 
@@ -1343,6 +1353,15 @@
                     >
                     </model-storage-dialog>
 
+                    <!-- History Dialog -->
+                    <event-storming-model-history
+                        v-model="showHistoryDialog"
+                        :project-id="projectId"
+                        :model="value"
+                        :selected-element="selectedElement"
+                        @view-at-time="viewAtTime"
+                    ></event-storming-model-history>
+
                     <!-- <v-overlay v-if="loadMerge" :absolute="true">
                         <v-progress-circular indeterminate></v-progress-circular>
                         소스코드 생성중...
@@ -2087,6 +2106,8 @@
     import ModelDraftDialog from "../modeling/ModelDraftDialog"
     import EventStormingTestTerminal from "./testTerminals/EventStormingTestTerminal.vue";
 
+    import EventStormingModelHistory from "./EventStormingModelHistory.vue";
+
     import OpenAPIPBC from '../modeling/OpenAPIPBC'
 
     import {
@@ -2174,6 +2195,7 @@
             KubernetesModelCanvas,
             Login,
             "model-canvas-share-dialog": ModelCanvasShareDialog,
+            "event-storming-model-history": EventStormingModelHistory,
             "dialog-purchase-item": DialogPurchaseItem,
             "model-storage-dialog": ModelStorageDialog,
             "uml-class-model-canvas": UMLClassDiagram,
@@ -2244,6 +2266,7 @@
                 },
                 backupGenState: null,
                 generatorStep: "event",
+                showHistoryDialog: false,
                 showUiWizard: false,
                 // automodeling
                 showField: false,
@@ -3262,6 +3285,13 @@
 
             me.$EventBus.$on("generationFinished", function () {
                 // me.canvasRenderKey++;
+            });
+
+            me.$EventBus.$on("openHistory", function (value) {
+                if(JSON.stringify(value) != JSON.stringify(me.selectedElement)){
+                    me.selectedElement = value
+                }
+                me.openHistory(me.selectedElement)
             });
 
             // console.log(me.isClazzModeling);
@@ -6562,6 +6592,21 @@
                     // let route = me.$router.resolve({path: `/replay/${proId}/null/null`});
                     window.open(route.href, "_blank");
                 }
+            },
+            openHistory(value) {
+                this.showHistoryDialog = true;
+            },
+            viewAtTime(item) {
+                // Navigate to replay page with specific time
+                var me = this;
+                var proId = me.information.projectId
+                    ? me.information.projectId
+                    : me.projectId;
+                
+                let route = me.$router.resolve({
+                    path: `/replay/${proId}/${item.key}`,
+                });
+                window.open(route.href, "_blank");
             },
             changeCaseforView(item, eventName, viewName) {
                 item.eventField.namePascalCase = changeCase.pascalCase(eventName);

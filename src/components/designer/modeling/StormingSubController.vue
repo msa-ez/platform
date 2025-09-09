@@ -70,6 +70,13 @@
             ></sub-controller>
         </div>
 
+        <div v-if="value">
+            <sub-controller
+                    :image="'history.svg'"
+                    v-on:click="openHistory"
+            ></sub-controller>
+        </div>
+
         <div v-if="canvasType == 'cm'">
             <sub-controller
                     :image="'../event/link-box-variant-primary.png'"
@@ -497,6 +504,10 @@
             repairBoundedContext() {
                 var me = this
                 me.$EventBus.$emit('repairBoundedContext', me.value)
+            },
+            openHistory() {
+                var me = this
+                me.$EventBus.$emit('openHistory', me.value)
             }
         }
     }
