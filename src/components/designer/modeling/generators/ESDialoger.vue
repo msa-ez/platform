@@ -107,7 +107,7 @@
                     >
                         {{ $t('ESDialoger.generateAIAuto') }}
                     </v-btn>
-                    <v-btn :disabled="getDisabledGenerateBtn() || !isEditable" class="auto-modeling-btn" color="primary" @click="validateRequirements()">
+                    <v-btn :disabled="getDisabledValidateBtn() || !isEditable" class="auto-modeling-btn" color="primary" @click="validateRequirements()">
                         {{ $t('ESDialoger.validateRequirements') }}
                     </v-btn>
                 </v-row>
@@ -2540,6 +2540,10 @@ import { value } from 'jsonpath';
             },
 
             getDisabledGenerateBtn(){
+                return this.processingState.isSummarizeStarted || this.processingState.isGeneratingBoundedContext || this.processingState.isStartMapping || this.processingState.isAnalizing || this.projectInfo.userStory == null
+            },
+
+            getDisabledValidateBtn(){
                 return this.processingState.isSummarizeStarted || this.processingState.isGeneratingBoundedContext || this.processingState.isStartMapping || this.processingState.isAnalizing || !this.projectInfo.userStory
             },
 
