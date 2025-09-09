@@ -1,7 +1,7 @@
 import AIGenerator from "./AIGenerator";
 import JsonAIGenerator from "./JsonAIGenerator";
 
-export default class UserStoryGenerator extends JsonAIGenerator{
+export default class UserStoryGenerator extends AIGenerator{
 
     constructor(client){
         super(client);

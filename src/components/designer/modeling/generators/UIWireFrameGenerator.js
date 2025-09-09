@@ -1,9 +1,11 @@
 const JsonAIGenerator = require("./JsonAIGenerator");
+const RequirementsClassifier = require("./RequirementsClassifier");
 
 class UIWireFrameGenerator extends JsonAIGenerator {
     constructor(client) {
         super(client, {}, "thinkingModel");
         this.generatorName = 'UIWireFrameGenerator';
+        this.requirementsClassifier = new RequirementsClassifier();
     }
 
     createPrompt() {
@@ -18,7 +20,8 @@ class UIWireFrameGenerator extends JsonAIGenerator {
     }
 
     createCommandPrompt() {
-        const hasAdditionalRequirements = this.client.input.additionalRequirements && this.client.input.additionalRequirements.trim() !== '';
+        const additionalRequirements = this.client.input.additionalRequirements || '';
+        const classification = this.requirementsClassifier.classify(additionalRequirements);
         
         return `You are a UI/UX designer creating HTML wireframes for Command interfaces.
 
@@ -35,43 +38,8 @@ class UIWireFrameGenerator extends JsonAIGenerator {
 - Fields: ${this.client.input.uiDefinition.fieldDescriptors ? this.client.input.uiDefinition.fieldDescriptors.map(f => `${f.name} (${f.type || 'text'})`).join(', ') : 'No fields defined'}
 - API: ${this.client.input.uiDefinition.controllerInfo ? `${this.client.input.uiDefinition.controllerInfo.method || 'N/A'} ${this.client.input.uiDefinition.controllerInfo.apiPath || 'N/A'}` : 'No API info'}
 
-## Additional Requirements
-${this.client.input.additionalRequirements || 'None specified'}
-
-## Basic Structure (Default)
-**Command Default**: Simple form with all fields
-- Form: Input form with all fields listed above
-- No additional screens by default
-
-## How to Handle Requirements
-
-**If NO Additional Requirements:**
-- Use the basic structure above
-- Follow default style guidelines below
-
-**If Additional Requirements exist:**
-1. **Simple Changes** (colors, fonts, minor styles):
-   - Keep basic structure
-   - Apply only the requested changes
-   
-2. **Component Changes** (add screens, buttons, fields):
-   - Keep basic structure
-   - Add requested components
-   
-3. **Structural Changes** (dashboard, charts, different layout):
-   - Ignore basic structure completely
-   - Create new structure as requested
-
-**CRITICAL: Multiple Requirements Handling**
-- **When multiple requirements exist, process ALL of them together**
-- **Example**: "카드로 + 성공/실패 화면 추가" = Structural + Component changes
-- **Do NOT ignore any part of the requirements**
-- **Combine different types of changes as needed**
-
-**Examples:**
-- "성공/실패 화면도 추가로 만들어줘" → Component Changes (add screens)
-- "카드 레이아웃으로 + 추가 화면" → Structural + Component Changes
-- "버튼은 빨간색으로 + 추가 기능" → Simple + Component Changes
+## Requirements Analysis
+${this.generateRequirementsSection(classification, additionalRequirements, 'Command')}
 
 ## Default Style Guidelines
 - Buttons: Primary #007bff, Secondary #6c757d
@@ -91,8 +59,9 @@ ${this.client.input.additionalRequirements || 'None specified'}
 - Start with < (HTML tag) OR use the JSON format above
 - Include complete HTML structure
 - Include inline CSS styling
-- Include JavaScript for screen transitions
+- **DO NOT use JavaScript for interactivity** - this is for static preview only
 - Include sample data to demonstrate functionality
+- **Show ALL possible states/screens statically** - no dynamic behavior needed
 
 **IMPORTANT: Wireframe Requirements**
 - **DO NOT use <html>, <head>, <body> tags**
@@ -107,7 +76,8 @@ Generate the HTML wireframe now.`;
     createViewPrompt() {
         const uiDefinition = this.client.input.uiDefinition;
         const isCQRS = uiDefinition.dataProjection === "cqrs";
-        const hasAdditionalRequirements = this.client.input.additionalRequirements && this.client.input.additionalRequirements.trim() !== '';
+        const additionalRequirements = this.client.input.additionalRequirements || '';
+        const classification = this.requirementsClassifier.classify(additionalRequirements);
         
         // Regular View일 때 aggregate의 field 정보 추출
         let aggregateFields = [];
@@ -197,42 +167,8 @@ ${uiDefinition.queryParameters && uiDefinition.queryParameters.length > 0 ?
 
 ${eventMappingInfo}
 
-## Additional Requirements
-${this.client.input.additionalRequirements || 'None specified'}
-
-## Basic Structure (Default)
-**Regular View**: Search form + Results table
-**CQRS View**: Query button + Results table
-
-## How to Handle Requirements
-
-**If NO Additional Requirements:**
-- Use the basic structure above
-- Follow default style guidelines below
-
-**If Additional Requirements exist:**
-1. **Simple Changes** (colors, fonts, minor styles):
-   - Keep basic structure
-   - Apply only the requested changes
-   
-2. **Component Changes** (add fields, filters, pagination):
-   - Keep basic structure
-   - Add requested components
-   
-3. **Structural Changes** (cards, charts, dashboard):
-   - Ignore basic structure completely
-   - Create new structure as requested
-
-**CRITICAL: Multiple Requirements Handling**
-- **When multiple requirements exist, process ALL of them together**
-- **Example**: "카드로 + 필터 추가" = Structural + Component changes
-- **Do NOT ignore any part of the requirements**
-- **Combine different types of changes as needed**
-
-**Examples:**
-- "조회결과는 카드로" → Structural Changes (table to cards)
-- "카드로 + 검색 필드 추가" → Structural + Component Changes
-- "테이블 색상 변경 + 정렬 기능" → Simple + Component Changes
+## Requirements Analysis
+${this.generateRequirementsSection(classification, additionalRequirements, 'View')}
 
 ## Default Style Guidelines
 - Buttons: Primary #007bff, Secondary #6c757d
@@ -252,8 +188,9 @@ ${this.client.input.additionalRequirements || 'None specified'}
 - Start with < (HTML tag) OR use the JSON format above
 - Include complete HTML structure
 - Include inline CSS styling
-- Include JavaScript for interactivity
+- **DO NOT use JavaScript for interactivity** - this is for static preview only
 - Include sample data to demonstrate functionality
+- **Show ALL possible states/screens statically** - no dynamic behavior needed
 
 **IMPORTANT: Wireframe Requirements**
 - **DO NOT use <html>, <head>, <body> tags**
@@ -263,6 +200,140 @@ ${this.client.input.additionalRequirements || 'None specified'}
 - **Use relative sizing (%, auto) instead of viewport units**
 
 Generate the HTML wireframe now.`;
+    }
+
+    /**
+     * 분류된 요구사항에 따른 프롬프트 섹션 생성
+     * @param {Object} classification - 분류 결과
+     * @param {string} originalRequirements - 원본 요구사항
+     * @param {string} uiType - UI 타입 (Command/View)
+     * @returns {string} 생성된 프롬프트 섹션
+     */
+    generateRequirementsSection(classification, originalRequirements, uiType) {
+        const { type, confidence, action, isComplex, allClassifications } = classification;
+        
+        if (type === 'none') {
+            return `## Additional Requirements
+None specified
+
+## Basic Structure (Default)
+**${uiType} Default**: ${uiType === 'Command' ? 'Simple form with all fields' : 'Search form + Results table'}
+
+## Implementation Strategy
+- Use the basic structure above
+- Follow default style guidelines below`;
+        }
+
+        if (isComplex) {
+            const actionTypes = allClassifications.map(c => c.type).join(', ');
+            return `## Additional Requirements
+${originalRequirements}
+
+## Requirements Analysis
+**Classification**: Complex requirements with multiple types (${actionTypes})
+**Confidence**: ${(confidence * 100).toFixed(1)}%
+**Strategy**: Ignore basic structure and create comprehensive solution
+
+## Implementation Strategy
+- **IGNORE** the basic structure completely
+- Create a new structure that addresses ALL requirements
+- Combine different types of changes as needed
+- Ensure all requested features are implemented`;
+        }
+
+        const baseStructure = uiType === 'Command' 
+            ? 'Simple form with all fields' 
+            : 'Search form + Results table';
+
+        let strategy = '';
+        switch (action) {
+            case 'applyStyle':
+                strategy = `- **KEEP** the basic structure (${baseStructure})
+- Apply only the requested style changes
+- Maintain existing functionality`;
+                break;
+            case 'addComponent':
+                strategy = `- **KEEP** the basic structure (${baseStructure})
+- Add the requested components
+- Maintain existing functionality`;
+                break;
+            case 'restructure':
+                strategy = `- **IGNORE** the basic structure completely
+- Create new structure as requested
+- Implement all requested changes`;
+                break;
+            case 'addFunctionality':
+                strategy = `- **KEEP** the basic structure (${baseStructure})
+- Add the requested functional features
+- Enhance existing functionality`;
+                break;
+            default:
+                strategy = `- **KEEP** the basic structure (${baseStructure})
+- Implement the requested changes
+- Maintain existing functionality`;
+        }
+
+        // 데모 버튼이 필요한지 확인
+        const needsDemoButtons = this.shouldAddDemoButtons(originalRequirements, type, action);
+        
+        let demoButtonInstructions = '';
+        if (needsDemoButtons) {
+            demoButtonInstructions = `
+
+## IMPORTANT: Multiple Screens/Views
+- If you create multiple screens/views (success, error, etc.), show ALL of them statically
+- Display each screen in a separate section with clear labels
+- NO JavaScript needed - this is for static preview only
+- Example: "Success Screen:", "Error Screen:", "Form Screen:" etc.`;
+        }
+
+        return `## Additional Requirements
+${originalRequirements}
+
+## Requirements Analysis
+**Classification**: ${type} (${action})
+**Confidence**: ${(confidence * 100).toFixed(1)}%
+**Strategy**: ${action === 'restructure' ? 'Structural change' : 'Enhancement'}
+
+## Implementation Strategy
+${strategy}${demoButtonInstructions}`;
+    }
+
+    /**
+     * 데모 버튼이 필요한지 판단
+     * @param {string} requirements - 요구사항
+     * @param {string} type - 분류 타입
+     * @param {string} action - 액션
+     * @returns {boolean} 데모 버튼 필요 여부
+     */
+    shouldAddDemoButtons(requirements, type, action) {
+        if (!requirements || requirements.trim() === '') {
+            return false;
+        }
+
+        const normalizedRequirements = requirements.toLowerCase();
+        
+        // 성공/실패 화면 관련 키워드
+        const screenKeywords = [
+            '성공', 'success', '실패', 'fail', 'error', '화면', 'screen',
+            '페이지', 'page', '뷰', 'view', '모달', 'modal', '팝업', 'popup'
+        ];
+        
+        // 여러 화면을 요청하는 키워드
+        const multipleScreenKeywords = [
+            '추가', 'add', '만들어', 'create', '생성', 'generate'
+        ];
+        
+        const hasScreenKeywords = screenKeywords.some(keyword => 
+            normalizedRequirements.includes(keyword)
+        );
+        
+        const hasMultipleScreenKeywords = multipleScreenKeywords.some(keyword => 
+            normalizedRequirements.includes(keyword)
+        );
+        
+        // 성공/실패 화면을 요청했거나, 여러 화면을 추가하라고 했을 때
+        return hasScreenKeywords && hasMultipleScreenKeywords;
     }
 
     createModel(text) {
