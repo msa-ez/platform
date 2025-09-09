@@ -2536,7 +2536,7 @@
                         // setting menuOpen
                         returnArray.forEach(function (root) {
                             if(root.preferredPlatform && !root.isBasePlatform){
-                                me.menuOpen[root.bcId] = false;
+                                me.$set(me.menuOpen, root.bcId, false);
                             }
                         })
 
@@ -3819,17 +3819,29 @@ jobs:
                     var templateKey = null;
                     var conf = null;
 
+
                     if(!me._templateLists){
                         return null;
                     }
 
                     if(division == 'BASE'){
-                        templateKey = Object.keys(me._templateLists).find(x=>x.includes(codeObj.split('/')[codeObj.split('/').length-1]));
+                        var templateName = codeObj.split('/')[codeObj.split('/').length-1];
+                        // _templateLists의 키들을 확인하여 templateName이 포함된 키를 찾음
+                        templateKey = Object.keys(me._templateLists).find(x=>x.includes(templateName));
+                        // 만약 templateName으로 찾지 못했다면, configuration이 포함된 키를 찾음
+                        if(!templateKey) {
+                            templateKey = Object.keys(me._templateLists).find(x=>x.includes('configuration'));
+                        }
                         conf = me.basePlatformConf[codeObj] ? JSON.parse(JSON.stringify(me.basePlatformConf[codeObj])) : null;
                     } else if(division == 'MAIN'){
                         elementId = codeObj.bcId;
                         if(me.value.elements[elementId]){
-                            templateKey = Object.keys(me._templateLists).find(x=>x.includes(me.value.elements[elementId].name));
+                            var elementName = me.value.elements[elementId].name;
+                            templateKey = Object.keys(me._templateLists).find(x=>x.includes(elementName));
+                            // 만약 elementName으로 찾지 못했다면, configuration이 포함된 키를 찾음
+                            if(!templateKey) {
+                                templateKey = Object.keys(me._templateLists).find(x=>x.includes('configuration'));
+                            }
 
                             conf =
                                 me.value.elements[elementId].preferredPlatformConf
@@ -3843,7 +3855,12 @@ jobs:
                         }
                     } else if(division == 'TOPPING'){
                         elementId = codeObj.includes(me.toppingBaseUrl) ? codeObj.split(me.toppingBaseUrl)[1] : codeObj
-                        templateKey = Object.keys(me._templateLists).find(x=>x.includes(codeObj.split('/')[codeObj.split('/').length-1]));
+                        var toppingTemplateName = codeObj.split('/')[codeObj.split('/').length-1];
+                        templateKey = Object.keys(me._templateLists).find(x=>x.includes(toppingTemplateName));
+                        // 만약 toppingTemplateName으로 찾지 못했다면, configuration이 포함된 키를 찾음
+                        if(!templateKey) {
+                            templateKey = Object.keys(me._templateLists).find(x=>x.includes('configuration'));
+                        }
                         conf = me.value.toppingPlatformsConf && me.value.toppingPlatformsConf[elementId]
                             ? me.value.toppingPlatformsConf[elementId]
                             : null;
@@ -3852,6 +3869,7 @@ jobs:
 
                     conf = conf ? JSON.parse(JSON.stringify(conf)) : null;
                     template = templateKey && me._templateLists[templateKey] ? me._templateLists[templateKey] : null;
+                    
                     if(template){
                         return { division: division, template: template, configuration: conf, elementId: elementId };
                     }
@@ -3941,7 +3959,7 @@ jobs:
                 }
             },
             closeCodeConfiguration(division, elementId) {
-                this.menuOpen[elementId] = false
+                this.$set(this.menuOpen, elementId, false)
             },
             // cssUpateinVueObjViewer(){	
             //     var keyElementArray = document.querySelectorAll(".key")	
