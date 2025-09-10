@@ -1322,6 +1322,8 @@
                 if(draft && (draft.type == 'processAnalysis')){
                     localStorage.setItem(`draft_userStory`, this.projectInfo.userStory || '')
                     localStorage.setItem(`draft_inputDDL`, this.projectInfo.inputDDL || '')
+                    localStorage.setItem(`draft_usedUserStory`, this.projectInfo.usedUserStory || '')
+                    localStorage.setItem(`draft_usedInputDDL`, this.projectInfo.usedInputDDL || '')
 
                     localStorage.setItem(`localDraft`, JSON.stringify(draft.content))
                 }else{
@@ -1336,11 +1338,10 @@
                     return
                 }
 
-                let userStory = localStorage.getItem('draft_userStory') || ''
-                let inputDDL = localStorage.getItem('draft_inputDDL') || ''
-
-                me.projectInfo.userStory = userStory
-                me.projectInfo.inputDDL = inputDDL
+                me.projectInfo.userStory = localStorage.getItem('draft_userStory') || ''
+                me.projectInfo.inputDDL = localStorage.getItem('draft_inputDDL') || ''
+                me.projectInfo.usedUserStory = localStorage.getItem('draft_usedUserStory') || ''
+                me.projectInfo.usedInputDDL = localStorage.getItem('draft_usedInputDDL') || ''
 
                 me.draft = []
                 me.draft = JSON.parse(localStorage.getItem('localDraft') || '[]')
