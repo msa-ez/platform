@@ -442,6 +442,8 @@
                         eventStorming: null,
                         userStory: '',
                         inputDDL: '',
+                        usedUserStory: '',
+                        usedInputDDL: '',
                         customerJourneyMap: null,
                         businessModel: null,
                         userStoryMap: null,
@@ -1286,8 +1288,10 @@
                 }
             },
             async updateProjectInfo(info){
-                this.$set(this.projectInfo, 'userStoryChunks', info.userStoryChunks);
-                this.$set(this.projectInfo, 'summarizedResult', info.summarizedResult);
+                if(info.userStoryChunks) this.$set(this.projectInfo, 'userStoryChunks', info.userStoryChunks);
+                if(info.summarizedResult) this.$set(this.projectInfo, 'summarizedResult', info.summarizedResult);
+                if(info.usedUserStory) this.$set(this.projectInfo, 'usedUserStory', info.usedUserStory);
+                if(info.usedInputDDL) this.$set(this.projectInfo, 'usedInputDDL', info.usedInputDDL);
                 await this.putObject(`db://definitions/${this.projectInfo.projectId}/information`, this.projectInfo)
             },
             async updateInputDDL(content){
