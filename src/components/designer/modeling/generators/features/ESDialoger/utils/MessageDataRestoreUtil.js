@@ -6,6 +6,10 @@ class MessageDataRestoreUtil {
         if(!msg || !msg.type) return msg
 
         switch(msg.type){
+            case 'boundedContextResult':
+                this._restoreBoundedContextResultData(msg)
+                break
+
             case 'aggregateDraftDialogDto':
                 this._restoreAggregateDraftDialogDtoData(msg)
                 break
@@ -13,6 +17,22 @@ class MessageDataRestoreUtil {
 
         return msg
     }
+
+
+    static _restoreBoundedContextResultData(msg){
+        if(msg.result) {
+            for(const bcResult of Object.values(msg.result)){
+                if(bcResult && bcResult.boundedContexts) {
+                    for(const boundedContext of bcResult.boundedContexts){
+                        if(!boundedContext.events) boundedContext.events = []
+                        if(!boundedContext.requirements) boundedContext.requirements = []
+                        if(!boundedContext.aggregates) boundedContext.aggregates = []
+                    }
+                }
+            }
+        }
+    }
+
 
     static _restoreAggregateDraftDialogDtoData(msg){
         if(msg.draftOptions) {

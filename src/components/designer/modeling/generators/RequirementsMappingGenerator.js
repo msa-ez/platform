@@ -24,7 +24,14 @@ class RequirementsMappingGenerator extends FormattedJSONAIGenerator {
 
 
     async onGenerateBefore(inputParams, generatorName) {
+        this.__sanitizeInputParams(inputParams);
         this.__validateClientInput(inputParams);
+    }
+    __sanitizeInputParams(inputParams){
+        if(inputParams.boundedContext) {
+            if(!inputParams.boundedContext.aggregates) inputParams.boundedContext.aggregates = []
+            if(!inputParams.boundedContext.events) inputParams.boundedContext.events = []
+        }
     }
     __validateClientInput(clientInput){
         const clientInputSchema = {
