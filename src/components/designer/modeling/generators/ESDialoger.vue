@@ -913,6 +913,7 @@ import { value } from 'jsonpath';
                         requirements.ddlFields = []
                     requirements.description = bcDescriptionWithMappingIndex.markdown
                     requirements.traceMap = bcDescriptionWithMappingIndex.traceMap
+                    if(bc.siteMap) requirements.siteMap = bc.siteMap
 
                     passedGeneratorInputs.push({
                         boundedContext: {

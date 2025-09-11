@@ -196,6 +196,11 @@
             this.generator = new UIWireFrameGenerator(this);
         },
         watch: {
+            "value.runTimeTemplateHtml": {
+                handler(newVal, oldVal) {
+                    if(newVal) this.runTimeTemplateHtml = newVal;
+                }
+            }
         },
         mounted: function () {
             if (this.value.runTimeTemplateHtml !== '') {
@@ -242,37 +247,53 @@
                 this.generator.stop();
             },
             generate(generateDescription) {
-                let me = this;
+                const me = this
 
-                this.runTimeTemplateHtml = "";
-                this.$nextTick(() => {
-                    this.$forceUpdate();
-                });
-
-                me.uiDefinitionPanelDto.genAIDto.isGenerateWithDescriptionDone = false;
-                me.uiDefinitionPanelDto.generateDone = false;
-
-                let attachedElement = null;
-                Object.values(me.canvas.value.elements).forEach(function(element){
-                    if(element && element._type == 'org.uengine.modeling.model.Command'){
-                        if(me.canvas._isAttached(element.elementView, me.value.elementView)){
-                            attachedElement = element;
-                            return;
+                try {
+                    let attachedElement = null;
+                    Object.values(me.canvas.value.elements).forEach(function(element){
+                        if(element && element._type == 'org.uengine.modeling.model.Command'){
+                            if(me.canvas._isAttached(element.elementView, me.value.elementView)){
+                                attachedElement = element;
+                                return;
+                            }
                         }
+
+                        if(element && element._type == 'org.uengine.modeling.model.View'){
+                            if(me.canvas._isAttached(element.elementView, me.value.elementView)){
+                                attachedElement = element;
+                                return;
+                            }
+                        }
+                    })
+                    if(!attachedElement) {
+                        alert("Could not find an element with a UI sticker attached. Please attach the UI sticker to a specific command or view and try again.")
+                        return;
                     }
 
-                    if(element && element._type == 'org.uengine.modeling.model.View'){
-                        if(me.canvas._isAttached(element.elementView, me.value.elementView)){
-                            attachedElement = element;
-                            return;
-                        }
-                    }
-                })
 
-                me.input['attachedAggregate'] = me.canvas.value.elements[attachedElement.aggregate.id]? me.canvas.value.elements[attachedElement.aggregate.id]: null;
-                me.input['uiDefinition'] = attachedElement;
-                me.input['additionalRequirements'] = generateDescription;
-                me.generator.generate();
+                    me.runTimeTemplateHtml = "";
+                    me.$nextTick(() => {
+                        me.$forceUpdate();
+                    });
+
+                    me.uiDefinitionPanelDto.genAIDto.isGenerateWithDescriptionDone = false;
+                    me.uiDefinitionPanelDto.generateDone = false;
+
+
+                    me.input['attachedAggregate'] = me.canvas.value.elements[attachedElement.aggregate.id] ? me.canvas.value.elements[attachedElement.aggregate.id]: null;
+                    me.input['uiDefinition'] = attachedElement;
+                    me.input['additionalRequirements'] = generateDescription;
+                    me.generator.generate();
+                } catch(error) {
+                    alert("An exception occurred during AI generation. Please try again in a moment. Error reason: " + error.message)
+                    console.error("Error occurred during AI generation: ", error);
+
+                    if(me && me.uiDefinitionPanelDto && me.uiDefinitionPanelDto.genAIDto) {
+                        me.uiDefinitionPanelDto.genAIDto.isGenerateWithDescriptionDone = true;
+                        me.uiDefinitionPanelDto.generateDone = true;
+                    }
+                }
             },
             onModelCreated(model){
             },

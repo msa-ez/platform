@@ -338,9 +338,13 @@ ${strategy}${demoButtonInstructions}`;
 
     createModel(text) {
         try {
-            let model = super.createModel(text);
-            let html = model.html;
+            const model = super.createModel(text);
+            if(!model || !model.html) {
+                return this.createFallbackHTML();
+            }
 
+
+            const html = model.html;
             // AI가 생성한 텍스트가 HTML인지 확인
             if (html && html.trim().startsWith('<')) {
                 // HTML 유효성 검사 (기본적인 검사)
