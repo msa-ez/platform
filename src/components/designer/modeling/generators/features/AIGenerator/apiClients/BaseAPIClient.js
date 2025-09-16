@@ -174,6 +174,9 @@ class BaseAPIClient {
                             previousResponseInfos = previousResponseInfos.slice(-500)
                             console.log("[*] AI 모델 생성이 완료됨", { responseInfo, previousResponseInfos })
 
+                            if(g.client.onReceived){
+                                g.client.onReceived(existingResult);
+                            }
 
                             const model = g.createModel(existingResult);
                             if(g.client.onModelCreated){

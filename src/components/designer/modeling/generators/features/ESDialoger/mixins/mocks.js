@@ -226,6 +226,36 @@ export const aggregateDraftScenarios = {
                                 61
                             ]
                         ]
+                    ],
+                    "siteMap": [
+                        {
+                            "id": "book-management",
+                            "title": "도서 관리",
+                            "description": "도서 등록, 상태 관리, 폐기 및 도서별 이력 관리",
+                            "boundedContext": "BookManagement",
+                            "uiRequirements": "'도서 관리' 화면에서는 새로운 도서를 등록하고 현재 보유한 도서들의 상태를 관리할 수 있어야 해. 도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해. 등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야 해."
+                        },
+                        {
+                            "id": "book-registration",
+                            "title": "도서 등록",
+                            "description": "새로운 도서 등록",
+                            "boundedContext": "BookManagement",
+                            "uiRequirements": "도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해."
+                        },
+                        {
+                            "id": "book-status-management",
+                            "title": "도서 상태 관리",
+                            "description": "보유 도서의 상태 변경 및 폐기 처리",
+                            "boundedContext": "BookManagement",
+                            "uiRequirements": "등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야 해."
+                        },
+                        {
+                            "id": "book-history",
+                            "title": "도서 이력 조회",
+                            "description": "도서별 대출 및 상태 변경 이력 조회",
+                            "boundedContext": "BookManagement",
+                            "uiRequirements": "각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해."
+                        }
                     ]
                 },
                 {
@@ -498,6 +528,29 @@ export const aggregateDraftScenarios = {
                                 208
                             ]
                         ]
+                    ],
+                    "siteMap": [
+                        {
+                            "id": "loan-process",
+                            "title": "대출/반납",
+                            "description": "도서 대출, 반납, 예약 및 연장 처리",
+                            "boundedContext": "LoanProcess",
+                            "uiRequirements": "'대출/반납' 화면에서는 회원이 도서를 대출하고 반납하는 것을 관리할 수 있어야 해. 대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할 도서를 선택해야 해. 도서는 도서명이나 ISBN으로 검색할 수 있어야 해. 대출 기간은 7일/14일/30일 중에서 선택할 수 있어. 만약 대출하려는 도서가 이미 대출 중이라면, 예약 신청이 가능해야 해. 대출이 완료되면 해당 도서의 상태는 자동으로 '대출중'으로 변경되어야 해."
+                        },
+                        {
+                            "id": "loan-application",
+                            "title": "대출 신청",
+                            "description": "회원 인증 및 도서 대출 신청",
+                            "boundedContext": "LoanProcess",
+                            "uiRequirements": "대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할 도서를 선택해야 해. 도서는 도서명이나 ISBN으로 검색할 수 있어야 해. 대출 기간은 7일/14일/30일 중에서 선택할 수 있어. 만약 대출하려는 도서가 이미 대출 중이라면, 예약 신청이 가능해야 해."
+                        },
+                        {
+                            "id": "return-process",
+                            "title": "반납 처리",
+                            "description": "도서 반납 및 상태 변경",
+                            "boundedContext": "LoanProcess",
+                            "uiRequirements": "대출이 완료되면 해당 도서의 상태는 자동으로 '대출중'으로 변경되어야 해."
+                        }
                     ]
                 },
                 {
@@ -627,6 +680,29 @@ export const aggregateDraftScenarios = {
                                 61
                             ]
                         ]
+                    ],
+                    "siteMap": [
+                        {
+                            "id": "loan-status-inquiry",
+                            "title": "대출 현황",
+                            "description": "현재 대출 중인 도서 목록 및 대출 상태 관리",
+                            "boundedContext": "LoanStatusInquiry",
+                            "uiRequirements": "대출 현황 화면에서는 현재 대출 중인 도서들의 목록을 볼 수 있어야 해. 각 대출 건에 대해 대출일, 반납예정일, 현재 상태(대출중/연체/반납완료)를 확인할 수 있어야 하고, 대출 중인 도서는 연장이나 반납 처리가 가능해야 해. 도서가 반납되면 자동으로 해당 도서의 상태가 '대출가능'으로 변경되어야 해. 만약 예약자가 있는 도서가 반납되면, 해당 도서는 '예약중' 상태로 변경되어야 해."
+                        },
+                        {
+                            "id": "loan-list",
+                            "title": "대출 목록",
+                            "description": "대출 중인 도서 목록 및 상태 확인",
+                            "boundedContext": "LoanStatusInquiry",
+                            "uiRequirements": "각 대출 건에 대해 대출일, 반납예정일, 현재 상태(대출중/연체/반납완료)를 확인할 수 있어야 하고, 대출 중인 도서는 연장이나 반납 처리가 가능해야 해."
+                        },
+                        {
+                            "id": "loan-history",
+                            "title": "대출 이력 조회",
+                            "description": "도서별 대출 이력 및 상태 변경 이력 확인",
+                            "boundedContext": "LoanStatusInquiry",
+                            "uiRequirements": "각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해."
+                        }
                     ]
                 }
             ],
@@ -1037,6 +1113,36 @@ export const aggregateDraftScenarios = {
                                     61
                                 ]
                             ]
+                        ],
+                        "siteMap": [
+                            {
+                                "id": "book-management",
+                                "title": "도서 관리",
+                                "description": "도서 등록, 상태 관리, 폐기 및 도서별 이력 관리",
+                                "boundedContext": "BookManagement",
+                                "uiRequirements": "'도서 관리' 화면에서는 새로운 도서를 등록하고 현재 보유한 도서들의 상태를 관리할 수 있어야 해. 도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해. 등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야 해."
+                            },
+                            {
+                                "id": "book-registration",
+                                "title": "도서 등록",
+                                "description": "새로운 도서 등록",
+                                "boundedContext": "BookManagement",
+                                "uiRequirements": "도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해."
+                            },
+                            {
+                                "id": "book-status-management",
+                                "title": "도서 상태 관리",
+                                "description": "보유 도서의 상태 변경 및 폐기 처리",
+                                "boundedContext": "BookManagement",
+                                "uiRequirements": "등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야 해."
+                            },
+                            {
+                                "id": "book-history",
+                                "title": "도서 이력 조회",
+                                "description": "도서별 대출 및 상태 변경 이력 조회",
+                                "boundedContext": "BookManagement",
+                                "uiRequirements": "각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해."
+                            }
                         ]
                     },
                     {
@@ -1309,6 +1415,29 @@ export const aggregateDraftScenarios = {
                                     208
                                 ]
                             ]
+                        ],
+                        "siteMap": [
+                            {
+                                "id": "loan-process",
+                                "title": "대출/반납",
+                                "description": "도서 대출, 반납, 예약 및 연장 처리",
+                                "boundedContext": "LoanProcess",
+                                "uiRequirements": "'대출/반납' 화면에서는 회원이 도서를 대출하고 반납하는 것을 관리할 수 있어야 해. 대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할 도서를 선택해야 해. 도서는 도서명이나 ISBN으로 검색할 수 있어야 해. 대출 기간은 7일/14일/30일 중에서 선택할 수 있어. 만약 대출하려는 도서가 이미 대출 중이라면, 예약 신청이 가능해야 해. 대출이 완료되면 해당 도서의 상태는 자동으로 '대출중'으로 변경되어야 해."
+                            },
+                            {
+                                "id": "loan-application",
+                                "title": "대출 신청",
+                                "description": "회원 인증 및 도서 대출 신청",
+                                "boundedContext": "LoanProcess",
+                                "uiRequirements": "대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할 도서를 선택해야 해. 도서는 도서명이나 ISBN으로 검색할 수 있어야 해. 대출 기간은 7일/14일/30일 중에서 선택할 수 있어. 만약 대출하려는 도서가 이미 대출 중이라면, 예약 신청이 가능해야 해."
+                            },
+                            {
+                                "id": "return-process",
+                                "title": "반납 처리",
+                                "description": "도서 반납 및 상태 변경",
+                                "boundedContext": "LoanProcess",
+                                "uiRequirements": "대출이 완료되면 해당 도서의 상태는 자동으로 '대출중'으로 변경되어야 해."
+                            }
                         ]
                     },
                     {
@@ -1438,6 +1567,29 @@ export const aggregateDraftScenarios = {
                                     61
                                 ]
                             ]
+                        ],
+                        "siteMap": [
+                            {
+                                "id": "loan-status-inquiry",
+                                "title": "대출 현황",
+                                "description": "현재 대출 중인 도서 목록 및 대출 상태 관리",
+                                "boundedContext": "LoanStatusInquiry",
+                                "uiRequirements": "대출 현황 화면에서는 현재 대출 중인 도서들의 목록을 볼 수 있어야 해. 각 대출 건에 대해 대출일, 반납예정일, 현재 상태(대출중/연체/반납완료)를 확인할 수 있어야 하고, 대출 중인 도서는 연장이나 반납 처리가 가능해야 해. 도서가 반납되면 자동으로 해당 도서의 상태가 '대출가능'으로 변경되어야 해. 만약 예약자가 있는 도서가 반납되면, 해당 도서는 '예약중' 상태로 변경되어야 해."
+                            },
+                            {
+                                "id": "loan-list",
+                                "title": "대출 목록",
+                                "description": "대출 중인 도서 목록 및 상태 확인",
+                                "boundedContext": "LoanStatusInquiry",
+                                "uiRequirements": "각 대출 건에 대해 대출일, 반납예정일, 현재 상태(대출중/연체/반납완료)를 확인할 수 있어야 하고, 대출 중인 도서는 연장이나 반납 처리가 가능해야 해."
+                            },
+                            {
+                                "id": "loan-history",
+                                "title": "대출 이력 조회",
+                                "description": "도서별 대출 이력 및 상태 변경 이력 확인",
+                                "boundedContext": "LoanStatusInquiry",
+                                "uiRequirements": "각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해."
+                            }
                         ]
                     }
                 ],
@@ -1670,6 +1822,36 @@ export const aggregateDraftScenarios = {
                                     61
                                 ]
                             ]
+                        ],
+                        "siteMap": [
+                            {
+                                "id": "book-management",
+                                "title": "도서 관리",
+                                "description": "도서 등록, 상태 관리, 폐기 및 도서별 이력 관리",
+                                "boundedContext": "BookManagement",
+                                "uiRequirements": "'도서 관리' 화면에서는 새로운 도서를 등록하고 현재 보유한 도서들의 상태를 관리할 수 있어야 해. 도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해. 등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야 해."
+                            },
+                            {
+                                "id": "book-registration",
+                                "title": "도서 등록",
+                                "description": "새로운 도서 등록",
+                                "boundedContext": "BookManagement",
+                                "uiRequirements": "도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해."
+                            },
+                            {
+                                "id": "book-status-management",
+                                "title": "도서 상태 관리",
+                                "description": "보유 도서의 상태 변경 및 폐기 처리",
+                                "boundedContext": "BookManagement",
+                                "uiRequirements": "등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야 해."
+                            },
+                            {
+                                "id": "book-history",
+                                "title": "도서 이력 조회",
+                                "description": "도서별 대출 및 상태 변경 이력 조회",
+                                "boundedContext": "BookManagement",
+                                "uiRequirements": "각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해."
+                            }
                         ]
                     },
                     {
@@ -1709,6 +1891,29 @@ export const aggregateDraftScenarios = {
                                     208
                                 ]
                             ]
+                        ],
+                        "siteMap": [
+                            {
+                                "id": "loan-process",
+                                "title": "대출/반납",
+                                "description": "도서 대출, 반납, 예약 및 연장 처리",
+                                "boundedContext": "LoanProcess",
+                                "uiRequirements": "'대출/반납' 화면에서는 회원이 도서를 대출하고 반납하는 것을 관리할 수 있어야 해. 대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할 도서를 선택해야 해. 도서는 도서명이나 ISBN으로 검색할 수 있어야 해. 대출 기간은 7일/14일/30일 중에서 선택할 수 있어. 만약 대출하려는 도서가 이미 대출 중이라면, 예약 신청이 가능해야 해. 대출이 완료되면 해당 도서의 상태는 자동으로 '대출중'으로 변경되어야 해."
+                            },
+                            {
+                                "id": "loan-application",
+                                "title": "대출 신청",
+                                "description": "회원 인증 및 도서 대출 신청",
+                                "boundedContext": "LoanProcess",
+                                "uiRequirements": "대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할 도서를 선택해야 해. 도서는 도서명이나 ISBN으로 검색할 수 있어야 해. 대출 기간은 7일/14일/30일 중에서 선택할 수 있어. 만약 대출하려는 도서가 이미 대출 중이라면, 예약 신청이 가능해야 해."
+                            },
+                            {
+                                "id": "return-process",
+                                "title": "반납 처리",
+                                "description": "도서 반납 및 상태 변경",
+                                "boundedContext": "LoanProcess",
+                                "uiRequirements": "대출이 완료되면 해당 도서의 상태는 자동으로 '대출중'으로 변경되어야 해."
+                            }
                         ]
                     },
                     {
@@ -1741,6 +1946,29 @@ export const aggregateDraftScenarios = {
                                     61
                                 ]
                             ]
+                        ],
+                        "siteMap": [
+                            {
+                                "id": "loan-status-inquiry",
+                                "title": "대출 현황",
+                                "description": "현재 대출 중인 도서 목록 및 대출 상태 관리",
+                                "boundedContext": "LoanStatusInquiry",
+                                "uiRequirements": "대출 현황 화면에서는 현재 대출 중인 도서들의 목록을 볼 수 있어야 해. 각 대출 건에 대해 대출일, 반납예정일, 현재 상태(대출중/연체/반납완료)를 확인할 수 있어야 하고, 대출 중인 도서는 연장이나 반납 처리가 가능해야 해. 도서가 반납되면 자동으로 해당 도서의 상태가 '대출가능'으로 변경되어야 해. 만약 예약자가 있는 도서가 반납되면, 해당 도서는 '예약중' 상태로 변경되어야 해."
+                            },
+                            {
+                                "id": "loan-list",
+                                "title": "대출 목록",
+                                "description": "대출 중인 도서 목록 및 상태 확인",
+                                "boundedContext": "LoanStatusInquiry",
+                                "uiRequirements": "각 대출 건에 대해 대출일, 반납예정일, 현재 상태(대출중/연체/반납완료)를 확인할 수 있어야 하고, 대출 중인 도서는 연장이나 반납 처리가 가능해야 해."
+                            },
+                            {
+                                "id": "loan-history",
+                                "title": "대출 이력 조회",
+                                "description": "도서별 대출 이력 및 상태 변경 이력 확인",
+                                "boundedContext": "LoanStatusInquiry",
+                                "uiRequirements": "각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해."
+                            }
                         ]
                     }
                 ],
@@ -5820,7 +6048,37 @@ export const aggregateDraftScenarios = {
                                 ],
                                 "isDirectMatching": false
                             }
-                        }
+                        },
+                        "siteMap": [
+                            {
+                                "id": "book-management",
+                                "title": "도서 관리",
+                                "description": "도서 등록, 상태 관리, 폐기 및 도서별 이력 관리",
+                                "boundedContext": "BookManagement",
+                                "uiRequirements": "'도서 관리' 화면에서는 새로운 도서를 등록하고 현재 보유한 도서들의 상태를 관리할 수 있어야 해. 도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해. 등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야 해."
+                            },
+                            {
+                                "id": "book-registration",
+                                "title": "도서 등록",
+                                "description": "새로운 도서 등록",
+                                "boundedContext": "BookManagement",
+                                "uiRequirements": "도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해."
+                            },
+                            {
+                                "id": "book-status-management",
+                                "title": "도서 상태 관리",
+                                "description": "보유 도서의 상태 변경 및 폐기 처리",
+                                "boundedContext": "BookManagement",
+                                "uiRequirements": "등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야 해."
+                            },
+                            {
+                                "id": "book-history",
+                                "title": "도서 이력 조회",
+                                "description": "도서별 대출 및 상태 변경 이력 조회",
+                                "boundedContext": "BookManagement",
+                                "uiRequirements": "각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해."
+                            }
+                        ]
                     }
                 },
                 "description": "# Bounded Context Overview: BookManagement (도서 관리)\n\n## Role\n도서의 등록, 상태 관리, 폐기, 상태 변경 및 도서별 이력 관리를 담당한다. 도서의 상태는 대출/반납/예약/폐기 등 이벤트에 따라 자동으로 변경되며, 도서별 대출 및 상태 변경 이력을 추적할 수 있다.\n\n## Key Events\n- BookRegistered\n- BookDiscarded\n- BookStatusChanged\n\n# Requirements\n\n## userStory\n\n도서 관리' 화면에서는 새로운 도서를 등록하고 현재 보유한 도서들의 상태를 관리할 수 있어야 해. 도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해. 등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야\n\n도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할\n\n## DDL\n\n```sql\nCREATE TABLE books (\n    book_id INT AUTO_INCREMENT PRIMARY KEY,\n    title VARCHAR(500) NOT NULL,\n    isbn VARCHAR(13) UNIQUE NOT NULL,\n    author VARCHAR(200) NOT NULL,\n    publisher VARCHAR(200) NOT NULL,\n    category ENUM('소설', '비소설', '학술', '잡지') NOT NULL,\n    status ENUM('대출가능', '대출중', '예약중', '폐기') DEFAULT '대출가능',\n    registration_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    disposal_date DATETIME NULL,\n    disposal_reason TEXT NULL,\n    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,\n    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n    INDEX idx_title (title),\n    INDEX idx_isbn (isbn),\n    INDEX idx_status (status),\n    INDEX idx_category (category)\n);\n```\n```sql\nCREATE TABLE book_status_history (\n    history_id INT AUTO_INCREMENT PRIMARY KEY,\n    book_id INT NOT NULL,\n    previous_status ENUM('대출가능', '대출중', '예약중', '폐기'),\n    new_status ENUM('대출가능', '대출중', '예약중', '폐기') NOT NULL,\n    change_reason VARCHAR(200),\n    changed_by VARCHAR(100),\n    change_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    FOREIGN KEY (book_id) REFERENCES books(book_id),\n    INDEX idx_book_id (book_id),\n    INDEX idx_change_date (change_date)\n);\n```\n## Event\n\n```json\n{\n  \"name\": \"BookRegistered\",\n  \"displayName\": \"도서 등록됨\",\n  \"actor\": \"Librarian\",\n  \"level\": 1,\n  \"description\": \"관리자가 새로운 도서를 도서관 시스템에 등록함. 등록 시 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받고, ISBN 중복 및 유효성 검증이 완료됨.\",\n  \"inputs\": [\n    \"도서명\",\n    \"ISBN(13자리)\",\n    \"저자\",\n    \"출판사\",\n    \"카테고리(소설/비소설/학술/잡지)\"\n  ],\n  \"outputs\": [\n    \"신규 도서 생성\",\n    \"도서 상태 '대출가능'으로 설정\"\n  ],\n  \"nextEvents\": [\n    \"BookStatusChanged\"\n  ]\n}\n```\n\n```json\n{\n  \"name\": \"BookStatusChanged\",\n  \"displayName\": \"도서 상태 변경됨\",\n  \"actor\": \"System\",\n  \"level\": 2,\n  \"description\": \"도서의 대출/반납/예약/폐기 등 상황에 따라 도서 상태가 자동으로 변경됨.\",\n  \"inputs\": [\n    \"도서 상태 변경 트리거(대출, 반납, 예약, 폐기 등)\"\n  ],\n  \"outputs\": [\n    \"도서 상태(대출가능, 대출중, 예약중, 폐기)\"\n  ],\n  \"nextEvents\": [\n    \"BookDiscarded\",\n    \"LoanRequested\",\n    \"BookReturned\",\n    \"BookReserved\"\n  ]\n}\n```\n\n```json\n{\n  \"name\": \"BookDiscarded\",\n  \"displayName\": \"도서 폐기됨\",\n  \"actor\": \"Librarian\",\n  \"level\": 3,\n  \"description\": \"도서가 훼손되거나 분실된 경우 관리자가 해당 도서를 폐기 처리함. 폐기된 도서는 더 이상 대출이 불가능함.\",\n  \"inputs\": [\n    \"도서 훼손/분실 사유\",\n    \"도서 식별자\"\n  ],\n  \"outputs\": [\n    \"도서 상태 '폐기'로 변경\"\n  ],\n  \"nextEvents\": []\n}\n```\n\n```json\n{\n  \"name\": \"BookHistoryChecked\",\n  \"displayName\": \"도서 이력 조회됨\",\n  \"actor\": \"Librarian\",\n  \"level\": 1,\n  \"description\": \"관리자가 도서별 대출 이력과 상태 변경 이력을 조회함.\",\n  \"inputs\": [\n    \"도서 식별자\"\n  ],\n  \"outputs\": [\n    \"대출 이력\",\n    \"상태 변경 이력\"\n  ],\n  \"nextEvents\": []\n}\n```\n\n## Context Relations\n\n### BookManagement-LoanProcess\n- **Type**: Pub/Sub\n- **Direction**: sends to 대출/반납 프로세스 (LoanProcess)\n- **Reason**: 도서 상태 변경 등 이벤트가 발생하면 대출/반납 프로세스에서 이를 구독하여 처리할 수 있도록 느슨한 결합을 유지하기 위함.\n- **Interaction Pattern**: 도서 등록, 폐기, 상태 변경 이벤트가 발생하면 대출/반납 프로세스에서 해당 이벤트를 구독하여 대출 가능 여부 등을 판단한다.\n\n### LoanProcess-BookManagement\n- **Type**: Pub/Sub\n- **Direction**: receives from 대출/반납 프로세스 (LoanProcess)\n- **Reason**: 도서 상태 변경 등 이벤트가 발생하면 대출/반납 프로세스에서 이를 구독하여 처리할 수 있도록 느슨한 결합을 유지하기 위함.\n- **Interaction Pattern**: 도서 등록, 폐기, 상태 변경 이벤트가 발생하면 대출/반납 프로세스에서 해당 이벤트를 구독하여 대출 가능 여부 등을 판단한다.\n\n### BookManagement-LoanStatusInquiry\n- **Type**: Pub/Sub\n- **Direction**: sends to 대출 현황 및 이력 조회 (LoanStatusInquiry)\n- **Reason**: 도서의 상태 변경 및 이력 이벤트가 발생하면 현황 및 이력 조회 컨텍스트가 이를 구독하여 도서별 이력 정보를 제공한다.\n- **Interaction Pattern**: 도서 등록, 폐기, 상태 변경 이벤트가 발생할 때마다 현황 및 이력 조회 컨텍스트가 도서별 이력 정보를 갱신한다."
@@ -10543,7 +10801,30 @@ export const aggregateDraftScenarios = {
                                 ],
                                 "isDirectMatching": false
                             }
-                        }
+                        },
+                        "siteMap": [
+                            {
+                                "id": "loan-process",
+                                "title": "대출/반납",
+                                "description": "도서 대출, 반납, 예약 및 연장 처리",
+                                "boundedContext": "LoanProcess",
+                                "uiRequirements": "'대출/반납' 화면에서는 회원이 도서를 대출하고 반납하는 것을 관리할 수 있어야 해. 대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할 도서를 선택해야 해. 도서는 도서명이나 ISBN으로 검색할 수 있어야 해. 대출 기간은 7일/14일/30일 중에서 선택할 수 있어. 만약 대출하려는 도서가 이미 대출 중이라면, 예약 신청이 가능해야 해. 대출이 완료되면 해당 도서의 상태는 자동으로 '대출중'으로 변경되어야 해."
+                            },
+                            {
+                                "id": "loan-application",
+                                "title": "대출 신청",
+                                "description": "회원 인증 및 도서 대출 신청",
+                                "boundedContext": "LoanProcess",
+                                "uiRequirements": "대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할 도서를 선택해야 해. 도서는 도서명이나 ISBN으로 검색할 수 있어야 해. 대출 기간은 7일/14일/30일 중에서 선택할 수 있어. 만약 대출하려는 도서가 이미 대출 중이라면, 예약 신청이 가능해야 해."
+                            },
+                            {
+                                "id": "return-process",
+                                "title": "반납 처리",
+                                "description": "도서 반납 및 상태 변경",
+                                "boundedContext": "LoanProcess",
+                                "uiRequirements": "대출이 완료되면 해당 도서의 상태는 자동으로 '대출중'으로 변경되어야 해."
+                            }
+                        ]
                     }
                 },
                 "description": "# Bounded Context Overview: LoanProcess (대출/반납 프로세스)\n\n## Role\n회원의 도서 대출 신청, 승인, 예약, 연장, 반납 등 대출/반납 전반의 프로세스를 관리한다. 대출 신청 시 회원 인증, 도서 검색, 대출 기간 선택, 예약 처리, 반납 및 연장 기능을 제공한다.\n\n## Key Events\n- LoanRequested\n- LoanApproved\n- BookReserved\n- LoanExtended\n- BookReturned\n\n# Requirements\n\n## userStory\n\n도서관의 도서 관리와 대출/반납을 통합적으로 관리하는\n\n'대출/반납' 화면에서는 회원이 도서를 대출하고 반납하는 것을 관리할 수 있어야 해. 대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할 도서를 선택해야 해. 도서는 도서명이나 ISBN으로 검색할 수 있어야 해. 대출 기간은 7일/14일/30일 중에서 선택할 수 있어. 만약 대출하려는 도서가 이미 대출 중이라면, 예약 신청이 가능해야 해. 대출이 완료되면 해당 도서의 상태는 자동으로 '대출중'으로 변경되어야\n\n대출 현황 화면에서는 현재 대출 중인 도서들의 목록을 볼 수 있어야 해. 각 대출 건에 대해 대출일, 반납예정일, 현재 상태(대출중/연체/반납완료)를 확인할 수 있어야 하고, 대출 중인 도서는 연장이나 반납 처리가 가능해야 해. 도서가 반납되면 자동으로 해당 도서의 상태가 '대출가능'으로 변경되어야\n\n대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할\n\n## DDL\n\n```sql\nCREATE TABLE loans (\n    loan_id INT AUTO_INCREMENT PRIMARY KEY,\n    member_id VARCHAR(20) NOT NULL,\n    book_id INT NOT NULL,\n    loan_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    due_date DATETIME NOT NULL,\n    return_date DATETIME NULL,\n    loan_period_days INT NOT NULL CHECK (loan_period_days IN (7, 14, 30)),\n    status ENUM('대출중', '연체', '반납완료', '연장') DEFAULT '대출중',\n    extension_count INT DEFAULT 0,\n    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,\n    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n    FOREIGN KEY (member_id) REFERENCES members(member_id),\n    FOREIGN KEY (book_id) REFERENCES books(book_id),\n    INDEX idx_member_id (member_id),\n    INDEX idx_book_id (book_id),\n    INDEX idx_status (status),\n    INDEX idx_due_date (due_date)\n);\n```\n```sql\nCREATE TABLE reservations (\n    reservation_id INT AUTO_INCREMENT PRIMARY KEY,\n    member_id VARCHAR(20) NOT NULL,\n    book_id INT NOT NULL,\n    reservation_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    status ENUM('예약중', '예약완료', '예약취소', '예약만료') DEFAULT '예약중',\n    notification_sent BOOLEAN DEFAULT FALSE,\n    expiry_date DATETIME NULL,\n    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,\n    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n    FOREIGN KEY (member_id) REFERENCES members(member_id),\n    FOREIGN KEY (book_id) REFERENCES books(book_id),\n    INDEX idx_member_id (member_id),\n    INDEX idx_book_id (book_id),\n    INDEX idx_status (status),\n    INDEX idx_reservation_date (reservation_date)\n);\n```\n```sql\nCREATE TABLE loan_history (\n    history_id INT AUTO_INCREMENT PRIMARY KEY,\n    loan_id INT NOT NULL,\n    action_type ENUM('대출', '반납', '연장', '연체알림', '분실신고') NOT NULL,\n    action_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    previous_due_date DATETIME NULL,\n    new_due_date DATETIME NULL,\n    notes TEXT,\n    processed_by VARCHAR(100),\n    FOREIGN KEY (loan_id) REFERENCES loans(loan_id),\n    INDEX idx_loan_id (loan_id),\n    INDEX idx_action_type (action_type),\n    INDEX idx_action_date (action_date)\n);\n```\n## Event\n\n```json\n{\n  \"name\": \"LoanRequested\",\n  \"displayName\": \"대출 신청됨\",\n  \"actor\": \"Member\",\n  \"level\": 1,\n  \"description\": \"회원이 도서 대출을 신청함. 회원번호와 이름으로 회원 확인 후, 대출할 도서를 선택함.\",\n  \"inputs\": [\n    \"회원번호\",\n    \"이름\",\n    \"도서명/ISBN\",\n    \"대출 기간(7/14/30일)\"\n  ],\n  \"outputs\": [\n    \"대출 신청 생성\",\n    \"회원 인증 완료\"\n  ],\n  \"nextEvents\": [\n    \"LoanApproved\",\n    \"BookReserved\"\n  ]\n}\n```\n\n```json\n{\n  \"name\": \"LoanApproved\",\n  \"displayName\": \"대출 승인됨\",\n  \"actor\": \"Librarian\",\n  \"level\": 2,\n  \"description\": \"도서가 대출 가능 상태일 때 대출이 승인되고, 도서 상태가 '대출중'으로 변경됨.\",\n  \"inputs\": [\n    \"대출 신청\",\n    \"도서 상태 '대출가능'\"\n  ],\n  \"outputs\": [\n    \"대출 기록 생성\",\n    \"도서 상태 '대출중'으로 변경\"\n  ],\n  \"nextEvents\": [\n    \"BookStatusChanged\"\n  ]\n}\n```\n\n```json\n{\n  \"name\": \"BookReserved\",\n  \"displayName\": \"도서 예약됨\",\n  \"actor\": \"Member\",\n  \"level\": 2,\n  \"description\": \"대출하려는 도서가 이미 대출 중인 경우, 회원이 해당 도서를 예약함.\",\n  \"inputs\": [\n    \"회원번호\",\n    \"도서 식별자\",\n    \"도서 상태 '대출중'\"\n  ],\n  \"outputs\": [\n    \"예약 기록 생성\",\n    \"도서 상태 '예약중'으로 변경\"\n  ],\n  \"nextEvents\": [\n    \"BookStatusChanged\"\n  ]\n}\n```\n\n```json\n{\n  \"name\": \"LoanExtended\",\n  \"displayName\": \"대출 연장됨\",\n  \"actor\": \"Member\",\n  \"level\": 3,\n  \"description\": \"회원이 대출 중인 도서의 대출 기간을 연장함.\",\n  \"inputs\": [\n    \"회원번호\",\n    \"도서 식별자\",\n    \"연장 요청\"\n  ],\n  \"outputs\": [\n    \"대출 기간 연장\",\n    \"대출 기록 갱신\"\n  ],\n  \"nextEvents\": []\n}\n```\n\n```json\n{\n  \"name\": \"BookReturned\",\n  \"displayName\": \"도서 반납됨\",\n  \"actor\": \"Member\",\n  \"level\": 2,\n  \"description\": \"회원이 대출한 도서를 반납함. 반납 시 도서 상태가 자동으로 '대출가능' 또는 예약자가 있으면 '예약중'으로 변경됨.\",\n  \"inputs\": [\n    \"회원번호\",\n    \"도서 식별자\",\n    \"반납 요청\"\n  ],\n  \"outputs\": [\n    \"반납 기록 생성\",\n    \"도서 상태 변경\"\n  ],\n  \"nextEvents\": [\n    \"BookStatusChanged\"\n  ]\n}\n```\n\n## Context Relations\n\n### BookManagement-LoanProcess\n- **Type**: Pub/Sub\n- **Direction**: receives from 도서 관리 (BookManagement)\n- **Reason**: 도서 상태 변경 등 이벤트가 발생하면 대출/반납 프로세스에서 이를 구독하여 처리할 수 있도록 느슨한 결합을 유지하기 위함.\n- **Interaction Pattern**: 도서 등록, 폐기, 상태 변경 이벤트가 발생하면 대출/반납 프로세스에서 해당 이벤트를 구독하여 대출 가능 여부 등을 판단한다.\n\n### LoanProcess-BookManagement\n- **Type**: Pub/Sub\n- **Direction**: sends to 도서 관리 (BookManagement)\n- **Reason**: 도서 상태 변경 등 이벤트가 발생하면 대출/반납 프로세스에서 이를 구독하여 처리할 수 있도록 느슨한 결합을 유지하기 위함.\n- **Interaction Pattern**: 도서 등록, 폐기, 상태 변경 이벤트가 발생하면 대출/반납 프로세스에서 해당 이벤트를 구독하여 대출 가능 여부 등을 판단한다.\n\n### LoanProcess-LoanStatusInquiry\n- **Type**: Pub/Sub\n- **Direction**: sends to 대출 현황 및 이력 조회 (LoanStatusInquiry)\n- **Reason**: 대출/반납/연장 등 이벤트 발생 시 현황 및 이력 조회 컨텍스트가 이를 구독하여 최신 현황과 이력을 제공할 수 있도록 한다.\n- **Interaction Pattern**: 대출/반납/연장 이벤트가 발생할 때마다 현황 및 이력 조회 컨텍스트가 관련 정보를 갱신한다."
@@ -10562,7 +10843,7 @@ export const aggregateDraftScenarios = {
         },
         "messages": [
             {
-                "uniqueId": "e40809634fc54127c121d4d4cbc21f9d",
+                "uniqueId": "81c96e6d15a495b331315dd5406ab9b5",
                 "type": "processAnalysis",
                 "isAnalizing": false,
                 "isSummarizeStarted": false,
@@ -10574,9 +10855,9 @@ export const aggregateDraftScenarios = {
                     "projectName": "Requirements Analysis",
                     "content": {
                         "elements": {
-                            "8ac37feb-6a1d-2e04-4069-ebbd0681a346": {
+                            "b5ba0919-61be-fd99-952f-d25f2679a299": {
                                 "_type": "org.uengine.modeling.model.Actor",
-                                "id": "8ac37feb-6a1d-2e04-4069-ebbd0681a346",
+                                "id": "b5ba0919-61be-fd99-952f-d25f2679a299",
                                 "name": "Librarian",
                                 "oldName": "",
                                 "displayName": "",
@@ -10584,7 +10865,7 @@ export const aggregateDraftScenarios = {
                                 "author": null,
                                 "elementView": {
                                     "_type": "org.uengine.modeling.model.Actor",
-                                    "id": "8ac37feb-6a1d-2e04-4069-ebbd0681a346",
+                                    "id": "b5ba0919-61be-fd99-952f-d25f2679a299",
                                     "x": 150,
                                     "y": 150,
                                     "width": 100,
@@ -10593,9 +10874,9 @@ export const aggregateDraftScenarios = {
                                 },
                                 "boundedContext": {}
                             },
-                            "17cd9dc1-64d2-62e3-66d5-fec8f78436d9": {
+                            "db30667b-66f0-f1ef-5f17-eff5f73a6432": {
                                 "_type": "org.uengine.modeling.model.Actor",
-                                "id": "17cd9dc1-64d2-62e3-66d5-fec8f78436d9",
+                                "id": "db30667b-66f0-f1ef-5f17-eff5f73a6432",
                                 "name": "Member",
                                 "oldName": "",
                                 "displayName": "",
@@ -10603,7 +10884,7 @@ export const aggregateDraftScenarios = {
                                 "author": null,
                                 "elementView": {
                                     "_type": "org.uengine.modeling.model.Actor",
-                                    "id": "17cd9dc1-64d2-62e3-66d5-fec8f78436d9",
+                                    "id": "db30667b-66f0-f1ef-5f17-eff5f73a6432",
                                     "x": 150,
                                     "y": 400,
                                     "width": 100,
@@ -10612,9 +10893,9 @@ export const aggregateDraftScenarios = {
                                 },
                                 "boundedContext": {}
                             },
-                            "4ffac2a4-5fe9-7ba8-1ff1-659c2334d0bf": {
+                            "3a7e8b9e-26cb-e866-4269-942f432bd79d": {
                                 "_type": "org.uengine.modeling.model.Actor",
-                                "id": "4ffac2a4-5fe9-7ba8-1ff1-659c2334d0bf",
+                                "id": "3a7e8b9e-26cb-e866-4269-942f432bd79d",
                                 "name": "System",
                                 "oldName": "",
                                 "displayName": "",
@@ -10622,7 +10903,7 @@ export const aggregateDraftScenarios = {
                                 "author": null,
                                 "elementView": {
                                     "_type": "org.uengine.modeling.model.Actor",
-                                    "id": "4ffac2a4-5fe9-7ba8-1ff1-659c2334d0bf",
+                                    "id": "3a7e8b9e-26cb-e866-4269-942f432bd79d",
                                     "x": 150,
                                     "y": 650,
                                     "width": 100,
@@ -10631,9 +10912,9 @@ export const aggregateDraftScenarios = {
                                 },
                                 "boundedContext": {}
                             },
-                            "f2c9c6f2-d17c-d38e-a714-716815a15b01": {
+                            "1d7c1caf-8e23-331f-628b-e87406b7d722": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "f2c9c6f2-d17c-d38e-a714-716815a15b01",
+                                "id": "1d7c1caf-8e23-331f-628b-e87406b7d722",
                                 "visibility": "public",
                                 "name": "BookRegistered",
                                 "oldName": "",
@@ -10658,7 +10939,7 @@ export const aggregateDraftScenarios = {
                                 "mirrorElement": null,
                                 "elementView": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "f2c9c6f2-d17c-d38e-a714-716815a15b01",
+                                    "id": "1d7c1caf-8e23-331f-628b-e87406b7d722",
                                     "x": 300,
                                     "y": 150,
                                     "width": 100,
@@ -10668,7 +10949,7 @@ export const aggregateDraftScenarios = {
                                 },
                                 "hexagonalView": {
                                     "_type": "org.uengine.modeling.model.EventHexagonal",
-                                    "id": "f2c9c6f2-d17c-d38e-a714-716815a15b01",
+                                    "id": "1d7c1caf-8e23-331f-628b-e87406b7d722",
                                     "x": 300,
                                     "y": 150,
                                     "subWidth": 100,
@@ -10680,9 +10961,9 @@ export const aggregateDraftScenarios = {
                                 "relationCommandInfo": [],
                                 "trigger": "@PostPersist"
                             },
-                            "50904331-6712-d6dc-8aa3-048c1abf7f09": {
+                            "a91c7cca-8cfa-8f66-ff55-c2c07133a498": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "50904331-6712-d6dc-8aa3-048c1abf7f09",
+                                "id": "a91c7cca-8cfa-8f66-ff55-c2c07133a498",
                                 "visibility": "public",
                                 "name": "BookDiscarded",
                                 "oldName": "",
@@ -10707,7 +10988,7 @@ export const aggregateDraftScenarios = {
                                 "mirrorElement": null,
                                 "elementView": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "50904331-6712-d6dc-8aa3-048c1abf7f09",
+                                    "id": "a91c7cca-8cfa-8f66-ff55-c2c07133a498",
                                     "x": 500,
                                     "y": 150,
                                     "width": 100,
@@ -10717,7 +10998,7 @@ export const aggregateDraftScenarios = {
                                 },
                                 "hexagonalView": {
                                     "_type": "org.uengine.modeling.model.EventHexagonal",
-                                    "id": "50904331-6712-d6dc-8aa3-048c1abf7f09",
+                                    "id": "a91c7cca-8cfa-8f66-ff55-c2c07133a498",
                                     "x": 500,
                                     "y": 150,
                                     "subWidth": 100,
@@ -10729,9 +11010,9 @@ export const aggregateDraftScenarios = {
                                 "relationCommandInfo": [],
                                 "trigger": "@PostPersist"
                             },
-                            "5319c43f-3f55-0e7c-00f0-b27a9c8355a2": {
+                            "ddfeff49-a1ea-ff08-6e32-21843898cf7c": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "5319c43f-3f55-0e7c-00f0-b27a9c8355a2",
+                                "id": "ddfeff49-a1ea-ff08-6e32-21843898cf7c",
                                 "visibility": "public",
                                 "name": "LoanApproved",
                                 "oldName": "",
@@ -10756,7 +11037,7 @@ export const aggregateDraftScenarios = {
                                 "mirrorElement": null,
                                 "elementView": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "5319c43f-3f55-0e7c-00f0-b27a9c8355a2",
+                                    "id": "ddfeff49-a1ea-ff08-6e32-21843898cf7c",
                                     "x": 700,
                                     "y": 150,
                                     "width": 100,
@@ -10766,7 +11047,7 @@ export const aggregateDraftScenarios = {
                                 },
                                 "hexagonalView": {
                                     "_type": "org.uengine.modeling.model.EventHexagonal",
-                                    "id": "5319c43f-3f55-0e7c-00f0-b27a9c8355a2",
+                                    "id": "ddfeff49-a1ea-ff08-6e32-21843898cf7c",
                                     "x": 700,
                                     "y": 150,
                                     "subWidth": 100,
@@ -10778,9 +11059,9 @@ export const aggregateDraftScenarios = {
                                 "relationCommandInfo": [],
                                 "trigger": "@PostPersist"
                             },
-                            "8f1ac3ce-f851-6172-930d-5e4f04d0d916": {
+                            "e2eda0d2-17a6-5756-330a-fe750a9e2a07": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "8f1ac3ce-f851-6172-930d-5e4f04d0d916",
+                                "id": "e2eda0d2-17a6-5756-330a-fe750a9e2a07",
                                 "visibility": "public",
                                 "name": "LoanStatusChecked",
                                 "oldName": "",
@@ -10805,7 +11086,7 @@ export const aggregateDraftScenarios = {
                                 "mirrorElement": null,
                                 "elementView": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "8f1ac3ce-f851-6172-930d-5e4f04d0d916",
+                                    "id": "e2eda0d2-17a6-5756-330a-fe750a9e2a07",
                                     "x": 900,
                                     "y": 150,
                                     "width": 100,
@@ -10815,7 +11096,7 @@ export const aggregateDraftScenarios = {
                                 },
                                 "hexagonalView": {
                                     "_type": "org.uengine.modeling.model.EventHexagonal",
-                                    "id": "8f1ac3ce-f851-6172-930d-5e4f04d0d916",
+                                    "id": "e2eda0d2-17a6-5756-330a-fe750a9e2a07",
                                     "x": 900,
                                     "y": 150,
                                     "subWidth": 100,
@@ -10827,9 +11108,9 @@ export const aggregateDraftScenarios = {
                                 "relationCommandInfo": [],
                                 "trigger": "@PostPersist"
                             },
-                            "351007cf-d075-1e73-722b-b0a391f17a11": {
+                            "bb1ba913-8b13-3ddd-f4ee-57ac66ab34df": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "351007cf-d075-1e73-722b-b0a391f17a11",
+                                "id": "bb1ba913-8b13-3ddd-f4ee-57ac66ab34df",
                                 "visibility": "public",
                                 "name": "BookHistoryChecked",
                                 "oldName": "",
@@ -10854,7 +11135,7 @@ export const aggregateDraftScenarios = {
                                 "mirrorElement": null,
                                 "elementView": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "351007cf-d075-1e73-722b-b0a391f17a11",
+                                    "id": "bb1ba913-8b13-3ddd-f4ee-57ac66ab34df",
                                     "x": 1100,
                                     "y": 150,
                                     "width": 100,
@@ -10864,7 +11145,7 @@ export const aggregateDraftScenarios = {
                                 },
                                 "hexagonalView": {
                                     "_type": "org.uengine.modeling.model.EventHexagonal",
-                                    "id": "351007cf-d075-1e73-722b-b0a391f17a11",
+                                    "id": "bb1ba913-8b13-3ddd-f4ee-57ac66ab34df",
                                     "x": 1100,
                                     "y": 150,
                                     "subWidth": 100,
@@ -10876,9 +11157,9 @@ export const aggregateDraftScenarios = {
                                 "relationCommandInfo": [],
                                 "trigger": "@PostPersist"
                             },
-                            "f9bfe10e-208b-c620-68a3-9bef709150ad": {
+                            "1621a7c8-7e36-a87f-0ae4-b99d98103eba": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                                "id": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                                 "visibility": "public",
                                 "name": "BookStatusChanged",
                                 "oldName": "",
@@ -10903,7 +11184,7 @@ export const aggregateDraftScenarios = {
                                 "mirrorElement": null,
                                 "elementView": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                                    "id": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                                     "x": 300,
                                     "y": 650,
                                     "width": 100,
@@ -10913,7 +11194,7 @@ export const aggregateDraftScenarios = {
                                 },
                                 "hexagonalView": {
                                     "_type": "org.uengine.modeling.model.EventHexagonal",
-                                    "id": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                                    "id": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                                     "x": 300,
                                     "y": 650,
                                     "subWidth": 100,
@@ -10925,9 +11206,9 @@ export const aggregateDraftScenarios = {
                                 "relationCommandInfo": [],
                                 "trigger": "@PostPersist"
                             },
-                            "378c8a28-9d32-1f05-4952-d30e60350391": {
+                            "c780d7c0-77c4-cdd8-71b7-6697e78cf364": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "378c8a28-9d32-1f05-4952-d30e60350391",
+                                "id": "c780d7c0-77c4-cdd8-71b7-6697e78cf364",
                                 "visibility": "public",
                                 "name": "LoanRequested",
                                 "oldName": "",
@@ -10952,7 +11233,7 @@ export const aggregateDraftScenarios = {
                                 "mirrorElement": null,
                                 "elementView": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "378c8a28-9d32-1f05-4952-d30e60350391",
+                                    "id": "c780d7c0-77c4-cdd8-71b7-6697e78cf364",
                                     "x": 300,
                                     "y": 400,
                                     "width": 100,
@@ -10962,7 +11243,7 @@ export const aggregateDraftScenarios = {
                                 },
                                 "hexagonalView": {
                                     "_type": "org.uengine.modeling.model.EventHexagonal",
-                                    "id": "378c8a28-9d32-1f05-4952-d30e60350391",
+                                    "id": "c780d7c0-77c4-cdd8-71b7-6697e78cf364",
                                     "x": 300,
                                     "y": 400,
                                     "subWidth": 100,
@@ -10974,9 +11255,9 @@ export const aggregateDraftScenarios = {
                                 "relationCommandInfo": [],
                                 "trigger": "@PostPersist"
                             },
-                            "c778f986-621e-e728-6352-b694764b00d4": {
+                            "bcb80ab1-c9e1-dfca-2abb-c26dd0ba8456": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "c778f986-621e-e728-6352-b694764b00d4",
+                                "id": "bcb80ab1-c9e1-dfca-2abb-c26dd0ba8456",
                                 "visibility": "public",
                                 "name": "BookReserved",
                                 "oldName": "",
@@ -11001,7 +11282,7 @@ export const aggregateDraftScenarios = {
                                 "mirrorElement": null,
                                 "elementView": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "c778f986-621e-e728-6352-b694764b00d4",
+                                    "id": "bcb80ab1-c9e1-dfca-2abb-c26dd0ba8456",
                                     "x": 500,
                                     "y": 400,
                                     "width": 100,
@@ -11011,7 +11292,7 @@ export const aggregateDraftScenarios = {
                                 },
                                 "hexagonalView": {
                                     "_type": "org.uengine.modeling.model.EventHexagonal",
-                                    "id": "c778f986-621e-e728-6352-b694764b00d4",
+                                    "id": "bcb80ab1-c9e1-dfca-2abb-c26dd0ba8456",
                                     "x": 500,
                                     "y": 400,
                                     "subWidth": 100,
@@ -11023,9 +11304,9 @@ export const aggregateDraftScenarios = {
                                 "relationCommandInfo": [],
                                 "trigger": "@PostPersist"
                             },
-                            "83e28f0e-8bf3-6a20-3e58-c3a766087111": {
+                            "19ff0aea-6add-cf8f-8310-93dab1c943d8": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "83e28f0e-8bf3-6a20-3e58-c3a766087111",
+                                "id": "19ff0aea-6add-cf8f-8310-93dab1c943d8",
                                 "visibility": "public",
                                 "name": "LoanExtended",
                                 "oldName": "",
@@ -11050,7 +11331,7 @@ export const aggregateDraftScenarios = {
                                 "mirrorElement": null,
                                 "elementView": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "83e28f0e-8bf3-6a20-3e58-c3a766087111",
+                                    "id": "19ff0aea-6add-cf8f-8310-93dab1c943d8",
                                     "x": 700,
                                     "y": 400,
                                     "width": 100,
@@ -11060,7 +11341,7 @@ export const aggregateDraftScenarios = {
                                 },
                                 "hexagonalView": {
                                     "_type": "org.uengine.modeling.model.EventHexagonal",
-                                    "id": "83e28f0e-8bf3-6a20-3e58-c3a766087111",
+                                    "id": "19ff0aea-6add-cf8f-8310-93dab1c943d8",
                                     "x": 700,
                                     "y": 400,
                                     "subWidth": 100,
@@ -11072,9 +11353,9 @@ export const aggregateDraftScenarios = {
                                 "relationCommandInfo": [],
                                 "trigger": "@PostPersist"
                             },
-                            "ea1a52b5-59a7-1c75-390b-52ff0d2a8f34": {
+                            "9544047d-ac4f-deef-bf8f-5534c5b6bf8d": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "ea1a52b5-59a7-1c75-390b-52ff0d2a8f34",
+                                "id": "9544047d-ac4f-deef-bf8f-5534c5b6bf8d",
                                 "visibility": "public",
                                 "name": "BookReturned",
                                 "oldName": "",
@@ -11099,7 +11380,7 @@ export const aggregateDraftScenarios = {
                                 "mirrorElement": null,
                                 "elementView": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "ea1a52b5-59a7-1c75-390b-52ff0d2a8f34",
+                                    "id": "9544047d-ac4f-deef-bf8f-5534c5b6bf8d",
                                     "x": 900,
                                     "y": 400,
                                     "width": 100,
@@ -11109,7 +11390,7 @@ export const aggregateDraftScenarios = {
                                 },
                                 "hexagonalView": {
                                     "_type": "org.uengine.modeling.model.EventHexagonal",
-                                    "id": "ea1a52b5-59a7-1c75-390b-52ff0d2a8f34",
+                                    "id": "9544047d-ac4f-deef-bf8f-5534c5b6bf8d",
                                     "x": 900,
                                     "y": 400,
                                     "subWidth": 100,
@@ -11123,18 +11404,18 @@ export const aggregateDraftScenarios = {
                             }
                         },
                         "relations": {
-                            "4fd14f9e-4d12-ce67-e57d-c3bee8875a54": {
+                            "b67b8262-8ba9-e255-7cb1-24ae242a3719": {
                                 "_type": "org.uengine.modeling.model.Line",
-                                "id": "4fd14f9e-4d12-ce67-e57d-c3bee8875a54",
+                                "id": "b67b8262-8ba9-e255-7cb1-24ae242a3719",
                                 "name": "",
                                 "author": null,
                                 "oldName": "",
                                 "displayName": "",
-                                "from": "4fd14f9e-4d12-ce67-e57d-c3bee8875a54",
-                                "to": "4fd14f9e-4d12-ce67-e57d-c3bee8875a54",
+                                "from": "b67b8262-8ba9-e255-7cb1-24ae242a3719",
+                                "to": "b67b8262-8ba9-e255-7cb1-24ae242a3719",
                                 "description": "",
                                 "relationView": {
-                                    "id": "4fd14f9e-4d12-ce67-e57d-c3bee8875a54",
+                                    "id": "b67b8262-8ba9-e255-7cb1-24ae242a3719",
                                     "value": "[[0,275],[2000,275]]"
                                 },
                                 "size": 10,
@@ -11143,18 +11424,18 @@ export const aggregateDraftScenarios = {
                                 "imgSrc": "https://www.msaez.io:8081/static/image/symbol/edge.png",
                                 "vertices": "[[0,275],[2000,275]]"
                             },
-                            "4b33c988-918c-7129-284b-69ef5419a5f4": {
+                            "f9060569-6650-83cc-8b12-6950d97e2ba4": {
                                 "_type": "org.uengine.modeling.model.Line",
-                                "id": "4b33c988-918c-7129-284b-69ef5419a5f4",
+                                "id": "f9060569-6650-83cc-8b12-6950d97e2ba4",
                                 "name": "",
                                 "author": null,
                                 "oldName": "",
                                 "displayName": "",
-                                "from": "4b33c988-918c-7129-284b-69ef5419a5f4",
-                                "to": "4b33c988-918c-7129-284b-69ef5419a5f4",
+                                "from": "f9060569-6650-83cc-8b12-6950d97e2ba4",
+                                "to": "f9060569-6650-83cc-8b12-6950d97e2ba4",
                                 "description": "",
                                 "relationView": {
-                                    "id": "4b33c988-918c-7129-284b-69ef5419a5f4",
+                                    "id": "f9060569-6650-83cc-8b12-6950d97e2ba4",
                                     "value": "[[0,525],[2000,525]]"
                                 },
                                 "size": 10,
@@ -11163,18 +11444,18 @@ export const aggregateDraftScenarios = {
                                 "imgSrc": "https://www.msaez.io:8081/static/image/symbol/edge.png",
                                 "vertices": "[[0,525],[2000,525]]"
                             },
-                            "2f657f8a-39ac-96a2-8069-549ce9a6284a": {
+                            "16343416-1724-6db2-a115-211a18efc133": {
                                 "_type": "org.uengine.modeling.model.Line",
-                                "id": "2f657f8a-39ac-96a2-8069-549ce9a6284a",
+                                "id": "16343416-1724-6db2-a115-211a18efc133",
                                 "name": "",
                                 "author": null,
                                 "oldName": "",
                                 "displayName": "",
-                                "from": "2f657f8a-39ac-96a2-8069-549ce9a6284a",
-                                "to": "2f657f8a-39ac-96a2-8069-549ce9a6284a",
+                                "from": "16343416-1724-6db2-a115-211a18efc133",
+                                "to": "16343416-1724-6db2-a115-211a18efc133",
                                 "description": "",
                                 "relationView": {
-                                    "id": "2f657f8a-39ac-96a2-8069-549ce9a6284a",
+                                    "id": "16343416-1724-6db2-a115-211a18efc133",
                                     "value": "[[0,775],[2000,775]]"
                                 },
                                 "size": 10,
@@ -11183,14 +11464,14 @@ export const aggregateDraftScenarios = {
                                 "imgSrc": "https://www.msaez.io:8081/static/image/symbol/edge.png",
                                 "vertices": "[[0,775],[2000,775]]"
                             },
-                            "0c293896-c6c4-2679-b346-316024fa46d7": {
+                            "9d8829f2-5a99-7852-1300-f9ac1ebb1ae3": {
                                 "_type": "org.uengine.modeling.model.Relation",
-                                "id": "0c293896-c6c4-2679-b346-316024fa46d7",
+                                "id": "9d8829f2-5a99-7852-1300-f9ac1ebb1ae3",
                                 "name": "1",
                                 "displayName": "1",
                                 "sourceElement": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "f2c9c6f2-d17c-d38e-a714-716815a15b01",
+                                    "id": "1d7c1caf-8e23-331f-628b-e87406b7d722",
                                     "visibility": "public",
                                     "name": "BookRegistered",
                                     "oldName": "",
@@ -11215,7 +11496,7 @@ export const aggregateDraftScenarios = {
                                     "mirrorElement": null,
                                     "elementView": {
                                         "_type": "org.uengine.modeling.model.Event",
-                                        "id": "f2c9c6f2-d17c-d38e-a714-716815a15b01",
+                                        "id": "1d7c1caf-8e23-331f-628b-e87406b7d722",
                                         "x": 300,
                                         "y": 150,
                                         "width": 100,
@@ -11225,7 +11506,7 @@ export const aggregateDraftScenarios = {
                                     },
                                     "hexagonalView": {
                                         "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "f2c9c6f2-d17c-d38e-a714-716815a15b01",
+                                        "id": "1d7c1caf-8e23-331f-628b-e87406b7d722",
                                         "x": 300,
                                         "y": 150,
                                         "subWidth": 100,
@@ -11239,7 +11520,7 @@ export const aggregateDraftScenarios = {
                                 },
                                 "targetElement": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                                    "id": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                                     "visibility": "public",
                                     "name": "BookStatusChanged",
                                     "oldName": "",
@@ -11264,7 +11545,7 @@ export const aggregateDraftScenarios = {
                                     "mirrorElement": null,
                                     "elementView": {
                                         "_type": "org.uengine.modeling.model.Event",
-                                        "id": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                                        "id": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                                         "x": 300,
                                         "y": 650,
                                         "width": 100,
@@ -11274,7 +11555,7 @@ export const aggregateDraftScenarios = {
                                     },
                                     "hexagonalView": {
                                         "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                                        "id": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                                         "x": 300,
                                         "y": 650,
                                         "subWidth": 100,
@@ -11286,25 +11567,25 @@ export const aggregateDraftScenarios = {
                                     "relationCommandInfo": [],
                                     "trigger": "@PostPersist"
                                 },
-                                "from": "f2c9c6f2-d17c-d38e-a714-716815a15b01",
-                                "to": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                                "from": "1d7c1caf-8e23-331f-628b-e87406b7d722",
+                                "to": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                                 "relationView": {
-                                    "id": "0c293896-c6c4-2679-b346-316024fa46d7",
+                                    "id": "9d8829f2-5a99-7852-1300-f9ac1ebb1ae3",
                                     "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
                                     "value": null,
-                                    "from": "f2c9c6f2-d17c-d38e-a714-716815a15b01",
-                                    "to": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                                    "from": "1d7c1caf-8e23-331f-628b-e87406b7d722",
+                                    "to": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                                     "needReconnect": true
                                 }
                             },
-                            "93f7532c-9a6e-e01f-8371-7dbaa3ba53b8": {
+                            "39fb6a0e-154d-fe1d-efdb-62ef704817f5": {
                                 "_type": "org.uengine.modeling.model.Relation",
-                                "id": "93f7532c-9a6e-e01f-8371-7dbaa3ba53b8",
+                                "id": "39fb6a0e-154d-fe1d-efdb-62ef704817f5",
                                 "name": "2",
                                 "displayName": "2",
                                 "sourceElement": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                                    "id": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                                     "visibility": "public",
                                     "name": "BookStatusChanged",
                                     "oldName": "",
@@ -11329,7 +11610,7 @@ export const aggregateDraftScenarios = {
                                     "mirrorElement": null,
                                     "elementView": {
                                         "_type": "org.uengine.modeling.model.Event",
-                                        "id": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                                        "id": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                                         "x": 300,
                                         "y": 650,
                                         "width": 100,
@@ -11339,7 +11620,7 @@ export const aggregateDraftScenarios = {
                                     },
                                     "hexagonalView": {
                                         "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                                        "id": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                                         "x": 300,
                                         "y": 650,
                                         "subWidth": 100,
@@ -11353,7 +11634,7 @@ export const aggregateDraftScenarios = {
                                 },
                                 "targetElement": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "50904331-6712-d6dc-8aa3-048c1abf7f09",
+                                    "id": "a91c7cca-8cfa-8f66-ff55-c2c07133a498",
                                     "visibility": "public",
                                     "name": "BookDiscarded",
                                     "oldName": "",
@@ -11378,7 +11659,7 @@ export const aggregateDraftScenarios = {
                                     "mirrorElement": null,
                                     "elementView": {
                                         "_type": "org.uengine.modeling.model.Event",
-                                        "id": "50904331-6712-d6dc-8aa3-048c1abf7f09",
+                                        "id": "a91c7cca-8cfa-8f66-ff55-c2c07133a498",
                                         "x": 500,
                                         "y": 150,
                                         "width": 100,
@@ -11388,7 +11669,7 @@ export const aggregateDraftScenarios = {
                                     },
                                     "hexagonalView": {
                                         "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "50904331-6712-d6dc-8aa3-048c1abf7f09",
+                                        "id": "a91c7cca-8cfa-8f66-ff55-c2c07133a498",
                                         "x": 500,
                                         "y": 150,
                                         "subWidth": 100,
@@ -11400,25 +11681,25 @@ export const aggregateDraftScenarios = {
                                     "relationCommandInfo": [],
                                     "trigger": "@PostPersist"
                                 },
-                                "from": "f9bfe10e-208b-c620-68a3-9bef709150ad",
-                                "to": "50904331-6712-d6dc-8aa3-048c1abf7f09",
+                                "from": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
+                                "to": "a91c7cca-8cfa-8f66-ff55-c2c07133a498",
                                 "relationView": {
-                                    "id": "93f7532c-9a6e-e01f-8371-7dbaa3ba53b8",
+                                    "id": "39fb6a0e-154d-fe1d-efdb-62ef704817f5",
                                     "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
                                     "value": null,
-                                    "from": "f9bfe10e-208b-c620-68a3-9bef709150ad",
-                                    "to": "50904331-6712-d6dc-8aa3-048c1abf7f09",
+                                    "from": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
+                                    "to": "a91c7cca-8cfa-8f66-ff55-c2c07133a498",
                                     "needReconnect": true
                                 }
                             },
-                            "8ef65399-fb2c-cd78-cffd-a895fdf20408": {
+                            "1f289e8e-187b-212d-f95f-0595096c83c2": {
                                 "_type": "org.uengine.modeling.model.Relation",
-                                "id": "8ef65399-fb2c-cd78-cffd-a895fdf20408",
+                                "id": "1f289e8e-187b-212d-f95f-0595096c83c2",
                                 "name": "2",
                                 "displayName": "2",
                                 "sourceElement": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                                    "id": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                                     "visibility": "public",
                                     "name": "BookStatusChanged",
                                     "oldName": "",
@@ -11443,7 +11724,7 @@ export const aggregateDraftScenarios = {
                                     "mirrorElement": null,
                                     "elementView": {
                                         "_type": "org.uengine.modeling.model.Event",
-                                        "id": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                                        "id": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                                         "x": 300,
                                         "y": 650,
                                         "width": 100,
@@ -11453,7 +11734,7 @@ export const aggregateDraftScenarios = {
                                     },
                                     "hexagonalView": {
                                         "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                                        "id": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                                         "x": 300,
                                         "y": 650,
                                         "subWidth": 100,
@@ -11467,7 +11748,7 @@ export const aggregateDraftScenarios = {
                                 },
                                 "targetElement": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "378c8a28-9d32-1f05-4952-d30e60350391",
+                                    "id": "c780d7c0-77c4-cdd8-71b7-6697e78cf364",
                                     "visibility": "public",
                                     "name": "LoanRequested",
                                     "oldName": "",
@@ -11492,7 +11773,7 @@ export const aggregateDraftScenarios = {
                                     "mirrorElement": null,
                                     "elementView": {
                                         "_type": "org.uengine.modeling.model.Event",
-                                        "id": "378c8a28-9d32-1f05-4952-d30e60350391",
+                                        "id": "c780d7c0-77c4-cdd8-71b7-6697e78cf364",
                                         "x": 300,
                                         "y": 400,
                                         "width": 100,
@@ -11502,7 +11783,7 @@ export const aggregateDraftScenarios = {
                                     },
                                     "hexagonalView": {
                                         "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "378c8a28-9d32-1f05-4952-d30e60350391",
+                                        "id": "c780d7c0-77c4-cdd8-71b7-6697e78cf364",
                                         "x": 300,
                                         "y": 400,
                                         "subWidth": 100,
@@ -11514,25 +11795,25 @@ export const aggregateDraftScenarios = {
                                     "relationCommandInfo": [],
                                     "trigger": "@PostPersist"
                                 },
-                                "from": "f9bfe10e-208b-c620-68a3-9bef709150ad",
-                                "to": "378c8a28-9d32-1f05-4952-d30e60350391",
+                                "from": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
+                                "to": "c780d7c0-77c4-cdd8-71b7-6697e78cf364",
                                 "relationView": {
-                                    "id": "8ef65399-fb2c-cd78-cffd-a895fdf20408",
+                                    "id": "1f289e8e-187b-212d-f95f-0595096c83c2",
                                     "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
                                     "value": null,
-                                    "from": "f9bfe10e-208b-c620-68a3-9bef709150ad",
-                                    "to": "378c8a28-9d32-1f05-4952-d30e60350391",
+                                    "from": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
+                                    "to": "c780d7c0-77c4-cdd8-71b7-6697e78cf364",
                                     "needReconnect": true
                                 }
                             },
-                            "bae5a31d-f113-144d-26a4-8a9da31d2200": {
+                            "043f26b2-1b98-8e24-d311-e225df91e6df": {
                                 "_type": "org.uengine.modeling.model.Relation",
-                                "id": "bae5a31d-f113-144d-26a4-8a9da31d2200",
+                                "id": "043f26b2-1b98-8e24-d311-e225df91e6df",
                                 "name": "2",
                                 "displayName": "2",
                                 "sourceElement": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                                    "id": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                                     "visibility": "public",
                                     "name": "BookStatusChanged",
                                     "oldName": "",
@@ -11557,7 +11838,7 @@ export const aggregateDraftScenarios = {
                                     "mirrorElement": null,
                                     "elementView": {
                                         "_type": "org.uengine.modeling.model.Event",
-                                        "id": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                                        "id": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                                         "x": 300,
                                         "y": 650,
                                         "width": 100,
@@ -11567,7 +11848,7 @@ export const aggregateDraftScenarios = {
                                     },
                                     "hexagonalView": {
                                         "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                                        "id": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                                         "x": 300,
                                         "y": 650,
                                         "subWidth": 100,
@@ -11581,7 +11862,7 @@ export const aggregateDraftScenarios = {
                                 },
                                 "targetElement": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "ea1a52b5-59a7-1c75-390b-52ff0d2a8f34",
+                                    "id": "9544047d-ac4f-deef-bf8f-5534c5b6bf8d",
                                     "visibility": "public",
                                     "name": "BookReturned",
                                     "oldName": "",
@@ -11606,7 +11887,7 @@ export const aggregateDraftScenarios = {
                                     "mirrorElement": null,
                                     "elementView": {
                                         "_type": "org.uengine.modeling.model.Event",
-                                        "id": "ea1a52b5-59a7-1c75-390b-52ff0d2a8f34",
+                                        "id": "9544047d-ac4f-deef-bf8f-5534c5b6bf8d",
                                         "x": 900,
                                         "y": 400,
                                         "width": 100,
@@ -11616,7 +11897,7 @@ export const aggregateDraftScenarios = {
                                     },
                                     "hexagonalView": {
                                         "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "ea1a52b5-59a7-1c75-390b-52ff0d2a8f34",
+                                        "id": "9544047d-ac4f-deef-bf8f-5534c5b6bf8d",
                                         "x": 900,
                                         "y": 400,
                                         "subWidth": 100,
@@ -11628,25 +11909,25 @@ export const aggregateDraftScenarios = {
                                     "relationCommandInfo": [],
                                     "trigger": "@PostPersist"
                                 },
-                                "from": "f9bfe10e-208b-c620-68a3-9bef709150ad",
-                                "to": "ea1a52b5-59a7-1c75-390b-52ff0d2a8f34",
+                                "from": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
+                                "to": "9544047d-ac4f-deef-bf8f-5534c5b6bf8d",
                                 "relationView": {
-                                    "id": "bae5a31d-f113-144d-26a4-8a9da31d2200",
+                                    "id": "043f26b2-1b98-8e24-d311-e225df91e6df",
                                     "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
                                     "value": null,
-                                    "from": "f9bfe10e-208b-c620-68a3-9bef709150ad",
-                                    "to": "ea1a52b5-59a7-1c75-390b-52ff0d2a8f34",
+                                    "from": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
+                                    "to": "9544047d-ac4f-deef-bf8f-5534c5b6bf8d",
                                     "needReconnect": true
                                 }
                             },
-                            "e934e93c-47c3-1e4b-ca9f-836fa16ed05e": {
+                            "d00ef15c-34bc-f38e-4e7d-2352561b3a6e": {
                                 "_type": "org.uengine.modeling.model.Relation",
-                                "id": "e934e93c-47c3-1e4b-ca9f-836fa16ed05e",
+                                "id": "d00ef15c-34bc-f38e-4e7d-2352561b3a6e",
                                 "name": "2",
                                 "displayName": "2",
                                 "sourceElement": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                                    "id": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                                     "visibility": "public",
                                     "name": "BookStatusChanged",
                                     "oldName": "",
@@ -11671,7 +11952,7 @@ export const aggregateDraftScenarios = {
                                     "mirrorElement": null,
                                     "elementView": {
                                         "_type": "org.uengine.modeling.model.Event",
-                                        "id": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                                        "id": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                                         "x": 300,
                                         "y": 650,
                                         "width": 100,
@@ -11681,7 +11962,7 @@ export const aggregateDraftScenarios = {
                                     },
                                     "hexagonalView": {
                                         "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                                        "id": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                                         "x": 300,
                                         "y": 650,
                                         "subWidth": 100,
@@ -11695,7 +11976,7 @@ export const aggregateDraftScenarios = {
                                 },
                                 "targetElement": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "c778f986-621e-e728-6352-b694764b00d4",
+                                    "id": "bcb80ab1-c9e1-dfca-2abb-c26dd0ba8456",
                                     "visibility": "public",
                                     "name": "BookReserved",
                                     "oldName": "",
@@ -11720,7 +12001,7 @@ export const aggregateDraftScenarios = {
                                     "mirrorElement": null,
                                     "elementView": {
                                         "_type": "org.uengine.modeling.model.Event",
-                                        "id": "c778f986-621e-e728-6352-b694764b00d4",
+                                        "id": "bcb80ab1-c9e1-dfca-2abb-c26dd0ba8456",
                                         "x": 500,
                                         "y": 400,
                                         "width": 100,
@@ -11730,7 +12011,7 @@ export const aggregateDraftScenarios = {
                                     },
                                     "hexagonalView": {
                                         "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "c778f986-621e-e728-6352-b694764b00d4",
+                                        "id": "bcb80ab1-c9e1-dfca-2abb-c26dd0ba8456",
                                         "x": 500,
                                         "y": 400,
                                         "subWidth": 100,
@@ -11742,25 +12023,25 @@ export const aggregateDraftScenarios = {
                                     "relationCommandInfo": [],
                                     "trigger": "@PostPersist"
                                 },
-                                "from": "f9bfe10e-208b-c620-68a3-9bef709150ad",
-                                "to": "c778f986-621e-e728-6352-b694764b00d4",
+                                "from": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
+                                "to": "bcb80ab1-c9e1-dfca-2abb-c26dd0ba8456",
                                 "relationView": {
-                                    "id": "e934e93c-47c3-1e4b-ca9f-836fa16ed05e",
+                                    "id": "d00ef15c-34bc-f38e-4e7d-2352561b3a6e",
                                     "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
                                     "value": null,
-                                    "from": "f9bfe10e-208b-c620-68a3-9bef709150ad",
-                                    "to": "c778f986-621e-e728-6352-b694764b00d4",
+                                    "from": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
+                                    "to": "bcb80ab1-c9e1-dfca-2abb-c26dd0ba8456",
                                     "needReconnect": true
                                 }
                             },
-                            "c98e3d05-7069-dd59-1cb8-ac962b79f656": {
+                            "ff7fb8a6-d7d8-2703-d3c9-ba1d25460d48": {
                                 "_type": "org.uengine.modeling.model.Relation",
-                                "id": "c98e3d05-7069-dd59-1cb8-ac962b79f656",
+                                "id": "ff7fb8a6-d7d8-2703-d3c9-ba1d25460d48",
                                 "name": "1",
                                 "displayName": "1",
                                 "sourceElement": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "378c8a28-9d32-1f05-4952-d30e60350391",
+                                    "id": "c780d7c0-77c4-cdd8-71b7-6697e78cf364",
                                     "visibility": "public",
                                     "name": "LoanRequested",
                                     "oldName": "",
@@ -11785,7 +12066,7 @@ export const aggregateDraftScenarios = {
                                     "mirrorElement": null,
                                     "elementView": {
                                         "_type": "org.uengine.modeling.model.Event",
-                                        "id": "378c8a28-9d32-1f05-4952-d30e60350391",
+                                        "id": "c780d7c0-77c4-cdd8-71b7-6697e78cf364",
                                         "x": 300,
                                         "y": 400,
                                         "width": 100,
@@ -11795,7 +12076,7 @@ export const aggregateDraftScenarios = {
                                     },
                                     "hexagonalView": {
                                         "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "378c8a28-9d32-1f05-4952-d30e60350391",
+                                        "id": "c780d7c0-77c4-cdd8-71b7-6697e78cf364",
                                         "x": 300,
                                         "y": 400,
                                         "subWidth": 100,
@@ -11809,7 +12090,7 @@ export const aggregateDraftScenarios = {
                                 },
                                 "targetElement": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "5319c43f-3f55-0e7c-00f0-b27a9c8355a2",
+                                    "id": "ddfeff49-a1ea-ff08-6e32-21843898cf7c",
                                     "visibility": "public",
                                     "name": "LoanApproved",
                                     "oldName": "",
@@ -11834,7 +12115,7 @@ export const aggregateDraftScenarios = {
                                     "mirrorElement": null,
                                     "elementView": {
                                         "_type": "org.uengine.modeling.model.Event",
-                                        "id": "5319c43f-3f55-0e7c-00f0-b27a9c8355a2",
+                                        "id": "ddfeff49-a1ea-ff08-6e32-21843898cf7c",
                                         "x": 700,
                                         "y": 150,
                                         "width": 100,
@@ -11844,7 +12125,7 @@ export const aggregateDraftScenarios = {
                                     },
                                     "hexagonalView": {
                                         "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "5319c43f-3f55-0e7c-00f0-b27a9c8355a2",
+                                        "id": "ddfeff49-a1ea-ff08-6e32-21843898cf7c",
                                         "x": 700,
                                         "y": 150,
                                         "subWidth": 100,
@@ -11856,25 +12137,25 @@ export const aggregateDraftScenarios = {
                                     "relationCommandInfo": [],
                                     "trigger": "@PostPersist"
                                 },
-                                "from": "378c8a28-9d32-1f05-4952-d30e60350391",
-                                "to": "5319c43f-3f55-0e7c-00f0-b27a9c8355a2",
+                                "from": "c780d7c0-77c4-cdd8-71b7-6697e78cf364",
+                                "to": "ddfeff49-a1ea-ff08-6e32-21843898cf7c",
                                 "relationView": {
-                                    "id": "c98e3d05-7069-dd59-1cb8-ac962b79f656",
+                                    "id": "ff7fb8a6-d7d8-2703-d3c9-ba1d25460d48",
                                     "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
                                     "value": null,
-                                    "from": "378c8a28-9d32-1f05-4952-d30e60350391",
-                                    "to": "5319c43f-3f55-0e7c-00f0-b27a9c8355a2",
+                                    "from": "c780d7c0-77c4-cdd8-71b7-6697e78cf364",
+                                    "to": "ddfeff49-a1ea-ff08-6e32-21843898cf7c",
                                     "needReconnect": true
                                 }
                             },
-                            "93ae4161-d891-c566-0f3f-11a8706ec982": {
+                            "a9f25878-517b-b32d-177d-baa967c74e88": {
                                 "_type": "org.uengine.modeling.model.Relation",
-                                "id": "93ae4161-d891-c566-0f3f-11a8706ec982",
+                                "id": "a9f25878-517b-b32d-177d-baa967c74e88",
                                 "name": "1",
                                 "displayName": "1",
                                 "sourceElement": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "378c8a28-9d32-1f05-4952-d30e60350391",
+                                    "id": "c780d7c0-77c4-cdd8-71b7-6697e78cf364",
                                     "visibility": "public",
                                     "name": "LoanRequested",
                                     "oldName": "",
@@ -11899,7 +12180,7 @@ export const aggregateDraftScenarios = {
                                     "mirrorElement": null,
                                     "elementView": {
                                         "_type": "org.uengine.modeling.model.Event",
-                                        "id": "378c8a28-9d32-1f05-4952-d30e60350391",
+                                        "id": "c780d7c0-77c4-cdd8-71b7-6697e78cf364",
                                         "x": 300,
                                         "y": 400,
                                         "width": 100,
@@ -11909,7 +12190,7 @@ export const aggregateDraftScenarios = {
                                     },
                                     "hexagonalView": {
                                         "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "378c8a28-9d32-1f05-4952-d30e60350391",
+                                        "id": "c780d7c0-77c4-cdd8-71b7-6697e78cf364",
                                         "x": 300,
                                         "y": 400,
                                         "subWidth": 100,
@@ -11923,7 +12204,7 @@ export const aggregateDraftScenarios = {
                                 },
                                 "targetElement": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "c778f986-621e-e728-6352-b694764b00d4",
+                                    "id": "bcb80ab1-c9e1-dfca-2abb-c26dd0ba8456",
                                     "visibility": "public",
                                     "name": "BookReserved",
                                     "oldName": "",
@@ -11948,7 +12229,7 @@ export const aggregateDraftScenarios = {
                                     "mirrorElement": null,
                                     "elementView": {
                                         "_type": "org.uengine.modeling.model.Event",
-                                        "id": "c778f986-621e-e728-6352-b694764b00d4",
+                                        "id": "bcb80ab1-c9e1-dfca-2abb-c26dd0ba8456",
                                         "x": 500,
                                         "y": 400,
                                         "width": 100,
@@ -11958,7 +12239,7 @@ export const aggregateDraftScenarios = {
                                     },
                                     "hexagonalView": {
                                         "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "c778f986-621e-e728-6352-b694764b00d4",
+                                        "id": "bcb80ab1-c9e1-dfca-2abb-c26dd0ba8456",
                                         "x": 500,
                                         "y": 400,
                                         "subWidth": 100,
@@ -11970,25 +12251,25 @@ export const aggregateDraftScenarios = {
                                     "relationCommandInfo": [],
                                     "trigger": "@PostPersist"
                                 },
-                                "from": "378c8a28-9d32-1f05-4952-d30e60350391",
-                                "to": "c778f986-621e-e728-6352-b694764b00d4",
+                                "from": "c780d7c0-77c4-cdd8-71b7-6697e78cf364",
+                                "to": "bcb80ab1-c9e1-dfca-2abb-c26dd0ba8456",
                                 "relationView": {
-                                    "id": "93ae4161-d891-c566-0f3f-11a8706ec982",
+                                    "id": "a9f25878-517b-b32d-177d-baa967c74e88",
                                     "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
                                     "value": null,
-                                    "from": "378c8a28-9d32-1f05-4952-d30e60350391",
-                                    "to": "c778f986-621e-e728-6352-b694764b00d4",
+                                    "from": "c780d7c0-77c4-cdd8-71b7-6697e78cf364",
+                                    "to": "bcb80ab1-c9e1-dfca-2abb-c26dd0ba8456",
                                     "needReconnect": true
                                 }
                             },
-                            "ad28f2a2-dba6-e496-e698-4ce162071c67": {
+                            "92902c1e-afdf-cb6e-8a2f-7140b87af4fc": {
                                 "_type": "org.uengine.modeling.model.Relation",
-                                "id": "ad28f2a2-dba6-e496-e698-4ce162071c67",
+                                "id": "92902c1e-afdf-cb6e-8a2f-7140b87af4fc",
                                 "name": "2",
                                 "displayName": "2",
                                 "sourceElement": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "5319c43f-3f55-0e7c-00f0-b27a9c8355a2",
+                                    "id": "ddfeff49-a1ea-ff08-6e32-21843898cf7c",
                                     "visibility": "public",
                                     "name": "LoanApproved",
                                     "oldName": "",
@@ -12013,7 +12294,7 @@ export const aggregateDraftScenarios = {
                                     "mirrorElement": null,
                                     "elementView": {
                                         "_type": "org.uengine.modeling.model.Event",
-                                        "id": "5319c43f-3f55-0e7c-00f0-b27a9c8355a2",
+                                        "id": "ddfeff49-a1ea-ff08-6e32-21843898cf7c",
                                         "x": 700,
                                         "y": 150,
                                         "width": 100,
@@ -12023,7 +12304,7 @@ export const aggregateDraftScenarios = {
                                     },
                                     "hexagonalView": {
                                         "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "5319c43f-3f55-0e7c-00f0-b27a9c8355a2",
+                                        "id": "ddfeff49-a1ea-ff08-6e32-21843898cf7c",
                                         "x": 700,
                                         "y": 150,
                                         "subWidth": 100,
@@ -12037,7 +12318,7 @@ export const aggregateDraftScenarios = {
                                 },
                                 "targetElement": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                                    "id": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                                     "visibility": "public",
                                     "name": "BookStatusChanged",
                                     "oldName": "",
@@ -12062,7 +12343,7 @@ export const aggregateDraftScenarios = {
                                     "mirrorElement": null,
                                     "elementView": {
                                         "_type": "org.uengine.modeling.model.Event",
-                                        "id": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                                        "id": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                                         "x": 300,
                                         "y": 650,
                                         "width": 100,
@@ -12072,7 +12353,7 @@ export const aggregateDraftScenarios = {
                                     },
                                     "hexagonalView": {
                                         "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                                        "id": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                                         "x": 300,
                                         "y": 650,
                                         "subWidth": 100,
@@ -12084,25 +12365,25 @@ export const aggregateDraftScenarios = {
                                     "relationCommandInfo": [],
                                     "trigger": "@PostPersist"
                                 },
-                                "from": "5319c43f-3f55-0e7c-00f0-b27a9c8355a2",
-                                "to": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                                "from": "ddfeff49-a1ea-ff08-6e32-21843898cf7c",
+                                "to": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                                 "relationView": {
-                                    "id": "ad28f2a2-dba6-e496-e698-4ce162071c67",
+                                    "id": "92902c1e-afdf-cb6e-8a2f-7140b87af4fc",
                                     "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
                                     "value": null,
-                                    "from": "5319c43f-3f55-0e7c-00f0-b27a9c8355a2",
-                                    "to": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                                    "from": "ddfeff49-a1ea-ff08-6e32-21843898cf7c",
+                                    "to": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                                     "needReconnect": true
                                 }
                             },
-                            "e5cf655c-c2f6-37d9-4b20-151539d0ca5f": {
+                            "29ae1abd-3e29-acc8-6900-45a676c77de8": {
                                 "_type": "org.uengine.modeling.model.Relation",
-                                "id": "e5cf655c-c2f6-37d9-4b20-151539d0ca5f",
+                                "id": "29ae1abd-3e29-acc8-6900-45a676c77de8",
                                 "name": "2",
                                 "displayName": "2",
                                 "sourceElement": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "c778f986-621e-e728-6352-b694764b00d4",
+                                    "id": "bcb80ab1-c9e1-dfca-2abb-c26dd0ba8456",
                                     "visibility": "public",
                                     "name": "BookReserved",
                                     "oldName": "",
@@ -12127,7 +12408,7 @@ export const aggregateDraftScenarios = {
                                     "mirrorElement": null,
                                     "elementView": {
                                         "_type": "org.uengine.modeling.model.Event",
-                                        "id": "c778f986-621e-e728-6352-b694764b00d4",
+                                        "id": "bcb80ab1-c9e1-dfca-2abb-c26dd0ba8456",
                                         "x": 500,
                                         "y": 400,
                                         "width": 100,
@@ -12137,7 +12418,7 @@ export const aggregateDraftScenarios = {
                                     },
                                     "hexagonalView": {
                                         "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "c778f986-621e-e728-6352-b694764b00d4",
+                                        "id": "bcb80ab1-c9e1-dfca-2abb-c26dd0ba8456",
                                         "x": 500,
                                         "y": 400,
                                         "subWidth": 100,
@@ -12151,7 +12432,7 @@ export const aggregateDraftScenarios = {
                                 },
                                 "targetElement": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                                    "id": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                                     "visibility": "public",
                                     "name": "BookStatusChanged",
                                     "oldName": "",
@@ -12176,7 +12457,7 @@ export const aggregateDraftScenarios = {
                                     "mirrorElement": null,
                                     "elementView": {
                                         "_type": "org.uengine.modeling.model.Event",
-                                        "id": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                                        "id": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                                         "x": 300,
                                         "y": 650,
                                         "width": 100,
@@ -12186,7 +12467,7 @@ export const aggregateDraftScenarios = {
                                     },
                                     "hexagonalView": {
                                         "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                                        "id": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                                         "x": 300,
                                         "y": 650,
                                         "subWidth": 100,
@@ -12198,25 +12479,25 @@ export const aggregateDraftScenarios = {
                                     "relationCommandInfo": [],
                                     "trigger": "@PostPersist"
                                 },
-                                "from": "c778f986-621e-e728-6352-b694764b00d4",
-                                "to": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                                "from": "bcb80ab1-c9e1-dfca-2abb-c26dd0ba8456",
+                                "to": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                                 "relationView": {
-                                    "id": "e5cf655c-c2f6-37d9-4b20-151539d0ca5f",
+                                    "id": "29ae1abd-3e29-acc8-6900-45a676c77de8",
                                     "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
                                     "value": null,
-                                    "from": "c778f986-621e-e728-6352-b694764b00d4",
-                                    "to": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                                    "from": "bcb80ab1-c9e1-dfca-2abb-c26dd0ba8456",
+                                    "to": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                                     "needReconnect": true
                                 }
                             },
-                            "a7affe8a-41cd-9d90-680a-69c0ea1d3e9a": {
+                            "11f2c0eb-2718-e9a0-6173-fbcbf5724870": {
                                 "_type": "org.uengine.modeling.model.Relation",
-                                "id": "a7affe8a-41cd-9d90-680a-69c0ea1d3e9a",
+                                "id": "11f2c0eb-2718-e9a0-6173-fbcbf5724870",
                                 "name": "2",
                                 "displayName": "2",
                                 "sourceElement": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "ea1a52b5-59a7-1c75-390b-52ff0d2a8f34",
+                                    "id": "9544047d-ac4f-deef-bf8f-5534c5b6bf8d",
                                     "visibility": "public",
                                     "name": "BookReturned",
                                     "oldName": "",
@@ -12241,7 +12522,7 @@ export const aggregateDraftScenarios = {
                                     "mirrorElement": null,
                                     "elementView": {
                                         "_type": "org.uengine.modeling.model.Event",
-                                        "id": "ea1a52b5-59a7-1c75-390b-52ff0d2a8f34",
+                                        "id": "9544047d-ac4f-deef-bf8f-5534c5b6bf8d",
                                         "x": 900,
                                         "y": 400,
                                         "width": 100,
@@ -12251,7 +12532,7 @@ export const aggregateDraftScenarios = {
                                     },
                                     "hexagonalView": {
                                         "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "ea1a52b5-59a7-1c75-390b-52ff0d2a8f34",
+                                        "id": "9544047d-ac4f-deef-bf8f-5534c5b6bf8d",
                                         "x": 900,
                                         "y": 400,
                                         "subWidth": 100,
@@ -12265,7 +12546,7 @@ export const aggregateDraftScenarios = {
                                 },
                                 "targetElement": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                                    "id": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                                     "visibility": "public",
                                     "name": "BookStatusChanged",
                                     "oldName": "",
@@ -12290,7 +12571,7 @@ export const aggregateDraftScenarios = {
                                     "mirrorElement": null,
                                     "elementView": {
                                         "_type": "org.uengine.modeling.model.Event",
-                                        "id": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                                        "id": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                                         "x": 300,
                                         "y": 650,
                                         "width": 100,
@@ -12300,7 +12581,7 @@ export const aggregateDraftScenarios = {
                                     },
                                     "hexagonalView": {
                                         "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                                        "id": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                                         "x": 300,
                                         "y": 650,
                                         "subWidth": 100,
@@ -12312,14 +12593,14 @@ export const aggregateDraftScenarios = {
                                     "relationCommandInfo": [],
                                     "trigger": "@PostPersist"
                                 },
-                                "from": "ea1a52b5-59a7-1c75-390b-52ff0d2a8f34",
-                                "to": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                                "from": "9544047d-ac4f-deef-bf8f-5534c5b6bf8d",
+                                "to": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                                 "relationView": {
-                                    "id": "a7affe8a-41cd-9d90-680a-69c0ea1d3e9a",
+                                    "id": "11f2c0eb-2718-e9a0-6173-fbcbf5724870",
                                     "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
                                     "value": null,
-                                    "from": "ea1a52b5-59a7-1c75-390b-52ff0d2a8f34",
-                                    "to": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                                    "from": "9544047d-ac4f-deef-bf8f-5534c5b6bf8d",
+                                    "to": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                                     "needReconnect": true
                                 }
                             }
@@ -12752,10 +13033,10 @@ export const aggregateDraftScenarios = {
                     "currentGeneratedLength": 5282
                 },
                 "currentGeneratedLength": 5282,
-                "timestamp": "2025-09-01T06:51:58.205Z"
+                "timestamp": "2025-09-09T02:16:51.277Z"
             },
             {
-                "uniqueId": "924fc6426323daf8f167be0c1d977e3b",
+                "uniqueId": "7a935b68360fdcb6a631db4cef3da600",
                 "type": "bcGenerationOption",
                 "isSummarizeStarted": false,
                 "isGeneratingBoundedContext": false,
@@ -12774,10 +13055,10 @@ export const aggregateDraftScenarios = {
                 },
                 "recommendedBoundedContextsNumber": 4,
                 "reasonOfRecommendedBoundedContextsNumber": "도서관 시스템의 요구사항을 분석한 결과, 다음과 같이 4개의 바운디드 컨텍스트를 추천합니다. (1) 도서 관리: 도서의 등록, 상태 변경, 폐기 등 도서 자체의 라이프사이클을 관리합니다. (2) 대출/반납 관리: 회원의 대출/반납, 연장, 예약 등 대출 프로세스와 관련된 상태 변화를 담당합니다. (3) 회원 인증 및 확인: 대출 시 회원의 신원 확인 및 회원 정보 관리가 필요하므로 별도의 컨텍스트로 분리합니다. (4) 이력/현황 조회: 도서별 대출 이력, 상태 변경 이력, 대출 현황 조회 등 기록 및 리포팅 기능을 담당합니다. 각 컨텍스트는 담당하는 비즈니스 도메인과 책임이 명확히 구분되며, 이벤트 복잡도와 액터 간 상호작용, 조직 내 역할 분리에 따라 4개가 적절합니다. 이는 도서 관리(관리자 중심), 대출/반납(회원 및 관리자), 회원 인증(시스템 또는 관리자), 이력/현황(관리자 및 시스템) 등으로 조직 구조와도 잘 맞습니다.",
-                "timestamp": "2025-09-01T06:52:04.112Z"
+                "timestamp": "2025-09-09T02:16:55.376Z"
             },
             {
-                "uniqueId": "0b1747b497277336f14c75559fe4d22f",
+                "uniqueId": "4ec483172d7cbfe4be78bb3a35a0cf21",
                 "type": "boundedContextResult",
                 "result": {
                     "도메인 복잡도 분리+프로세스(value stream) 기반 분리": {
@@ -13006,6 +13287,36 @@ export const aggregateDraftScenarios = {
                                             61
                                         ]
                                     ]
+                                ],
+                                "siteMap": [
+                                    {
+                                        "id": "book-management",
+                                        "title": "도서 관리",
+                                        "description": "도서 등록, 상태 관리, 폐기 및 도서별 이력 관리",
+                                        "boundedContext": "BookManagement",
+                                        "uiRequirements": "'도서 관리' 화면에서는 새로운 도서를 등록하고 현재 보유한 도서들의 상태를 관리할 수 있어야 해. 도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해. 등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야 해."
+                                    },
+                                    {
+                                        "id": "book-registration",
+                                        "title": "도서 등록",
+                                        "description": "새로운 도서 등록",
+                                        "boundedContext": "BookManagement",
+                                        "uiRequirements": "도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해."
+                                    },
+                                    {
+                                        "id": "book-status-management",
+                                        "title": "도서 상태 관리",
+                                        "description": "보유 도서의 상태 변경 및 폐기 처리",
+                                        "boundedContext": "BookManagement",
+                                        "uiRequirements": "등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야 해."
+                                    },
+                                    {
+                                        "id": "book-history",
+                                        "title": "도서 이력 조회",
+                                        "description": "도서별 대출 및 상태 변경 이력 조회",
+                                        "boundedContext": "BookManagement",
+                                        "uiRequirements": "각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해."
+                                    }
                                 ]
                             },
                             {
@@ -13278,6 +13589,29 @@ export const aggregateDraftScenarios = {
                                             208
                                         ]
                                     ]
+                                ],
+                                "siteMap": [
+                                    {
+                                        "id": "loan-process",
+                                        "title": "대출/반납",
+                                        "description": "도서 대출, 반납, 예약 및 연장 처리",
+                                        "boundedContext": "LoanProcess",
+                                        "uiRequirements": "'대출/반납' 화면에서는 회원이 도서를 대출하고 반납하는 것을 관리할 수 있어야 해. 대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할 도서를 선택해야 해. 도서는 도서명이나 ISBN으로 검색할 수 있어야 해. 대출 기간은 7일/14일/30일 중에서 선택할 수 있어. 만약 대출하려는 도서가 이미 대출 중이라면, 예약 신청이 가능해야 해. 대출이 완료되면 해당 도서의 상태는 자동으로 '대출중'으로 변경되어야 해."
+                                    },
+                                    {
+                                        "id": "loan-application",
+                                        "title": "대출 신청",
+                                        "description": "회원 인증 및 도서 대출 신청",
+                                        "boundedContext": "LoanProcess",
+                                        "uiRequirements": "대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할 도서를 선택해야 해. 도서는 도서명이나 ISBN으로 검색할 수 있어야 해. 대출 기간은 7일/14일/30일 중에서 선택할 수 있어. 만약 대출하려는 도서가 이미 대출 중이라면, 예약 신청이 가능해야 해."
+                                    },
+                                    {
+                                        "id": "return-process",
+                                        "title": "반납 처리",
+                                        "description": "도서 반납 및 상태 변경",
+                                        "boundedContext": "LoanProcess",
+                                        "uiRequirements": "대출이 완료되면 해당 도서의 상태는 자동으로 '대출중'으로 변경되어야 해."
+                                    }
                                 ]
                             },
                             {
@@ -13375,6 +13709,29 @@ export const aggregateDraftScenarios = {
                                             61
                                         ]
                                     ]
+                                ],
+                                "siteMap": [
+                                    {
+                                        "id": "loan-status-inquiry",
+                                        "title": "대출 현황",
+                                        "description": "현재 대출 중인 도서 목록 및 대출 상태 관리",
+                                        "boundedContext": "LoanStatusInquiry",
+                                        "uiRequirements": "대출 현황 화면에서는 현재 대출 중인 도서들의 목록을 볼 수 있어야 해. 각 대출 건에 대해 대출일, 반납예정일, 현재 상태(대출중/연체/반납완료)를 확인할 수 있어야 하고, 대출 중인 도서는 연장이나 반납 처리가 가능해야 해. 도서가 반납되면 자동으로 해당 도서의 상태가 '대출가능'으로 변경되어야 해. 만약 예약자가 있는 도서가 반납되면, 해당 도서는 '예약중' 상태로 변경되어야 해."
+                                    },
+                                    {
+                                        "id": "loan-list",
+                                        "title": "대출 목록",
+                                        "description": "대출 중인 도서 목록 및 상태 확인",
+                                        "boundedContext": "LoanStatusInquiry",
+                                        "uiRequirements": "각 대출 건에 대해 대출일, 반납예정일, 현재 상태(대출중/연체/반납완료)를 확인할 수 있어야 하고, 대출 중인 도서는 연장이나 반납 처리가 가능해야 해."
+                                    },
+                                    {
+                                        "id": "loan-history",
+                                        "title": "대출 이력 조회",
+                                        "description": "도서별 대출 이력 및 상태 변경 이력 확인",
+                                        "boundedContext": "LoanStatusInquiry",
+                                        "uiRequirements": "각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해."
+                                    }
                                 ]
                             }
                         ],
@@ -13581,7 +13938,7 @@ export const aggregateDraftScenarios = {
                             "COMMON"
                         ],
                         "instruction": "## PBC Chat System Overview <br>\nThe PBC Chat system is designed to handle all chat-related tasks efficiently and securely. It provides a robust framework for chat room creation, conversation history storage, and retrieval. The system ensures seamless integration with Supabase and offers a user-friendly interface for both developers and users. Specifically optimized for Vue3-based environments, it delivers a smooth and responsive user experience utilizing modern web technologies. Through this integration, it offers various chat options and leverages Supabase's unique features to provide an optimal chat experience. The PBC Chat system ensures both reliability and scalability while offering users more diverse options to make the chat process smoother and more convenient.\n\n## Available Features\n### 1) Chat Room Creation <br>\n  Enables users to create chat rooms through various supported methods, ensuring a safe and fast chat environment.\n\n### 2) Conversation History Storage <br>\n  Provides functionality to securely store and manage all conversation history using Supabase.\n\n### 3) Conversation History Retrieval <br>\n  Allows users to view detailed records of past conversations, providing information including chat status and timestamps.\n\n## Usage Guide\n\n### 1) Analysis/Design\n1. Double-click the applied PBC's bounded context area to activate the PBC panel.\n\n<img width=\"1275\" alt=\"image\" src=\"https://github.com/user-attachments/assets/69cebda6-8334-4945-b0b7-7b061ad6c064\" /> <br>\n<Example of PBC Panel Creation>\n\n2. From the PBC panel options, select the event storming stickers corresponding to the features you want to use from reading elements, command elements, and event elements.\n\n<img width=\"435\" alt=\"image\" src=\"https://github.com/user-attachments/assets/22365ca1-139f-4582-a95f-bb425bb61383\" /> <br>\n<Example of Panel Sticker Option Selection>\n\n### 2) Implementation\n1. After closing the panel, click CODE to preview the event storming-based generated code.\n<img width=\"714\" alt=\"image\" src=\"https://github.com/user-attachments/assets/4d3f35e7-30cb-483d-a3b5-2fd099101ed4\" /> <br>\n\n2. In the generated code, click on the selected PBC folder > README.md to check the source code usage instructions.\n<img width=\"716\" alt=\"image\" src=\"https://github.com/user-attachments/assets/324887ab-53b3-4bd9-b8ba-823a62bcf764\" /> <br>\n<Example of PBC README.md File>\n\n3. After loading the source code in your IDE environment, follow the README instructions to download and extract the files, then verify that the downloaded PBC has been created in your source code.\n<img width=\"741\" alt=\"image\" src=\"https://github.com/user-attachments/assets/037b4ac3-dc03-4b96-9d83-dd049629d24f\" /> <br>\n<Example of PBC Source Code Download>\n\n4. To avoid port conflicts, modify the port appropriately in application.yml (payment/src/main/resources/application.yml).\n<img width=\"290\" alt=\"image\" src=\"https://github.com/user-attachments/assets/8809f047-3cc4-4e66-932e-9f89f6f8df5b\" /> <br>\n<Example of PBC Port Modification>\n",
-                        "id": 18,
+                        "id": 19,
                         "pbcPath": "https://github.com/msa-ez/pbc-chat-vue3-en/blob/main/model.json"
                     },
                     {
@@ -13593,7 +13950,7 @@ export const aggregateDraftScenarios = {
                             "COMMON"
                         ],
                         "instruction": "## PBC Review 시스템 개요\nPBC Review 시스템은 모든 리뷰 관련 작업을 효율적이고 안전하게 처리하도록 설계되었습니다. 이 시스템은 리뷰 등록, 평점 등록 및 조회를 위한 견고한 프레임워크를 제공합니다. 사용자 친화적인 인터페이스를 통해 특정 정보에 대한 평점과 리뷰를 쉽게 남길 수 있도록 지원합니다. 이러한 기능을 통해 다양한 리뷰 옵션을 제공하고, 사용자 경험을 최적화하여 보다 매끄럽고 편리한 리뷰 과정을 제공합니다. PBC Review 시스템은 신뢰성과 확장성을 동시에 확보하며, 사용자에게 보다 다양한 선택지를 제공하여 리뷰 과정을 더욱 매끄럽고 편리하게 만듭니다.\n\n## 사용 가능한 기능\n### 1) 리뷰 등록 <br>\n  사용자가 특정 정보에 대한 리뷰를 쉽게 등록할 수 있도록 하며, 안전하고 빠른 리뷰 환경을 보장합니다.\n\n### 2) 평점 등록 <br>\n  사용자 친화적인 인터페이스를 통해 사용자가 평점을 등록할 수 있는 기능을 제공합니다.\n\n### 3) 리뷰 및 평점 조회 <br>\n  등록된 모든 리뷰와 평점을 서비스를 이용하는 모든 사용자가 확인할 수 있도록 하는 기능을 제공합니다.\n\n## 사용 방법\n\n### 1) 분석/설계\n1. 적용한 PBC의 바운디드 컨텍스트 영역을 더블 클릭하여 PBC 패널을 활성화 합니다.\n\n<img width=\"1422\" alt=\"image\" src=\"https://github.com/user-attachments/assets/f1e557a5-7ac9-44d0-9ba2-30fd6fa11ba8\" /> <br>\n<PBC Panel 생성 예시>\n\n2. PBC 패널 옵션중 읽기 요소, 커맨드 요소, 이벤트 요소에서 각각 사용할 기능에 해당하는 이벤트스토밍 스티커를 선택합니다. \n\n<img width=\"767\" alt=\"image\" src=\"https://github.com/user-attachments/assets/2b255acd-934d-4565-8981-b16a2fe7e087\" /> <br>\n<Panel 스티커 옵션 선택 예시>\n\n### 2) 구현\n1. 패널을 닫은 후, CODE를 클릭하여 코드 프리뷰를 통해 이벤트스토밍기반 생성된 코드를 확인합니다.\n<img width=\"509\" alt=\"image\" src=\"https://github.com/user-attachments/assets/717d6253-1f07-43f7-b949-6bd7350e459b\" /> <br>\n\n2. 생성된 코드에서 선택한 PBC 폴더 > README.md를 클릭하여 소스코드 사용방법을 확인하여 사용할 수 있습니다.\n<img width=\"998\" alt=\"image\" src=\"https://github.com/user-attachments/assets/699bda6a-7167-4c50-98b4-1afe1ccb1607\" /> <br>\n<PBC README.md 파일 예시>\n",
-                        "id": 20,
+                        "id": 21,
                         "pbcPath": "https://github.com/msa-ez/pbc-review/blob/main/model.json"
                     },
                     {
@@ -13605,7 +13962,7 @@ export const aggregateDraftScenarios = {
                             "COMMON"
                         ],
                         "instruction": "## PBC Alarm 시스템 개요\nPBC Alarm 시스템은 모든 알림 관련 작업을 효율적이고 안전하게 처리하도록 설계되었습니다. 이 시스템은 즉각 알람 발송 및 예약 알림 발송을 위한 견고한 프레임워크를 제공합니다. SSE(Server-Sent Events) 기반의 기술을 활용하여 실시간으로 알림을 전송하며, 사용자 친화적인 인터페이스를 통해 알림 설정을 쉽게 관리할 수 있도록 지원합니다. 이러한 기능을 통해 다양한 알림 옵션을 제공하고, 사용자 경험을 최적화하여 보다 매끄럽고 편리한 알림 과정을 제공합니다. PBC Alarm 시스템은 신뢰성과 확장성을 동시에 확보하며, 사용자에게 보다 다양한 선택지를 제공하여 알림 과정을 더욱 매끄럽고 편리하게 만듭니다.\n\n## 사용 가능한 기능\n### 1) 즉각 알람 발송 <br>\n  SSE 기반의 기술을 통해 사용자가 즉각적인 알람을 받을 수 있도록 하며, 안전하고 빠른 알림 환경을 보장합니다.\n\n### 2) 예약 알림 발송 <br>\n  사용자가 정해진 날짜와 시간에 알림을 설정할 수 있는 기능을 제공하여, 예약된 알림을 정확하게 발송할 수 있도록 지원합니다.\n\n## 사용 방법\n\n### 1) 분석/설계\n1. 적용한 PBC의 바운디드 컨텍스트 영역을 더블 클릭하여 PBC 패널을 활성화 합니다.\n\n<img width=\"1275\" alt=\"image\" src=\"https://github.com/user-attachments/assets/69cebda6-8334-4945-b0b7-7b061ad6c064\" /> <br>\n<PBC Panel 생성 예시>\n\n2. PBC 패널 옵션중 읽기 요소, 커맨드 요소, 이벤트 요소에서 각각 사용할 기능에 해당하는 이벤트스토밍 스티커를 선택합니다. \n\n<img width=\"435\" alt=\"image\" src=\"https://github.com/user-attachments/assets/22365ca1-139f-4582-a95f-bb425bb61383\" /> <br>\n<Panel 스티커 옵션 선택 예시>\n\n* 결제를 통한 결제정보 업데이트와 같은 다른 마이크로서비스와의 통신이 발생할 경우\n  Event - Policy Relation을 연결해야합니다.\n\n  예시) 결제성공을 통한 주문 애그리거트의 결제정보 변경\n  \n  <img width=\"823\" alt=\"image\" src=\"https://github.com/user-attachments/assets/cfaa6b70-a489-42eb-8c18-823b8c9ed7dc\" /> <br>\n  \n\n### 2) 구현\n1. 패널을 닫은 후, CODE를 클릭하여 코드 프리뷰를 통해 이벤트스토밍기반 생성된 코드를 확인합니다.\n<img width=\"714\" alt=\"image\" src=\"https://github.com/user-attachments/assets/4d3f35e7-30cb-483d-a3b5-2fd099101ed4\" /> <br>\n\n2. 생성된 코드에서 선택한 PBC 폴더 > README.md를 클릭하여 소스코드 사용방법을 확인합니다.\n<img width=\"716\" alt=\"image\" src=\"https://github.com/user-attachments/assets/324887ab-53b3-4bd9-b8ba-823a62bcf764\" /> <br>\n<PBC README.md 파일 예시>\n\n3. IDE환경에서 소스코드를 Load한 후, README를 참고하여 다운로드 > 압축 해제를 진행하여 소스코드에 다운로드 받은 PBC가 생성되었는지 확인합니다.\n<img width=\"741\" alt=\"image\" src=\"https://github.com/user-attachments/assets/037b4ac3-dc03-4b96-9d83-dd049629d24f\" /> <br>\n<PBC 소스코드 다운 예시>\n\n4. port 충돌을 고려해 application.yml(payment/src/main/resources/application.yml)의 port를 적절하게 변경합니다.\n<img width=\"290\" alt=\"image\" src=\"https://github.com/user-attachments/assets/8809f047-3cc4-4e66-932e-9f89f6f8df5b\" /> <br>\n<PBC Port 변경 예시>\n",
-                        "id": 21,
+                        "id": 22,
                         "pbcPath": "https://github.com/msa-ez/pbc-reservation-notification/blob/main/model.json"
                     },
                     {
@@ -13617,7 +13974,7 @@ export const aggregateDraftScenarios = {
                             "COMMON"
                         ],
                         "instruction": "## PBC Alarm 시스템 개요\nPBC Alarm 시스템은 모든 알림 관련 작업을 효율적이고 안전하게 처리하도록 설계되었습니다. 이 시스템은 즉각 알람 발송 및 예약 알림 발송을 위한 견고한 프레임워크를 제공합니다. SSE(Server-Sent Events) 기반의 기술을 활용하여 실시간으로 알림을 전송하며, 사용자 친화적인 인터페이스를 통해 알림 설정을 쉽게 관리할 수 있도록 지원합니다. 특히, Vue3 기반 환경에서 원활하게 동작하도록 최적화되어 있어, 최신 웹 기술을 활용한 매끄럽고 반응성 높은 사용자 경험을 제공합니다. 이러한 기능을 통해 다양한 알림 옵션을 제공하고, 사용자 경험을 최적화하여 보다 매끄럽고 편리한 알림 과정을 제공합니다. PBC Alarm 시스템은 신뢰성과 확장성을 동시에 확보하며, 사용자에게 보다 다양한 선택지를 제공하여 알림 과정을 더욱 매끄럽고 편리하게 만듭니다.\n\n## 사용 가능한 기능\n### 1) 즉각 알람 발송 <br>\n  SSE 기반의 기술을 통해 사용자가 즉각적인 알람을 받을 수 있도록 하며, 안전하고 빠른 알림 환경을 보장합니다.\n\n### 2) 예약 알림 발송 <br>\n  사용자가 정해진 날짜와 시간에 알림을 설정할 수 있는 기능을 제공하여, 예약된 알림을 정확하게 발송할 수 있도록 지원합니다.\n\n## 사용 방법\n\n### 1) 분석/설계\n1. 적용한 PBC의 바운디드 컨텍스트 영역을 더블 클릭하여 PBC 패널을 활성화 합니다.\n\n<img width=\"1275\" alt=\"image\" src=\"https://github.com/user-attachments/assets/69cebda6-8334-4945-b0b7-7b061ad6c064\" /> <br>\n<PBC Panel 생성 예시>\n\n2. PBC 패널 옵션중 읽기 요소, 커맨드 요소, 이벤트 요소에서 각각 사용할 기능에 해당하는 이벤트스토밍 스티커를 선택합니다. \n\n<img width=\"435\" alt=\"image\" src=\"https://github.com/user-attachments/assets/22365ca1-139f-4582-a95f-bb425bb61383\" /> <br>\n<Panel 스티커 옵션 선택 예시>\n\n### 2) 구현\n1. 패널을 닫은 후, CODE를 클릭하여 코드 프리뷰를 통해 이벤트스토밍기반 생성된 코드를 확인합니다.\n<img width=\"714\" alt=\"image\" src=\"https://github.com/user-attachments/assets/4d3f35e7-30cb-483d-a3b5-2fd099101ed4\" /> <br>\n\n2. 생성된 코드에서 선택한 PBC 폴더 > README.md를 클릭하여 소스코드 사용방법을 확인합니다.\n<img width=\"716\" alt=\"image\" src=\"https://github.com/user-attachments/assets/324887ab-53b3-4bd9-b8ba-823a62bcf764\" /> <br>\n<PBC README.md 파일 예시>\n\n3. IDE환경에서 소스코드를 Load한 후, README를 참고하여 다운로드 > 압축 해제를 진행하여 소스코드에 다운로드 받은 PBC가 생성되었는지 확인합니다.\n<img width=\"741\" alt=\"image\" src=\"https://github.com/user-attachments/assets/037b4ac3-dc03-4b96-9d83-dd049629d24f\" /> <br>\n<PBC 소스코드 다운 예시>\n\n4. port 충돌을 고려해 application.yml(payment/src/main/resources/application.yml)의 port를 적절하게 변경합니다.\n<img width=\"290\" alt=\"image\" src=\"https://github.com/user-attachments/assets/8809f047-3cc4-4e66-932e-9f89f6f8df5b\" /> <br>\n<PBC Port 변경 예시>\n",
-                        "id": 22,
+                        "id": 23,
                         "pbcPath": "https://github.com/msa-ez/pbc-reservation-notification-vue3/blob/main/model.json"
                     },
                     {
@@ -13629,7 +13986,7 @@ export const aggregateDraftScenarios = {
                             "COMMON"
                         ],
                         "instruction": "## PBC Chat 시스템 개요 <br>\nPBC Chat 시스템은 모든 채팅 관련 작업을 효율적이고 안전하게 처리하도록 설계되었습니다. 이 시스템은 채팅방 생성, 대화 내역 저장 및 조회를 위한 견고한 프레임워크를 제공합니다. Supabase와의 원활한 통합을 보장하며, 개발자와 사용자 모두에게 사용자 친화적인 인터페이스를 제공합니다. 특히, Vue3 기반 환경에서 원활하게 동작하도록 최적화되어 있어, 최신 웹 기술을 활용한 매끄럽고 반응성 높은 사용자 경험을 제공합니다. 이러한 통합을 통해 다양한 채팅 옵션을 제공하고, Supabase의 고유한 기능을 활용하여 최적의 채팅 경험을 제공합니다. PBC Chat 시스템은 신뢰성과 확장성을 동시에 확보하며, 사용자에게 보다 다양한 선택지를 제공하여 채팅 과정을 더욱 매끄럽고 편리하게 만듭니다.\n\n## 사용 가능한 기능\n### 1) 채팅방 생성 <br>\n  다양한 지원 방법을 통해 사용자가 채팅방을 생성할 수 있도록 하며, 안전하고 빠른 채팅 환경을 보장합니다.\n\n### 2) 대화 내역 저장 <br>\n  Supabase를 사용하여 모든 대화 내역을 안전하게 저장하고 관리할 수 있는 기능을 제공합니다.\n\n### 3) 대화 내역 조회 <br>\n  과거 대화의 상세 기록을 사용자가 볼 수 있도록 하여, 채팅 상태 및 타임스탬프를 포함한 정보를 제공합니다.\n\n## 사용 방법\n\n### 1) 분석/설계\n1. 적용한 PBC의 바운디드 컨텍스트 영역을 더블 클릭하여 PBC 패널을 활성화 합니다.\n\n<img width=\"1275\" alt=\"image\" src=\"https://github.com/user-attachments/assets/69cebda6-8334-4945-b0b7-7b061ad6c064\" /> <br>\n<PBC Panel 생성 예시>\n\n2. PBC 패널 옵션중 읽기 요소, 커맨드 요소, 이벤트 요소에서 각각 사용할 기능에 해당하는 이벤트스토밍 스티커를 선택합니다. \n\n<img width=\"435\" alt=\"image\" src=\"https://github.com/user-attachments/assets/22365ca1-139f-4582-a95f-bb425bb61383\" /> <br>\n<Panel 스티커 옵션 선택 예시>\n\n### 2) 구현\n1. 패널을 닫은 후, CODE를 클릭하여 코드 프리뷰를 통해 이벤트스토밍기반 생성된 코드를 확인합니다.\n<img width=\"714\" alt=\"image\" src=\"https://github.com/user-attachments/assets/4d3f35e7-30cb-483d-a3b5-2fd099101ed4\" /> <br>\n\n2. 생성된 코드에서 선택한 PBC 폴더 > README.md를 클릭하여 소스코드 사용방법을 확인합니다.\n<img width=\"716\" alt=\"image\" src=\"https://github.com/user-attachments/assets/324887ab-53b3-4bd9-b8ba-823a62bcf764\" /> <br>\n<PBC README.md 파일 예시>\n\n3. IDE환경에서 소스코드를 Load한 후, README를 참고하여 다운로드 > 압축 해제를 진행하여 소스코드에 다운로드 받은 PBC가 생성되었는지 확인합니다.\n<img width=\"741\" alt=\"image\" src=\"https://github.com/user-attachments/assets/037b4ac3-dc03-4b96-9d83-dd049629d24f\" /> <br>\n<PBC 소스코드 다운 예시>\n\n4. port 충돌을 고려해 application.yml(payment/src/main/resources/application.yml)의 port를 적절하게 변경합니다.\n<img width=\"290\" alt=\"image\" src=\"https://github.com/user-attachments/assets/8809f047-3cc4-4e66-932e-9f89f6f8df5b\" /> <br>\n<PBC Port 변경 예시>\n",
-                        "id": 23,
+                        "id": 24,
                         "pbcPath": "https://github.com/msa-ez/pbc-chat-vue3/blob/main/model.json"
                     },
                     {
@@ -13641,7 +13998,7 @@ export const aggregateDraftScenarios = {
                             "COMMON"
                         ],
                         "instruction": "## PBC Chat 시스템 개요 <br>\nPBC Chat 시스템은 모든 채팅 관련 작업을 효율적이고 안전하게 처리하도록 설계되었습니다. 이 시스템은 채팅방 생성, 대화 내역 저장 및 조회를 위한 견고한 프레임워크를 제공합니다. Supabase와의 원활한 통합을 보장하며, 개발자와 사용자 모두에게 사용자 친화적인 인터페이스를 제공합니다. 이러한 통합을 통해 다양한 채팅 옵션을 제공하고, Supabase의 고유한 기능을 활용하여 최적의 채팅 경험을 제공합니다. PBC Chat 시스템은 신뢰성과 확장성을 동시에 확보하며, 사용자에게 보다 다양한 선택지를 제공하여 채팅 과정을 더욱 매끄럽고 편리하게 만듭니다.\n\n## 사용 가능한 기능\n### 1) 채팅방 생성 <br>\n  다양한 지원 방법을 통해 사용자가 채팅방을 생성할 수 있도록 하며, 안전하고 빠른 채팅 환경을 보장합니다.\n\n### 2) 대화 내역 저장 <br>\n  Supabase를 사용하여 모든 대화 내역을 안전하게 저장하고 관리할 수 있는 기능을 제공합니다.\n\n### 3) 대화 내역 조회 <br>\n  과거 대화의 상세 기록을 사용자가 볼 수 있도록 하여, 채팅 상태 및 타임스탬프를 포함한 정보를 제공합니다.\n\n## 사용 방법\n\n### 1) 분석/설계\n1. 적용한 PBC의 바운디드 컨텍스트 영역을 더블 클릭하여 PBC 패널을 활성화 합니다.\n\n<img width=\"1275\" alt=\"image\" src=\"https://github.com/user-attachments/assets/69cebda6-8334-4945-b0b7-7b061ad6c064\" /> <br>\n<PBC Panel 생성 예시>\n\n2. PBC 패널 옵션중 읽기 요소, 커맨드 요소, 이벤트 요소에서 각각 사용할 기능에 해당하는 이벤트스토밍 스티커를 선택합니다. \n\n<img width=\"435\" alt=\"image\" src=\"https://github.com/user-attachments/assets/22365ca1-139f-4582-a95f-bb425bb61383\" /> <br>\n<Panel 스티커 옵션 선택 예시>\n\n### 2) 구현\n1. 패널을 닫은 후, CODE를 클릭하여 코드 프리뷰를 통해 이벤트스토밍기반 생성된 코드를 확인합니다.\n<img width=\"714\" alt=\"image\" src=\"https://github.com/user-attachments/assets/4d3f35e7-30cb-483d-a3b5-2fd099101ed4\" /> <br>\n\n2. 생성된 코드에서 선택한 PBC 폴더 > README.md를 클릭하여 소스코드 사용방법을 확인합니다.\n<img width=\"716\" alt=\"image\" src=\"https://github.com/user-attachments/assets/324887ab-53b3-4bd9-b8ba-823a62bcf764\" /> <br>\n<PBC README.md 파일 예시>\n\n3. IDE환경에서 소스코드를 Load한 후, README를 참고하여 다운로드 > 압축 해제를 진행하여 소스코드에 다운로드 받은 PBC가 생성되었는지 확인합니다.\n<img width=\"741\" alt=\"image\" src=\"https://github.com/user-attachments/assets/037b4ac3-dc03-4b96-9d83-dd049629d24f\" /> <br>\n<PBC 소스코드 다운 예시>\n\n4. port 충돌을 고려해 application.yml(payment/src/main/resources/application.yml)의 port를 적절하게 변경합니다.\n<img width=\"290\" alt=\"image\" src=\"https://github.com/user-attachments/assets/8809f047-3cc4-4e66-932e-9f89f6f8df5b\" /> <br>\n<PBC Port 변경 예시>\n",
-                        "id": 24,
+                        "id": 25,
                         "pbcPath": "https://github.com/msa-ez/pbc-chat/blob/main/model.json"
                     },
                     {
@@ -13653,7 +14010,7 @@ export const aggregateDraftScenarios = {
                             "COMMON"
                         ],
                         "instruction": "## PBC 결제 시스템 개요 <br>\nPBC 결제 시스템은 모든 결제 관련 작업을 효율적이고 안전하게 처리하도록 설계되었습니다. 이 시스템은 결제 처리, 취소 관리, 거래 내역 조회를 위한 견고한 프레임워크를 제공합니다. 다양한 결제 게이트웨이(PG사)와의 원활한 통합을 보장하며, 개발자와 사용자 모두에게 사용자 친화적인 인터페이스를 제공합니다. 이러한 통합을 통해 다양한 결제 옵션을 제공하고, 각 게이트웨이의 고유한 기능을 활용하여 최적의 결제 경험을 제공합니다. PBC 결제 시스템은 신뢰성과 확장성을 동시에 확보하며, 사용자에게 보다 다양한 선택지를 제공하여 결제 과정을 더욱 매끄럽고 편리하게 만듭니다.\n\n## 사용 가능한 기능\n\n### 1) 결제 처리 <br>\n  다양한 지원 방법을 통해 사용자가 결제를 할 수 있도록 하며, 안전하고 빠른 거래를 보장합니다.\n\n### 2) 결제 취소 <br>\n   전체 또는 부분 환불 옵션을 통해 결제를 취소할 수 있는 기능을 제공합니다.\n\n### 3) 거래 내역 조회 <br>\n   결제 상태 및 타임스탬프를 포함한 과거 거래의 상세 기록을 사용자가 볼 수 있도록 합니다.\n\n## 사용 방법\n\n### 1) 분석/설계\n1. 적용한 PBC의 바운디드 컨텍스트 영역을 더블 클릭하여 PBC 패널을 활성화 합니다.\n\n<img width=\"1275\" alt=\"image\" src=\"https://github.com/user-attachments/assets/69cebda6-8334-4945-b0b7-7b061ad6c064\" /> <br>\n<PBC Panel 생성 예시>\n\n2. PBC 패널 옵션중 읽기 요소, 커맨드 요소, 이벤트 요소에서 각각 사용할 기능에 해당하는 이벤트스토밍 스티커를 선택합니다. \n\n<img width=\"435\" alt=\"image\" src=\"https://github.com/user-attachments/assets/22365ca1-139f-4582-a95f-bb425bb61383\" /> <br>\n<Panel 스티커 옵션 선택 예시>\n\n* 결제를 통한 결제정보 업데이트와 같은 다른 마이크로서비스와의 통신이 발생할 경우\n  Event - Policy Relation을 연결해야합니다.\n\n  예시) 결제성공을 통한 주문 애그리거트의 결제정보 변경\n  \n  <img width=\"823\" alt=\"image\" src=\"https://github.com/user-attachments/assets/cfaa6b70-a489-42eb-8c18-823b8c9ed7dc\" /> <br>\n  \n\n### 2) 구현\n1. 패널을 닫은 후, CODE를 클릭하여 코드 프리뷰를 통해 이벤트스토밍기반 생성된 코드를 확인합니다.\n<img width=\"714\" alt=\"image\" src=\"https://github.com/user-attachments/assets/4d3f35e7-30cb-483d-a3b5-2fd099101ed4\" /> <br>\n\n2. 생성된 코드에서 선택한 PBC 폴더 > README.md를 클릭하여 소스코드 사용방법을 확인합니다.\n<img width=\"716\" alt=\"image\" src=\"https://github.com/user-attachments/assets/324887ab-53b3-4bd9-b8ba-823a62bcf764\" /> <br>\n<PBC README.md 파일 예시>\n\n3. IDE환경에서 소스코드를 Load한 후, README를 참고하여 다운로드 > 압축 해제를 진행하여 소스코드에 다운로드 받은 PBC가 생성되었는지 확인합니다.\n<img width=\"741\" alt=\"image\" src=\"https://github.com/user-attachments/assets/037b4ac3-dc03-4b96-9d83-dd049629d24f\" /> <br>\n<PBC 소스코드 다운 예시>\n\n4. port 충돌을 고려해 application.yml(payment/src/main/resources/application.yml)의 port를 적절하게 변경합니다.\n<img width=\"290\" alt=\"image\" src=\"https://github.com/user-attachments/assets/8809f047-3cc4-4e66-932e-9f89f6f8df5b\" /> <br>\n<PBC Port 변경 예시>\n\n6. 이후, EDA기반 통신이 이루어지도록 다른 마이크로서비스와 topic명을 일치 시키기 위해 destination을 수정합니다.\n<img width=\"314\" alt=\"image\" src=\"https://github.com/user-attachments/assets/634d95ea-3d50-43e2-8d95-2a42a51de390\" /> <br>\n\n7. Frontend도 동일하게 package.json(frontend/package.json)의 'start'에 명시된 port number를 변경합니다.\n<img width=\"366\" alt=\"image\" src=\"https://github.com/user-attachments/assets/c750e392-c186-4d25-a8a1-2c088a412468\" /> <br>\n\n8. 아래 커맨드를 통해 Payment system의 backend, frontend를 기동합니다.\n```\n// 1. payment Backend\n\n// Root 기준\ncd payment-system-0-0-6\ncd payment\nmvn spring-boot:run\n\n// 2. payment Frontend\n\n// Root 기준\ncd frontend\nnpm install\nnpm run build\nnpm run start\n```\n\n8. Payment system의 Gateway 라우팅 설정을 진행하기 위해 application.yml(gateway/src/resources/application.yml)에 라우팅을 설정합니다.\n<img width=\"350\" alt=\"image\" src=\"https://github.com/user-attachments/assets/884ee895-b385-43be-aa37-7626b1d70056\" /> <br>\n\n9. Root에 위치한 Frontend에 web component 등록을 위해 index.html(frontend/public/index.html)에 Payment system의 17line에 아래와 같이 등록합니다.\n```\n<script src=\"<Payment system의 Frontend Url>/payment-system-app.js\"></script>\n```\n<img width=\"1013\" alt=\"image\" src=\"https://github.com/user-attachments/assets/8a5e7b96-facd-4c0b-9e65-387c198a2d80\" /> <br>\n\n10. Payment system을 SingleSPA로 동작하기 위해 Component의 \\<template>과 <script>에 다음과 같이 코드를 생성합니다.\n```\n// template\n<template>\n  <payment-system-app>\n      <payment-system\n          service-type=\"<payment-system frontend의 Payment.vue에 생성된 타입 ex) pay, refund, receipt...>\"\n          :request-info=\"JSON.stringify(paymentData)\" \n          buyer-info-mode=\"<결제 detail 정보 옵션 ex) true, false>\"\n      ></payment-system>\n  </payment-system-app>\n</template>\n\n// script\ndata: () => ({\n  snackbar: {\n    paymentData: null,\n}),\nasync created() {\n  if(!this.paymentData){\n    this.paymentData = {\n      itemId : this.decode(this.value._links.self.href.split(\"/\")[this.value._links.self.href.split(\"/\").length - 1]),\n      price: , // 직접 설정\n      name: \"\", // 직접 설정\n      buyerId: \"\", // 직접 설정\n      buyerEmail: \"\", // 직접 설정\n      buyerTel: \"\", // 직접 설정\n      buyerName: \"\" // 직접 설정\n    }\n  }\n}\n```\n\nPayment system에 대한 설정이 완료되면 Root Frontend UI에 아래와 같이 Payment system에 대한 UI가 생성됩니다. <br>\n![image](https://github.com/user-attachments/assets/5792ce28-b318-4ed8-b65d-d908fb1524ec) <br>\n\n",
-                        "id": 25,
+                        "id": 26,
                         "pbcPath": "https://github.com/msa-ez/pbc-payment-system/blob/main/model.json"
                     },
                     {
@@ -13695,11 +14052,518 @@ export const aggregateDraftScenarios = {
                 ],
                 "currentGeneratedLength": 5588,
                 "userStory": "도서관의 도서 관리와 대출/반납을 통합적으로 관리하는 화면을 만들려고 해.\n\n'도서 관리' 화면에서는 새로운 도서를 등록하고 현재 보유한 도서들의 상태를 관리할 수 있어야 해. 도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해. 등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야 해.\n\n'대출/반납' 화면에서는 회원이 도서를 대출하고 반납하는 것을 관리할 수 있어야 해. 대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할 도서를 선택해야 해. 도서는 도서명이나 ISBN으로 검색할 수 있어야 해. 대출 기간은 7일/14일/30일 중에서 선택할 수 있어. 만약 대출하려는 도서가 이미 대출 중이라면, 예약 신청이 가능해야 해. 대출이 완료되면 해당 도서의 상태는 자동으로 '대출중'으로 변경되어야 해.\n\n대출 현황 화면에서는 현재 대출 중인 도서들의 목록을 볼 수 있어야 해. 각 대출 건에 대해 대출일, 반납예정일, 현재 상태(대출중/연체/반납완료)를 확인할 수 있어야 하고, 대출 중인 도서는 연장이나 반납 처리가 가능해야 해. 도서가 반납되면 자동으로 해당 도서의 상태가 '대출가능'으로 변경되어야 해. 만약 예약자가 있는 도서가 반납되면, 해당 도서는 '예약중' 상태로 변경되어야 해.\n\n각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해.\n",
-                "timestamp": "2025-09-01T06:52:08.111Z"
+                "timestamp": "2025-09-09T02:16:59.825Z"
+            },
+            {
+                "uniqueId": "6d49d6a5211b08cedb19102387b9306c",
+                "type": "siteMapViewer",
+                "siteMap": [
+                    {
+                        "id": "node-1757384223929-cvwuxrn7j",
+                        "title": "도서관 도서 관리 시스템",
+                        "description": "도서관의 도서 등록, 상태 관리, 대출/반납, 대출 현황 및 이력 조회를 통합적으로 지원하는 시스템입니다.",
+                        "type": "root",
+                        "boundedContexts": [
+                            {
+                                "id": "BookManagement",
+                                "title": "BookManagement",
+                                "description": "도서의 등록, 상태 관리, 폐기, 상태 변경 및 도서별 이력 관리를 담당한다. 도서의 상태는 대출/반납/예약/폐기 등 이벤트에 따라 자동으로 변경되며, 도서별 대출 및 상태 변경 이력을 추적할 수 있다."
+                            },
+                            {
+                                "id": "LoanProcess",
+                                "title": "LoanProcess",
+                                "description": "회원의 도서 대출 신청, 승인, 예약, 연장, 반납 등 대출/반납 전반의 프로세스를 관리한다. 대출 신청 시 회원 인증, 도서 검색, 대출 기간 선택, 예약 처리, 반납 및 연장 기능을 제공한다."
+                            },
+                            {
+                                "id": "LoanStatusInquiry",
+                                "title": "LoanStatusInquiry",
+                                "description": "관리자 및 회원이 대출 현황, 도서별 대출 이력, 상태 변경 이력을 조회할 수 있도록 한다. 각 대출 건의 상태(대출중/연체/반납완료)와 도서별 이력 정보를 제공한다."
+                            }
+                        ],
+                        "children": [
+                            {
+                                "id": "book-management",
+                                "title": "도서 관리",
+                                "description": "도서 등록, 상태 관리, 폐기 및 도서별 이력 관리",
+                                "type": "navigation",
+                                "boundedContext": "BookManagement",
+                                "uiRequirements": "'도서 관리' 화면에서는 새로운 도서를 등록하고 현재 보유한 도서들의 상태를 관리할 수 있어야 해. 도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해. 등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야 해.",
+                                "children": [
+                                    {
+                                        "id": "book-registration",
+                                        "title": "도서 등록",
+                                        "description": "새로운 도서 등록",
+                                        "type": "navigation",
+                                        "boundedContext": "BookManagement",
+                                        "uiRequirements": "도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해.",
+                                        "children": []
+                                    },
+                                    {
+                                        "id": "book-status-management",
+                                        "title": "도서 상태 관리",
+                                        "description": "보유 도서의 상태 변경 및 폐기 처리",
+                                        "type": "navigation",
+                                        "boundedContext": "BookManagement",
+                                        "uiRequirements": "등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야 해.",
+                                        "children": []
+                                    },
+                                    {
+                                        "id": "book-history",
+                                        "title": "도서 이력 조회",
+                                        "description": "도서별 대출 및 상태 변경 이력 조회",
+                                        "type": "navigation",
+                                        "boundedContext": "BookManagement",
+                                        "uiRequirements": "각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해.",
+                                        "children": []
+                                    }
+                                ]
+                            },
+                            {
+                                "id": "loan-process",
+                                "title": "대출/반납",
+                                "description": "도서 대출, 반납, 예약 및 연장 처리",
+                                "type": "navigation",
+                                "boundedContext": "LoanProcess",
+                                "uiRequirements": "'대출/반납' 화면에서는 회원이 도서를 대출하고 반납하는 것을 관리할 수 있어야 해. 대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할 도서를 선택해야 해. 도서는 도서명이나 ISBN으로 검색할 수 있어야 해. 대출 기간은 7일/14일/30일 중에서 선택할 수 있어. 만약 대출하려는 도서가 이미 대출 중이라면, 예약 신청이 가능해야 해. 대출이 완료되면 해당 도서의 상태는 자동으로 '대출중'으로 변경되어야 해.",
+                                "children": [
+                                    {
+                                        "id": "loan-application",
+                                        "title": "대출 신청",
+                                        "description": "회원 인증 및 도서 대출 신청",
+                                        "type": "navigation",
+                                        "boundedContext": "LoanProcess",
+                                        "uiRequirements": "대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할 도서를 선택해야 해. 도서는 도서명이나 ISBN으로 검색할 수 있어야 해. 대출 기간은 7일/14일/30일 중에서 선택할 수 있어. 만약 대출하려는 도서가 이미 대출 중이라면, 예약 신청이 가능해야 해.",
+                                        "children": []
+                                    },
+                                    {
+                                        "id": "return-process",
+                                        "title": "반납 처리",
+                                        "description": "도서 반납 및 상태 변경",
+                                        "type": "navigation",
+                                        "boundedContext": "LoanProcess",
+                                        "uiRequirements": "대출이 완료되면 해당 도서의 상태는 자동으로 '대출중'으로 변경되어야 해.",
+                                        "children": []
+                                    }
+                                ]
+                            },
+                            {
+                                "id": "loan-status-inquiry",
+                                "title": "대출 현황",
+                                "description": "현재 대출 중인 도서 목록 및 대출 상태 관리",
+                                "type": "navigation",
+                                "boundedContext": "LoanStatusInquiry",
+                                "uiRequirements": "대출 현황 화면에서는 현재 대출 중인 도서들의 목록을 볼 수 있어야 해. 각 대출 건에 대해 대출일, 반납예정일, 현재 상태(대출중/연체/반납완료)를 확인할 수 있어야 하고, 대출 중인 도서는 연장이나 반납 처리가 가능해야 해. 도서가 반납되면 자동으로 해당 도서의 상태가 '대출가능'으로 변경되어야 해. 만약 예약자가 있는 도서가 반납되면, 해당 도서는 '예약중' 상태로 변경되어야 해.",
+                                "children": [
+                                    {
+                                        "id": "loan-list",
+                                        "title": "대출 목록",
+                                        "description": "대출 중인 도서 목록 및 상태 확인",
+                                        "type": "navigation",
+                                        "boundedContext": "LoanStatusInquiry",
+                                        "uiRequirements": "각 대출 건에 대해 대출일, 반납예정일, 현재 상태(대출중/연체/반납완료)를 확인할 수 있어야 하고, 대출 중인 도서는 연장이나 반납 처리가 가능해야 해.",
+                                        "children": []
+                                    },
+                                    {
+                                        "id": "loan-history",
+                                        "title": "대출 이력 조회",
+                                        "description": "도서별 대출 이력 및 상태 변경 이력 확인",
+                                        "type": "navigation",
+                                        "boundedContext": "LoanStatusInquiry",
+                                        "uiRequirements": "각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해.",
+                                        "children": []
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ],
+                "userStory": "도서관의 도서 관리와 대출/반납을 통합적으로 관리하는 화면을 만들려고 해.\n\n'도서 관리' 화면에서는 새로운 도서를 등록하고 현재 보유한 도서들의 상태를 관리할 수 있어야 해. 도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해. 등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야 해.\n\n'대출/반납' 화면에서는 회원이 도서를 대출하고 반납하는 것을 관리할 수 있어야 해. 대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할 도서를 선택해야 해. 도서는 도서명이나 ISBN으로 검색할 수 있어야 해. 대출 기간은 7일/14일/30일 중에서 선택할 수 있어. 만약 대출하려는 도서가 이미 대출 중이라면, 예약 신청이 가능해야 해. 대출이 완료되면 해당 도서의 상태는 자동으로 '대출중'으로 변경되어야 해.\n\n대출 현황 화면에서는 현재 대출 중인 도서들의 목록을 볼 수 있어야 해. 각 대출 건에 대해 대출일, 반납예정일, 현재 상태(대출중/연체/반납완료)를 확인할 수 있어야 하고, 대출 중인 도서는 연장이나 반납 처리가 가능해야 해. 도서가 반납되면 자동으로 해당 도서의 상태가 '대출가능'으로 변경되어야 해. 만약 예약자가 있는 도서가 반납되면, 해당 도서는 '예약중' 상태로 변경되어야 해.\n\n각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해.\n",
+                "resultDevideBoundedContext": {
+                    "boundedContexts": [
+                        {
+                            "name": "BookManagement",
+                            "alias": "도서 관리",
+                            "importance": "Core Domain",
+                            "complexity": 0.8,
+                            "differentiation": 0.9,
+                            "implementationStrategy": "Rich Domain Model",
+                            "aggregates": [
+                                {
+                                    "name": "Book",
+                                    "alias": "도서"
+                                },
+                                {
+                                    "name": "BookHistory",
+                                    "alias": "도서 이력"
+                                }
+                            ],
+                            "events": [
+                                "BookRegistered",
+                                "BookDiscarded",
+                                "BookStatusChanged"
+                            ],
+                            "requirements": [],
+                            "role": "도서의 등록, 상태 관리, 폐기, 상태 변경 및 도서별 이력 관리를 담당한다. 도서의 상태는 대출/반납/예약/폐기 등 이벤트에 따라 자동으로 변경되며, 도서별 대출 및 상태 변경 이력을 추적할 수 있다.",
+                            "roleRefs": [
+                                [
+                                    [
+                                        3,
+                                        2
+                                    ],
+                                    [
+                                        3,
+                                        286
+                                    ]
+                                ],
+                                [
+                                    [
+                                        9,
+                                        3
+                                    ],
+                                    [
+                                        9,
+                                        61
+                                    ]
+                                ]
+                            ],
+                            "siteMap": [
+                                {
+                                    "id": "book-management",
+                                    "title": "도서 관리",
+                                    "description": "도서 등록, 상태 관리, 폐기 및 도서별 이력 관리",
+                                    "boundedContext": "BookManagement",
+                                    "uiRequirements": "'도서 관리' 화면에서는 새로운 도서를 등록하고 현재 보유한 도서들의 상태를 관리할 수 있어야 해. 도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해. 등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야 해."
+                                },
+                                {
+                                    "id": "book-registration",
+                                    "title": "도서 등록",
+                                    "description": "새로운 도서 등록",
+                                    "boundedContext": "BookManagement",
+                                    "uiRequirements": "도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해."
+                                },
+                                {
+                                    "id": "book-status-management",
+                                    "title": "도서 상태 관리",
+                                    "description": "보유 도서의 상태 변경 및 폐기 처리",
+                                    "boundedContext": "BookManagement",
+                                    "uiRequirements": "등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야 해."
+                                },
+                                {
+                                    "id": "book-history",
+                                    "title": "도서 이력 조회",
+                                    "description": "도서별 대출 및 상태 변경 이력 조회",
+                                    "boundedContext": "BookManagement",
+                                    "uiRequirements": "각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해."
+                                }
+                            ]
+                        },
+                        {
+                            "name": "LoanProcess",
+                            "alias": "대출/반납 프로세스",
+                            "importance": "Core Domain",
+                            "complexity": 0.9,
+                            "differentiation": 0.95,
+                            "implementationStrategy": "Rich Domain Model",
+                            "aggregates": [
+                                {
+                                    "name": "Loan",
+                                    "alias": "대출"
+                                },
+                                {
+                                    "name": "Reservation",
+                                    "alias": "예약"
+                                }
+                            ],
+                            "events": [
+                                "LoanRequested",
+                                "LoanApproved",
+                                "BookReserved",
+                                "LoanExtended",
+                                "BookReturned"
+                            ],
+                            "requirements": [],
+                            "role": "회원의 도서 대출 신청, 승인, 예약, 연장, 반납 등 대출/반납 전반의 프로세스를 관리한다. 대출 신청 시 회원 인증, 도서 검색, 대출 기간 선택, 예약 처리, 반납 및 연장 기능을 제공한다.",
+                            "roleRefs": [
+                                [
+                                    [
+                                        5,
+                                        2
+                                    ],
+                                    [
+                                        7,
+                                        208
+                                    ]
+                                ]
+                            ],
+                            "siteMap": [
+                                {
+                                    "id": "loan-process",
+                                    "title": "대출/반납",
+                                    "description": "도서 대출, 반납, 예약 및 연장 처리",
+                                    "boundedContext": "LoanProcess",
+                                    "uiRequirements": "'대출/반납' 화면에서는 회원이 도서를 대출하고 반납하는 것을 관리할 수 있어야 해. 대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할 도서를 선택해야 해. 도서는 도서명이나 ISBN으로 검색할 수 있어야 해. 대출 기간은 7일/14일/30일 중에서 선택할 수 있어. 만약 대출하려는 도서가 이미 대출 중이라면, 예약 신청이 가능해야 해. 대출이 완료되면 해당 도서의 상태는 자동으로 '대출중'으로 변경되어야 해."
+                                },
+                                {
+                                    "id": "loan-application",
+                                    "title": "대출 신청",
+                                    "description": "회원 인증 및 도서 대출 신청",
+                                    "boundedContext": "LoanProcess",
+                                    "uiRequirements": "대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할 도서를 선택해야 해. 도서는 도서명이나 ISBN으로 검색할 수 있어야 해. 대출 기간은 7일/14일/30일 중에서 선택할 수 있어. 만약 대출하려는 도서가 이미 대출 중이라면, 예약 신청이 가능해야 해."
+                                },
+                                {
+                                    "id": "return-process",
+                                    "title": "반납 처리",
+                                    "description": "도서 반납 및 상태 변경",
+                                    "boundedContext": "LoanProcess",
+                                    "uiRequirements": "대출이 완료되면 해당 도서의 상태는 자동으로 '대출중'으로 변경되어야 해."
+                                }
+                            ]
+                        },
+                        {
+                            "name": "LoanStatusInquiry",
+                            "alias": "대출 현황 및 이력 조회",
+                            "importance": "Supporting Domain",
+                            "complexity": 0.6,
+                            "differentiation": 0.5,
+                            "implementationStrategy": "Transaction Script",
+                            "aggregates": [
+                                {
+                                    "name": "LoanStatus",
+                                    "alias": "대출 현황"
+                                }
+                            ],
+                            "events": [
+                                "LoanStatusChecked",
+                                "BookHistoryChecked"
+                            ],
+                            "requirements": [],
+                            "role": "관리자 및 회원이 대출 현황, 도서별 대출 이력, 상태 변경 이력을 조회할 수 있도록 한다. 각 대출 건의 상태(대출중/연체/반납완료)와 도서별 이력 정보를 제공한다.",
+                            "roleRefs": [
+                                [
+                                    [
+                                        7,
+                                        1
+                                    ],
+                                    [
+                                        9,
+                                        61
+                                    ]
+                                ]
+                            ],
+                            "siteMap": [
+                                {
+                                    "id": "loan-status-inquiry",
+                                    "title": "대출 현황",
+                                    "description": "현재 대출 중인 도서 목록 및 대출 상태 관리",
+                                    "boundedContext": "LoanStatusInquiry",
+                                    "uiRequirements": "대출 현황 화면에서는 현재 대출 중인 도서들의 목록을 볼 수 있어야 해. 각 대출 건에 대해 대출일, 반납예정일, 현재 상태(대출중/연체/반납완료)를 확인할 수 있어야 하고, 대출 중인 도서는 연장이나 반납 처리가 가능해야 해. 도서가 반납되면 자동으로 해당 도서의 상태가 '대출가능'으로 변경되어야 해. 만약 예약자가 있는 도서가 반납되면, 해당 도서는 '예약중' 상태로 변경되어야 해."
+                                },
+                                {
+                                    "id": "loan-list",
+                                    "title": "대출 목록",
+                                    "description": "대출 중인 도서 목록 및 상태 확인",
+                                    "boundedContext": "LoanStatusInquiry",
+                                    "uiRequirements": "각 대출 건에 대해 대출일, 반납예정일, 현재 상태(대출중/연체/반납완료)를 확인할 수 있어야 하고, 대출 중인 도서는 연장이나 반납 처리가 가능해야 해."
+                                },
+                                {
+                                    "id": "loan-history",
+                                    "title": "대출 이력 조회",
+                                    "description": "도서별 대출 이력 및 상태 변경 이력 확인",
+                                    "boundedContext": "LoanStatusInquiry",
+                                    "uiRequirements": "각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해."
+                                }
+                            ]
+                        }
+                    ],
+                    "relations": [
+                        {
+                            "name": "BookManagement-LoanProcess",
+                            "type": "Pub/Sub",
+                            "upStream": {
+                                "name": "BookManagement",
+                                "alias": "도서 관리"
+                            },
+                            "downStream": {
+                                "name": "LoanProcess",
+                                "alias": "대출/반납 프로세스"
+                            },
+                            "refs": [
+                                [
+                                    [
+                                        3,
+                                        228
+                                    ],
+                                    [
+                                        3,
+                                        230
+                                    ]
+                                ]
+                            ]
+                        },
+                        {
+                            "name": "LoanProcess-BookManagement",
+                            "type": "Pub/Sub",
+                            "upStream": {
+                                "name": "LoanProcess",
+                                "alias": "대출/반납 프로세스"
+                            },
+                            "downStream": {
+                                "name": "BookManagement",
+                                "alias": "도서 관리"
+                            },
+                            "refs": [
+                                [
+                                    [
+                                        5,
+                                        198
+                                    ],
+                                    [
+                                        7,
+                                        208
+                                    ]
+                                ]
+                            ]
+                        },
+                        {
+                            "name": "LoanProcess-LoanStatusInquiry",
+                            "type": "Pub/Sub",
+                            "upStream": {
+                                "name": "LoanProcess",
+                                "alias": "대출/반납 프로세스"
+                            },
+                            "downStream": {
+                                "name": "LoanStatusInquiry",
+                                "alias": "대출 현황 및 이력 조회"
+                            },
+                            "refs": [
+                                [
+                                    [
+                                        7,
+                                        1
+                                    ],
+                                    [
+                                        9,
+                                        61
+                                    ]
+                                ]
+                            ]
+                        },
+                        {
+                            "name": "BookManagement-LoanStatusInquiry",
+                            "type": "Pub/Sub",
+                            "upStream": {
+                                "name": "BookManagement",
+                                "alias": "도서 관리"
+                            },
+                            "downStream": {
+                                "name": "LoanStatusInquiry",
+                                "alias": "대출 현황 및 이력 조회"
+                            },
+                            "refs": [
+                                [
+                                    [
+                                        9,
+                                        3
+                                    ],
+                                    [
+                                        9,
+                                        61
+                                    ]
+                                ]
+                            ]
+                        }
+                    ],
+                    "thoughts": "도메인 복잡도와 프로세스(value stream)를 기준으로 도서 관리, 대출/반납 프로세스, 그리고 현황 및 이력 조회로 분리하였다. 도서 관리와 대출/반납은 각각 복잡한 비즈니스 규칙과 상태 전이를 포함하므로 Core Domain으로 지정하였다. 현황 및 이력 조회는 주로 데이터 조회 중심이므로 Supporting Domain으로 분리하였다. 각 컨텍스트는 이벤트 기반(Pub/Sub)으로 상호작용하여 결합도를 낮추고, 각자의 책임에 집중할 수 있도록 설계하였다.",
+                    "explanations": [
+                        {
+                            "sourceContext": "도서 관리",
+                            "targetContext": "대출/반납 프로세스",
+                            "relationType": "Pub/Sub",
+                            "reason": "도서 상태 변경 등 이벤트가 발생하면 대출/반납 프로세스에서 이를 구독하여 처리할 수 있도록 느슨한 결합을 유지하기 위함.",
+                            "interactionPattern": "도서 등록, 폐기, 상태 변경 이벤트가 발생하면 대출/반납 프로세스에서 해당 이벤트를 구독하여 대출 가능 여부 등을 판단한다.",
+                            "refs": [
+                                [
+                                    [
+                                        3,
+                                        228
+                                    ],
+                                    [
+                                        3,
+                                        230
+                                    ]
+                                ]
+                            ]
+                        },
+                        {
+                            "sourceContext": "대출/반납 프로세스",
+                            "targetContext": "도서 관리",
+                            "relationType": "Pub/Sub",
+                            "reason": "대출/반납/예약/연장 등 프로세스에서 발생한 이벤트를 도서 관리 컨텍스트가 구독하여 도서 상태를 변경한다.",
+                            "interactionPattern": "대출 승인, 반납, 예약 등의 이벤트가 발생하면 도서 관리에서 해당 이벤트를 구독하여 도서 상태를 갱신한다.",
+                            "refs": [
+                                [
+                                    [
+                                        5,
+                                        198
+                                    ],
+                                    [
+                                        7,
+                                        208
+                                    ]
+                                ]
+                            ]
+                        },
+                        {
+                            "sourceContext": "대출/반납 프로세스",
+                            "targetContext": "대출 현황 및 이력 조회",
+                            "relationType": "Pub/Sub",
+                            "reason": "대출/반납/연장 등 이벤트 발생 시 현황 및 이력 조회 컨텍스트가 이를 구독하여 최신 현황과 이력을 제공할 수 있도록 한다.",
+                            "interactionPattern": "대출/반납/연장 이벤트가 발생할 때마다 현황 및 이력 조회 컨텍스트가 관련 정보를 갱신한다.",
+                            "refs": [
+                                [
+                                    [
+                                        7,
+                                        1
+                                    ],
+                                    [
+                                        9,
+                                        61
+                                    ]
+                                ]
+                            ]
+                        },
+                        {
+                            "sourceContext": "도서 관리",
+                            "targetContext": "대출 현황 및 이력 조회",
+                            "relationType": "Pub/Sub",
+                            "reason": "도서의 상태 변경 및 이력 이벤트가 발생하면 현황 및 이력 조회 컨텍스트가 이를 구독하여 도서별 이력 정보를 제공한다.",
+                            "interactionPattern": "도서 등록, 폐기, 상태 변경 이벤트가 발생할 때마다 현황 및 이력 조회 컨텍스트가 도서별 이력 정보를 갱신한다.",
+                            "refs": [
+                                [
+                                    [
+                                        9,
+                                        3
+                                    ],
+                                    [
+                                        9,
+                                        61
+                                    ]
+                                ]
+                            ]
+                        }
+                    ],
+                    "devisionAspect": "도메인 복잡도 분리+프로세스(value stream) 기반 분리",
+                    "currentGeneratedLength": 5588
+                },
+                "isGenerating": false,
+                "processingRate": 0,
+                "currentChunk": 0,
+                "totalChunks": 0,
+                "timestamp": "2025-09-09T02:17:03.693Z"
             },
             {
                 "type": "aggregateDraftDialogDto",
-                "uniqueId": "1756709538659",
+                "uniqueId": "1757384237823",
                 "isShow": true,
                 "draftOptions": [
                     {
@@ -17599,7 +18463,37 @@ export const aggregateDraftScenarios = {
                                                 ],
                                                 "isDirectMatching": false
                                             }
-                                        }
+                                        },
+                                        "siteMap": [
+                                            {
+                                                "id": "book-management",
+                                                "title": "도서 관리",
+                                                "description": "도서 등록, 상태 관리, 폐기 및 도서별 이력 관리",
+                                                "boundedContext": "BookManagement",
+                                                "uiRequirements": "'도서 관리' 화면에서는 새로운 도서를 등록하고 현재 보유한 도서들의 상태를 관리할 수 있어야 해. 도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해. 등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야 해."
+                                            },
+                                            {
+                                                "id": "book-registration",
+                                                "title": "도서 등록",
+                                                "description": "새로운 도서 등록",
+                                                "boundedContext": "BookManagement",
+                                                "uiRequirements": "도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해."
+                                            },
+                                            {
+                                                "id": "book-status-management",
+                                                "title": "도서 상태 관리",
+                                                "description": "보유 도서의 상태 변경 및 폐기 처리",
+                                                "boundedContext": "BookManagement",
+                                                "uiRequirements": "등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야 해."
+                                            },
+                                            {
+                                                "id": "book-history",
+                                                "title": "도서 이력 조회",
+                                                "description": "도서별 대출 및 상태 변경 이력 조회",
+                                                "boundedContext": "BookManagement",
+                                                "uiRequirements": "각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해."
+                                            }
+                                        ]
                                     }
                                 },
                                 "description": "# Bounded Context Overview: BookManagement (도서 관리)\n\n## Role\n도서의 등록, 상태 관리, 폐기, 상태 변경 및 도서별 이력 관리를 담당한다. 도서의 상태는 대출/반납/예약/폐기 등 이벤트에 따라 자동으로 변경되며, 도서별 대출 및 상태 변경 이력을 추적할 수 있다.\n\n## Key Events\n- BookRegistered\n- BookDiscarded\n- BookStatusChanged\n\n# Requirements\n\n## userStory\n\n도서 관리' 화면에서는 새로운 도서를 등록하고 현재 보유한 도서들의 상태를 관리할 수 있어야 해. 도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해. 등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야\n\n도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할\n\n## DDL\n\n```sql\nCREATE TABLE books (\n    book_id INT AUTO_INCREMENT PRIMARY KEY,\n    title VARCHAR(500) NOT NULL,\n    isbn VARCHAR(13) UNIQUE NOT NULL,\n    author VARCHAR(200) NOT NULL,\n    publisher VARCHAR(200) NOT NULL,\n    category ENUM('소설', '비소설', '학술', '잡지') NOT NULL,\n    status ENUM('대출가능', '대출중', '예약중', '폐기') DEFAULT '대출가능',\n    registration_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    disposal_date DATETIME NULL,\n    disposal_reason TEXT NULL,\n    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,\n    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n    INDEX idx_title (title),\n    INDEX idx_isbn (isbn),\n    INDEX idx_status (status),\n    INDEX idx_category (category)\n);\n```\n```sql\nCREATE TABLE book_status_history (\n    history_id INT AUTO_INCREMENT PRIMARY KEY,\n    book_id INT NOT NULL,\n    previous_status ENUM('대출가능', '대출중', '예약중', '폐기'),\n    new_status ENUM('대출가능', '대출중', '예약중', '폐기') NOT NULL,\n    change_reason VARCHAR(200),\n    changed_by VARCHAR(100),\n    change_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    FOREIGN KEY (book_id) REFERENCES books(book_id),\n    INDEX idx_book_id (book_id),\n    INDEX idx_change_date (change_date)\n);\n```\n## Event\n\n```json\n{\n  \"name\": \"BookRegistered\",\n  \"displayName\": \"도서 등록됨\",\n  \"actor\": \"Librarian\",\n  \"level\": 1,\n  \"description\": \"관리자가 새로운 도서를 도서관 시스템에 등록함. 등록 시 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받고, ISBN 중복 및 유효성 검증이 완료됨.\",\n  \"inputs\": [\n    \"도서명\",\n    \"ISBN(13자리)\",\n    \"저자\",\n    \"출판사\",\n    \"카테고리(소설/비소설/학술/잡지)\"\n  ],\n  \"outputs\": [\n    \"신규 도서 생성\",\n    \"도서 상태 '대출가능'으로 설정\"\n  ],\n  \"nextEvents\": [\n    \"BookStatusChanged\"\n  ]\n}\n```\n\n```json\n{\n  \"name\": \"BookStatusChanged\",\n  \"displayName\": \"도서 상태 변경됨\",\n  \"actor\": \"System\",\n  \"level\": 2,\n  \"description\": \"도서의 대출/반납/예약/폐기 등 상황에 따라 도서 상태가 자동으로 변경됨.\",\n  \"inputs\": [\n    \"도서 상태 변경 트리거(대출, 반납, 예약, 폐기 등)\"\n  ],\n  \"outputs\": [\n    \"도서 상태(대출가능, 대출중, 예약중, 폐기)\"\n  ],\n  \"nextEvents\": [\n    \"BookDiscarded\",\n    \"LoanRequested\",\n    \"BookReturned\",\n    \"BookReserved\"\n  ]\n}\n```\n\n```json\n{\n  \"name\": \"BookDiscarded\",\n  \"displayName\": \"도서 폐기됨\",\n  \"actor\": \"Librarian\",\n  \"level\": 3,\n  \"description\": \"도서가 훼손되거나 분실된 경우 관리자가 해당 도서를 폐기 처리함. 폐기된 도서는 더 이상 대출이 불가능함.\",\n  \"inputs\": [\n    \"도서 훼손/분실 사유\",\n    \"도서 식별자\"\n  ],\n  \"outputs\": [\n    \"도서 상태 '폐기'로 변경\"\n  ],\n  \"nextEvents\": []\n}\n```\n\n```json\n{\n  \"name\": \"BookHistoryChecked\",\n  \"displayName\": \"도서 이력 조회됨\",\n  \"actor\": \"Librarian\",\n  \"level\": 1,\n  \"description\": \"관리자가 도서별 대출 이력과 상태 변경 이력을 조회함.\",\n  \"inputs\": [\n    \"도서 식별자\"\n  ],\n  \"outputs\": [\n    \"대출 이력\",\n    \"상태 변경 이력\"\n  ],\n  \"nextEvents\": []\n}\n```\n\n## Context Relations\n\n### BookManagement-LoanProcess\n- **Type**: Pub/Sub\n- **Direction**: sends to 대출/반납 프로세스 (LoanProcess)\n- **Reason**: 도서 상태 변경 등 이벤트가 발생하면 대출/반납 프로세스에서 이를 구독하여 처리할 수 있도록 느슨한 결합을 유지하기 위함.\n- **Interaction Pattern**: 도서 등록, 폐기, 상태 변경 이벤트가 발생하면 대출/반납 프로세스에서 해당 이벤트를 구독하여 대출 가능 여부 등을 판단한다.\n\n### LoanProcess-BookManagement\n- **Type**: Pub/Sub\n- **Direction**: receives from 대출/반납 프로세스 (LoanProcess)\n- **Reason**: 도서 상태 변경 등 이벤트가 발생하면 대출/반납 프로세스에서 이를 구독하여 처리할 수 있도록 느슨한 결합을 유지하기 위함.\n- **Interaction Pattern**: 도서 등록, 폐기, 상태 변경 이벤트가 발생하면 대출/반납 프로세스에서 해당 이벤트를 구독하여 대출 가능 여부 등을 판단한다.\n\n### BookManagement-LoanStatusInquiry\n- **Type**: Pub/Sub\n- **Direction**: sends to 대출 현황 및 이력 조회 (LoanStatusInquiry)\n- **Reason**: 도서의 상태 변경 및 이력 이벤트가 발생하면 현황 및 이력 조회 컨텍스트가 이를 구독하여 도서별 이력 정보를 제공한다.\n- **Interaction Pattern**: 도서 등록, 폐기, 상태 변경 이벤트가 발생할 때마다 현황 및 이력 조회 컨텍스트가 도서별 이력 정보를 갱신한다."
@@ -21831,7 +22725,37 @@ export const aggregateDraftScenarios = {
                                                 ],
                                                 "isDirectMatching": false
                                             }
-                                        }
+                                        },
+                                        "siteMap": [
+                                            {
+                                                "id": "book-management",
+                                                "title": "도서 관리",
+                                                "description": "도서 등록, 상태 관리, 폐기 및 도서별 이력 관리",
+                                                "boundedContext": "BookManagement",
+                                                "uiRequirements": "'도서 관리' 화면에서는 새로운 도서를 등록하고 현재 보유한 도서들의 상태를 관리할 수 있어야 해. 도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해. 등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야 해."
+                                            },
+                                            {
+                                                "id": "book-registration",
+                                                "title": "도서 등록",
+                                                "description": "새로운 도서 등록",
+                                                "boundedContext": "BookManagement",
+                                                "uiRequirements": "도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해."
+                                            },
+                                            {
+                                                "id": "book-status-management",
+                                                "title": "도서 상태 관리",
+                                                "description": "보유 도서의 상태 변경 및 폐기 처리",
+                                                "boundedContext": "BookManagement",
+                                                "uiRequirements": "등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야 해."
+                                            },
+                                            {
+                                                "id": "book-history",
+                                                "title": "도서 이력 조회",
+                                                "description": "도서별 대출 및 상태 변경 이력 조회",
+                                                "boundedContext": "BookManagement",
+                                                "uiRequirements": "각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해."
+                                            }
+                                        ]
                                     }
                                 },
                                 "description": "# Bounded Context Overview: BookManagement (도서 관리)\n\n## Role\n도서의 등록, 상태 관리, 폐기, 상태 변경 및 도서별 이력 관리를 담당한다. 도서의 상태는 대출/반납/예약/폐기 등 이벤트에 따라 자동으로 변경되며, 도서별 대출 및 상태 변경 이력을 추적할 수 있다.\n\n## Key Events\n- BookRegistered\n- BookDiscarded\n- BookStatusChanged\n\n# Requirements\n\n## userStory\n\n도서 관리' 화면에서는 새로운 도서를 등록하고 현재 보유한 도서들의 상태를 관리할 수 있어야 해. 도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해. 등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야\n\n도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할\n\n## DDL\n\n```sql\nCREATE TABLE books (\n    book_id INT AUTO_INCREMENT PRIMARY KEY,\n    title VARCHAR(500) NOT NULL,\n    isbn VARCHAR(13) UNIQUE NOT NULL,\n    author VARCHAR(200) NOT NULL,\n    publisher VARCHAR(200) NOT NULL,\n    category ENUM('소설', '비소설', '학술', '잡지') NOT NULL,\n    status ENUM('대출가능', '대출중', '예약중', '폐기') DEFAULT '대출가능',\n    registration_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    disposal_date DATETIME NULL,\n    disposal_reason TEXT NULL,\n    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,\n    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n    INDEX idx_title (title),\n    INDEX idx_isbn (isbn),\n    INDEX idx_status (status),\n    INDEX idx_category (category)\n);\n```\n```sql\nCREATE TABLE book_status_history (\n    history_id INT AUTO_INCREMENT PRIMARY KEY,\n    book_id INT NOT NULL,\n    previous_status ENUM('대출가능', '대출중', '예약중', '폐기'),\n    new_status ENUM('대출가능', '대출중', '예약중', '폐기') NOT NULL,\n    change_reason VARCHAR(200),\n    changed_by VARCHAR(100),\n    change_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    FOREIGN KEY (book_id) REFERENCES books(book_id),\n    INDEX idx_book_id (book_id),\n    INDEX idx_change_date (change_date)\n);\n```\n## Event\n\n```json\n{\n  \"name\": \"BookRegistered\",\n  \"displayName\": \"도서 등록됨\",\n  \"actor\": \"Librarian\",\n  \"level\": 1,\n  \"description\": \"관리자가 새로운 도서를 도서관 시스템에 등록함. 등록 시 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받고, ISBN 중복 및 유효성 검증이 완료됨.\",\n  \"inputs\": [\n    \"도서명\",\n    \"ISBN(13자리)\",\n    \"저자\",\n    \"출판사\",\n    \"카테고리(소설/비소설/학술/잡지)\"\n  ],\n  \"outputs\": [\n    \"신규 도서 생성\",\n    \"도서 상태 '대출가능'으로 설정\"\n  ],\n  \"nextEvents\": [\n    \"BookStatusChanged\"\n  ]\n}\n```\n\n```json\n{\n  \"name\": \"BookStatusChanged\",\n  \"displayName\": \"도서 상태 변경됨\",\n  \"actor\": \"System\",\n  \"level\": 2,\n  \"description\": \"도서의 대출/반납/예약/폐기 등 상황에 따라 도서 상태가 자동으로 변경됨.\",\n  \"inputs\": [\n    \"도서 상태 변경 트리거(대출, 반납, 예약, 폐기 등)\"\n  ],\n  \"outputs\": [\n    \"도서 상태(대출가능, 대출중, 예약중, 폐기)\"\n  ],\n  \"nextEvents\": [\n    \"BookDiscarded\",\n    \"LoanRequested\",\n    \"BookReturned\",\n    \"BookReserved\"\n  ]\n}\n```\n\n```json\n{\n  \"name\": \"BookDiscarded\",\n  \"displayName\": \"도서 폐기됨\",\n  \"actor\": \"Librarian\",\n  \"level\": 3,\n  \"description\": \"도서가 훼손되거나 분실된 경우 관리자가 해당 도서를 폐기 처리함. 폐기된 도서는 더 이상 대출이 불가능함.\",\n  \"inputs\": [\n    \"도서 훼손/분실 사유\",\n    \"도서 식별자\"\n  ],\n  \"outputs\": [\n    \"도서 상태 '폐기'로 변경\"\n  ],\n  \"nextEvents\": []\n}\n```\n\n```json\n{\n  \"name\": \"BookHistoryChecked\",\n  \"displayName\": \"도서 이력 조회됨\",\n  \"actor\": \"Librarian\",\n  \"level\": 1,\n  \"description\": \"관리자가 도서별 대출 이력과 상태 변경 이력을 조회함.\",\n  \"inputs\": [\n    \"도서 식별자\"\n  ],\n  \"outputs\": [\n    \"대출 이력\",\n    \"상태 변경 이력\"\n  ],\n  \"nextEvents\": []\n}\n```\n\n## Context Relations\n\n### BookManagement-LoanProcess\n- **Type**: Pub/Sub\n- **Direction**: sends to 대출/반납 프로세스 (LoanProcess)\n- **Reason**: 도서 상태 변경 등 이벤트가 발생하면 대출/반납 프로세스에서 이를 구독하여 처리할 수 있도록 느슨한 결합을 유지하기 위함.\n- **Interaction Pattern**: 도서 등록, 폐기, 상태 변경 이벤트가 발생하면 대출/반납 프로세스에서 해당 이벤트를 구독하여 대출 가능 여부 등을 판단한다.\n\n### LoanProcess-BookManagement\n- **Type**: Pub/Sub\n- **Direction**: receives from 대출/반납 프로세스 (LoanProcess)\n- **Reason**: 도서 상태 변경 등 이벤트가 발생하면 대출/반납 프로세스에서 이를 구독하여 처리할 수 있도록 느슨한 결합을 유지하기 위함.\n- **Interaction Pattern**: 도서 등록, 폐기, 상태 변경 이벤트가 발생하면 대출/반납 프로세스에서 해당 이벤트를 구독하여 대출 가능 여부 등을 판단한다.\n\n### BookManagement-LoanStatusInquiry\n- **Type**: Pub/Sub\n- **Direction**: sends to 대출 현황 및 이력 조회 (LoanStatusInquiry)\n- **Reason**: 도서의 상태 변경 및 이력 이벤트가 발생하면 현황 및 이력 조회 컨텍스트가 이를 구독하여 도서별 이력 정보를 제공한다.\n- **Interaction Pattern**: 도서 등록, 폐기, 상태 변경 이벤트가 발생할 때마다 현황 및 이력 조회 컨텍스트가 도서별 이력 정보를 갱신한다."
@@ -26564,7 +27488,30 @@ export const aggregateDraftScenarios = {
                                                 ],
                                                 "isDirectMatching": false
                                             }
-                                        }
+                                        },
+                                        "siteMap": [
+                                            {
+                                                "id": "loan-process",
+                                                "title": "대출/반납",
+                                                "description": "도서 대출, 반납, 예약 및 연장 처리",
+                                                "boundedContext": "LoanProcess",
+                                                "uiRequirements": "'대출/반납' 화면에서는 회원이 도서를 대출하고 반납하는 것을 관리할 수 있어야 해. 대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할 도서를 선택해야 해. 도서는 도서명이나 ISBN으로 검색할 수 있어야 해. 대출 기간은 7일/14일/30일 중에서 선택할 수 있어. 만약 대출하려는 도서가 이미 대출 중이라면, 예약 신청이 가능해야 해. 대출이 완료되면 해당 도서의 상태는 자동으로 '대출중'으로 변경되어야 해."
+                                            },
+                                            {
+                                                "id": "loan-application",
+                                                "title": "대출 신청",
+                                                "description": "회원 인증 및 도서 대출 신청",
+                                                "boundedContext": "LoanProcess",
+                                                "uiRequirements": "대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할 도서를 선택해야 해. 도서는 도서명이나 ISBN으로 검색할 수 있어야 해. 대출 기간은 7일/14일/30일 중에서 선택할 수 있어. 만약 대출하려는 도서가 이미 대출 중이라면, 예약 신청이 가능해야 해."
+                                            },
+                                            {
+                                                "id": "return-process",
+                                                "title": "반납 처리",
+                                                "description": "도서 반납 및 상태 변경",
+                                                "boundedContext": "LoanProcess",
+                                                "uiRequirements": "대출이 완료되면 해당 도서의 상태는 자동으로 '대출중'으로 변경되어야 해."
+                                            }
+                                        ]
                                     }
                                 },
                                 "description": "# Bounded Context Overview: LoanProcess (대출/반납 프로세스)\n\n## Role\n회원의 도서 대출 신청, 승인, 예약, 연장, 반납 등 대출/반납 전반의 프로세스를 관리한다. 대출 신청 시 회원 인증, 도서 검색, 대출 기간 선택, 예약 처리, 반납 및 연장 기능을 제공한다.\n\n## Key Events\n- LoanRequested\n- LoanApproved\n- BookReserved\n- LoanExtended\n- BookReturned\n\n# Requirements\n\n## userStory\n\n도서관의 도서 관리와 대출/반납을 통합적으로 관리하는\n\n'대출/반납' 화면에서는 회원이 도서를 대출하고 반납하는 것을 관리할 수 있어야 해. 대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할 도서를 선택해야 해. 도서는 도서명이나 ISBN으로 검색할 수 있어야 해. 대출 기간은 7일/14일/30일 중에서 선택할 수 있어. 만약 대출하려는 도서가 이미 대출 중이라면, 예약 신청이 가능해야 해. 대출이 완료되면 해당 도서의 상태는 자동으로 '대출중'으로 변경되어야\n\n대출 현황 화면에서는 현재 대출 중인 도서들의 목록을 볼 수 있어야 해. 각 대출 건에 대해 대출일, 반납예정일, 현재 상태(대출중/연체/반납완료)를 확인할 수 있어야 하고, 대출 중인 도서는 연장이나 반납 처리가 가능해야 해. 도서가 반납되면 자동으로 해당 도서의 상태가 '대출가능'으로 변경되어야\n\n대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할\n\n## DDL\n\n```sql\nCREATE TABLE loans (\n    loan_id INT AUTO_INCREMENT PRIMARY KEY,\n    member_id VARCHAR(20) NOT NULL,\n    book_id INT NOT NULL,\n    loan_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    due_date DATETIME NOT NULL,\n    return_date DATETIME NULL,\n    loan_period_days INT NOT NULL CHECK (loan_period_days IN (7, 14, 30)),\n    status ENUM('대출중', '연체', '반납완료', '연장') DEFAULT '대출중',\n    extension_count INT DEFAULT 0,\n    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,\n    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n    FOREIGN KEY (member_id) REFERENCES members(member_id),\n    FOREIGN KEY (book_id) REFERENCES books(book_id),\n    INDEX idx_member_id (member_id),\n    INDEX idx_book_id (book_id),\n    INDEX idx_status (status),\n    INDEX idx_due_date (due_date)\n);\n```\n```sql\nCREATE TABLE reservations (\n    reservation_id INT AUTO_INCREMENT PRIMARY KEY,\n    member_id VARCHAR(20) NOT NULL,\n    book_id INT NOT NULL,\n    reservation_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    status ENUM('예약중', '예약완료', '예약취소', '예약만료') DEFAULT '예약중',\n    notification_sent BOOLEAN DEFAULT FALSE,\n    expiry_date DATETIME NULL,\n    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,\n    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n    FOREIGN KEY (member_id) REFERENCES members(member_id),\n    FOREIGN KEY (book_id) REFERENCES books(book_id),\n    INDEX idx_member_id (member_id),\n    INDEX idx_book_id (book_id),\n    INDEX idx_status (status),\n    INDEX idx_reservation_date (reservation_date)\n);\n```\n```sql\nCREATE TABLE loan_history (\n    history_id INT AUTO_INCREMENT PRIMARY KEY,\n    loan_id INT NOT NULL,\n    action_type ENUM('대출', '반납', '연장', '연체알림', '분실신고') NOT NULL,\n    action_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    previous_due_date DATETIME NULL,\n    new_due_date DATETIME NULL,\n    notes TEXT,\n    processed_by VARCHAR(100),\n    FOREIGN KEY (loan_id) REFERENCES loans(loan_id),\n    INDEX idx_loan_id (loan_id),\n    INDEX idx_action_type (action_type),\n    INDEX idx_action_date (action_date)\n);\n```\n## Event\n\n```json\n{\n  \"name\": \"LoanRequested\",\n  \"displayName\": \"대출 신청됨\",\n  \"actor\": \"Member\",\n  \"level\": 1,\n  \"description\": \"회원이 도서 대출을 신청함. 회원번호와 이름으로 회원 확인 후, 대출할 도서를 선택함.\",\n  \"inputs\": [\n    \"회원번호\",\n    \"이름\",\n    \"도서명/ISBN\",\n    \"대출 기간(7/14/30일)\"\n  ],\n  \"outputs\": [\n    \"대출 신청 생성\",\n    \"회원 인증 완료\"\n  ],\n  \"nextEvents\": [\n    \"LoanApproved\",\n    \"BookReserved\"\n  ]\n}\n```\n\n```json\n{\n  \"name\": \"LoanApproved\",\n  \"displayName\": \"대출 승인됨\",\n  \"actor\": \"Librarian\",\n  \"level\": 2,\n  \"description\": \"도서가 대출 가능 상태일 때 대출이 승인되고, 도서 상태가 '대출중'으로 변경됨.\",\n  \"inputs\": [\n    \"대출 신청\",\n    \"도서 상태 '대출가능'\"\n  ],\n  \"outputs\": [\n    \"대출 기록 생성\",\n    \"도서 상태 '대출중'으로 변경\"\n  ],\n  \"nextEvents\": [\n    \"BookStatusChanged\"\n  ]\n}\n```\n\n```json\n{\n  \"name\": \"BookReserved\",\n  \"displayName\": \"도서 예약됨\",\n  \"actor\": \"Member\",\n  \"level\": 2,\n  \"description\": \"대출하려는 도서가 이미 대출 중인 경우, 회원이 해당 도서를 예약함.\",\n  \"inputs\": [\n    \"회원번호\",\n    \"도서 식별자\",\n    \"도서 상태 '대출중'\"\n  ],\n  \"outputs\": [\n    \"예약 기록 생성\",\n    \"도서 상태 '예약중'으로 변경\"\n  ],\n  \"nextEvents\": [\n    \"BookStatusChanged\"\n  ]\n}\n```\n\n```json\n{\n  \"name\": \"LoanExtended\",\n  \"displayName\": \"대출 연장됨\",\n  \"actor\": \"Member\",\n  \"level\": 3,\n  \"description\": \"회원이 대출 중인 도서의 대출 기간을 연장함.\",\n  \"inputs\": [\n    \"회원번호\",\n    \"도서 식별자\",\n    \"연장 요청\"\n  ],\n  \"outputs\": [\n    \"대출 기간 연장\",\n    \"대출 기록 갱신\"\n  ],\n  \"nextEvents\": []\n}\n```\n\n```json\n{\n  \"name\": \"BookReturned\",\n  \"displayName\": \"도서 반납됨\",\n  \"actor\": \"Member\",\n  \"level\": 2,\n  \"description\": \"회원이 대출한 도서를 반납함. 반납 시 도서 상태가 자동으로 '대출가능' 또는 예약자가 있으면 '예약중'으로 변경됨.\",\n  \"inputs\": [\n    \"회원번호\",\n    \"도서 식별자\",\n    \"반납 요청\"\n  ],\n  \"outputs\": [\n    \"반납 기록 생성\",\n    \"도서 상태 변경\"\n  ],\n  \"nextEvents\": [\n    \"BookStatusChanged\"\n  ]\n}\n```\n\n## Context Relations\n\n### BookManagement-LoanProcess\n- **Type**: Pub/Sub\n- **Direction**: receives from 도서 관리 (BookManagement)\n- **Reason**: 도서 상태 변경 등 이벤트가 발생하면 대출/반납 프로세스에서 이를 구독하여 처리할 수 있도록 느슨한 결합을 유지하기 위함.\n- **Interaction Pattern**: 도서 등록, 폐기, 상태 변경 이벤트가 발생하면 대출/반납 프로세스에서 해당 이벤트를 구독하여 대출 가능 여부 등을 판단한다.\n\n### LoanProcess-BookManagement\n- **Type**: Pub/Sub\n- **Direction**: sends to 도서 관리 (BookManagement)\n- **Reason**: 도서 상태 변경 등 이벤트가 발생하면 대출/반납 프로세스에서 이를 구독하여 처리할 수 있도록 느슨한 결합을 유지하기 위함.\n- **Interaction Pattern**: 도서 등록, 폐기, 상태 변경 이벤트가 발생하면 대출/반납 프로세스에서 해당 이벤트를 구독하여 대출 가능 여부 등을 판단한다.\n\n### LoanProcess-LoanStatusInquiry\n- **Type**: Pub/Sub\n- **Direction**: sends to 대출 현황 및 이력 조회 (LoanStatusInquiry)\n- **Reason**: 대출/반납/연장 등 이벤트 발생 시 현황 및 이력 조회 컨텍스트가 이를 구독하여 최신 현황과 이력을 제공할 수 있도록 한다.\n- **Interaction Pattern**: 대출/반납/연장 이벤트가 발생할 때마다 현황 및 이력 조회 컨텍스트가 관련 정보를 갱신한다."
@@ -31505,7 +32452,30 @@ export const aggregateDraftScenarios = {
                                                 ],
                                                 "isDirectMatching": false
                                             }
-                                        }
+                                        },
+                                        "siteMap": [
+                                            {
+                                                "id": "loan-process",
+                                                "title": "대출/반납",
+                                                "description": "도서 대출, 반납, 예약 및 연장 처리",
+                                                "boundedContext": "LoanProcess",
+                                                "uiRequirements": "'대출/반납' 화면에서는 회원이 도서를 대출하고 반납하는 것을 관리할 수 있어야 해. 대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할 도서를 선택해야 해. 도서는 도서명이나 ISBN으로 검색할 수 있어야 해. 대출 기간은 7일/14일/30일 중에서 선택할 수 있어. 만약 대출하려는 도서가 이미 대출 중이라면, 예약 신청이 가능해야 해. 대출이 완료되면 해당 도서의 상태는 자동으로 '대출중'으로 변경되어야 해."
+                                            },
+                                            {
+                                                "id": "loan-application",
+                                                "title": "대출 신청",
+                                                "description": "회원 인증 및 도서 대출 신청",
+                                                "boundedContext": "LoanProcess",
+                                                "uiRequirements": "대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할 도서를 선택해야 해. 도서는 도서명이나 ISBN으로 검색할 수 있어야 해. 대출 기간은 7일/14일/30일 중에서 선택할 수 있어. 만약 대출하려는 도서가 이미 대출 중이라면, 예약 신청이 가능해야 해."
+                                            },
+                                            {
+                                                "id": "return-process",
+                                                "title": "반납 처리",
+                                                "description": "도서 반납 및 상태 변경",
+                                                "boundedContext": "LoanProcess",
+                                                "uiRequirements": "대출이 완료되면 해당 도서의 상태는 자동으로 '대출중'으로 변경되어야 해."
+                                            }
+                                        ]
                                     }
                                 },
                                 "description": "# Bounded Context Overview: LoanProcess (대출/반납 프로세스)\n\n## Role\n회원의 도서 대출 신청, 승인, 예약, 연장, 반납 등 대출/반납 전반의 프로세스를 관리한다. 대출 신청 시 회원 인증, 도서 검색, 대출 기간 선택, 예약 처리, 반납 및 연장 기능을 제공한다.\n\n## Key Events\n- LoanRequested\n- LoanApproved\n- BookReserved\n- LoanExtended\n- BookReturned\n\n# Requirements\n\n## userStory\n\n도서관의 도서 관리와 대출/반납을 통합적으로 관리하는\n\n'대출/반납' 화면에서는 회원이 도서를 대출하고 반납하는 것을 관리할 수 있어야 해. 대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할 도서를 선택해야 해. 도서는 도서명이나 ISBN으로 검색할 수 있어야 해. 대출 기간은 7일/14일/30일 중에서 선택할 수 있어. 만약 대출하려는 도서가 이미 대출 중이라면, 예약 신청이 가능해야 해. 대출이 완료되면 해당 도서의 상태는 자동으로 '대출중'으로 변경되어야\n\n대출 현황 화면에서는 현재 대출 중인 도서들의 목록을 볼 수 있어야 해. 각 대출 건에 대해 대출일, 반납예정일, 현재 상태(대출중/연체/반납완료)를 확인할 수 있어야 하고, 대출 중인 도서는 연장이나 반납 처리가 가능해야 해. 도서가 반납되면 자동으로 해당 도서의 상태가 '대출가능'으로 변경되어야\n\n대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할\n\n## DDL\n\n```sql\nCREATE TABLE loans (\n    loan_id INT AUTO_INCREMENT PRIMARY KEY,\n    member_id VARCHAR(20) NOT NULL,\n    book_id INT NOT NULL,\n    loan_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    due_date DATETIME NOT NULL,\n    return_date DATETIME NULL,\n    loan_period_days INT NOT NULL CHECK (loan_period_days IN (7, 14, 30)),\n    status ENUM('대출중', '연체', '반납완료', '연장') DEFAULT '대출중',\n    extension_count INT DEFAULT 0,\n    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,\n    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n    FOREIGN KEY (member_id) REFERENCES members(member_id),\n    FOREIGN KEY (book_id) REFERENCES books(book_id),\n    INDEX idx_member_id (member_id),\n    INDEX idx_book_id (book_id),\n    INDEX idx_status (status),\n    INDEX idx_due_date (due_date)\n);\n```\n```sql\nCREATE TABLE reservations (\n    reservation_id INT AUTO_INCREMENT PRIMARY KEY,\n    member_id VARCHAR(20) NOT NULL,\n    book_id INT NOT NULL,\n    reservation_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    status ENUM('예약중', '예약완료', '예약취소', '예약만료') DEFAULT '예약중',\n    notification_sent BOOLEAN DEFAULT FALSE,\n    expiry_date DATETIME NULL,\n    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,\n    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n    FOREIGN KEY (member_id) REFERENCES members(member_id),\n    FOREIGN KEY (book_id) REFERENCES books(book_id),\n    INDEX idx_member_id (member_id),\n    INDEX idx_book_id (book_id),\n    INDEX idx_status (status),\n    INDEX idx_reservation_date (reservation_date)\n);\n```\n```sql\nCREATE TABLE loan_history (\n    history_id INT AUTO_INCREMENT PRIMARY KEY,\n    loan_id INT NOT NULL,\n    action_type ENUM('대출', '반납', '연장', '연체알림', '분실신고') NOT NULL,\n    action_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    previous_due_date DATETIME NULL,\n    new_due_date DATETIME NULL,\n    notes TEXT,\n    processed_by VARCHAR(100),\n    FOREIGN KEY (loan_id) REFERENCES loans(loan_id),\n    INDEX idx_loan_id (loan_id),\n    INDEX idx_action_type (action_type),\n    INDEX idx_action_date (action_date)\n);\n```\n## Event\n\n```json\n{\n  \"name\": \"LoanRequested\",\n  \"displayName\": \"대출 신청됨\",\n  \"actor\": \"Member\",\n  \"level\": 1,\n  \"description\": \"회원이 도서 대출을 신청함. 회원번호와 이름으로 회원 확인 후, 대출할 도서를 선택함.\",\n  \"inputs\": [\n    \"회원번호\",\n    \"이름\",\n    \"도서명/ISBN\",\n    \"대출 기간(7/14/30일)\"\n  ],\n  \"outputs\": [\n    \"대출 신청 생성\",\n    \"회원 인증 완료\"\n  ],\n  \"nextEvents\": [\n    \"LoanApproved\",\n    \"BookReserved\"\n  ]\n}\n```\n\n```json\n{\n  \"name\": \"LoanApproved\",\n  \"displayName\": \"대출 승인됨\",\n  \"actor\": \"Librarian\",\n  \"level\": 2,\n  \"description\": \"도서가 대출 가능 상태일 때 대출이 승인되고, 도서 상태가 '대출중'으로 변경됨.\",\n  \"inputs\": [\n    \"대출 신청\",\n    \"도서 상태 '대출가능'\"\n  ],\n  \"outputs\": [\n    \"대출 기록 생성\",\n    \"도서 상태 '대출중'으로 변경\"\n  ],\n  \"nextEvents\": [\n    \"BookStatusChanged\"\n  ]\n}\n```\n\n```json\n{\n  \"name\": \"BookReserved\",\n  \"displayName\": \"도서 예약됨\",\n  \"actor\": \"Member\",\n  \"level\": 2,\n  \"description\": \"대출하려는 도서가 이미 대출 중인 경우, 회원이 해당 도서를 예약함.\",\n  \"inputs\": [\n    \"회원번호\",\n    \"도서 식별자\",\n    \"도서 상태 '대출중'\"\n  ],\n  \"outputs\": [\n    \"예약 기록 생성\",\n    \"도서 상태 '예약중'으로 변경\"\n  ],\n  \"nextEvents\": [\n    \"BookStatusChanged\"\n  ]\n}\n```\n\n```json\n{\n  \"name\": \"LoanExtended\",\n  \"displayName\": \"대출 연장됨\",\n  \"actor\": \"Member\",\n  \"level\": 3,\n  \"description\": \"회원이 대출 중인 도서의 대출 기간을 연장함.\",\n  \"inputs\": [\n    \"회원번호\",\n    \"도서 식별자\",\n    \"연장 요청\"\n  ],\n  \"outputs\": [\n    \"대출 기간 연장\",\n    \"대출 기록 갱신\"\n  ],\n  \"nextEvents\": []\n}\n```\n\n```json\n{\n  \"name\": \"BookReturned\",\n  \"displayName\": \"도서 반납됨\",\n  \"actor\": \"Member\",\n  \"level\": 2,\n  \"description\": \"회원이 대출한 도서를 반납함. 반납 시 도서 상태가 자동으로 '대출가능' 또는 예약자가 있으면 '예약중'으로 변경됨.\",\n  \"inputs\": [\n    \"회원번호\",\n    \"도서 식별자\",\n    \"반납 요청\"\n  ],\n  \"outputs\": [\n    \"반납 기록 생성\",\n    \"도서 상태 변경\"\n  ],\n  \"nextEvents\": [\n    \"BookStatusChanged\"\n  ]\n}\n```\n\n## Context Relations\n\n### BookManagement-LoanProcess\n- **Type**: Pub/Sub\n- **Direction**: receives from 도서 관리 (BookManagement)\n- **Reason**: 도서 상태 변경 등 이벤트가 발생하면 대출/반납 프로세스에서 이를 구독하여 처리할 수 있도록 느슨한 결합을 유지하기 위함.\n- **Interaction Pattern**: 도서 등록, 폐기, 상태 변경 이벤트가 발생하면 대출/반납 프로세스에서 해당 이벤트를 구독하여 대출 가능 여부 등을 판단한다.\n\n### LoanProcess-BookManagement\n- **Type**: Pub/Sub\n- **Direction**: sends to 도서 관리 (BookManagement)\n- **Reason**: 도서 상태 변경 등 이벤트가 발생하면 대출/반납 프로세스에서 이를 구독하여 처리할 수 있도록 느슨한 결합을 유지하기 위함.\n- **Interaction Pattern**: 도서 등록, 폐기, 상태 변경 이벤트가 발생하면 대출/반납 프로세스에서 해당 이벤트를 구독하여 대출 가능 여부 등을 판단한다.\n\n### LoanProcess-LoanStatusInquiry\n- **Type**: Pub/Sub\n- **Direction**: sends to 대출 현황 및 이력 조회 (LoanStatusInquiry)\n- **Reason**: 대출/반납/연장 등 이벤트 발생 시 현황 및 이력 조회 컨텍스트가 이를 구독하여 최신 현황과 이력을 제공할 수 있도록 한다.\n- **Interaction Pattern**: 대출/반납/연장 이벤트가 발생할 때마다 현황 및 이력 조회 컨텍스트가 관련 정보를 갱신한다."
@@ -34620,7 +35590,37 @@ export const aggregateDraftScenarios = {
                                             ],
                                             "isDirectMatching": false
                                         }
-                                    }
+                                    },
+                                    "siteMap": [
+                                        {
+                                            "id": "book-management",
+                                            "title": "도서 관리",
+                                            "description": "도서 등록, 상태 관리, 폐기 및 도서별 이력 관리",
+                                            "boundedContext": "BookManagement",
+                                            "uiRequirements": "'도서 관리' 화면에서는 새로운 도서를 등록하고 현재 보유한 도서들의 상태를 관리할 수 있어야 해. 도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해. 등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야 해."
+                                        },
+                                        {
+                                            "id": "book-registration",
+                                            "title": "도서 등록",
+                                            "description": "새로운 도서 등록",
+                                            "boundedContext": "BookManagement",
+                                            "uiRequirements": "도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해."
+                                        },
+                                        {
+                                            "id": "book-status-management",
+                                            "title": "도서 상태 관리",
+                                            "description": "보유 도서의 상태 변경 및 폐기 처리",
+                                            "boundedContext": "BookManagement",
+                                            "uiRequirements": "등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야 해."
+                                        },
+                                        {
+                                            "id": "book-history",
+                                            "title": "도서 이력 조회",
+                                            "description": "도서별 대출 및 상태 변경 이력 조회",
+                                            "boundedContext": "BookManagement",
+                                            "uiRequirements": "각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해."
+                                        }
+                                    ]
                                 }
                             },
                             "description": "# Bounded Context Overview: BookManagement (도서 관리)\n\n## Role\n도서의 등록, 상태 관리, 폐기, 상태 변경 및 도서별 이력 관리를 담당한다. 도서의 상태는 대출/반납/예약/폐기 등 이벤트에 따라 자동으로 변경되며, 도서별 대출 및 상태 변경 이력을 추적할 수 있다.\n\n## Key Events\n- BookRegistered\n- BookDiscarded\n- BookStatusChanged\n\n# Requirements\n\n## userStory\n\n도서 관리' 화면에서는 새로운 도서를 등록하고 현재 보유한 도서들의 상태를 관리할 수 있어야 해. 도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해. 등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야\n\n도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할\n\n## DDL\n\n```sql\nCREATE TABLE books (\n    book_id INT AUTO_INCREMENT PRIMARY KEY,\n    title VARCHAR(500) NOT NULL,\n    isbn VARCHAR(13) UNIQUE NOT NULL,\n    author VARCHAR(200) NOT NULL,\n    publisher VARCHAR(200) NOT NULL,\n    category ENUM('소설', '비소설', '학술', '잡지') NOT NULL,\n    status ENUM('대출가능', '대출중', '예약중', '폐기') DEFAULT '대출가능',\n    registration_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    disposal_date DATETIME NULL,\n    disposal_reason TEXT NULL,\n    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,\n    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n    INDEX idx_title (title),\n    INDEX idx_isbn (isbn),\n    INDEX idx_status (status),\n    INDEX idx_category (category)\n);\n```\n```sql\nCREATE TABLE book_status_history (\n    history_id INT AUTO_INCREMENT PRIMARY KEY,\n    book_id INT NOT NULL,\n    previous_status ENUM('대출가능', '대출중', '예약중', '폐기'),\n    new_status ENUM('대출가능', '대출중', '예약중', '폐기') NOT NULL,\n    change_reason VARCHAR(200),\n    changed_by VARCHAR(100),\n    change_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    FOREIGN KEY (book_id) REFERENCES books(book_id),\n    INDEX idx_book_id (book_id),\n    INDEX idx_change_date (change_date)\n);\n```\n## Event\n\n```json\n{\n  \"name\": \"BookRegistered\",\n  \"displayName\": \"도서 등록됨\",\n  \"actor\": \"Librarian\",\n  \"level\": 1,\n  \"description\": \"관리자가 새로운 도서를 도서관 시스템에 등록함. 등록 시 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받고, ISBN 중복 및 유효성 검증이 완료됨.\",\n  \"inputs\": [\n    \"도서명\",\n    \"ISBN(13자리)\",\n    \"저자\",\n    \"출판사\",\n    \"카테고리(소설/비소설/학술/잡지)\"\n  ],\n  \"outputs\": [\n    \"신규 도서 생성\",\n    \"도서 상태 '대출가능'으로 설정\"\n  ],\n  \"nextEvents\": [\n    \"BookStatusChanged\"\n  ]\n}\n```\n\n```json\n{\n  \"name\": \"BookStatusChanged\",\n  \"displayName\": \"도서 상태 변경됨\",\n  \"actor\": \"System\",\n  \"level\": 2,\n  \"description\": \"도서의 대출/반납/예약/폐기 등 상황에 따라 도서 상태가 자동으로 변경됨.\",\n  \"inputs\": [\n    \"도서 상태 변경 트리거(대출, 반납, 예약, 폐기 등)\"\n  ],\n  \"outputs\": [\n    \"도서 상태(대출가능, 대출중, 예약중, 폐기)\"\n  ],\n  \"nextEvents\": [\n    \"BookDiscarded\",\n    \"LoanRequested\",\n    \"BookReturned\",\n    \"BookReserved\"\n  ]\n}\n```\n\n```json\n{\n  \"name\": \"BookDiscarded\",\n  \"displayName\": \"도서 폐기됨\",\n  \"actor\": \"Librarian\",\n  \"level\": 3,\n  \"description\": \"도서가 훼손되거나 분실된 경우 관리자가 해당 도서를 폐기 처리함. 폐기된 도서는 더 이상 대출이 불가능함.\",\n  \"inputs\": [\n    \"도서 훼손/분실 사유\",\n    \"도서 식별자\"\n  ],\n  \"outputs\": [\n    \"도서 상태 '폐기'로 변경\"\n  ],\n  \"nextEvents\": []\n}\n```\n\n```json\n{\n  \"name\": \"BookHistoryChecked\",\n  \"displayName\": \"도서 이력 조회됨\",\n  \"actor\": \"Librarian\",\n  \"level\": 1,\n  \"description\": \"관리자가 도서별 대출 이력과 상태 변경 이력을 조회함.\",\n  \"inputs\": [\n    \"도서 식별자\"\n  ],\n  \"outputs\": [\n    \"대출 이력\",\n    \"상태 변경 이력\"\n  ],\n  \"nextEvents\": []\n}\n```\n\n## Context Relations\n\n### BookManagement-LoanProcess\n- **Type**: Pub/Sub\n- **Direction**: sends to 대출/반납 프로세스 (LoanProcess)\n- **Reason**: 도서 상태 변경 등 이벤트가 발생하면 대출/반납 프로세스에서 이를 구독하여 처리할 수 있도록 느슨한 결합을 유지하기 위함.\n- **Interaction Pattern**: 도서 등록, 폐기, 상태 변경 이벤트가 발생하면 대출/반납 프로세스에서 해당 이벤트를 구독하여 대출 가능 여부 등을 판단한다.\n\n### LoanProcess-BookManagement\n- **Type**: Pub/Sub\n- **Direction**: receives from 대출/반납 프로세스 (LoanProcess)\n- **Reason**: 도서 상태 변경 등 이벤트가 발생하면 대출/반납 프로세스에서 이를 구독하여 처리할 수 있도록 느슨한 결합을 유지하기 위함.\n- **Interaction Pattern**: 도서 등록, 폐기, 상태 변경 이벤트가 발생하면 대출/반납 프로세스에서 해당 이벤트를 구독하여 대출 가능 여부 등을 판단한다.\n\n### BookManagement-LoanStatusInquiry\n- **Type**: Pub/Sub\n- **Direction**: sends to 대출 현황 및 이력 조회 (LoanStatusInquiry)\n- **Reason**: 도서의 상태 변경 및 이력 이벤트가 발생하면 현황 및 이력 조회 컨텍스트가 이를 구독하여 도서별 이력 정보를 제공한다.\n- **Interaction Pattern**: 도서 등록, 폐기, 상태 변경 이벤트가 발생할 때마다 현황 및 이력 조회 컨텍스트가 도서별 이력 정보를 갱신한다."
@@ -38340,7 +39340,30 @@ export const aggregateDraftScenarios = {
                                             ],
                                             "isDirectMatching": false
                                         }
-                                    }
+                                    },
+                                    "siteMap": [
+                                        {
+                                            "id": "loan-process",
+                                            "title": "대출/반납",
+                                            "description": "도서 대출, 반납, 예약 및 연장 처리",
+                                            "boundedContext": "LoanProcess",
+                                            "uiRequirements": "'대출/반납' 화면에서는 회원이 도서를 대출하고 반납하는 것을 관리할 수 있어야 해. 대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할 도서를 선택해야 해. 도서는 도서명이나 ISBN으로 검색할 수 있어야 해. 대출 기간은 7일/14일/30일 중에서 선택할 수 있어. 만약 대출하려는 도서가 이미 대출 중이라면, 예약 신청이 가능해야 해. 대출이 완료되면 해당 도서의 상태는 자동으로 '대출중'으로 변경되어야 해."
+                                        },
+                                        {
+                                            "id": "loan-application",
+                                            "title": "대출 신청",
+                                            "description": "회원 인증 및 도서 대출 신청",
+                                            "boundedContext": "LoanProcess",
+                                            "uiRequirements": "대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할 도서를 선택해야 해. 도서는 도서명이나 ISBN으로 검색할 수 있어야 해. 대출 기간은 7일/14일/30일 중에서 선택할 수 있어. 만약 대출하려는 도서가 이미 대출 중이라면, 예약 신청이 가능해야 해."
+                                        },
+                                        {
+                                            "id": "return-process",
+                                            "title": "반납 처리",
+                                            "description": "도서 반납 및 상태 변경",
+                                            "boundedContext": "LoanProcess",
+                                            "uiRequirements": "대출이 완료되면 해당 도서의 상태는 자동으로 '대출중'으로 변경되어야 해."
+                                        }
+                                    ]
                                 }
                             },
                             "description": "# Bounded Context Overview: LoanProcess (대출/반납 프로세스)\n\n## Role\n회원의 도서 대출 신청, 승인, 예약, 연장, 반납 등 대출/반납 전반의 프로세스를 관리한다. 대출 신청 시 회원 인증, 도서 검색, 대출 기간 선택, 예약 처리, 반납 및 연장 기능을 제공한다.\n\n## Key Events\n- LoanRequested\n- LoanApproved\n- BookReserved\n- LoanExtended\n- BookReturned\n\n# Requirements\n\n## userStory\n\n도서관의 도서 관리와 대출/반납을 통합적으로 관리하는\n\n'대출/반납' 화면에서는 회원이 도서를 대출하고 반납하는 것을 관리할 수 있어야 해. 대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할 도서를 선택해야 해. 도서는 도서명이나 ISBN으로 검색할 수 있어야 해. 대출 기간은 7일/14일/30일 중에서 선택할 수 있어. 만약 대출하려는 도서가 이미 대출 중이라면, 예약 신청이 가능해야 해. 대출이 완료되면 해당 도서의 상태는 자동으로 '대출중'으로 변경되어야\n\n대출 현황 화면에서는 현재 대출 중인 도서들의 목록을 볼 수 있어야 해. 각 대출 건에 대해 대출일, 반납예정일, 현재 상태(대출중/연체/반납완료)를 확인할 수 있어야 하고, 대출 중인 도서는 연장이나 반납 처리가 가능해야 해. 도서가 반납되면 자동으로 해당 도서의 상태가 '대출가능'으로 변경되어야\n\n대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할\n\n## DDL\n\n```sql\nCREATE TABLE loans (\n    loan_id INT AUTO_INCREMENT PRIMARY KEY,\n    member_id VARCHAR(20) NOT NULL,\n    book_id INT NOT NULL,\n    loan_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    due_date DATETIME NOT NULL,\n    return_date DATETIME NULL,\n    loan_period_days INT NOT NULL CHECK (loan_period_days IN (7, 14, 30)),\n    status ENUM('대출중', '연체', '반납완료', '연장') DEFAULT '대출중',\n    extension_count INT DEFAULT 0,\n    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,\n    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n    FOREIGN KEY (member_id) REFERENCES members(member_id),\n    FOREIGN KEY (book_id) REFERENCES books(book_id),\n    INDEX idx_member_id (member_id),\n    INDEX idx_book_id (book_id),\n    INDEX idx_status (status),\n    INDEX idx_due_date (due_date)\n);\n```\n```sql\nCREATE TABLE reservations (\n    reservation_id INT AUTO_INCREMENT PRIMARY KEY,\n    member_id VARCHAR(20) NOT NULL,\n    book_id INT NOT NULL,\n    reservation_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    status ENUM('예약중', '예약완료', '예약취소', '예약만료') DEFAULT '예약중',\n    notification_sent BOOLEAN DEFAULT FALSE,\n    expiry_date DATETIME NULL,\n    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,\n    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n    FOREIGN KEY (member_id) REFERENCES members(member_id),\n    FOREIGN KEY (book_id) REFERENCES books(book_id),\n    INDEX idx_member_id (member_id),\n    INDEX idx_book_id (book_id),\n    INDEX idx_status (status),\n    INDEX idx_reservation_date (reservation_date)\n);\n```\n```sql\nCREATE TABLE loan_history (\n    history_id INT AUTO_INCREMENT PRIMARY KEY,\n    loan_id INT NOT NULL,\n    action_type ENUM('대출', '반납', '연장', '연체알림', '분실신고') NOT NULL,\n    action_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    previous_due_date DATETIME NULL,\n    new_due_date DATETIME NULL,\n    notes TEXT,\n    processed_by VARCHAR(100),\n    FOREIGN KEY (loan_id) REFERENCES loans(loan_id),\n    INDEX idx_loan_id (loan_id),\n    INDEX idx_action_type (action_type),\n    INDEX idx_action_date (action_date)\n);\n```\n## Event\n\n```json\n{\n  \"name\": \"LoanRequested\",\n  \"displayName\": \"대출 신청됨\",\n  \"actor\": \"Member\",\n  \"level\": 1,\n  \"description\": \"회원이 도서 대출을 신청함. 회원번호와 이름으로 회원 확인 후, 대출할 도서를 선택함.\",\n  \"inputs\": [\n    \"회원번호\",\n    \"이름\",\n    \"도서명/ISBN\",\n    \"대출 기간(7/14/30일)\"\n  ],\n  \"outputs\": [\n    \"대출 신청 생성\",\n    \"회원 인증 완료\"\n  ],\n  \"nextEvents\": [\n    \"LoanApproved\",\n    \"BookReserved\"\n  ]\n}\n```\n\n```json\n{\n  \"name\": \"LoanApproved\",\n  \"displayName\": \"대출 승인됨\",\n  \"actor\": \"Librarian\",\n  \"level\": 2,\n  \"description\": \"도서가 대출 가능 상태일 때 대출이 승인되고, 도서 상태가 '대출중'으로 변경됨.\",\n  \"inputs\": [\n    \"대출 신청\",\n    \"도서 상태 '대출가능'\"\n  ],\n  \"outputs\": [\n    \"대출 기록 생성\",\n    \"도서 상태 '대출중'으로 변경\"\n  ],\n  \"nextEvents\": [\n    \"BookStatusChanged\"\n  ]\n}\n```\n\n```json\n{\n  \"name\": \"BookReserved\",\n  \"displayName\": \"도서 예약됨\",\n  \"actor\": \"Member\",\n  \"level\": 2,\n  \"description\": \"대출하려는 도서가 이미 대출 중인 경우, 회원이 해당 도서를 예약함.\",\n  \"inputs\": [\n    \"회원번호\",\n    \"도서 식별자\",\n    \"도서 상태 '대출중'\"\n  ],\n  \"outputs\": [\n    \"예약 기록 생성\",\n    \"도서 상태 '예약중'으로 변경\"\n  ],\n  \"nextEvents\": [\n    \"BookStatusChanged\"\n  ]\n}\n```\n\n```json\n{\n  \"name\": \"LoanExtended\",\n  \"displayName\": \"대출 연장됨\",\n  \"actor\": \"Member\",\n  \"level\": 3,\n  \"description\": \"회원이 대출 중인 도서의 대출 기간을 연장함.\",\n  \"inputs\": [\n    \"회원번호\",\n    \"도서 식별자\",\n    \"연장 요청\"\n  ],\n  \"outputs\": [\n    \"대출 기간 연장\",\n    \"대출 기록 갱신\"\n  ],\n  \"nextEvents\": []\n}\n```\n\n```json\n{\n  \"name\": \"BookReturned\",\n  \"displayName\": \"도서 반납됨\",\n  \"actor\": \"Member\",\n  \"level\": 2,\n  \"description\": \"회원이 대출한 도서를 반납함. 반납 시 도서 상태가 자동으로 '대출가능' 또는 예약자가 있으면 '예약중'으로 변경됨.\",\n  \"inputs\": [\n    \"회원번호\",\n    \"도서 식별자\",\n    \"반납 요청\"\n  ],\n  \"outputs\": [\n    \"반납 기록 생성\",\n    \"도서 상태 변경\"\n  ],\n  \"nextEvents\": [\n    \"BookStatusChanged\"\n  ]\n}\n```\n\n## Context Relations\n\n### BookManagement-LoanProcess\n- **Type**: Pub/Sub\n- **Direction**: receives from 도서 관리 (BookManagement)\n- **Reason**: 도서 상태 변경 등 이벤트가 발생하면 대출/반납 프로세스에서 이를 구독하여 처리할 수 있도록 느슨한 결합을 유지하기 위함.\n- **Interaction Pattern**: 도서 등록, 폐기, 상태 변경 이벤트가 발생하면 대출/반납 프로세스에서 해당 이벤트를 구독하여 대출 가능 여부 등을 판단한다.\n\n### LoanProcess-BookManagement\n- **Type**: Pub/Sub\n- **Direction**: sends to 도서 관리 (BookManagement)\n- **Reason**: 도서 상태 변경 등 이벤트가 발생하면 대출/반납 프로세스에서 이를 구독하여 처리할 수 있도록 느슨한 결합을 유지하기 위함.\n- **Interaction Pattern**: 도서 등록, 폐기, 상태 변경 이벤트가 발생하면 대출/반납 프로세스에서 해당 이벤트를 구독하여 대출 가능 여부 등을 판단한다.\n\n### LoanProcess-LoanStatusInquiry\n- **Type**: Pub/Sub\n- **Direction**: sends to 대출 현황 및 이력 조회 (LoanStatusInquiry)\n- **Reason**: 대출/반납/연장 등 이벤트 발생 시 현황 및 이력 조회 컨텍스트가 이를 구독하여 최신 현황과 이력을 제공할 수 있도록 한다.\n- **Interaction Pattern**: 대출/반납/연장 이벤트가 발생할 때마다 현황 및 이력 조회 컨텍스트가 관련 정보를 갱신한다."
@@ -42278,7 +43301,37 @@ export const aggregateDraftScenarios = {
                                         ],
                                         "isDirectMatching": false
                                     }
-                                }
+                                },
+                                "siteMap": [
+                                    {
+                                        "id": "book-management",
+                                        "title": "도서 관리",
+                                        "description": "도서 등록, 상태 관리, 폐기 및 도서별 이력 관리",
+                                        "boundedContext": "BookManagement",
+                                        "uiRequirements": "'도서 관리' 화면에서는 새로운 도서를 등록하고 현재 보유한 도서들의 상태를 관리할 수 있어야 해. 도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해. 등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야 해."
+                                    },
+                                    {
+                                        "id": "book-registration",
+                                        "title": "도서 등록",
+                                        "description": "새로운 도서 등록",
+                                        "boundedContext": "BookManagement",
+                                        "uiRequirements": "도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해."
+                                    },
+                                    {
+                                        "id": "book-status-management",
+                                        "title": "도서 상태 관리",
+                                        "description": "보유 도서의 상태 변경 및 폐기 처리",
+                                        "boundedContext": "BookManagement",
+                                        "uiRequirements": "등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야 해."
+                                    },
+                                    {
+                                        "id": "book-history",
+                                        "title": "도서 이력 조회",
+                                        "description": "도서별 대출 및 상태 변경 이력 조회",
+                                        "boundedContext": "BookManagement",
+                                        "uiRequirements": "각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해."
+                                    }
+                                ]
                             }
                         },
                         "description": "# Bounded Context Overview: BookManagement (도서 관리)\n\n## Role\n도서의 등록, 상태 관리, 폐기, 상태 변경 및 도서별 이력 관리를 담당한다. 도서의 상태는 대출/반납/예약/폐기 등 이벤트에 따라 자동으로 변경되며, 도서별 대출 및 상태 변경 이력을 추적할 수 있다.\n\n## Key Events\n- BookRegistered\n- BookDiscarded\n- BookStatusChanged\n\n# Requirements\n\n## userStory\n\n도서 관리' 화면에서는 새로운 도서를 등록하고 현재 보유한 도서들의 상태를 관리할 수 있어야 해. 도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해. 등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야\n\n도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할\n\n## DDL\n\n```sql\nCREATE TABLE books (\n    book_id INT AUTO_INCREMENT PRIMARY KEY,\n    title VARCHAR(500) NOT NULL,\n    isbn VARCHAR(13) UNIQUE NOT NULL,\n    author VARCHAR(200) NOT NULL,\n    publisher VARCHAR(200) NOT NULL,\n    category ENUM('소설', '비소설', '학술', '잡지') NOT NULL,\n    status ENUM('대출가능', '대출중', '예약중', '폐기') DEFAULT '대출가능',\n    registration_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    disposal_date DATETIME NULL,\n    disposal_reason TEXT NULL,\n    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,\n    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n    INDEX idx_title (title),\n    INDEX idx_isbn (isbn),\n    INDEX idx_status (status),\n    INDEX idx_category (category)\n);\n```\n```sql\nCREATE TABLE book_status_history (\n    history_id INT AUTO_INCREMENT PRIMARY KEY,\n    book_id INT NOT NULL,\n    previous_status ENUM('대출가능', '대출중', '예약중', '폐기'),\n    new_status ENUM('대출가능', '대출중', '예약중', '폐기') NOT NULL,\n    change_reason VARCHAR(200),\n    changed_by VARCHAR(100),\n    change_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    FOREIGN KEY (book_id) REFERENCES books(book_id),\n    INDEX idx_book_id (book_id),\n    INDEX idx_change_date (change_date)\n);\n```\n## Event\n\n```json\n{\n  \"name\": \"BookRegistered\",\n  \"displayName\": \"도서 등록됨\",\n  \"actor\": \"Librarian\",\n  \"level\": 1,\n  \"description\": \"관리자가 새로운 도서를 도서관 시스템에 등록함. 등록 시 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받고, ISBN 중복 및 유효성 검증이 완료됨.\",\n  \"inputs\": [\n    \"도서명\",\n    \"ISBN(13자리)\",\n    \"저자\",\n    \"출판사\",\n    \"카테고리(소설/비소설/학술/잡지)\"\n  ],\n  \"outputs\": [\n    \"신규 도서 생성\",\n    \"도서 상태 '대출가능'으로 설정\"\n  ],\n  \"nextEvents\": [\n    \"BookStatusChanged\"\n  ]\n}\n```\n\n```json\n{\n  \"name\": \"BookStatusChanged\",\n  \"displayName\": \"도서 상태 변경됨\",\n  \"actor\": \"System\",\n  \"level\": 2,\n  \"description\": \"도서의 대출/반납/예약/폐기 등 상황에 따라 도서 상태가 자동으로 변경됨.\",\n  \"inputs\": [\n    \"도서 상태 변경 트리거(대출, 반납, 예약, 폐기 등)\"\n  ],\n  \"outputs\": [\n    \"도서 상태(대출가능, 대출중, 예약중, 폐기)\"\n  ],\n  \"nextEvents\": [\n    \"BookDiscarded\",\n    \"LoanRequested\",\n    \"BookReturned\",\n    \"BookReserved\"\n  ]\n}\n```\n\n```json\n{\n  \"name\": \"BookDiscarded\",\n  \"displayName\": \"도서 폐기됨\",\n  \"actor\": \"Librarian\",\n  \"level\": 3,\n  \"description\": \"도서가 훼손되거나 분실된 경우 관리자가 해당 도서를 폐기 처리함. 폐기된 도서는 더 이상 대출이 불가능함.\",\n  \"inputs\": [\n    \"도서 훼손/분실 사유\",\n    \"도서 식별자\"\n  ],\n  \"outputs\": [\n    \"도서 상태 '폐기'로 변경\"\n  ],\n  \"nextEvents\": []\n}\n```\n\n```json\n{\n  \"name\": \"BookHistoryChecked\",\n  \"displayName\": \"도서 이력 조회됨\",\n  \"actor\": \"Librarian\",\n  \"level\": 1,\n  \"description\": \"관리자가 도서별 대출 이력과 상태 변경 이력을 조회함.\",\n  \"inputs\": [\n    \"도서 식별자\"\n  ],\n  \"outputs\": [\n    \"대출 이력\",\n    \"상태 변경 이력\"\n  ],\n  \"nextEvents\": []\n}\n```\n\n## Context Relations\n\n### BookManagement-LoanProcess\n- **Type**: Pub/Sub\n- **Direction**: sends to 대출/반납 프로세스 (LoanProcess)\n- **Reason**: 도서 상태 변경 등 이벤트가 발생하면 대출/반납 프로세스에서 이를 구독하여 처리할 수 있도록 느슨한 결합을 유지하기 위함.\n- **Interaction Pattern**: 도서 등록, 폐기, 상태 변경 이벤트가 발생하면 대출/반납 프로세스에서 해당 이벤트를 구독하여 대출 가능 여부 등을 판단한다.\n\n### LoanProcess-BookManagement\n- **Type**: Pub/Sub\n- **Direction**: receives from 대출/반납 프로세스 (LoanProcess)\n- **Reason**: 도서 상태 변경 등 이벤트가 발생하면 대출/반납 프로세스에서 이를 구독하여 처리할 수 있도록 느슨한 결합을 유지하기 위함.\n- **Interaction Pattern**: 도서 등록, 폐기, 상태 변경 이벤트가 발생하면 대출/반납 프로세스에서 해당 이벤트를 구독하여 대출 가능 여부 등을 판단한다.\n\n### BookManagement-LoanStatusInquiry\n- **Type**: Pub/Sub\n- **Direction**: sends to 대출 현황 및 이력 조회 (LoanStatusInquiry)\n- **Reason**: 도서의 상태 변경 및 이력 이벤트가 발생하면 현황 및 이력 조회 컨텍스트가 이를 구독하여 도서별 이력 정보를 제공한다.\n- **Interaction Pattern**: 도서 등록, 폐기, 상태 변경 이벤트가 발생할 때마다 현황 및 이력 조회 컨텍스트가 도서별 이력 정보를 갱신한다."
@@ -47001,7 +48054,30 @@ export const aggregateDraftScenarios = {
                                         ],
                                         "isDirectMatching": false
                                     }
-                                }
+                                },
+                                "siteMap": [
+                                    {
+                                        "id": "loan-process",
+                                        "title": "대출/반납",
+                                        "description": "도서 대출, 반납, 예약 및 연장 처리",
+                                        "boundedContext": "LoanProcess",
+                                        "uiRequirements": "'대출/반납' 화면에서는 회원이 도서를 대출하고 반납하는 것을 관리할 수 있어야 해. 대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할 도서를 선택해야 해. 도서는 도서명이나 ISBN으로 검색할 수 있어야 해. 대출 기간은 7일/14일/30일 중에서 선택할 수 있어. 만약 대출하려는 도서가 이미 대출 중이라면, 예약 신청이 가능해야 해. 대출이 완료되면 해당 도서의 상태는 자동으로 '대출중'으로 변경되어야 해."
+                                    },
+                                    {
+                                        "id": "loan-application",
+                                        "title": "대출 신청",
+                                        "description": "회원 인증 및 도서 대출 신청",
+                                        "boundedContext": "LoanProcess",
+                                        "uiRequirements": "대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할 도서를 선택해야 해. 도서는 도서명이나 ISBN으로 검색할 수 있어야 해. 대출 기간은 7일/14일/30일 중에서 선택할 수 있어. 만약 대출하려는 도서가 이미 대출 중이라면, 예약 신청이 가능해야 해."
+                                    },
+                                    {
+                                        "id": "return-process",
+                                        "title": "반납 처리",
+                                        "description": "도서 반납 및 상태 변경",
+                                        "boundedContext": "LoanProcess",
+                                        "uiRequirements": "대출이 완료되면 해당 도서의 상태는 자동으로 '대출중'으로 변경되어야 해."
+                                    }
+                                ]
                             }
                         },
                         "description": "# Bounded Context Overview: LoanProcess (대출/반납 프로세스)\n\n## Role\n회원의 도서 대출 신청, 승인, 예약, 연장, 반납 등 대출/반납 전반의 프로세스를 관리한다. 대출 신청 시 회원 인증, 도서 검색, 대출 기간 선택, 예약 처리, 반납 및 연장 기능을 제공한다.\n\n## Key Events\n- LoanRequested\n- LoanApproved\n- BookReserved\n- LoanExtended\n- BookReturned\n\n# Requirements\n\n## userStory\n\n도서관의 도서 관리와 대출/반납을 통합적으로 관리하는\n\n'대출/반납' 화면에서는 회원이 도서를 대출하고 반납하는 것을 관리할 수 있어야 해. 대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할 도서를 선택해야 해. 도서는 도서명이나 ISBN으로 검색할 수 있어야 해. 대출 기간은 7일/14일/30일 중에서 선택할 수 있어. 만약 대출하려는 도서가 이미 대출 중이라면, 예약 신청이 가능해야 해. 대출이 완료되면 해당 도서의 상태는 자동으로 '대출중'으로 변경되어야\n\n대출 현황 화면에서는 현재 대출 중인 도서들의 목록을 볼 수 있어야 해. 각 대출 건에 대해 대출일, 반납예정일, 현재 상태(대출중/연체/반납완료)를 확인할 수 있어야 하고, 대출 중인 도서는 연장이나 반납 처리가 가능해야 해. 도서가 반납되면 자동으로 해당 도서의 상태가 '대출가능'으로 변경되어야\n\n대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할\n\n## DDL\n\n```sql\nCREATE TABLE loans (\n    loan_id INT AUTO_INCREMENT PRIMARY KEY,\n    member_id VARCHAR(20) NOT NULL,\n    book_id INT NOT NULL,\n    loan_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    due_date DATETIME NOT NULL,\n    return_date DATETIME NULL,\n    loan_period_days INT NOT NULL CHECK (loan_period_days IN (7, 14, 30)),\n    status ENUM('대출중', '연체', '반납완료', '연장') DEFAULT '대출중',\n    extension_count INT DEFAULT 0,\n    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,\n    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n    FOREIGN KEY (member_id) REFERENCES members(member_id),\n    FOREIGN KEY (book_id) REFERENCES books(book_id),\n    INDEX idx_member_id (member_id),\n    INDEX idx_book_id (book_id),\n    INDEX idx_status (status),\n    INDEX idx_due_date (due_date)\n);\n```\n```sql\nCREATE TABLE reservations (\n    reservation_id INT AUTO_INCREMENT PRIMARY KEY,\n    member_id VARCHAR(20) NOT NULL,\n    book_id INT NOT NULL,\n    reservation_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    status ENUM('예약중', '예약완료', '예약취소', '예약만료') DEFAULT '예약중',\n    notification_sent BOOLEAN DEFAULT FALSE,\n    expiry_date DATETIME NULL,\n    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,\n    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n    FOREIGN KEY (member_id) REFERENCES members(member_id),\n    FOREIGN KEY (book_id) REFERENCES books(book_id),\n    INDEX idx_member_id (member_id),\n    INDEX idx_book_id (book_id),\n    INDEX idx_status (status),\n    INDEX idx_reservation_date (reservation_date)\n);\n```\n```sql\nCREATE TABLE loan_history (\n    history_id INT AUTO_INCREMENT PRIMARY KEY,\n    loan_id INT NOT NULL,\n    action_type ENUM('대출', '반납', '연장', '연체알림', '분실신고') NOT NULL,\n    action_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    previous_due_date DATETIME NULL,\n    new_due_date DATETIME NULL,\n    notes TEXT,\n    processed_by VARCHAR(100),\n    FOREIGN KEY (loan_id) REFERENCES loans(loan_id),\n    INDEX idx_loan_id (loan_id),\n    INDEX idx_action_type (action_type),\n    INDEX idx_action_date (action_date)\n);\n```\n## Event\n\n```json\n{\n  \"name\": \"LoanRequested\",\n  \"displayName\": \"대출 신청됨\",\n  \"actor\": \"Member\",\n  \"level\": 1,\n  \"description\": \"회원이 도서 대출을 신청함. 회원번호와 이름으로 회원 확인 후, 대출할 도서를 선택함.\",\n  \"inputs\": [\n    \"회원번호\",\n    \"이름\",\n    \"도서명/ISBN\",\n    \"대출 기간(7/14/30일)\"\n  ],\n  \"outputs\": [\n    \"대출 신청 생성\",\n    \"회원 인증 완료\"\n  ],\n  \"nextEvents\": [\n    \"LoanApproved\",\n    \"BookReserved\"\n  ]\n}\n```\n\n```json\n{\n  \"name\": \"LoanApproved\",\n  \"displayName\": \"대출 승인됨\",\n  \"actor\": \"Librarian\",\n  \"level\": 2,\n  \"description\": \"도서가 대출 가능 상태일 때 대출이 승인되고, 도서 상태가 '대출중'으로 변경됨.\",\n  \"inputs\": [\n    \"대출 신청\",\n    \"도서 상태 '대출가능'\"\n  ],\n  \"outputs\": [\n    \"대출 기록 생성\",\n    \"도서 상태 '대출중'으로 변경\"\n  ],\n  \"nextEvents\": [\n    \"BookStatusChanged\"\n  ]\n}\n```\n\n```json\n{\n  \"name\": \"BookReserved\",\n  \"displayName\": \"도서 예약됨\",\n  \"actor\": \"Member\",\n  \"level\": 2,\n  \"description\": \"대출하려는 도서가 이미 대출 중인 경우, 회원이 해당 도서를 예약함.\",\n  \"inputs\": [\n    \"회원번호\",\n    \"도서 식별자\",\n    \"도서 상태 '대출중'\"\n  ],\n  \"outputs\": [\n    \"예약 기록 생성\",\n    \"도서 상태 '예약중'으로 변경\"\n  ],\n  \"nextEvents\": [\n    \"BookStatusChanged\"\n  ]\n}\n```\n\n```json\n{\n  \"name\": \"LoanExtended\",\n  \"displayName\": \"대출 연장됨\",\n  \"actor\": \"Member\",\n  \"level\": 3,\n  \"description\": \"회원이 대출 중인 도서의 대출 기간을 연장함.\",\n  \"inputs\": [\n    \"회원번호\",\n    \"도서 식별자\",\n    \"연장 요청\"\n  ],\n  \"outputs\": [\n    \"대출 기간 연장\",\n    \"대출 기록 갱신\"\n  ],\n  \"nextEvents\": []\n}\n```\n\n```json\n{\n  \"name\": \"BookReturned\",\n  \"displayName\": \"도서 반납됨\",\n  \"actor\": \"Member\",\n  \"level\": 2,\n  \"description\": \"회원이 대출한 도서를 반납함. 반납 시 도서 상태가 자동으로 '대출가능' 또는 예약자가 있으면 '예약중'으로 변경됨.\",\n  \"inputs\": [\n    \"회원번호\",\n    \"도서 식별자\",\n    \"반납 요청\"\n  ],\n  \"outputs\": [\n    \"반납 기록 생성\",\n    \"도서 상태 변경\"\n  ],\n  \"nextEvents\": [\n    \"BookStatusChanged\"\n  ]\n}\n```\n\n## Context Relations\n\n### BookManagement-LoanProcess\n- **Type**: Pub/Sub\n- **Direction**: receives from 도서 관리 (BookManagement)\n- **Reason**: 도서 상태 변경 등 이벤트가 발생하면 대출/반납 프로세스에서 이를 구독하여 처리할 수 있도록 느슨한 결합을 유지하기 위함.\n- **Interaction Pattern**: 도서 등록, 폐기, 상태 변경 이벤트가 발생하면 대출/반납 프로세스에서 해당 이벤트를 구독하여 대출 가능 여부 등을 판단한다.\n\n### LoanProcess-BookManagement\n- **Type**: Pub/Sub\n- **Direction**: sends to 도서 관리 (BookManagement)\n- **Reason**: 도서 상태 변경 등 이벤트가 발생하면 대출/반납 프로세스에서 이를 구독하여 처리할 수 있도록 느슨한 결합을 유지하기 위함.\n- **Interaction Pattern**: 도서 등록, 폐기, 상태 변경 이벤트가 발생하면 대출/반납 프로세스에서 해당 이벤트를 구독하여 대출 가능 여부 등을 판단한다.\n\n### LoanProcess-LoanStatusInquiry\n- **Type**: Pub/Sub\n- **Direction**: sends to 대출 현황 및 이력 조회 (LoanStatusInquiry)\n- **Reason**: 대출/반납/연장 등 이벤트 발생 시 현황 및 이력 조회 컨텍스트가 이를 구독하여 최신 현황과 이력을 제공할 수 있도록 한다.\n- **Interaction Pattern**: 대출/반납/연장 이벤트가 발생할 때마다 현황 및 이력 조회 컨텍스트가 관련 정보를 갱신한다."
@@ -47138,6 +48214,29 @@ export const aggregateDraftScenarios = {
                             61
                         ]
                     ]
+                ],
+                "siteMap": [
+                    {
+                        "id": "loan-status-inquiry",
+                        "title": "대출 현황",
+                        "description": "현재 대출 중인 도서 목록 및 대출 상태 관리",
+                        "boundedContext": "LoanStatusInquiry",
+                        "uiRequirements": "대출 현황 화면에서는 현재 대출 중인 도서들의 목록을 볼 수 있어야 해. 각 대출 건에 대해 대출일, 반납예정일, 현재 상태(대출중/연체/반납완료)를 확인할 수 있어야 하고, 대출 중인 도서는 연장이나 반납 처리가 가능해야 해. 도서가 반납되면 자동으로 해당 도서의 상태가 '대출가능'으로 변경되어야 해. 만약 예약자가 있는 도서가 반납되면, 해당 도서는 '예약중' 상태로 변경되어야 해."
+                    },
+                    {
+                        "id": "loan-list",
+                        "title": "대출 목록",
+                        "description": "대출 중인 도서 목록 및 상태 확인",
+                        "boundedContext": "LoanStatusInquiry",
+                        "uiRequirements": "각 대출 건에 대해 대출일, 반납예정일, 현재 상태(대출중/연체/반납완료)를 확인할 수 있어야 하고, 대출 중인 도서는 연장이나 반납 처리가 가능해야 해."
+                    },
+                    {
+                        "id": "loan-history",
+                        "title": "대출 이력 조회",
+                        "description": "도서별 대출 이력 및 상태 변경 이력 확인",
+                        "boundedContext": "LoanStatusInquiry",
+                        "uiRequirements": "각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해."
+                    }
                 ]
             }
         ],
@@ -47151,7 +48250,7 @@ export const aggregateDraftScenarios = {
                     "COMMON"
                 ],
                 "instruction": "## PBC Chat System Overview <br>\nThe PBC Chat system is designed to handle all chat-related tasks efficiently and securely. It provides a robust framework for chat room creation, conversation history storage, and retrieval. The system ensures seamless integration with Supabase and offers a user-friendly interface for both developers and users. Specifically optimized for Vue3-based environments, it delivers a smooth and responsive user experience utilizing modern web technologies. Through this integration, it offers various chat options and leverages Supabase's unique features to provide an optimal chat experience. The PBC Chat system ensures both reliability and scalability while offering users more diverse options to make the chat process smoother and more convenient.\n\n## Available Features\n### 1) Chat Room Creation <br>\n  Enables users to create chat rooms through various supported methods, ensuring a safe and fast chat environment.\n\n### 2) Conversation History Storage <br>\n  Provides functionality to securely store and manage all conversation history using Supabase.\n\n### 3) Conversation History Retrieval <br>\n  Allows users to view detailed records of past conversations, providing information including chat status and timestamps.\n\n## Usage Guide\n\n### 1) Analysis/Design\n1. Double-click the applied PBC's bounded context area to activate the PBC panel.\n\n<img width=\"1275\" alt=\"image\" src=\"https://github.com/user-attachments/assets/69cebda6-8334-4945-b0b7-7b061ad6c064\" /> <br>\n<Example of PBC Panel Creation>\n\n2. From the PBC panel options, select the event storming stickers corresponding to the features you want to use from reading elements, command elements, and event elements.\n\n<img width=\"435\" alt=\"image\" src=\"https://github.com/user-attachments/assets/22365ca1-139f-4582-a95f-bb425bb61383\" /> <br>\n<Example of Panel Sticker Option Selection>\n\n### 2) Implementation\n1. After closing the panel, click CODE to preview the event storming-based generated code.\n<img width=\"714\" alt=\"image\" src=\"https://github.com/user-attachments/assets/4d3f35e7-30cb-483d-a3b5-2fd099101ed4\" /> <br>\n\n2. In the generated code, click on the selected PBC folder > README.md to check the source code usage instructions.\n<img width=\"716\" alt=\"image\" src=\"https://github.com/user-attachments/assets/324887ab-53b3-4bd9-b8ba-823a62bcf764\" /> <br>\n<Example of PBC README.md File>\n\n3. After loading the source code in your IDE environment, follow the README instructions to download and extract the files, then verify that the downloaded PBC has been created in your source code.\n<img width=\"741\" alt=\"image\" src=\"https://github.com/user-attachments/assets/037b4ac3-dc03-4b96-9d83-dd049629d24f\" /> <br>\n<Example of PBC Source Code Download>\n\n4. To avoid port conflicts, modify the port appropriately in application.yml (payment/src/main/resources/application.yml).\n<img width=\"290\" alt=\"image\" src=\"https://github.com/user-attachments/assets/8809f047-3cc4-4e66-932e-9f89f6f8df5b\" /> <br>\n<Example of PBC Port Modification>\n",
-                "id": 18,
+                "id": 19,
                 "pbcPath": "https://github.com/msa-ez/pbc-chat-vue3-en/blob/main/model.json"
             },
             {
@@ -47163,7 +48262,7 @@ export const aggregateDraftScenarios = {
                     "COMMON"
                 ],
                 "instruction": "## PBC Review 시스템 개요\nPBC Review 시스템은 모든 리뷰 관련 작업을 효율적이고 안전하게 처리하도록 설계되었습니다. 이 시스템은 리뷰 등록, 평점 등록 및 조회를 위한 견고한 프레임워크를 제공합니다. 사용자 친화적인 인터페이스를 통해 특정 정보에 대한 평점과 리뷰를 쉽게 남길 수 있도록 지원합니다. 이러한 기능을 통해 다양한 리뷰 옵션을 제공하고, 사용자 경험을 최적화하여 보다 매끄럽고 편리한 리뷰 과정을 제공합니다. PBC Review 시스템은 신뢰성과 확장성을 동시에 확보하며, 사용자에게 보다 다양한 선택지를 제공하여 리뷰 과정을 더욱 매끄럽고 편리하게 만듭니다.\n\n## 사용 가능한 기능\n### 1) 리뷰 등록 <br>\n  사용자가 특정 정보에 대한 리뷰를 쉽게 등록할 수 있도록 하며, 안전하고 빠른 리뷰 환경을 보장합니다.\n\n### 2) 평점 등록 <br>\n  사용자 친화적인 인터페이스를 통해 사용자가 평점을 등록할 수 있는 기능을 제공합니다.\n\n### 3) 리뷰 및 평점 조회 <br>\n  등록된 모든 리뷰와 평점을 서비스를 이용하는 모든 사용자가 확인할 수 있도록 하는 기능을 제공합니다.\n\n## 사용 방법\n\n### 1) 분석/설계\n1. 적용한 PBC의 바운디드 컨텍스트 영역을 더블 클릭하여 PBC 패널을 활성화 합니다.\n\n<img width=\"1422\" alt=\"image\" src=\"https://github.com/user-attachments/assets/f1e557a5-7ac9-44d0-9ba2-30fd6fa11ba8\" /> <br>\n<PBC Panel 생성 예시>\n\n2. PBC 패널 옵션중 읽기 요소, 커맨드 요소, 이벤트 요소에서 각각 사용할 기능에 해당하는 이벤트스토밍 스티커를 선택합니다. \n\n<img width=\"767\" alt=\"image\" src=\"https://github.com/user-attachments/assets/2b255acd-934d-4565-8981-b16a2fe7e087\" /> <br>\n<Panel 스티커 옵션 선택 예시>\n\n### 2) 구현\n1. 패널을 닫은 후, CODE를 클릭하여 코드 프리뷰를 통해 이벤트스토밍기반 생성된 코드를 확인합니다.\n<img width=\"509\" alt=\"image\" src=\"https://github.com/user-attachments/assets/717d6253-1f07-43f7-b949-6bd7350e459b\" /> <br>\n\n2. 생성된 코드에서 선택한 PBC 폴더 > README.md를 클릭하여 소스코드 사용방법을 확인하여 사용할 수 있습니다.\n<img width=\"998\" alt=\"image\" src=\"https://github.com/user-attachments/assets/699bda6a-7167-4c50-98b4-1afe1ccb1607\" /> <br>\n<PBC README.md 파일 예시>\n",
-                "id": 20,
+                "id": 21,
                 "pbcPath": "https://github.com/msa-ez/pbc-review/blob/main/model.json"
             },
             {
@@ -47175,7 +48274,7 @@ export const aggregateDraftScenarios = {
                     "COMMON"
                 ],
                 "instruction": "## PBC Alarm 시스템 개요\nPBC Alarm 시스템은 모든 알림 관련 작업을 효율적이고 안전하게 처리하도록 설계되었습니다. 이 시스템은 즉각 알람 발송 및 예약 알림 발송을 위한 견고한 프레임워크를 제공합니다. SSE(Server-Sent Events) 기반의 기술을 활용하여 실시간으로 알림을 전송하며, 사용자 친화적인 인터페이스를 통해 알림 설정을 쉽게 관리할 수 있도록 지원합니다. 이러한 기능을 통해 다양한 알림 옵션을 제공하고, 사용자 경험을 최적화하여 보다 매끄럽고 편리한 알림 과정을 제공합니다. PBC Alarm 시스템은 신뢰성과 확장성을 동시에 확보하며, 사용자에게 보다 다양한 선택지를 제공하여 알림 과정을 더욱 매끄럽고 편리하게 만듭니다.\n\n## 사용 가능한 기능\n### 1) 즉각 알람 발송 <br>\n  SSE 기반의 기술을 통해 사용자가 즉각적인 알람을 받을 수 있도록 하며, 안전하고 빠른 알림 환경을 보장합니다.\n\n### 2) 예약 알림 발송 <br>\n  사용자가 정해진 날짜와 시간에 알림을 설정할 수 있는 기능을 제공하여, 예약된 알림을 정확하게 발송할 수 있도록 지원합니다.\n\n## 사용 방법\n\n### 1) 분석/설계\n1. 적용한 PBC의 바운디드 컨텍스트 영역을 더블 클릭하여 PBC 패널을 활성화 합니다.\n\n<img width=\"1275\" alt=\"image\" src=\"https://github.com/user-attachments/assets/69cebda6-8334-4945-b0b7-7b061ad6c064\" /> <br>\n<PBC Panel 생성 예시>\n\n2. PBC 패널 옵션중 읽기 요소, 커맨드 요소, 이벤트 요소에서 각각 사용할 기능에 해당하는 이벤트스토밍 스티커를 선택합니다. \n\n<img width=\"435\" alt=\"image\" src=\"https://github.com/user-attachments/assets/22365ca1-139f-4582-a95f-bb425bb61383\" /> <br>\n<Panel 스티커 옵션 선택 예시>\n\n* 결제를 통한 결제정보 업데이트와 같은 다른 마이크로서비스와의 통신이 발생할 경우\n  Event - Policy Relation을 연결해야합니다.\n\n  예시) 결제성공을 통한 주문 애그리거트의 결제정보 변경\n  \n  <img width=\"823\" alt=\"image\" src=\"https://github.com/user-attachments/assets/cfaa6b70-a489-42eb-8c18-823b8c9ed7dc\" /> <br>\n  \n\n### 2) 구현\n1. 패널을 닫은 후, CODE를 클릭하여 코드 프리뷰를 통해 이벤트스토밍기반 생성된 코드를 확인합니다.\n<img width=\"714\" alt=\"image\" src=\"https://github.com/user-attachments/assets/4d3f35e7-30cb-483d-a3b5-2fd099101ed4\" /> <br>\n\n2. 생성된 코드에서 선택한 PBC 폴더 > README.md를 클릭하여 소스코드 사용방법을 확인합니다.\n<img width=\"716\" alt=\"image\" src=\"https://github.com/user-attachments/assets/324887ab-53b3-4bd9-b8ba-823a62bcf764\" /> <br>\n<PBC README.md 파일 예시>\n\n3. IDE환경에서 소스코드를 Load한 후, README를 참고하여 다운로드 > 압축 해제를 진행하여 소스코드에 다운로드 받은 PBC가 생성되었는지 확인합니다.\n<img width=\"741\" alt=\"image\" src=\"https://github.com/user-attachments/assets/037b4ac3-dc03-4b96-9d83-dd049629d24f\" /> <br>\n<PBC 소스코드 다운 예시>\n\n4. port 충돌을 고려해 application.yml(payment/src/main/resources/application.yml)의 port를 적절하게 변경합니다.\n<img width=\"290\" alt=\"image\" src=\"https://github.com/user-attachments/assets/8809f047-3cc4-4e66-932e-9f89f6f8df5b\" /> <br>\n<PBC Port 변경 예시>\n",
-                "id": 21,
+                "id": 22,
                 "pbcPath": "https://github.com/msa-ez/pbc-reservation-notification/blob/main/model.json"
             },
             {
@@ -47187,7 +48286,7 @@ export const aggregateDraftScenarios = {
                     "COMMON"
                 ],
                 "instruction": "## PBC Alarm 시스템 개요\nPBC Alarm 시스템은 모든 알림 관련 작업을 효율적이고 안전하게 처리하도록 설계되었습니다. 이 시스템은 즉각 알람 발송 및 예약 알림 발송을 위한 견고한 프레임워크를 제공합니다. SSE(Server-Sent Events) 기반의 기술을 활용하여 실시간으로 알림을 전송하며, 사용자 친화적인 인터페이스를 통해 알림 설정을 쉽게 관리할 수 있도록 지원합니다. 특히, Vue3 기반 환경에서 원활하게 동작하도록 최적화되어 있어, 최신 웹 기술을 활용한 매끄럽고 반응성 높은 사용자 경험을 제공합니다. 이러한 기능을 통해 다양한 알림 옵션을 제공하고, 사용자 경험을 최적화하여 보다 매끄럽고 편리한 알림 과정을 제공합니다. PBC Alarm 시스템은 신뢰성과 확장성을 동시에 확보하며, 사용자에게 보다 다양한 선택지를 제공하여 알림 과정을 더욱 매끄럽고 편리하게 만듭니다.\n\n## 사용 가능한 기능\n### 1) 즉각 알람 발송 <br>\n  SSE 기반의 기술을 통해 사용자가 즉각적인 알람을 받을 수 있도록 하며, 안전하고 빠른 알림 환경을 보장합니다.\n\n### 2) 예약 알림 발송 <br>\n  사용자가 정해진 날짜와 시간에 알림을 설정할 수 있는 기능을 제공하여, 예약된 알림을 정확하게 발송할 수 있도록 지원합니다.\n\n## 사용 방법\n\n### 1) 분석/설계\n1. 적용한 PBC의 바운디드 컨텍스트 영역을 더블 클릭하여 PBC 패널을 활성화 합니다.\n\n<img width=\"1275\" alt=\"image\" src=\"https://github.com/user-attachments/assets/69cebda6-8334-4945-b0b7-7b061ad6c064\" /> <br>\n<PBC Panel 생성 예시>\n\n2. PBC 패널 옵션중 읽기 요소, 커맨드 요소, 이벤트 요소에서 각각 사용할 기능에 해당하는 이벤트스토밍 스티커를 선택합니다. \n\n<img width=\"435\" alt=\"image\" src=\"https://github.com/user-attachments/assets/22365ca1-139f-4582-a95f-bb425bb61383\" /> <br>\n<Panel 스티커 옵션 선택 예시>\n\n### 2) 구현\n1. 패널을 닫은 후, CODE를 클릭하여 코드 프리뷰를 통해 이벤트스토밍기반 생성된 코드를 확인합니다.\n<img width=\"714\" alt=\"image\" src=\"https://github.com/user-attachments/assets/4d3f35e7-30cb-483d-a3b5-2fd099101ed4\" /> <br>\n\n2. 생성된 코드에서 선택한 PBC 폴더 > README.md를 클릭하여 소스코드 사용방법을 확인합니다.\n<img width=\"716\" alt=\"image\" src=\"https://github.com/user-attachments/assets/324887ab-53b3-4bd9-b8ba-823a62bcf764\" /> <br>\n<PBC README.md 파일 예시>\n\n3. IDE환경에서 소스코드를 Load한 후, README를 참고하여 다운로드 > 압축 해제를 진행하여 소스코드에 다운로드 받은 PBC가 생성되었는지 확인합니다.\n<img width=\"741\" alt=\"image\" src=\"https://github.com/user-attachments/assets/037b4ac3-dc03-4b96-9d83-dd049629d24f\" /> <br>\n<PBC 소스코드 다운 예시>\n\n4. port 충돌을 고려해 application.yml(payment/src/main/resources/application.yml)의 port를 적절하게 변경합니다.\n<img width=\"290\" alt=\"image\" src=\"https://github.com/user-attachments/assets/8809f047-3cc4-4e66-932e-9f89f6f8df5b\" /> <br>\n<PBC Port 변경 예시>\n",
-                "id": 22,
+                "id": 23,
                 "pbcPath": "https://github.com/msa-ez/pbc-reservation-notification-vue3/blob/main/model.json"
             },
             {
@@ -47199,7 +48298,7 @@ export const aggregateDraftScenarios = {
                     "COMMON"
                 ],
                 "instruction": "## PBC Chat 시스템 개요 <br>\nPBC Chat 시스템은 모든 채팅 관련 작업을 효율적이고 안전하게 처리하도록 설계되었습니다. 이 시스템은 채팅방 생성, 대화 내역 저장 및 조회를 위한 견고한 프레임워크를 제공합니다. Supabase와의 원활한 통합을 보장하며, 개발자와 사용자 모두에게 사용자 친화적인 인터페이스를 제공합니다. 특히, Vue3 기반 환경에서 원활하게 동작하도록 최적화되어 있어, 최신 웹 기술을 활용한 매끄럽고 반응성 높은 사용자 경험을 제공합니다. 이러한 통합을 통해 다양한 채팅 옵션을 제공하고, Supabase의 고유한 기능을 활용하여 최적의 채팅 경험을 제공합니다. PBC Chat 시스템은 신뢰성과 확장성을 동시에 확보하며, 사용자에게 보다 다양한 선택지를 제공하여 채팅 과정을 더욱 매끄럽고 편리하게 만듭니다.\n\n## 사용 가능한 기능\n### 1) 채팅방 생성 <br>\n  다양한 지원 방법을 통해 사용자가 채팅방을 생성할 수 있도록 하며, 안전하고 빠른 채팅 환경을 보장합니다.\n\n### 2) 대화 내역 저장 <br>\n  Supabase를 사용하여 모든 대화 내역을 안전하게 저장하고 관리할 수 있는 기능을 제공합니다.\n\n### 3) 대화 내역 조회 <br>\n  과거 대화의 상세 기록을 사용자가 볼 수 있도록 하여, 채팅 상태 및 타임스탬프를 포함한 정보를 제공합니다.\n\n## 사용 방법\n\n### 1) 분석/설계\n1. 적용한 PBC의 바운디드 컨텍스트 영역을 더블 클릭하여 PBC 패널을 활성화 합니다.\n\n<img width=\"1275\" alt=\"image\" src=\"https://github.com/user-attachments/assets/69cebda6-8334-4945-b0b7-7b061ad6c064\" /> <br>\n<PBC Panel 생성 예시>\n\n2. PBC 패널 옵션중 읽기 요소, 커맨드 요소, 이벤트 요소에서 각각 사용할 기능에 해당하는 이벤트스토밍 스티커를 선택합니다. \n\n<img width=\"435\" alt=\"image\" src=\"https://github.com/user-attachments/assets/22365ca1-139f-4582-a95f-bb425bb61383\" /> <br>\n<Panel 스티커 옵션 선택 예시>\n\n### 2) 구현\n1. 패널을 닫은 후, CODE를 클릭하여 코드 프리뷰를 통해 이벤트스토밍기반 생성된 코드를 확인합니다.\n<img width=\"714\" alt=\"image\" src=\"https://github.com/user-attachments/assets/4d3f35e7-30cb-483d-a3b5-2fd099101ed4\" /> <br>\n\n2. 생성된 코드에서 선택한 PBC 폴더 > README.md를 클릭하여 소스코드 사용방법을 확인합니다.\n<img width=\"716\" alt=\"image\" src=\"https://github.com/user-attachments/assets/324887ab-53b3-4bd9-b8ba-823a62bcf764\" /> <br>\n<PBC README.md 파일 예시>\n\n3. IDE환경에서 소스코드를 Load한 후, README를 참고하여 다운로드 > 압축 해제를 진행하여 소스코드에 다운로드 받은 PBC가 생성되었는지 확인합니다.\n<img width=\"741\" alt=\"image\" src=\"https://github.com/user-attachments/assets/037b4ac3-dc03-4b96-9d83-dd049629d24f\" /> <br>\n<PBC 소스코드 다운 예시>\n\n4. port 충돌을 고려해 application.yml(payment/src/main/resources/application.yml)의 port를 적절하게 변경합니다.\n<img width=\"290\" alt=\"image\" src=\"https://github.com/user-attachments/assets/8809f047-3cc4-4e66-932e-9f89f6f8df5b\" /> <br>\n<PBC Port 변경 예시>\n",
-                "id": 23,
+                "id": 24,
                 "pbcPath": "https://github.com/msa-ez/pbc-chat-vue3/blob/main/model.json"
             },
             {
@@ -47211,7 +48310,7 @@ export const aggregateDraftScenarios = {
                     "COMMON"
                 ],
                 "instruction": "## PBC Chat 시스템 개요 <br>\nPBC Chat 시스템은 모든 채팅 관련 작업을 효율적이고 안전하게 처리하도록 설계되었습니다. 이 시스템은 채팅방 생성, 대화 내역 저장 및 조회를 위한 견고한 프레임워크를 제공합니다. Supabase와의 원활한 통합을 보장하며, 개발자와 사용자 모두에게 사용자 친화적인 인터페이스를 제공합니다. 이러한 통합을 통해 다양한 채팅 옵션을 제공하고, Supabase의 고유한 기능을 활용하여 최적의 채팅 경험을 제공합니다. PBC Chat 시스템은 신뢰성과 확장성을 동시에 확보하며, 사용자에게 보다 다양한 선택지를 제공하여 채팅 과정을 더욱 매끄럽고 편리하게 만듭니다.\n\n## 사용 가능한 기능\n### 1) 채팅방 생성 <br>\n  다양한 지원 방법을 통해 사용자가 채팅방을 생성할 수 있도록 하며, 안전하고 빠른 채팅 환경을 보장합니다.\n\n### 2) 대화 내역 저장 <br>\n  Supabase를 사용하여 모든 대화 내역을 안전하게 저장하고 관리할 수 있는 기능을 제공합니다.\n\n### 3) 대화 내역 조회 <br>\n  과거 대화의 상세 기록을 사용자가 볼 수 있도록 하여, 채팅 상태 및 타임스탬프를 포함한 정보를 제공합니다.\n\n## 사용 방법\n\n### 1) 분석/설계\n1. 적용한 PBC의 바운디드 컨텍스트 영역을 더블 클릭하여 PBC 패널을 활성화 합니다.\n\n<img width=\"1275\" alt=\"image\" src=\"https://github.com/user-attachments/assets/69cebda6-8334-4945-b0b7-7b061ad6c064\" /> <br>\n<PBC Panel 생성 예시>\n\n2. PBC 패널 옵션중 읽기 요소, 커맨드 요소, 이벤트 요소에서 각각 사용할 기능에 해당하는 이벤트스토밍 스티커를 선택합니다. \n\n<img width=\"435\" alt=\"image\" src=\"https://github.com/user-attachments/assets/22365ca1-139f-4582-a95f-bb425bb61383\" /> <br>\n<Panel 스티커 옵션 선택 예시>\n\n### 2) 구현\n1. 패널을 닫은 후, CODE를 클릭하여 코드 프리뷰를 통해 이벤트스토밍기반 생성된 코드를 확인합니다.\n<img width=\"714\" alt=\"image\" src=\"https://github.com/user-attachments/assets/4d3f35e7-30cb-483d-a3b5-2fd099101ed4\" /> <br>\n\n2. 생성된 코드에서 선택한 PBC 폴더 > README.md를 클릭하여 소스코드 사용방법을 확인합니다.\n<img width=\"716\" alt=\"image\" src=\"https://github.com/user-attachments/assets/324887ab-53b3-4bd9-b8ba-823a62bcf764\" /> <br>\n<PBC README.md 파일 예시>\n\n3. IDE환경에서 소스코드를 Load한 후, README를 참고하여 다운로드 > 압축 해제를 진행하여 소스코드에 다운로드 받은 PBC가 생성되었는지 확인합니다.\n<img width=\"741\" alt=\"image\" src=\"https://github.com/user-attachments/assets/037b4ac3-dc03-4b96-9d83-dd049629d24f\" /> <br>\n<PBC 소스코드 다운 예시>\n\n4. port 충돌을 고려해 application.yml(payment/src/main/resources/application.yml)의 port를 적절하게 변경합니다.\n<img width=\"290\" alt=\"image\" src=\"https://github.com/user-attachments/assets/8809f047-3cc4-4e66-932e-9f89f6f8df5b\" /> <br>\n<PBC Port 변경 예시>\n",
-                "id": 24,
+                "id": 25,
                 "pbcPath": "https://github.com/msa-ez/pbc-chat/blob/main/model.json"
             },
             {
@@ -47223,7 +48322,7 @@ export const aggregateDraftScenarios = {
                     "COMMON"
                 ],
                 "instruction": "## PBC 결제 시스템 개요 <br>\nPBC 결제 시스템은 모든 결제 관련 작업을 효율적이고 안전하게 처리하도록 설계되었습니다. 이 시스템은 결제 처리, 취소 관리, 거래 내역 조회를 위한 견고한 프레임워크를 제공합니다. 다양한 결제 게이트웨이(PG사)와의 원활한 통합을 보장하며, 개발자와 사용자 모두에게 사용자 친화적인 인터페이스를 제공합니다. 이러한 통합을 통해 다양한 결제 옵션을 제공하고, 각 게이트웨이의 고유한 기능을 활용하여 최적의 결제 경험을 제공합니다. PBC 결제 시스템은 신뢰성과 확장성을 동시에 확보하며, 사용자에게 보다 다양한 선택지를 제공하여 결제 과정을 더욱 매끄럽고 편리하게 만듭니다.\n\n## 사용 가능한 기능\n\n### 1) 결제 처리 <br>\n  다양한 지원 방법을 통해 사용자가 결제를 할 수 있도록 하며, 안전하고 빠른 거래를 보장합니다.\n\n### 2) 결제 취소 <br>\n   전체 또는 부분 환불 옵션을 통해 결제를 취소할 수 있는 기능을 제공합니다.\n\n### 3) 거래 내역 조회 <br>\n   결제 상태 및 타임스탬프를 포함한 과거 거래의 상세 기록을 사용자가 볼 수 있도록 합니다.\n\n## 사용 방법\n\n### 1) 분석/설계\n1. 적용한 PBC의 바운디드 컨텍스트 영역을 더블 클릭하여 PBC 패널을 활성화 합니다.\n\n<img width=\"1275\" alt=\"image\" src=\"https://github.com/user-attachments/assets/69cebda6-8334-4945-b0b7-7b061ad6c064\" /> <br>\n<PBC Panel 생성 예시>\n\n2. PBC 패널 옵션중 읽기 요소, 커맨드 요소, 이벤트 요소에서 각각 사용할 기능에 해당하는 이벤트스토밍 스티커를 선택합니다. \n\n<img width=\"435\" alt=\"image\" src=\"https://github.com/user-attachments/assets/22365ca1-139f-4582-a95f-bb425bb61383\" /> <br>\n<Panel 스티커 옵션 선택 예시>\n\n* 결제를 통한 결제정보 업데이트와 같은 다른 마이크로서비스와의 통신이 발생할 경우\n  Event - Policy Relation을 연결해야합니다.\n\n  예시) 결제성공을 통한 주문 애그리거트의 결제정보 변경\n  \n  <img width=\"823\" alt=\"image\" src=\"https://github.com/user-attachments/assets/cfaa6b70-a489-42eb-8c18-823b8c9ed7dc\" /> <br>\n  \n\n### 2) 구현\n1. 패널을 닫은 후, CODE를 클릭하여 코드 프리뷰를 통해 이벤트스토밍기반 생성된 코드를 확인합니다.\n<img width=\"714\" alt=\"image\" src=\"https://github.com/user-attachments/assets/4d3f35e7-30cb-483d-a3b5-2fd099101ed4\" /> <br>\n\n2. 생성된 코드에서 선택한 PBC 폴더 > README.md를 클릭하여 소스코드 사용방법을 확인합니다.\n<img width=\"716\" alt=\"image\" src=\"https://github.com/user-attachments/assets/324887ab-53b3-4bd9-b8ba-823a62bcf764\" /> <br>\n<PBC README.md 파일 예시>\n\n3. IDE환경에서 소스코드를 Load한 후, README를 참고하여 다운로드 > 압축 해제를 진행하여 소스코드에 다운로드 받은 PBC가 생성되었는지 확인합니다.\n<img width=\"741\" alt=\"image\" src=\"https://github.com/user-attachments/assets/037b4ac3-dc03-4b96-9d83-dd049629d24f\" /> <br>\n<PBC 소스코드 다운 예시>\n\n4. port 충돌을 고려해 application.yml(payment/src/main/resources/application.yml)의 port를 적절하게 변경합니다.\n<img width=\"290\" alt=\"image\" src=\"https://github.com/user-attachments/assets/8809f047-3cc4-4e66-932e-9f89f6f8df5b\" /> <br>\n<PBC Port 변경 예시>\n\n6. 이후, EDA기반 통신이 이루어지도록 다른 마이크로서비스와 topic명을 일치 시키기 위해 destination을 수정합니다.\n<img width=\"314\" alt=\"image\" src=\"https://github.com/user-attachments/assets/634d95ea-3d50-43e2-8d95-2a42a51de390\" /> <br>\n\n7. Frontend도 동일하게 package.json(frontend/package.json)의 'start'에 명시된 port number를 변경합니다.\n<img width=\"366\" alt=\"image\" src=\"https://github.com/user-attachments/assets/c750e392-c186-4d25-a8a1-2c088a412468\" /> <br>\n\n8. 아래 커맨드를 통해 Payment system의 backend, frontend를 기동합니다.\n```\n// 1. payment Backend\n\n// Root 기준\ncd payment-system-0-0-6\ncd payment\nmvn spring-boot:run\n\n// 2. payment Frontend\n\n// Root 기준\ncd frontend\nnpm install\nnpm run build\nnpm run start\n```\n\n8. Payment system의 Gateway 라우팅 설정을 진행하기 위해 application.yml(gateway/src/resources/application.yml)에 라우팅을 설정합니다.\n<img width=\"350\" alt=\"image\" src=\"https://github.com/user-attachments/assets/884ee895-b385-43be-aa37-7626b1d70056\" /> <br>\n\n9. Root에 위치한 Frontend에 web component 등록을 위해 index.html(frontend/public/index.html)에 Payment system의 17line에 아래와 같이 등록합니다.\n```\n<script src=\"<Payment system의 Frontend Url>/payment-system-app.js\"></script>\n```\n<img width=\"1013\" alt=\"image\" src=\"https://github.com/user-attachments/assets/8a5e7b96-facd-4c0b-9e65-387c198a2d80\" /> <br>\n\n10. Payment system을 SingleSPA로 동작하기 위해 Component의 \\<template>과 <script>에 다음과 같이 코드를 생성합니다.\n```\n// template\n<template>\n  <payment-system-app>\n      <payment-system\n          service-type=\"<payment-system frontend의 Payment.vue에 생성된 타입 ex) pay, refund, receipt...>\"\n          :request-info=\"JSON.stringify(paymentData)\" \n          buyer-info-mode=\"<결제 detail 정보 옵션 ex) true, false>\"\n      ></payment-system>\n  </payment-system-app>\n</template>\n\n// script\ndata: () => ({\n  snackbar: {\n    paymentData: null,\n}),\nasync created() {\n  if(!this.paymentData){\n    this.paymentData = {\n      itemId : this.decode(this.value._links.self.href.split(\"/\")[this.value._links.self.href.split(\"/\").length - 1]),\n      price: , // 직접 설정\n      name: \"\", // 직접 설정\n      buyerId: \"\", // 직접 설정\n      buyerEmail: \"\", // 직접 설정\n      buyerTel: \"\", // 직접 설정\n      buyerName: \"\" // 직접 설정\n    }\n  }\n}\n```\n\nPayment system에 대한 설정이 완료되면 Root Frontend UI에 아래와 같이 Payment system에 대한 UI가 생성됩니다. <br>\n![image](https://github.com/user-attachments/assets/5792ce28-b318-4ed8-b65d-d908fb1524ec) <br>\n\n",
-                "id": 25,
+                "id": 26,
                 "pbcPath": "https://github.com/msa-ez/pbc-payment-system/blob/main/model.json"
             },
             {
@@ -47279,9 +48378,9 @@ export const aggregateDraftScenarios = {
             "projectName": "Requirements Analysis",
             "content": {
                 "elements": {
-                    "8ac37feb-6a1d-2e04-4069-ebbd0681a346": {
+                    "b5ba0919-61be-fd99-952f-d25f2679a299": {
                         "_type": "org.uengine.modeling.model.Actor",
-                        "id": "8ac37feb-6a1d-2e04-4069-ebbd0681a346",
+                        "id": "b5ba0919-61be-fd99-952f-d25f2679a299",
                         "name": "Librarian",
                         "oldName": "",
                         "displayName": "",
@@ -47289,7 +48388,7 @@ export const aggregateDraftScenarios = {
                         "author": null,
                         "elementView": {
                             "_type": "org.uengine.modeling.model.Actor",
-                            "id": "8ac37feb-6a1d-2e04-4069-ebbd0681a346",
+                            "id": "b5ba0919-61be-fd99-952f-d25f2679a299",
                             "x": 150,
                             "y": 150,
                             "width": 100,
@@ -47298,9 +48397,9 @@ export const aggregateDraftScenarios = {
                         },
                         "boundedContext": {}
                     },
-                    "17cd9dc1-64d2-62e3-66d5-fec8f78436d9": {
+                    "db30667b-66f0-f1ef-5f17-eff5f73a6432": {
                         "_type": "org.uengine.modeling.model.Actor",
-                        "id": "17cd9dc1-64d2-62e3-66d5-fec8f78436d9",
+                        "id": "db30667b-66f0-f1ef-5f17-eff5f73a6432",
                         "name": "Member",
                         "oldName": "",
                         "displayName": "",
@@ -47308,7 +48407,7 @@ export const aggregateDraftScenarios = {
                         "author": null,
                         "elementView": {
                             "_type": "org.uengine.modeling.model.Actor",
-                            "id": "17cd9dc1-64d2-62e3-66d5-fec8f78436d9",
+                            "id": "db30667b-66f0-f1ef-5f17-eff5f73a6432",
                             "x": 150,
                             "y": 400,
                             "width": 100,
@@ -47317,9 +48416,9 @@ export const aggregateDraftScenarios = {
                         },
                         "boundedContext": {}
                     },
-                    "4ffac2a4-5fe9-7ba8-1ff1-659c2334d0bf": {
+                    "3a7e8b9e-26cb-e866-4269-942f432bd79d": {
                         "_type": "org.uengine.modeling.model.Actor",
-                        "id": "4ffac2a4-5fe9-7ba8-1ff1-659c2334d0bf",
+                        "id": "3a7e8b9e-26cb-e866-4269-942f432bd79d",
                         "name": "System",
                         "oldName": "",
                         "displayName": "",
@@ -47327,7 +48426,7 @@ export const aggregateDraftScenarios = {
                         "author": null,
                         "elementView": {
                             "_type": "org.uengine.modeling.model.Actor",
-                            "id": "4ffac2a4-5fe9-7ba8-1ff1-659c2334d0bf",
+                            "id": "3a7e8b9e-26cb-e866-4269-942f432bd79d",
                             "x": 150,
                             "y": 650,
                             "width": 100,
@@ -47336,9 +48435,9 @@ export const aggregateDraftScenarios = {
                         },
                         "boundedContext": {}
                     },
-                    "f2c9c6f2-d17c-d38e-a714-716815a15b01": {
+                    "1d7c1caf-8e23-331f-628b-e87406b7d722": {
                         "_type": "org.uengine.modeling.model.Event",
-                        "id": "f2c9c6f2-d17c-d38e-a714-716815a15b01",
+                        "id": "1d7c1caf-8e23-331f-628b-e87406b7d722",
                         "visibility": "public",
                         "name": "BookRegistered",
                         "oldName": "",
@@ -47363,7 +48462,7 @@ export const aggregateDraftScenarios = {
                         "mirrorElement": null,
                         "elementView": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "f2c9c6f2-d17c-d38e-a714-716815a15b01",
+                            "id": "1d7c1caf-8e23-331f-628b-e87406b7d722",
                             "x": 300,
                             "y": 150,
                             "width": 100,
@@ -47373,7 +48472,7 @@ export const aggregateDraftScenarios = {
                         },
                         "hexagonalView": {
                             "_type": "org.uengine.modeling.model.EventHexagonal",
-                            "id": "f2c9c6f2-d17c-d38e-a714-716815a15b01",
+                            "id": "1d7c1caf-8e23-331f-628b-e87406b7d722",
                             "x": 300,
                             "y": 150,
                             "subWidth": 100,
@@ -47385,9 +48484,9 @@ export const aggregateDraftScenarios = {
                         "relationCommandInfo": [],
                         "trigger": "@PostPersist"
                     },
-                    "50904331-6712-d6dc-8aa3-048c1abf7f09": {
+                    "a91c7cca-8cfa-8f66-ff55-c2c07133a498": {
                         "_type": "org.uengine.modeling.model.Event",
-                        "id": "50904331-6712-d6dc-8aa3-048c1abf7f09",
+                        "id": "a91c7cca-8cfa-8f66-ff55-c2c07133a498",
                         "visibility": "public",
                         "name": "BookDiscarded",
                         "oldName": "",
@@ -47412,7 +48511,7 @@ export const aggregateDraftScenarios = {
                         "mirrorElement": null,
                         "elementView": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "50904331-6712-d6dc-8aa3-048c1abf7f09",
+                            "id": "a91c7cca-8cfa-8f66-ff55-c2c07133a498",
                             "x": 500,
                             "y": 150,
                             "width": 100,
@@ -47422,7 +48521,7 @@ export const aggregateDraftScenarios = {
                         },
                         "hexagonalView": {
                             "_type": "org.uengine.modeling.model.EventHexagonal",
-                            "id": "50904331-6712-d6dc-8aa3-048c1abf7f09",
+                            "id": "a91c7cca-8cfa-8f66-ff55-c2c07133a498",
                             "x": 500,
                             "y": 150,
                             "subWidth": 100,
@@ -47434,9 +48533,9 @@ export const aggregateDraftScenarios = {
                         "relationCommandInfo": [],
                         "trigger": "@PostPersist"
                     },
-                    "5319c43f-3f55-0e7c-00f0-b27a9c8355a2": {
+                    "ddfeff49-a1ea-ff08-6e32-21843898cf7c": {
                         "_type": "org.uengine.modeling.model.Event",
-                        "id": "5319c43f-3f55-0e7c-00f0-b27a9c8355a2",
+                        "id": "ddfeff49-a1ea-ff08-6e32-21843898cf7c",
                         "visibility": "public",
                         "name": "LoanApproved",
                         "oldName": "",
@@ -47461,7 +48560,7 @@ export const aggregateDraftScenarios = {
                         "mirrorElement": null,
                         "elementView": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "5319c43f-3f55-0e7c-00f0-b27a9c8355a2",
+                            "id": "ddfeff49-a1ea-ff08-6e32-21843898cf7c",
                             "x": 700,
                             "y": 150,
                             "width": 100,
@@ -47471,7 +48570,7 @@ export const aggregateDraftScenarios = {
                         },
                         "hexagonalView": {
                             "_type": "org.uengine.modeling.model.EventHexagonal",
-                            "id": "5319c43f-3f55-0e7c-00f0-b27a9c8355a2",
+                            "id": "ddfeff49-a1ea-ff08-6e32-21843898cf7c",
                             "x": 700,
                             "y": 150,
                             "subWidth": 100,
@@ -47483,9 +48582,9 @@ export const aggregateDraftScenarios = {
                         "relationCommandInfo": [],
                         "trigger": "@PostPersist"
                     },
-                    "8f1ac3ce-f851-6172-930d-5e4f04d0d916": {
+                    "e2eda0d2-17a6-5756-330a-fe750a9e2a07": {
                         "_type": "org.uengine.modeling.model.Event",
-                        "id": "8f1ac3ce-f851-6172-930d-5e4f04d0d916",
+                        "id": "e2eda0d2-17a6-5756-330a-fe750a9e2a07",
                         "visibility": "public",
                         "name": "LoanStatusChecked",
                         "oldName": "",
@@ -47510,7 +48609,7 @@ export const aggregateDraftScenarios = {
                         "mirrorElement": null,
                         "elementView": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "8f1ac3ce-f851-6172-930d-5e4f04d0d916",
+                            "id": "e2eda0d2-17a6-5756-330a-fe750a9e2a07",
                             "x": 900,
                             "y": 150,
                             "width": 100,
@@ -47520,7 +48619,7 @@ export const aggregateDraftScenarios = {
                         },
                         "hexagonalView": {
                             "_type": "org.uengine.modeling.model.EventHexagonal",
-                            "id": "8f1ac3ce-f851-6172-930d-5e4f04d0d916",
+                            "id": "e2eda0d2-17a6-5756-330a-fe750a9e2a07",
                             "x": 900,
                             "y": 150,
                             "subWidth": 100,
@@ -47532,9 +48631,9 @@ export const aggregateDraftScenarios = {
                         "relationCommandInfo": [],
                         "trigger": "@PostPersist"
                     },
-                    "351007cf-d075-1e73-722b-b0a391f17a11": {
+                    "bb1ba913-8b13-3ddd-f4ee-57ac66ab34df": {
                         "_type": "org.uengine.modeling.model.Event",
-                        "id": "351007cf-d075-1e73-722b-b0a391f17a11",
+                        "id": "bb1ba913-8b13-3ddd-f4ee-57ac66ab34df",
                         "visibility": "public",
                         "name": "BookHistoryChecked",
                         "oldName": "",
@@ -47559,7 +48658,7 @@ export const aggregateDraftScenarios = {
                         "mirrorElement": null,
                         "elementView": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "351007cf-d075-1e73-722b-b0a391f17a11",
+                            "id": "bb1ba913-8b13-3ddd-f4ee-57ac66ab34df",
                             "x": 1100,
                             "y": 150,
                             "width": 100,
@@ -47569,7 +48668,7 @@ export const aggregateDraftScenarios = {
                         },
                         "hexagonalView": {
                             "_type": "org.uengine.modeling.model.EventHexagonal",
-                            "id": "351007cf-d075-1e73-722b-b0a391f17a11",
+                            "id": "bb1ba913-8b13-3ddd-f4ee-57ac66ab34df",
                             "x": 1100,
                             "y": 150,
                             "subWidth": 100,
@@ -47581,9 +48680,9 @@ export const aggregateDraftScenarios = {
                         "relationCommandInfo": [],
                         "trigger": "@PostPersist"
                     },
-                    "f9bfe10e-208b-c620-68a3-9bef709150ad": {
+                    "1621a7c8-7e36-a87f-0ae4-b99d98103eba": {
                         "_type": "org.uengine.modeling.model.Event",
-                        "id": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                        "id": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                         "visibility": "public",
                         "name": "BookStatusChanged",
                         "oldName": "",
@@ -47608,7 +48707,7 @@ export const aggregateDraftScenarios = {
                         "mirrorElement": null,
                         "elementView": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                            "id": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                             "x": 300,
                             "y": 650,
                             "width": 100,
@@ -47618,7 +48717,7 @@ export const aggregateDraftScenarios = {
                         },
                         "hexagonalView": {
                             "_type": "org.uengine.modeling.model.EventHexagonal",
-                            "id": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                            "id": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                             "x": 300,
                             "y": 650,
                             "subWidth": 100,
@@ -47630,9 +48729,9 @@ export const aggregateDraftScenarios = {
                         "relationCommandInfo": [],
                         "trigger": "@PostPersist"
                     },
-                    "378c8a28-9d32-1f05-4952-d30e60350391": {
+                    "c780d7c0-77c4-cdd8-71b7-6697e78cf364": {
                         "_type": "org.uengine.modeling.model.Event",
-                        "id": "378c8a28-9d32-1f05-4952-d30e60350391",
+                        "id": "c780d7c0-77c4-cdd8-71b7-6697e78cf364",
                         "visibility": "public",
                         "name": "LoanRequested",
                         "oldName": "",
@@ -47657,7 +48756,7 @@ export const aggregateDraftScenarios = {
                         "mirrorElement": null,
                         "elementView": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "378c8a28-9d32-1f05-4952-d30e60350391",
+                            "id": "c780d7c0-77c4-cdd8-71b7-6697e78cf364",
                             "x": 300,
                             "y": 400,
                             "width": 100,
@@ -47667,7 +48766,7 @@ export const aggregateDraftScenarios = {
                         },
                         "hexagonalView": {
                             "_type": "org.uengine.modeling.model.EventHexagonal",
-                            "id": "378c8a28-9d32-1f05-4952-d30e60350391",
+                            "id": "c780d7c0-77c4-cdd8-71b7-6697e78cf364",
                             "x": 300,
                             "y": 400,
                             "subWidth": 100,
@@ -47679,9 +48778,9 @@ export const aggregateDraftScenarios = {
                         "relationCommandInfo": [],
                         "trigger": "@PostPersist"
                     },
-                    "c778f986-621e-e728-6352-b694764b00d4": {
+                    "bcb80ab1-c9e1-dfca-2abb-c26dd0ba8456": {
                         "_type": "org.uengine.modeling.model.Event",
-                        "id": "c778f986-621e-e728-6352-b694764b00d4",
+                        "id": "bcb80ab1-c9e1-dfca-2abb-c26dd0ba8456",
                         "visibility": "public",
                         "name": "BookReserved",
                         "oldName": "",
@@ -47706,7 +48805,7 @@ export const aggregateDraftScenarios = {
                         "mirrorElement": null,
                         "elementView": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "c778f986-621e-e728-6352-b694764b00d4",
+                            "id": "bcb80ab1-c9e1-dfca-2abb-c26dd0ba8456",
                             "x": 500,
                             "y": 400,
                             "width": 100,
@@ -47716,7 +48815,7 @@ export const aggregateDraftScenarios = {
                         },
                         "hexagonalView": {
                             "_type": "org.uengine.modeling.model.EventHexagonal",
-                            "id": "c778f986-621e-e728-6352-b694764b00d4",
+                            "id": "bcb80ab1-c9e1-dfca-2abb-c26dd0ba8456",
                             "x": 500,
                             "y": 400,
                             "subWidth": 100,
@@ -47728,9 +48827,9 @@ export const aggregateDraftScenarios = {
                         "relationCommandInfo": [],
                         "trigger": "@PostPersist"
                     },
-                    "83e28f0e-8bf3-6a20-3e58-c3a766087111": {
+                    "19ff0aea-6add-cf8f-8310-93dab1c943d8": {
                         "_type": "org.uengine.modeling.model.Event",
-                        "id": "83e28f0e-8bf3-6a20-3e58-c3a766087111",
+                        "id": "19ff0aea-6add-cf8f-8310-93dab1c943d8",
                         "visibility": "public",
                         "name": "LoanExtended",
                         "oldName": "",
@@ -47755,7 +48854,7 @@ export const aggregateDraftScenarios = {
                         "mirrorElement": null,
                         "elementView": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "83e28f0e-8bf3-6a20-3e58-c3a766087111",
+                            "id": "19ff0aea-6add-cf8f-8310-93dab1c943d8",
                             "x": 700,
                             "y": 400,
                             "width": 100,
@@ -47765,7 +48864,7 @@ export const aggregateDraftScenarios = {
                         },
                         "hexagonalView": {
                             "_type": "org.uengine.modeling.model.EventHexagonal",
-                            "id": "83e28f0e-8bf3-6a20-3e58-c3a766087111",
+                            "id": "19ff0aea-6add-cf8f-8310-93dab1c943d8",
                             "x": 700,
                             "y": 400,
                             "subWidth": 100,
@@ -47777,9 +48876,9 @@ export const aggregateDraftScenarios = {
                         "relationCommandInfo": [],
                         "trigger": "@PostPersist"
                     },
-                    "ea1a52b5-59a7-1c75-390b-52ff0d2a8f34": {
+                    "9544047d-ac4f-deef-bf8f-5534c5b6bf8d": {
                         "_type": "org.uengine.modeling.model.Event",
-                        "id": "ea1a52b5-59a7-1c75-390b-52ff0d2a8f34",
+                        "id": "9544047d-ac4f-deef-bf8f-5534c5b6bf8d",
                         "visibility": "public",
                         "name": "BookReturned",
                         "oldName": "",
@@ -47804,7 +48903,7 @@ export const aggregateDraftScenarios = {
                         "mirrorElement": null,
                         "elementView": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "ea1a52b5-59a7-1c75-390b-52ff0d2a8f34",
+                            "id": "9544047d-ac4f-deef-bf8f-5534c5b6bf8d",
                             "x": 900,
                             "y": 400,
                             "width": 100,
@@ -47814,7 +48913,7 @@ export const aggregateDraftScenarios = {
                         },
                         "hexagonalView": {
                             "_type": "org.uengine.modeling.model.EventHexagonal",
-                            "id": "ea1a52b5-59a7-1c75-390b-52ff0d2a8f34",
+                            "id": "9544047d-ac4f-deef-bf8f-5534c5b6bf8d",
                             "x": 900,
                             "y": 400,
                             "subWidth": 100,
@@ -47828,18 +48927,18 @@ export const aggregateDraftScenarios = {
                     }
                 },
                 "relations": {
-                    "4fd14f9e-4d12-ce67-e57d-c3bee8875a54": {
+                    "b67b8262-8ba9-e255-7cb1-24ae242a3719": {
                         "_type": "org.uengine.modeling.model.Line",
-                        "id": "4fd14f9e-4d12-ce67-e57d-c3bee8875a54",
+                        "id": "b67b8262-8ba9-e255-7cb1-24ae242a3719",
                         "name": "",
                         "author": null,
                         "oldName": "",
                         "displayName": "",
-                        "from": "4fd14f9e-4d12-ce67-e57d-c3bee8875a54",
-                        "to": "4fd14f9e-4d12-ce67-e57d-c3bee8875a54",
+                        "from": "b67b8262-8ba9-e255-7cb1-24ae242a3719",
+                        "to": "b67b8262-8ba9-e255-7cb1-24ae242a3719",
                         "description": "",
                         "relationView": {
-                            "id": "4fd14f9e-4d12-ce67-e57d-c3bee8875a54",
+                            "id": "b67b8262-8ba9-e255-7cb1-24ae242a3719",
                             "value": "[[0,275],[2000,275]]"
                         },
                         "size": 10,
@@ -47848,18 +48947,18 @@ export const aggregateDraftScenarios = {
                         "imgSrc": "https://www.msaez.io:8081/static/image/symbol/edge.png",
                         "vertices": "[[0,275],[2000,275]]"
                     },
-                    "4b33c988-918c-7129-284b-69ef5419a5f4": {
+                    "f9060569-6650-83cc-8b12-6950d97e2ba4": {
                         "_type": "org.uengine.modeling.model.Line",
-                        "id": "4b33c988-918c-7129-284b-69ef5419a5f4",
+                        "id": "f9060569-6650-83cc-8b12-6950d97e2ba4",
                         "name": "",
                         "author": null,
                         "oldName": "",
                         "displayName": "",
-                        "from": "4b33c988-918c-7129-284b-69ef5419a5f4",
-                        "to": "4b33c988-918c-7129-284b-69ef5419a5f4",
+                        "from": "f9060569-6650-83cc-8b12-6950d97e2ba4",
+                        "to": "f9060569-6650-83cc-8b12-6950d97e2ba4",
                         "description": "",
                         "relationView": {
-                            "id": "4b33c988-918c-7129-284b-69ef5419a5f4",
+                            "id": "f9060569-6650-83cc-8b12-6950d97e2ba4",
                             "value": "[[0,525],[2000,525]]"
                         },
                         "size": 10,
@@ -47868,18 +48967,18 @@ export const aggregateDraftScenarios = {
                         "imgSrc": "https://www.msaez.io:8081/static/image/symbol/edge.png",
                         "vertices": "[[0,525],[2000,525]]"
                     },
-                    "2f657f8a-39ac-96a2-8069-549ce9a6284a": {
+                    "16343416-1724-6db2-a115-211a18efc133": {
                         "_type": "org.uengine.modeling.model.Line",
-                        "id": "2f657f8a-39ac-96a2-8069-549ce9a6284a",
+                        "id": "16343416-1724-6db2-a115-211a18efc133",
                         "name": "",
                         "author": null,
                         "oldName": "",
                         "displayName": "",
-                        "from": "2f657f8a-39ac-96a2-8069-549ce9a6284a",
-                        "to": "2f657f8a-39ac-96a2-8069-549ce9a6284a",
+                        "from": "16343416-1724-6db2-a115-211a18efc133",
+                        "to": "16343416-1724-6db2-a115-211a18efc133",
                         "description": "",
                         "relationView": {
-                            "id": "2f657f8a-39ac-96a2-8069-549ce9a6284a",
+                            "id": "16343416-1724-6db2-a115-211a18efc133",
                             "value": "[[0,775],[2000,775]]"
                         },
                         "size": 10,
@@ -47888,14 +48987,14 @@ export const aggregateDraftScenarios = {
                         "imgSrc": "https://www.msaez.io:8081/static/image/symbol/edge.png",
                         "vertices": "[[0,775],[2000,775]]"
                     },
-                    "0c293896-c6c4-2679-b346-316024fa46d7": {
+                    "9d8829f2-5a99-7852-1300-f9ac1ebb1ae3": {
                         "_type": "org.uengine.modeling.model.Relation",
-                        "id": "0c293896-c6c4-2679-b346-316024fa46d7",
+                        "id": "9d8829f2-5a99-7852-1300-f9ac1ebb1ae3",
                         "name": "1",
                         "displayName": "1",
                         "sourceElement": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "f2c9c6f2-d17c-d38e-a714-716815a15b01",
+                            "id": "1d7c1caf-8e23-331f-628b-e87406b7d722",
                             "visibility": "public",
                             "name": "BookRegistered",
                             "oldName": "",
@@ -47920,7 +49019,7 @@ export const aggregateDraftScenarios = {
                             "mirrorElement": null,
                             "elementView": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "f2c9c6f2-d17c-d38e-a714-716815a15b01",
+                                "id": "1d7c1caf-8e23-331f-628b-e87406b7d722",
                                 "x": 300,
                                 "y": 150,
                                 "width": 100,
@@ -47930,7 +49029,7 @@ export const aggregateDraftScenarios = {
                             },
                             "hexagonalView": {
                                 "_type": "org.uengine.modeling.model.EventHexagonal",
-                                "id": "f2c9c6f2-d17c-d38e-a714-716815a15b01",
+                                "id": "1d7c1caf-8e23-331f-628b-e87406b7d722",
                                 "x": 300,
                                 "y": 150,
                                 "subWidth": 100,
@@ -47944,7 +49043,7 @@ export const aggregateDraftScenarios = {
                         },
                         "targetElement": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                            "id": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                             "visibility": "public",
                             "name": "BookStatusChanged",
                             "oldName": "",
@@ -47969,7 +49068,7 @@ export const aggregateDraftScenarios = {
                             "mirrorElement": null,
                             "elementView": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                                "id": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                                 "x": 300,
                                 "y": 650,
                                 "width": 100,
@@ -47979,7 +49078,7 @@ export const aggregateDraftScenarios = {
                             },
                             "hexagonalView": {
                                 "_type": "org.uengine.modeling.model.EventHexagonal",
-                                "id": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                                "id": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                                 "x": 300,
                                 "y": 650,
                                 "subWidth": 100,
@@ -47991,25 +49090,25 @@ export const aggregateDraftScenarios = {
                             "relationCommandInfo": [],
                             "trigger": "@PostPersist"
                         },
-                        "from": "f2c9c6f2-d17c-d38e-a714-716815a15b01",
-                        "to": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                        "from": "1d7c1caf-8e23-331f-628b-e87406b7d722",
+                        "to": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                         "relationView": {
-                            "id": "0c293896-c6c4-2679-b346-316024fa46d7",
+                            "id": "9d8829f2-5a99-7852-1300-f9ac1ebb1ae3",
                             "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
                             "value": null,
-                            "from": "f2c9c6f2-d17c-d38e-a714-716815a15b01",
-                            "to": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                            "from": "1d7c1caf-8e23-331f-628b-e87406b7d722",
+                            "to": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                             "needReconnect": true
                         }
                     },
-                    "93f7532c-9a6e-e01f-8371-7dbaa3ba53b8": {
+                    "39fb6a0e-154d-fe1d-efdb-62ef704817f5": {
                         "_type": "org.uengine.modeling.model.Relation",
-                        "id": "93f7532c-9a6e-e01f-8371-7dbaa3ba53b8",
+                        "id": "39fb6a0e-154d-fe1d-efdb-62ef704817f5",
                         "name": "2",
                         "displayName": "2",
                         "sourceElement": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                            "id": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                             "visibility": "public",
                             "name": "BookStatusChanged",
                             "oldName": "",
@@ -48034,7 +49133,7 @@ export const aggregateDraftScenarios = {
                             "mirrorElement": null,
                             "elementView": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                                "id": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                                 "x": 300,
                                 "y": 650,
                                 "width": 100,
@@ -48044,7 +49143,7 @@ export const aggregateDraftScenarios = {
                             },
                             "hexagonalView": {
                                 "_type": "org.uengine.modeling.model.EventHexagonal",
-                                "id": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                                "id": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                                 "x": 300,
                                 "y": 650,
                                 "subWidth": 100,
@@ -48058,7 +49157,7 @@ export const aggregateDraftScenarios = {
                         },
                         "targetElement": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "50904331-6712-d6dc-8aa3-048c1abf7f09",
+                            "id": "a91c7cca-8cfa-8f66-ff55-c2c07133a498",
                             "visibility": "public",
                             "name": "BookDiscarded",
                             "oldName": "",
@@ -48083,7 +49182,7 @@ export const aggregateDraftScenarios = {
                             "mirrorElement": null,
                             "elementView": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "50904331-6712-d6dc-8aa3-048c1abf7f09",
+                                "id": "a91c7cca-8cfa-8f66-ff55-c2c07133a498",
                                 "x": 500,
                                 "y": 150,
                                 "width": 100,
@@ -48093,7 +49192,7 @@ export const aggregateDraftScenarios = {
                             },
                             "hexagonalView": {
                                 "_type": "org.uengine.modeling.model.EventHexagonal",
-                                "id": "50904331-6712-d6dc-8aa3-048c1abf7f09",
+                                "id": "a91c7cca-8cfa-8f66-ff55-c2c07133a498",
                                 "x": 500,
                                 "y": 150,
                                 "subWidth": 100,
@@ -48105,25 +49204,25 @@ export const aggregateDraftScenarios = {
                             "relationCommandInfo": [],
                             "trigger": "@PostPersist"
                         },
-                        "from": "f9bfe10e-208b-c620-68a3-9bef709150ad",
-                        "to": "50904331-6712-d6dc-8aa3-048c1abf7f09",
+                        "from": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
+                        "to": "a91c7cca-8cfa-8f66-ff55-c2c07133a498",
                         "relationView": {
-                            "id": "93f7532c-9a6e-e01f-8371-7dbaa3ba53b8",
+                            "id": "39fb6a0e-154d-fe1d-efdb-62ef704817f5",
                             "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
                             "value": null,
-                            "from": "f9bfe10e-208b-c620-68a3-9bef709150ad",
-                            "to": "50904331-6712-d6dc-8aa3-048c1abf7f09",
+                            "from": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
+                            "to": "a91c7cca-8cfa-8f66-ff55-c2c07133a498",
                             "needReconnect": true
                         }
                     },
-                    "8ef65399-fb2c-cd78-cffd-a895fdf20408": {
+                    "1f289e8e-187b-212d-f95f-0595096c83c2": {
                         "_type": "org.uengine.modeling.model.Relation",
-                        "id": "8ef65399-fb2c-cd78-cffd-a895fdf20408",
+                        "id": "1f289e8e-187b-212d-f95f-0595096c83c2",
                         "name": "2",
                         "displayName": "2",
                         "sourceElement": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                            "id": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                             "visibility": "public",
                             "name": "BookStatusChanged",
                             "oldName": "",
@@ -48148,7 +49247,7 @@ export const aggregateDraftScenarios = {
                             "mirrorElement": null,
                             "elementView": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                                "id": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                                 "x": 300,
                                 "y": 650,
                                 "width": 100,
@@ -48158,7 +49257,7 @@ export const aggregateDraftScenarios = {
                             },
                             "hexagonalView": {
                                 "_type": "org.uengine.modeling.model.EventHexagonal",
-                                "id": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                                "id": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                                 "x": 300,
                                 "y": 650,
                                 "subWidth": 100,
@@ -48172,7 +49271,7 @@ export const aggregateDraftScenarios = {
                         },
                         "targetElement": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "378c8a28-9d32-1f05-4952-d30e60350391",
+                            "id": "c780d7c0-77c4-cdd8-71b7-6697e78cf364",
                             "visibility": "public",
                             "name": "LoanRequested",
                             "oldName": "",
@@ -48197,7 +49296,7 @@ export const aggregateDraftScenarios = {
                             "mirrorElement": null,
                             "elementView": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "378c8a28-9d32-1f05-4952-d30e60350391",
+                                "id": "c780d7c0-77c4-cdd8-71b7-6697e78cf364",
                                 "x": 300,
                                 "y": 400,
                                 "width": 100,
@@ -48207,7 +49306,7 @@ export const aggregateDraftScenarios = {
                             },
                             "hexagonalView": {
                                 "_type": "org.uengine.modeling.model.EventHexagonal",
-                                "id": "378c8a28-9d32-1f05-4952-d30e60350391",
+                                "id": "c780d7c0-77c4-cdd8-71b7-6697e78cf364",
                                 "x": 300,
                                 "y": 400,
                                 "subWidth": 100,
@@ -48219,25 +49318,25 @@ export const aggregateDraftScenarios = {
                             "relationCommandInfo": [],
                             "trigger": "@PostPersist"
                         },
-                        "from": "f9bfe10e-208b-c620-68a3-9bef709150ad",
-                        "to": "378c8a28-9d32-1f05-4952-d30e60350391",
+                        "from": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
+                        "to": "c780d7c0-77c4-cdd8-71b7-6697e78cf364",
                         "relationView": {
-                            "id": "8ef65399-fb2c-cd78-cffd-a895fdf20408",
+                            "id": "1f289e8e-187b-212d-f95f-0595096c83c2",
                             "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
                             "value": null,
-                            "from": "f9bfe10e-208b-c620-68a3-9bef709150ad",
-                            "to": "378c8a28-9d32-1f05-4952-d30e60350391",
+                            "from": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
+                            "to": "c780d7c0-77c4-cdd8-71b7-6697e78cf364",
                             "needReconnect": true
                         }
                     },
-                    "bae5a31d-f113-144d-26a4-8a9da31d2200": {
+                    "043f26b2-1b98-8e24-d311-e225df91e6df": {
                         "_type": "org.uengine.modeling.model.Relation",
-                        "id": "bae5a31d-f113-144d-26a4-8a9da31d2200",
+                        "id": "043f26b2-1b98-8e24-d311-e225df91e6df",
                         "name": "2",
                         "displayName": "2",
                         "sourceElement": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                            "id": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                             "visibility": "public",
                             "name": "BookStatusChanged",
                             "oldName": "",
@@ -48262,7 +49361,7 @@ export const aggregateDraftScenarios = {
                             "mirrorElement": null,
                             "elementView": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                                "id": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                                 "x": 300,
                                 "y": 650,
                                 "width": 100,
@@ -48272,7 +49371,7 @@ export const aggregateDraftScenarios = {
                             },
                             "hexagonalView": {
                                 "_type": "org.uengine.modeling.model.EventHexagonal",
-                                "id": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                                "id": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                                 "x": 300,
                                 "y": 650,
                                 "subWidth": 100,
@@ -48286,7 +49385,7 @@ export const aggregateDraftScenarios = {
                         },
                         "targetElement": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "ea1a52b5-59a7-1c75-390b-52ff0d2a8f34",
+                            "id": "9544047d-ac4f-deef-bf8f-5534c5b6bf8d",
                             "visibility": "public",
                             "name": "BookReturned",
                             "oldName": "",
@@ -48311,7 +49410,7 @@ export const aggregateDraftScenarios = {
                             "mirrorElement": null,
                             "elementView": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "ea1a52b5-59a7-1c75-390b-52ff0d2a8f34",
+                                "id": "9544047d-ac4f-deef-bf8f-5534c5b6bf8d",
                                 "x": 900,
                                 "y": 400,
                                 "width": 100,
@@ -48321,7 +49420,7 @@ export const aggregateDraftScenarios = {
                             },
                             "hexagonalView": {
                                 "_type": "org.uengine.modeling.model.EventHexagonal",
-                                "id": "ea1a52b5-59a7-1c75-390b-52ff0d2a8f34",
+                                "id": "9544047d-ac4f-deef-bf8f-5534c5b6bf8d",
                                 "x": 900,
                                 "y": 400,
                                 "subWidth": 100,
@@ -48333,25 +49432,25 @@ export const aggregateDraftScenarios = {
                             "relationCommandInfo": [],
                             "trigger": "@PostPersist"
                         },
-                        "from": "f9bfe10e-208b-c620-68a3-9bef709150ad",
-                        "to": "ea1a52b5-59a7-1c75-390b-52ff0d2a8f34",
+                        "from": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
+                        "to": "9544047d-ac4f-deef-bf8f-5534c5b6bf8d",
                         "relationView": {
-                            "id": "bae5a31d-f113-144d-26a4-8a9da31d2200",
+                            "id": "043f26b2-1b98-8e24-d311-e225df91e6df",
                             "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
                             "value": null,
-                            "from": "f9bfe10e-208b-c620-68a3-9bef709150ad",
-                            "to": "ea1a52b5-59a7-1c75-390b-52ff0d2a8f34",
+                            "from": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
+                            "to": "9544047d-ac4f-deef-bf8f-5534c5b6bf8d",
                             "needReconnect": true
                         }
                     },
-                    "e934e93c-47c3-1e4b-ca9f-836fa16ed05e": {
+                    "d00ef15c-34bc-f38e-4e7d-2352561b3a6e": {
                         "_type": "org.uengine.modeling.model.Relation",
-                        "id": "e934e93c-47c3-1e4b-ca9f-836fa16ed05e",
+                        "id": "d00ef15c-34bc-f38e-4e7d-2352561b3a6e",
                         "name": "2",
                         "displayName": "2",
                         "sourceElement": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                            "id": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                             "visibility": "public",
                             "name": "BookStatusChanged",
                             "oldName": "",
@@ -48376,7 +49475,7 @@ export const aggregateDraftScenarios = {
                             "mirrorElement": null,
                             "elementView": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                                "id": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                                 "x": 300,
                                 "y": 650,
                                 "width": 100,
@@ -48386,7 +49485,7 @@ export const aggregateDraftScenarios = {
                             },
                             "hexagonalView": {
                                 "_type": "org.uengine.modeling.model.EventHexagonal",
-                                "id": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                                "id": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                                 "x": 300,
                                 "y": 650,
                                 "subWidth": 100,
@@ -48400,7 +49499,7 @@ export const aggregateDraftScenarios = {
                         },
                         "targetElement": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "c778f986-621e-e728-6352-b694764b00d4",
+                            "id": "bcb80ab1-c9e1-dfca-2abb-c26dd0ba8456",
                             "visibility": "public",
                             "name": "BookReserved",
                             "oldName": "",
@@ -48425,7 +49524,7 @@ export const aggregateDraftScenarios = {
                             "mirrorElement": null,
                             "elementView": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "c778f986-621e-e728-6352-b694764b00d4",
+                                "id": "bcb80ab1-c9e1-dfca-2abb-c26dd0ba8456",
                                 "x": 500,
                                 "y": 400,
                                 "width": 100,
@@ -48435,7 +49534,7 @@ export const aggregateDraftScenarios = {
                             },
                             "hexagonalView": {
                                 "_type": "org.uengine.modeling.model.EventHexagonal",
-                                "id": "c778f986-621e-e728-6352-b694764b00d4",
+                                "id": "bcb80ab1-c9e1-dfca-2abb-c26dd0ba8456",
                                 "x": 500,
                                 "y": 400,
                                 "subWidth": 100,
@@ -48447,25 +49546,25 @@ export const aggregateDraftScenarios = {
                             "relationCommandInfo": [],
                             "trigger": "@PostPersist"
                         },
-                        "from": "f9bfe10e-208b-c620-68a3-9bef709150ad",
-                        "to": "c778f986-621e-e728-6352-b694764b00d4",
+                        "from": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
+                        "to": "bcb80ab1-c9e1-dfca-2abb-c26dd0ba8456",
                         "relationView": {
-                            "id": "e934e93c-47c3-1e4b-ca9f-836fa16ed05e",
+                            "id": "d00ef15c-34bc-f38e-4e7d-2352561b3a6e",
                             "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
                             "value": null,
-                            "from": "f9bfe10e-208b-c620-68a3-9bef709150ad",
-                            "to": "c778f986-621e-e728-6352-b694764b00d4",
+                            "from": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
+                            "to": "bcb80ab1-c9e1-dfca-2abb-c26dd0ba8456",
                             "needReconnect": true
                         }
                     },
-                    "c98e3d05-7069-dd59-1cb8-ac962b79f656": {
+                    "ff7fb8a6-d7d8-2703-d3c9-ba1d25460d48": {
                         "_type": "org.uengine.modeling.model.Relation",
-                        "id": "c98e3d05-7069-dd59-1cb8-ac962b79f656",
+                        "id": "ff7fb8a6-d7d8-2703-d3c9-ba1d25460d48",
                         "name": "1",
                         "displayName": "1",
                         "sourceElement": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "378c8a28-9d32-1f05-4952-d30e60350391",
+                            "id": "c780d7c0-77c4-cdd8-71b7-6697e78cf364",
                             "visibility": "public",
                             "name": "LoanRequested",
                             "oldName": "",
@@ -48490,7 +49589,7 @@ export const aggregateDraftScenarios = {
                             "mirrorElement": null,
                             "elementView": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "378c8a28-9d32-1f05-4952-d30e60350391",
+                                "id": "c780d7c0-77c4-cdd8-71b7-6697e78cf364",
                                 "x": 300,
                                 "y": 400,
                                 "width": 100,
@@ -48500,7 +49599,7 @@ export const aggregateDraftScenarios = {
                             },
                             "hexagonalView": {
                                 "_type": "org.uengine.modeling.model.EventHexagonal",
-                                "id": "378c8a28-9d32-1f05-4952-d30e60350391",
+                                "id": "c780d7c0-77c4-cdd8-71b7-6697e78cf364",
                                 "x": 300,
                                 "y": 400,
                                 "subWidth": 100,
@@ -48514,7 +49613,7 @@ export const aggregateDraftScenarios = {
                         },
                         "targetElement": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "5319c43f-3f55-0e7c-00f0-b27a9c8355a2",
+                            "id": "ddfeff49-a1ea-ff08-6e32-21843898cf7c",
                             "visibility": "public",
                             "name": "LoanApproved",
                             "oldName": "",
@@ -48539,7 +49638,7 @@ export const aggregateDraftScenarios = {
                             "mirrorElement": null,
                             "elementView": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "5319c43f-3f55-0e7c-00f0-b27a9c8355a2",
+                                "id": "ddfeff49-a1ea-ff08-6e32-21843898cf7c",
                                 "x": 700,
                                 "y": 150,
                                 "width": 100,
@@ -48549,7 +49648,7 @@ export const aggregateDraftScenarios = {
                             },
                             "hexagonalView": {
                                 "_type": "org.uengine.modeling.model.EventHexagonal",
-                                "id": "5319c43f-3f55-0e7c-00f0-b27a9c8355a2",
+                                "id": "ddfeff49-a1ea-ff08-6e32-21843898cf7c",
                                 "x": 700,
                                 "y": 150,
                                 "subWidth": 100,
@@ -48561,25 +49660,25 @@ export const aggregateDraftScenarios = {
                             "relationCommandInfo": [],
                             "trigger": "@PostPersist"
                         },
-                        "from": "378c8a28-9d32-1f05-4952-d30e60350391",
-                        "to": "5319c43f-3f55-0e7c-00f0-b27a9c8355a2",
+                        "from": "c780d7c0-77c4-cdd8-71b7-6697e78cf364",
+                        "to": "ddfeff49-a1ea-ff08-6e32-21843898cf7c",
                         "relationView": {
-                            "id": "c98e3d05-7069-dd59-1cb8-ac962b79f656",
+                            "id": "ff7fb8a6-d7d8-2703-d3c9-ba1d25460d48",
                             "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
                             "value": null,
-                            "from": "378c8a28-9d32-1f05-4952-d30e60350391",
-                            "to": "5319c43f-3f55-0e7c-00f0-b27a9c8355a2",
+                            "from": "c780d7c0-77c4-cdd8-71b7-6697e78cf364",
+                            "to": "ddfeff49-a1ea-ff08-6e32-21843898cf7c",
                             "needReconnect": true
                         }
                     },
-                    "93ae4161-d891-c566-0f3f-11a8706ec982": {
+                    "a9f25878-517b-b32d-177d-baa967c74e88": {
                         "_type": "org.uengine.modeling.model.Relation",
-                        "id": "93ae4161-d891-c566-0f3f-11a8706ec982",
+                        "id": "a9f25878-517b-b32d-177d-baa967c74e88",
                         "name": "1",
                         "displayName": "1",
                         "sourceElement": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "378c8a28-9d32-1f05-4952-d30e60350391",
+                            "id": "c780d7c0-77c4-cdd8-71b7-6697e78cf364",
                             "visibility": "public",
                             "name": "LoanRequested",
                             "oldName": "",
@@ -48604,7 +49703,7 @@ export const aggregateDraftScenarios = {
                             "mirrorElement": null,
                             "elementView": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "378c8a28-9d32-1f05-4952-d30e60350391",
+                                "id": "c780d7c0-77c4-cdd8-71b7-6697e78cf364",
                                 "x": 300,
                                 "y": 400,
                                 "width": 100,
@@ -48614,7 +49713,7 @@ export const aggregateDraftScenarios = {
                             },
                             "hexagonalView": {
                                 "_type": "org.uengine.modeling.model.EventHexagonal",
-                                "id": "378c8a28-9d32-1f05-4952-d30e60350391",
+                                "id": "c780d7c0-77c4-cdd8-71b7-6697e78cf364",
                                 "x": 300,
                                 "y": 400,
                                 "subWidth": 100,
@@ -48628,7 +49727,7 @@ export const aggregateDraftScenarios = {
                         },
                         "targetElement": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "c778f986-621e-e728-6352-b694764b00d4",
+                            "id": "bcb80ab1-c9e1-dfca-2abb-c26dd0ba8456",
                             "visibility": "public",
                             "name": "BookReserved",
                             "oldName": "",
@@ -48653,7 +49752,7 @@ export const aggregateDraftScenarios = {
                             "mirrorElement": null,
                             "elementView": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "c778f986-621e-e728-6352-b694764b00d4",
+                                "id": "bcb80ab1-c9e1-dfca-2abb-c26dd0ba8456",
                                 "x": 500,
                                 "y": 400,
                                 "width": 100,
@@ -48663,7 +49762,7 @@ export const aggregateDraftScenarios = {
                             },
                             "hexagonalView": {
                                 "_type": "org.uengine.modeling.model.EventHexagonal",
-                                "id": "c778f986-621e-e728-6352-b694764b00d4",
+                                "id": "bcb80ab1-c9e1-dfca-2abb-c26dd0ba8456",
                                 "x": 500,
                                 "y": 400,
                                 "subWidth": 100,
@@ -48675,25 +49774,25 @@ export const aggregateDraftScenarios = {
                             "relationCommandInfo": [],
                             "trigger": "@PostPersist"
                         },
-                        "from": "378c8a28-9d32-1f05-4952-d30e60350391",
-                        "to": "c778f986-621e-e728-6352-b694764b00d4",
+                        "from": "c780d7c0-77c4-cdd8-71b7-6697e78cf364",
+                        "to": "bcb80ab1-c9e1-dfca-2abb-c26dd0ba8456",
                         "relationView": {
-                            "id": "93ae4161-d891-c566-0f3f-11a8706ec982",
+                            "id": "a9f25878-517b-b32d-177d-baa967c74e88",
                             "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
                             "value": null,
-                            "from": "378c8a28-9d32-1f05-4952-d30e60350391",
-                            "to": "c778f986-621e-e728-6352-b694764b00d4",
+                            "from": "c780d7c0-77c4-cdd8-71b7-6697e78cf364",
+                            "to": "bcb80ab1-c9e1-dfca-2abb-c26dd0ba8456",
                             "needReconnect": true
                         }
                     },
-                    "ad28f2a2-dba6-e496-e698-4ce162071c67": {
+                    "92902c1e-afdf-cb6e-8a2f-7140b87af4fc": {
                         "_type": "org.uengine.modeling.model.Relation",
-                        "id": "ad28f2a2-dba6-e496-e698-4ce162071c67",
+                        "id": "92902c1e-afdf-cb6e-8a2f-7140b87af4fc",
                         "name": "2",
                         "displayName": "2",
                         "sourceElement": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "5319c43f-3f55-0e7c-00f0-b27a9c8355a2",
+                            "id": "ddfeff49-a1ea-ff08-6e32-21843898cf7c",
                             "visibility": "public",
                             "name": "LoanApproved",
                             "oldName": "",
@@ -48718,7 +49817,7 @@ export const aggregateDraftScenarios = {
                             "mirrorElement": null,
                             "elementView": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "5319c43f-3f55-0e7c-00f0-b27a9c8355a2",
+                                "id": "ddfeff49-a1ea-ff08-6e32-21843898cf7c",
                                 "x": 700,
                                 "y": 150,
                                 "width": 100,
@@ -48728,7 +49827,7 @@ export const aggregateDraftScenarios = {
                             },
                             "hexagonalView": {
                                 "_type": "org.uengine.modeling.model.EventHexagonal",
-                                "id": "5319c43f-3f55-0e7c-00f0-b27a9c8355a2",
+                                "id": "ddfeff49-a1ea-ff08-6e32-21843898cf7c",
                                 "x": 700,
                                 "y": 150,
                                 "subWidth": 100,
@@ -48742,7 +49841,7 @@ export const aggregateDraftScenarios = {
                         },
                         "targetElement": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                            "id": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                             "visibility": "public",
                             "name": "BookStatusChanged",
                             "oldName": "",
@@ -48767,7 +49866,7 @@ export const aggregateDraftScenarios = {
                             "mirrorElement": null,
                             "elementView": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                                "id": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                                 "x": 300,
                                 "y": 650,
                                 "width": 100,
@@ -48777,7 +49876,7 @@ export const aggregateDraftScenarios = {
                             },
                             "hexagonalView": {
                                 "_type": "org.uengine.modeling.model.EventHexagonal",
-                                "id": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                                "id": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                                 "x": 300,
                                 "y": 650,
                                 "subWidth": 100,
@@ -48789,25 +49888,25 @@ export const aggregateDraftScenarios = {
                             "relationCommandInfo": [],
                             "trigger": "@PostPersist"
                         },
-                        "from": "5319c43f-3f55-0e7c-00f0-b27a9c8355a2",
-                        "to": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                        "from": "ddfeff49-a1ea-ff08-6e32-21843898cf7c",
+                        "to": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                         "relationView": {
-                            "id": "ad28f2a2-dba6-e496-e698-4ce162071c67",
+                            "id": "92902c1e-afdf-cb6e-8a2f-7140b87af4fc",
                             "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
                             "value": null,
-                            "from": "5319c43f-3f55-0e7c-00f0-b27a9c8355a2",
-                            "to": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                            "from": "ddfeff49-a1ea-ff08-6e32-21843898cf7c",
+                            "to": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                             "needReconnect": true
                         }
                     },
-                    "e5cf655c-c2f6-37d9-4b20-151539d0ca5f": {
+                    "29ae1abd-3e29-acc8-6900-45a676c77de8": {
                         "_type": "org.uengine.modeling.model.Relation",
-                        "id": "e5cf655c-c2f6-37d9-4b20-151539d0ca5f",
+                        "id": "29ae1abd-3e29-acc8-6900-45a676c77de8",
                         "name": "2",
                         "displayName": "2",
                         "sourceElement": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "c778f986-621e-e728-6352-b694764b00d4",
+                            "id": "bcb80ab1-c9e1-dfca-2abb-c26dd0ba8456",
                             "visibility": "public",
                             "name": "BookReserved",
                             "oldName": "",
@@ -48832,7 +49931,7 @@ export const aggregateDraftScenarios = {
                             "mirrorElement": null,
                             "elementView": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "c778f986-621e-e728-6352-b694764b00d4",
+                                "id": "bcb80ab1-c9e1-dfca-2abb-c26dd0ba8456",
                                 "x": 500,
                                 "y": 400,
                                 "width": 100,
@@ -48842,7 +49941,7 @@ export const aggregateDraftScenarios = {
                             },
                             "hexagonalView": {
                                 "_type": "org.uengine.modeling.model.EventHexagonal",
-                                "id": "c778f986-621e-e728-6352-b694764b00d4",
+                                "id": "bcb80ab1-c9e1-dfca-2abb-c26dd0ba8456",
                                 "x": 500,
                                 "y": 400,
                                 "subWidth": 100,
@@ -48856,7 +49955,7 @@ export const aggregateDraftScenarios = {
                         },
                         "targetElement": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                            "id": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                             "visibility": "public",
                             "name": "BookStatusChanged",
                             "oldName": "",
@@ -48881,7 +49980,7 @@ export const aggregateDraftScenarios = {
                             "mirrorElement": null,
                             "elementView": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                                "id": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                                 "x": 300,
                                 "y": 650,
                                 "width": 100,
@@ -48891,7 +49990,7 @@ export const aggregateDraftScenarios = {
                             },
                             "hexagonalView": {
                                 "_type": "org.uengine.modeling.model.EventHexagonal",
-                                "id": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                                "id": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                                 "x": 300,
                                 "y": 650,
                                 "subWidth": 100,
@@ -48903,25 +50002,25 @@ export const aggregateDraftScenarios = {
                             "relationCommandInfo": [],
                             "trigger": "@PostPersist"
                         },
-                        "from": "c778f986-621e-e728-6352-b694764b00d4",
-                        "to": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                        "from": "bcb80ab1-c9e1-dfca-2abb-c26dd0ba8456",
+                        "to": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                         "relationView": {
-                            "id": "e5cf655c-c2f6-37d9-4b20-151539d0ca5f",
+                            "id": "29ae1abd-3e29-acc8-6900-45a676c77de8",
                             "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
                             "value": null,
-                            "from": "c778f986-621e-e728-6352-b694764b00d4",
-                            "to": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                            "from": "bcb80ab1-c9e1-dfca-2abb-c26dd0ba8456",
+                            "to": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                             "needReconnect": true
                         }
                     },
-                    "a7affe8a-41cd-9d90-680a-69c0ea1d3e9a": {
+                    "11f2c0eb-2718-e9a0-6173-fbcbf5724870": {
                         "_type": "org.uengine.modeling.model.Relation",
-                        "id": "a7affe8a-41cd-9d90-680a-69c0ea1d3e9a",
+                        "id": "11f2c0eb-2718-e9a0-6173-fbcbf5724870",
                         "name": "2",
                         "displayName": "2",
                         "sourceElement": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "ea1a52b5-59a7-1c75-390b-52ff0d2a8f34",
+                            "id": "9544047d-ac4f-deef-bf8f-5534c5b6bf8d",
                             "visibility": "public",
                             "name": "BookReturned",
                             "oldName": "",
@@ -48946,7 +50045,7 @@ export const aggregateDraftScenarios = {
                             "mirrorElement": null,
                             "elementView": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "ea1a52b5-59a7-1c75-390b-52ff0d2a8f34",
+                                "id": "9544047d-ac4f-deef-bf8f-5534c5b6bf8d",
                                 "x": 900,
                                 "y": 400,
                                 "width": 100,
@@ -48956,7 +50055,7 @@ export const aggregateDraftScenarios = {
                             },
                             "hexagonalView": {
                                 "_type": "org.uengine.modeling.model.EventHexagonal",
-                                "id": "ea1a52b5-59a7-1c75-390b-52ff0d2a8f34",
+                                "id": "9544047d-ac4f-deef-bf8f-5534c5b6bf8d",
                                 "x": 900,
                                 "y": 400,
                                 "subWidth": 100,
@@ -48970,7 +50069,7 @@ export const aggregateDraftScenarios = {
                         },
                         "targetElement": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                            "id": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                             "visibility": "public",
                             "name": "BookStatusChanged",
                             "oldName": "",
@@ -48995,7 +50094,7 @@ export const aggregateDraftScenarios = {
                             "mirrorElement": null,
                             "elementView": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                                "id": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                                 "x": 300,
                                 "y": 650,
                                 "width": 100,
@@ -49005,7 +50104,7 @@ export const aggregateDraftScenarios = {
                             },
                             "hexagonalView": {
                                 "_type": "org.uengine.modeling.model.EventHexagonal",
-                                "id": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                                "id": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                                 "x": 300,
                                 "y": 650,
                                 "subWidth": 100,
@@ -49017,14 +50116,14 @@ export const aggregateDraftScenarios = {
                             "relationCommandInfo": [],
                             "trigger": "@PostPersist"
                         },
-                        "from": "ea1a52b5-59a7-1c75-390b-52ff0d2a8f34",
-                        "to": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                        "from": "9544047d-ac4f-deef-bf8f-5534c5b6bf8d",
+                        "to": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                         "relationView": {
-                            "id": "a7affe8a-41cd-9d90-680a-69c0ea1d3e9a",
+                            "id": "11f2c0eb-2718-e9a0-6173-fbcbf5724870",
                             "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
                             "value": null,
-                            "from": "ea1a52b5-59a7-1c75-390b-52ff0d2a8f34",
-                            "to": "f9bfe10e-208b-c620-68a3-9bef709150ad",
+                            "from": "9544047d-ac4f-deef-bf8f-5534c5b6bf8d",
+                            "to": "1621a7c8-7e36-a87f-0ae4-b99d98103eba",
                             "needReconnect": true
                         }
                     }

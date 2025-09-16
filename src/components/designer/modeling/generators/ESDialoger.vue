@@ -913,6 +913,7 @@ import { value } from 'jsonpath';
                         requirements.ddlFields = []
                     requirements.description = bcDescriptionWithMappingIndex.markdown
                     requirements.traceMap = bcDescriptionWithMappingIndex.traceMap
+                    if(bc.siteMap) requirements.siteMap = bc.siteMap
 
                     passedGeneratorInputs.push({
                         boundedContext: {
@@ -1284,6 +1285,8 @@ import { value } from 'jsonpath';
                 this.state.secondMessageIsTyping = false;
                 this.projectInfo.userStory = this.projectInfo.userStory || '';
                 this.projectInfo.inputDDL = this.projectInfo.inputDDL || '';
+                this.projectInfo.usedUserStory = this.projectInfo.usedUserStory || '';
+                this.projectInfo.usedInputDDL = this.projectInfo.usedInputDDL || '';
                 this.userStoryChunks = this.projectInfo.userStoryChunks || [];
                 this.summarizedResult = this.projectInfo.summarizedResult || {
                     summary: "",
@@ -1345,7 +1348,7 @@ import { value } from 'jsonpath';
                                 await addPropertyWithDelay(newMessage, 'pbcLists', msg.pbcLists);
                                 await addPropertyWithDelay(newMessage, 'isEditable', msg.isEditable);
                                 await addPropertyWithDelay(newMessage, 'currentGeneratedLength', 0);
-                                await addPropertyWithDelay(newMessage, 'userStory', this.projectInfo.userStory);
+                                await addPropertyWithDelay(newMessage, 'userStory', this.projectInfo.usedUserStory);
                                 
                                 // Sanitize summarizedResult
                                 if(!msg.summarizedResult) {
@@ -2021,7 +2024,7 @@ import { value } from 'jsonpath';
                 this.input.devisionAspect = targetMessage.selectedAspect;
                 this.input.previousAspectModel = targetMessage.result[targetMessage.selectedAspect];
                 this.input['requirements'] = {
-                    userStory: this.projectInfo.userStory,
+                    userStory: this.projectInfo.usedUserStory,
                     summarizedResult: this.summarizedResult || {},
                     analysisResult: this.requirementsValidationResult.analysisResult,
                     pbcInfo: this.pbcLists.map(pbc => ({
@@ -2096,9 +2099,9 @@ import { value } from 'jsonpath';
                 this.processingState.isSummarizeStarted = true;
 
                 try {
-                    const summarizedResult = await this.generator.summarizeRecursively(this.projectInfo.userStory);
+                    const summarizedResult = await this.generator.summarizeRecursively(this.projectInfo.usedUserStory);
                     // 요약 결과 저장
-                    this.userStoryChunks = this.generator.makeUserStoryChunks(this.projectInfo.userStory + "\n" + this.projectInfo.inputDDL);
+                    this.userStoryChunks = this.generator.makeUserStoryChunks(this.projectInfo.usedUserStory + "\n" + this.projectInfo.usedInputDDL);
                     this.userStoryChunksIndex = 0;
                     
                     this.summarizedResult = summarizedResult;
@@ -2130,17 +2133,17 @@ import { value } from 'jsonpath';
 
                 // 요약 결과가 없어도 원본 매핑 진행을 위해 원본 요구사항을 청크로 넣어줌
                 if(this.userStoryChunks.length == 0){
-                    if(this.projectInfo.userStory) {
+                    if(this.projectInfo.usedUserStory) {
                         this.userStoryChunks.push({
-                            text: this.projectInfo.userStory,
+                            text: this.projectInfo.usedUserStory,
                             startLine: 1
                         });
                     }
 
-                    if(this.projectInfo.inputDDL) {
+                    if(this.projectInfo.usedInputDDL) {
                         this.userStoryChunks.push({
-                            text: this.projectInfo.inputDDL,
-                            startLine: this.projectInfo.userStory.split("\n").length + 1
+                            text: this.projectInfo.usedInputDDL,
+                            startLine: this.projectInfo.usedUserStory.split("\n").length + 1
                         });
                     }
                 }
@@ -2164,7 +2167,7 @@ import { value } from 'jsonpath';
                 }
 
                 // 현재 요약본이 너무 길면 먼저 요약 진행
-                if (this.projectInfo.userStory.length + this.projectInfo.inputDDL.length > 25000 && !this.summarizedResult.summary) {
+                if (this.projectInfo.usedUserStory.length + this.projectInfo.usedInputDDL.length > 25000 && !this.summarizedResult.summary) {
                     this.pendingBCGeneration = true;
                     this.summarizeRequirements();
                     return;
@@ -2181,7 +2184,7 @@ import { value } from 'jsonpath';
                 this.input['generateOption'] = this.bcGenerationOption;
                 
                 this.input['requirements'] = {
-                    userStory: this.projectInfo.userStory,
+                    userStory: this.projectInfo.usedUserStory,
                     summarizedResult: this.summarizedResult || {},
                     analysisResult: this.requirementsValidationResult.analysisResult,
                     pbcInfo: this.pbcLists.map(pbc => ({
@@ -2290,8 +2293,8 @@ import { value } from 'jsonpath';
                     this._makeCollectedMockDatas(draftOptions)
 
                     draftOptions = ESDialogerTraceUtil.extractTraceInfoFromDraftOptions(draftOptions, {
-                        userStory: this.projectInfo.userStory,
-                        ddl: this.projectInfo.inputDDL,
+                        userStory: this.projectInfo.usedUserStory,
+                        ddl: this.projectInfo.usedInputDDL,
                     })
 
                     
@@ -2320,7 +2323,7 @@ import { value } from 'jsonpath';
                     
                     this.state = {
                         ...this.state,
-                        userStory: this.projectInfo.userStory,
+                        userStory: this.projectInfo.usedUserStory,
                         draftOptions: draftOptions,
                         generator: "CreateAggregateActionsByFunctions"
                     }
@@ -2433,7 +2436,7 @@ import { value } from 'jsonpath';
                         summarizedResult: this.summarizedResult,
                         pbcLists: this.pbcLists,
                         currentGeneratedLength: this.currentGeneratedLength,
-                        userStory: this.projectInfo.userStory,
+                        userStory: this.projectInfo.usedUserStory,
                         timestamp: new Date()
                     };
                 } else if(type === "userMessage"){
@@ -2474,7 +2477,7 @@ import { value } from 'jsonpath';
                         uniqueId: this.uuid(),
                         type: type,
                         siteMap: this.siteMap,
-                        userStory: (this.summarizedResult && this.summarizedResult.summary) ? this.summarizedResult.summary : this.projectInfo.userStory,
+                        userStory: (this.summarizedResult && this.summarizedResult.summary) ? this.summarizedResult.summary : this.projectInfo.usedUserStory,
                         resultDevideBoundedContext: this.resultDevideBoundedContext[this.selectedAspect],
                         isGenerating: true,
                         processingRate: 0,
@@ -2502,11 +2505,18 @@ import { value } from 'jsonpath';
                     return;
                 }
 
+                // 요구사항 검증 이후에 요구사항 입력창을 유저가 수정한 경우, 이후 로직이 망가질 수 있기 때문에 별도로 저장 후 사용
+                this.projectInfo.usedUserStory = this.projectInfo.userStory || ''
+                this.projectInfo.usedInputDDL = this.projectInfo.inputDDL || ''
+                this.$emit("update:projectInfo", {
+                    usedUserStory: this.projectInfo.usedUserStory,
+                    usedInputDDL: this.projectInfo.usedInputDDL
+                })
                 
-                const requirements = this.projectInfo.userStory;
-                this.$emit("update:userStory", requirements, true);
+                const usedUserStory = this.projectInfo.usedUserStory;
+                this.$emit("update:userStory", usedUserStory, true);
 
-                if(requirements.length > 25000){
+                if(usedUserStory.length > 25000){
                     if(!this.alertGenerateWarning("RecursiveRequirementsValidationGenerator")){
                         return;
                     }
@@ -2518,20 +2528,20 @@ import { value } from 'jsonpath';
 
                 this.processingState.isAnalizing = true;
                 
-                if (requirements.length > 25000) {
+                if (usedUserStory.length > 25000) {
                     this.generator = new RecursiveRequirementsValidationGenerator(this);
                     this.state.generator = "RecursiveRequirementsValidationGenerator";
                     this.generatorName = "RecursiveRequirementsValidationGenerator";
 
                     this.messages.push(this.generateMessage("processAnalysis", {}));
-                    this.generator.validateRecursively(requirements);
+                    this.generator.validateRecursively(usedUserStory);
                 } else {
                     this.generator = new RequirementsValidationGenerator(this);
                     this.state.generator = "RequirementsValidationGenerator";
                     this.generatorName = "RequirementsValidationGenerator";
 
                     this.input['requirements'] = {
-                        userStory: requirements,
+                        userStory: usedUserStory,
                     };
 
                     this.messages.push(this.generateMessage("processAnalysis", {}));
@@ -2902,7 +2912,7 @@ import { value } from 'jsonpath';
             },
 
             generateSiteMap(){
-                const requirementsText = this.projectInfo.userStory || '';
+                const requirementsText = this.projectInfo.usedUserStory || '';
                 const shouldUseRecursive = requirementsText && requirementsText.length > 24000;
 
                 this.generator = shouldUseRecursive ? new RecursiveSiteMapGenerator(this) : new SiteMapGenerator(this);
@@ -2912,7 +2922,7 @@ import { value } from 'jsonpath';
                     return;
                 }
 
-                this.input['requirements'] = this.projectInfo.userStory;
+                this.input['requirements'] = this.projectInfo.usedUserStory;
                 this.input['resultDevideBoundedContext'] = this.resultDevideBoundedContext[this.selectedAspect].boundedContexts.map(bc => {
                     return {
                         name: bc.name,
@@ -2936,7 +2946,7 @@ import { value } from 'jsonpath';
                 }
                 
                 if (shouldUseRecursive) {
-                    this.generator.generateRecursively(this.projectInfo.userStory).then(result => {
+                    this.generator.generateRecursively(this.projectInfo.usedUserStory).then(result => {
                         this.siteMap = result.treeData;
                         this.updateMessageState(this.messages.find(msg => msg.type === 'siteMapViewer').uniqueId, {
                             siteMap: this.siteMap,

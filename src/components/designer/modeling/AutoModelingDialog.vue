@@ -442,6 +442,8 @@
                         eventStorming: null,
                         userStory: '',
                         inputDDL: '',
+                        usedUserStory: '',
+                        usedInputDDL: '',
                         customerJourneyMap: null,
                         businessModel: null,
                         userStoryMap: null,
@@ -1287,8 +1289,10 @@
                 }
             },
             async updateProjectInfo(info){
-                this.$set(this.projectInfo, 'userStoryChunks', info.userStoryChunks);
-                this.$set(this.projectInfo, 'summarizedResult', info.summarizedResult);
+                if(info.userStoryChunks) this.$set(this.projectInfo, 'userStoryChunks', info.userStoryChunks);
+                if(info.summarizedResult) this.$set(this.projectInfo, 'summarizedResult', info.summarizedResult);
+                if(info.usedUserStory) this.$set(this.projectInfo, 'usedUserStory', info.usedUserStory);
+                if(info.usedInputDDL) this.$set(this.projectInfo, 'usedInputDDL', info.usedInputDDL);
                 await this.putObject(`db://definitions/${this.projectInfo.projectId}/information`, this.projectInfo)
             },
             async updateInputDDL(content){
@@ -1319,6 +1323,8 @@
                 if(draft && (draft.type == 'processAnalysis')){
                     localStorage.setItem(`draft_userStory`, this.projectInfo.userStory || '')
                     localStorage.setItem(`draft_inputDDL`, this.projectInfo.inputDDL || '')
+                    localStorage.setItem(`draft_usedUserStory`, this.projectInfo.usedUserStory || '')
+                    localStorage.setItem(`draft_usedInputDDL`, this.projectInfo.usedInputDDL || '')
 
                     localStorage.setItem(`localDraft`, JSON.stringify(draft.content))
                 }else{
@@ -1333,11 +1339,10 @@
                     return
                 }
 
-                let userStory = localStorage.getItem('draft_userStory') || ''
-                let inputDDL = localStorage.getItem('draft_inputDDL') || ''
-
-                me.projectInfo.userStory = userStory
-                me.projectInfo.inputDDL = inputDDL
+                me.projectInfo.userStory = localStorage.getItem('draft_userStory') || ''
+                me.projectInfo.inputDDL = localStorage.getItem('draft_inputDDL') || ''
+                me.projectInfo.usedUserStory = localStorage.getItem('draft_usedUserStory') || ''
+                me.projectInfo.usedInputDDL = localStorage.getItem('draft_usedInputDDL') || ''
 
                 me.draft = []
                 me.draft = JSON.parse(localStorage.getItem('localDraft') || '[]')
