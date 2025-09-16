@@ -3243,7 +3243,6 @@
                                             }
                                         }
 
-                                        this.value.langgraphStudioInfos.esGenerator.logs = logs
                                         update_value_particaly(esValue)
                                     },
                                     async (esValue, logs, totalPercentage, isFailed) => { // onComplete
