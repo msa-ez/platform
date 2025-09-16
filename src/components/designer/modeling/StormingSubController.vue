@@ -77,6 +77,13 @@
             ></sub-controller>
         </div>
 
+        <div v-if="value && value.name==='ui' && type.endsWith('BoundedContext')">
+            <sub-controller
+                    :image="'site_map.png'"
+                    v-on:click="openSiteMap"
+            ></sub-controller>
+        </div>
+
         <div v-if="canvasType == 'cm'">
             <sub-controller
                     :image="'../event/link-box-variant-primary.png'"
@@ -508,6 +515,10 @@
             openHistory() {
                 var me = this
                 me.$EventBus.$emit('openHistory', me.value)
+            },
+            openSiteMap() {
+                var me = this
+                me.$EventBus.$emit('openSiteMap')
             }
         }
     }

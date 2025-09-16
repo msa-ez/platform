@@ -164,6 +164,7 @@
                             :isEditable="isEditable"
                             :isGenerating="message.isGenerating"
                             :processingRate="message.processingRate"
+                            :currentGeneratedLength="message.currentGeneratedLength"
                             :currentChunk="message.currentChunk"
                             :totalChunks="message.totalChunks"
                             :resultDevideBoundedContext="message.resultDevideBoundedContext"

@@ -1533,9 +1533,11 @@ import { value } from 'jsonpath';
                         this.updateMessageState(currentMessage.uniqueId, {
                             currentGeneratedLength: this.currentGeneratedLength,
                         });
-                    }else if(this.state.generator === "RecursiveUserStoryGenerator"){
-                        // RecursiveUserStoryGenerator의 처리 상태는 onGenerationFinished에서 관리
-                        // 여기서는 currentGeneratedLength만 업데이트
+                    }else if(this.state.generator === "SiteMapGenerator"){
+                        const currentMessage = this.messages.find(msg => msg.type === 'siteMapViewer');
+                        this.updateMessageState(currentMessage.uniqueId, {
+                            currentGeneratedLength: this.currentGeneratedLength,
+                        });
                     }
                 }
             },
@@ -1560,7 +1562,7 @@ import { value } from 'jsonpath';
 
                 // Recursive SiteMap: 청크 단위 결과는 생성기 내부에서 누적 처리하며 진행상황/부분결과 업데이트
                 if (me.state.generator === "RecursiveSiteMapGenerator") {
-                    me.generator.handleGenerationFinished(model);
+                    me.generator.handleGenerationFinished(model.siteMap);
 
                     try {
                         const total = me.generator.currentChunks.length || 1;
@@ -1580,13 +1582,15 @@ import { value } from 'jsonpath';
 
                         // 메시지 업데이트 (진행률, 부분 사이트맵)
                         const siteMapMsg = me.messages.find(msg => msg.type === 'siteMapViewer');
+                        me.currentGeneratedLength = 0;
                         if (siteMapMsg) {
                             me.updateMessageState(siteMapMsg.uniqueId, {
                                 siteMap: partialTree,
                                 isGenerating: done < total,
                                 processingRate,
                                 currentChunk: done,
-                                totalChunks: total
+                                totalChunks: total,
+                                currentGeneratedLength: me.currentGeneratedLength
                             });
                         }
 
@@ -1598,6 +1602,8 @@ import { value } from 'jsonpath';
                                 result: JSON.parse(JSON.stringify(me.resultDevideBoundedContext))
                             });
                         }
+
+                        localStorage.setItem("siteMap", JSON.stringify(me.siteMap));
                         me.$emit("update:draft", me.messages);
                     } catch(e) {
                         console.warn('Recursive sitemap incremental update failed:', e);
@@ -1606,10 +1612,12 @@ import { value } from 'jsonpath';
                 }
 
                 if(me.state.generator === "SiteMapGenerator"){
-                    me.siteMap = model.treeData;
+                    me.siteMap = model.siteMap.treeData;
+                    me.currentGeneratedLength = 0;
                     me.updateMessageState(me.messages.find(msg => msg.type === 'siteMapViewer').uniqueId, {
                         siteMap: me.siteMap,
-                        isGenerating: false
+                        isGenerating: false,
+                        currentGeneratedLength: me.currentGeneratedLength
                     });
 
                     // Map sitemap nodes to bounded contexts under selected aspect
@@ -1625,6 +1633,7 @@ import { value } from 'jsonpath';
                         console.warn('Failed to map sitemap to bounded contexts:', e);
                     }
 
+                    localStorage.setItem("siteMap", JSON.stringify(me.siteMap));
                     me.$emit("update:draft", me.messages)
                 }
 
@@ -2305,6 +2314,9 @@ import { value } from 'jsonpath';
                         })
                     }
 
+                    //siteMap 전달
+                    if(!(localStorage.getItem("siteMap"))) localStorage.setItem("siteMap", JSON.stringify(this.siteMap))
+
                     
                     this.state = {
                         ...this.state,
@@ -2468,6 +2480,7 @@ import { value } from 'jsonpath';
                         processingRate: 0,
                         currentChunk: 0,
                         totalChunks: 0,
+                        currentGeneratedLength: this.currentGeneratedLength,
                         timestamp: new Date()
                     };
                 }
@@ -2802,6 +2815,7 @@ import { value } from 'jsonpath';
                 this.updateMessageState(this.messages.find(message => message.type === 'siteMapViewer').uniqueId, {
                     siteMap: siteMap
                 });
+                localStorage.setItem("siteMap", JSON.stringify(this.siteMap));
                 this.$emit('update:draft', this.messages)
             },
 
@@ -2911,8 +2925,13 @@ import { value } from 'jsonpath';
                 const siteMapIndex = this.messages.findIndex(msg => msg.type === 'siteMapViewer');
                 if (siteMapIndex !== -1) {
                     this.messages.splice(siteMapIndex, 1);
-                    this.messages.push(siteMapMessage);
-                } else {
+                }
+
+                const aggregateDraftDialogDtoIndex = this.messages.findIndex(msg => msg.type === 'aggregateDraftDialogDto');
+                if (aggregateDraftDialogDtoIndex !== -1) {
+                    // agg 메시지가 있다면 이 메시지보다 앞에 생성
+                    this.messages.splice(aggregateDraftDialogDtoIndex, 0, siteMapMessage);
+                }else{
                     this.messages.push(siteMapMessage);
                 }
                 
@@ -2940,9 +2959,17 @@ import { value } from 'jsonpath';
                     this.generator.generate()
                 }
             },
+            
+            // 사이트맵 루트 노드 안전하게 가져오기
+            getSiteMapRoot(siteMapTree) {
+                return siteMapTree && Array.isArray(siteMapTree) && siteMapTree.length > 0 ? siteMapTree[0] : null;
+            },
+            
             mapSiteMapToBoundedContexts(siteMapTree) {
                 if (!siteMapTree || !Array.isArray(siteMapTree) || siteMapTree.length === 0) return;
-                const root = siteMapTree[0];
+                const root = this.getSiteMapRoot(siteMapTree);
+                if (!root) return;
+                
                 const aspect = this.selectedAspect || Object.keys(this.resultDevideBoundedContext)[0];
                 if (!aspect || !this.resultDevideBoundedContext[aspect]) return;
 
@@ -2966,8 +2993,10 @@ import { value } from 'jsonpath';
                         bc.siteMap.push({
                             id: node.id,
                             title: node.title,
+                            name: node.name,
                             description: node.description || '',
                             boundedContext: node.boundedContext,
+                            functionType: node.functionType || "",
                             uiRequirements: node.uiRequirements || '',
                         });
                     }

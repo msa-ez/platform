@@ -515,6 +515,10 @@ import { group } from "d3";
             },
             onChangedElementName(newVal, oldVal){ },
             openPanel() {
+                if(this.value._type.endsWith('BoundedContext') && this.value.name=='ui') {
+                    this.$EventBus.$emit('openSiteMap')
+                    return
+                }
                 // if(this.isPBCModel) {
                 //     return
                 // }

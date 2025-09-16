@@ -1,12 +1,18 @@
 <template>
     <div class="site-map-node" :class="{ 'collapsed': isCollapsed, 'root': isRoot }">
-        <div class="node-content" :data-node-id="node.id" :data-node-type="node.type">
+        <div class="node-content" 
+             :class="{ 
+                 'group-node': !node.functionType || node.functionType === '', 
+                 'function-node': node.functionType && node.functionType !== ''
+             }"
+             :data-node-id="node.id" 
+             :data-node-type="node.type">
             <!-- 접기/펼치기 버튼 (우측) -->
             <button 
                 v-if="node.children && node.children.length > 0"
                 class="collapse-btn" 
                 @click="toggleCollapse" 
-                :title="isCollapsed ? '펼치기' : '접기'"
+                :title="isCollapsed ? $t('siteMap.node.expand') : $t('siteMap.node.collapse')"
                 :disabled="isGenerating"
                 :class="{ 'collapsed': isCollapsed }"
             >
@@ -53,7 +59,19 @@
                     </option>
                 </select>
             </div>
-            <div class="node-ui-requirements" v-if="node.type !== 'root'">
+            <div class="node-function-type" v-if="node.type !== 'root'">
+                <div class="field-label">{{ $t('siteMap.node.functionType') }}</div>
+                <select 
+                    v-model="node.functionType"
+                    :disabled="isGenerating"
+                    @change="updateNode"
+                >
+                    <option value="">{{ $t('siteMap.node.functionTypeCategory') }}</option>
+                    <option value="view">{{ $t('siteMap.node.functionTypeView') }}</option>
+                    <option value="command">{{ $t('siteMap.node.functionTypeCommand') }}</option>
+                </select>
+            </div>
+            <div class="node-ui-requirements" v-if="node.type !== 'root' && node.functionType && node.functionType !== ''">
                 <div class="field-label">{{ $t('siteMap.node.uiRequirements') }}</div>
                 <textarea 
                     v-model="node.uiRequirements" 
@@ -115,8 +133,9 @@
                         v-for="(child, index) in node.children.slice(0, 3)" 
                         :key="child.id"
                         class="preview-item"
+                        :class="{ 'group-preview': !child.functionType || child.functionType === '' }"
                     >
-                        <i class="fas fa-circle"></i>
+                        <i :class="(!child.functionType || child.functionType === '') ? 'fas fa-folder' : 'fas fa-circle'"></i>
                         <span class="preview-title">{{ child.title }}</span>
                     </div>
                     <div v-if="node.children.length > 3" class="preview-more">
@@ -219,6 +238,30 @@ export default {
 .site-map-node.root .node-content:hover {
     border-color: #0056b3 !important;
     box-shadow: 0 8px 25px rgba(0,123,255,0.15);
+}
+
+/* 그룹 노드 스타일 */
+.node-content.group-node {
+    border-color: #6f42c1 !important;
+    background: linear-gradient(135deg, #f8f6ff 0%, #ffffff 100%);
+    border-style: dashed;
+}
+
+.node-content.group-node:hover {
+    border-color: #5a32a3 !important;
+    box-shadow: 0 5px 15px rgba(111, 66, 193, 0.15);
+}
+
+/* 기능 노드 스타일 */
+.node-content.function-node {
+    border-color: #28a745 !important;
+    background: white;
+    border-style: solid;
+}
+
+.node-content.function-node:hover {
+    border-color: #1e7e34 !important;
+    box-shadow: 0 5px 15px rgba(40, 167, 69, 0.15);
 }
 
 .node-content:hover {
@@ -513,6 +556,19 @@ export default {
     opacity: 1;
 }
 
+/* 접힌 상태에서 그룹 노드 구분 */
+.site-map-node.collapsed .node-content.group-node {
+    border-color: #8e7cc3 !important;
+    background: #f0edff;
+    border-style: dashed;
+}
+
+.site-map-node.collapsed .node-content.group-node:hover {
+    border-color: #6f42c1 !important;
+    background: #e6dfff;
+    opacity: 1;
+}
+
 /* 노드 상태 표시기 */
 .node-status-indicator {
     position: absolute;
@@ -629,6 +685,11 @@ export default {
 .preview-item i {
     font-size: 8px;
     color: #6c757d;
+}
+
+.preview-item.group-preview i {
+    color: #6f42c1;
+    font-size: 10px;
 }
 
 .preview-title {

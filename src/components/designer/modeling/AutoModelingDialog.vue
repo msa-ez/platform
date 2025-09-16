@@ -894,7 +894,8 @@
                     version: '1.0.0',
                     type: type == 'cm' ? 'cm' : 'project'
                 }
-                this.showStorageDialog = true;
+                // this.showStorageDialog = true;
+                this.saveStorageDialog();
             },
             closeStorageDialog(){
                 this.storageCondition = null;

@@ -1590,6 +1590,39 @@
                         ></uml-class-model-canvas>
                     </div>
 
+                    <div v-if="siteMapViewerDialog"
+                        style="
+                            position: absolute;
+                            top: 0;
+                            left: 0;
+                            width: 100%;
+                            height: 100%;
+                            z-index: 100;
+                            background-color: white;
+                        "
+                    >
+                        <v-btn
+                            icon
+                            @click="siteMapViewerDialog = false"
+                            style="
+                                position: absolute;
+                                z-index: 101;
+                                right: 20px;
+                                top: 20px;
+                                color: gray;
+                            "
+                        >
+                            <v-icon>mdi-close</v-icon>
+                        </v-btn>
+                        
+                        <site-map-viewer
+                            :embedded="true"
+                            :siteMap="value.siteMap"
+                            :modelValue="value"
+                        >
+                        </site-map-viewer>
+                    </div>
+
                     <!-- Kubernetes Dialog -->
                     <v-dialog
                         no-click-animation
@@ -2132,7 +2165,7 @@
         TraceInfoViewer
     } from "../modeling/generators/features/EventStormingModelCanvas"
 
-
+    import SiteMapViewer from "../modeling/generators/SiteMapViewer.vue"
 
     const prettier = require("prettier");
     const plugins = require("prettier-plugin-java");
@@ -2208,7 +2241,8 @@
             AggregateDraftDialog,
             GeneratorProgress,
             OpenAPIPBC,
-            TraceInfoViewer
+            TraceInfoViewer,
+            SiteMapViewer
             // ModelCodeGenerator
         },
         props: {
@@ -2683,7 +2717,9 @@
                     isShow: false,
                     userInputs: {userStory: "", ddl: ""},
                     directRefInfos: {refs: []}
-                }
+                },
+
+                siteMapViewerDialog: false,
             };
         },
         computed: {
@@ -3219,13 +3255,17 @@
                                         const filteredPBCs = JSON.parse(localStorage.getItem("filteredPBCs"))
                                         const filteredFrontEndResults = JSON.parse(localStorage.getItem("filteredFrontEndResults"))
 
+                                        // PBC와 Frontend 생성 (위치 계산을 위해 순차적 실행)
+                                        let pbcElements = {}
+                                        
+                                        // PBC 생성
                                         if(filteredPBCs && Object.keys(filteredPBCs).length > 0) {
-                                            this.generatePBCAndFrontEndbyDraftOptions(filteredPBCs)
-                                            console.log("[*] 최종 생성 후 PBC, FrontEnd 생성 완료", {'filteredPBCs': filteredPBCs, 'filteredFrontEndResults': filteredFrontEndResults})
-                                        }else {
-                                            if(filteredFrontEndResults && Object.keys(filteredFrontEndResults).length > 0) {
-                                                this.generateFrontEnd(filteredFrontEndResults, {})
-                                            }
+                                            pbcElements = this.generatePBCbyDraftOptions(filteredPBCs)
+                                        }
+                                        
+                                        // Frontend 생성 (PBC 위치를 고려하여)
+                                        if(filteredFrontEndResults && Object.keys(filteredFrontEndResults).length > 0) {
+                                            this.generateFrontEnd(filteredFrontEndResults, pbcElements)
                                         }
                                         
                                         this.value.langgraphStudioInfos.esGenerator.isCompleted = true
@@ -3352,6 +3392,15 @@
             // if (storedHighlighting !== null) {
             //     this.highlightingEnabled = storedHighlighting === 'true';
             // }
+
+            // siteMap 로드
+            if(!me.value.siteMap && localStorage.getItem("siteMap")){
+                me.loadSiteMap();
+            }
+
+            me.$EventBus.$on("openSiteMap", function () {
+                me.openSiteMapViewer()
+            });
         },
         beforeDestroy() {
             if (this.fetchEventInterval) {
@@ -4437,7 +4486,73 @@
                 }
             },
 
-            async generatePBCAndFrontEndbyDraftOptions(pbc) {
+            generateFrontEnd(filteredFrontEndResults, pbcElements = {}) {
+                if(Object.keys(filteredFrontEndResults).length === 0) return
+
+                let maxBCBottom = 450  // 기본값
+                
+                if (pbcElements && Object.keys(pbcElements).length > 0) {
+                    maxBCBottom = Object.values(pbcElements).map(pbc => pbc.elementView.y + pbc.elementView.height).reduce((a, b) => Math.max(a, b), 0)
+                }else{
+                    const boundedContexts = Object.values(this.value.elements).filter(element => element && element._type === "org.uengine.modeling.model.BoundedContext")
+                    
+                    if (boundedContexts.length > 0) {
+                        maxBCBottom = Math.max(...boundedContexts.map(bc => 
+                            bc.elementView.y + Math.round(bc.elementView.height/2)
+                        ))
+                    }
+                }
+
+                for(const [key, value] of Object.entries(filteredFrontEndResults)) {
+                    if(key === "frontend") {
+                        let uuid = this.uuid()
+                        const frontEnd = {
+                            _type: 'org.uengine.modeling.model.BoundedContext',
+                            id: `frontend-${uuid}`,
+                            name: value.name,
+                            oldName: '',
+                            displayName: value.alias,
+                            description: value.requirements.map(requirement => requirement.text).join("\n"),
+                            author: null,
+                            aggregates: [],
+                            policies: [],
+                            members: [],
+                            views: [],
+                            gitURL: null,
+                            elementView: {
+                                '_type': 'org.uengine.modeling.model.BoundedContext',
+                                'id': `frontend-${uuid}`,
+                                'x': 650,
+                                'y': maxBCBottom + 300,
+                                'width': 500,
+                                'height': 500,
+                                'style': JSON.stringify({})
+                            },
+                            hexagonalView:{
+                                '_type': 'org.uengine.modeling.model.BoundedContext',
+                                'id': `frontend-${uuid}`,
+                                'x': 0,
+                                'y': 0,
+                                'width': 0,
+                                'height': 0,
+                                'style': JSON.stringify({})
+                            },
+                            portGenerated: 0,
+                            tempId: '',
+                            templatePerElements: {},
+                            preferredPlatform: 'spring-boot',
+                            preferredPlatformConf: {},
+                        }
+
+                        this.value.elements = Object.assign(this.value.elements, {[frontEnd.id]: frontEnd})
+                        this.changedByMe = true
+                        console.log("[*] Frontend 생성 완료", {'frontEnd': frontEnd})
+                        localStorage.removeItem("filteredFrontEndResults")
+                    }
+                }
+            },
+
+            generatePBCbyDraftOptions(pbc) {
                 if(Object.keys(pbc).length === 0) return
 
                 const boundedContexts = Object.values(this.value.elements).filter(element => element && element._type === "org.uengine.modeling.model.BoundedContext")
@@ -4508,7 +4623,7 @@
                                 description: value.info.description? value.info.description : ''
                             }
                             openAPIPBC.setPBCInfo(pbc, info)
-                            await openAPIPBC.appendPBC(info)
+                            openAPIPBC.appendPBC(info)
                             this.changedByMe = true
                         }
 
@@ -4518,11 +4633,8 @@
                 }
 
                 localStorage.removeItem("filteredPBCs")
-
-                let frontEnd = localStorage.getItem("filteredFrontEndResults")
-                if(frontEnd && Object.keys(JSON.parse(frontEnd)).length > 0) {
-                    this.generateFrontEnd(JSON.parse(frontEnd), pbcElements)
-                }
+                console.log("[*] PBC 생성 완료", pbcElements)
+                return pbcElements
             },
 
             activePBCElement(pbc) {
@@ -4539,71 +4651,6 @@
                 }
 
                 this.changedByMe = true
-            },
-
-            generateFrontEnd(filteredFrontEndResults, pbcElements) {
-                if(Object.keys(filteredFrontEndResults).length === 0) return
-
-                let maxBCBottom = 450  // 기본값
-                
-                if (pbcElements && Object.keys(pbcElements).length > 0) {
-                    maxBCBottom = Object.values(pbcElements).map(pbc => pbc.elementView.y + pbc.elementView.height).reduce((a, b) => Math.max(a, b), 0)
-                }else{
-                    const boundedContexts = Object.values(this.value.elements).filter(element => element && element._type === "org.uengine.modeling.model.BoundedContext")
-                    
-                    if (boundedContexts.length > 0) {
-                        maxBCBottom = Math.max(...boundedContexts.map(bc => 
-                            bc.elementView.y + Math.round(bc.elementView.height/2)
-                        ))
-                    }
-                }
-
-                for(const [key, value] of Object.entries(filteredFrontEndResults)) {
-                    if(key.includes("frontend")) {
-                        let uuid = this.uuid()
-                        const frontEnd = {
-                            _type: 'org.uengine.modeling.model.BoundedContext',
-                            id: `frontend-${uuid}`,
-                            name: value.name,
-                            oldName: '',
-                            displayName: value.alias,
-                            description: value.requirements.map(requirement => requirement.text).join("\n"),
-                            author: null,
-                            aggregates: [],
-                            policies: [],
-                            members: [],
-                            views: [],
-                            gitURL: null,
-                            elementView: {
-                                '_type': 'org.uengine.modeling.model.BoundedContext',
-                                'id': `frontend-${uuid}`,
-                                'x': 650,
-                                'y': maxBCBottom + 300,
-                                'width': 500,
-                                'height': 500,
-                                'style': JSON.stringify({})
-                            },
-                            hexagonalView:{
-                                '_type': 'org.uengine.modeling.model.BoundedContext',
-                                'id': `frontend-${uuid}`,
-                                'x': 0,
-                                'y': 0,
-                                'width': 0,
-                                'height': 0,
-                                'style': JSON.stringify({})
-                            },
-                            portGenerated: 0,
-                            tempId: '',
-                            templatePerElements: {},
-                            preferredPlatform: 'spring-boot',
-                            preferredPlatformConf: {},
-                        }
-
-                        this.value.elements = Object.assign(this.value.elements, {[frontEnd.id]: frontEnd})
-                        this.changedByMe = true
-                        localStorage.removeItem("filteredFrontEndResults")
-                    }
-                }
             },
 
             async generateAggregatesFromDraft(draftOptions) {
@@ -8919,7 +8966,25 @@
                 else {
                     this.traceInfoViewerDto.isUsable = false
                 }
-            }
+            },
+
+            async loadSiteMap(){
+                this.siteMap = JSON.parse(localStorage.getItem("siteMap"));
+
+                if(!this.value['siteMap']) this.value['siteMap'] = [];
+                this.value['siteMap'] = this.siteMap;
+
+                await this._saveModelForcely();
+                localStorage.removeItem("siteMap");
+            },
+
+            openSiteMapViewer(){
+                this.siteMapViewerDialog = true
+            },
+
+            closeSiteMapViewer(){
+                this.siteMapViewerDialog = false
+            },
         },
     };
 </script>

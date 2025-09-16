@@ -1,9 +1,9 @@
 <template>
-    <div class="site-map-viewer">
+    <div class="site-map-viewer" :class="{ 'embedded': embedded }">
         <div class="toolbar">
             <div class="toolbar-left">
                 <v-row class="pa-0 ma-0 pt-4" style="align-items: center; gap: 10px;">
-                    <v-btn class="auto-modeling-btn" color="primary" @click="generateSiteMap" :disabled="isGenerating">
+                    <v-btn v-if="!embedded" class="auto-modeling-btn" color="primary" @click="generateSiteMap" :disabled="isGenerating">
                         {{ $t('siteMap.toolbar.regenerate') }}
                     </v-btn>
                     <v-btn class="auto-modeling-btn" color="secondary" @click="addNode" :disabled="isGenerating">
@@ -15,12 +15,13 @@
                     <template v-if="isGenerating">
                         <v-progress-circular indeterminate color="primary" size="24" class="mr-2"></v-progress-circular>
                         <span class="progress-text" v-if="totalChunks > 0">{{ $t('siteMap.toolbar.progress', { rate: processingRate }) }}</span>
+                        <span class="progress-text" v-if="currentGeneratedLength > 0">({{ currentGeneratedLength }} text generated...)</span>
                     </template>
                 </v-row>
             </div>
             
             <!-- 줌 컨트롤 추가 -->
-            <div class="zoom-controls">
+            <div class="zoom-controls" :style="{ 'margin-right': embedded ? '5%' : '0' }">
                 <v-btn icon small @click="zoomOut" :disabled="currentZoom <= minZoom" class="zoom-btn">
                     <v-icon>mdi-minus</v-icon>
                 </v-btn>
@@ -47,18 +48,25 @@
                      transform: `translate3d(${panOffset.x}px, ${panOffset.y}px, 0) scale(${currentZoom})`,
                      transformOrigin: '0 0'
                  }">
-                <div class="root-node" v-if="localSiteMap.length > 0">
-                    <SiteMapNode 
-                        :isGenerating="isGenerating"
-                        :node="localSiteMap[0]"
-                        :parent-title="null"
-                        :available-bounded-contexts="(localSiteMap[0].boundedContexts || [])"
-                        :is-root="true"
-                        @add-child="addChildNode"
-                        @delete-node="deleteNode"
-                        @update-node="updateNode"
-                        @node-collapse-changed="handleNodeCollapseChanged"
-                    />
+                <div class="root-nodes" v-if="hasRootNode()">
+                    <div 
+                        v-for="(rootNode, index) in localSiteMap" 
+                        :key="rootNode.id"
+                        class="root-node"
+                        :class="{ 'multiple-roots': localSiteMap.length > 1 }"
+                    >
+                        <SiteMapNode 
+                            :isGenerating="isGenerating"
+                            :node="rootNode"
+                            :parent-title="null"
+                            :available-bounded-contexts="(rootNode.boundedContexts || [])"
+                            :is-root="true"
+                            @add-child="addChildNode"
+                            @delete-node="deleteNode"
+                            @update-node="updateNode"
+                            @node-collapse-changed="handleNodeCollapseChanged"
+                        />
+                    </div>
                 </div>
                 
                 <!-- 빈 상태 -->
@@ -120,6 +128,21 @@ export default {
             type: Number,
             default: 0,
             required: false
+        },
+        embedded: {
+            type: Boolean,
+            default: false,
+            required: false
+        },
+        currentGeneratedLength: {
+            type: Number,
+            default: 0,
+            required: false
+        },
+        modelValue: {
+            type: Object,
+            default: () => ({}),
+            required: false
         }
     },
     data() {
@@ -140,11 +163,15 @@ export default {
             lastMouseX: 0, // 마지막 마우스 X 좌표
             lastMouseY: 0, // 마지막 마우스 Y 좌표
             isAllCollapsed: false, // 전체 접기/펼치기 상태
-            // 성능 최적화를 위한 추가 변수들
+
             rafId: null, // RequestAnimationFrame ID
             isDragging: false, // 드래그 중인지 여부
             lastPanTime: 0, // 마지막 패닝 시간
-            panThrottle: 16, // 60fps로 제한 (16ms)
+            panThrottle: 16, 
+
+            modelBoundedContexts: {},
+            modelCommands: {},
+            modelViews: {}
         };
     },
     computed: {
@@ -161,9 +188,9 @@ export default {
                     const newLocalSiteMap = JSON.parse(JSON.stringify(newSiteMap));
                     
                     // 기존 localSiteMap이 있고, 루트 노드의 접기/펼치기 상태가 있다면 보존
-                    if (this.localSiteMap.length > 0 && this.localSiteMap[0].hasOwnProperty('isCollapsed')) {
+                    if (this.hasRootNode() && this.getRootNode().hasOwnProperty('isCollapsed')) {
                         if (newLocalSiteMap.length > 0) {
-                            newLocalSiteMap[0].isCollapsed = this.localSiteMap[0].isCollapsed;
+                            newLocalSiteMap[0].isCollapsed = this.getRootNode().isCollapsed;
                         }
                     }
                     
@@ -182,9 +209,9 @@ export default {
                 this.addRootNode();
             } else {
                 // 기존 사이트맵이 있는 경우 루트 노드의 접기/펼치기 상태 초기화
-                if (this.localSiteMap.length > 0 && !this.localSiteMap[0].hasOwnProperty('isCollapsed')) {
+                if (this.hasRootNode() && !this.getRootNode().hasOwnProperty('isCollapsed')) {
                     // isCollapsed 속성이 없다면 기본값 설정
-                    this.localSiteMap[0].isCollapsed = false;
+                    this.getRootNode().isCollapsed = false;
                 }
             }
             
@@ -193,7 +220,7 @@ export default {
                 try {
                     this.centerRootNode();
                 } catch (error) {
-                    console.warn('초기 중앙 정렬 실패:', error);
+                    console.warn('Error in centerRootNode:', error);
                 }
                 
                 // 휠 이벤트 리스너 추가 (Ctrl+휠로 줌)
@@ -203,10 +230,21 @@ export default {
                 }
             });
         } catch (error) {
-            console.error('컴포넌트 마운트 중 오류 발생:', error);
+            console.error('Error in SiteMapViewer:', error);
+        }
+
+        if(this.embedded && this.modelValue){
+            this.modelBoundedContexts = Object.values(this.modelValue.elements).filter(ele => ele!=null && ele._type.endsWith("BoundedContext") && ele.name !== "ui");
+            this.modelCommands = Object.values(this.modelValue.elements).filter(ele => ele!=null && ele._type.endsWith("Command"));
+            this.modelViews = Object.values(this.modelValue.elements).filter(ele => ele!=null && ele._type.endsWith("View"));
+
+            migrateSiteMap();
         }
     },
     methods: {
+        migrateSiteMap(){
+            
+        },
         generateId() {
             return `node-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
         },
@@ -223,12 +261,22 @@ export default {
             this.localSiteMap = [rootNode];
             this.$emit('update:siteMap', this.localSiteMap);
         },
+
+        // 루트 노드 찾기 헬퍼 메서드
+        getRootNode() {
+            return this.localSiteMap.length > 0 ? this.localSiteMap[0] : null;
+        },
+
+        // 루트 노드가 있는지 확인
+        hasRootNode() {
+            return this.localSiteMap.length > 0;
+        },
         
         addNode() {
-            if (this.localSiteMap.length === 0) {
+            if (!this.hasRootNode()) {
                 this.addRootNode();
             } else {
-                this.addChildNode(this.localSiteMap[0].id);
+                this.addChildNode(this.getRootNode().id);
             }
         },
         
@@ -238,9 +286,11 @@ export default {
                 const newNode = {
                     id: this.generateId(),
                     title: this.$t('siteMap.defaults.newPage'),
+                    name: "NewPage",
                     description: this.$t('siteMap.defaults.pageDescription'),
                     type: "navigation",
                     boundedContext: "",
+                    functionType: "",
                     uiRequirements: "",
                     children: []
                 };
@@ -252,21 +302,11 @@ export default {
                 
                 // 부모 컴포넌트에 변경사항 알림
                 this.$emit('update:siteMap', this.localSiteMap);
-                
-                // 새로운 노드가 추가되면 스크롤을 오른쪽으로 이동
-                this.$nextTick(() => {
-                    this.scrollToNewNode(parentNode);
-                });
             }
         },
         
-        scrollToNewNode(parentNode) {
-            // 스크롤 강제 이동 제거 - 사용자가 직접 스크롤하도록 함
-            console.log('새 노드가 추가되었습니다:', parentNode.title);
-        },
-        
         deleteNode(nodeId) {
-            if (this.localSiteMap.length === 1 && this.localSiteMap[0].id === nodeId) {
+            if (this.hasRootNode() && this.getRootNode().id === nodeId) {
                 // 루트 노드 삭제
                 this.localSiteMap = [];
                 this.$emit('update:siteMap', this.localSiteMap);
@@ -346,18 +386,24 @@ export default {
                 };
             }
             
-            const rootNode = this.localSiteMap[0];
+            const rootNode = this.getRootNode();
+            if (!rootNode) return { siteMap: { title: "", description: "", boundedContexts: [], navigation: [] } };
+            
             const navigation = rootNode.children ? rootNode.children.map(child => ({
                 id: child.id,
                 title: child.title,
+                name: child.name,
                 description: child.description,
                 boundedContext: child.boundedContext,
+                functionType: child.functionType,
                 uiRequirements: child.uiRequirements,
                 children: child.children ? child.children.map(subChild => ({
                     id: subChild.id,
                     title: subChild.title,
+                    name: subChild.name,
                     description: subChild.description,
                     boundedContext: subChild.boundedContext,
+                    functionType: subChild.functionType,
                     uiRequirements: subChild.uiRequirements
                 })) : []
             })) : [];
@@ -379,7 +425,7 @@ export default {
 
         centerRootNode() {
             // 기본적인 중앙 정렬만 수행 (복잡한 로직 제거)
-            if (this.localSiteMap.length === 0) return;
+            if (!this.hasRootNode()) return;
             
             this.$nextTick(() => {
                 try {
@@ -396,7 +442,7 @@ export default {
                         };
                     }
                 } catch (error) {
-                    console.error('중앙 정렬 중 오류 발생:', error);
+                    console.error('Error in centerRootNode:', error);
                     this.panOffset = { x: 0, y: 0 };
                 }
             });
@@ -420,6 +466,16 @@ export default {
 
         // 패닝 기능
         startPan(event) {
+            // 입력 필드, 버튼, 선택 요소에서는 드래그 시작하지 않음
+            const target = event.target;
+            if (target.tagName === 'INPUT' || 
+                target.tagName === 'TEXTAREA' || 
+                target.tagName === 'SELECT' || 
+                target.tagName === 'BUTTON' ||
+                target.closest('input, textarea, select, button')) {
+                return;
+            }
+            
             if (event.button === 0) { // 왼쪽 마우스 버튼
                 this.isPanning = true;
                 this.isDragging = true;
@@ -429,6 +485,16 @@ export default {
             }
         },
         pan(event) {
+            // 입력 필드, 버튼, 선택 요소에서는 패닝하지 않음
+            const target = event.target;
+            if (target.tagName === 'INPUT' || 
+                target.tagName === 'TEXTAREA' || 
+                target.tagName === 'SELECT' || 
+                target.tagName === 'BUTTON' ||
+                target.closest('input, textarea, select, button')) {
+                return;
+            }
+            
             if (this.isPanning && this.isDragging) {
                 // throttling으로 성능 최적화
                 const now = Date.now();
@@ -534,7 +600,8 @@ export default {
             const centerY = containerRect.height / 2;
             
             // 현재 루트 노드의 위치를 계산하여 중앙에 맞춤
-            const rootNode = this.localSiteMap[0];
+            const rootNode = this.getRootNode();
+            if (!rootNode) return;
             let estimatedHeight = 100; // 기본 높이
             
             if (rootNode.children && rootNode.children.length > 0 && !rootNode.isCollapsed) {
@@ -664,6 +731,15 @@ export default {
 </script>
 
 <style scoped>
+.embedded {
+    position: absolute;
+    width: 100%;
+    height: 90%;
+    left: 0;
+    right: 0;
+    overflow: hidden;
+}
+
 .site-map-viewer {
     display: flex;
     flex-direction: column;
@@ -671,6 +747,15 @@ export default {
     min-height: 600px;
     background: #f8f9fa;
     overflow: hidden; /* 전체 컨테이너에서 스크롤 방지 */
+}
+
+.site-map-viewer.embedded {
+    position: absolute;
+    width: 100%;
+    height: 90%;
+    left: 0;
+    right: 0;
+    overflow: hidden;
 }
 
 .toolbar {
@@ -776,6 +861,18 @@ export default {
     position: relative;
 }
 
+/* embedded 상태에서는 스크롤 비활성화 */
+.site-map-viewer.embedded .site-map-container {
+    overflow: hidden;
+}
+
+/* embedded 상태에서 site-map-tree 최적화 */
+.site-map-viewer.embedded .site-map-tree {
+    min-width: 100%;
+    width: 100%;
+    justify-content: flex-start;
+}
+
 .site-map-container:active {
     cursor: grabbing;
 }
@@ -811,12 +908,10 @@ export default {
     cursor: zoom-out;
 }
 
-.site-map-container {
-    flex: 1;
+/* 일반 상태에서는 스크롤 활성화 */
+.site-map-viewer:not(.embedded) .site-map-container {
     overflow-x: auto; /* 가로 스크롤 활성화 */
     overflow-y: auto; /* 세로 스크롤 활성화 */
-    padding: 20px;
-    min-height: 0; /* flex 아이템이 축소될 수 있도록 */
     scrollbar-width: thin; /* Firefox 스크롤바 */
     scrollbar-color: #007bff #f8f9fa; /* Firefox 스크롤바 색상 */
     scroll-behavior: smooth; /* 부드러운 스크롤 */
@@ -830,10 +925,23 @@ export default {
     padding: 0 20px; /* 좌우 여백 */
 }
 
+.root-nodes {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 40px;
+    justify-content: center;
+    align-items: flex-start;
+}
+
 .root-node {
     display: flex;
     flex-direction: column;
     align-items: center;
+}
+
+.root-node.multiple-roots {
+    margin-bottom: 20px;
 }
 
 .node-content {

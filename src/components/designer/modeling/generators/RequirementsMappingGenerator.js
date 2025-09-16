@@ -273,15 +273,14 @@ Important Instructions:
         this.eventLineMap.clear();
         this.lineNumberedRequirements = '';
 
-        if(this.client.input['boundedContext'].name == 'ui') {
-            return '';
-        }
-
         if(!requirementChunk.type) {
             this.lineNumberedRequirements = TextTraceUtil.addLineNumbers(requirementChunk.text, requirementChunk.startLine);
             return this.lineNumberedRequirements;
         }
 
+        if(this.client.input['boundedContext'].name === 'ui') {
+            return this._parseUIRequirements(requirementChunk);
+        }
 
         let markdown = '### Events\n\n';
         let currentLine = 3;
@@ -298,6 +297,32 @@ Important Instructions:
         });
         
         this.lineNumberedRequirements = TextTraceUtil.addLineNumbers(markdown.trim());
+        return this.lineNumberedRequirements;
+    }
+
+    _parseUIRequirements(requirementChunk) {
+        // UI 요구사항을 파싱하는 로직
+        if (requirementChunk.events && requirementChunk.events.length > 0) {
+            let markdown = '### UI Requirements\n\n';
+            let currentLine = 3;
+
+            requirementChunk.events.forEach((event, index) => {
+                const eventMarkdown = this._makeEventMarkdown(event);
+                const lineCount = eventMarkdown.split('\n').length;
+                for(let i=0; i<lineCount; i++){
+                    this.eventLineMap.set(currentLine + i, { type: 'event', index: index });
+                }
+
+                markdown += eventMarkdown + '\n';
+                currentLine += lineCount;
+            });
+            
+            this.lineNumberedRequirements = TextTraceUtil.addLineNumbers(markdown.trim());
+            return this.lineNumberedRequirements;
+        }
+        
+        // 일반 텍스트 요구사항인 경우
+        this.lineNumberedRequirements = TextTraceUtil.addLineNumbers(requirementChunk.text, requirementChunk.startLine);
         return this.lineNumberedRequirements;
     }
 
@@ -328,6 +353,11 @@ Important Instructions:
             return;
         }
 
+        // UI bounded context에 대한 특별 처리
+        if(this.client.input['boundedContext'].name === 'ui') {
+            this._processUIRequirements(returnObj, model);
+            return;
+        }
 
         this._wrapRefArrayToModel(model);
         const sanitizedModel = RefsTraceUtil.sanitizeAndConvertRefs(model, this.lineNumberedRequirements);
@@ -355,6 +385,78 @@ Important Instructions:
             };
             return;
         }
+
+        // 1. Get all refs from relevant requirements (already converted by sanitizeAndConvertRefs)
+        const allRefs = model.relevantRequirements.flatMap(r => r.refs);
+
+        const referencedLines = new Set();
+        allRefs.forEach(ref => {
+            if(!ref || !ref[0] || !ref[1]) return;
+            const startLine = ref[0][0];
+            const endLine = ref[1][0];
+            for (let i = startLine; i <= endLine; i++) {
+                referencedLines.add(i);
+            }
+        });
+
+        // 2. Map line numbers to original event objects
+        const allRelevantEvents = new Map();
+        for (const line of referencedLines) {
+            if(this.eventLineMap.has(line)) {
+                const { index } = this.eventLineMap.get(line);
+                const originalEvent = requirementChunk.events[index];
+                if (originalEvent && !allRelevantEvents.has(index)) {
+                    allRelevantEvents.set(index, {
+                        type: "Event",
+                        text: JSON.stringify(originalEvent, null, 2),
+                        refs: originalEvent.refs // Use original refs
+                    });
+                }
+            }
+        }
+
+        const finalRequirements = Array.from(allRelevantEvents.values());
+        returnObj.modelValue.output = {
+            boundedContext: this.client.input['boundedContext'].name,
+            requirements: finalRequirements
+        };
+    }
+
+    _processUIRequirements(returnObj, model) {
+        const requirementChunk = this.client.input['requirementChunk'];
+        
+        // UI 요구사항에 대한 처리
+        if(!requirementChunk.type) {
+            // 텍스트 기반 UI 요구사항 처리
+            this._wrapRefArrayToModel(model);
+            const sanitizedModel = RefsTraceUtil.sanitizeAndConvertRefs(model, this.lineNumberedRequirements);
+            model.relevantRequirements = sanitizedModel.relevantRequirements;
+            
+            const finalRequirements = model.relevantRequirements.map(req => {
+                if (!req.refs || req.refs.length === 0) return null;
+
+                const referencedTexts = TextTraceUtil.getReferencedUserRequirements(
+                    requirementChunk.text, req.refs, requirementChunk.startLine - 1
+                );
+                if (referencedTexts.length === 0 || referencedTexts.every(t => t.trim() === '')) return null;
+
+                return {
+                    ...req,
+                    text: referencedTexts[0]
+                };
+            }).filter(Boolean);
+
+            returnObj.modelValue.output = {
+                boundedContext: this.client.input['boundedContext'].name,
+                requirements: finalRequirements
+            };
+            return;
+        }
+
+        // 이벤트 기반 UI 요구사항 처리
+        this._wrapRefArrayToModel(model);
+        const sanitizedModel = RefsTraceUtil.sanitizeAndConvertRefs(model, this.lineNumberedRequirements);
+        model.relevantRequirements = sanitizedModel.relevantRequirements;
 
         // 1. Get all refs from relevant requirements (already converted by sanitizeAndConvertRefs)
         const allRefs = model.relevantRequirements.flatMap(r => r.refs);

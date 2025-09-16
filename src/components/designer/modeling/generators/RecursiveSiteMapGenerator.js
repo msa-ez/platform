@@ -76,11 +76,15 @@ class RecursiveSiteMapGenerator extends SiteMapGenerator {
         }
     }
 
+    getSiteMapRoot(siteMapTree) {
+        return siteMapTree && Array.isArray(siteMapTree) && siteMapTree.length > 0 ? siteMapTree[0] : null;
+    }
+
     handleGenerationFinished(model) {
         try {
-            // model은 SiteMapGenerator.createModel을 거친 결과라고 가정
             if (model && model.treeData && model.treeData.length > 0) {
-                const root = model.treeData[0];
+                const root = this.getSiteMapRoot(model.treeData);
+                if (!root) return this.accumulated;
                 // title/description은 최초 한 번만 채움
                 if (!this.accumulated.title) this.accumulated.title = root.title || '';
                 if (!this.accumulated.description) this.accumulated.description = root.description || '';
