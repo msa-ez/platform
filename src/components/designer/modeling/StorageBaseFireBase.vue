@@ -303,6 +303,7 @@
                 const isTokenValid = await this.checkFirebaseTokenValidity();
                 if (!isTokenValid) {
                     alert('DB 접근 권한이 만료되었습니다. 재로그인이 필요합니다.');
+                    this.redirectToMain();
                     return true;
                 }
                 
@@ -310,11 +311,21 @@
                 const hasDbAccess = await this.testDbAccess();
                 if (!hasDbAccess) {
                     alert('DB 접근 권한이 만료되었습니다. 재로그인이 필요합니다.');
+                    this.redirectToMain();
                     return true;
                 }
                 
                 // 정상인 경우 조용히 통과 (alert 없음)
                 return false;
+            },
+
+            redirectToMain() {
+                // 메인페이지로 라우팅
+                if (this.$router) {
+                    this.$router.push('/');
+                } else if (window.location) {
+                    window.location.href = '/';
+                }
             },
 
             async checkFirebaseTokenValidity() {
