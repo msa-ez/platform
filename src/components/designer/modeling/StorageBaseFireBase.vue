@@ -113,14 +113,6 @@
             },
             async list(path, metadata){
                 var me = this
-                
-                // API 키 변경 확인 (테스트용)
-                const apiKeyChanged = await me.checkApiKeyChange();
-                if (apiKeyChanged) {
-                    console.warn(`API 키 변경 감지됨. Path: ${path}`);
-                    return null;
-                }
-                
                 var reference = firebase.database().ref(path)
 
                 if( metadata ){
