@@ -125,6 +125,7 @@
 
                 if(snapshots && snapshots.ErrorCode){
                     console.warn(`Permission denied for path: ${path}`);
+                    alert('Login Session is expired. Please login again.');
                     return null;
                 }
 
