@@ -2066,7 +2066,7 @@
 
           
         <!-- <gitAPIMenu></gitAPIMenu> -->
-        <div style="position:absolute; top:90px; right:35px; z-index:999; width: 50%;">
+        <div>
             <GeneratorProgress
             :generateDone="generatorProgressDto.generateDone"
             :displayMessage="generatorProgressDto.displayMessage"
@@ -3245,7 +3245,6 @@
                                             }
                                         }
 
-                                        this.value.langgraphStudioInfos.esGenerator.logs = logs
                                         update_value_particaly(esValue)
                                     },
                                     async (esValue, logs, totalPercentage, isFailed) => { // onComplete
