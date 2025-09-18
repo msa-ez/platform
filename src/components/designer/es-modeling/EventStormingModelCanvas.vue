@@ -7050,23 +7050,23 @@
                                         me.information.firstCommit == "false"
                                             ? `/releases/tag/${this.value.scm.tag}`
                                             : "";
-                                    var gitpodUrl;
+                                    var codespaceUrl;
                                     if (me.information.firstCommit == "false") {
-                                        gitpodUrl = `https://gitpod.io/#https://github.com/${this.value.scm.org}/${this.value.scm.repo}${releaseTagPath}`;
+                                        codespaceUrl = `https://codespaces.new/${this.value.scm.org}/${this.value.scm.repo}`;
                                     } else {
                                         if (
                                             this.value.scm.forkedOrg &&
                                             this.value.scm.forkedRepo
                                         ) {
-                                            gitpodUrl = `https://gitpod.io/#https://github.com/${this.value.scm.forkedOrg}/${this.value.scm.forkedRepo}${releaseTagPath}`;
+                                            codespaceUrl = `https://codespaces.new/${this.value.scm.forkedOrg}/${this.value.scm.forkedRepo}`;
                                         } else {
-                                            gitpodUrl = `https://gitpod.io/#https://github.com/${this.value.scm.org}/${this.value.scm.repo}${releaseTagPath}`;
+                                            codespaceUrl = `https://codespaces.new/${this.value.scm.org}/${this.value.scm.repo}`;
                                         }
                                     }
                                     var targetUrl;
                                     targetUrl = isVersionBranch
-                                        ? `${gitpodUrl}/tree/branch-${me.value.scm.forkedTag}`
-                                        : gitpodUrl;
+                                        ? `${codespaceUrl}/tree/branch-${me.value.scm.forkedTag}`
+                                        : codespaceUrl;
                                     window.open(targetUrl, "_blank");
                                     // var tagName =  this.scmTag ? `/releases/tag/${this.scmTag}` : ''
                                     // if(me.information.firstCommit == 'false'){

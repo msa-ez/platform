@@ -68,7 +68,6 @@
     "updateFromModelCode": "Update from Model Code",
     "cloudIDE": "Cloud IDE",
     "localIDE": "Local IDE",
-    "openGitpod": "Open Gitpod",
     "openCodespaces": "Open Codespaces",
     "cloneRepo": "Git Clone Command",
     "update": "Git Update Command",
