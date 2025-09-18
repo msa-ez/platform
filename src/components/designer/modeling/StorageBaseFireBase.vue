@@ -10,6 +10,13 @@
         methods:{
             async put(path, string, isString){
                 var me = this
+                
+                // Firebase DB 접근 권한 검증
+                const hasProblem = await me.checkApiKeyChange();
+                if (hasProblem) {
+                    return false;
+                }
+                
                 try {
                     //putObject
                     var parseString = string
@@ -31,8 +38,14 @@
 
             },
             async set(path,string,isString){
-
                 var me = this
+                
+                // Firebase DB 접근 권한 검증
+                const hasProblem = await me.checkApiKeyChange();
+                if (hasProblem) {
+                    return false;
+                }
+                
                 try {
                     //setObject
                     var parseString = string
@@ -55,8 +68,15 @@
 
             },
             async push(path, string, isString){
+                var me = this
+                
+                // Firebase DB 접근 권한 검증
+                const hasProblem = await me.checkApiKeyChange();
+                if (hasProblem) {
+                    return null;
+                }
+                
                 try {
-                    var me = this
                     //pushObject
                     var parseString = string
                     if (!isString) {
@@ -75,6 +95,13 @@
             },
             async get(path){
                 var me = this
+                
+                // Firebase DB 접근 권한 검증
+                const hasProblem = await me.checkApiKeyChange();
+                if (hasProblem) {
+                    return null;
+                }
+                
                 var reference = firebase.database().ref(path);
                 var snapshots = await me._get(reference)
 
@@ -217,8 +244,15 @@
                 var reference = firebase.database().ref(path);
                 me._watch_off(reference)
             },
-            delete(path) {
+            async delete(path) {
                 var me = this
+                
+                // Firebase DB 접근 권한 검증
+                const hasProblem = await me.checkApiKeyChange();
+                if (hasProblem) {
+                    return false;
+                }
+                
                 var reference = firebase.database().ref(path)
                 return me._delete(reference)
             },
@@ -262,6 +296,69 @@
                     return false
                 }
             },
+
+            // ========== Firebase DB 접근 권한 검증 로직 ==========
+            async checkApiKeyChange() {
+                // 1. Firebase ID 토큰 유효성 확인
+                const isTokenValid = await this.checkFirebaseTokenValidity();
+                if (!isTokenValid) {
+                    alert('DB 접근 권한이 만료되었습니다. 재로그인이 필요합니다.');
+                    return true;
+                }
+                
+                // 2. DB 접근 권한 테스트
+                const hasDbAccess = await this.testDbAccess();
+                if (!hasDbAccess) {
+                    alert('DB 접근 권한이 만료되었습니다. 재로그인이 필요합니다.');
+                    return true;
+                }
+                
+                // 정상인 경우 조용히 통과 (alert 없음)
+                return false;
+            },
+
+            async checkFirebaseTokenValidity() {
+                return new Promise((resolve) => {
+                    firebase.auth().onAuthStateChanged(async (user) => {
+                        if (!user) {
+                            resolve(false);
+                            return;
+                        }
+                        
+                        try {
+                            await user.getIdToken(true);
+                            resolve(true);
+                        } catch (error) {
+                            resolve(false);
+                        }
+                    });
+                });
+            },
+
+            async testDbAccess() {
+                try {
+                    // 일반적으로 모든 인증된 사용자가 접근 가능한 경로 테스트
+                    await firebase.database().ref('configs').once('value');
+                    return true;
+                } catch (error) {
+                    if (error.code === 'PERMISSION_DENIED') {
+                        return false;
+                    }
+                    return false;
+                }
+            },
+
+
+
+            async handleApiKeyChange() {
+                alert('DB 접근 권한이 만료되었습니다. 재로그인이 필요합니다.');
+                
+                // 로그인 다이얼로그 표시
+                if (window.$app && window.$app.loginDialog !== undefined) {
+                    window.$app.loginDialog = true;
+                }
+            },
+
         }
     };
 </script>
