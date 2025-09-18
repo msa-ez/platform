@@ -7,21 +7,9 @@
     export default {
         name: "storage-base-firebase",
         mixins: [StorageBaseFireBase_],
-        data() {
-            return {
-                isShowingAlert: false
-            };
-        },
         methods:{
             async put(path, string, isString){
                 var me = this
-                
-                // Firebase DB 접근 권한 검증
-                const hasProblem = await me.checkApiKeyChange();
-                if (hasProblem) {
-                    return false;
-                }
-                
                 try {
                     //putObject
                     var parseString = string
@@ -43,14 +31,8 @@
 
             },
             async set(path,string,isString){
+
                 var me = this
-                
-                // Firebase DB 접근 권한 검증
-                const hasProblem = await me.checkApiKeyChange();
-                if (hasProblem) {
-                    return false;
-                }
-                
                 try {
                     //setObject
                     var parseString = string
@@ -73,15 +55,8 @@
 
             },
             async push(path, string, isString){
-                var me = this
-                
-                // Firebase DB 접근 권한 검증
-                const hasProblem = await me.checkApiKeyChange();
-                if (hasProblem) {
-                    return null;
-                }
-                
                 try {
+                    var me = this
                     //pushObject
                     var parseString = string
                     if (!isString) {
@@ -100,13 +75,6 @@
             },
             async get(path){
                 var me = this
-                
-                // Firebase DB 접근 권한 검증
-                const hasProblem = await me.checkApiKeyChange();
-                if (hasProblem) {
-                    return null;
-                }
-                
                 var reference = firebase.database().ref(path);
                 var snapshots = await me._get(reference)
 
@@ -249,15 +217,8 @@
                 var reference = firebase.database().ref(path);
                 me._watch_off(reference)
             },
-            async delete(path) {
+            delete(path) {
                 var me = this
-                
-                // Firebase DB 접근 권한 검증
-                const hasProblem = await me.checkApiKeyChange();
-                if (hasProblem) {
-                    return false;
-                }
-                
                 var reference = firebase.database().ref(path)
                 return me._delete(reference)
             },
@@ -301,85 +262,6 @@
                     return false
                 }
             },
-
-            // ========== Firebase DB 접근 권한 검증 로직 ==========
-            async checkApiKeyChange() {
-                if (this.isShowingAlert) {
-                    return true;
-                }
-                
-                // 플래그를 먼저 설정하여 동시 실행 방지
-                this.isShowingAlert = true;
-                
-                // 1. 사용자 로그인 상태 확인
-                const user = firebase.auth().currentUser;
-                if (!user) {
-                    console.log('checkApiKeyChange: No user found');
-                    this.isShowingAlert = false;
-                    return false; // 로그인되지 않은 상태는 정상
-                }
-                
-                // 2. DB 접근 권한 테스트 (실제 문제 감지)
-                const hasDbAccess = await this.testDbAccess();
-                if (!hasDbAccess) {
-                    alert('DB 접근 권한이 만료되었습니다. 재로그인이 필요합니다.');
-                    return true;
-                }
-                
-                this.isShowingAlert = false;
-                return false;
-            },
-
-
-            async checkFirebaseTokenValidity() {
-                return new Promise((resolve) => {
-                    firebase.auth().onAuthStateChanged(async (user) => {
-                        if (!user) {
-                            console.log('checkFirebaseTokenValidity: No user found');
-                            resolve(false);
-                            return;
-                        }
-                        
-                        try {
-                            await user.getIdToken(true);
-                            console.log('checkFirebaseTokenValidity: Token is valid');
-                            resolve(true);
-                        } catch (error) {
-                            console.log('checkFirebaseTokenValidity error:', error.code, error.message);
-                            resolve(false);
-                        }
-                    });
-                });
-            },
-
-            async testDbAccess() {
-                try {
-                    // 일반적으로 접근 가능한 경로로 테스트 (API 키/프로젝트 설정 문제 감지)
-                    await firebase.database().ref('configs').once('value');
-                    console.log('testDbAccess: DB access successful');
-                    return true;
-                } catch (error) {
-                    console.log('testDbAccess error:', error.code, error.message);
-                    // PERMISSION_DENIED 외에도 네트워크 오류, API 키 문제 등도 감지
-                    if (error.code === 'PERMISSION_DENIED' || error.code === 'UNAUTHENTICATED') {
-                        return false;
-                    }
-                    // 기타 오류도 DB 접근 문제로 간주
-                    return false;
-                }
-            },
-
-
-
-            async handleApiKeyChange() {
-                alert('DB 접근 권한이 만료되었습니다. 재로그인이 필요합니다.');
-                
-                // 로그인 다이얼로그 표시
-                if (window.$app && window.$app.loginDialog !== undefined) {
-                    window.$app.loginDialog = true;
-                }
-            },
-
         }
     };
 </script>
