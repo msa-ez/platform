@@ -7,6 +7,11 @@
     export default {
         name: "storage-base-firebase",
         mixins: [StorageBaseFireBase_],
+        data() {
+            return {
+                isShowingAlert: false
+            };
+        },
         methods:{
             async put(path, string, isString){
                 var me = this
@@ -299,6 +304,13 @@
 
             // ========== Firebase DB 접근 권한 검증 로직 ==========
             async checkApiKeyChange() {
+                if (this.isShowingAlert) {
+                    return true;
+                }
+                
+                // 플래그를 먼저 설정하여 동시 실행 방지
+                this.isShowingAlert = true;
+                
                 // 1. Firebase ID 토큰 유효성 확인
                 const isTokenValid = await this.checkFirebaseTokenValidity();
                 if (!isTokenValid) {
@@ -315,7 +327,7 @@
                     return true;
                 }
                 
-                // 정상인 경우 조용히 통과 (alert 없음)
+                this.isShowingAlert = false;
                 return false;
             },
 
