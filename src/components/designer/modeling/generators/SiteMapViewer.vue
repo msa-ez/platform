@@ -34,6 +34,81 @@
                 </v-btn> -->
             </div>
         </div>
+
+        <!-- 미매핑 요소 확인 다이얼로그 -->
+        <v-dialog v-model="showUnmappedDialog" max-width="600px" persistent>
+            <v-card>
+                <v-card-title class="headline">
+                    {{ $t('siteMap.unmapped.title') }}
+                    <v-spacer></v-spacer>
+                    <v-btn icon @click="closeUnmappedDialog">
+                        <v-icon>mdi-close</v-icon>
+                    </v-btn>
+                </v-card-title>
+                    <v-card-text>
+                        <p>{{ $t('siteMap.unmapped.description') }}</p>
+                        <div class="unmapped-list mt-4">
+                            <div v-for="element in unmappedElements" :key="element.id" class="unmapped-item mb-3">
+                                <div class="d-flex align-center mb-1">
+                                    <v-checkbox
+                                        v-model="selectedElements"
+                                        :value="element.id"
+                                        class="mr-2"
+                                        hide-details
+                                        @change="updateSelection"
+                                    ></v-checkbox>
+                                    <v-chip 
+                                        :color="element._type.endsWith('Command') ? 'primary' : 'success'" 
+                                        small 
+                                        class="mr-2"
+                                    >
+                                        {{ element._type.endsWith('Command') ? 'Command' : 'View' }}
+                                    </v-chip>
+                                    <span class="item-name font-weight-medium">{{ element.displayName || element.name }}</span>
+                                </div>
+                                <div class="bc-assignment ml-6">
+                                    <v-icon small class="mr-1" color="grey">mdi-arrow-right</v-icon>
+                                    <span class="text-caption grey--text">
+                                        {{ $t('siteMap.unmapped.willBeAddedTo') }} 
+                                        <strong>{{ getBoundedContextName(element.boundedContext && element.boundedContext.name) }}</strong>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="selection-summary mt-3 pa-3" style="background-color: #f5f5f5; border-radius: 4px;">
+                            <div class="d-flex align-center">
+                                <v-icon class="mr-2" color="info">mdi-information</v-icon>
+                                <span class="text-caption">
+                                    {{ $t('siteMap.unmapped.selectedCount', { 
+                                        selected: selectedElements.length, 
+                                        total: unmappedElements.length 
+                                    }) }}
+                                </span>
+                            </div>
+                        </div>
+                    </v-card-text>
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn @click="selectAllElements" color="info" text>
+                        {{ $t('siteMap.unmapped.selectAll') }}
+                    </v-btn>
+                    <v-btn @click="deselectAllElements" color="info" text>
+                        {{ $t('siteMap.unmapped.deselectAll') }}
+                    </v-btn>
+                    <v-spacer></v-spacer>
+                    <v-btn @click="closeUnmappedDialog" color="grey">
+                        {{ $t('siteMap.unmapped.cancel') }}
+                    </v-btn>
+                    <v-btn 
+                        @click="confirmAddUnmappedElements" 
+                        color="primary"
+                        :disabled="selectedElements.length === 0"
+                    >
+                        {{ $t('siteMap.unmapped.confirm') }} ({{ selectedElements.length }})
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
         
         <div class="site-map-container" 
              ref="siteMapContainer"
@@ -145,33 +220,37 @@ export default {
             required: false
         }
     },
-    data() {
-        return {
-            nodeIdCounter: 1,
-            input: {
-                frontendRequirements: "",
-                resultDevideBoundedContext: []
-            },
-            generator: null,
-            updateTimeout: null,
-            localSiteMap: [],
-            currentZoom: 1, // 현재 줌 레벨
-            minZoom: 0.5, // 최소 줌 레벨
-            maxZoom: 2.0, // 최대 줌 레벨
-            panOffset: { x: 0, y: 0 }, // 패닝 오프셋
-            isPanning: false, // 패닝 중인지 여부
-            lastMouseX: 0, // 마지막 마우스 X 좌표
-            lastMouseY: 0, // 마지막 마우스 Y 좌표
-            isAllCollapsed: false, // 전체 접기/펼치기 상태
+        data() {
+            return {
+                nodeIdCounter: 1,
+                input: {
+                    frontendRequirements: "",
+                    resultDevideBoundedContext: []
+                },
+                generator: null,
+                updateTimeout: null,
+                localSiteMap: [],
+                migrationCompleted: false, // 마이그레이션 완료 플래그
+                showUnmappedDialog: false, // 미매핑 요소 다이얼로그 표시 여부
+                unmappedElements: [], // 미매핑된 요소들
+                selectedElements: [], // 선택된 요소들의 ID
+                currentZoom: 1, // 현재 줌 레벨
+                minZoom: 0.5, // 최소 줌 레벨
+                maxZoom: 2.0, // 최대 줌 레벨
+                panOffset: { x: 0, y: 0 }, // 패닝 오프셋
+                isPanning: false, // 패닝 중인지 여부
+                lastMouseX: 0, // 마지막 마우스 X 좌표
+                lastMouseY: 0, // 마지막 마우스 Y 좌표
+                isAllCollapsed: false, // 전체 접기/펼치기 상태
 
-            rafId: null, // RequestAnimationFrame ID
-            isDragging: false, // 드래그 중인지 여부
-            lastPanTime: 0, // 마지막 패닝 시간
-            panThrottle: 16, 
+                rafId: null, // RequestAnimationFrame ID
+                isDragging: false, // 드래그 중인지 여부
+                lastPanTime: 0, // 마지막 패닝 시간
+                panThrottle: 16, 
 
-            modelBoundedContexts: {},
-            modelCommands: {},
-            modelViews: {}
+                modelBoundedContexts: [],
+                modelCommands: [],
+                modelViews: []
         };
     },
     computed: {
@@ -186,6 +265,7 @@ export default {
                 if (newSiteMap && Array.isArray(newSiteMap)) {
                     // 기존 localSiteMap의 상태를 보존하면서 새로운 데이터로 업데이트
                     const newLocalSiteMap = JSON.parse(JSON.stringify(newSiteMap));
+                    
                     
                     // 기존 localSiteMap이 있고, 루트 노드의 접기/펼치기 상태가 있다면 보존
                     if (this.hasRootNode() && this.getRootNode().hasOwnProperty('isCollapsed')) {
@@ -238,25 +318,325 @@ export default {
             this.modelCommands = Object.values(this.modelValue.elements).filter(ele => ele!=null && ele._type.endsWith("Command"));
             this.modelViews = Object.values(this.modelValue.elements).filter(ele => ele!=null && ele._type.endsWith("View"));
 
-            migrateSiteMap();
+            this.migrateSiteMap();
+            
+            // BC 정보가 설정되지 않은 경우 설정
+            this.setupBoundedContexts();
         }
+    },
+    beforeDestroy() {
+        // 컴포넌트 정리 시 RequestAnimationFrame 정리
+        if (this.rafId) {
+            cancelAnimationFrame(this.rafId);
+        }
+
+        this.closeSiteMapViewer();
     },
     methods: {
         migrateSiteMap(){
+            if (!this.modelValue || !this.modelValue.elements) return;
             
+            if (this.migrationCompleted) return;
+            
+            // 사이트맵에 이미 매핑된 노드들의 name 수집
+            const mappedNames = new Set();
+            this.collectMappedNames(this.localSiteMap, mappedNames);
+            
+            // modelValue에서 매핑되지 않은 Command와 View 찾기
+            const unmappedElements = [];
+            Object.values(this.modelValue.elements).forEach(ele => {
+                if (ele && (ele._type.endsWith("Command") || ele._type.endsWith("View"))) {
+                    const elementName = ele.namePascalCase || ele.name;
+                    if (elementName && !mappedNames.has(elementName)) {
+                        unmappedElements.push(ele);
+                    }
+                }
+            });
+            
+            // 매핑되지 않은 요소들이 있으면 다이얼로그 표시
+            if (unmappedElements.length > 0) {
+                this.unmappedElements = unmappedElements;
+                // 기본적으로 모든 요소 선택
+                this.selectedElements = unmappedElements.map(ele => ele.id);
+                this.showUnmappedDialog = true;
+            } else {
+                this.migrationCompleted = true;
+            }
         },
+        
+        collectMappedNames(nodes, mappedNames) {
+            nodes.forEach(node => {
+                if (node.name && node.name !== "NewPage") {
+                    mappedNames.add(node.name);
+                }
+                if (node.children) {
+                    this.collectMappedNames(node.children, mappedNames);
+                }
+            });
+        },
+        
+        addUnmappedElements(elements) {
+            // 선택된 요소들만 필터링
+            const selectedElements = elements.filter(element => 
+                this.selectedElements.includes(element.id)
+            );
+            
+            // Bounded Context별로 그룹핑
+            const elementsByBC = this.groupElementsByBoundedContext(selectedElements);
+            
+            // 각 Bounded Context에 대해 그룹을 찾거나 생성하고 요소들을 추가
+            Object.keys(elementsByBC).forEach(bcName => {
+                const bcElements = elementsByBC[bcName];
+                const boundedContext = this.findBoundedContextByName(bcName);
+                
+                if (boundedContext) {
+                    let bcGroup = this.findBoundedContextGroupByName(bcName);
+                    if (!bcGroup) {
+                        bcGroup = this.createBoundedContextGroup(boundedContext);
+                    }
+                    
+                    // 요소들을 그룹에 추가
+                    bcElements.forEach(element => {
+                        const newNode = this.createNodeFromElement(element);
+                        if (newNode) {
+                            if (!bcGroup.children) {
+                                bcGroup.children = [];
+                            }
+                            bcGroup.children.push(newNode);
+                        }
+                    });
+                }
+            });
+            
+            this.$nextTick(() => {
+                this.$emit('update:siteMap', this.localSiteMap);
+            });
+        },
+        
+        groupElementsByBoundedContext(elements) {
+            const elementsByBC = {};
+            elements.forEach(element => {
+                const bcId = element.boundedContext && element.boundedContext.id;
+                if (bcId) {
+                    // id로 BC를 찾아서 name으로 그룹화
+                    const bc = this.findBoundedContextById(bcId);
+                    const bcName = bc ? bc.name : bcId;
+                    
+                    if (!elementsByBC[bcName]) {
+                        elementsByBC[bcName] = [];
+                    }
+                    elementsByBC[bcName].push(element);
+                }
+            });
+            return elementsByBC;
+        },
+        
+        findBoundedContextByName(bcName) {
+            return this.modelBoundedContexts.find(bc => bc.name === bcName);
+        },
+        
+        findBoundedContextById(bcId) {
+            return this.modelBoundedContexts.find(bc => bc.id === bcId);
+        },
+        
+        findBoundedContextGroup(bcId) {
+            // 첫 번째 루트 노드에서 해당 Bounded Context 그룹 찾기
+            if (this.localSiteMap.length > 0) {
+                const rootNode = this.localSiteMap[0];
+                if (rootNode.children) {
+                    return rootNode.children.find(child => 
+                        child.boundedContext === bcId && child.functionType === ""
+                    );
+                }
+            }
+            return null;
+        },
+        
+        findBoundedContextGroupByName(bcName) {
+            // 첫 번째 루트 노드에서 해당 Bounded Context 그룹 찾기 (name으로)
+            if (this.localSiteMap.length > 0) {
+                const rootNode = this.localSiteMap[0];
+                if (rootNode.children) {
+                    return rootNode.children.find(child => 
+                        child.boundedContext === bcName && child.functionType === ""
+                    );
+                }
+            }
+            return null;
+        },
+        
+        createBoundedContextGroup(boundedContext) {
+            const rootNode = this.localSiteMap[0];
+            if (!rootNode.children) {
+                rootNode.children = [];
+            }
+            
+            const bcGroup = {
+                id: this.generateId(),
+                title: boundedContext.displayName || boundedContext.name,
+                name: "NewPage",
+                description: boundedContext.description || "",
+                type: "navigation",
+                boundedContext: boundedContext.name, // id 대신 name 사용
+                functionType: "",
+                uiRequirements: "",
+                children: []
+            };
+            
+            rootNode.children.push(bcGroup);
+            return bcGroup;
+        },
+        
+        createNodeFromElement(element) {
+            const isCommand = element._type.endsWith("Command");
+            const isView = element._type.endsWith("View");
+            
+            if (!isCommand && !isView) return null;
+            
+            // boundedContext id를 name으로 변환
+            let bcName = "";
+            if (element.boundedContext && element.boundedContext.id) {
+                const bc = this.findBoundedContextById(element.boundedContext.id);
+                bcName = bc ? bc.name : element.boundedContext.id;
+            }
+            
+            return {
+                id: this.generateId(),
+                title: element.displayName || element.name,
+                name: element.namePascalCase || element.name,
+                description: element.description || "",
+                type: "navigation",
+                boundedContext: bcName, // name 사용
+                functionType: isCommand ? "command" : "view",
+                uiRequirements: "",
+                children: []
+            };
+        },
+        
+        getBoundedContextName(bcName) {
+            if (!bcName) return this.$t('siteMap.unmapped.noBoundedContext');
+            const bc = this.findBoundedContextByName(bcName);
+            return bc ? (bc.displayName || bc.name) : this.$t('siteMap.unmapped.unknownBoundedContext');
+        },
+        
+        closeUnmappedDialog() {
+            this.showUnmappedDialog = false;
+            this.unmappedElements = [];
+            this.selectedElements = [];
+            this.migrationCompleted = true; // 사용자가 취소해도 마이그레이션 완료로 처리
+        },
+        
+        confirmAddUnmappedElements() {
+            this.showUnmappedDialog = false;
+            this.addUnmappedElements(this.unmappedElements);
+            this.unmappedElements = [];
+            this.selectedElements = [];
+            this.migrationCompleted = true;
+        },
+        
+        selectAllElements() {
+            this.selectedElements = this.unmappedElements.map(ele => ele.id);
+        },
+        
+        deselectAllElements() {
+            this.selectedElements = [];
+        },
+        
+        updateSelection() {
+            // 체크박스 변경 시 자동으로 호출됨
+            // 추가 로직이 필요하면 여기에 구현
+        },
+        
+        findNewNodesInSiteMap() {
+            if (!this.modelValue || !this.modelValue.elements) {
+                return [];
+            }
+            
+            // Event Storming에 존재하는 Command/View의 name 수집
+            const existingElementNames = new Set();
+            Object.values(this.modelValue.elements).forEach(element => {
+                if (element && (element._type.endsWith("Command") || element._type.endsWith("View"))) {
+                    const elementName = element.namePascalCase || element.name;
+                    if (elementName) {
+                        existingElementNames.add(elementName);
+                    }
+                }
+            });
+            
+            // 사이트맵에서 새로운 노드들 찾기
+            const newNodes = [];
+            this.collectNewNodes(this.localSiteMap, existingElementNames, newNodes);
+            
+            return newNodes;
+        },
+        
+        collectNewNodes(nodes, existingElementNames, newNodes) {
+            nodes.forEach(node => {
+                // functionType이 "view" 또는 "command"인 노드만 확인
+                if (node.functionType === "view" || node.functionType === "command") {
+                    const nodeName = node.name;
+                    
+                    if (nodeName && !existingElementNames.has(nodeName)) {
+                        newNodes.push({
+                            id: node.id,
+                            title: node.title,
+                            name: node.name,
+                            description: node.description,
+                            boundedContext: node.boundedContext,
+                            functionType: node.functionType,
+                            uiRequirements: node.uiRequirements,
+                            type: node.functionType === "command" ? "Command" : "View"
+                        });
+                    }
+                }
+                
+                // 하위 노드들도 재귀적으로 확인
+                if (node.children && node.children.length > 0) {
+                    this.collectNewNodes(node.children, existingElementNames, newNodes);
+                }
+            });
+        },
+        
         generateId() {
             return `node-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
         },
         
+        getAvailableBoundedContexts() {
+            // modelBoundedContexts에서 name들을 추출하여 반환
+            if (this.modelBoundedContexts && this.modelBoundedContexts.length > 0) {
+                return this.modelBoundedContexts.map(bc => ({
+                    id: bc.id,
+                    name: bc.name,
+                    displayName: bc.displayName || bc.name,
+                    description: bc.description || ""
+                }));
+            }
+            return [];
+        },
+        
+        setupBoundedContexts() {
+            const availableBoundedContexts = this.getAvailableBoundedContexts();
+            
+            if (availableBoundedContexts.length > 0) {
+                this.localSiteMap.forEach(rootNode => {
+                    if (!rootNode.boundedContexts || rootNode.boundedContexts.length === 0) {
+                        rootNode.boundedContexts = availableBoundedContexts;
+                    }
+                });
+            }
+        },
+        
         addRootNode() {
+            const availableBoundedContexts = this.getAvailableBoundedContexts();
+            
             const rootNode = {
                 id: this.generateId(),
                 title: this.$t('siteMap.defaults.newWebsite'),
                 description: this.$t('siteMap.defaults.siteDescription'),
                 type: "root",
                 children: [],
-                isCollapsed: false
+                isCollapsed: false,
+                boundedContexts: availableBoundedContexts
             };
             this.localSiteMap = [rootNode];
             this.$emit('update:siteMap', this.localSiteMap);
@@ -283,14 +663,31 @@ export default {
         addChildNode(parentId) {
             const parentNode = this.findNode(parentId, this.localSiteMap);
             if (parentNode) {
+                // 부모 노드가 루트인지 그룹인지에 따라 functionType 결정
+                const isRootNode = parentNode.type === "root";
+                const functionType = isRootNode ? "" : "command"; // 루트면 그룹(""), 그룹이면 command
+                
+                // boundedContext 목록 생성 (modelBoundedContexts의 name들 사용)
+                const availableBoundedContexts = this.getAvailableBoundedContexts();
+                
+                // 부모 노드의 boundedContext를 상속받기 (그룹 노드인 경우)
+                let boundedContext = "";
+                if (isRootNode) {
+                    // 루트 노드에서 추가하는 경우 첫 번째 BC 사용
+                    boundedContext = availableBoundedContexts.length > 0 ? availableBoundedContexts[0].name : "";
+                } else {
+                    // 그룹 노드에서 추가하는 경우 부모의 boundedContext 상속
+                    boundedContext = parentNode.boundedContext || (availableBoundedContexts.length > 0 ? availableBoundedContexts[0].name : "");
+                }
+                
                 const newNode = {
                     id: this.generateId(),
                     title: this.$t('siteMap.defaults.newPage'),
                     name: "NewPage",
                     description: this.$t('siteMap.defaults.pageDescription'),
                     type: "navigation",
-                    boundedContext: "",
-                    functionType: "",
+                    boundedContext: boundedContext,
+                    functionType: functionType,
                     uiRequirements: "",
                     children: []
                 };
@@ -419,8 +816,20 @@ export default {
         },
 
         closeSiteMapViewer() {
-            this.$emit('close:siteMapViewer')
-            this.$emit('update:siteMap', this.localSiteMap)
+            // 사이트맵에서 Event Storming에 없는 새로운 노드들 찾기
+            const newNodes = this.findNewNodesInSiteMap();
+            
+            // 새로운 노드들을 Event Storming에 추가 (embedded일 때만)
+            let addedElements = [];
+            if (newNodes.length > 0 && this.embedded) {
+                addedElements = this.addNewNodesToEventStorming(newNodes);
+            }
+            
+            this.$emit('close:siteMapViewer', {
+                siteMap: this.localSiteMap,
+                newNodes: newNodes,
+                addedElements: addedElements
+            });
         },
 
         centerRootNode() {
@@ -717,15 +1126,333 @@ export default {
             
             this.$emit('update:siteMap', this.localSiteMap);
         },
-
-        // 컴포넌트 정리 시 RequestAnimationFrame 정리
-        beforeDestroy() {
-            if (this.rafId) {
-                cancelAnimationFrame(this.rafId);
+        
+        // ===== Event Storming Element 추가 관련 메서드들 =====
+        
+        addNewNodesToEventStorming(newNodes) {
+            if (!this.modelValue || !this.modelValue.elements) {
+                return [];
+            }
+            
+            const addedElements = [];
+            
+            newNodes.forEach(node => {
+                // 해당 BC를 찾기
+                const boundedContext = this.findBoundedContextByName(node.boundedContext);
+                if (!boundedContext) {
+                    console.warn(`BoundedContext not found: ${node.boundedContext}`);
+                    return;
+                }
+                
+                // BC의 위치를 기준으로 새 요소의 위치 계산
+                const bcElement = this.modelValue.elements[boundedContext.id];
+                if (!bcElement || !bcElement.elementView) {
+                    console.warn(`BoundedContext element not found: ${boundedContext.id}`);
+                    return;
+                }
+                
+                // BC 내부의 적절한 위치 계산 (BC 오른쪽에 배치)
+                const bcX = bcElement.elementView.x || 0;
+                const bcY = bcElement.elementView.y || 0;
+                const bcWidth = bcElement.elementView.width || 350;
+                
+                // BC 내부의 기존 요소들 위치 확인하여 적절한 위치 찾기
+                const newElementPosition = this.calculateNewElementPosition(bcElement, bcX, bcY, bcWidth);
+                
+            // 새 요소 생성
+            const newElement = this.createEventStormingElement(node, newElementPosition);
+            
+            if (!newElement) {
+                console.warn(`Failed to create element for node: ${node.title}`);
+                return; // forEach에서 return은 continue와 같음
+            }
+            
+            // Event Storming에 추가
+            this.addElementToEventStorming(newElement);
+            
+            // 추가된 요소를 배열에 저장
+            addedElements.push(newElement);
+            });
+            
+            return addedElements;
+        },
+        
+        findBoundedContextByName(bcName) {
+            return this.modelBoundedContexts.find(bc => bc.name === bcName);
+        },
+        
+        calculateNewElementPosition(bcElement, bcX, bcY, bcWidth) {
+            const bcHeight = bcElement.elementView.height || 400;
+            const elementWidth = 100;
+            const elementHeight = 100;
+            const padding = 20; // BC 내부 여백
+            
+            // BC 내부의 기존 요소들 위치 확인
+            const existingElements = this.getElementsInBoundedContext(bcElement.id);
+            
+            // BC 내부 좌표로 변환 (BC 내부 기준)
+            const bcInnerX = bcX + padding;
+            const bcInnerY = bcY + padding;
+            const bcInnerWidth = bcWidth - (padding * 2);
+            const bcInnerHeight = bcHeight - (padding * 2);
+            
+            if (existingElements.length === 0) {
+                // BC 내부에 요소가 없으면 BC 내부 왼쪽 상단에 배치
+                return {
+                    x: bcInnerX,
+                    y: bcInnerY
+                };
+            }
+            
+            // 기존 요소들을 BC 내부 좌표로 변환하여 격자 형태로 배치
+            const gridCols = Math.floor(bcInnerWidth / (elementWidth + 10)); // 10px 간격
+            const gridRows = Math.floor(bcInnerHeight / (elementHeight + 10));
+            
+            // 격자 위치 찾기
+            for (let row = 0; row < gridRows; row++) {
+                for (let col = 0; col < gridCols; col++) {
+                    const candidateX = bcInnerX + col * (elementWidth + 10);
+                    const candidateY = bcInnerY + row * (elementHeight + 10);
+                    
+                    // 이 위치가 기존 요소들과 겹치는지 확인
+                    const isOverlapping = existingElements.some(existingEl => {
+                        if (!existingEl.elementView) return false;
+                        
+                        const existingX = existingEl.elementView.x || 0;
+                        const existingY = existingEl.elementView.y || 0;
+                        const existingWidth = existingEl.elementView.width || 100;
+                        const existingHeight = existingEl.elementView.height || 100;
+                        
+                        return !(candidateX >= existingX + existingWidth || 
+                               candidateX + elementWidth <= existingX ||
+                               candidateY >= existingY + existingHeight || 
+                               candidateY + elementHeight <= existingY);
+                    });
+                    
+                    if (!isOverlapping) {
+                        return {
+                            x: candidateX,
+                            y: candidateY
+                        };
+                    }
+                }
+            }
+            
+            // 격자에 빈 공간이 없으면 기존 요소들 오른쪽에 배치
+            const rightmostX = Math.max(...existingElements.map(el => {
+                if (!el.elementView) return bcInnerX;
+                return (el.elementView.x || 0) + (el.elementView.width || 100);
+            }));
+            
+            return {
+                x: Math.min(rightmostX + 10, bcInnerX + bcInnerWidth - elementWidth),
+                y: bcInnerY
+            };
+        },
+        
+        getElementsInBoundedContext(bcId) {
+            if (!this.modelValue || !this.modelValue.elements) {
+                return [];
+            }
+            
+            return Object.values(this.modelValue.elements).filter(element => {
+                return element && element.boundedContext && element.boundedContext.id === bcId;
+            });
+        },
+        
+        createEventStormingElement(node, position) {
+            // EventStormingModelCanvas에서 uuid 메서드 가져오기
+            let canvas = this.$parent;
+            while (canvas && !canvas.uuid) {
+                canvas = canvas.$parent;
+            }
+            
+            if (!canvas || !canvas.uuid) {
+                console.warn('EventStormingModelCanvas not found or uuid method not available');
+                return null;
+            }
+            
+            const elementId = canvas.uuid();
+            const boundedContext = this.findBoundedContextByName(node.boundedContext);
+            
+            if (node.type === "Command") {
+                return this.createCommandElement(node, position, elementId, boundedContext);
+            } else {
+                return this.createViewElement(node, position, elementId, boundedContext);
+            }
+        },
+        
+        createCommandElement(node, position, elementId, boundedContext) {
+            return {
+                _type: "org.uengine.modeling.model.Command",
+                id: elementId,
+                name: node.name,
+                oldName: "",
+                displayName: "",
+                namePlural: "",
+                namePascalCase: "",
+                nameCamelCase: "",
+                description: null,
+                author: this.modelValue.author || "",
+                aggregate: { id: "" },
+                boundedContext: { id: boundedContext ? boundedContext.id : "" },
+                mirrorElement: null,
+                elementView: {
+                    _type: "org.uengine.modeling.model.Command",
+                    id: elementId,
+                    x: position.x,
+                    y: position.y,
+                    width: 100,
+                    height: 100,
+                    style: "{}",
+                    "z-index": 999
+                },
+                hexagonalView: {
+                    _type: "org.uengine.modeling.model.CommandHexagonal",
+                    id: elementId,
+                    subWidth: 100,
+                    width: 20,
+                    height: 20,
+                    style: "{}"
+                },
+                isRestRepository: true,
+                controllerInfo: {
+                    apiPath: "",
+                    method: "PUT",
+                    fullApiPath: ""
+                },
+                restRepositoryInfo: {
+                    method: "POST"
+                },
+                relationEventInfo: [],
+                relationCommandInfo: [],
+                trigger: "@PostPersist",
+                fieldDescriptors: [],
+                visibility: "public",
+                rotateStatus: false
+            };
+        },
+        
+        createViewElement(node, position, elementId, boundedContext) {
+            return {
+                _type: "org.uengine.modeling.model.View",
+                id: elementId,
+                visibility: "public",
+                name: node.name,
+                oldName: "",
+                displayName: "",
+                namePascalCase: "",
+                namePlural: "",
+                aggregate: { id: "" },
+                description: null,
+                author: this.modelValue.author || "",
+                boundedContext: { id: boundedContext ? boundedContext.id : "" },
+                fieldDescriptors: [
+                    {
+                        _type: "org.uengine.model.FieldDescriptor",
+                        name: "id",
+                        className: "Long",
+                        nameCamelCase: "id",
+                        namePascalCase: "Id",
+                        isKey: true
+                    }
+                ],
+                queryParameters: [],
+                queryOption: {
+                    apiPath: "",
+                    useDefaultUri: true,
+                    multipleResult: false
+                },
+                controllerInfo: {
+                    url: ""
+                },
+                elementView: {
+                    _type: "org.uengine.modeling.model.View",
+                    id: elementId,
+                    x: position.x,
+                    y: position.y,
+                    width: 100,
+                    height: 100,
+                    style: "{}"
+                },
+                editingView: false,
+                dataProjection: "cqrs",
+                createRules: [
+                    {
+                        _type: "viewStoreRule",
+                        operation: "CREATE",
+                        when: null,
+                        fieldMapping: [
+                            {
+                                viewField: null,
+                                eventField: null,
+                                operator: "="
+                            }
+                        ],
+                        where: [
+                            {
+                                viewField: null,
+                                eventField: null
+                            }
+                        ]
+                    }
+                ],
+                updateRules: [
+                    {
+                        _type: "viewStoreRule",
+                        operation: "UPDATE",
+                        when: null,
+                        fieldMapping: [
+                            {
+                                viewField: null,
+                                eventField: null,
+                                operator: "="
+                            }
+                        ],
+                        where: [
+                            {
+                                viewField: null,
+                                eventField: null
+                            }
+                        ]
+                    }
+                ],
+                deleteRules: [
+                    {
+                        _type: "viewStoreRule",
+                        operation: "DELETE",
+                        when: null,
+                        fieldMapping: [
+                            {
+                                viewField: null,
+                                eventField: null
+                            }
+                        ],
+                        where: [
+                            {
+                                viewField: null,
+                                eventField: null
+                            }
+                        ]
+                    }
+                ],
+                rotateStatus: false
+            };
+        },
+        
+        addElementToEventStorming(element) {
+            // EventStormingModelCanvas에 직접 접근하여 요소 추가
+            let canvas = this.$parent;
+            while (canvas && !canvas.addElementAction) {
+                canvas = canvas.$parent;
+            }
+            
+            if (canvas && canvas.addElementAction) {
+                canvas.addElementAction(element);
+            } else {
+                console.warn('EventStormingModelCanvas not found');
             }
         }
-
-
     }
 };
 </script>
@@ -1312,5 +2039,34 @@ export default {
     .node-content {
         min-width: 200px;
     }
+}
+
+/* Unmapped elements dialog styles */
+.unmapped-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.unmapped-item {
+    padding: 12px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background-color: #fafafa;
+    transition: all 0.2s ease;
+}
+
+.unmapped-item:hover {
+    background-color: #f5f5f5;
+    border-color: #d0d0d0;
+}
+
+.item-name {
+    font-weight: 500;
+}
+
+.bc-assignment {
+    display: flex;
+    align-items: center;
+    margin-top: 4px;
 }
 </style>

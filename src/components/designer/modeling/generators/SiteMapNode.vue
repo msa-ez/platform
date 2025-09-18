@@ -41,6 +41,16 @@
                     @input="updateNode"
                 />
             </div>
+            <div class="node-name" v-if="node.type !== 'root' && node.functionType && node.functionType !== ''">
+                <div class="field-label">{{ $t('siteMap.node.name') }}</div>
+                <input 
+                    v-model="node.name" 
+                    :disabled="isGenerating"
+                    class="node-input name-input"
+                    :placeholder="$t('siteMap.node.namePlaceholder')"
+                    @input="updateNode"
+                />
+            </div>
             <div class="node-bounded-context" v-if="node.type !== 'root'">
                 <div class="field-label">{{ $t('siteMap.node.boundedContext') }}</div>
                 <select 
@@ -51,11 +61,11 @@
                     <option value="">{{ $t('siteMap.node.selectBoundedContext') }}</option>
                     <option 
                         v-for="bc in availableBoundedContexts" 
-                        :key="typeof bc === 'string' ? bc : (bc.id || bc.title)"
-                        :value="typeof bc === 'string' ? bc : bc.title"
+                        :key="typeof bc === 'string' ? bc : (bc.id || bc.title || bc.name)"
+                        :value="typeof bc === 'string' ? bc : (bc.title || bc.name)"
                         :disabled="isGenerating"
                     >
-                        {{ typeof bc === 'string' ? bc : bc.title }}
+                        {{ typeof bc === 'string' ? bc : (bc.displayName || bc.title || bc.name) }}
                     </option>
                 </select>
             </div>

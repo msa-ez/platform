@@ -738,6 +738,8 @@
       "siteDescription": "Enter site description",
       "pageTitle": "Page Title",
       "pageDescription": "Page Description",
+      "name": "Code Name:",
+      "namePlaceholder": "PascalCase code name (e.g., LoginView, CreateOrderCommand)",
       "boundedContext": "Bounded Context:",
       "selectBoundedContext": "Select",
       "functionType": "Function Type:",
@@ -752,6 +754,18 @@
       "expand": "Expand",
       "collapse": "Collapse",
       "collapsed": "{count} child nodes collapsed"
+    },
+    "unmapped": {
+      "title": "Unmapped Functions Found",
+      "description": "The following functions from Event Storming are not mapped to the site map. Would you like to add them to their respective Bounded Context groups?",
+      "willBeAddedTo": "Will be added to:",
+      "noBoundedContext": "No Bounded Context",
+      "unknownBoundedContext": "Unknown Bounded Context",
+      "selectedCount": "{selected} selected (of {total})",
+      "selectAll": "Select All",
+      "deselectAll": "Deselect All",
+      "cancel": "Cancel",
+      "confirm": "Add"
     },
     "empty": {
       "title": "Site map is empty",

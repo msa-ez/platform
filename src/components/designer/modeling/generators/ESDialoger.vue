@@ -2483,7 +2483,7 @@ import { value } from 'jsonpath';
                         processingRate: 0,
                         currentChunk: 0,
                         totalChunks: 0,
-                        currentGeneratedLength: this.currentGeneratedLength,
+                        currentGeneratedLength: 0,
                         timestamp: new Date()
                     };
                 }
@@ -2923,7 +2923,7 @@ import { value } from 'jsonpath';
                 }
 
                 this.input['requirements'] = this.projectInfo.usedUserStory;
-                this.input['resultDevideBoundedContext'] = this.resultDevideBoundedContext[this.selectedAspect].boundedContexts.map(bc => {
+                this.input['resultDevideBoundedContext'] = this.resultDevideBoundedContext[this.selectedAspect].boundedContexts.filter(bc => !bc.implementationStrategy.includes('PBC:')).map(bc => {
                     return {
                         name: bc.name,
                         role: bc.role

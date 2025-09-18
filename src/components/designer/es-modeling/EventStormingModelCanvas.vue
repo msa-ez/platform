@@ -1619,6 +1619,7 @@
                             :embedded="true"
                             :siteMap="value.siteMap"
                             :modelValue="value"
+                            @close:siteMapViewer="closeSiteMapViewer"
                         >
                         </site-map-viewer>
                     </div>
@@ -2719,6 +2720,7 @@
                     directRefInfos: {refs: []}
                 },
 
+                selectedElement: null,
                 siteMapViewerDialog: false,
             };
         },
@@ -3331,7 +3333,7 @@
                 if(JSON.stringify(value) != JSON.stringify(me.selectedElement)){
                     me.selectedElement = value
                 }
-                me.openHistory(me.selectedElement)
+                me.openHistory()
             });
 
             // console.log(me.isClazzModeling);
@@ -6640,7 +6642,7 @@
                     window.open(route.href, "_blank");
                 }
             },
-            openHistory(value) {
+            openHistory() {
                 this.showHistoryDialog = true;
             },
             viewAtTime(item) {
@@ -8969,8 +8971,6 @@
             },
 
             async loadSiteMap(){
-                this.siteMap = JSON.parse(localStorage.getItem("siteMap"));
-
                 if(!this.value['siteMap']) this.value['siteMap'] = [];
                 this.value['siteMap'] = this.siteMap;
 
@@ -8979,11 +8979,20 @@
             },
 
             openSiteMapViewer(){
-                this.siteMapViewerDialog = true
+                this.siteMapViewerDialog = true;
             },
 
-            closeSiteMapViewer(){
-                this.siteMapViewerDialog = false
+            async closeSiteMapViewer(data){
+                if(data && data.addedElements) {
+                    data.addedElements.forEach(element => {
+                        this.$set(this.value.elements, element.id, element);
+                    });
+                }
+                
+                this.$set(this.value, "siteMap", data.siteMap);
+
+                this.siteMapViewerDialog = false;
+                await this._saveModelForcely();
             },
         },
     };

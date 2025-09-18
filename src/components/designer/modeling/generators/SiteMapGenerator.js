@@ -15,19 +15,18 @@ class SiteMapGenerator extends JsonAIGenerator {
         EXISTING DATA:
         Navigation: ${JSON.stringify(this.client.input.existingNavigation || [])}
         Bounded Contexts: ${JSON.stringify(this.client.input.existingBoundedContexts || [])}
-        Bounded Contexts List: ${JSON.stringify(this.client.input.resultDevideBoundedContext.filter(bc => bc.name !== 'ui' || bc.implementationStrategy.includes('PBC:')))}
+        Bounded Contexts List: ${JSON.stringify(this.client.input.resultDevideBoundedContext.filter(bc => bc.name !== 'ui'))}
 
         TASK:
-        1. Create hierarchical navigation reflecting DDD bounded contexts
-        2. Map each navigation item to exact bounded context names from the list
-        3. Each navigation item should represent a SINGLE, SPECIFIC UI function (view or command)
-        4. Create meaningful parent-child relationships (e.g., "주문 관리" > "주문 생성", "주문 조회")
-        5. Group related functions under logical parent categories
-        6. Preserve existing navigation items, only enrich or add missing children
-        7. Limit main navigation to 5-7 items for optimal UX
-        8. Break down complex pages into individual functional units
+        Generate a hierarchical site map based on requirements and bounded contexts.
+        Each navigation item should represent a SINGLE UI function (view or command).
+        Group related functions under logical parent categories.
 
-        OUTPUT FORMAT (JSON only):
+        STRUCTURE OPTIONS:
+        - Single Service: One website with multiple navigation categories
+        - Multi-Service: Multiple independent websites (e.g., customer app, admin panel, delivery app)
+
+        OUTPUT FORMAT:
         {
           "siteMap": {
             "title": "Application Title",
@@ -51,10 +50,10 @@ class SiteMapGenerator extends JsonAIGenerator {
                   {
                     "id": "child-nav-id",
                     "title": "Single Function Title (e.g., 'User List View' or 'Create User Command')",
-                    "name": "pascal-case function name",
+                    "name": "PascalCaseName",
                     "description": "Specific function description",
                     "boundedContext": "Exact bounded context name",
-                    "functionType": "view" or "command" or "" (empty for group),
+                    "functionType": "view" or "command",
                     "uiRequirements": "Specific UI requirements for this single function",
                     "children": []
                   }
@@ -64,28 +63,11 @@ class SiteMapGenerator extends JsonAIGenerator {
           }
         }
 
-        HIERARCHY GUIDELINES:
-        - Create parent categories that group related functions (e.g., "User Management", "Order Management", "Delivery Management")
-        - Parent categories have functionType: "" (empty string, they are grouping nodes, not actual functions)
-        - Each parent category should contain 3-8 child functions
-        - Children can be either actual functions (view/command) or sub-groups (empty functionType)
-        - Group functions by user role or business domain
-        - Use clear, logical parent-child relationships
-        - Example structure:
-          * "User Management" (parent category, functionType: "", boundedContext: "UserAccount")
-            - "Login View" (view, functionType: "view")
-            - "Signup View" (view, functionType: "view")
-            - "Logout Command" (command, functionType: "command")
-          * "Order Management" (parent category, functionType: "", boundedContext: "OrderManagement")
-            - "Restaurant Search View" (view, functionType: "view")
-            - "Create Order Command" (command, functionType: "command")
-            - "Order Status View" (view, functionType: "view")
-
-        CRITICAL RULES:
+        RULES:
         - Use exact bounded context names from provided list
-        - Each navigation item must represent ONE specific function (view or command) OR a grouping category
-        - functionType must be either "view", "command", or "" (empty for groups)
-        - uiRequirements should describe only the specific function, not multiple features
+        - functionType: "" for groups, "view"/"command" for functions
+        - Each function must be atomic (single responsibility)
+        - Group functions by user role or business domain
         - Create meaningful parent-child relationships, not flat structure
         - Don't duplicate existing navigation items
         - Break complex pages into individual functional units

@@ -742,6 +742,8 @@
       "siteDescription": "사이트 설명을 입력하세요",
       "pageTitle": "페이지 제목",
       "pageDescription": "페이지 설명",
+      "name": "코드명:",
+      "namePlaceholder": "PascalCase 코드명 (예: LoginView, CreateOrderCommand)",
       "boundedContext": "Bounded Context:",
       "selectBoundedContext": "선택하세요",
       "functionType": "기능 유형:",
@@ -756,6 +758,18 @@
       "expand": "펼치기",
       "collapse": "접기",
       "collapsed": "{count}개 하위 노드 접힘"
+    },
+    "unmapped": {
+      "title": "미매핑된 기능 발견",
+      "description": "Event Storming에서 생성된 다음 기능들이 사이트맵에 매핑되지 않았습니다. 이들을 해당 Bounded Context 그룹에 추가하시겠습니까?",
+      "willBeAddedTo": "다음 그룹에 추가됩니다:",
+      "noBoundedContext": "Bounded Context 없음",
+      "unknownBoundedContext": "알 수 없는 Bounded Context",
+      "selectedCount": "{selected}개 선택됨 (전체 {total}개)",
+      "selectAll": "전체 선택",
+      "deselectAll": "전체 해제",
+      "cancel": "취소",
+      "confirm": "추가하기"
     },
     "empty": {
       "title": "사이트맵이 비어있습니다",
