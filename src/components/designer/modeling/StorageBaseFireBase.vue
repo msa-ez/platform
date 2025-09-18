@@ -321,14 +321,17 @@
                 return new Promise((resolve) => {
                     firebase.auth().onAuthStateChanged(async (user) => {
                         if (!user) {
+                            console.log('checkFirebaseTokenValidity: No user found');
                             resolve(false);
                             return;
                         }
                         
                         try {
                             await user.getIdToken(true);
+                            console.log('checkFirebaseTokenValidity: Token is valid');
                             resolve(true);
                         } catch (error) {
+                            console.log('checkFirebaseTokenValidity error:', error.code, error.message);
                             resolve(false);
                         }
                     });
@@ -337,10 +340,18 @@
 
             async testDbAccess() {
                 try {
-                    // 일반적으로 모든 인증된 사용자가 접근 가능한 경로 테스트
-                    await firebase.database().ref('configs').once('value');
+                    // 사용자 정보 경로로 테스트 (인증된 사용자만 접근 가능)
+                    const user = firebase.auth().currentUser;
+                    if (!user) {
+                        console.log('testDbAccess: No current user');
+                        return false;
+                    }
+                    
+                    // 사용자 자신의 데이터에 접근 테스트
+                    await firebase.database().ref(`users/${user.uid}`).once('value');
                     return true;
                 } catch (error) {
+                    console.log('testDbAccess error:', error.code, error.message);
                     if (error.code === 'PERMISSION_DENIED') {
                         return false;
                     }
