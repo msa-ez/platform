@@ -311,19 +311,18 @@
                 // 플래그를 먼저 설정하여 동시 실행 방지
                 this.isShowingAlert = true;
                 
-                // 1. Firebase ID 토큰 유효성 확인
-                const isTokenValid = await this.checkFirebaseTokenValidity();
-                if (!isTokenValid) {
-                    alert('DB 접근 권한이 만료되었습니다. 재로그인이 필요합니다.');
-                    this.redirectToMain();
-                    return true;
+                // 1. 사용자 로그인 상태 확인
+                const user = firebase.auth().currentUser;
+                if (!user) {
+                    console.log('checkApiKeyChange: No user found');
+                    this.isShowingAlert = false;
+                    return false; // 로그인되지 않은 상태는 정상
                 }
                 
-                // 2. DB 접근 권한 테스트
+                // 2. DB 접근 권한 테스트 (실제 문제 감지)
                 const hasDbAccess = await this.testDbAccess();
                 if (!hasDbAccess) {
                     alert('DB 접근 권한이 만료되었습니다. 재로그인이 필요합니다.');
-                    this.redirectToMain();
                     return true;
                 }
                 
@@ -331,14 +330,6 @@
                 return false;
             },
 
-            redirectToMain() {
-                // 메인페이지로 라우팅
-                if (this.$router) {
-                    this.$router.push('/');
-                } else if (window.location) {
-                    window.location.href = '/';
-                }
-            },
 
             async checkFirebaseTokenValidity() {
                 return new Promise((resolve) => {
@@ -363,21 +354,17 @@
 
             async testDbAccess() {
                 try {
-                    // 사용자 정보 경로로 테스트 (인증된 사용자만 접근 가능)
-                    const user = firebase.auth().currentUser;
-                    if (!user) {
-                        console.log('testDbAccess: No current user');
-                        return false;
-                    }
-                    
-                    // 사용자 자신의 데이터에 접근 테스트
-                    await firebase.database().ref(`users/${user.uid}`).once('value');
+                    // 일반적으로 접근 가능한 경로로 테스트 (API 키/프로젝트 설정 문제 감지)
+                    await firebase.database().ref('configs').once('value');
+                    console.log('testDbAccess: DB access successful');
                     return true;
                 } catch (error) {
                     console.log('testDbAccess error:', error.code, error.message);
-                    if (error.code === 'PERMISSION_DENIED') {
+                    // PERMISSION_DENIED 외에도 네트워크 오류, API 키 문제 등도 감지
+                    if (error.code === 'PERMISSION_DENIED' || error.code === 'UNAUTHENTICATED') {
                         return false;
                     }
+                    // 기타 오류도 DB 접근 문제로 간주
                     return false;
                 }
             },
