@@ -68,7 +68,6 @@
     "updateFromModelCode" : "모델 코드에서 업데이트",
     "cloudIDE" : "클라우드 IDE",
     "localIDE" : "로컬 IDE",
-    "openGitpod" : "Gitpod 열기",
     "openCodespaces" : "Codespaces 열기",
     "cloneRepo" : "Git 로컬 다운로드 명령어",
     "update" : "Git 업데이트 명령어",

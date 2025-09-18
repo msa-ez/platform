@@ -230,7 +230,7 @@
                                         <v-tab-item class="pa-4">
                                             <v-card flat :key="gitPodError">
                                                 <v-row class="ma-0 pa-0">
-                                                    <v-col class="pt-0 pl-0">
+                                                    <!-- <v-col class="pt-0 pl-0">
                                                         <v-tooltip bottom>
                                                             <template v-slot:activator="{ on }">
                                                                 <v-btn style="width:100%;"
@@ -244,7 +244,7 @@
                                                             </template>
                                                             Go to the {{ IdeType }} Link
                                                         </v-tooltip>
-                                                    </v-col>
+                                                    </v-col> -->
                                                     <v-col class="pt-0 pr-0">
                                                         <v-tooltip bottom>
                                                             <template v-slot:activator="{ on }">
