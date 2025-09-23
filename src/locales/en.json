@@ -726,7 +726,7 @@
   "siteMap": {
     "toolbar": {
       "regenerate": "Regenerate",
-      "addNode": "Add Node",
+      "addNode": "Add Page",
       "generating": "Generating site map...",
       "progress": "Generating site map... ({rate}%)",
       "expandAll": "Expand All",
@@ -737,46 +737,36 @@
       "siteDescription": "Enter site description",
       "pageTitle": "Page Title",
       "pageDescription": "Page Description",
-      "name": "Code Name:",
-      "namePlaceholder": "PascalCase code name (e.g., LoginView, CreateOrderCommand)",
-      "boundedContext": "Bounded Context:",
-      "selectBoundedContext": "Select",
-      "functionType": "Function Type:",
-      "functionTypeCategory": "Category (Group)",
-      "functionTypeView": "View (Search)",
-      "functionTypeCommand": "Command (Business Logic)",
-      "uiRequirements": "UI Requirements:",
-      "uiRequirementsPlaceholder": "UI requirements (e.g., table layout, card form, form validation, etc.)",
+      "url": "URL:",
+      "urlPlaceholder": "Page URL (e.g., /about, /products/list)",
       "childCount": "{count} children",
-      "addChildNode": "Add Child Node",
-      "deleteNode": "Delete Node",
+      "addChildNode": "Add Child Page",
+      "deleteNode": "Delete Page",
       "expand": "Expand",
       "collapse": "Collapse",
-      "collapsed": "{count} child nodes collapsed"
-    },
-    "unmapped": {
-      "title": "Unmapped Functions Found",
-      "description": "The following functions from Event Storming are not mapped to the site map. Would you like to add them to their respective Bounded Context groups?",
-      "willBeAddedTo": "Will be added to:",
-      "noBoundedContext": "No Bounded Context",
-      "unknownBoundedContext": "Unknown Bounded Context",
-      "selectedCount": "{selected} selected (of {total})",
-      "selectAll": "Select All",
-      "deselectAll": "Deselect All",
-      "cancel": "Cancel",
-      "confirm": "Add"
+      "collapsed": "{count} child pages collapsed"
     },
     "empty": {
       "title": "Site map is empty",
-      "description": "Add your first node!",
-      "addRootNode": "Add Root Node"
+      "description": "Add your first page!",
+      "addRootNode": "Add Home Page"
     },
     "defaults": {
       "newWebsite": "New Website",
+      "siteDescription": "Website description",
       "newPage": "New Page",
       "pageDescription": "Page Description",
+      "newComponent": "New Component",
+      "componentDescription": "Component description",
       "emptySiteMap": "Empty Site Map"
-    }
+    },
+    "title": "Site Map",
+    "nodeCount": "Total {count} pages",
+    "generate": "Generate Site Map",
+    "editNode": "Edit Page",
+    "title": "Title",
+    "url": "URL",
+    "description": "Description"
   }
 }
 
