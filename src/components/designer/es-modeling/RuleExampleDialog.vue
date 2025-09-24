@@ -731,10 +731,7 @@
                         compareArray(obj1[0].then, obj2.then);
                 }
                 me.setExampleFrameWork();
-                if(me.value && me.value.examples && me.value.examples.length > 0
-                && me.value.examples[0].given && me.value.examples[0].given[0].value
-                && me.value.examples[0].when && me.value.examples[0].when[0].value
-                && me.value.examples[0].then && me.value.examples[0].then[me.value.examples[0].then.lastIndex].value)
+                if(me.value && me.value.examples && me.value.examples.length > 0 && me.__isValidExample(me.value.examples[0]))
                 {
                     var checkValue = areObjectsEqual(me.value.examples, me.exampleFrameWork)
                     if(checkValue){
@@ -742,36 +739,20 @@
                     } else {
                         me.rule.values = [];
                         
-                        function mapValues(frameworkArray, sourceArray) {
-                            frameworkArray.forEach((frameworkItem, index) => {
-                                const sourceItem = sourceArray[index];
-                                if (sourceItem) {
-                                    Object.keys(frameworkItem.value).forEach(key => {
-                                        if (sourceItem.value[key] !== undefined) {
+                        for(let i = 0; i < me.value.examples.length; i++){
+                            if(!me.__isValidExample(me.value.examples[i])) continue;
 
-                                            // 임시용
-                                            frameworkItem.value[key] = sourceItem.value[key];
+                            const exampleFrameworkToUse = JSON.parse(JSON.stringify(me.exampleFrameWork))
+                            const exampleToUse = JSON.parse(JSON.stringify(me.value.examples[i]))
 
-                                            // frameworkArray가 현재 적절한 타입으로 정의되어 있지 않아서 이 조건 검사는 버그를 일으키고 있음
-                                            // TODO: setExampleFrameWork에서 전달되는 given, when, then 객체의 타입에 따라서 정확하게 frameworkArray를 정확하게 구축하도록 만들고, 주석 해제하기
-                                            // if(typeof sourceItem.value[key] == typeof frameworkItem.value[key]){
-                                            //     frameworkItem.value[key] = sourceItem.value[key];
-                                            // }
-                                            
-                                        } else {
-                                            frameworkItem.value[key] = "N/A";
-                                        }
-                                    });
-                                }
-                            });
+                            me._mapValues(exampleFrameworkToUse.given, exampleToUse.given);
+                            me._mapValues(exampleFrameworkToUse.when, exampleToUse.when);
+                            me._mapValues(exampleFrameworkToUse.then, exampleToUse.then);
+
+                            me.rule.values.push(exampleFrameworkToUse);
                         }
-
-                        mapValues(me.exampleFrameWork.given, me.value.examples[0].given);
-                        mapValues(me.exampleFrameWork.when, me.value.examples[0].when);
-                        mapValues(me.exampleFrameWork.then, me.value.examples[0].then);
-
-                        me.rule.values.push(me.exampleFrameWork);
                     }
+
                     me.rule.thenItems.forEach(function (item){
                         let fieldDescriptors = item.fieldDescriptors || item.aggregateRoot.fieldDescriptors
                         me.thenAttLength[item.name] = fieldDescriptors.length;
@@ -781,6 +762,35 @@
                     me.rule.values.push(me.exampleFrameWork)
                 }
             },
+            __isValidExample(example) {
+                return example.given && example.given[0].value && 
+                       example.when && example.when[0].value && 
+                       example.then && example.then[example.then.lastIndex].value
+            },
+            _mapValues(frameworkArray, sourceArray){
+                frameworkArray.forEach((frameworkItem, index) => {
+                    const sourceItem = sourceArray[index];
+                    if (sourceItem) {
+                        Object.keys(frameworkItem.value).forEach(key => {
+                            if (sourceItem.value[key] !== undefined) {
+
+                                // 임시용
+                                frameworkItem.value[key] = sourceItem.value[key];
+
+                                // frameworkArray가 현재 적절한 타입으로 정의되어 있지 않아서 이 조건 검사는 버그를 일으키고 있음
+                                // TODO: setExampleFrameWork에서 전달되는 given, when, then 객체의 타입에 따라서 정확하게 frameworkArray를 정확하게 구축하도록 만들고, 주석 해제하기
+                                // if(typeof sourceItem.value[key] == typeof frameworkItem.value[key]){
+                                //     frameworkItem.value[key] = sourceItem.value[key];
+                                // }
+                                
+                            } else {
+                                frameworkItem.value[key] = "N/A";
+                            }
+                        });
+                    }
+                });
+            },
+
             setExampleFrameWork(){
                 var me = this;
                 let values = {

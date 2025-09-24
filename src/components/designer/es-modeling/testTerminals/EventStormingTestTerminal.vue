@@ -26,7 +26,7 @@ import {
     ModelOptionDto
 } from "../../modeling/generators/features/AIGenerator"
 import ESActionsUtilTest from "../../modeling/generators/es-ddl-generators/modules/ESActionsUtilTest";
-import { mockedProgressDto, mockedProgressDtoUpdateCallback, mockedTraceInfoViewerDto } from "./mocks"
+import { mockedProgressDto, mockedProgressDtoUpdateCallback, mockedTraceInfoViewerDto, mockedUIComponent } from "./mocks"
 import { EsValueLangGraphStudioProxyTest, EsValueLangGraphStudioProxy } from "../../modeling/generators/proxies"
 
 export default {
@@ -56,8 +56,8 @@ export default {
                     description: "AI 진행 상황 UI에 대한 Mock 데이터 표시"
                 },
                 EsValueInjection: {
-                    command: () => this._EsValueInjection(),
-                    description: "이벤트 스토밍 값을 강제로 삽입"
+                    command: () => this._valueInjection(),
+                    description: "특정 Value 값을 강제로 삽입입"
                 },
                 TempTest: {
                     command: () => this._TempTest(),
@@ -66,6 +66,10 @@ export default {
                 TestTraceInfoViewer: {
                     command: () => this._testTraceInfoViewer(),
                     description: "TraceInfoViewer 테스트"
+                },
+                ShowUIRunTimeTemplateHtml: {
+                    command: () => this._showUIRunTimeTemplateHtml(),
+                    description: "UI RunTimeTemplateHtml 테스트"
                 },
 
                 SanityCheckGeneratorTest: {command: async () => { await SanityCheckGeneratorTest.test() }},
@@ -177,11 +181,18 @@ export default {
             return selectedScenarioName
         },
 
-        _EsValueInjection() {
-            const esValue = prompt("이벤트 스토밍 값을 입력하세요:")
-            if(!esValue) return
+        _valueInjection() {
+            const inject_value = prompt("삽입시킬 value 값을 입력하세요:")
+            if(!inject_value) return
 
-            this.value = JSON.parse(esValue)
+            const inject_value_keys = Object.keys(JSON.parse(inject_value))
+            const current_value_keys = Object.keys(this.value)
+            for(const key of inject_value_keys) {
+                if(current_value_keys.includes(key)) {
+                    this.value[key] = JSON.parse(inject_value)[key]
+                }
+            }
+
             this.forceRefreshCanvas()
         },
 
@@ -192,6 +203,20 @@ export default {
 
         _testTraceInfoViewer() {
             this.traceInfoViewerDto = structuredClone(mockedTraceInfoViewerDto)
+        },
+
+        _showUIRunTimeTemplateHtml() {
+            const uiComponent = structuredClone(mockedUIComponent)
+
+            const runTimeTemplateHtml = prompt("삽입시킬 runTimeTemplateHtml을 입력하세요")
+            if(runTimeTemplateHtml)
+                uiComponent.runTimeTemplateHtml = runTimeTemplateHtml
+
+            this.value.elements = {
+                [uiComponent.id]: uiComponent
+            }
+            this.value.relations = {}
+            this.forceRefreshCanvas()
         }
     }
 }
