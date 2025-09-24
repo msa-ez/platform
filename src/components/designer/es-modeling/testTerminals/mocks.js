@@ -59,3 +59,55 @@ export const mockedTraceInfoViewerDto = {
         ]
     }
 }
+
+export const mockedUIComponent = {
+	"_type": "org.uengine.modeling.model.UI",
+	"aggregate": {
+		"id": "5f3bc451-33ba-4520-93a5-4f704d4c73b5"
+	},
+	"author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
+	"boundedContext": {
+		"id": "14f1fcf0-554b-4cfe-96af-7c5a675c14e2"
+	},
+	"card": {
+		"subtitle": "",
+		"text": "",
+		"title": ""
+	},
+	"chart": {
+		"fieldMapping": {
+			"category": [],
+			"data": []
+		},
+		"type": ""
+	},
+	"command": {
+		"id": "280c8ada-cc07-47f7-839e-012f1c188bb3"
+	},
+	"description": "- Used SiteMap Title: 도서 관리\n- Used SiteMap Description: 도서 등록, 상태 관리, 폐기 처리를 위한 화면입니다.\n* Inference(When generating the wireframe)\n이번 도서 등록 UI는 '도서 관리'라는 상위 컨텍스트 내에서 도서 등록, 상태 관리, 폐기 처리 등 다양한 기능 중 도서 등록 부분만을 담당하는 컴포넌트로 설계해야 한다. 필드는 도서명, ISBN(13자리 숫자, 중복 확인 필요), 저자, 출판사, 카테고리(소설/비소설/학술/잡지 선택)로 구성된다. 모든 필드는 필수는 아니지만, ISBN 입력란에는 13자리 숫자 제한과 중복 확인 버튼, 카테고리는 드롭다운으로 구현한다. UI는 도서 관리의 일부로서, 상단에 '도서 등록' 섹션 타이틀과 간단한 설명을 추가해 맥락을 명확히 하고, 입력 폼은 시각적 구분을 위해 카드 형태로 배치한다. 각 입력 필드는 명확한 레이블과 적절한 placeholder, ISBN 입력란 옆에 중복 확인 버튼을 배치한다. 버튼은 기본 스타일 가이드(Primary #007bff, Secondary #6c757d)를 따른다. 폼 하단에는 등록 버튼을 배치하고, 입력 예시 데이터와 에러 상태(예: ISBN 자리수 오류)를 시각적으로 표현한다. 접근성을 위해 label-for, aria-label 등을 활용한다. 전체적으로 컨테이너 내에서 적절한 여백과 정렬, 시각적 계층 구조를 유지한다.\n",
+	"displayName": "도서 등록 UI",
+	"elementView": {
+		"_type": "org.uengine.modeling.model.UI",
+		"height": 100,
+		"id": "9cecb8eb-07bb-453b-bd82-f8b3acc7d802",
+		"style": {},
+		"width": 100,
+		"x": 490,
+		"y": 280
+	},
+	"generateDescription": "",
+	"grid": {
+		"columns": []
+	},
+	"id": "9cecb8eb-07bb-453b-bd82-f8b3acc7d802",
+	"name": "RegisterBookUI",
+	"nameCamelCase": "registerbookui",
+	"namePascalCase": "Registerbookui",
+	"namePlural": "registerbookuis",
+	"oldName": "",
+	"readModel": null,
+	"referencedSiteMapId": "nav-book-mgmt",
+	"rotateStatus": false,
+	"runTimeTemplateHtml": "<div style=\"max-width:600px; margin:0 auto; padding:24px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;\">\n  <div style=\"margin-bottom:24px;\">\n    <h2 style=\"font-size:22px; color:#333; margin-bottom:6px;\">도서 등록</h2>\n    <p style=\"font-size:14px; color:#666; margin:0;\">새로운 도서를 등록하려면 아래 정보를 입력하세요.</p>\n  </div>\n  <div style=\"background:#fff; border-radius:8px; box-shadow:0 2px 10px rgba(0,0,0,0.07); padding:32px;\">\n    <form style=\"display:flex; flex-direction:column; gap:18px;\">\n      <div>\n        <label for=\"title\" style=\"display:block; margin-bottom:6px; font-weight:500; color:#555;\">도서명</label>\n        <input type=\"text\" id=\"title\" name=\"title\" placeholder=\"예: UI/UX 디자인 원리\" style=\"width:100%; padding:12px; border:2px solid #ddd; border-radius:4px; font-size:16px; box-sizing:border-box;\">\n      </div>\n      <div>\n        <label for=\"isbn\" style=\"display:block; margin-bottom:6px; font-weight:500; color:#555;\">ISBN</label>\n        <div style=\"display:flex; gap:8px; align-items:center;\">\n          <input type=\"text\" id=\"isbn\" name=\"isbn\" maxlength=\"13\" pattern=\"\\d{13}\" aria-label=\"ISBN 13자리 숫자\" placeholder=\"예: 9781234567890\" style=\"flex:1; padding:12px; border:2px solid #dc3545; border-radius:4px; font-size:16px; box-sizing:border-box;\">\n          <button type=\"button\" style=\"background:#6c757d; color:#fff; border:none; padding:10px 16px; border-radius:4px; font-size:14px; cursor:pointer;\">중복 확인</button>\n        </div>\n        <div style=\"margin-top:4px; font-size:12px; color:#dc3545;\">13자리 숫자를 입력하세요.</div>\n      </div>\n      <div>\n        <label for=\"author\" style=\"display:block; margin-bottom:6px; font-weight:500; color:#555;\">저자</label>\n        <input type=\"text\" id=\"author\" name=\"author\" placeholder=\"예: 홍길동\" style=\"width:100%; padding:12px; border:2px solid #ddd; border-radius:4px; font-size:16px; box-sizing:border-box;\">\n      </div>\n      <div>\n        <label for=\"publisher\" style=\"display:block; margin-bottom:6px; font-weight:500; color:#555;\">출판사</label>\n        <input type=\"text\" id=\"publisher\" name=\"publisher\" placeholder=\"예: 한빛미디어\" style=\"width:100%; padding:12px; border:2px solid #ddd; border-radius:4px; font-size:16px; box-sizing:border-box;\">\n      </div>\n      <div>\n        <label for=\"category\" style=\"display:block; margin-bottom:6px; font-weight:500; color:#555;\">카테고리</label>\n        <select id=\"category\" name=\"category\" style=\"width:100%; padding:12px; border:2px solid #ddd; border-radius:4px; font-size:16px; box-sizing:border-box;\">\n          <option value=\"\" disabled selected>카테고리 선택</option>\n          <option value=\"novel\">소설</option>\n          <option value=\"nonfiction\">비소설</option>\n          <option value=\"academic\">학술</option>\n          <option value=\"magazine\">잡지</option>\n        </select>\n      </div>\n      <button type=\"submit\" style=\"background:#007bff; color:#fff; border:none; padding:14px 0; border-radius:4px; font-size:16px; font-weight:500; cursor:pointer; margin-top:8px;\">도서 등록</button>\n    </form>\n  </div>\n</div>",
+	"uiType": "Chart"
+}
