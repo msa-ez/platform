@@ -167,7 +167,9 @@
                             :currentGeneratedLength="message.currentGeneratedLength"
                             :currentChunk="message.currentChunk"
                             :totalChunks="message.totalChunks"
+                            :currentProcessingStep="message.currentProcessingStep"
                             :resultDevideBoundedContext="message.resultDevideBoundedContext"
+                            :commandReadModelData="message.commandReadModelData"
                             @update:siteMap="updateSiteMap"
                             @generate:siteMap="$emit('generate:siteMap')"
                         ></SiteMapViewer>

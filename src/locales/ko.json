@@ -736,6 +736,15 @@
       "expandAll": "전체 펼치기",
       "collapseAll": "전체 접기"
     },
+    "processingSteps": {
+      "extractingCommandsAndReadModels": "사이트맵 생성에 필요한 데이터를 추출 중입니다.",
+      "generatingSiteMap": "사이트맵 생성 중입니다.",
+      "analyzingRequirements": "요구사항 분석 중입니다.",
+      "creatingBoundedContexts": "Bounded Context 생성 중입니다."
+    },
+    "progress": {
+      "textGenerated": "({length} text generated...)"
+    },
     "node": {
       "siteTitle": "사이트 제목",
       "siteDescription": "사이트 설명을 입력하세요",
@@ -768,7 +777,7 @@
     "nodeCount": "총 {count}개 페이지",
     "generate": "사이트맵 생성",
     "editNode": "페이지 편집",
-    "title": "제목",
+    "nodeTitle": "제목",
     "url": "URL",
     "description": "설명"
   }

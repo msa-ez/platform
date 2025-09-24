@@ -267,6 +267,10 @@
     // SiteMap Viewer
     import SiteMapGenerator from './SiteMapGenerator.js';
     import RecursiveSiteMapGenerator from './RecursiveSiteMapGenerator.js';
+    
+    // Command/ReadModel Extractor
+    import CommandReadModelExtractor from './CommandReadModelExtractor.js';
+    import RecursiveCommandReadModelExtractor from './RecursiveCommandReadModelExtractor.js';
 
     const axios = require('axios');
     import YAML from 'js-yaml';
@@ -1270,6 +1274,11 @@ import { value } from 'jsonpath';
                 frontEndResults: [],
 
                 siteMap: [],
+                
+                // Command/ReadModel 추출 관련 상태
+                commandReadModelData: null,
+                isExtractingCommandReadModel: false,
+                commandReadModelExtractionProgress: 0,
 
                 modelListKey: 0,
                 isAutoScrollEnabled: true,
@@ -1436,6 +1445,7 @@ import { value } from 'jsonpath';
                                 await addPropertyWithDelay(newMessage, 'uniqueId', msg.uniqueId);
                                 await addPropertyWithDelay(newMessage, 'resultDevideBoundedContext', msg.resultDevideBoundedContext);
                                 await addPropertyWithDelay(newMessage, 'siteMap', msg.siteMap.length > 0 ? msg.siteMap : []);
+                                await addPropertyWithDelay(newMessage, 'commandReadModelData', msg.commandReadModelData);
 
                                 this.siteMap = msg.siteMap.length > 0 ? msg.siteMap : [];
                                 break;
@@ -1563,6 +1573,25 @@ import { value } from 'jsonpath';
                     return;
                 }
 
+                // Command/ReadModel 추출 완료 처리
+                if (me.state.generator === "CommandReadModelExtractor" || me.state.generator === "RecursiveCommandReadModelExtractor") {
+                    me.commandReadModelData = model.extractedData || model;
+                    me.isExtractingCommandReadModel = false;
+
+                    // 추출 완료 상태 업데이트 (100% 완료 표시)
+                    me.updateMessageState(me.messages.find(msg => msg.type === 'siteMapViewer').uniqueId, {
+                        commandReadModelData: me.commandReadModelData,
+                        processingRate: 100,
+                        currentProcessingStep: 'extractingCommandsAndReadModels'
+                    });
+                    
+                    // 추출 완료 후 자동으로 사이트맵 생성 진행
+                    setTimeout(() => {
+                        me.generateSiteMap();
+                    }, 500);
+                    return;
+                }
+
                 // Recursive SiteMap: 청크 단위 결과는 생성기 내부에서 누적 처리하며 진행상황/부분결과 업데이트
                 if (me.state.generator === "RecursiveSiteMapGenerator") {
                     me.generator.handleGenerationFinished(model.siteMap);
@@ -1575,8 +1604,8 @@ import { value } from 'jsonpath';
                         // 부분 결과 구성
                         const partialRoot = {
                             id: me.uuid(),
-                            title: me.generator.accumulated.title || '새로운 웹사이트',
-                            description: me.generator.accumulated.description || '웹사이트 설명',
+                            title: me.generator.accumulated.title || 'New Website',
+                            description: me.generator.accumulated.description || 'Website Description',
                             type: 'root',
                             boundedContexts: Array.from(me.generator.accumulated.boundedContextsMap.values()),
                             children: JSON.parse(JSON.stringify(me.generator.accumulated.rootChildren || []))
@@ -2166,6 +2195,9 @@ import { value } from 'jsonpath';
                     return;
                 }
 
+                // 요구사항이 변경되었으므로 추출된 Command/ReadModel 데이터 초기화
+                this.commandReadModelData = null;
+
                 // 현재 요약본이 너무 길면 먼저 요약 진행
                 if (this.projectInfo.usedUserStory.length + this.projectInfo.usedInputDDL.length > 25000 && !this.summarizedResult.summary) {
                     this.pendingBCGeneration = true;
@@ -2484,6 +2516,7 @@ import { value } from 'jsonpath';
                         currentChunk: 0,
                         totalChunks: 0,
                         currentGeneratedLength: 0,
+                        commandReadModelData: this.commandReadModelData,
                         timestamp: new Date()
                     };
                 }
@@ -2911,24 +2944,94 @@ import { value } from 'jsonpath';
                 return Math.abs(textarea.scrollHeight - textarea.clientHeight - textarea.scrollTop) <= threshold;
             },
 
+            generateCommandReadModelExtraction(){
+                const requirementsText = this.projectInfo.usedUserStory || '';
+                const shouldUseRecursive = requirementsText && requirementsText.length > 24000;
+
+                this.generator = shouldUseRecursive ? new RecursiveCommandReadModelExtractor(this) : new CommandReadModelExtractor(this);
+                this.state.generator = shouldUseRecursive ? "RecursiveCommandReadModelExtractor" : "CommandReadModelExtractor";
+
+                this.input['requirements'] = this.projectInfo.usedUserStory;
+                this.input['resultDevideBoundedContext'] = JSON.parse(JSON.stringify(this.resultDevideBoundedContext[this.selectedAspect].boundedContexts.filter(bc => !bc.implementationStrategy.includes('PBC:')))).map(bc => {
+                    return {
+                        name: bc.name,
+                        role: bc.role
+                    }
+                });
+
+                this.isExtractingCommandReadModel = true;
+                this.commandReadModelExtractionProgress = 0;
+
+                // SiteMapViewer 메시지에 추출 진행 상태 표시
+                const siteMapMessage = this.generateMessage("siteMapViewer", []);
+                const siteMapIndex = this.messages.findIndex(msg => msg.type === 'siteMapViewer');
+                if (siteMapIndex !== -1) {
+                    this.messages.splice(siteMapIndex, 1);
+                }
+
+                const aggregateDraftDialogDtoIndex = this.messages.findIndex(msg => msg.type === 'aggregateDraftDialogDto');
+                if (aggregateDraftDialogDtoIndex !== -1) {
+                    this.messages.splice(aggregateDraftDialogDtoIndex, 0, siteMapMessage);
+                } else {
+                    this.messages.push(siteMapMessage);
+                }
+
+                // SiteMapViewer에 추출 진행 상태 표시
+                this.updateMessageState(this.messages.find(msg => msg.type === 'siteMapViewer').uniqueId, {
+                    isGenerating: true,
+                    processingRate: 0,
+                    currentProcessingStep: 'extractingCommandsAndReadModels',
+                    currentChunk: 0,
+                    totalChunks: 0
+                });
+
+                if (shouldUseRecursive) {
+                    this.generator.generateRecursively(this.projectInfo.usedUserStory).then(result => {
+                        this.commandReadModelData = result.extractedData;
+                        this.isExtractingCommandReadModel = false;
+                        
+                        // 추출 완료 후 자동으로 사이트맵 생성 진행
+                        this.generateSiteMap();
+                    }).catch(error => {
+                        console.error('Command/ReadModel extraction failed:', error);
+                        this.isExtractingCommandReadModel = false;
+                        // 실패해도 사이트맵 생성 진행
+                        this.generateSiteMap();
+                    });
+                } else {
+                    this.generator.generate();
+                }
+            },
+
             generateSiteMap(){
+                if(!this.alertGenerateWarning("siteMapViewer")){
+                    return;
+                }
+
+                // Command/ReadModel 데이터가 없으면 먼저 추출
+                if (!this.commandReadModelData) {
+                    this.generateCommandReadModelExtraction();
+                    return;
+                }
+
                 const requirementsText = this.projectInfo.usedUserStory || '';
                 const shouldUseRecursive = requirementsText && requirementsText.length > 24000;
 
                 this.generator = shouldUseRecursive ? new RecursiveSiteMapGenerator(this) : new SiteMapGenerator(this);
                 this.state.generator = shouldUseRecursive ? "RecursiveSiteMapGenerator" : "SiteMapGenerator";
 
-                if(!this.alertGenerateWarning("siteMapViewer")){
-                    return;
-                }
-
                 this.input['requirements'] = this.projectInfo.usedUserStory;
-                this.input['resultDevideBoundedContext'] = this.resultDevideBoundedContext[this.selectedAspect].boundedContexts.filter(bc => !bc.implementationStrategy.includes('PBC:')).map(bc => {
+                this.input['resultDevideBoundedContext'] = JSON.parse(JSON.stringify(this.resultDevideBoundedContext[this.selectedAspect].boundedContexts.filter(bc => !bc.implementationStrategy.includes('PBC:')))).map(bc => {
                     return {
                         name: bc.name,
                         role: bc.role
                     }
                 });
+                
+                // Command/ReadModel 데이터가 있으면 추가
+                if (this.commandReadModelData) {
+                    this.input['commandReadModelData'] = this.commandReadModelData;
+                }
 
                 this.siteMap = [];
                 const siteMapMessage = this.generateMessage("siteMapViewer", []);
@@ -2944,6 +3047,15 @@ import { value } from 'jsonpath';
                 }else{
                     this.messages.push(siteMapMessage);
                 }
+
+                // SiteMapViewer에 사이트맵 생성 진행 상태 표시
+                this.updateMessageState(this.messages.find(msg => msg.type === 'siteMapViewer').uniqueId, {
+                    isGenerating: true,
+                    processingRate: 0,
+                    currentProcessingStep: 'generatingSiteMap',
+                    currentChunk: 0,
+                    totalChunks: 0
+                });
                 
                 if (shouldUseRecursive) {
                     this.generator.generateRecursively(this.projectInfo.usedUserStory).then(result => {

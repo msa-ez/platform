@@ -732,6 +732,15 @@
       "expandAll": "Expand All",
       "collapseAll": "Collapse All"
     },
+    "processingSteps": {
+      "extractingCommandsAndReadModels": "Extracting data required for site map generation.",
+      "generatingSiteMap": "Generating Site Map.",
+      "analyzingRequirements": "Analyzing Requirements.",
+      "creatingBoundedContexts": "Creating Bounded Contexts."
+    },
+    "progress": {
+      "textGenerated": "({length} text generated...)"
+    },
     "node": {
       "siteTitle": "Site Title",
       "siteDescription": "Enter site description",
@@ -764,7 +773,7 @@
     "nodeCount": "Total {count} pages",
     "generate": "Generate Site Map",
     "editNode": "Edit Page",
-    "title": "Title",
+    "nodeTitle": "Title",
     "url": "URL",
     "description": "Description"
   }

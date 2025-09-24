@@ -52,6 +52,45 @@
                     @input="updateNode"
                 />
             </div>
+            
+            <!-- Command/ReadModel 참조 정보 -->
+            <div class="node-references" v-if="hasReferences">
+                <div class="references-section">
+                    <div class="reference-group" v-if="node.referencedCommands && node.referencedCommands.length > 0">
+                        <div class="reference-label">
+                            <i class="fas fa-terminal"></i>
+                            {{ $t('siteMap.node.referencedCommands') }}
+                        </div>
+                        <div class="reference-tags">
+                            <span 
+                                v-for="command in node.referencedCommands" 
+                                :key="command" 
+                                class="reference-tag command-tag"
+                                :title="$t('siteMap.node.commandTooltip', { command })"
+                            >
+                                {{ command }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="reference-group" v-if="node.referencedReadModels && node.referencedReadModels.length > 0">
+                        <div class="reference-label">
+                            <i class="fas fa-eye"></i>
+                            {{ $t('siteMap.node.referencedReadModels') }}
+                        </div>
+                        <div class="reference-tags">
+                            <span 
+                                v-for="readModel in node.referencedReadModels" 
+                                :key="readModel" 
+                                class="reference-tag readmodel-tag"
+                                :title="$t('siteMap.node.readModelTooltip', { readModel })"
+                            >
+                                {{ readModel }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div class="node-actions">
                 <span class="child-count" v-if="node.children && node.children.length > 0">
                     {{ $t('siteMap.node.childCount', { count: node.children.length }) }}
@@ -195,6 +234,16 @@ export default {
             isCollapsed: false,
             updateTimeout: null
         };
+    },
+    computed: {
+        hasReferences() {
+            // 페이지 레벨(children이 있는 경우)에서는 참조 정보를 표시하지 않음
+            if (this.node.children && this.node.children.length > 0) {
+                return false;
+            }
+            return (this.node.referencedCommands && this.node.referencedCommands.length > 0) ||
+                   (this.node.referencedReadModels && this.node.referencedReadModels.length > 0);
+        }
     },
     methods: {
         updateNode() {
@@ -737,6 +786,96 @@ export default {
     .action-btn {
         width: 24px;
         height: 24px;
+    }
+}
+
+/* Command/ReadModel 참조 정보 스타일 */
+.node-references {
+    margin-top: 12px;
+    padding: 8px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+}
+
+.references-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.reference-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.reference-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #495057;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.reference-label i {
+    font-size: 10px;
+}
+
+.reference-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.reference-tag {
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 500;
+    cursor: help;
+    transition: all 0.2s ease;
+}
+
+.command-tag {
+    background: #e3f2fd;
+    color: #1976d2;
+    border: 1px solid #bbdefb;
+}
+
+.command-tag:hover {
+    background: #bbdefb;
+    color: #0d47a1;
+}
+
+.readmodel-tag {
+    background: #f3e5f5;
+    color: #7b1fa2;
+    border: 1px solid #e1bee7;
+}
+
+.readmodel-tag:hover {
+    background: #e1bee7;
+    color: #4a148c;
+}
+
+/* 반응형에서 참조 정보 */
+@media (max-width: 768px) {
+    .node-references {
+        margin-top: 8px;
+        padding: 6px;
+    }
+    
+    .reference-tags {
+        gap: 3px;
+    }
+    
+    .reference-tag {
+        font-size: 9px;
+        padding: 1px 4px;
     }
 }
 </style>

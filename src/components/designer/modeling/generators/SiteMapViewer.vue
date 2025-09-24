@@ -14,8 +14,9 @@
                     </v-btn> -->
                     <template v-if="isGenerating">
                         <v-progress-circular indeterminate color="primary" size="24" class="mr-2"></v-progress-circular>
-                        <span class="progress-text" v-if="totalChunks > 0">{{ $t('siteMap.toolbar.progress', { rate: processingRate }) }}</span>
-                        <span class="progress-text" v-if="currentGeneratedLength > 0">({{ currentGeneratedLength }} text generated...)</span>
+                        <span class="progress-text" v-if="currentProcessingStep">{{ $t(`siteMap.processingSteps.${currentProcessingStep}`) }}</span>
+                        <span class="progress-text" v-if="totalChunks > 0">({{ processingRate }}%)</span>
+                        <span class="progress-text" v-if="totalChunks === 0 && currentGeneratedLength > 0">{{ $t('siteMap.progress.textGenerated', { length: currentGeneratedLength }) }}</span>
                     </template>
                 </v-row>
             </div>
@@ -140,7 +141,17 @@ export default {
             default: 0,
             required: false
         },
+        currentProcessingStep: {
+            type: String,
+            default: "",
+            required: false
+        },
         modelValue: {
+            type: Object,
+            default: () => ({}),
+            required: false
+        },
+        commandReadModelData: {
             type: Object,
             default: () => ({}),
             required: false
