@@ -20,8 +20,8 @@ export const AddTraceToDraftOptionsGeneratorInputs = [
                         ],
                         "valueObjects": [
                             {
-                                "name": "ISBN",
-                                "alias": "ISBN",
+                                "name": "BookSpecification",
+                                "alias": "도서 상세 정보",
                                 "referencedAggregateName": ""
                             },
                             {
@@ -39,43 +39,27 @@ export const AddTraceToDraftOptionsGeneratorInputs = [
                                     "name": "Reservation",
                                     "alias": "예약"
                                 }
-                            },
-                            {
-                                "name": "LoanHistoryReference",
-                                "alias": "대출 이력 참조",
-                                "referencedAggregate": {
-                                    "name": "LoanHistory",
-                                    "alias": "대출 이력"
-                                }
-                            },
-                            {
-                                "name": "BookStatusHistoryReference",
-                                "alias": "도서 상태 이력 참조",
-                                "referencedAggregate": {
-                                    "name": "BookStatusHistory",
-                                    "alias": "도서 상태 이력"
-                                }
                             }
                         ]
                     }
                 ],
                 "pros": {
-                    "cohesion": "도서 등록, 상태변경, 폐기 등 모든 도서 관련 비즈니스 로직이 한 Aggregate 내에서 집중적으로 관리되어 높은 응집도를 보장한다.",
-                    "coupling": "외부 컨텍스트(대출, 예약, 이력)와의 관계가 ValueObject 참조로 단방향으로만 연결되어 결합도가 낮다.",
-                    "consistency": "ISBN 중복, 도서 상태 변경 등 핵심 불변식이 단일 트랜잭션 내에서 강하게 보장된다.",
-                    "encapsulation": "도서 상태 및 관리 규칙이 Aggregate 내부에 잘 은닉되어 시스템 전체의 일관성이 높다.",
-                    "complexity": "단일 Aggregate 구조로 인해 개발 및 이해가 용이하며, 코드 복잡성이 낮다.",
-                    "independence": "외부 컨텍스트와의 의존성이 ValueObject 참조에 그쳐 도서 관리 도메인의 독립적 진화가 가능하다.",
-                    "performance": "도서 한 건의 조회, 상태 변경이 Aggregate 단일 조회/갱신으로 처리되어 성능상 이점이 있다."
+                    "cohesion": "도서의 등록, 상태 관리, 폐기 등 모든 도서 관련 기능이 Book Aggregate 내에 집중되어 있어 일관된 트랜잭션 경계를 제공한다.",
+                    "coupling": "외부 컨텍스트(대출, 예약, 이력)와의 의존성을 ValueObject 참조로만 유지하여 결합도가 낮다.",
+                    "consistency": "도서 상태 변경, 폐기 등 핵심 비즈니스 규칙을 Aggregate 내부에서 원자적으로 보장할 수 있다.",
+                    "encapsulation": "도서의 상태, 상세 정보, 대출/예약 참조 등 도서 관리의 모든 세부 구현이 Aggregate 내부에 은닉된다.",
+                    "complexity": "단일 Aggregate로 구조가 단순하며, 도서 관리 업무에 대한 이해와 유지보수가 용이하다.",
+                    "independence": "도서 관리 정책 변경이 Aggregate 단위로 독립적으로 이루어질 수 있다.",
+                    "performance": "단일 Aggregate 접근으로 도서 상태 및 정보 조회·변경 시 쿼리 효율이 높다."
                 },
                 "cons": {
-                    "cohesion": "카테고리 등 도서 정보와 상태 관리 이력이 모두 포함되어 확장 시 책임이 커질 수 있다.",
-                    "coupling": "모든 도서 관리 변경이 Book Aggregate에 집중되어 변경 영향도가 높아질 수 있다.",
-                    "consistency": "도서 데이터가 대규모일 때 단일 Aggregate로 인한 락 경합이 발생할 수 있다.",
-                    "encapsulation": "확장이나 팀 분업 시 상태 이력 등 세부 영역의 은닉이 상대적으로 약하다.",
-                    "complexity": "도서 도메인 모든 책임이 집중되어 큰 도서 관리 시스템에서 기능 분리가 어려울 수 있다.",
-                    "independence": "카테고리 분류 정책 등 변화가 많을 때 도서 전체에 영향을 줄 수 있다.",
-                    "performance": "상태 변경 이력, 대출 이력 등 연관 정보까지 모두 Aggregate에 포함될 경우 대용량 처리에 부하가 발생할 수 있다."
+                    "cohesion": "상태 이력, 대출/예약 참조 등 다양한 책임이 한 Aggregate에 집중되어 도서 관리가 복잡해질 수 있다.",
+                    "coupling": "도서 상태 이력 등 확장 요구가 생기면 Aggregate 크기가 커져 외부 시스템과의 연동이 어려워질 수 있다.",
+                    "consistency": "상태 이력 등 대용량 데이터가 누적될 경우 트랜잭션 처리에 부담이 될 수 있다.",
+                    "encapsulation": "상태 이력, 대출/예약 등 서로 다른 도메인 관심사가 한 Aggregate에 혼재되어 캡슐화가 약해질 수 있다.",
+                    "complexity": "도서 관리 업무가 확장될수록 Aggregate가 비대해져 도메인 복잡도가 증가한다.",
+                    "independence": "상태 이력, 대출/예약 등 세부 기능 변경 시 전체 Aggregate에 영향이 갈 수 있다.",
+                    "performance": "상태 이력, 대출/예약 등 데이터가 누적될수록 단일 Aggregate 접근 시 성능 저하가 발생할 수 있다."
                 },
                 "isAIRecommended": false
             },
@@ -90,21 +74,17 @@ export const AddTraceToDraftOptionsGeneratorInputs = [
                             {
                                 "name": "BookStatus",
                                 "alias": "도서 상태"
+                            },
+                            {
+                                "name": "BookCategory",
+                                "alias": "도서 카테고리"
                             }
                         ],
                         "valueObjects": [
                             {
-                                "name": "ISBN",
-                                "alias": "ISBN",
+                                "name": "BookSpecification",
+                                "alias": "도서 상세 정보",
                                 "referencedAggregateName": ""
-                            },
-                            {
-                                "name": "CategoryReference",
-                                "alias": "카테고리 참조",
-                                "referencedAggregate": {
-                                    "name": "Category",
-                                    "alias": "카테고리"
-                                }
                             },
                             {
                                 "name": "LoanReference",
@@ -121,83 +101,76 @@ export const AddTraceToDraftOptionsGeneratorInputs = [
                                     "name": "Reservation",
                                     "alias": "예약"
                                 }
-                            },
-                            {
-                                "name": "LoanHistoryReference",
-                                "alias": "대출 이력 참조",
-                                "referencedAggregate": {
-                                    "name": "LoanHistory",
-                                    "alias": "대출 이력"
-                                }
-                            },
-                            {
-                                "name": "BookStatusHistoryReference",
-                                "alias": "도서 상태 이력 참조",
-                                "referencedAggregate": {
-                                    "name": "BookStatusHistory",
-                                    "alias": "도서 상태 이력"
-                                }
                             }
                         ]
                     },
                     {
                         "aggregate": {
-                            "name": "Category",
-                            "alias": "카테고리"
+                            "name": "BookStatusHistory",
+                            "alias": "도서 상태 변경 이력"
                         },
                         "enumerations": [
                             {
-                                "name": "BookCategory",
-                                "alias": "도서 카테고리"
+                                "name": "BookStatus",
+                                "alias": "도서 상태"
                             }
                         ],
-                        "valueObjects": []
+                        "valueObjects": [
+                            {
+                                "name": "BookReference",
+                                "alias": "도서 참조",
+                                "referencedAggregate": {
+                                    "name": "Book",
+                                    "alias": "도서"
+                                }
+                            }
+                        ]
                     }
                 ],
                 "pros": {
-                    "cohesion": "Book과 Category 영역을 분리해 도서 정보 관리와 카테고리 정책 변경의 독립성이 높다.",
-                    "coupling": "카테고리 정책 및 구조 변경이 Book Aggregate에 직접적 영향을 주지 않아 결합도가 낮다.",
-                    "consistency": "카테고리 변경/확장/통합 등 정책 변경 시 Book 도메인에 영향 없이 독립적으로 일관성 있게 처리 가능하다.",
-                    "encapsulation": "카테고리 정책의 관리 및 은닉이 Category Aggregate 내부에 잘 구현된다.",
-                    "complexity": "카테고리별 규칙, 도서별 상태 관리 등 복잡성이 Aggregate 별로 분산되어 관리 부담이 줄어든다.",
-                    "independence": "Category 정책만 변경해도 도서 등록, 분류, 상태관리 등 확장·진화가 가능하다.",
-                    "performance": "도서 검색, 카테고리별 조회 등 쿼리 패턴별로 최적화·분산이 가능해진다."
+                    "cohesion": "도서 정보와 상태 변경 이력을 별도 Aggregate로 분리해 각자의 책임과 라이프사이클을 명확히 구분한다.",
+                    "coupling": "상태 이력 관리가 Book Aggregate와 분리되어, 이력 확장·변경 시 도서 관리에 영향이 적다.",
+                    "consistency": "도서 상태 변경과 이력 기록이 분리되어 대용량 이력 데이터 관리에 유리하다.",
+                    "encapsulation": "상태 이력 관리의 세부 구현이 BookStatusHistory Aggregate에 은닉되어 도서 관리와 분리된다.",
+                    "complexity": "도서 관리와 상태 이력 관리가 분리되어 각 Aggregate의 복잡도가 낮아진다.",
+                    "independence": "상태 이력 관리 정책 변경이 BookStatusHistory Aggregate 단위로 독립적으로 가능하다.",
+                    "performance": "상태 이력 데이터가 많아져도 Book Aggregate의 성능 저하 없이 이력만 별도로 관리할 수 있다."
                 },
                 "cons": {
-                    "cohesion": "카테고리 참조 구조로 인해 도서 등록·변경 시 두 Aggregate 간 연동이 필요하다.",
-                    "coupling": "Book과 Category 사이의 참조로 인한 약한 결합이 생기며, 데이터 동기화 오류 가능성이 있다.",
-                    "consistency": "카테고리별 정책 변경이 Book에 즉각 반영되지 않을 경우 일관성 보장이 어렵다.",
-                    "encapsulation": "도서 상태 관리와 카테고리 정책이 분리되어 전체 비즈니스 규칙 파악이 어려워질 수 있다.",
-                    "complexity": "Aggregate 분리로 인해 트랜잭션 관리 및 서비스 레이어에서의 오케스트레이션 코드가 추가된다.",
-                    "independence": "Book과 Category 동시 변경 시 동시성 이슈나 트랜잭션 관리가 복잡해진다.",
-                    "performance": "카테고리 기반 대용량 조회 시 Cross-Aggregate Join이 필요해질 수 있다."
+                    "cohesion": "도서 상태 변경 시 이력 기록을 위해 두 Aggregate 간의 오케스트레이션이 필요하다.",
+                    "coupling": "상태 변경 트랜잭션이 두 Aggregate에 걸쳐 발생하므로, 일관성 보장을 위해 추가적인 처리 로직이 필요하다.",
+                    "consistency": "상태 변경과 이력 기록이 분리되어 일시적으로 데이터 불일치가 발생할 수 있다.",
+                    "encapsulation": "상태 변경과 이력 기록에 대한 비즈니스 규칙이 Aggregate 외부(Application Service 등)에서 관리되어야 한다.",
+                    "complexity": "두 Aggregate 간의 연동 및 트랜잭션 관리 로직이 추가되어 시스템 복잡도가 증가한다.",
+                    "independence": "도서 상태 변경과 이력 기록의 동기화 정책 변경 시 두 Aggregate 모두에 영향이 갈 수 있다.",
+                    "performance": "상태 변경 시 두 Aggregate를 모두 접근해야 하므로 트랜잭션 처리 비용이 증가할 수 있다."
                 },
                 "isAIRecommended": true
             }
         ],
-        "boundedContextName": "RoomManagement",
+        "boundedContextName": "BookManagement",
         "functionalRequirements": `# Bounded Context Overview: BookManagement (도서 관리)
 
 ## Role
-도서 등록, 도서 상태 관리(대출가능/대출중/예약중/폐기) 및 도서 정보(도서명, ISBN, 저자, 출판사, 카테고리) 관리를 담당한다. ISBN 중복 및 자리수 유효성 검증, 카테고리 분류, 도서의 상태 변동, 폐기 처리 등을 수행한다.
+도서 등록, 상태 관리, 폐기 처리를 담당하며 도서의 생애주기와 상태 변화를 관리한다.
 
 ## Key Events
 - BookRegistered
-- BookDiscarded
-- BookStateChanged
+- BookStatusChanged
+- BookDisposed
 
 # Requirements
 
 ## userStory
 
-'도서 관리' 화면에서는 새로운 도서를 등록하고 현재 보유한 도서들의 상태를 관리할 수 있어야 해. 도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해. 등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야 해.
+도서 관리' 화면에서는 새로운 도서를 등록하고 현재 보유한 도서들의 상태를 관리할 수 있어야 해. 도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해. 등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야
 
-각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해.
+도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할
 
 ## DDL
 
 \`\`\`sql
--- 도서 테이블
+도서 테이블
 CREATE TABLE books (
     book_id INT AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(500) NOT NULL,
@@ -218,7 +191,7 @@ CREATE TABLE books (
 );
 \`\`\`
 \`\`\`sql
--- 도서 상태 변경 이력 테이블
+도서 상태 변경 이력 테이블
 CREATE TABLE book_status_history (
     history_id INT AUTO_INCREMENT PRIMARY KEY,
     book_id INT NOT NULL,
@@ -238,9 +211,9 @@ CREATE TABLE book_status_history (
 {
   "name": "BookRegistered",
   "displayName": "도서 등록됨",
-  "actor": "사서",
+  "actor": "Librarian",
   "level": 1,
-  "description": "사서가 신규 도서 정보를 입력하고, 유효성(ISBN 중복/자리수, 카테고리) 검증 후 도서를 등록하였음.",
+  "description": "사서가 새로운 도서를 등록하여 도서관 시스템에 추가하였음. 등록 시 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받고, ISBN 중복 및 유효성 검증이 완료됨.",
   "inputs": [
     "도서명",
     "ISBN(13자리)",
@@ -249,82 +222,80 @@ CREATE TABLE book_status_history (
     "카테고리(소설/비소설/학술/잡지)"
   ],
   "outputs": [
-    "신규 도서 생성",
-    "도서 상태 '대출가능' 설정"
+    "신규 도서 정보",
+    "도서 상태: 대출가능"
   ],
   "nextEvents": [
-    "BookStateChanged"
+    "BookStatusChanged"
   ]
 }
 \`\`\`
 
 \`\`\`json
 {
-  "name": "BookStateChanged",
+  "name": "BookStatusChanged",
   "displayName": "도서 상태 변경됨",
-  "actor": "도서관리시스템",
+  "actor": "System",
   "level": 2,
-  "description": "도서가 등록, 대출, 반납, 예약, 폐기 등 상황 변화에 따라 상태가 자동으로 변경됨.",
+  "description": "도서의 대출/반납/예약/폐기 등 상태 변화가 발생하여 도서 상태가 자동 또는 수동으로 변경됨.",
   "inputs": [
-    "도서 상태 변경 조건 발생(대출/반납/예약/폐기)"
+    "도서 상태 변경 트리거(대출, 반납, 예약, 폐기 등)",
+    "도서 식별자"
   ],
   "outputs": [
-    "도서 상태: 대출가능/대출중/예약중/폐기"
+    "변경된 도서 상태"
   ],
   "nextEvents": [
+    "BookDisposed",
     "BookLoaned",
     "BookReturned",
-    "BookReserved",
-    "BookDiscarded"
+    "BookReserved"
   ]
 }
 \`\`\`
 
 \`\`\`json
 {
-  "name": "BookDiscarded",
+  "name": "BookDisposed",
   "displayName": "도서 폐기됨",
-  "actor": "사서",
+  "actor": "Librarian",
   "level": 3,
-  "description": "사서가 훼손, 분실 등으로 도서를 폐기 처리함. 폐기된 도서는 대출 불가.",
+  "description": "도서가 훼손 또는 분실되어 사서에 의해 폐기 처리됨. 폐기된 도서는 더 이상 대출이 불가능함.",
   "inputs": [
-    "도서",
+    "도서 식별자",
     "폐기 사유"
   ],
   "outputs": [
-    "도서 상태 '폐기'로 변경",
-    "대출 불가 처리"
+    "도서 상태: 폐기"
   ],
-  "nextEvents": [
-    "BookStateChanged"
-  ]
+  "nextEvents": []
 }
 \`\`\`
 
 ## Context Relations
 
-### BookManagement-LoanProcessing
+### BookManagement-LoanAndReservation
 - **Type**: Pub/Sub
-- **Direction**: sends to 대출/반납 처리 (LoanProcessing)
-- **Reason**: 도서 상태 변경 등 주요 이벤트가 대출/반납 프로세스에 영향을 미치므로, 느슨한 결합과 확장성을 위해 pub/sub을 적용했다.
-- **Interaction Pattern**: 도서 등록, 폐기, 상태 변경 이벤트가 발생하면 대출/반납 처리 컨텍스트가 이를 구독하여 내부 상태를 동기화한다.
+- **Direction**: sends to 대출/반납 및 예약 (LoanAndReservation)
+- **Reason**: 도서 상태 변경(대출가능, 대출중, 예약중, 폐기 등)이 발생하면 대출/반납 및 예약 컨텍스트에서 이를 구독하여 대출/예약 프로세스에 반영한다.
+- **Interaction Pattern**: 도서 관리에서 도서 상태 변경 이벤트를 발행하면 대출/반납 및 예약 컨텍스트가 이를 구독하여 처리한다.
 
-### BookManagement-HistoryManagement
+### BookManagement-LoanHistory
 - **Type**: Pub/Sub
-- **Direction**: sends to 이력 관리 (HistoryManagement)
-- **Reason**: 도서 등록/상태 변경 이벤트가 이력 관리의 기록 트리거가 되므로, pub/sub을 적용해 독립성과 유연성을 보장했다.
-- **Interaction Pattern**: 도서 관리 컨텍스트에서 도서 등록/상태 변경이 발생하면 이력 관리 컨텍스트가 이를 구독해 상태 변경 이력을 기록한다.`,
+- **Direction**: sends to 이력 관리 (LoanHistory)
+- **Reason**: 도서 등록, 폐기 등 도서 상태 변화 이력도 이력 관리 컨텍스트에서 기록할 수 있도록 이벤트를 발행한다.
+- **Interaction Pattern**: 도서 관리에서 도서 등록, 폐기 등 상태 변화 이벤트를 발행하면 이력 관리 컨텍스트가 이를 구독하여 상태 변경 이력을 기록한다.`,
         "traceMap": {
             "4": {
                 "refs": [
                     [
                         [
-                            1,
-                            1
+                            3,
+                            2
                         ],
                         [
                             3,
-                            306
+                            265
                         ]
                     ]
                 ],
@@ -335,11 +306,31 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            15
+                            57
                         ],
                         [
                             3,
-                            103
+                            100
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            105
+                        ],
+                        [
+                            3,
+                            128
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            136
+                        ],
+                        [
+                            3,
+                            161
                         ]
                     ]
                 ],
@@ -350,11 +341,41 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            246
+                            191
                         ],
                         [
                             3,
-                            305
+                            238
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            264
+                        ],
+                        [
+                            3,
+                            302
+                        ]
+                    ],
+                    [
+                        [
+                            7,
+                            150
+                        ],
+                        [
+                            7,
+                            167
+                        ]
+                    ],
+                    [
+                        [
+                            7,
+                            167
+                        ],
+                        [
+                            7,
+                            175
                         ]
                     ]
                 ],
@@ -365,11 +386,11 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            40
+                            264
                         ],
                         [
                             3,
-                            244
+                            302
                         ]
                     ]
                 ],
@@ -384,7 +405,7 @@ CREATE TABLE book_status_history (
                         ],
                         [
                             3,
-                            306
+                            301
                         ]
                     ]
                 ],
@@ -399,7 +420,7 @@ CREATE TABLE book_status_history (
                         ],
                         [
                             9,
-                            75
+                            63
                         ]
                     ]
                 ],
@@ -413,8 +434,8 @@ CREATE TABLE book_status_history (
                             1
                         ],
                         [
-                            42,
-                            3
+                            24,
+                            6
                         ]
                     ]
                 ],
@@ -424,12 +445,12 @@ CREATE TABLE book_status_history (
                 "refs": [
                     [
                         [
-                            24,
+                            25,
                             1
                         ],
                         [
-                            42,
-                            3
+                            25,
+                            20
                         ]
                     ]
                 ],
@@ -439,12 +460,12 @@ CREATE TABLE book_status_history (
                 "refs": [
                     [
                         [
-                            24,
+                            26,
                             1
                         ],
                         [
-                            42,
-                            3
+                            26,
+                            43
                         ]
                     ]
                 ],
@@ -454,12 +475,12 @@ CREATE TABLE book_status_history (
                 "refs": [
                     [
                         [
-                            24,
+                            27,
                             1
                         ],
                         [
-                            42,
-                            3
+                            27,
+                            32
                         ]
                     ]
                 ],
@@ -469,12 +490,12 @@ CREATE TABLE book_status_history (
                 "refs": [
                     [
                         [
-                            24,
+                            28,
                             1
                         ],
                         [
-                            42,
-                            3
+                            28,
+                            37
                         ]
                     ]
                 ],
@@ -484,12 +505,12 @@ CREATE TABLE book_status_history (
                 "refs": [
                     [
                         [
-                            24,
+                            29,
                             1
                         ],
                         [
-                            42,
-                            3
+                            29,
+                            33
                         ]
                     ]
                 ],
@@ -499,12 +520,12 @@ CREATE TABLE book_status_history (
                 "refs": [
                     [
                         [
-                            24,
+                            30,
                             1
                         ],
                         [
-                            42,
-                            3
+                            30,
+                            36
                         ]
                     ]
                 ],
@@ -514,12 +535,12 @@ CREATE TABLE book_status_history (
                 "refs": [
                     [
                         [
-                            24,
+                            31,
                             1
                         ],
                         [
-                            42,
-                            3
+                            31,
+                            52
                         ]
                     ]
                 ],
@@ -529,12 +550,12 @@ CREATE TABLE book_status_history (
                 "refs": [
                     [
                         [
-                            24,
+                            32,
                             1
                         ],
                         [
-                            42,
-                            3
+                            32,
+                            59
                         ]
                     ]
                 ],
@@ -544,12 +565,12 @@ CREATE TABLE book_status_history (
                 "refs": [
                     [
                         [
-                            24,
+                            33,
                             1
                         ],
                         [
-                            42,
-                            3
+                            33,
+                            57
                         ]
                     ]
                 ],
@@ -559,12 +580,12 @@ CREATE TABLE book_status_history (
                 "refs": [
                     [
                         [
-                            24,
+                            34,
                             1
                         ],
                         [
-                            42,
-                            3
+                            34,
+                            32
                         ]
                     ]
                 ],
@@ -574,12 +595,12 @@ CREATE TABLE book_status_history (
                 "refs": [
                     [
                         [
-                            24,
+                            35,
                             1
                         ],
                         [
-                            42,
-                            3
+                            35,
+                            30
                         ]
                     ]
                 ],
@@ -589,12 +610,12 @@ CREATE TABLE book_status_history (
                 "refs": [
                     [
                         [
-                            24,
+                            36,
                             1
                         ],
                         [
-                            42,
-                            3
+                            36,
+                            50
                         ]
                     ]
                 ],
@@ -604,12 +625,12 @@ CREATE TABLE book_status_history (
                 "refs": [
                     [
                         [
-                            24,
+                            37,
                             1
                         ],
                         [
-                            42,
-                            3
+                            37,
+                            78
                         ]
                     ]
                 ],
@@ -619,12 +640,12 @@ CREATE TABLE book_status_history (
                 "refs": [
                     [
                         [
-                            24,
+                            38,
                             1
                         ],
                         [
-                            42,
-                            3
+                            38,
+                            28
                         ]
                     ]
                 ],
@@ -634,12 +655,12 @@ CREATE TABLE book_status_history (
                 "refs": [
                     [
                         [
-                            24,
+                            39,
                             1
                         ],
                         [
-                            42,
-                            3
+                            39,
+                            26
                         ]
                     ]
                 ],
@@ -649,12 +670,12 @@ CREATE TABLE book_status_history (
                 "refs": [
                     [
                         [
-                            24,
+                            40,
                             1
                         ],
                         [
-                            42,
-                            3
+                            40,
+                            30
                         ]
                     ]
                 ],
@@ -664,12 +685,12 @@ CREATE TABLE book_status_history (
                 "refs": [
                     [
                         [
-                            24,
+                            41,
                             1
                         ],
                         [
-                            42,
-                            3
+                            41,
+                            33
                         ]
                     ]
                 ],
@@ -679,12 +700,12 @@ CREATE TABLE book_status_history (
                 "refs": [
                     [
                         [
-                            24,
+                            42,
                             1
                         ],
                         [
                             42,
-                            3
+                            2
                         ]
                     ]
                 ],
@@ -698,8 +719,8 @@ CREATE TABLE book_status_history (
                             1
                         ],
                         [
-                            96,
-                            3
+                            84,
+                            15
                         ]
                     ]
                 ],
@@ -709,12 +730,12 @@ CREATE TABLE book_status_history (
                 "refs": [
                     [
                         [
-                            84,
+                            85,
                             1
                         ],
                         [
-                            96,
-                            3
+                            85,
+                            34
                         ]
                     ]
                 ],
@@ -724,12 +745,12 @@ CREATE TABLE book_status_history (
                 "refs": [
                     [
                         [
-                            84,
+                            86,
                             1
                         ],
                         [
-                            96,
-                            3
+                            86,
+                            46
                         ]
                     ]
                 ],
@@ -739,12 +760,12 @@ CREATE TABLE book_status_history (
                 "refs": [
                     [
                         [
-                            84,
+                            87,
                             1
                         ],
                         [
-                            96,
-                            3
+                            87,
+                            25
                         ]
                     ]
                 ],
@@ -754,12 +775,12 @@ CREATE TABLE book_status_history (
                 "refs": [
                     [
                         [
-                            84,
+                            88,
                             1
                         ],
                         [
-                            96,
-                            3
+                            88,
+                            53
                         ]
                     ]
                 ],
@@ -769,12 +790,12 @@ CREATE TABLE book_status_history (
                 "refs": [
                     [
                         [
-                            84,
+                            89,
                             1
                         ],
                         [
-                            96,
-                            3
+                            89,
+                            57
                         ]
                     ]
                 ],
@@ -784,12 +805,12 @@ CREATE TABLE book_status_history (
                 "refs": [
                     [
                         [
-                            84,
+                            90,
                             1
                         ],
                         [
-                            96,
-                            3
+                            90,
+                            31
                         ]
                     ]
                 ],
@@ -799,12 +820,12 @@ CREATE TABLE book_status_history (
                 "refs": [
                     [
                         [
-                            84,
+                            91,
                             1
                         ],
                         [
-                            96,
-                            3
+                            91,
+                            28
                         ]
                     ]
                 ],
@@ -814,12 +835,12 @@ CREATE TABLE book_status_history (
                 "refs": [
                     [
                         [
-                            84,
+                            92,
                             1
                         ],
                         [
-                            96,
-                            3
+                            92,
+                            51
                         ]
                     ]
                 ],
@@ -829,12 +850,12 @@ CREATE TABLE book_status_history (
                 "refs": [
                     [
                         [
-                            84,
+                            93,
                             1
                         ],
                         [
-                            96,
-                            3
+                            93,
+                            52
                         ]
                     ]
                 ],
@@ -844,12 +865,12 @@ CREATE TABLE book_status_history (
                 "refs": [
                     [
                         [
-                            84,
+                            94,
                             1
                         ],
                         [
-                            96,
-                            3
+                            94,
+                            32
                         ]
                     ]
                 ],
@@ -859,12 +880,12 @@ CREATE TABLE book_status_history (
                 "refs": [
                     [
                         [
-                            84,
+                            95,
                             1
                         ],
                         [
-                            96,
-                            3
+                            95,
+                            39
                         ]
                     ]
                 ],
@@ -874,12 +895,12 @@ CREATE TABLE book_status_history (
                 "refs": [
                     [
                         [
-                            84,
+                            96,
                             1
                         ],
                         [
                             96,
-                            3
+                            2
                         ]
                     ]
                 ],
@@ -890,11 +911,31 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            15
+                            57
                         ],
                         [
                             3,
-                            103
+                            100
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            105
+                        ],
+                        [
+                            3,
+                            128
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            136
+                        ],
+                        [
+                            3,
+                            161
                         ]
                     ]
                 ],
@@ -905,11 +946,31 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            15
+                            57
                         ],
                         [
                             3,
-                            103
+                            100
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            105
+                        ],
+                        [
+                            3,
+                            128
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            136
+                        ],
+                        [
+                            3,
+                            161
                         ]
                     ]
                 ],
@@ -920,11 +981,31 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            15
+                            57
                         ],
                         [
                             3,
-                            103
+                            100
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            105
+                        ],
+                        [
+                            3,
+                            128
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            136
+                        ],
+                        [
+                            3,
+                            161
                         ]
                     ]
                 ],
@@ -935,11 +1016,31 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            15
+                            57
                         ],
                         [
                             3,
-                            103
+                            100
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            105
+                        ],
+                        [
+                            3,
+                            128
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            136
+                        ],
+                        [
+                            3,
+                            161
                         ]
                     ]
                 ],
@@ -950,11 +1051,31 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            15
+                            57
                         ],
                         [
                             3,
-                            103
+                            100
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            105
+                        ],
+                        [
+                            3,
+                            128
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            136
+                        ],
+                        [
+                            3,
+                            161
                         ]
                     ]
                 ],
@@ -965,11 +1086,31 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            15
+                            57
                         ],
                         [
                             3,
-                            103
+                            100
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            105
+                        ],
+                        [
+                            3,
+                            128
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            136
+                        ],
+                        [
+                            3,
+                            161
                         ]
                     ]
                 ],
@@ -980,11 +1121,31 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            15
+                            57
                         ],
                         [
                             3,
-                            103
+                            100
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            105
+                        ],
+                        [
+                            3,
+                            128
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            136
+                        ],
+                        [
+                            3,
+                            161
                         ]
                     ]
                 ],
@@ -995,11 +1156,31 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            15
+                            57
                         ],
                         [
                             3,
-                            103
+                            100
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            105
+                        ],
+                        [
+                            3,
+                            128
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            136
+                        ],
+                        [
+                            3,
+                            161
                         ]
                     ]
                 ],
@@ -1010,11 +1191,31 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            15
+                            57
                         ],
                         [
                             3,
-                            103
+                            100
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            105
+                        ],
+                        [
+                            3,
+                            128
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            136
+                        ],
+                        [
+                            3,
+                            161
                         ]
                     ]
                 ],
@@ -1025,11 +1226,31 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            15
+                            57
                         ],
                         [
                             3,
-                            103
+                            100
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            105
+                        ],
+                        [
+                            3,
+                            128
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            136
+                        ],
+                        [
+                            3,
+                            161
                         ]
                     ]
                 ],
@@ -1040,11 +1261,31 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            15
+                            57
                         ],
                         [
                             3,
-                            103
+                            100
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            105
+                        ],
+                        [
+                            3,
+                            128
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            136
+                        ],
+                        [
+                            3,
+                            161
                         ]
                     ]
                 ],
@@ -1055,11 +1296,31 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            15
+                            57
                         ],
                         [
                             3,
-                            103
+                            100
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            105
+                        ],
+                        [
+                            3,
+                            128
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            136
+                        ],
+                        [
+                            3,
+                            161
                         ]
                     ]
                 ],
@@ -1070,11 +1331,31 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            15
+                            57
                         ],
                         [
                             3,
-                            103
+                            100
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            105
+                        ],
+                        [
+                            3,
+                            128
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            136
+                        ],
+                        [
+                            3,
+                            161
                         ]
                     ]
                 ],
@@ -1085,11 +1366,31 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            15
+                            57
                         ],
                         [
                             3,
-                            103
+                            100
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            105
+                        ],
+                        [
+                            3,
+                            128
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            136
+                        ],
+                        [
+                            3,
+                            161
                         ]
                     ]
                 ],
@@ -1100,11 +1401,31 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            15
+                            57
                         ],
                         [
                             3,
-                            103
+                            100
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            105
+                        ],
+                        [
+                            3,
+                            128
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            136
+                        ],
+                        [
+                            3,
+                            161
                         ]
                     ]
                 ],
@@ -1115,11 +1436,31 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            15
+                            57
                         ],
                         [
                             3,
-                            103
+                            100
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            105
+                        ],
+                        [
+                            3,
+                            128
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            136
+                        ],
+                        [
+                            3,
+                            161
                         ]
                     ]
                 ],
@@ -1130,11 +1471,31 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            15
+                            57
                         ],
                         [
                             3,
-                            103
+                            100
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            105
+                        ],
+                        [
+                            3,
+                            128
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            136
+                        ],
+                        [
+                            3,
+                            161
                         ]
                     ]
                 ],
@@ -1145,11 +1506,31 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            15
+                            57
                         ],
                         [
                             3,
-                            103
+                            100
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            105
+                        ],
+                        [
+                            3,
+                            128
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            136
+                        ],
+                        [
+                            3,
+                            161
                         ]
                     ]
                 ],
@@ -1160,11 +1541,31 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            15
+                            57
                         ],
                         [
                             3,
-                            103
+                            100
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            105
+                        ],
+                        [
+                            3,
+                            128
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            136
+                        ],
+                        [
+                            3,
+                            161
                         ]
                     ]
                 ],
@@ -1175,11 +1576,31 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            15
+                            57
                         ],
                         [
                             3,
-                            103
+                            100
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            105
+                        ],
+                        [
+                            3,
+                            128
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            136
+                        ],
+                        [
+                            3,
+                            161
                         ]
                     ]
                 ],
@@ -1190,11 +1611,31 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            15
+                            57
                         ],
                         [
                             3,
-                            103
+                            100
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            105
+                        ],
+                        [
+                            3,
+                            128
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            136
+                        ],
+                        [
+                            3,
+                            161
                         ]
                     ]
                 ],
@@ -1205,11 +1646,41 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            40
+                            191
                         ],
                         [
                             3,
-                            244
+                            238
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            264
+                        ],
+                        [
+                            3,
+                            302
+                        ]
+                    ],
+                    [
+                        [
+                            7,
+                            150
+                        ],
+                        [
+                            7,
+                            167
+                        ]
+                    ],
+                    [
+                        [
+                            7,
+                            167
+                        ],
+                        [
+                            7,
+                            175
                         ]
                     ]
                 ],
@@ -1220,11 +1691,41 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            40
+                            191
                         ],
                         [
                             3,
-                            244
+                            238
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            264
+                        ],
+                        [
+                            3,
+                            302
+                        ]
+                    ],
+                    [
+                        [
+                            7,
+                            150
+                        ],
+                        [
+                            7,
+                            167
+                        ]
+                    ],
+                    [
+                        [
+                            7,
+                            167
+                        ],
+                        [
+                            7,
+                            175
                         ]
                     ]
                 ],
@@ -1235,11 +1736,41 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            40
+                            191
                         ],
                         [
                             3,
-                            244
+                            238
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            264
+                        ],
+                        [
+                            3,
+                            302
+                        ]
+                    ],
+                    [
+                        [
+                            7,
+                            150
+                        ],
+                        [
+                            7,
+                            167
+                        ]
+                    ],
+                    [
+                        [
+                            7,
+                            167
+                        ],
+                        [
+                            7,
+                            175
                         ]
                     ]
                 ],
@@ -1250,11 +1781,41 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            40
+                            191
                         ],
                         [
                             3,
-                            244
+                            238
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            264
+                        ],
+                        [
+                            3,
+                            302
+                        ]
+                    ],
+                    [
+                        [
+                            7,
+                            150
+                        ],
+                        [
+                            7,
+                            167
+                        ]
+                    ],
+                    [
+                        [
+                            7,
+                            167
+                        ],
+                        [
+                            7,
+                            175
                         ]
                     ]
                 ],
@@ -1265,11 +1826,41 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            40
+                            191
                         ],
                         [
                             3,
-                            244
+                            238
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            264
+                        ],
+                        [
+                            3,
+                            302
+                        ]
+                    ],
+                    [
+                        [
+                            7,
+                            150
+                        ],
+                        [
+                            7,
+                            167
+                        ]
+                    ],
+                    [
+                        [
+                            7,
+                            167
+                        ],
+                        [
+                            7,
+                            175
                         ]
                     ]
                 ],
@@ -1280,11 +1871,41 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            40
+                            191
                         ],
                         [
                             3,
-                            244
+                            238
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            264
+                        ],
+                        [
+                            3,
+                            302
+                        ]
+                    ],
+                    [
+                        [
+                            7,
+                            150
+                        ],
+                        [
+                            7,
+                            167
+                        ]
+                    ],
+                    [
+                        [
+                            7,
+                            167
+                        ],
+                        [
+                            7,
+                            175
                         ]
                     ]
                 ],
@@ -1295,11 +1916,41 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            40
+                            191
                         ],
                         [
                             3,
-                            244
+                            238
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            264
+                        ],
+                        [
+                            3,
+                            302
+                        ]
+                    ],
+                    [
+                        [
+                            7,
+                            150
+                        ],
+                        [
+                            7,
+                            167
+                        ]
+                    ],
+                    [
+                        [
+                            7,
+                            167
+                        ],
+                        [
+                            7,
+                            175
                         ]
                     ]
                 ],
@@ -1310,11 +1961,41 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            40
+                            191
                         ],
                         [
                             3,
-                            244
+                            238
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            264
+                        ],
+                        [
+                            3,
+                            302
+                        ]
+                    ],
+                    [
+                        [
+                            7,
+                            150
+                        ],
+                        [
+                            7,
+                            167
+                        ]
+                    ],
+                    [
+                        [
+                            7,
+                            167
+                        ],
+                        [
+                            7,
+                            175
                         ]
                     ]
                 ],
@@ -1325,11 +2006,41 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            40
+                            191
                         ],
                         [
                             3,
-                            244
+                            238
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            264
+                        ],
+                        [
+                            3,
+                            302
+                        ]
+                    ],
+                    [
+                        [
+                            7,
+                            150
+                        ],
+                        [
+                            7,
+                            167
+                        ]
+                    ],
+                    [
+                        [
+                            7,
+                            167
+                        ],
+                        [
+                            7,
+                            175
                         ]
                     ]
                 ],
@@ -1340,11 +2051,41 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            40
+                            191
                         ],
                         [
                             3,
-                            244
+                            238
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            264
+                        ],
+                        [
+                            3,
+                            302
+                        ]
+                    ],
+                    [
+                        [
+                            7,
+                            150
+                        ],
+                        [
+                            7,
+                            167
+                        ]
+                    ],
+                    [
+                        [
+                            7,
+                            167
+                        ],
+                        [
+                            7,
+                            175
                         ]
                     ]
                 ],
@@ -1355,11 +2096,41 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            40
+                            191
                         ],
                         [
                             3,
-                            244
+                            238
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            264
+                        ],
+                        [
+                            3,
+                            302
+                        ]
+                    ],
+                    [
+                        [
+                            7,
+                            150
+                        ],
+                        [
+                            7,
+                            167
+                        ]
+                    ],
+                    [
+                        [
+                            7,
+                            167
+                        ],
+                        [
+                            7,
+                            175
                         ]
                     ]
                 ],
@@ -1370,11 +2141,41 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            40
+                            191
                         ],
                         [
                             3,
-                            244
+                            238
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            264
+                        ],
+                        [
+                            3,
+                            302
+                        ]
+                    ],
+                    [
+                        [
+                            7,
+                            150
+                        ],
+                        [
+                            7,
+                            167
+                        ]
+                    ],
+                    [
+                        [
+                            7,
+                            167
+                        ],
+                        [
+                            7,
+                            175
                         ]
                     ]
                 ],
@@ -1385,11 +2186,41 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            40
+                            191
                         ],
                         [
                             3,
-                            244
+                            238
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            264
+                        ],
+                        [
+                            3,
+                            302
+                        ]
+                    ],
+                    [
+                        [
+                            7,
+                            150
+                        ],
+                        [
+                            7,
+                            167
+                        ]
+                    ],
+                    [
+                        [
+                            7,
+                            167
+                        ],
+                        [
+                            7,
+                            175
                         ]
                     ]
                 ],
@@ -1400,11 +2231,41 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            40
+                            191
                         ],
                         [
                             3,
-                            244
+                            238
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            264
+                        ],
+                        [
+                            3,
+                            302
+                        ]
+                    ],
+                    [
+                        [
+                            7,
+                            150
+                        ],
+                        [
+                            7,
+                            167
+                        ]
+                    ],
+                    [
+                        [
+                            7,
+                            167
+                        ],
+                        [
+                            7,
+                            175
                         ]
                     ]
                 ],
@@ -1415,11 +2276,41 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            40
+                            191
                         ],
                         [
                             3,
-                            244
+                            238
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            264
+                        ],
+                        [
+                            3,
+                            302
+                        ]
+                    ],
+                    [
+                        [
+                            7,
+                            150
+                        ],
+                        [
+                            7,
+                            167
+                        ]
+                    ],
+                    [
+                        [
+                            7,
+                            167
+                        ],
+                        [
+                            7,
+                            175
                         ]
                     ]
                 ],
@@ -1430,11 +2321,41 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            40
+                            191
                         ],
                         [
                             3,
-                            244
+                            238
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            264
+                        ],
+                        [
+                            3,
+                            302
+                        ]
+                    ],
+                    [
+                        [
+                            7,
+                            150
+                        ],
+                        [
+                            7,
+                            167
+                        ]
+                    ],
+                    [
+                        [
+                            7,
+                            167
+                        ],
+                        [
+                            7,
+                            175
                         ]
                     ]
                 ],
@@ -1445,11 +2366,41 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            40
+                            191
                         ],
                         [
                             3,
-                            244
+                            238
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            264
+                        ],
+                        [
+                            3,
+                            302
+                        ]
+                    ],
+                    [
+                        [
+                            7,
+                            150
+                        ],
+                        [
+                            7,
+                            167
+                        ]
+                    ],
+                    [
+                        [
+                            7,
+                            167
+                        ],
+                        [
+                            7,
+                            175
                         ]
                     ]
                 ],
@@ -1460,11 +2411,41 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            40
+                            191
                         ],
                         [
                             3,
-                            244
+                            238
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            264
+                        ],
+                        [
+                            3,
+                            302
+                        ]
+                    ],
+                    [
+                        [
+                            7,
+                            150
+                        ],
+                        [
+                            7,
+                            167
+                        ]
+                    ],
+                    [
+                        [
+                            7,
+                            167
+                        ],
+                        [
+                            7,
+                            175
                         ]
                     ]
                 ],
@@ -1475,26 +2456,86 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            40
+                            191
                         ],
                         [
                             3,
-                            244
+                            238
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            264
+                        ],
+                        [
+                            3,
+                            302
+                        ]
+                    ],
+                    [
+                        [
+                            7,
+                            150
+                        ],
+                        [
+                            7,
+                            167
+                        ]
+                    ],
+                    [
+                        [
+                            7,
+                            167
+                        ],
+                        [
+                            7,
+                            175
                         ]
                     ]
                 ],
                 "isDirectMatching": false
             },
-            "106": {
+            "103": {
                 "refs": [
                     [
                         [
                             3,
-                            246
+                            191
                         ],
                         [
                             3,
-                            305
+                            238
+                        ]
+                    ],
+                    [
+                        [
+                            3,
+                            264
+                        ],
+                        [
+                            3,
+                            302
+                        ]
+                    ],
+                    [
+                        [
+                            7,
+                            150
+                        ],
+                        [
+                            7,
+                            167
+                        ]
+                    ],
+                    [
+                        [
+                            7,
+                            167
+                        ],
+                        [
+                            7,
+                            175
                         ]
                     ]
                 ],
@@ -1505,11 +2546,11 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            246
+                            264
                         ],
                         [
                             3,
-                            305
+                            302
                         ]
                     ]
                 ],
@@ -1520,11 +2561,11 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            246
+                            264
                         ],
                         [
                             3,
-                            305
+                            302
                         ]
                     ]
                 ],
@@ -1535,11 +2576,11 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            246
+                            264
                         ],
                         [
                             3,
-                            305
+                            302
                         ]
                     ]
                 ],
@@ -1550,11 +2591,11 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            246
+                            264
                         ],
                         [
                             3,
-                            305
+                            302
                         ]
                     ]
                 ],
@@ -1565,11 +2606,11 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            246
+                            264
                         ],
                         [
                             3,
-                            305
+                            302
                         ]
                     ]
                 ],
@@ -1580,11 +2621,11 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            246
+                            264
                         ],
                         [
                             3,
-                            305
+                            302
                         ]
                     ]
                 ],
@@ -1595,11 +2636,11 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            246
+                            264
                         ],
                         [
                             3,
-                            305
+                            302
                         ]
                     ]
                 ],
@@ -1610,11 +2651,11 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            246
+                            264
                         ],
                         [
                             3,
-                            305
+                            302
                         ]
                     ]
                 ],
@@ -1625,11 +2666,11 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            246
+                            264
                         ],
                         [
                             3,
-                            305
+                            302
                         ]
                     ]
                 ],
@@ -1640,11 +2681,11 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            246
+                            264
                         ],
                         [
                             3,
-                            305
+                            302
                         ]
                     ]
                 ],
@@ -1655,11 +2696,11 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            246
+                            264
                         ],
                         [
                             3,
-                            305
+                            302
                         ]
                     ]
                 ],
@@ -1670,11 +2711,11 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            246
+                            264
                         ],
                         [
                             3,
-                            305
+                            302
                         ]
                     ]
                 ],
@@ -1685,11 +2726,11 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            246
+                            264
                         ],
                         [
                             3,
-                            305
+                            302
                         ]
                     ]
                 ],
@@ -1700,11 +2741,11 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            246
+                            264
                         ],
                         [
                             3,
-                            305
+                            302
                         ]
                     ]
                 ],
@@ -1715,41 +2756,41 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            246
+                            264
                         ],
                         [
                             3,
-                            305
+                            302
                         ]
                     ]
                 ],
                 "isDirectMatching": false
             },
-            "122": {
+            "127": {
                 "refs": [
                     [
                         [
                             3,
-                            246
+                            1
                         ],
                         [
-                            3,
-                            305
+                            7,
+                            203
                         ]
                     ]
                 ],
                 "isDirectMatching": false
             },
-            "123": {
+            "128": {
                 "refs": [
                     [
                         [
                             3,
-                            246
+                            1
                         ],
                         [
-                            3,
-                            305
+                            7,
+                            203
                         ]
                     ]
                 ],
@@ -1760,11 +2801,11 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            172
+                            1
                         ],
                         [
                             7,
-                            171
+                            203
                         ]
                     ]
                 ],
@@ -1775,41 +2816,41 @@ CREATE TABLE book_status_history (
                     [
                         [
                             3,
-                            172
+                            1
                         ],
                         [
                             7,
-                            171
+                            203
                         ]
                     ]
                 ],
                 "isDirectMatching": false
             },
-            "131": {
+            "133": {
                 "refs": [
                     [
                         [
                             3,
-                            172
+                            1
                         ],
                         [
-                            7,
-                            171
+                            9,
+                            67
                         ]
                     ]
                 ],
                 "isDirectMatching": false
             },
-            "132": {
+            "134": {
                 "refs": [
                     [
                         [
                             3,
-                            172
+                            1
                         ],
                         [
-                            7,
-                            171
+                            9,
+                            67
                         ]
                     ]
                 ],
@@ -1819,12 +2860,12 @@ CREATE TABLE book_status_history (
                 "refs": [
                     [
                         [
-                            9,
-                            15
+                            3,
+                            1
                         ],
                         [
                             9,
-                            75
+                            67
                         ]
                     ]
                 ],
@@ -1834,42 +2875,12 @@ CREATE TABLE book_status_history (
                 "refs": [
                     [
                         [
-                            9,
-                            15
+                            3,
+                            1
                         ],
                         [
                             9,
-                            75
-                        ]
-                    ]
-                ],
-                "isDirectMatching": false
-            },
-            "137": {
-                "refs": [
-                    [
-                        [
-                            9,
-                            15
-                        ],
-                        [
-                            9,
-                            75
-                        ]
-                    ]
-                ],
-                "isDirectMatching": false
-            },
-            "138": {
-                "refs": [
-                    [
-                        [
-                            9,
-                            15
-                        ],
-                        [
-                            9,
-                            75
+                            67
                         ]
                     ]
                 ],
