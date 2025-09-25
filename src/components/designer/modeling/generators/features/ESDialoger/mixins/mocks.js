@@ -197,52 +197,16 @@ export const aggregateDraftScenarios = {
                             ]
                         ]
                     ],
-                    "siteMap": [
-                        {
-                            "id": "book-list-view",
-                            "title": "도서 목록 조회",
-                            "name": "BookListView",
-                            "description": "현재 보유 도서의 목록과 상태를 조회",
-                            "boundedContext": "BookManagement",
-                            "functionType": "view",
-                            "uiRequirements": "도서명, ISBN, 저자, 출판사, 카테고리, 상태(대출가능/대출중/예약중/폐기) 필터 및 검색, 페이징 지원"
-                        },
-                        {
-                            "id": "book-create-command",
-                            "title": "도서 등록",
-                            "name": "BookCreateCommand",
-                            "description": "새로운 도서를 등록",
-                            "boundedContext": "BookManagement",
-                            "functionType": "command",
-                            "uiRequirements": "도서명, ISBN(13자리, 중복확인), 저자, 출판사, 카테고리(소설/비소설/학술/잡지) 입력 폼, 등록 시 상태는 '대출가능'으로 설정"
-                        },
-                        {
-                            "id": "book-edit-command",
-                            "title": "도서 정보 수정",
-                            "name": "BookEditCommand",
-                            "description": "기존 도서의 정보를 수정",
-                            "boundedContext": "BookManagement",
-                            "functionType": "command",
-                            "uiRequirements": "도서명, 저자, 출판사, 카테고리 등 수정, ISBN은 수정 불가, 상태 변경 불가"
-                        },
-                        {
-                            "id": "book-dispose-command",
-                            "title": "도서 폐기 처리",
-                            "name": "BookDisposeCommand",
-                            "description": "훼손 또는 분실된 도서를 폐기 처리",
-                            "boundedContext": "BookManagement",
-                            "functionType": "command",
-                            "uiRequirements": "도서 목록에서 폐기 처리 버튼, 폐기 사유 입력, 폐기 시 상태를 '폐기'로 변경, 폐기 도서는 대출 불가"
-                        },
-                        {
-                            "id": "book-status-change-view",
-                            "title": "도서 상태 변경 이력 조회",
-                            "name": "BookStatusChangeHistoryView",
-                            "description": "도서별 상태 변경 이력을 조회",
-                            "boundedContext": "BookManagement",
-                            "functionType": "view",
-                            "uiRequirements": "도서별 상태 변경(대출가능/대출중/예약중/폐기 등) 이력 리스트, 변경일시, 변경자, 변경 사유 표시"
-                        }
+                    "commandNames": [
+                        "RegisterBook",
+                        "DiscardBook",
+                        "UpdateBookStatus",
+                        "ValidateIsbn"
+                    ],
+                    "readModelNames": [
+                        "BookList",
+                        "BookDetail",
+                        "CategoryOptions"
                     ]
                 },
                 {
@@ -541,15 +505,25 @@ export const aggregateDraftScenarios = {
                             ]
                         ]
                     ],
-                    "siteMap": []
+                    "commandNames": [
+                        "LoanBook",
+                        "ReturnBook",
+                        "ExtendLoan",
+                        "ReserveBook"
+                    ],
+                    "readModelNames": [
+                        "LoanStatusList",
+                        "LoanDetail",
+                        "SearchBookForLoan"
+                    ]
                 },
                 {
                     "name": "LoanHistory",
                     "alias": "이력 관리",
-                    "importance": "Generic Domain",
+                    "importance": "Supporting Domain",
                     "complexity": 0.5,
                     "differentiation": 0.5,
-                    "implementationStrategy": "PBC: PBC-Test",
+                    "implementationStrategy": "Transaction Script",
                     "aggregates": [
                         {
                             "name": "LoanHistory",
@@ -587,15 +561,15 @@ export const aggregateDraftScenarios = {
                                 [
                                     [
                                         9,
-                                        12
+                                        15
                                     ],
                                     [
                                         9,
-                                        15
+                                        19
                                     ]
                                 ]
                             ],
-                            "text": "력과 상"
+                            "text": "상태 변경"
                         },
                         {
                             "type": "DDL",
@@ -607,11 +581,11 @@ export const aggregateDraftScenarios = {
                                     ],
                                     [
                                         111,
-                                        25
+                                        9
                                     ]
                                 ]
                             ],
-                            "text": "CREATE TABLE loan_history (\n    history_id INT AUTO_INCREMENT PRIMARY KEY,\n    loan_id INT NOT NULL,\n    action_type ENUM('대출', '반납', '연장', '연체알림', '분실신고') NOT NULL,\n    action_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    previous_due_date DATETIME NULL,\n    new_due_date DATETIME NULL,\n    notes TEXT,\n    processed_by VARCHAR(100),\n    FOREIGN KEY (loan_id) REFERENCES loans(loan_id),\n    INDEX idx_loan_id (loan_id),\n    INDEX idx_action_type (action_type),\n    INDEX idx_action_date"
+                            "text": "CREATE TABLE loan_history (\n    history_id INT AUTO_INCREMENT PRIMARY KEY,\n    loan_id INT NOT NULL,\n    action_type ENUM('대출', '반납', '연장', '연체알림', '분실신고') NOT NULL,\n    action_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    previous_due_date DATETIME NULL,\n    new_due_date DATETIME NULL,\n    notes TEXT,\n    processed_by VARCHAR(100),\n    FOREIGN KEY (loan_id) REFERENCES loans(loan_id),\n    INDEX idx_loan_id (loan_id),\n    INDEX idx_action_type (action_type),\n    INDEX"
                         },
                         {
                             "type": "Event",
@@ -659,7 +633,11 @@ export const aggregateDraftScenarios = {
                             ]
                         ]
                     ],
-                    "siteMap": []
+                    "commandNames": [],
+                    "readModelNames": [
+                        "BookLoanHistory",
+                        "BookStatusChangeHistory"
+                    ]
                 }
             ],
             "relations": [
@@ -997,52 +975,16 @@ export const aggregateDraftScenarios = {
                                 ]
                             ]
                         ],
-                        "siteMap": [
-                            {
-                                "id": "book-list-view",
-                                "title": "도서 목록 조회",
-                                "name": "BookListView",
-                                "description": "현재 보유 도서의 목록과 상태를 조회",
-                                "boundedContext": "BookManagement",
-                                "functionType": "view",
-                                "uiRequirements": "도서명, ISBN, 저자, 출판사, 카테고리, 상태(대출가능/대출중/예약중/폐기) 필터 및 검색, 페이징 지원"
-                            },
-                            {
-                                "id": "book-create-command",
-                                "title": "도서 등록",
-                                "name": "BookCreateCommand",
-                                "description": "새로운 도서를 등록",
-                                "boundedContext": "BookManagement",
-                                "functionType": "command",
-                                "uiRequirements": "도서명, ISBN(13자리, 중복확인), 저자, 출판사, 카테고리(소설/비소설/학술/잡지) 입력 폼, 등록 시 상태는 '대출가능'으로 설정"
-                            },
-                            {
-                                "id": "book-edit-command",
-                                "title": "도서 정보 수정",
-                                "name": "BookEditCommand",
-                                "description": "기존 도서의 정보를 수정",
-                                "boundedContext": "BookManagement",
-                                "functionType": "command",
-                                "uiRequirements": "도서명, 저자, 출판사, 카테고리 등 수정, ISBN은 수정 불가, 상태 변경 불가"
-                            },
-                            {
-                                "id": "book-dispose-command",
-                                "title": "도서 폐기 처리",
-                                "name": "BookDisposeCommand",
-                                "description": "훼손 또는 분실된 도서를 폐기 처리",
-                                "boundedContext": "BookManagement",
-                                "functionType": "command",
-                                "uiRequirements": "도서 목록에서 폐기 처리 버튼, 폐기 사유 입력, 폐기 시 상태를 '폐기'로 변경, 폐기 도서는 대출 불가"
-                            },
-                            {
-                                "id": "book-status-change-view",
-                                "title": "도서 상태 변경 이력 조회",
-                                "name": "BookStatusChangeHistoryView",
-                                "description": "도서별 상태 변경 이력을 조회",
-                                "boundedContext": "BookManagement",
-                                "functionType": "view",
-                                "uiRequirements": "도서별 상태 변경(대출가능/대출중/예약중/폐기 등) 이력 리스트, 변경일시, 변경자, 변경 사유 표시"
-                            }
+                        "commandNames": [
+                            "RegisterBook",
+                            "DiscardBook",
+                            "UpdateBookStatus",
+                            "ValidateIsbn"
+                        ],
+                        "readModelNames": [
+                            "BookList",
+                            "BookDetail",
+                            "CategoryOptions"
                         ]
                     },
                     {
@@ -1341,15 +1283,25 @@ export const aggregateDraftScenarios = {
                                 ]
                             ]
                         ],
-                        "siteMap": []
+                        "commandNames": [
+                            "LoanBook",
+                            "ReturnBook",
+                            "ExtendLoan",
+                            "ReserveBook"
+                        ],
+                        "readModelNames": [
+                            "LoanStatusList",
+                            "LoanDetail",
+                            "SearchBookForLoan"
+                        ]
                     },
                     {
                         "name": "LoanHistory",
                         "alias": "이력 관리",
-                        "importance": "Generic Domain",
+                        "importance": "Supporting Domain",
                         "complexity": 0.5,
                         "differentiation": 0.5,
-                        "implementationStrategy": "PBC: PBC-Test",
+                        "implementationStrategy": "Transaction Script",
                         "aggregates": [
                             {
                                 "name": "LoanHistory",
@@ -1387,15 +1339,15 @@ export const aggregateDraftScenarios = {
                                     [
                                         [
                                             9,
-                                            12
+                                            15
                                         ],
                                         [
                                             9,
-                                            15
+                                            19
                                         ]
                                     ]
                                 ],
-                                "text": "력과 상"
+                                "text": "상태 변경"
                             },
                             {
                                 "type": "DDL",
@@ -1407,11 +1359,11 @@ export const aggregateDraftScenarios = {
                                         ],
                                         [
                                             111,
-                                            25
+                                            9
                                         ]
                                     ]
                                 ],
-                                "text": "CREATE TABLE loan_history (\n    history_id INT AUTO_INCREMENT PRIMARY KEY,\n    loan_id INT NOT NULL,\n    action_type ENUM('대출', '반납', '연장', '연체알림', '분실신고') NOT NULL,\n    action_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    previous_due_date DATETIME NULL,\n    new_due_date DATETIME NULL,\n    notes TEXT,\n    processed_by VARCHAR(100),\n    FOREIGN KEY (loan_id) REFERENCES loans(loan_id),\n    INDEX idx_loan_id (loan_id),\n    INDEX idx_action_type (action_type),\n    INDEX idx_action_date"
+                                "text": "CREATE TABLE loan_history (\n    history_id INT AUTO_INCREMENT PRIMARY KEY,\n    loan_id INT NOT NULL,\n    action_type ENUM('대출', '반납', '연장', '연체알림', '분실신고') NOT NULL,\n    action_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    previous_due_date DATETIME NULL,\n    new_due_date DATETIME NULL,\n    notes TEXT,\n    processed_by VARCHAR(100),\n    FOREIGN KEY (loan_id) REFERENCES loans(loan_id),\n    INDEX idx_loan_id (loan_id),\n    INDEX idx_action_type (action_type),\n    INDEX"
                             },
                             {
                                 "type": "Event",
@@ -1459,7 +1411,11 @@ export const aggregateDraftScenarios = {
                                 ]
                             ]
                         ],
-                        "siteMap": []
+                        "commandNames": [],
+                        "readModelNames": [
+                            "BookLoanHistory",
+                            "BookStatusChangeHistory"
+                        ]
                     }
                 ],
                 "relations": [
@@ -1635,52 +1591,16 @@ export const aggregateDraftScenarios = {
                                 ]
                             ]
                         ],
-                        "siteMap": [
-                            {
-                                "id": "book-list-view",
-                                "title": "도서 목록 조회",
-                                "name": "BookListView",
-                                "description": "현재 보유 도서의 목록과 상태를 조회",
-                                "boundedContext": "BookManagement",
-                                "functionType": "view",
-                                "uiRequirements": "도서명, ISBN, 저자, 출판사, 카테고리, 상태(대출가능/대출중/예약중/폐기) 필터 및 검색, 페이징 지원"
-                            },
-                            {
-                                "id": "book-create-command",
-                                "title": "도서 등록",
-                                "name": "BookCreateCommand",
-                                "description": "새로운 도서를 등록",
-                                "boundedContext": "BookManagement",
-                                "functionType": "command",
-                                "uiRequirements": "도서명, ISBN(13자리, 중복확인), 저자, 출판사, 카테고리(소설/비소설/학술/잡지) 입력 폼, 등록 시 상태는 '대출가능'으로 설정"
-                            },
-                            {
-                                "id": "book-edit-command",
-                                "title": "도서 정보 수정",
-                                "name": "BookEditCommand",
-                                "description": "기존 도서의 정보를 수정",
-                                "boundedContext": "BookManagement",
-                                "functionType": "command",
-                                "uiRequirements": "도서명, 저자, 출판사, 카테고리 등 수정, ISBN은 수정 불가, 상태 변경 불가"
-                            },
-                            {
-                                "id": "book-dispose-command",
-                                "title": "도서 폐기 처리",
-                                "name": "BookDisposeCommand",
-                                "description": "훼손 또는 분실된 도서를 폐기 처리",
-                                "boundedContext": "BookManagement",
-                                "functionType": "command",
-                                "uiRequirements": "도서 목록에서 폐기 처리 버튼, 폐기 사유 입력, 폐기 시 상태를 '폐기'로 변경, 폐기 도서는 대출 불가"
-                            },
-                            {
-                                "id": "book-status-change-view",
-                                "title": "도서 상태 변경 이력 조회",
-                                "name": "BookStatusChangeHistoryView",
-                                "description": "도서별 상태 변경 이력을 조회",
-                                "boundedContext": "BookManagement",
-                                "functionType": "view",
-                                "uiRequirements": "도서별 상태 변경(대출가능/대출중/예약중/폐기 등) 이력 리스트, 변경일시, 변경자, 변경 사유 표시"
-                            }
+                        "commandNames": [
+                            "RegisterBook",
+                            "DiscardBook",
+                            "UpdateBookStatus",
+                            "ValidateIsbn"
+                        ],
+                        "readModelNames": [
+                            "BookList",
+                            "BookDetail",
+                            "CategoryOptions"
                         ]
                     },
                     {
@@ -1720,15 +1640,25 @@ export const aggregateDraftScenarios = {
                                 ]
                             ]
                         ],
-                        "siteMap": []
+                        "commandNames": [
+                            "LoanBook",
+                            "ReturnBook",
+                            "ExtendLoan",
+                            "ReserveBook"
+                        ],
+                        "readModelNames": [
+                            "LoanStatusList",
+                            "LoanDetail",
+                            "SearchBookForLoan"
+                        ]
                     },
                     {
                         "name": "LoanHistory",
                         "alias": "이력 관리",
-                        "importance": "Generic Domain",
+                        "importance": "Supporting Domain",
                         "complexity": 0.5,
                         "differentiation": 0.5,
-                        "implementationStrategy": "PBC: PBC-Test",
+                        "implementationStrategy": "Transaction Script",
                         "aggregates": [
                             {
                                 "name": "LoanHistory",
@@ -1757,7 +1687,11 @@ export const aggregateDraftScenarios = {
                                 ]
                             ]
                         ],
-                        "siteMap": []
+                        "commandNames": [],
+                        "readModelNames": [
+                            "BookLoanHistory",
+                            "BookStatusChangeHistory"
+                        ]
                     }
                 ],
                 "relations": [
@@ -2122,7 +2056,7 @@ export const aggregateDraftScenarios = {
                                         ],
                                         [
                                             32,
-                                            22
+                                            43
                                         ]
                                     ],
                                     [
@@ -2144,16 +2078,6 @@ export const aggregateDraftScenarios = {
                                             89,
                                             19
                                         ]
-                                    ],
-                                    [
-                                        [
-                                            3,
-                                            183
-                                        ],
-                                        [
-                                            3,
-                                            265
-                                        ]
                                     ]
                                 ]
                             },
@@ -2168,23 +2092,110 @@ export const aggregateDraftScenarios = {
                                         ],
                                         [
                                             31,
-                                            41
+                                            42
                                         ]
                                     ],
                                     [
                                         [
                                             3,
-                                            86
+                                            57
                                         ],
                                         [
                                             3,
-                                            156
+                                            100
+                                        ]
+                                    ],
+                                    [
+                                        [
+                                            3,
+                                            105
+                                        ],
+                                        [
+                                            3,
+                                            128
+                                        ]
+                                    ],
+                                    [
+                                        [
+                                            3,
+                                            136
+                                        ],
+                                        [
+                                            3,
+                                            161
                                         ]
                                     ]
                                 ]
                             }
                         ],
                         "valueObjects": [
+                            {
+                                "name": "BookSpecification",
+                                "alias": "도서 상세 정보",
+                                "referencedAggregateName": "",
+                                "refs": [
+                                    [
+                                        [
+                                            3,
+                                            66
+                                        ],
+                                        [
+                                            3,
+                                            93
+                                        ]
+                                    ],
+                                    [
+                                        [
+                                            27,
+                                            5
+                                        ],
+                                        [
+                                            27,
+                                            32
+                                        ]
+                                    ],
+                                    [
+                                        [
+                                            28,
+                                            1
+                                        ],
+                                        [
+                                            28,
+                                            37
+                                        ]
+                                    ],
+                                    [
+                                        [
+                                            29,
+                                            1
+                                        ],
+                                        [
+                                            29,
+                                            33
+                                        ]
+                                    ],
+                                    [
+                                        [
+                                            30,
+                                            1
+                                        ],
+                                        [
+                                            30,
+                                            36
+                                        ]
+                                    ],
+                                    [
+                                        [
+                                            31,
+                                            1
+                                        ],
+                                        [
+                                            31,
+                                            17
+                                        ]
+                                    ]
+                                ]
+                            },
                             {
                                 "name": "LoanReference",
                                 "alias": "대출 참조",
@@ -2195,12 +2206,12 @@ export const aggregateDraftScenarios = {
                                 "refs": [
                                     [
                                         [
-                                            9,
-                                            6
+                                            3,
+                                            184
                                         ],
                                         [
-                                            9,
-                                            10
+                                            3,
+                                            217
                                         ]
                                     ],
                                     [
@@ -2531,22 +2542,22 @@ export const aggregateDraftScenarios = {
                     }
                 ],
                 "pros": {
-                    "cohesion": "도서의 등록, 상태 변경, 폐기 등 모든 핵심 도서 관리 기능이 Book Aggregate에 집중되어 있어 도메인 응집도가 매우 높음.",
-                    "coupling": "대출/예약과의 연동은 ValueObject 참조로만 처리되어 타 컨텍스트와의 결합도가 낮음.",
-                    "consistency": "도서 상태와 관련된 비즈니스 불변성이 단일 트랜잭션 내에서 강하게 보장됨.",
-                    "encapsulation": "도서의 상태, 대출/예약 참조, 폐기 정보 등 모든 도메인 규칙이 Book 내부에 은닉되어 있음.",
-                    "complexity": "구현 및 이해가 단순하며, 도서별 상태 관리가 한 곳에서 이루어져 개발자 부담이 적음.",
-                    "independence": "Book Aggregate만으로 도서 관리의 대부분을 처리할 수 있어 타 Aggregate 변화에 영향이 적음.",
-                    "performance": "도서 상태 변경, 폐기 등 주요 연산이 단일 Aggregate에서 처리되어 조회 및 갱신 성능이 우수함."
+                    "cohesion": "도서의 등록, 상태 관리, 폐기 등 모든 도서 관련 기능이 Book Aggregate 내에 집중되어 있어 일관된 트랜잭션 경계를 제공한다.",
+                    "coupling": "외부 컨텍스트(대출, 예약, 이력)와의 의존성을 ValueObject 참조로만 유지하여 결합도가 낮다.",
+                    "consistency": "도서 상태 변경, 폐기 등 핵심 비즈니스 규칙을 Aggregate 내부에서 원자적으로 보장할 수 있다.",
+                    "encapsulation": "도서의 상태, 상세 정보, 대출/예약 참조 등 도서 관리의 모든 세부 구현이 Aggregate 내부에 은닉된다.",
+                    "complexity": "단일 Aggregate로 구조가 단순하며, 도서 관리 업무에 대한 이해와 유지보수가 용이하다.",
+                    "independence": "도서 관리 정책 변경이 Aggregate 단위로 독립적으로 이루어질 수 있다.",
+                    "performance": "단일 Aggregate 접근으로 도서 상태 및 정보 조회·변경 시 쿼리 효율이 높다."
                 },
                 "cons": {
-                    "cohesion": "상태 변경 이력, 대출/예약 참조 등 다양한 책임이 Book에 집중되어 도메인 역할이 다소 혼재될 수 있음.",
-                    "coupling": "Book이 모든 도서 관련 정보를 직접 관리하므로, 도서 이력이나 확장 요구가 커질 경우 Aggregate가 비대해질 수 있음.",
-                    "consistency": "상태 변경 이력 등 부가 정보가 많아질수록 트랜잭션 크기가 커질 수 있음.",
-                    "encapsulation": "상태 이력 등 부가 기능이 많아질 경우 도메인 규칙의 은닉성이 다소 약화될 수 있음.",
-                    "complexity": "도서 관리와 이력 관리, 대출/예약 참조까지 모두 포함되어 Aggregate가 점차 복잡해질 수 있음.",
-                    "independence": "이력 관리 등 부가 기능 확장 시 Book Aggregate의 독립성이 저하될 수 있음.",
-                    "performance": "상태 변경 이력 등 부가 정보가 많아질 경우 일부 연산에서 성능 저하 가능성 있음."
+                    "cohesion": "상태 이력, 대출/예약 참조 등 다양한 책임이 한 Aggregate에 집중되어 도서 관리가 복잡해질 수 있다.",
+                    "coupling": "도서 상태 이력 등 확장 요구가 생기면 Aggregate 크기가 커져 외부 시스템과의 연동이 어려워질 수 있다.",
+                    "consistency": "상태 이력 등 대용량 데이터가 누적될 경우 트랜잭션 처리에 부담이 될 수 있다.",
+                    "encapsulation": "상태 이력, 대출/예약 등 서로 다른 도메인 관심사가 한 Aggregate에 혼재되어 캡슐화가 약해질 수 있다.",
+                    "complexity": "도서 관리 업무가 확장될수록 Aggregate가 비대해져 도메인 복잡도가 증가한다.",
+                    "independence": "상태 이력, 대출/예약 등 세부 기능 변경 시 전체 Aggregate에 영향이 갈 수 있다.",
+                    "performance": "상태 이력, 대출/예약 등 데이터가 누적될수록 단일 Aggregate 접근 시 성능 저하가 발생할 수 있다."
                 },
                 "isAIRecommended": false,
                 "boundedContext": {
@@ -5450,52 +5461,16 @@ export const aggregateDraftScenarios = {
                                 "isDirectMatching": false
                             }
                         },
-                        "siteMap": [
-                            {
-                                "id": "book-list-view",
-                                "title": "도서 목록 조회",
-                                "name": "BookListView",
-                                "description": "현재 보유 도서의 목록과 상태를 조회",
-                                "boundedContext": "BookManagement",
-                                "functionType": "view",
-                                "uiRequirements": "도서명, ISBN, 저자, 출판사, 카테고리, 상태(대출가능/대출중/예약중/폐기) 필터 및 검색, 페이징 지원"
-                            },
-                            {
-                                "id": "book-create-command",
-                                "title": "도서 등록",
-                                "name": "BookCreateCommand",
-                                "description": "새로운 도서를 등록",
-                                "boundedContext": "BookManagement",
-                                "functionType": "command",
-                                "uiRequirements": "도서명, ISBN(13자리, 중복확인), 저자, 출판사, 카테고리(소설/비소설/학술/잡지) 입력 폼, 등록 시 상태는 '대출가능'으로 설정"
-                            },
-                            {
-                                "id": "book-edit-command",
-                                "title": "도서 정보 수정",
-                                "name": "BookEditCommand",
-                                "description": "기존 도서의 정보를 수정",
-                                "boundedContext": "BookManagement",
-                                "functionType": "command",
-                                "uiRequirements": "도서명, 저자, 출판사, 카테고리 등 수정, ISBN은 수정 불가, 상태 변경 불가"
-                            },
-                            {
-                                "id": "book-dispose-command",
-                                "title": "도서 폐기 처리",
-                                "name": "BookDisposeCommand",
-                                "description": "훼손 또는 분실된 도서를 폐기 처리",
-                                "boundedContext": "BookManagement",
-                                "functionType": "command",
-                                "uiRequirements": "도서 목록에서 폐기 처리 버튼, 폐기 사유 입력, 폐기 시 상태를 '폐기'로 변경, 폐기 도서는 대출 불가"
-                            },
-                            {
-                                "id": "book-status-change-view",
-                                "title": "도서 상태 변경 이력 조회",
-                                "name": "BookStatusChangeHistoryView",
-                                "description": "도서별 상태 변경 이력을 조회",
-                                "boundedContext": "BookManagement",
-                                "functionType": "view",
-                                "uiRequirements": "도서별 상태 변경(대출가능/대출중/예약중/폐기 등) 이력 리스트, 변경일시, 변경자, 변경 사유 표시"
-                            }
+                        "commandNames": [
+                            "RegisterBook",
+                            "DiscardBook",
+                            "UpdateBookStatus",
+                            "ValidateIsbn"
+                        ],
+                        "readModelNames": [
+                            "BookList",
+                            "BookDetail",
+                            "CategoryOptions"
                         ]
                     }
                 },
@@ -5701,16 +5676,6 @@ export const aggregateDraftScenarios = {
                                 [
                                     [
                                         5,
-                                        79
-                                    ],
-                                    [
-                                        5,
-                                        81
-                                    ]
-                                ],
-                                [
-                                    [
-                                        5,
                                         49
                                     ],
                                     [
@@ -5747,16 +5712,6 @@ export const aggregateDraftScenarios = {
                                         5,
                                         235
                                     ]
-                                ],
-                                [
-                                    [
-                                        7,
-                                        109
-                                    ],
-                                    [
-                                        7,
-                                        124
-                                    ]
                                 ]
                             ]
                         },
@@ -5772,7 +5727,7 @@ export const aggregateDraftScenarios = {
                                         ],
                                         [
                                             53,
-                                            40
+                                            56
                                         ]
                                     ],
                                     [
@@ -5906,6 +5861,272 @@ export const aggregateDraftScenarios = {
                                             7,
                                             175
                                         ]
+                                    ]
+                                ]
+                            },
+                            {
+                                "name": "Reservation",
+                                "alias": "예약",
+                                "refs": [
+                                    [
+                                        [
+                                            66,
+                                            1
+                                        ],
+                                        [
+                                            66,
+                                            27
+                                        ]
+                                    ],
+                                    [
+                                        [
+                                            67,
+                                            1
+                                        ],
+                                        [
+                                            67,
+                                            50
+                                        ]
+                                    ],
+                                    [
+                                        [
+                                            68,
+                                            1
+                                        ],
+                                        [
+                                            68,
+                                            35
+                                        ]
+                                    ],
+                                    [
+                                        [
+                                            69,
+                                            1
+                                        ],
+                                        [
+                                            69,
+                                            25
+                                        ]
+                                    ],
+                                    [
+                                        [
+                                            70,
+                                            1
+                                        ],
+                                        [
+                                            70,
+                                            56
+                                        ]
+                                    ],
+                                    [
+                                        [
+                                            71,
+                                            1
+                                        ],
+                                        [
+                                            71,
+                                            61
+                                        ]
+                                    ],
+                                    [
+                                        [
+                                            72,
+                                            1
+                                        ],
+                                        [
+                                            72,
+                                            44
+                                        ]
+                                    ],
+                                    [
+                                        [
+                                            73,
+                                            1
+                                        ],
+                                        [
+                                            73,
+                                            30
+                                        ]
+                                    ],
+                                    [
+                                        [
+                                            74,
+                                            1
+                                        ],
+                                        [
+                                            74,
+                                            50
+                                        ]
+                                    ],
+                                    [
+                                        [
+                                            75,
+                                            1
+                                        ],
+                                        [
+                                            75,
+                                            78
+                                        ]
+                                    ],
+                                    [
+                                        [
+                                            76,
+                                            1
+                                        ],
+                                        [
+                                            76,
+                                            58
+                                        ]
+                                    ],
+                                    [
+                                        [
+                                            77,
+                                            1
+                                        ],
+                                        [
+                                            77,
+                                            52
+                                        ]
+                                    ],
+                                    [
+                                        [
+                                            78,
+                                            1
+                                        ],
+                                        [
+                                            78,
+                                            36
+                                        ]
+                                    ],
+                                    [
+                                        [
+                                            79,
+                                            1
+                                        ],
+                                        [
+                                            79,
+                                            32
+                                        ]
+                                    ],
+                                    [
+                                        [
+                                            80,
+                                            1
+                                        ],
+                                        [
+                                            80,
+                                            30
+                                        ]
+                                    ],
+                                    [
+                                        [
+                                            81,
+                                            1
+                                        ],
+                                        [
+                                            81,
+                                            49
+                                        ]
+                                    ],
+                                    [
+                                        [
+                                            82,
+                                            1
+                                        ],
+                                        [
+                                            82,
+                                            2
+                                        ]
+                                    ],
+                                    [
+                                        [
+                                            5,
+                                            183
+                                        ],
+                                        [
+                                            5,
+                                            193
+                                        ]
+                                    ],
+                                    [
+                                        [
+                                            7,
+                                            167
+                                        ],
+                                        [
+                                            7,
+                                            175
+                                        ]
+                                    ]
+                                ]
+                            },
+                            {
+                                "name": "LoanHistoryReference",
+                                "alias": "대출 이력 참조",
+                                "referencedAggregate": {
+                                    "name": "LoanHistory",
+                                    "alias": "대출 이력"
+                                },
+                                "refs": [
+                                    [
+                                        [
+                                            101,
+                                            5
+                                        ],
+                                        [
+                                            101,
+                                            11
+                                        ]
+                                    ],
+                                    [
+                                        [
+                                            108,
+                                            5
+                                        ],
+                                        [
+                                            108,
+                                            25
+                                        ]
+                                    ],
+                                    [
+                                        [
+                                            5,
+                                            49
+                                        ],
+                                        [
+                                            5,
+                                            91
+                                        ]
+                                    ],
+                                    [
+                                        [
+                                            5,
+                                            59
+                                        ],
+                                        [
+                                            5,
+                                            77
+                                        ]
+                                    ],
+                                    [
+                                        [
+                                            5,
+                                            43
+                                        ],
+                                        [
+                                            5,
+                                            126
+                                        ]
+                                    ],
+                                    [
+                                        [
+                                            5,
+                                            198
+                                        ],
+                                        [
+                                            5,
+                                            235
+                                        ]
                                     ],
                                     [
                                         [
@@ -5935,36 +6156,6 @@ export const aggregateDraftScenarios = {
                                         [
                                             7,
                                             124
-                                        ]
-                                    ]
-                                ]
-                            },
-                            {
-                                "name": "ReservationReference",
-                                "alias": "예약 참조",
-                                "referencedAggregate": {
-                                    "name": "Reservation",
-                                    "alias": "예약"
-                                },
-                                "refs": [
-                                    [
-                                        [
-                                            101,
-                                            5
-                                        ],
-                                        [
-                                            101,
-                                            11
-                                        ]
-                                    ],
-                                    [
-                                        [
-                                            67,
-                                            5
-                                        ],
-                                        [
-                                            67,
-                                            18
                                         ]
                                     ]
                                 ]
@@ -6197,6 +6388,66 @@ export const aggregateDraftScenarios = {
                                 ]
                             },
                             {
+                                "fieldName": "reservation_id",
+                                "refs": [
+                                    [
+                                        [
+                                            67,
+                                            5
+                                        ],
+                                        [
+                                            67,
+                                            45
+                                        ]
+                                    ]
+                                ]
+                            },
+                            {
+                                "fieldName": "reservation_date",
+                                "refs": [
+                                    [
+                                        [
+                                            70,
+                                            5
+                                        ],
+                                        [
+                                            70,
+                                            55
+                                        ]
+                                    ]
+                                ]
+                            },
+                            {
+                                "fieldName": "notification_sent",
+                                "refs": [
+                                    [
+                                        [
+                                            72,
+                                            5
+                                        ],
+                                        [
+                                            72,
+                                            37
+                                        ]
+                                    ]
+                                ]
+                            },
+                            {
+                                "fieldName": "expiry_date",
+                                "refs": [
+                                    [
+                                        [
+                                            73,
+                                            5
+                                        ],
+                                        [
+                                            73,
+                                            29
+                                        ]
+                                    ]
+                                ]
+                            },
+                            {
                                 "fieldName": "history_id",
                                 "refs": [
                                     [
@@ -6302,572 +6553,27 @@ export const aggregateDraftScenarios = {
                                 ]
                             }
                         ]
-                    },
-                    {
-                        "aggregate": {
-                            "name": "Reservation",
-                            "alias": "예약",
-                            "refs": [
-                                [
-                                    [
-                                        66,
-                                        1
-                                    ],
-                                    [
-                                        66,
-                                        27
-                                    ]
-                                ],
-                                [
-                                    [
-                                        67,
-                                        1
-                                    ],
-                                    [
-                                        67,
-                                        50
-                                    ]
-                                ],
-                                [
-                                    [
-                                        68,
-                                        1
-                                    ],
-                                    [
-                                        68,
-                                        35
-                                    ]
-                                ],
-                                [
-                                    [
-                                        69,
-                                        1
-                                    ],
-                                    [
-                                        69,
-                                        25
-                                    ]
-                                ],
-                                [
-                                    [
-                                        70,
-                                        1
-                                    ],
-                                    [
-                                        70,
-                                        56
-                                    ]
-                                ],
-                                [
-                                    [
-                                        71,
-                                        1
-                                    ],
-                                    [
-                                        71,
-                                        61
-                                    ]
-                                ],
-                                [
-                                    [
-                                        72,
-                                        1
-                                    ],
-                                    [
-                                        72,
-                                        44
-                                    ]
-                                ],
-                                [
-                                    [
-                                        73,
-                                        1
-                                    ],
-                                    [
-                                        73,
-                                        30
-                                    ]
-                                ],
-                                [
-                                    [
-                                        74,
-                                        1
-                                    ],
-                                    [
-                                        74,
-                                        50
-                                    ]
-                                ],
-                                [
-                                    [
-                                        75,
-                                        1
-                                    ],
-                                    [
-                                        75,
-                                        78
-                                    ]
-                                ],
-                                [
-                                    [
-                                        76,
-                                        1
-                                    ],
-                                    [
-                                        76,
-                                        58
-                                    ]
-                                ],
-                                [
-                                    [
-                                        77,
-                                        1
-                                    ],
-                                    [
-                                        77,
-                                        52
-                                    ]
-                                ],
-                                [
-                                    [
-                                        78,
-                                        1
-                                    ],
-                                    [
-                                        78,
-                                        36
-                                    ]
-                                ],
-                                [
-                                    [
-                                        79,
-                                        1
-                                    ],
-                                    [
-                                        79,
-                                        32
-                                    ]
-                                ],
-                                [
-                                    [
-                                        80,
-                                        1
-                                    ],
-                                    [
-                                        80,
-                                        30
-                                    ]
-                                ],
-                                [
-                                    [
-                                        81,
-                                        1
-                                    ],
-                                    [
-                                        81,
-                                        49
-                                    ]
-                                ],
-                                [
-                                    [
-                                        82,
-                                        1
-                                    ],
-                                    [
-                                        82,
-                                        2
-                                    ]
-                                ],
-                                [
-                                    [
-                                        5,
-                                        183
-                                    ],
-                                    [
-                                        5,
-                                        193
-                                    ]
-                                ],
-                                [
-                                    [
-                                        7,
-                                        167
-                                    ],
-                                    [
-                                        7,
-                                        175
-                                    ]
-                                ]
-                            ]
-                        },
-                        "enumerations": [
-                            {
-                                "name": "ReservationStatus",
-                                "alias": "예약 상태",
-                                "refs": [
-                                    [
-                                        [
-                                            71,
-                                            5
-                                        ],
-                                        [
-                                            71,
-                                            44
-                                        ]
-                                    ],
-                                    [
-                                        [
-                                            5,
-                                            183
-                                        ],
-                                        [
-                                            5,
-                                            193
-                                        ]
-                                    ],
-                                    [
-                                        [
-                                            7,
-                                            167
-                                        ],
-                                        [
-                                            7,
-                                            175
-                                        ]
-                                    ]
-                                ]
-                            }
-                        ],
-                        "valueObjects": [
-                            {
-                                "name": "BookReference",
-                                "alias": "도서 참조",
-                                "referencedAggregate": {
-                                    "name": "Book",
-                                    "alias": "도서"
-                                },
-                                "refs": [
-                                    [
-                                        [
-                                            48,
-                                            5
-                                        ],
-                                        [
-                                            48,
-                                            11
-                                        ]
-                                    ],
-                                    [
-                                        [
-                                            69,
-                                            5
-                                        ],
-                                        [
-                                            69,
-                                            11
-                                        ]
-                                    ],
-                                    [
-                                        [
-                                            5,
-                                            49
-                                        ],
-                                        [
-                                            5,
-                                            91
-                                        ]
-                                    ],
-                                    [
-                                        [
-                                            5,
-                                            59
-                                        ],
-                                        [
-                                            5,
-                                            77
-                                        ]
-                                    ],
-                                    [
-                                        [
-                                            5,
-                                            43
-                                        ],
-                                        [
-                                            5,
-                                            126
-                                        ]
-                                    ],
-                                    [
-                                        [
-                                            5,
-                                            198
-                                        ],
-                                        [
-                                            5,
-                                            235
-                                        ]
-                                    ],
-                                    [
-                                        [
-                                            5,
-                                            183
-                                        ],
-                                        [
-                                            5,
-                                            193
-                                        ]
-                                    ],
-                                    [
-                                        [
-                                            7,
-                                            167
-                                        ],
-                                        [
-                                            7,
-                                            175
-                                        ]
-                                    ],
-                                    [
-                                        [
-                                            7,
-                                            133
-                                        ],
-                                        [
-                                            7,
-                                            167
-                                        ]
-                                    ],
-                                    [
-                                        [
-                                            7,
-                                            167
-                                        ],
-                                        [
-                                            7,
-                                            175
-                                        ]
-                                    ],
-                                    [
-                                        [
-                                            7,
-                                            109
-                                        ],
-                                        [
-                                            7,
-                                            124
-                                        ]
-                                    ]
-                                ]
-                            }
-                        ],
-                        "previewAttributes": [
-                            {
-                                "fieldName": "reservation_id",
-                                "refs": [
-                                    [
-                                        [
-                                            67,
-                                            5
-                                        ],
-                                        [
-                                            67,
-                                            45
-                                        ]
-                                    ]
-                                ]
-                            },
-                            {
-                                "fieldName": "member_id",
-                                "refs": [
-                                    [
-                                        [
-                                            47,
-                                            5
-                                        ],
-                                        [
-                                            47,
-                                            34
-                                        ]
-                                    ],
-                                    [
-                                        [
-                                            68,
-                                            5
-                                        ],
-                                        [
-                                            68,
-                                            34
-                                        ]
-                                    ]
-                                ]
-                            },
-                            {
-                                "fieldName": "book_id",
-                                "refs": [
-                                    [
-                                        [
-                                            48,
-                                            5
-                                        ],
-                                        [
-                                            48,
-                                            24
-                                        ]
-                                    ],
-                                    [
-                                        [
-                                            69,
-                                            5
-                                        ],
-                                        [
-                                            69,
-                                            24
-                                        ]
-                                    ]
-                                ]
-                            },
-                            {
-                                "fieldName": "reservation_date",
-                                "refs": [
-                                    [
-                                        [
-                                            70,
-                                            5
-                                        ],
-                                        [
-                                            70,
-                                            55
-                                        ]
-                                    ]
-                                ]
-                            },
-                            {
-                                "fieldName": "status",
-                                "refs": [
-                                    [
-                                        [
-                                            53,
-                                            5
-                                        ],
-                                        [
-                                            53,
-                                            50
-                                        ]
-                                    ],
-                                    [
-                                        [
-                                            71,
-                                            5
-                                        ],
-                                        [
-                                            71,
-                                            54
-                                        ]
-                                    ]
-                                ]
-                            },
-                            {
-                                "fieldName": "notification_sent",
-                                "refs": [
-                                    [
-                                        [
-                                            72,
-                                            5
-                                        ],
-                                        [
-                                            72,
-                                            37
-                                        ]
-                                    ]
-                                ]
-                            },
-                            {
-                                "fieldName": "expiry_date",
-                                "refs": [
-                                    [
-                                        [
-                                            73,
-                                            5
-                                        ],
-                                        [
-                                            73,
-                                            29
-                                        ]
-                                    ]
-                                ]
-                            },
-                            {
-                                "fieldName": "created_at",
-                                "refs": [
-                                    [
-                                        [
-                                            55,
-                                            5
-                                        ],
-                                        [
-                                            55,
-                                            49
-                                        ]
-                                    ],
-                                    [
-                                        [
-                                            74,
-                                            5
-                                        ],
-                                        [
-                                            74,
-                                            49
-                                        ]
-                                    ]
-                                ]
-                            },
-                            {
-                                "fieldName": "updated_at",
-                                "refs": [
-                                    [
-                                        [
-                                            56,
-                                            5
-                                        ],
-                                        [
-                                            56,
-                                            77
-                                        ]
-                                    ],
-                                    [
-                                        [
-                                            75,
-                                            5
-                                        ],
-                                        [
-                                            75,
-                                            77
-                                        ]
-                                    ]
-                                ]
-                            }
-                        ]
                     }
                 ],
                 "pros": {
-                    "cohesion": "대출과 예약이 각각의 Aggregate로 분리되어 각 도메인 책임이 명확하며, 각 Aggregate가 자신의 비즈니스 규칙을 집중적으로 관리할 수 있습니다.",
-                    "coupling": "Book, Reservation 간 참조는 ValueObject로 일방향으로만 이루어져 결합도가 낮고, 도서 관리 변경이 대출/예약에 직접적인 영향을 주지 않습니다.",
-                    "consistency": "대출, 예약 각각의 트랜잭션 경계가 명확하여 상태 변경 시 원자성을 보장할 수 있습니다.",
-                    "encapsulation": "각 Aggregate가 자신의 상태와 행위를 완전히 캡슐화하여 외부에서 내부 구현에 접근할 수 없습니다.",
-                    "complexity": "Aggregate 수가 적절하여 도메인 복잡도를 효과적으로 관리할 수 있습니다.",
-                    "independence": "대출과 예약 기능이 독립적으로 진화 및 확장될 수 있어 유지보수성이 높습니다.",
-                    "performance": "대출/예약 각각의 조회 및 변경이 독립적으로 처리되어 동시성 및 성능에 유리합니다."
+                    "cohesion": "대출, 예약, 이력 등 대출 관련 모든 정보를 Loan Aggregate에 통합하여 대출 프로세스의 전체 흐름을 한 곳에서 관리할 수 있다.",
+                    "coupling": "예약과 대출 간의 상태 전이 및 상호작용을 Aggregate 내부에서 직접 처리할 수 있어 결합도가 높아 복합 비즈니스 규칙 구현이 용이하다.",
+                    "consistency": "대출과 예약의 상태 변경, 이력 기록이 단일 트랜잭션 내에서 일관성 있게 처리된다.",
+                    "encapsulation": "대출과 예약, 이력 관리까지 모두 Loan Aggregate 내부에 캡슐화되어 외부 의존성이 줄어든다.",
+                    "complexity": "대출/예약/이력의 통합 관리로 복잡한 상태 전이와 비즈니스 규칙을 Aggregate 내부에서 일관성 있게 구현할 수 있다.",
+                    "independence": "대출 프로세스 전체를 단일 Aggregate로 관리하므로 기능 확장 시 일관성 있게 변경이 가능하다.",
+                    "performance": "대출/예약/이력 관련 데이터 접근이 한 번의 Aggregate 조회로 가능해 조회 성능이 향상된다."
                 },
                 "cons": {
-                    "cohesion": "대출과 예약 간의 상태 전이(예: 반납 시 예약 자동 처리 등) 로직이 Aggregate 간 조정 로직으로 분산될 수 있습니다.",
-                    "coupling": "예약과 대출 간의 상태 동기화가 필요할 때, 두 Aggregate 간의 간접적 연동이 필요하여 구현이 복잡해질 수 있습니다.",
-                    "consistency": "예약과 대출이 동시에 변경되어야 하는 복합 트랜잭션의 경우, 분산 트랜잭션 또는 이벤트 기반 보상 로직이 필요할 수 있습니다.",
-                    "encapsulation": "예약과 대출의 복합 비즈니스 규칙(예: 예약 우선 순위 반영 등)이 Aggregate 외부에서 처리될 수 있습니다.",
-                    "complexity": "예약과 대출의 상호작용을 조율하는 추가 서비스 계층이 필요할 수 있습니다.",
-                    "independence": "예약과 대출의 상호작용이 많을 경우, 완전한 독립성 확보가 어려울 수 있습니다.",
-                    "performance": "예약과 대출 정보를 통합 조회할 때 Aggregate 간 조인 또는 별도 조회가 필요하여 성능 저하가 발생할 수 있습니다."
+                    "cohesion": "대출, 예약, 이력 등 서로 다른 라이프사이클을 가진 도메인 개념이 하나의 Aggregate에 묶여 응집도가 저하될 수 있다.",
+                    "coupling": "Aggregate가 비대해지면서 도메인 변경 시 영향 범위가 넓어지고, 유지보수 난이도가 증가한다.",
+                    "consistency": "동시성 처리 시 여러 사용자가 동일 Loan Aggregate를 갱신하면 락 경합이 발생할 수 있다.",
+                    "encapsulation": "예약 및 이력 관리의 책임이 Loan Aggregate에 집중되어 역할 분리가 어렵다.",
+                    "complexity": "Aggregate가 커질수록 도메인 로직이 복잡해지고, 개발 및 테스트 난이도가 상승한다.",
+                    "independence": "예약 또는 이력 관리만 별도로 확장하거나 배포하기 어렵다.",
+                    "performance": "대출과 예약, 이력 등 모든 변경이 한 Aggregate에 집중되어 트래픽이 몰릴 경우 성능 저하가 발생할 수 있다."
                 },
-                "isAIRecommended": false,
+                "isAIRecommended": true,
                 "boundedContext": {
                     "name": "LoanAndReservation",
                     "alias": "대출/반납 및 예약",
@@ -10548,10 +10254,1411 @@ export const aggregateDraftScenarios = {
                                 "isDirectMatching": false
                             }
                         },
-                        "siteMap": []
+                        "commandNames": [
+                            "LoanBook",
+                            "ReturnBook",
+                            "ExtendLoan",
+                            "ReserveBook"
+                        ],
+                        "readModelNames": [
+                            "LoanStatusList",
+                            "LoanDetail",
+                            "SearchBookForLoan"
+                        ]
                     }
                 },
                 "description": "# Bounded Context Overview: LoanAndReservation (대출/반납 및 예약)\n\n## Role\n회원의 도서 대출, 반납, 연장, 예약을 관리하고 도서 상태 변경을 트리거한다.\n\n## Key Events\n- BookLoaned\n- BookReserved\n- BookReturned\n- LoanExtended\n\n# Requirements\n\n## userStory\n\n대출/반납을 통합적으로 관리하는\n\n대출/반납' 화면에서는 회원이 도서를 대출하고 반납하는 것을 관리할 수 있어야 해. 대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할\n\n예약\n\n대출 현황 화면에서는 현재 대출 중인 도서들의 목록을 볼 수 있어야 해. 각 대출 건에 대해 대출일, 반납\n\n연장\n\n대출 이력과 상태\n\n## DDL\n\n```sql\nCREATE TABLE loans (\n    loan_id INT AUTO_INCREMENT PRIMARY KEY,\n    member_id VARCHAR(20) NOT NULL,\n    book_id INT NOT NULL,\n    loan_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    due_date DATETIME NOT NULL,\n    return_date DATETIME NULL,\n    loan_period_days INT NOT NULL CHECK (loan_period_days IN (7, 14, 30)),\n    status ENUM('대출중', '연체', '반납완료', '연장') DEFAULT '대출중',\n    extension_count INT DEFAULT 0,\n    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,\n    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n    FOREIGN KEY (member_id) REFERENCES members(member_id),\n    FOREIGN KEY (book_id) REFERENCES books(book_id),\n    INDEX idx_member_id (member_id),\n    INDEX idx_book_id (book_id),\n    INDEX idx_status (status),\n    INDEX idx_due_date (due_date)\n);\n```\n```sql\nCREATE TABLE reservations (\n    reservation_id INT AUTO_INCREMENT PRIMARY KEY,\n    member_id VARCHAR(20) NOT NULL,\n    book_id INT NOT NULL,\n    reservation_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    status ENUM('예약중', '예약완료', '예약취소', '예약만료') DEFAULT '예약중',\n    notification_sent BOOLEAN DEFAULT FALSE,\n    expiry_date DATETIME NULL,\n    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,\n    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n    FOREIGN KEY (member_id) REFERENCES members(member_id),\n    FOREIGN KEY (book_id) REFERENCES books(book_id),\n    INDEX idx_member_id (member_id),\n    INDEX idx_book_id (book_id),\n    INDEX idx_status (status),\n    INDEX idx_reservation_date (reservation_date)\n);\n```\n```sql\nCREATE TABLE loan_history (\n    history_id INT AUTO_INCREMENT PRIMARY KEY,\n    loan_id INT NOT NULL,\n    action_type ENUM('대출', '반납', '연장', '연체알림', '분실신고') NOT NULL,\n    action_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    previous_due_date DATETIME NULL,\n    new_due_date DATETIME NULL,\n    notes TEXT,\n    processed_by VARCHAR(100),\n    FOREIGN KEY (loan_id) REFERENCES loans(loan_id),\n    INDEX idx_loan_id (loan_id),\n    INDEX idx_action_type (action_type),\n    INDEX idx_action_date (action_date)\n);\n```\n## Event\n\n```json\n{\n  \"name\": \"BookLoaned\",\n  \"displayName\": \"도서 대출됨\",\n  \"actor\": \"Member\",\n  \"level\": 4,\n  \"description\": \"회원이 도서 대출을 신청하고, 회원 인증 및 도서 상태 확인 후 대출이 승인됨. 대출 기간이 설정되고 도서 상태가 '대출중'으로 변경됨.\",\n  \"inputs\": [\n    \"회원번호\",\n    \"이름\",\n    \"도서 식별자\",\n    \"대출 기간(7/14/30일)\"\n  ],\n  \"outputs\": [\n    \"대출 정보\",\n    \"도서 상태: 대출중\"\n  ],\n  \"nextEvents\": [\n    \"BookStatusChanged\",\n    \"LoanHistoryRecorded\"\n  ]\n}\n```\n\n```json\n{\n  \"name\": \"BookReserved\",\n  \"displayName\": \"도서 예약됨\",\n  \"actor\": \"Member\",\n  \"level\": 5,\n  \"description\": \"회원이 대출 중인 도서에 대해 예약을 신청함. 예약이 완료되면 도서 상태가 '예약중'으로 변경됨.\",\n  \"inputs\": [\n    \"회원번호\",\n    \"도서 식별자\"\n  ],\n  \"outputs\": [\n    \"예약 정보\",\n    \"도서 상태: 예약중\"\n  ],\n  \"nextEvents\": [\n    \"BookStatusChanged\",\n    \"ReservationHistoryRecorded\"\n  ]\n}\n```\n\n```json\n{\n  \"name\": \"BookReturned\",\n  \"displayName\": \"도서 반납됨\",\n  \"actor\": \"Member\",\n  \"level\": 6,\n  \"description\": \"회원이 대출한 도서를 반납함. 반납 시 도서 상태가 '대출가능'으로 변경되고, 예약자가 있을 경우 '예약중'으로 변경됨.\",\n  \"inputs\": [\n    \"회원번호\",\n    \"도서 식별자\"\n  ],\n  \"outputs\": [\n    \"도서 상태: 대출가능 또는 예약중\",\n    \"반납 처리 정보\"\n  ],\n  \"nextEvents\": [\n    \"BookStatusChanged\",\n    \"LoanHistoryRecorded\"\n  ]\n}\n```\n\n```json\n{\n  \"name\": \"LoanExtended\",\n  \"displayName\": \"대출 연장됨\",\n  \"actor\": \"Member\",\n  \"level\": 7,\n  \"description\": \"회원이 대출 중인 도서의 대출 기간을 연장함. 연장 후 대출 정보와 반납 예정일이 갱신됨.\",\n  \"inputs\": [\n    \"회원번호\",\n    \"도서 식별자\",\n    \"연장 기간\"\n  ],\n  \"outputs\": [\n    \"갱신된 대출 정보\",\n    \"새 반납 예정일\"\n  ],\n  \"nextEvents\": [\n    \"LoanHistoryRecorded\"\n  ]\n}\n```\n\n## Context Relations\n\n### BookManagement-LoanAndReservation\n- **Type**: Pub/Sub\n- **Direction**: receives from 도서 관리 (BookManagement)\n- **Reason**: 도서 상태 변경(대출가능, 대출중, 예약중, 폐기 등)이 발생하면 대출/반납 및 예약 컨텍스트에서 이를 구독하여 대출/예약 프로세스에 반영한다.\n- **Interaction Pattern**: 도서 관리에서 도서 상태 변경 이벤트를 발행하면 대출/반납 및 예약 컨텍스트가 이를 구독하여 처리한다.\n\n### LoanAndReservation-LoanHistory\n- **Type**: Pub/Sub\n- **Direction**: sends to 이력 관리 (LoanHistory)\n- **Reason**: 대출, 반납, 연장, 예약 등 이벤트 발생 시 이력 관리 컨텍스트에서 해당 이벤트를 구독하여 이력을 기록한다.\n- **Interaction Pattern**: 대출/반납 및 예약에서 대출/반납/연장/예약 이벤트를 발행하면 이력 관리 컨텍스트가 이를 구독하여 이력 데이터를 생성한다."
+            },
+            "LoanHistory": {
+                "structure": [
+                    {
+                        "aggregate": {
+                            "name": "LoanHistory",
+                            "alias": "대출 이력",
+                            "refs": [
+                                [
+                                    [
+                                        9,
+                                        8
+                                    ],
+                                    [
+                                        9,
+                                        67
+                                    ]
+                                ],
+                                [
+                                    [
+                                        99,
+                                        14
+                                    ],
+                                    [
+                                        99,
+                                        27
+                                    ]
+                                ],
+                                [
+                                    [
+                                        100,
+                                        1
+                                    ],
+                                    [
+                                        100,
+                                        46
+                                    ]
+                                ],
+                                [
+                                    [
+                                        101,
+                                        1
+                                    ],
+                                    [
+                                        101,
+                                        25
+                                    ]
+                                ],
+                                [
+                                    [
+                                        102,
+                                        1
+                                    ],
+                                    [
+                                        102,
+                                        64
+                                    ]
+                                ],
+                                [
+                                    [
+                                        103,
+                                        1
+                                    ],
+                                    [
+                                        103,
+                                        51
+                                    ]
+                                ],
+                                [
+                                    [
+                                        104,
+                                        1
+                                    ],
+                                    [
+                                        104,
+                                        36
+                                    ]
+                                ],
+                                [
+                                    [
+                                        105,
+                                        1
+                                    ],
+                                    [
+                                        105,
+                                        31
+                                    ]
+                                ],
+                                [
+                                    [
+                                        106,
+                                        1
+                                    ],
+                                    [
+                                        106,
+                                        15
+                                    ]
+                                ],
+                                [
+                                    [
+                                        107,
+                                        1
+                                    ],
+                                    [
+                                        107,
+                                        30
+                                    ]
+                                ],
+                                [
+                                    [
+                                        108,
+                                        1
+                                    ],
+                                    [
+                                        108,
+                                        52
+                                    ]
+                                ],
+                                [
+                                    [
+                                        109,
+                                        1
+                                    ],
+                                    [
+                                        109,
+                                        32
+                                    ]
+                                ],
+                                [
+                                    [
+                                        110,
+                                        1
+                                    ],
+                                    [
+                                        110,
+                                        40
+                                    ]
+                                ],
+                                [
+                                    [
+                                        111,
+                                        1
+                                    ],
+                                    [
+                                        111,
+                                        9
+                                    ]
+                                ],
+                                [
+                                    [
+                                        9,
+                                        8
+                                    ],
+                                    [
+                                        9,
+                                        65
+                                    ]
+                                ]
+                            ]
+                        },
+                        "enumerations": [
+                            {
+                                "name": "LoanActionType",
+                                "alias": "대출 이력 액션 유형",
+                                "refs": [
+                                    [
+                                        [
+                                            102,
+                                            5
+                                        ],
+                                        [
+                                            102,
+                                            52
+                                        ]
+                                    ]
+                                ]
+                            }
+                        ],
+                        "valueObjects": [
+                            {
+                                "name": "LoanReference",
+                                "alias": "대출 참조",
+                                "referencedAggregate": {
+                                    "name": "Loan",
+                                    "alias": "대출"
+                                },
+                                "refs": [
+                                    [
+                                        [
+                                            101,
+                                            5
+                                        ],
+                                        [
+                                            101,
+                                            11
+                                        ]
+                                    ],
+                                    [
+                                        [
+                                            108,
+                                            5
+                                        ],
+                                        [
+                                            108,
+                                            51
+                                        ]
+                                    ]
+                                ]
+                            },
+                            {
+                                "name": "BookReference",
+                                "alias": "도서 참조",
+                                "referencedAggregate": {
+                                    "name": "Book",
+                                    "alias": "도서"
+                                },
+                                "refs": [
+                                    [
+                                        [
+                                            9,
+                                            8
+                                        ],
+                                        [
+                                            9,
+                                            67
+                                        ]
+                                    ]
+                                ]
+                            }
+                        ],
+                        "previewAttributes": [
+                            {
+                                "fieldName": "history_id",
+                                "refs": [
+                                    [
+                                        [
+                                            100,
+                                            5
+                                        ],
+                                        [
+                                            100,
+                                            45
+                                        ]
+                                    ]
+                                ]
+                            },
+                            {
+                                "fieldName": "loan_id",
+                                "refs": [
+                                    [
+                                        [
+                                            101,
+                                            5
+                                        ],
+                                        [
+                                            101,
+                                            24
+                                        ]
+                                    ]
+                                ]
+                            },
+                            {
+                                "fieldName": "action_date",
+                                "refs": [
+                                    [
+                                        [
+                                            103,
+                                            5
+                                        ],
+                                        [
+                                            103,
+                                            50
+                                        ]
+                                    ]
+                                ]
+                            },
+                            {
+                                "fieldName": "previous_due_date",
+                                "refs": [
+                                    [
+                                        [
+                                            104,
+                                            5
+                                        ],
+                                        [
+                                            104,
+                                            35
+                                        ]
+                                    ]
+                                ]
+                            },
+                            {
+                                "fieldName": "new_due_date",
+                                "refs": [
+                                    [
+                                        [
+                                            105,
+                                            5
+                                        ],
+                                        [
+                                            105,
+                                            30
+                                        ]
+                                    ]
+                                ]
+                            },
+                            {
+                                "fieldName": "notes",
+                                "refs": [
+                                    [
+                                        [
+                                            106,
+                                            5
+                                        ],
+                                        [
+                                            106,
+                                            14
+                                        ]
+                                    ]
+                                ]
+                            },
+                            {
+                                "fieldName": "processed_by",
+                                "refs": [
+                                    [
+                                        [
+                                            107,
+                                            5
+                                        ],
+                                        [
+                                            107,
+                                            29
+                                        ]
+                                    ]
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "aggregate": {
+                            "name": "ReservationHistory",
+                            "alias": "예약 이력",
+                            "refs": [
+                                [
+                                    [
+                                        9,
+                                        8
+                                    ],
+                                    [
+                                        9,
+                                        67
+                                    ]
+                                ],
+                                [
+                                    [
+                                        9,
+                                        15
+                                    ],
+                                    [
+                                        9,
+                                        65
+                                    ]
+                                ]
+                            ]
+                        },
+                        "enumerations": [
+                            {
+                                "name": "ReservationActionType",
+                                "alias": "예약 이력 액션 유형",
+                                "refs": [
+                                    [
+                                        [
+                                            9,
+                                            15
+                                        ],
+                                        [
+                                            9,
+                                            65
+                                        ]
+                                    ]
+                                ]
+                            }
+                        ],
+                        "valueObjects": [
+                            {
+                                "name": "Reservation",
+                                "alias": "예약",
+                                "refs": [
+                                    [
+                                        [
+                                            9,
+                                            15
+                                        ],
+                                        [
+                                            9,
+                                            65
+                                        ]
+                                    ]
+                                ]
+                            },
+                            {
+                                "name": "BookReference",
+                                "alias": "도서 참조",
+                                "referencedAggregate": {
+                                    "name": "Book",
+                                    "alias": "도서"
+                                },
+                                "refs": [
+                                    [
+                                        [
+                                            9,
+                                            8
+                                        ],
+                                        [
+                                            9,
+                                            67
+                                        ]
+                                    ]
+                                ]
+                            }
+                        ],
+                        "previewAttributes": []
+                    }
+                ],
+                "pros": {
+                    "cohesion": "대출 이력과 예약 이력을 별도의 Aggregate로 분리하여 각 도메인 책임이 명확하게 구분된다.",
+                    "coupling": "Loan, Reservation, Book 등 외부 Aggregate와의 참조가 ValueObject로 일관되게 관리되어 결합도가 낮다.",
+                    "consistency": "각 이력의 트랜잭션 경계가 명확하여, 대출/예약 이벤트 발생 시 이력 기록의 원자성이 보장된다.",
+                    "encapsulation": "이력별 도메인 규칙과 상태 전이가 Aggregate 내부에 잘 은닉되어 있다.",
+                    "complexity": "각 Aggregate가 단일 책임 원칙을 따르므로 도메인 복잡도가 낮고 유지보수가 용이하다.",
+                    "independence": "대출 이력과 예약 이력이 독립적으로 진화 및 확장될 수 있다.",
+                    "performance": "이력별로 데이터 접근이 분리되어 대량 데이터 조회 시 성능 저하가 적다."
+                },
+                "cons": {
+                    "cohesion": "이력 데이터가 분산되어 있어 복합 이력 조회(예: 대출과 예약 이력 동시 조회) 시 추가 조인이 필요하다.",
+                    "coupling": "이력 간 연관 이벤트 처리 시 애플리케이션 서비스 계층에서 조정 로직이 필요하다.",
+                    "consistency": "복합 이력 동기화가 필요한 경우 트랜잭션 경계가 Aggregate 단위로 분리되어 있어 일관성 유지가 복잡해질 수 있다.",
+                    "encapsulation": "이력 간 공통 규칙(예: 동일 도서에 대한 이력 통합 관리)이 Aggregate 외부에서 처리되어야 한다.",
+                    "complexity": "이력 유형이 추가될 경우 Aggregate가 계속 늘어나 도메인 구조가 복잡해질 수 있다.",
+                    "independence": "복합 이력 분석이나 통계 기능 개발 시 Aggregate 간 데이터 통합이 필요하다.",
+                    "performance": "복합 이력 조회 시 여러 테이블을 조인해야 하므로 단일 이력에 비해 조회 성능이 저하될 수 있다."
+                },
+                "isAIRecommended": false,
+                "boundedContext": {
+                    "name": "LoanHistory",
+                    "alias": "이력 관리",
+                    "displayName": "이력 관리",
+                    "description": "# Bounded Context Overview: LoanHistory (이력 관리)\n\n## Role\n도서별 대출 및 예약 이력, 상태 변경 이력을 기록하고 조회할 수 있도록 한다.\n\n## Key Events\n- LoanHistoryRecorded\n- ReservationHistoryRecorded\n\n# Requirements\n\n## userStory\n\n대출 이력\n\n상태 변경\n\n## DDL\n\n```sql\nCREATE TABLE loan_history (\n    history_id INT AUTO_INCREMENT PRIMARY KEY,\n    loan_id INT NOT NULL,\n    action_type ENUM('대출', '반납', '연장', '연체알림', '분실신고') NOT NULL,\n    action_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    previous_due_date DATETIME NULL,\n    new_due_date DATETIME NULL,\n    notes TEXT,\n    processed_by VARCHAR(100),\n    FOREIGN KEY (loan_id) REFERENCES loans(loan_id),\n    INDEX idx_loan_id (loan_id),\n    INDEX idx_action_type (action_type),\n    INDEX\n```\n## Event\n\n```json\n{\n  \"name\": \"LoanHistoryRecorded\",\n  \"displayName\": \"대출 이력 기록됨\",\n  \"actor\": \"System\",\n  \"level\": 8,\n  \"description\": \"도서의 대출, 반납, 연장 등 대출 관련 이력이 시스템에 기록됨.\",\n  \"inputs\": [\n    \"대출/반납/연장 이벤트 정보\"\n  ],\n  \"outputs\": [\n    \"대출 이력 데이터\"\n  ],\n  \"nextEvents\": []\n}\n```\n\n```json\n{\n  \"name\": \"ReservationHistoryRecorded\",\n  \"displayName\": \"예약 이력 기록됨\",\n  \"actor\": \"System\",\n  \"level\": 9,\n  \"description\": \"도서 예약 관련 이력이 시스템에 기록됨.\",\n  \"inputs\": [\n    \"예약 이벤트 정보\"\n  ],\n  \"outputs\": [\n    \"예약 이력 데이터\"\n  ],\n  \"nextEvents\": []\n}\n```\n\n## Context Relations\n\n### LoanAndReservation-LoanHistory\n- **Type**: Pub/Sub\n- **Direction**: receives from 대출/반납 및 예약 (LoanAndReservation)\n- **Reason**: 대출, 반납, 연장, 예약 등 이벤트 발생 시 이력 관리 컨텍스트에서 해당 이벤트를 구독하여 이력을 기록한다.\n- **Interaction Pattern**: 대출/반납 및 예약에서 대출/반납/연장/예약 이벤트를 발행하면 이력 관리 컨텍스트가 이를 구독하여 이력 데이터를 생성한다.\n\n### BookManagement-LoanHistory\n- **Type**: Pub/Sub\n- **Direction**: receives from 도서 관리 (BookManagement)\n- **Reason**: 도서 등록, 폐기 등 도서 상태 변화 이력도 이력 관리 컨텍스트에서 기록할 수 있도록 이벤트를 발행한다.\n- **Interaction Pattern**: 도서 관리에서 도서 등록, 폐기 등 상태 변화 이벤트를 발행하면 이력 관리 컨텍스트가 이를 구독하여 상태 변경 이력을 기록한다.",
+                    "aggregates": [
+                        {
+                            "name": "LoanHistory",
+                            "alias": "대출 이력"
+                        },
+                        {
+                            "name": "ReservationHistory",
+                            "alias": "예약 이력"
+                        }
+                    ],
+                    "requirements": {
+                        "userStory": "대출 이력\n상태 변경",
+                        "ddl": "CREATE TABLE loan_history (\n    history_id INT AUTO_INCREMENT PRIMARY KEY,\n    loan_id INT NOT NULL,\n    action_type ENUM('대출', '반납', '연장', '연체알림', '분실신고') NOT NULL,\n    action_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    previous_due_date DATETIME NULL,\n    new_due_date DATETIME NULL,\n    notes TEXT,\n    processed_by VARCHAR(100),\n    FOREIGN KEY (loan_id) REFERENCES loans(loan_id),\n    INDEX idx_loan_id (loan_id),\n    INDEX idx_action_type (action_type),\n    INDEX",
+                        "event": "{\n  \"name\": \"LoanHistoryRecorded\",\n  \"displayName\": \"대출 이력 기록됨\",\n  \"actor\": \"System\",\n  \"level\": 8,\n  \"description\": \"도서의 대출, 반납, 연장 등 대출 관련 이력이 시스템에 기록됨.\",\n  \"inputs\": [\n    \"대출/반납/연장 이벤트 정보\"\n  ],\n  \"outputs\": [\n    \"대출 이력 데이터\"\n  ],\n  \"nextEvents\": [],\n  \"refs\": [\n    [\n      [\n        9,\n        8\n      ],\n      [\n        9,\n        65\n      ]\n    ]\n  ]\n}\n{\n  \"name\": \"ReservationHistoryRecorded\",\n  \"displayName\": \"예약 이력 기록됨\",\n  \"actor\": \"System\",\n  \"level\": 9,\n  \"description\": \"도서 예약 관련 이력이 시스템에 기록됨.\",\n  \"inputs\": [\n    \"예약 이벤트 정보\"\n  ],\n  \"outputs\": [\n    \"예약 이력 데이터\"\n  ],\n  \"nextEvents\": [],\n  \"refs\": [\n    [\n      [\n        9,\n        15\n      ],\n      [\n        9,\n        65\n      ]\n    ]\n  ]\n}",
+                        "eventNames": "LoanHistoryRecorded, ReservationHistoryRecorded 이벤트가 발생할 수 있어.",
+                        "ddlFields": [
+                            {
+                                "fieldName": "history_id",
+                                "refs": [
+                                    [
+                                        [
+                                            100,
+                                            5
+                                        ],
+                                        [
+                                            100,
+                                            45
+                                        ]
+                                    ]
+                                ]
+                            },
+                            {
+                                "fieldName": "loan_id",
+                                "refs": [
+                                    [
+                                        [
+                                            101,
+                                            5
+                                        ],
+                                        [
+                                            101,
+                                            24
+                                        ]
+                                    ]
+                                ]
+                            },
+                            {
+                                "fieldName": "action_date",
+                                "refs": [
+                                    [
+                                        [
+                                            103,
+                                            5
+                                        ],
+                                        [
+                                            103,
+                                            50
+                                        ]
+                                    ]
+                                ]
+                            },
+                            {
+                                "fieldName": "previous_due_date",
+                                "refs": [
+                                    [
+                                        [
+                                            104,
+                                            5
+                                        ],
+                                        [
+                                            104,
+                                            35
+                                        ]
+                                    ]
+                                ]
+                            },
+                            {
+                                "fieldName": "new_due_date",
+                                "refs": [
+                                    [
+                                        [
+                                            105,
+                                            5
+                                        ],
+                                        [
+                                            105,
+                                            30
+                                        ]
+                                    ]
+                                ]
+                            },
+                            {
+                                "fieldName": "notes",
+                                "refs": [
+                                    [
+                                        [
+                                            106,
+                                            5
+                                        ],
+                                        [
+                                            106,
+                                            14
+                                        ]
+                                    ]
+                                ]
+                            },
+                            {
+                                "fieldName": "processed_by",
+                                "refs": [
+                                    [
+                                        [
+                                            107,
+                                            5
+                                        ],
+                                        [
+                                            107,
+                                            29
+                                        ]
+                                    ]
+                                ]
+                            }
+                        ],
+                        "description": "# Bounded Context Overview: LoanHistory (이력 관리)\n\n## Role\n도서별 대출 및 예약 이력, 상태 변경 이력을 기록하고 조회할 수 있도록 한다.\n\n## Key Events\n- LoanHistoryRecorded\n- ReservationHistoryRecorded\n\n# Requirements\n\n## userStory\n\n대출 이력\n\n상태 변경\n\n## DDL\n\n```sql\nCREATE TABLE loan_history (\n    history_id INT AUTO_INCREMENT PRIMARY KEY,\n    loan_id INT NOT NULL,\n    action_type ENUM('대출', '반납', '연장', '연체알림', '분실신고') NOT NULL,\n    action_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    previous_due_date DATETIME NULL,\n    new_due_date DATETIME NULL,\n    notes TEXT,\n    processed_by VARCHAR(100),\n    FOREIGN KEY (loan_id) REFERENCES loans(loan_id),\n    INDEX idx_loan_id (loan_id),\n    INDEX idx_action_type (action_type),\n    INDEX\n```\n## Event\n\n```json\n{\n  \"name\": \"LoanHistoryRecorded\",\n  \"displayName\": \"대출 이력 기록됨\",\n  \"actor\": \"System\",\n  \"level\": 8,\n  \"description\": \"도서의 대출, 반납, 연장 등 대출 관련 이력이 시스템에 기록됨.\",\n  \"inputs\": [\n    \"대출/반납/연장 이벤트 정보\"\n  ],\n  \"outputs\": [\n    \"대출 이력 데이터\"\n  ],\n  \"nextEvents\": []\n}\n```\n\n```json\n{\n  \"name\": \"ReservationHistoryRecorded\",\n  \"displayName\": \"예약 이력 기록됨\",\n  \"actor\": \"System\",\n  \"level\": 9,\n  \"description\": \"도서 예약 관련 이력이 시스템에 기록됨.\",\n  \"inputs\": [\n    \"예약 이벤트 정보\"\n  ],\n  \"outputs\": [\n    \"예약 이력 데이터\"\n  ],\n  \"nextEvents\": []\n}\n```\n\n## Context Relations\n\n### LoanAndReservation-LoanHistory\n- **Type**: Pub/Sub\n- **Direction**: receives from 대출/반납 및 예약 (LoanAndReservation)\n- **Reason**: 대출, 반납, 연장, 예약 등 이벤트 발생 시 이력 관리 컨텍스트에서 해당 이벤트를 구독하여 이력을 기록한다.\n- **Interaction Pattern**: 대출/반납 및 예약에서 대출/반납/연장/예약 이벤트를 발행하면 이력 관리 컨텍스트가 이를 구독하여 이력 데이터를 생성한다.\n\n### BookManagement-LoanHistory\n- **Type**: Pub/Sub\n- **Direction**: receives from 도서 관리 (BookManagement)\n- **Reason**: 도서 등록, 폐기 등 도서 상태 변화 이력도 이력 관리 컨텍스트에서 기록할 수 있도록 이벤트를 발행한다.\n- **Interaction Pattern**: 도서 관리에서 도서 등록, 폐기 등 상태 변화 이벤트를 발행하면 이력 관리 컨텍스트가 이를 구독하여 상태 변경 이력을 기록한다.",
+                        "traceMap": {
+                            "4": {
+                                "refs": [
+                                    [
+                                        [
+                                            9,
+                                            8
+                                        ],
+                                        [
+                                            9,
+                                            67
+                                        ]
+                                    ]
+                                ],
+                                "isDirectMatching": false
+                            },
+                            "7": {
+                                "refs": [
+                                    [
+                                        [
+                                            9,
+                                            8
+                                        ],
+                                        [
+                                            9,
+                                            65
+                                        ]
+                                    ]
+                                ],
+                                "isDirectMatching": false
+                            },
+                            "8": {
+                                "refs": [
+                                    [
+                                        [
+                                            9,
+                                            15
+                                        ],
+                                        [
+                                            9,
+                                            65
+                                        ]
+                                    ]
+                                ],
+                                "isDirectMatching": false
+                            },
+                            "14": {
+                                "refs": [
+                                    [
+                                        [
+                                            9,
+                                            1
+                                        ],
+                                        [
+                                            9,
+                                            5
+                                        ]
+                                    ]
+                                ],
+                                "isDirectMatching": true
+                            },
+                            "16": {
+                                "refs": [
+                                    [
+                                        [
+                                            9,
+                                            1
+                                        ],
+                                        [
+                                            9,
+                                            5
+                                        ]
+                                    ]
+                                ],
+                                "isDirectMatching": true
+                            },
+                            "21": {
+                                "refs": [
+                                    [
+                                        [
+                                            99,
+                                            1
+                                        ],
+                                        [
+                                            99,
+                                            27
+                                        ]
+                                    ]
+                                ],
+                                "isDirectMatching": true
+                            },
+                            "22": {
+                                "refs": [
+                                    [
+                                        [
+                                            100,
+                                            1
+                                        ],
+                                        [
+                                            100,
+                                            46
+                                        ]
+                                    ]
+                                ],
+                                "isDirectMatching": true
+                            },
+                            "23": {
+                                "refs": [
+                                    [
+                                        [
+                                            101,
+                                            1
+                                        ],
+                                        [
+                                            101,
+                                            25
+                                        ]
+                                    ]
+                                ],
+                                "isDirectMatching": true
+                            },
+                            "24": {
+                                "refs": [
+                                    [
+                                        [
+                                            102,
+                                            1
+                                        ],
+                                        [
+                                            102,
+                                            64
+                                        ]
+                                    ]
+                                ],
+                                "isDirectMatching": true
+                            },
+                            "25": {
+                                "refs": [
+                                    [
+                                        [
+                                            103,
+                                            1
+                                        ],
+                                        [
+                                            103,
+                                            51
+                                        ]
+                                    ]
+                                ],
+                                "isDirectMatching": true
+                            },
+                            "26": {
+                                "refs": [
+                                    [
+                                        [
+                                            104,
+                                            1
+                                        ],
+                                        [
+                                            104,
+                                            36
+                                        ]
+                                    ]
+                                ],
+                                "isDirectMatching": true
+                            },
+                            "27": {
+                                "refs": [
+                                    [
+                                        [
+                                            105,
+                                            1
+                                        ],
+                                        [
+                                            105,
+                                            31
+                                        ]
+                                    ]
+                                ],
+                                "isDirectMatching": true
+                            },
+                            "28": {
+                                "refs": [
+                                    [
+                                        [
+                                            106,
+                                            1
+                                        ],
+                                        [
+                                            106,
+                                            15
+                                        ]
+                                    ]
+                                ],
+                                "isDirectMatching": true
+                            },
+                            "29": {
+                                "refs": [
+                                    [
+                                        [
+                                            107,
+                                            1
+                                        ],
+                                        [
+                                            107,
+                                            30
+                                        ]
+                                    ]
+                                ],
+                                "isDirectMatching": true
+                            },
+                            "30": {
+                                "refs": [
+                                    [
+                                        [
+                                            108,
+                                            1
+                                        ],
+                                        [
+                                            108,
+                                            52
+                                        ]
+                                    ]
+                                ],
+                                "isDirectMatching": true
+                            },
+                            "31": {
+                                "refs": [
+                                    [
+                                        [
+                                            109,
+                                            1
+                                        ],
+                                        [
+                                            109,
+                                            32
+                                        ]
+                                    ]
+                                ],
+                                "isDirectMatching": true
+                            },
+                            "32": {
+                                "refs": [
+                                    [
+                                        [
+                                            110,
+                                            1
+                                        ],
+                                        [
+                                            110,
+                                            40
+                                        ]
+                                    ]
+                                ],
+                                "isDirectMatching": true
+                            },
+                            "33": {
+                                "refs": [
+                                    [
+                                        [
+                                            111,
+                                            1
+                                        ],
+                                        [
+                                            111,
+                                            9
+                                        ]
+                                    ]
+                                ],
+                                "isDirectMatching": true
+                            },
+                            "38": {
+                                "refs": [
+                                    [
+                                        [
+                                            9,
+                                            8
+                                        ],
+                                        [
+                                            9,
+                                            65
+                                        ]
+                                    ]
+                                ],
+                                "isDirectMatching": false
+                            },
+                            "39": {
+                                "refs": [
+                                    [
+                                        [
+                                            9,
+                                            8
+                                        ],
+                                        [
+                                            9,
+                                            65
+                                        ]
+                                    ]
+                                ],
+                                "isDirectMatching": false
+                            },
+                            "40": {
+                                "refs": [
+                                    [
+                                        [
+                                            9,
+                                            8
+                                        ],
+                                        [
+                                            9,
+                                            65
+                                        ]
+                                    ]
+                                ],
+                                "isDirectMatching": false
+                            },
+                            "41": {
+                                "refs": [
+                                    [
+                                        [
+                                            9,
+                                            8
+                                        ],
+                                        [
+                                            9,
+                                            65
+                                        ]
+                                    ]
+                                ],
+                                "isDirectMatching": false
+                            },
+                            "42": {
+                                "refs": [
+                                    [
+                                        [
+                                            9,
+                                            8
+                                        ],
+                                        [
+                                            9,
+                                            65
+                                        ]
+                                    ]
+                                ],
+                                "isDirectMatching": false
+                            },
+                            "43": {
+                                "refs": [
+                                    [
+                                        [
+                                            9,
+                                            8
+                                        ],
+                                        [
+                                            9,
+                                            65
+                                        ]
+                                    ]
+                                ],
+                                "isDirectMatching": false
+                            },
+                            "44": {
+                                "refs": [
+                                    [
+                                        [
+                                            9,
+                                            8
+                                        ],
+                                        [
+                                            9,
+                                            65
+                                        ]
+                                    ]
+                                ],
+                                "isDirectMatching": false
+                            },
+                            "45": {
+                                "refs": [
+                                    [
+                                        [
+                                            9,
+                                            8
+                                        ],
+                                        [
+                                            9,
+                                            65
+                                        ]
+                                    ]
+                                ],
+                                "isDirectMatching": false
+                            },
+                            "46": {
+                                "refs": [
+                                    [
+                                        [
+                                            9,
+                                            8
+                                        ],
+                                        [
+                                            9,
+                                            65
+                                        ]
+                                    ]
+                                ],
+                                "isDirectMatching": false
+                            },
+                            "47": {
+                                "refs": [
+                                    [
+                                        [
+                                            9,
+                                            8
+                                        ],
+                                        [
+                                            9,
+                                            65
+                                        ]
+                                    ]
+                                ],
+                                "isDirectMatching": false
+                            },
+                            "48": {
+                                "refs": [
+                                    [
+                                        [
+                                            9,
+                                            8
+                                        ],
+                                        [
+                                            9,
+                                            65
+                                        ]
+                                    ]
+                                ],
+                                "isDirectMatching": false
+                            },
+                            "49": {
+                                "refs": [
+                                    [
+                                        [
+                                            9,
+                                            8
+                                        ],
+                                        [
+                                            9,
+                                            65
+                                        ]
+                                    ]
+                                ],
+                                "isDirectMatching": false
+                            },
+                            "50": {
+                                "refs": [
+                                    [
+                                        [
+                                            9,
+                                            8
+                                        ],
+                                        [
+                                            9,
+                                            65
+                                        ]
+                                    ]
+                                ],
+                                "isDirectMatching": false
+                            },
+                            "51": {
+                                "refs": [
+                                    [
+                                        [
+                                            9,
+                                            8
+                                        ],
+                                        [
+                                            9,
+                                            65
+                                        ]
+                                    ]
+                                ],
+                                "isDirectMatching": false
+                            },
+                            "55": {
+                                "refs": [
+                                    [
+                                        [
+                                            9,
+                                            15
+                                        ],
+                                        [
+                                            9,
+                                            65
+                                        ]
+                                    ]
+                                ],
+                                "isDirectMatching": false
+                            },
+                            "56": {
+                                "refs": [
+                                    [
+                                        [
+                                            9,
+                                            15
+                                        ],
+                                        [
+                                            9,
+                                            65
+                                        ]
+                                    ]
+                                ],
+                                "isDirectMatching": false
+                            },
+                            "57": {
+                                "refs": [
+                                    [
+                                        [
+                                            9,
+                                            15
+                                        ],
+                                        [
+                                            9,
+                                            65
+                                        ]
+                                    ]
+                                ],
+                                "isDirectMatching": false
+                            },
+                            "58": {
+                                "refs": [
+                                    [
+                                        [
+                                            9,
+                                            15
+                                        ],
+                                        [
+                                            9,
+                                            65
+                                        ]
+                                    ]
+                                ],
+                                "isDirectMatching": false
+                            },
+                            "59": {
+                                "refs": [
+                                    [
+                                        [
+                                            9,
+                                            15
+                                        ],
+                                        [
+                                            9,
+                                            65
+                                        ]
+                                    ]
+                                ],
+                                "isDirectMatching": false
+                            },
+                            "60": {
+                                "refs": [
+                                    [
+                                        [
+                                            9,
+                                            15
+                                        ],
+                                        [
+                                            9,
+                                            65
+                                        ]
+                                    ]
+                                ],
+                                "isDirectMatching": false
+                            },
+                            "61": {
+                                "refs": [
+                                    [
+                                        [
+                                            9,
+                                            15
+                                        ],
+                                        [
+                                            9,
+                                            65
+                                        ]
+                                    ]
+                                ],
+                                "isDirectMatching": false
+                            },
+                            "62": {
+                                "refs": [
+                                    [
+                                        [
+                                            9,
+                                            15
+                                        ],
+                                        [
+                                            9,
+                                            65
+                                        ]
+                                    ]
+                                ],
+                                "isDirectMatching": false
+                            },
+                            "63": {
+                                "refs": [
+                                    [
+                                        [
+                                            9,
+                                            15
+                                        ],
+                                        [
+                                            9,
+                                            65
+                                        ]
+                                    ]
+                                ],
+                                "isDirectMatching": false
+                            },
+                            "64": {
+                                "refs": [
+                                    [
+                                        [
+                                            9,
+                                            15
+                                        ],
+                                        [
+                                            9,
+                                            65
+                                        ]
+                                    ]
+                                ],
+                                "isDirectMatching": false
+                            },
+                            "65": {
+                                "refs": [
+                                    [
+                                        [
+                                            9,
+                                            15
+                                        ],
+                                        [
+                                            9,
+                                            65
+                                        ]
+                                    ]
+                                ],
+                                "isDirectMatching": false
+                            },
+                            "66": {
+                                "refs": [
+                                    [
+                                        [
+                                            9,
+                                            15
+                                        ],
+                                        [
+                                            9,
+                                            65
+                                        ]
+                                    ]
+                                ],
+                                "isDirectMatching": false
+                            },
+                            "67": {
+                                "refs": [
+                                    [
+                                        [
+                                            9,
+                                            15
+                                        ],
+                                        [
+                                            9,
+                                            65
+                                        ]
+                                    ]
+                                ],
+                                "isDirectMatching": false
+                            },
+                            "68": {
+                                "refs": [
+                                    [
+                                        [
+                                            9,
+                                            15
+                                        ],
+                                        [
+                                            9,
+                                            65
+                                        ]
+                                    ]
+                                ],
+                                "isDirectMatching": false
+                            },
+                            "74": {
+                                "refs": [
+                                    [
+                                        [
+                                            7,
+                                            1
+                                        ],
+                                        [
+                                            9,
+                                            67
+                                        ]
+                                    ]
+                                ],
+                                "isDirectMatching": false
+                            },
+                            "75": {
+                                "refs": [
+                                    [
+                                        [
+                                            7,
+                                            1
+                                        ],
+                                        [
+                                            9,
+                                            67
+                                        ]
+                                    ]
+                                ],
+                                "isDirectMatching": false
+                            },
+                            "76": {
+                                "refs": [
+                                    [
+                                        [
+                                            7,
+                                            1
+                                        ],
+                                        [
+                                            9,
+                                            67
+                                        ]
+                                    ]
+                                ],
+                                "isDirectMatching": false
+                            },
+                            "77": {
+                                "refs": [
+                                    [
+                                        [
+                                            7,
+                                            1
+                                        ],
+                                        [
+                                            9,
+                                            67
+                                        ]
+                                    ]
+                                ],
+                                "isDirectMatching": false
+                            },
+                            "80": {
+                                "refs": [
+                                    [
+                                        [
+                                            3,
+                                            1
+                                        ],
+                                        [
+                                            9,
+                                            67
+                                        ]
+                                    ]
+                                ],
+                                "isDirectMatching": false
+                            },
+                            "81": {
+                                "refs": [
+                                    [
+                                        [
+                                            3,
+                                            1
+                                        ],
+                                        [
+                                            9,
+                                            67
+                                        ]
+                                    ]
+                                ],
+                                "isDirectMatching": false
+                            },
+                            "82": {
+                                "refs": [
+                                    [
+                                        [
+                                            3,
+                                            1
+                                        ],
+                                        [
+                                            9,
+                                            67
+                                        ]
+                                    ]
+                                ],
+                                "isDirectMatching": false
+                            },
+                            "83": {
+                                "refs": [
+                                    [
+                                        [
+                                            3,
+                                            1
+                                        ],
+                                        [
+                                            9,
+                                            67
+                                        ]
+                                    ]
+                                ],
+                                "isDirectMatching": false
+                            }
+                        },
+                        "commandNames": [],
+                        "readModelNames": [
+                            "BookLoanHistory",
+                            "BookStatusChangeHistory"
+                        ]
+                    }
+                },
+                "description": "# Bounded Context Overview: LoanHistory (이력 관리)\n\n## Role\n도서별 대출 및 예약 이력, 상태 변경 이력을 기록하고 조회할 수 있도록 한다.\n\n## Key Events\n- LoanHistoryRecorded\n- ReservationHistoryRecorded\n\n# Requirements\n\n## userStory\n\n대출 이력\n\n상태 변경\n\n## DDL\n\n```sql\nCREATE TABLE loan_history (\n    history_id INT AUTO_INCREMENT PRIMARY KEY,\n    loan_id INT NOT NULL,\n    action_type ENUM('대출', '반납', '연장', '연체알림', '분실신고') NOT NULL,\n    action_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    previous_due_date DATETIME NULL,\n    new_due_date DATETIME NULL,\n    notes TEXT,\n    processed_by VARCHAR(100),\n    FOREIGN KEY (loan_id) REFERENCES loans(loan_id),\n    INDEX idx_loan_id (loan_id),\n    INDEX idx_action_type (action_type),\n    INDEX\n```\n## Event\n\n```json\n{\n  \"name\": \"LoanHistoryRecorded\",\n  \"displayName\": \"대출 이력 기록됨\",\n  \"actor\": \"System\",\n  \"level\": 8,\n  \"description\": \"도서의 대출, 반납, 연장 등 대출 관련 이력이 시스템에 기록됨.\",\n  \"inputs\": [\n    \"대출/반납/연장 이벤트 정보\"\n  ],\n  \"outputs\": [\n    \"대출 이력 데이터\"\n  ],\n  \"nextEvents\": []\n}\n```\n\n```json\n{\n  \"name\": \"ReservationHistoryRecorded\",\n  \"displayName\": \"예약 이력 기록됨\",\n  \"actor\": \"System\",\n  \"level\": 9,\n  \"description\": \"도서 예약 관련 이력이 시스템에 기록됨.\",\n  \"inputs\": [\n    \"예약 이벤트 정보\"\n  ],\n  \"outputs\": [\n    \"예약 이력 데이터\"\n  ],\n  \"nextEvents\": []\n}\n```\n\n## Context Relations\n\n### LoanAndReservation-LoanHistory\n- **Type**: Pub/Sub\n- **Direction**: receives from 대출/반납 및 예약 (LoanAndReservation)\n- **Reason**: 대출, 반납, 연장, 예약 등 이벤트 발생 시 이력 관리 컨텍스트에서 해당 이벤트를 구독하여 이력을 기록한다.\n- **Interaction Pattern**: 대출/반납 및 예약에서 대출/반납/연장/예약 이벤트를 발행하면 이력 관리 컨텍스트가 이를 구독하여 이력 데이터를 생성한다.\n\n### BookManagement-LoanHistory\n- **Type**: Pub/Sub\n- **Direction**: receives from 도서 관리 (BookManagement)\n- **Reason**: 도서 등록, 폐기 등 도서 상태 변화 이력도 이력 관리 컨텍스트에서 기록할 수 있도록 이벤트를 발행한다.\n- **Interaction Pattern**: 도서 관리에서 도서 등록, 폐기 등 상태 변화 이벤트를 발행하면 이력 관리 컨텍스트가 이를 구독하여 상태 변경 이력을 기록한다."
             }
         },
         "userStory": "도서관의 도서 관리와 대출/반납을 통합적으로 관리하는 화면을 만들려고 해.\n\n'도서 관리' 화면에서는 새로운 도서를 등록하고 현재 보유한 도서들의 상태를 관리할 수 있어야 해. 도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해. 등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야 해.\n\n'대출/반납' 화면에서는 회원이 도서를 대출하고 반납하는 것을 관리할 수 있어야 해. 대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할 도서를 선택해야 해. 도서는 도서명이나 ISBN으로 검색할 수 있어야 해. 대출 기간은 7일/14일/30일 중에서 선택할 수 있어. 만약 대출하려는 도서가 이미 대출 중이라면, 예약 신청이 가능해야 해. 대출이 완료되면 해당 도서의 상태는 자동으로 '대출중'으로 변경되어야 해.\n\n대출 현황 화면에서는 현재 대출 중인 도서들의 목록을 볼 수 있어야 해. 각 대출 건에 대해 대출일, 반납예정일, 현재 상태(대출중/연체/반납완료)를 확인할 수 있어야 하고, 대출 중인 도서는 연장이나 반납 처리가 가능해야 해. 도서가 반납되면 자동으로 해당 도서의 상태가 '대출가능'으로 변경되어야 해. 만약 예약자가 있는 도서가 반납되면, 해당 도서는 '예약중' 상태로 변경되어야 해.\n\n각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해.\n",
@@ -10564,11 +11671,11 @@ export const aggregateDraftScenarios = {
             "communicationStyle": "Choreography",
             "aggregateDetail": false,
             "uiStyle": null,
-            "associatedProject": "4c558c54796d8f22083465e17f4f3173"
+            "associatedProject": "7339a13846cce7d2c16bc3db85f10593"
         },
         "messages": [
             {
-                "uniqueId": "2b06cf7132ff4c240aac1bd0775ca77e",
+                "uniqueId": "77496b465d7ef6bb496b871f1f05de54",
                 "type": "processAnalysis",
                 "isAnalizing": false,
                 "isSummarizeStarted": false,
@@ -10580,9 +11687,9 @@ export const aggregateDraftScenarios = {
                     "projectName": "Requirements Analysis",
                     "content": {
                         "elements": {
-                            "390d9ad6-e8b1-0508-75ce-07a946d754a9": {
+                            "d609b7ba-a17c-2b11-7229-857be7c15442": {
                                 "_type": "org.uengine.modeling.model.Actor",
-                                "id": "390d9ad6-e8b1-0508-75ce-07a946d754a9",
+                                "id": "d609b7ba-a17c-2b11-7229-857be7c15442",
                                 "name": "Librarian",
                                 "oldName": "",
                                 "displayName": "",
@@ -10590,7 +11697,7 @@ export const aggregateDraftScenarios = {
                                 "author": null,
                                 "elementView": {
                                     "_type": "org.uengine.modeling.model.Actor",
-                                    "id": "390d9ad6-e8b1-0508-75ce-07a946d754a9",
+                                    "id": "d609b7ba-a17c-2b11-7229-857be7c15442",
                                     "x": 150,
                                     "y": 150,
                                     "width": 100,
@@ -10599,9 +11706,9 @@ export const aggregateDraftScenarios = {
                                 },
                                 "boundedContext": {}
                             },
-                            "95caa185-a0dd-6d33-2345-575c86309c45": {
+                            "aaaea731-76a8-cb6f-a3ea-22aebc7c2924": {
                                 "_type": "org.uengine.modeling.model.Actor",
-                                "id": "95caa185-a0dd-6d33-2345-575c86309c45",
+                                "id": "aaaea731-76a8-cb6f-a3ea-22aebc7c2924",
                                 "name": "Member",
                                 "oldName": "",
                                 "displayName": "",
@@ -10609,7 +11716,7 @@ export const aggregateDraftScenarios = {
                                 "author": null,
                                 "elementView": {
                                     "_type": "org.uengine.modeling.model.Actor",
-                                    "id": "95caa185-a0dd-6d33-2345-575c86309c45",
+                                    "id": "aaaea731-76a8-cb6f-a3ea-22aebc7c2924",
                                     "x": 150,
                                     "y": 400,
                                     "width": 100,
@@ -10618,9 +11725,9 @@ export const aggregateDraftScenarios = {
                                 },
                                 "boundedContext": {}
                             },
-                            "2b568279-36d9-f183-03c4-d3934740d482": {
+                            "171dca44-b5c0-17a3-2a2f-3746b2029347": {
                                 "_type": "org.uengine.modeling.model.Actor",
-                                "id": "2b568279-36d9-f183-03c4-d3934740d482",
+                                "id": "171dca44-b5c0-17a3-2a2f-3746b2029347",
                                 "name": "System",
                                 "oldName": "",
                                 "displayName": "",
@@ -10628,7 +11735,7 @@ export const aggregateDraftScenarios = {
                                 "author": null,
                                 "elementView": {
                                     "_type": "org.uengine.modeling.model.Actor",
-                                    "id": "2b568279-36d9-f183-03c4-d3934740d482",
+                                    "id": "171dca44-b5c0-17a3-2a2f-3746b2029347",
                                     "x": 150,
                                     "y": 650,
                                     "width": 100,
@@ -10637,9 +11744,9 @@ export const aggregateDraftScenarios = {
                                 },
                                 "boundedContext": {}
                             },
-                            "1f8b1907-ad9c-3d11-b02d-c329e2202b80": {
+                            "39e955bb-2889-13ee-43d6-f9c04704e8aa": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "1f8b1907-ad9c-3d11-b02d-c329e2202b80",
+                                "id": "39e955bb-2889-13ee-43d6-f9c04704e8aa",
                                 "visibility": "public",
                                 "name": "BookRegistered",
                                 "oldName": "",
@@ -10664,7 +11771,7 @@ export const aggregateDraftScenarios = {
                                 "mirrorElement": null,
                                 "elementView": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "1f8b1907-ad9c-3d11-b02d-c329e2202b80",
+                                    "id": "39e955bb-2889-13ee-43d6-f9c04704e8aa",
                                     "x": 300,
                                     "y": 150,
                                     "width": 100,
@@ -10674,7 +11781,7 @@ export const aggregateDraftScenarios = {
                                 },
                                 "hexagonalView": {
                                     "_type": "org.uengine.modeling.model.EventHexagonal",
-                                    "id": "1f8b1907-ad9c-3d11-b02d-c329e2202b80",
+                                    "id": "39e955bb-2889-13ee-43d6-f9c04704e8aa",
                                     "x": 300,
                                     "y": 150,
                                     "subWidth": 100,
@@ -10686,9 +11793,9 @@ export const aggregateDraftScenarios = {
                                 "relationCommandInfo": [],
                                 "trigger": "@PostPersist"
                             },
-                            "46430672-409c-9699-4fd8-1c403afb6ae0": {
+                            "4006544a-46e2-20b3-091f-ace9dbf97109": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "46430672-409c-9699-4fd8-1c403afb6ae0",
+                                "id": "4006544a-46e2-20b3-091f-ace9dbf97109",
                                 "visibility": "public",
                                 "name": "BookDisposed",
                                 "oldName": "",
@@ -10713,7 +11820,7 @@ export const aggregateDraftScenarios = {
                                 "mirrorElement": null,
                                 "elementView": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "46430672-409c-9699-4fd8-1c403afb6ae0",
+                                    "id": "4006544a-46e2-20b3-091f-ace9dbf97109",
                                     "x": 500,
                                     "y": 150,
                                     "width": 100,
@@ -10723,7 +11830,7 @@ export const aggregateDraftScenarios = {
                                 },
                                 "hexagonalView": {
                                     "_type": "org.uengine.modeling.model.EventHexagonal",
-                                    "id": "46430672-409c-9699-4fd8-1c403afb6ae0",
+                                    "id": "4006544a-46e2-20b3-091f-ace9dbf97109",
                                     "x": 500,
                                     "y": 150,
                                     "subWidth": 100,
@@ -10735,9 +11842,9 @@ export const aggregateDraftScenarios = {
                                 "relationCommandInfo": [],
                                 "trigger": "@PostPersist"
                             },
-                            "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb": {
+                            "33d20dfd-41e2-329f-f21e-d951acc196dc": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                                "id": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                                 "visibility": "public",
                                 "name": "BookStatusChanged",
                                 "oldName": "",
@@ -10762,7 +11869,7 @@ export const aggregateDraftScenarios = {
                                 "mirrorElement": null,
                                 "elementView": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                                    "id": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                                     "x": 300,
                                     "y": 650,
                                     "width": 100,
@@ -10772,7 +11879,7 @@ export const aggregateDraftScenarios = {
                                 },
                                 "hexagonalView": {
                                     "_type": "org.uengine.modeling.model.EventHexagonal",
-                                    "id": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                                    "id": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                                     "x": 300,
                                     "y": 650,
                                     "subWidth": 100,
@@ -10784,9 +11891,9 @@ export const aggregateDraftScenarios = {
                                 "relationCommandInfo": [],
                                 "trigger": "@PostPersist"
                             },
-                            "3fd758ad-d1aa-2d00-84c6-e617a5ca321d": {
+                            "502ba06b-125d-e2ba-b615-073e706b6993": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "3fd758ad-d1aa-2d00-84c6-e617a5ca321d",
+                                "id": "502ba06b-125d-e2ba-b615-073e706b6993",
                                 "visibility": "public",
                                 "name": "LoanHistoryRecorded",
                                 "oldName": "",
@@ -10811,7 +11918,7 @@ export const aggregateDraftScenarios = {
                                 "mirrorElement": null,
                                 "elementView": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "3fd758ad-d1aa-2d00-84c6-e617a5ca321d",
+                                    "id": "502ba06b-125d-e2ba-b615-073e706b6993",
                                     "x": 500,
                                     "y": 650,
                                     "width": 100,
@@ -10821,7 +11928,7 @@ export const aggregateDraftScenarios = {
                                 },
                                 "hexagonalView": {
                                     "_type": "org.uengine.modeling.model.EventHexagonal",
-                                    "id": "3fd758ad-d1aa-2d00-84c6-e617a5ca321d",
+                                    "id": "502ba06b-125d-e2ba-b615-073e706b6993",
                                     "x": 500,
                                     "y": 650,
                                     "subWidth": 100,
@@ -10833,9 +11940,9 @@ export const aggregateDraftScenarios = {
                                 "relationCommandInfo": [],
                                 "trigger": "@PostPersist"
                             },
-                            "0c5189db-fb16-d909-f227-0d57f711a17b": {
+                            "f86575ae-5efb-bb6e-9570-f8b02222054f": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "0c5189db-fb16-d909-f227-0d57f711a17b",
+                                "id": "f86575ae-5efb-bb6e-9570-f8b02222054f",
                                 "visibility": "public",
                                 "name": "ReservationHistoryRecorded",
                                 "oldName": "",
@@ -10860,7 +11967,7 @@ export const aggregateDraftScenarios = {
                                 "mirrorElement": null,
                                 "elementView": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "0c5189db-fb16-d909-f227-0d57f711a17b",
+                                    "id": "f86575ae-5efb-bb6e-9570-f8b02222054f",
                                     "x": 700,
                                     "y": 650,
                                     "width": 100,
@@ -10870,7 +11977,7 @@ export const aggregateDraftScenarios = {
                                 },
                                 "hexagonalView": {
                                     "_type": "org.uengine.modeling.model.EventHexagonal",
-                                    "id": "0c5189db-fb16-d909-f227-0d57f711a17b",
+                                    "id": "f86575ae-5efb-bb6e-9570-f8b02222054f",
                                     "x": 700,
                                     "y": 650,
                                     "subWidth": 100,
@@ -10882,9 +11989,9 @@ export const aggregateDraftScenarios = {
                                 "relationCommandInfo": [],
                                 "trigger": "@PostPersist"
                             },
-                            "6f1d672f-a24c-3ce2-a1d8-001277df7fc7": {
+                            "2c5c3155-2cbe-acad-a41c-18c2ac2583ec": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "6f1d672f-a24c-3ce2-a1d8-001277df7fc7",
+                                "id": "2c5c3155-2cbe-acad-a41c-18c2ac2583ec",
                                 "visibility": "public",
                                 "name": "BookLoaned",
                                 "oldName": "",
@@ -10909,7 +12016,7 @@ export const aggregateDraftScenarios = {
                                 "mirrorElement": null,
                                 "elementView": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "6f1d672f-a24c-3ce2-a1d8-001277df7fc7",
+                                    "id": "2c5c3155-2cbe-acad-a41c-18c2ac2583ec",
                                     "x": 300,
                                     "y": 400,
                                     "width": 100,
@@ -10919,7 +12026,7 @@ export const aggregateDraftScenarios = {
                                 },
                                 "hexagonalView": {
                                     "_type": "org.uengine.modeling.model.EventHexagonal",
-                                    "id": "6f1d672f-a24c-3ce2-a1d8-001277df7fc7",
+                                    "id": "2c5c3155-2cbe-acad-a41c-18c2ac2583ec",
                                     "x": 300,
                                     "y": 400,
                                     "subWidth": 100,
@@ -10931,9 +12038,9 @@ export const aggregateDraftScenarios = {
                                 "relationCommandInfo": [],
                                 "trigger": "@PostPersist"
                             },
-                            "d858202f-6448-5f92-839f-057850558645": {
+                            "dae2e159-2892-5ae3-3f28-f7ca33ca3b86": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "d858202f-6448-5f92-839f-057850558645",
+                                "id": "dae2e159-2892-5ae3-3f28-f7ca33ca3b86",
                                 "visibility": "public",
                                 "name": "BookReserved",
                                 "oldName": "",
@@ -10958,7 +12065,7 @@ export const aggregateDraftScenarios = {
                                 "mirrorElement": null,
                                 "elementView": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "d858202f-6448-5f92-839f-057850558645",
+                                    "id": "dae2e159-2892-5ae3-3f28-f7ca33ca3b86",
                                     "x": 500,
                                     "y": 400,
                                     "width": 100,
@@ -10968,7 +12075,7 @@ export const aggregateDraftScenarios = {
                                 },
                                 "hexagonalView": {
                                     "_type": "org.uengine.modeling.model.EventHexagonal",
-                                    "id": "d858202f-6448-5f92-839f-057850558645",
+                                    "id": "dae2e159-2892-5ae3-3f28-f7ca33ca3b86",
                                     "x": 500,
                                     "y": 400,
                                     "subWidth": 100,
@@ -10980,9 +12087,9 @@ export const aggregateDraftScenarios = {
                                 "relationCommandInfo": [],
                                 "trigger": "@PostPersist"
                             },
-                            "69c6b800-fbe8-b39d-7671-bb7c9a5a9fde": {
+                            "259c838a-8e2b-4d53-e282-92e7b9f4c351": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "69c6b800-fbe8-b39d-7671-bb7c9a5a9fde",
+                                "id": "259c838a-8e2b-4d53-e282-92e7b9f4c351",
                                 "visibility": "public",
                                 "name": "BookReturned",
                                 "oldName": "",
@@ -11007,7 +12114,7 @@ export const aggregateDraftScenarios = {
                                 "mirrorElement": null,
                                 "elementView": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "69c6b800-fbe8-b39d-7671-bb7c9a5a9fde",
+                                    "id": "259c838a-8e2b-4d53-e282-92e7b9f4c351",
                                     "x": 700,
                                     "y": 400,
                                     "width": 100,
@@ -11017,7 +12124,7 @@ export const aggregateDraftScenarios = {
                                 },
                                 "hexagonalView": {
                                     "_type": "org.uengine.modeling.model.EventHexagonal",
-                                    "id": "69c6b800-fbe8-b39d-7671-bb7c9a5a9fde",
+                                    "id": "259c838a-8e2b-4d53-e282-92e7b9f4c351",
                                     "x": 700,
                                     "y": 400,
                                     "subWidth": 100,
@@ -11029,9 +12136,9 @@ export const aggregateDraftScenarios = {
                                 "relationCommandInfo": [],
                                 "trigger": "@PostPersist"
                             },
-                            "fdb46713-7a04-0545-7333-76bb78ef9e6b": {
+                            "7e5e2488-3c94-6b60-2dde-a60fb11834fa": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "fdb46713-7a04-0545-7333-76bb78ef9e6b",
+                                "id": "7e5e2488-3c94-6b60-2dde-a60fb11834fa",
                                 "visibility": "public",
                                 "name": "LoanExtended",
                                 "oldName": "",
@@ -11056,7 +12163,7 @@ export const aggregateDraftScenarios = {
                                 "mirrorElement": null,
                                 "elementView": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "fdb46713-7a04-0545-7333-76bb78ef9e6b",
+                                    "id": "7e5e2488-3c94-6b60-2dde-a60fb11834fa",
                                     "x": 900,
                                     "y": 400,
                                     "width": 100,
@@ -11066,7 +12173,7 @@ export const aggregateDraftScenarios = {
                                 },
                                 "hexagonalView": {
                                     "_type": "org.uengine.modeling.model.EventHexagonal",
-                                    "id": "fdb46713-7a04-0545-7333-76bb78ef9e6b",
+                                    "id": "7e5e2488-3c94-6b60-2dde-a60fb11834fa",
                                     "x": 900,
                                     "y": 400,
                                     "subWidth": 100,
@@ -11080,18 +12187,18 @@ export const aggregateDraftScenarios = {
                             }
                         },
                         "relations": {
-                            "1145e43c-b5f5-f11d-4ce6-8284718bd16d": {
+                            "094e1cd1-4d3e-739c-83f2-a4fbd6655d7f": {
                                 "_type": "org.uengine.modeling.model.Line",
-                                "id": "1145e43c-b5f5-f11d-4ce6-8284718bd16d",
+                                "id": "094e1cd1-4d3e-739c-83f2-a4fbd6655d7f",
                                 "name": "",
                                 "author": null,
                                 "oldName": "",
                                 "displayName": "",
-                                "from": "1145e43c-b5f5-f11d-4ce6-8284718bd16d",
-                                "to": "1145e43c-b5f5-f11d-4ce6-8284718bd16d",
+                                "from": "094e1cd1-4d3e-739c-83f2-a4fbd6655d7f",
+                                "to": "094e1cd1-4d3e-739c-83f2-a4fbd6655d7f",
                                 "description": "",
                                 "relationView": {
-                                    "id": "1145e43c-b5f5-f11d-4ce6-8284718bd16d",
+                                    "id": "094e1cd1-4d3e-739c-83f2-a4fbd6655d7f",
                                     "value": "[[0,275],[2000,275]]"
                                 },
                                 "size": 10,
@@ -11100,18 +12207,18 @@ export const aggregateDraftScenarios = {
                                 "imgSrc": "https://www.msaez.io:8081/static/image/symbol/edge.png",
                                 "vertices": "[[0,275],[2000,275]]"
                             },
-                            "1a7be36f-bc74-c430-34fc-05d2731ae1e7": {
+                            "9700580c-1970-b461-ad81-676a95123e95": {
                                 "_type": "org.uengine.modeling.model.Line",
-                                "id": "1a7be36f-bc74-c430-34fc-05d2731ae1e7",
+                                "id": "9700580c-1970-b461-ad81-676a95123e95",
                                 "name": "",
                                 "author": null,
                                 "oldName": "",
                                 "displayName": "",
-                                "from": "1a7be36f-bc74-c430-34fc-05d2731ae1e7",
-                                "to": "1a7be36f-bc74-c430-34fc-05d2731ae1e7",
+                                "from": "9700580c-1970-b461-ad81-676a95123e95",
+                                "to": "9700580c-1970-b461-ad81-676a95123e95",
                                 "description": "",
                                 "relationView": {
-                                    "id": "1a7be36f-bc74-c430-34fc-05d2731ae1e7",
+                                    "id": "9700580c-1970-b461-ad81-676a95123e95",
                                     "value": "[[0,525],[2000,525]]"
                                 },
                                 "size": 10,
@@ -11120,18 +12227,18 @@ export const aggregateDraftScenarios = {
                                 "imgSrc": "https://www.msaez.io:8081/static/image/symbol/edge.png",
                                 "vertices": "[[0,525],[2000,525]]"
                             },
-                            "2c8dc285-d342-8b02-4648-9c8765948650": {
+                            "887ca9dd-3cb0-8764-9176-787875c4f6ed": {
                                 "_type": "org.uengine.modeling.model.Line",
-                                "id": "2c8dc285-d342-8b02-4648-9c8765948650",
+                                "id": "887ca9dd-3cb0-8764-9176-787875c4f6ed",
                                 "name": "",
                                 "author": null,
                                 "oldName": "",
                                 "displayName": "",
-                                "from": "2c8dc285-d342-8b02-4648-9c8765948650",
-                                "to": "2c8dc285-d342-8b02-4648-9c8765948650",
+                                "from": "887ca9dd-3cb0-8764-9176-787875c4f6ed",
+                                "to": "887ca9dd-3cb0-8764-9176-787875c4f6ed",
                                 "description": "",
                                 "relationView": {
-                                    "id": "2c8dc285-d342-8b02-4648-9c8765948650",
+                                    "id": "887ca9dd-3cb0-8764-9176-787875c4f6ed",
                                     "value": "[[0,775],[2000,775]]"
                                 },
                                 "size": 10,
@@ -11140,14 +12247,14 @@ export const aggregateDraftScenarios = {
                                 "imgSrc": "https://www.msaez.io:8081/static/image/symbol/edge.png",
                                 "vertices": "[[0,775],[2000,775]]"
                             },
-                            "08de7859-04f0-9f44-9d01-34a8f16de0f8": {
+                            "2bc8c8c5-c18d-754d-f9de-f1a1b02b251d": {
                                 "_type": "org.uengine.modeling.model.Relation",
-                                "id": "08de7859-04f0-9f44-9d01-34a8f16de0f8",
+                                "id": "2bc8c8c5-c18d-754d-f9de-f1a1b02b251d",
                                 "name": "1",
                                 "displayName": "1",
                                 "sourceElement": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "1f8b1907-ad9c-3d11-b02d-c329e2202b80",
+                                    "id": "39e955bb-2889-13ee-43d6-f9c04704e8aa",
                                     "visibility": "public",
                                     "name": "BookRegistered",
                                     "oldName": "",
@@ -11172,7 +12279,7 @@ export const aggregateDraftScenarios = {
                                     "mirrorElement": null,
                                     "elementView": {
                                         "_type": "org.uengine.modeling.model.Event",
-                                        "id": "1f8b1907-ad9c-3d11-b02d-c329e2202b80",
+                                        "id": "39e955bb-2889-13ee-43d6-f9c04704e8aa",
                                         "x": 300,
                                         "y": 150,
                                         "width": 100,
@@ -11182,7 +12289,7 @@ export const aggregateDraftScenarios = {
                                     },
                                     "hexagonalView": {
                                         "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "1f8b1907-ad9c-3d11-b02d-c329e2202b80",
+                                        "id": "39e955bb-2889-13ee-43d6-f9c04704e8aa",
                                         "x": 300,
                                         "y": 150,
                                         "subWidth": 100,
@@ -11196,7 +12303,7 @@ export const aggregateDraftScenarios = {
                                 },
                                 "targetElement": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                                    "id": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                                     "visibility": "public",
                                     "name": "BookStatusChanged",
                                     "oldName": "",
@@ -11221,7 +12328,7 @@ export const aggregateDraftScenarios = {
                                     "mirrorElement": null,
                                     "elementView": {
                                         "_type": "org.uengine.modeling.model.Event",
-                                        "id": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                                        "id": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                                         "x": 300,
                                         "y": 650,
                                         "width": 100,
@@ -11231,7 +12338,7 @@ export const aggregateDraftScenarios = {
                                     },
                                     "hexagonalView": {
                                         "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                                        "id": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                                         "x": 300,
                                         "y": 650,
                                         "subWidth": 100,
@@ -11243,25 +12350,25 @@ export const aggregateDraftScenarios = {
                                     "relationCommandInfo": [],
                                     "trigger": "@PostPersist"
                                 },
-                                "from": "1f8b1907-ad9c-3d11-b02d-c329e2202b80",
-                                "to": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                                "from": "39e955bb-2889-13ee-43d6-f9c04704e8aa",
+                                "to": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                                 "relationView": {
-                                    "id": "08de7859-04f0-9f44-9d01-34a8f16de0f8",
+                                    "id": "2bc8c8c5-c18d-754d-f9de-f1a1b02b251d",
                                     "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
                                     "value": null,
-                                    "from": "1f8b1907-ad9c-3d11-b02d-c329e2202b80",
-                                    "to": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                                    "from": "39e955bb-2889-13ee-43d6-f9c04704e8aa",
+                                    "to": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                                     "needReconnect": true
                                 }
                             },
-                            "5126cbe9-4654-ddff-1703-d9c350d09e40": {
+                            "e7b7a299-3bb1-4f1b-eb11-203907e78050": {
                                 "_type": "org.uengine.modeling.model.Relation",
-                                "id": "5126cbe9-4654-ddff-1703-d9c350d09e40",
+                                "id": "e7b7a299-3bb1-4f1b-eb11-203907e78050",
                                 "name": "2",
                                 "displayName": "2",
                                 "sourceElement": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                                    "id": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                                     "visibility": "public",
                                     "name": "BookStatusChanged",
                                     "oldName": "",
@@ -11286,7 +12393,7 @@ export const aggregateDraftScenarios = {
                                     "mirrorElement": null,
                                     "elementView": {
                                         "_type": "org.uengine.modeling.model.Event",
-                                        "id": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                                        "id": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                                         "x": 300,
                                         "y": 650,
                                         "width": 100,
@@ -11296,7 +12403,7 @@ export const aggregateDraftScenarios = {
                                     },
                                     "hexagonalView": {
                                         "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                                        "id": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                                         "x": 300,
                                         "y": 650,
                                         "subWidth": 100,
@@ -11310,7 +12417,7 @@ export const aggregateDraftScenarios = {
                                 },
                                 "targetElement": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "46430672-409c-9699-4fd8-1c403afb6ae0",
+                                    "id": "4006544a-46e2-20b3-091f-ace9dbf97109",
                                     "visibility": "public",
                                     "name": "BookDisposed",
                                     "oldName": "",
@@ -11335,7 +12442,7 @@ export const aggregateDraftScenarios = {
                                     "mirrorElement": null,
                                     "elementView": {
                                         "_type": "org.uengine.modeling.model.Event",
-                                        "id": "46430672-409c-9699-4fd8-1c403afb6ae0",
+                                        "id": "4006544a-46e2-20b3-091f-ace9dbf97109",
                                         "x": 500,
                                         "y": 150,
                                         "width": 100,
@@ -11345,7 +12452,7 @@ export const aggregateDraftScenarios = {
                                     },
                                     "hexagonalView": {
                                         "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "46430672-409c-9699-4fd8-1c403afb6ae0",
+                                        "id": "4006544a-46e2-20b3-091f-ace9dbf97109",
                                         "x": 500,
                                         "y": 150,
                                         "subWidth": 100,
@@ -11357,25 +12464,25 @@ export const aggregateDraftScenarios = {
                                     "relationCommandInfo": [],
                                     "trigger": "@PostPersist"
                                 },
-                                "from": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
-                                "to": "46430672-409c-9699-4fd8-1c403afb6ae0",
+                                "from": "33d20dfd-41e2-329f-f21e-d951acc196dc",
+                                "to": "4006544a-46e2-20b3-091f-ace9dbf97109",
                                 "relationView": {
-                                    "id": "5126cbe9-4654-ddff-1703-d9c350d09e40",
+                                    "id": "e7b7a299-3bb1-4f1b-eb11-203907e78050",
                                     "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
                                     "value": null,
-                                    "from": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
-                                    "to": "46430672-409c-9699-4fd8-1c403afb6ae0",
+                                    "from": "33d20dfd-41e2-329f-f21e-d951acc196dc",
+                                    "to": "4006544a-46e2-20b3-091f-ace9dbf97109",
                                     "needReconnect": true
                                 }
                             },
-                            "c851c068-8abb-87d9-1c2a-1e80ed443591": {
+                            "88615bd2-d1b2-b3b1-25e0-6689ab67d1cc": {
                                 "_type": "org.uengine.modeling.model.Relation",
-                                "id": "c851c068-8abb-87d9-1c2a-1e80ed443591",
+                                "id": "88615bd2-d1b2-b3b1-25e0-6689ab67d1cc",
                                 "name": "2",
                                 "displayName": "2",
                                 "sourceElement": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                                    "id": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                                     "visibility": "public",
                                     "name": "BookStatusChanged",
                                     "oldName": "",
@@ -11400,7 +12507,7 @@ export const aggregateDraftScenarios = {
                                     "mirrorElement": null,
                                     "elementView": {
                                         "_type": "org.uengine.modeling.model.Event",
-                                        "id": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                                        "id": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                                         "x": 300,
                                         "y": 650,
                                         "width": 100,
@@ -11410,7 +12517,7 @@ export const aggregateDraftScenarios = {
                                     },
                                     "hexagonalView": {
                                         "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                                        "id": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                                         "x": 300,
                                         "y": 650,
                                         "subWidth": 100,
@@ -11424,7 +12531,7 @@ export const aggregateDraftScenarios = {
                                 },
                                 "targetElement": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "6f1d672f-a24c-3ce2-a1d8-001277df7fc7",
+                                    "id": "2c5c3155-2cbe-acad-a41c-18c2ac2583ec",
                                     "visibility": "public",
                                     "name": "BookLoaned",
                                     "oldName": "",
@@ -11449,7 +12556,7 @@ export const aggregateDraftScenarios = {
                                     "mirrorElement": null,
                                     "elementView": {
                                         "_type": "org.uengine.modeling.model.Event",
-                                        "id": "6f1d672f-a24c-3ce2-a1d8-001277df7fc7",
+                                        "id": "2c5c3155-2cbe-acad-a41c-18c2ac2583ec",
                                         "x": 300,
                                         "y": 400,
                                         "width": 100,
@@ -11459,7 +12566,7 @@ export const aggregateDraftScenarios = {
                                     },
                                     "hexagonalView": {
                                         "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "6f1d672f-a24c-3ce2-a1d8-001277df7fc7",
+                                        "id": "2c5c3155-2cbe-acad-a41c-18c2ac2583ec",
                                         "x": 300,
                                         "y": 400,
                                         "subWidth": 100,
@@ -11471,25 +12578,25 @@ export const aggregateDraftScenarios = {
                                     "relationCommandInfo": [],
                                     "trigger": "@PostPersist"
                                 },
-                                "from": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
-                                "to": "6f1d672f-a24c-3ce2-a1d8-001277df7fc7",
+                                "from": "33d20dfd-41e2-329f-f21e-d951acc196dc",
+                                "to": "2c5c3155-2cbe-acad-a41c-18c2ac2583ec",
                                 "relationView": {
-                                    "id": "c851c068-8abb-87d9-1c2a-1e80ed443591",
+                                    "id": "88615bd2-d1b2-b3b1-25e0-6689ab67d1cc",
                                     "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
                                     "value": null,
-                                    "from": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
-                                    "to": "6f1d672f-a24c-3ce2-a1d8-001277df7fc7",
+                                    "from": "33d20dfd-41e2-329f-f21e-d951acc196dc",
+                                    "to": "2c5c3155-2cbe-acad-a41c-18c2ac2583ec",
                                     "needReconnect": true
                                 }
                             },
-                            "bde18cde-2136-ad9e-f9b0-1257e6ebc558": {
+                            "4f2622e1-9dfb-5148-36ba-afcac0ed7d24": {
                                 "_type": "org.uengine.modeling.model.Relation",
-                                "id": "bde18cde-2136-ad9e-f9b0-1257e6ebc558",
+                                "id": "4f2622e1-9dfb-5148-36ba-afcac0ed7d24",
                                 "name": "2",
                                 "displayName": "2",
                                 "sourceElement": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                                    "id": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                                     "visibility": "public",
                                     "name": "BookStatusChanged",
                                     "oldName": "",
@@ -11514,7 +12621,7 @@ export const aggregateDraftScenarios = {
                                     "mirrorElement": null,
                                     "elementView": {
                                         "_type": "org.uengine.modeling.model.Event",
-                                        "id": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                                        "id": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                                         "x": 300,
                                         "y": 650,
                                         "width": 100,
@@ -11524,7 +12631,7 @@ export const aggregateDraftScenarios = {
                                     },
                                     "hexagonalView": {
                                         "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                                        "id": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                                         "x": 300,
                                         "y": 650,
                                         "subWidth": 100,
@@ -11538,7 +12645,7 @@ export const aggregateDraftScenarios = {
                                 },
                                 "targetElement": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "69c6b800-fbe8-b39d-7671-bb7c9a5a9fde",
+                                    "id": "259c838a-8e2b-4d53-e282-92e7b9f4c351",
                                     "visibility": "public",
                                     "name": "BookReturned",
                                     "oldName": "",
@@ -11563,7 +12670,7 @@ export const aggregateDraftScenarios = {
                                     "mirrorElement": null,
                                     "elementView": {
                                         "_type": "org.uengine.modeling.model.Event",
-                                        "id": "69c6b800-fbe8-b39d-7671-bb7c9a5a9fde",
+                                        "id": "259c838a-8e2b-4d53-e282-92e7b9f4c351",
                                         "x": 700,
                                         "y": 400,
                                         "width": 100,
@@ -11573,7 +12680,7 @@ export const aggregateDraftScenarios = {
                                     },
                                     "hexagonalView": {
                                         "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "69c6b800-fbe8-b39d-7671-bb7c9a5a9fde",
+                                        "id": "259c838a-8e2b-4d53-e282-92e7b9f4c351",
                                         "x": 700,
                                         "y": 400,
                                         "subWidth": 100,
@@ -11585,25 +12692,25 @@ export const aggregateDraftScenarios = {
                                     "relationCommandInfo": [],
                                     "trigger": "@PostPersist"
                                 },
-                                "from": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
-                                "to": "69c6b800-fbe8-b39d-7671-bb7c9a5a9fde",
+                                "from": "33d20dfd-41e2-329f-f21e-d951acc196dc",
+                                "to": "259c838a-8e2b-4d53-e282-92e7b9f4c351",
                                 "relationView": {
-                                    "id": "bde18cde-2136-ad9e-f9b0-1257e6ebc558",
+                                    "id": "4f2622e1-9dfb-5148-36ba-afcac0ed7d24",
                                     "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
                                     "value": null,
-                                    "from": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
-                                    "to": "69c6b800-fbe8-b39d-7671-bb7c9a5a9fde",
+                                    "from": "33d20dfd-41e2-329f-f21e-d951acc196dc",
+                                    "to": "259c838a-8e2b-4d53-e282-92e7b9f4c351",
                                     "needReconnect": true
                                 }
                             },
-                            "2f9fb1a8-a85c-57be-3df8-b6cce24a96eb": {
+                            "4eee1503-8fa4-4772-1e34-da7c19530d77": {
                                 "_type": "org.uengine.modeling.model.Relation",
-                                "id": "2f9fb1a8-a85c-57be-3df8-b6cce24a96eb",
+                                "id": "4eee1503-8fa4-4772-1e34-da7c19530d77",
                                 "name": "2",
                                 "displayName": "2",
                                 "sourceElement": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                                    "id": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                                     "visibility": "public",
                                     "name": "BookStatusChanged",
                                     "oldName": "",
@@ -11628,7 +12735,7 @@ export const aggregateDraftScenarios = {
                                     "mirrorElement": null,
                                     "elementView": {
                                         "_type": "org.uengine.modeling.model.Event",
-                                        "id": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                                        "id": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                                         "x": 300,
                                         "y": 650,
                                         "width": 100,
@@ -11638,7 +12745,7 @@ export const aggregateDraftScenarios = {
                                     },
                                     "hexagonalView": {
                                         "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                                        "id": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                                         "x": 300,
                                         "y": 650,
                                         "subWidth": 100,
@@ -11652,7 +12759,7 @@ export const aggregateDraftScenarios = {
                                 },
                                 "targetElement": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "d858202f-6448-5f92-839f-057850558645",
+                                    "id": "dae2e159-2892-5ae3-3f28-f7ca33ca3b86",
                                     "visibility": "public",
                                     "name": "BookReserved",
                                     "oldName": "",
@@ -11677,7 +12784,7 @@ export const aggregateDraftScenarios = {
                                     "mirrorElement": null,
                                     "elementView": {
                                         "_type": "org.uengine.modeling.model.Event",
-                                        "id": "d858202f-6448-5f92-839f-057850558645",
+                                        "id": "dae2e159-2892-5ae3-3f28-f7ca33ca3b86",
                                         "x": 500,
                                         "y": 400,
                                         "width": 100,
@@ -11687,7 +12794,7 @@ export const aggregateDraftScenarios = {
                                     },
                                     "hexagonalView": {
                                         "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "d858202f-6448-5f92-839f-057850558645",
+                                        "id": "dae2e159-2892-5ae3-3f28-f7ca33ca3b86",
                                         "x": 500,
                                         "y": 400,
                                         "subWidth": 100,
@@ -11699,25 +12806,25 @@ export const aggregateDraftScenarios = {
                                     "relationCommandInfo": [],
                                     "trigger": "@PostPersist"
                                 },
-                                "from": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
-                                "to": "d858202f-6448-5f92-839f-057850558645",
+                                "from": "33d20dfd-41e2-329f-f21e-d951acc196dc",
+                                "to": "dae2e159-2892-5ae3-3f28-f7ca33ca3b86",
                                 "relationView": {
-                                    "id": "2f9fb1a8-a85c-57be-3df8-b6cce24a96eb",
+                                    "id": "4eee1503-8fa4-4772-1e34-da7c19530d77",
                                     "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
                                     "value": null,
-                                    "from": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
-                                    "to": "d858202f-6448-5f92-839f-057850558645",
+                                    "from": "33d20dfd-41e2-329f-f21e-d951acc196dc",
+                                    "to": "dae2e159-2892-5ae3-3f28-f7ca33ca3b86",
                                     "needReconnect": true
                                 }
                             },
-                            "156064f6-b46c-dbd1-66e7-aec2612bee9a": {
+                            "3f64b1d9-2d58-a122-c89d-5e21269c65d0": {
                                 "_type": "org.uengine.modeling.model.Relation",
-                                "id": "156064f6-b46c-dbd1-66e7-aec2612bee9a",
+                                "id": "3f64b1d9-2d58-a122-c89d-5e21269c65d0",
                                 "name": "4",
                                 "displayName": "4",
                                 "sourceElement": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "6f1d672f-a24c-3ce2-a1d8-001277df7fc7",
+                                    "id": "2c5c3155-2cbe-acad-a41c-18c2ac2583ec",
                                     "visibility": "public",
                                     "name": "BookLoaned",
                                     "oldName": "",
@@ -11742,7 +12849,7 @@ export const aggregateDraftScenarios = {
                                     "mirrorElement": null,
                                     "elementView": {
                                         "_type": "org.uengine.modeling.model.Event",
-                                        "id": "6f1d672f-a24c-3ce2-a1d8-001277df7fc7",
+                                        "id": "2c5c3155-2cbe-acad-a41c-18c2ac2583ec",
                                         "x": 300,
                                         "y": 400,
                                         "width": 100,
@@ -11752,7 +12859,7 @@ export const aggregateDraftScenarios = {
                                     },
                                     "hexagonalView": {
                                         "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "6f1d672f-a24c-3ce2-a1d8-001277df7fc7",
+                                        "id": "2c5c3155-2cbe-acad-a41c-18c2ac2583ec",
                                         "x": 300,
                                         "y": 400,
                                         "subWidth": 100,
@@ -11766,7 +12873,7 @@ export const aggregateDraftScenarios = {
                                 },
                                 "targetElement": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                                    "id": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                                     "visibility": "public",
                                     "name": "BookStatusChanged",
                                     "oldName": "",
@@ -11791,7 +12898,7 @@ export const aggregateDraftScenarios = {
                                     "mirrorElement": null,
                                     "elementView": {
                                         "_type": "org.uengine.modeling.model.Event",
-                                        "id": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                                        "id": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                                         "x": 300,
                                         "y": 650,
                                         "width": 100,
@@ -11801,7 +12908,7 @@ export const aggregateDraftScenarios = {
                                     },
                                     "hexagonalView": {
                                         "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                                        "id": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                                         "x": 300,
                                         "y": 650,
                                         "subWidth": 100,
@@ -11813,25 +12920,25 @@ export const aggregateDraftScenarios = {
                                     "relationCommandInfo": [],
                                     "trigger": "@PostPersist"
                                 },
-                                "from": "6f1d672f-a24c-3ce2-a1d8-001277df7fc7",
-                                "to": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                                "from": "2c5c3155-2cbe-acad-a41c-18c2ac2583ec",
+                                "to": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                                 "relationView": {
-                                    "id": "156064f6-b46c-dbd1-66e7-aec2612bee9a",
+                                    "id": "3f64b1d9-2d58-a122-c89d-5e21269c65d0",
                                     "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
                                     "value": null,
-                                    "from": "6f1d672f-a24c-3ce2-a1d8-001277df7fc7",
-                                    "to": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                                    "from": "2c5c3155-2cbe-acad-a41c-18c2ac2583ec",
+                                    "to": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                                     "needReconnect": true
                                 }
                             },
-                            "0badfcbf-da89-28f3-1fc8-2176df4c90c2": {
+                            "b0053bd9-ddb5-d979-2c68-73594113884d": {
                                 "_type": "org.uengine.modeling.model.Relation",
-                                "id": "0badfcbf-da89-28f3-1fc8-2176df4c90c2",
+                                "id": "b0053bd9-ddb5-d979-2c68-73594113884d",
                                 "name": "4",
                                 "displayName": "4",
                                 "sourceElement": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "6f1d672f-a24c-3ce2-a1d8-001277df7fc7",
+                                    "id": "2c5c3155-2cbe-acad-a41c-18c2ac2583ec",
                                     "visibility": "public",
                                     "name": "BookLoaned",
                                     "oldName": "",
@@ -11856,7 +12963,7 @@ export const aggregateDraftScenarios = {
                                     "mirrorElement": null,
                                     "elementView": {
                                         "_type": "org.uengine.modeling.model.Event",
-                                        "id": "6f1d672f-a24c-3ce2-a1d8-001277df7fc7",
+                                        "id": "2c5c3155-2cbe-acad-a41c-18c2ac2583ec",
                                         "x": 300,
                                         "y": 400,
                                         "width": 100,
@@ -11866,7 +12973,7 @@ export const aggregateDraftScenarios = {
                                     },
                                     "hexagonalView": {
                                         "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "6f1d672f-a24c-3ce2-a1d8-001277df7fc7",
+                                        "id": "2c5c3155-2cbe-acad-a41c-18c2ac2583ec",
                                         "x": 300,
                                         "y": 400,
                                         "subWidth": 100,
@@ -11880,7 +12987,7 @@ export const aggregateDraftScenarios = {
                                 },
                                 "targetElement": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "3fd758ad-d1aa-2d00-84c6-e617a5ca321d",
+                                    "id": "502ba06b-125d-e2ba-b615-073e706b6993",
                                     "visibility": "public",
                                     "name": "LoanHistoryRecorded",
                                     "oldName": "",
@@ -11905,7 +13012,7 @@ export const aggregateDraftScenarios = {
                                     "mirrorElement": null,
                                     "elementView": {
                                         "_type": "org.uengine.modeling.model.Event",
-                                        "id": "3fd758ad-d1aa-2d00-84c6-e617a5ca321d",
+                                        "id": "502ba06b-125d-e2ba-b615-073e706b6993",
                                         "x": 500,
                                         "y": 650,
                                         "width": 100,
@@ -11915,7 +13022,7 @@ export const aggregateDraftScenarios = {
                                     },
                                     "hexagonalView": {
                                         "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "3fd758ad-d1aa-2d00-84c6-e617a5ca321d",
+                                        "id": "502ba06b-125d-e2ba-b615-073e706b6993",
                                         "x": 500,
                                         "y": 650,
                                         "subWidth": 100,
@@ -11927,25 +13034,25 @@ export const aggregateDraftScenarios = {
                                     "relationCommandInfo": [],
                                     "trigger": "@PostPersist"
                                 },
-                                "from": "6f1d672f-a24c-3ce2-a1d8-001277df7fc7",
-                                "to": "3fd758ad-d1aa-2d00-84c6-e617a5ca321d",
+                                "from": "2c5c3155-2cbe-acad-a41c-18c2ac2583ec",
+                                "to": "502ba06b-125d-e2ba-b615-073e706b6993",
                                 "relationView": {
-                                    "id": "0badfcbf-da89-28f3-1fc8-2176df4c90c2",
+                                    "id": "b0053bd9-ddb5-d979-2c68-73594113884d",
                                     "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
                                     "value": null,
-                                    "from": "6f1d672f-a24c-3ce2-a1d8-001277df7fc7",
-                                    "to": "3fd758ad-d1aa-2d00-84c6-e617a5ca321d",
+                                    "from": "2c5c3155-2cbe-acad-a41c-18c2ac2583ec",
+                                    "to": "502ba06b-125d-e2ba-b615-073e706b6993",
                                     "needReconnect": true
                                 }
                             },
-                            "2c9e22a8-f6b9-0ee6-a0ee-e0cff1eef916": {
+                            "dad1d9f6-5f71-119b-8c0b-434de6999a38": {
                                 "_type": "org.uengine.modeling.model.Relation",
-                                "id": "2c9e22a8-f6b9-0ee6-a0ee-e0cff1eef916",
+                                "id": "dad1d9f6-5f71-119b-8c0b-434de6999a38",
                                 "name": "5",
                                 "displayName": "5",
                                 "sourceElement": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "d858202f-6448-5f92-839f-057850558645",
+                                    "id": "dae2e159-2892-5ae3-3f28-f7ca33ca3b86",
                                     "visibility": "public",
                                     "name": "BookReserved",
                                     "oldName": "",
@@ -11970,7 +13077,7 @@ export const aggregateDraftScenarios = {
                                     "mirrorElement": null,
                                     "elementView": {
                                         "_type": "org.uengine.modeling.model.Event",
-                                        "id": "d858202f-6448-5f92-839f-057850558645",
+                                        "id": "dae2e159-2892-5ae3-3f28-f7ca33ca3b86",
                                         "x": 500,
                                         "y": 400,
                                         "width": 100,
@@ -11980,7 +13087,7 @@ export const aggregateDraftScenarios = {
                                     },
                                     "hexagonalView": {
                                         "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "d858202f-6448-5f92-839f-057850558645",
+                                        "id": "dae2e159-2892-5ae3-3f28-f7ca33ca3b86",
                                         "x": 500,
                                         "y": 400,
                                         "subWidth": 100,
@@ -11994,7 +13101,7 @@ export const aggregateDraftScenarios = {
                                 },
                                 "targetElement": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                                    "id": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                                     "visibility": "public",
                                     "name": "BookStatusChanged",
                                     "oldName": "",
@@ -12019,7 +13126,7 @@ export const aggregateDraftScenarios = {
                                     "mirrorElement": null,
                                     "elementView": {
                                         "_type": "org.uengine.modeling.model.Event",
-                                        "id": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                                        "id": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                                         "x": 300,
                                         "y": 650,
                                         "width": 100,
@@ -12029,7 +13136,7 @@ export const aggregateDraftScenarios = {
                                     },
                                     "hexagonalView": {
                                         "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                                        "id": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                                         "x": 300,
                                         "y": 650,
                                         "subWidth": 100,
@@ -12041,25 +13148,25 @@ export const aggregateDraftScenarios = {
                                     "relationCommandInfo": [],
                                     "trigger": "@PostPersist"
                                 },
-                                "from": "d858202f-6448-5f92-839f-057850558645",
-                                "to": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                                "from": "dae2e159-2892-5ae3-3f28-f7ca33ca3b86",
+                                "to": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                                 "relationView": {
-                                    "id": "2c9e22a8-f6b9-0ee6-a0ee-e0cff1eef916",
+                                    "id": "dad1d9f6-5f71-119b-8c0b-434de6999a38",
                                     "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
                                     "value": null,
-                                    "from": "d858202f-6448-5f92-839f-057850558645",
-                                    "to": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                                    "from": "dae2e159-2892-5ae3-3f28-f7ca33ca3b86",
+                                    "to": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                                     "needReconnect": true
                                 }
                             },
-                            "6b599222-08e9-f779-3f93-85e57557d253": {
+                            "dc3314ec-1557-1670-7d19-baf4c789345c": {
                                 "_type": "org.uengine.modeling.model.Relation",
-                                "id": "6b599222-08e9-f779-3f93-85e57557d253",
+                                "id": "dc3314ec-1557-1670-7d19-baf4c789345c",
                                 "name": "5",
                                 "displayName": "5",
                                 "sourceElement": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "d858202f-6448-5f92-839f-057850558645",
+                                    "id": "dae2e159-2892-5ae3-3f28-f7ca33ca3b86",
                                     "visibility": "public",
                                     "name": "BookReserved",
                                     "oldName": "",
@@ -12084,7 +13191,7 @@ export const aggregateDraftScenarios = {
                                     "mirrorElement": null,
                                     "elementView": {
                                         "_type": "org.uengine.modeling.model.Event",
-                                        "id": "d858202f-6448-5f92-839f-057850558645",
+                                        "id": "dae2e159-2892-5ae3-3f28-f7ca33ca3b86",
                                         "x": 500,
                                         "y": 400,
                                         "width": 100,
@@ -12094,7 +13201,7 @@ export const aggregateDraftScenarios = {
                                     },
                                     "hexagonalView": {
                                         "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "d858202f-6448-5f92-839f-057850558645",
+                                        "id": "dae2e159-2892-5ae3-3f28-f7ca33ca3b86",
                                         "x": 500,
                                         "y": 400,
                                         "subWidth": 100,
@@ -12108,7 +13215,7 @@ export const aggregateDraftScenarios = {
                                 },
                                 "targetElement": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "0c5189db-fb16-d909-f227-0d57f711a17b",
+                                    "id": "f86575ae-5efb-bb6e-9570-f8b02222054f",
                                     "visibility": "public",
                                     "name": "ReservationHistoryRecorded",
                                     "oldName": "",
@@ -12133,7 +13240,7 @@ export const aggregateDraftScenarios = {
                                     "mirrorElement": null,
                                     "elementView": {
                                         "_type": "org.uengine.modeling.model.Event",
-                                        "id": "0c5189db-fb16-d909-f227-0d57f711a17b",
+                                        "id": "f86575ae-5efb-bb6e-9570-f8b02222054f",
                                         "x": 700,
                                         "y": 650,
                                         "width": 100,
@@ -12143,7 +13250,7 @@ export const aggregateDraftScenarios = {
                                     },
                                     "hexagonalView": {
                                         "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "0c5189db-fb16-d909-f227-0d57f711a17b",
+                                        "id": "f86575ae-5efb-bb6e-9570-f8b02222054f",
                                         "x": 700,
                                         "y": 650,
                                         "subWidth": 100,
@@ -12155,25 +13262,25 @@ export const aggregateDraftScenarios = {
                                     "relationCommandInfo": [],
                                     "trigger": "@PostPersist"
                                 },
-                                "from": "d858202f-6448-5f92-839f-057850558645",
-                                "to": "0c5189db-fb16-d909-f227-0d57f711a17b",
+                                "from": "dae2e159-2892-5ae3-3f28-f7ca33ca3b86",
+                                "to": "f86575ae-5efb-bb6e-9570-f8b02222054f",
                                 "relationView": {
-                                    "id": "6b599222-08e9-f779-3f93-85e57557d253",
+                                    "id": "dc3314ec-1557-1670-7d19-baf4c789345c",
                                     "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
                                     "value": null,
-                                    "from": "d858202f-6448-5f92-839f-057850558645",
-                                    "to": "0c5189db-fb16-d909-f227-0d57f711a17b",
+                                    "from": "dae2e159-2892-5ae3-3f28-f7ca33ca3b86",
+                                    "to": "f86575ae-5efb-bb6e-9570-f8b02222054f",
                                     "needReconnect": true
                                 }
                             },
-                            "9609f7f4-f5a0-b5ca-4c01-e7543b2eaf23": {
+                            "b944f399-015b-20b1-c3eb-d5946655fa55": {
                                 "_type": "org.uengine.modeling.model.Relation",
-                                "id": "9609f7f4-f5a0-b5ca-4c01-e7543b2eaf23",
+                                "id": "b944f399-015b-20b1-c3eb-d5946655fa55",
                                 "name": "6",
                                 "displayName": "6",
                                 "sourceElement": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "69c6b800-fbe8-b39d-7671-bb7c9a5a9fde",
+                                    "id": "259c838a-8e2b-4d53-e282-92e7b9f4c351",
                                     "visibility": "public",
                                     "name": "BookReturned",
                                     "oldName": "",
@@ -12198,7 +13305,7 @@ export const aggregateDraftScenarios = {
                                     "mirrorElement": null,
                                     "elementView": {
                                         "_type": "org.uengine.modeling.model.Event",
-                                        "id": "69c6b800-fbe8-b39d-7671-bb7c9a5a9fde",
+                                        "id": "259c838a-8e2b-4d53-e282-92e7b9f4c351",
                                         "x": 700,
                                         "y": 400,
                                         "width": 100,
@@ -12208,7 +13315,7 @@ export const aggregateDraftScenarios = {
                                     },
                                     "hexagonalView": {
                                         "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "69c6b800-fbe8-b39d-7671-bb7c9a5a9fde",
+                                        "id": "259c838a-8e2b-4d53-e282-92e7b9f4c351",
                                         "x": 700,
                                         "y": 400,
                                         "subWidth": 100,
@@ -12222,7 +13329,7 @@ export const aggregateDraftScenarios = {
                                 },
                                 "targetElement": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                                    "id": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                                     "visibility": "public",
                                     "name": "BookStatusChanged",
                                     "oldName": "",
@@ -12247,7 +13354,7 @@ export const aggregateDraftScenarios = {
                                     "mirrorElement": null,
                                     "elementView": {
                                         "_type": "org.uengine.modeling.model.Event",
-                                        "id": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                                        "id": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                                         "x": 300,
                                         "y": 650,
                                         "width": 100,
@@ -12257,7 +13364,7 @@ export const aggregateDraftScenarios = {
                                     },
                                     "hexagonalView": {
                                         "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                                        "id": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                                         "x": 300,
                                         "y": 650,
                                         "subWidth": 100,
@@ -12269,25 +13376,25 @@ export const aggregateDraftScenarios = {
                                     "relationCommandInfo": [],
                                     "trigger": "@PostPersist"
                                 },
-                                "from": "69c6b800-fbe8-b39d-7671-bb7c9a5a9fde",
-                                "to": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                                "from": "259c838a-8e2b-4d53-e282-92e7b9f4c351",
+                                "to": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                                 "relationView": {
-                                    "id": "9609f7f4-f5a0-b5ca-4c01-e7543b2eaf23",
+                                    "id": "b944f399-015b-20b1-c3eb-d5946655fa55",
                                     "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
                                     "value": null,
-                                    "from": "69c6b800-fbe8-b39d-7671-bb7c9a5a9fde",
-                                    "to": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                                    "from": "259c838a-8e2b-4d53-e282-92e7b9f4c351",
+                                    "to": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                                     "needReconnect": true
                                 }
                             },
-                            "ed4c3414-3bb0-b268-2d63-04ef6a8b5c93": {
+                            "fed722e6-a0ed-dd78-9879-cc88f4462b04": {
                                 "_type": "org.uengine.modeling.model.Relation",
-                                "id": "ed4c3414-3bb0-b268-2d63-04ef6a8b5c93",
+                                "id": "fed722e6-a0ed-dd78-9879-cc88f4462b04",
                                 "name": "6",
                                 "displayName": "6",
                                 "sourceElement": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "69c6b800-fbe8-b39d-7671-bb7c9a5a9fde",
+                                    "id": "259c838a-8e2b-4d53-e282-92e7b9f4c351",
                                     "visibility": "public",
                                     "name": "BookReturned",
                                     "oldName": "",
@@ -12312,7 +13419,7 @@ export const aggregateDraftScenarios = {
                                     "mirrorElement": null,
                                     "elementView": {
                                         "_type": "org.uengine.modeling.model.Event",
-                                        "id": "69c6b800-fbe8-b39d-7671-bb7c9a5a9fde",
+                                        "id": "259c838a-8e2b-4d53-e282-92e7b9f4c351",
                                         "x": 700,
                                         "y": 400,
                                         "width": 100,
@@ -12322,7 +13429,7 @@ export const aggregateDraftScenarios = {
                                     },
                                     "hexagonalView": {
                                         "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "69c6b800-fbe8-b39d-7671-bb7c9a5a9fde",
+                                        "id": "259c838a-8e2b-4d53-e282-92e7b9f4c351",
                                         "x": 700,
                                         "y": 400,
                                         "subWidth": 100,
@@ -12336,7 +13443,7 @@ export const aggregateDraftScenarios = {
                                 },
                                 "targetElement": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "3fd758ad-d1aa-2d00-84c6-e617a5ca321d",
+                                    "id": "502ba06b-125d-e2ba-b615-073e706b6993",
                                     "visibility": "public",
                                     "name": "LoanHistoryRecorded",
                                     "oldName": "",
@@ -12361,7 +13468,7 @@ export const aggregateDraftScenarios = {
                                     "mirrorElement": null,
                                     "elementView": {
                                         "_type": "org.uengine.modeling.model.Event",
-                                        "id": "3fd758ad-d1aa-2d00-84c6-e617a5ca321d",
+                                        "id": "502ba06b-125d-e2ba-b615-073e706b6993",
                                         "x": 500,
                                         "y": 650,
                                         "width": 100,
@@ -12371,7 +13478,7 @@ export const aggregateDraftScenarios = {
                                     },
                                     "hexagonalView": {
                                         "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "3fd758ad-d1aa-2d00-84c6-e617a5ca321d",
+                                        "id": "502ba06b-125d-e2ba-b615-073e706b6993",
                                         "x": 500,
                                         "y": 650,
                                         "subWidth": 100,
@@ -12383,25 +13490,25 @@ export const aggregateDraftScenarios = {
                                     "relationCommandInfo": [],
                                     "trigger": "@PostPersist"
                                 },
-                                "from": "69c6b800-fbe8-b39d-7671-bb7c9a5a9fde",
-                                "to": "3fd758ad-d1aa-2d00-84c6-e617a5ca321d",
+                                "from": "259c838a-8e2b-4d53-e282-92e7b9f4c351",
+                                "to": "502ba06b-125d-e2ba-b615-073e706b6993",
                                 "relationView": {
-                                    "id": "ed4c3414-3bb0-b268-2d63-04ef6a8b5c93",
+                                    "id": "fed722e6-a0ed-dd78-9879-cc88f4462b04",
                                     "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
                                     "value": null,
-                                    "from": "69c6b800-fbe8-b39d-7671-bb7c9a5a9fde",
-                                    "to": "3fd758ad-d1aa-2d00-84c6-e617a5ca321d",
+                                    "from": "259c838a-8e2b-4d53-e282-92e7b9f4c351",
+                                    "to": "502ba06b-125d-e2ba-b615-073e706b6993",
                                     "needReconnect": true
                                 }
                             },
-                            "14263a5f-ed03-3d09-14f9-14a9af8b5ccb": {
+                            "48ef4437-9749-5751-7bd6-c2c24becf15b": {
                                 "_type": "org.uengine.modeling.model.Relation",
-                                "id": "14263a5f-ed03-3d09-14f9-14a9af8b5ccb",
+                                "id": "48ef4437-9749-5751-7bd6-c2c24becf15b",
                                 "name": "7",
                                 "displayName": "7",
                                 "sourceElement": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "fdb46713-7a04-0545-7333-76bb78ef9e6b",
+                                    "id": "7e5e2488-3c94-6b60-2dde-a60fb11834fa",
                                     "visibility": "public",
                                     "name": "LoanExtended",
                                     "oldName": "",
@@ -12426,7 +13533,7 @@ export const aggregateDraftScenarios = {
                                     "mirrorElement": null,
                                     "elementView": {
                                         "_type": "org.uengine.modeling.model.Event",
-                                        "id": "fdb46713-7a04-0545-7333-76bb78ef9e6b",
+                                        "id": "7e5e2488-3c94-6b60-2dde-a60fb11834fa",
                                         "x": 900,
                                         "y": 400,
                                         "width": 100,
@@ -12436,7 +13543,7 @@ export const aggregateDraftScenarios = {
                                     },
                                     "hexagonalView": {
                                         "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "fdb46713-7a04-0545-7333-76bb78ef9e6b",
+                                        "id": "7e5e2488-3c94-6b60-2dde-a60fb11834fa",
                                         "x": 900,
                                         "y": 400,
                                         "subWidth": 100,
@@ -12450,7 +13557,7 @@ export const aggregateDraftScenarios = {
                                 },
                                 "targetElement": {
                                     "_type": "org.uengine.modeling.model.Event",
-                                    "id": "3fd758ad-d1aa-2d00-84c6-e617a5ca321d",
+                                    "id": "502ba06b-125d-e2ba-b615-073e706b6993",
                                     "visibility": "public",
                                     "name": "LoanHistoryRecorded",
                                     "oldName": "",
@@ -12475,7 +13582,7 @@ export const aggregateDraftScenarios = {
                                     "mirrorElement": null,
                                     "elementView": {
                                         "_type": "org.uengine.modeling.model.Event",
-                                        "id": "3fd758ad-d1aa-2d00-84c6-e617a5ca321d",
+                                        "id": "502ba06b-125d-e2ba-b615-073e706b6993",
                                         "x": 500,
                                         "y": 650,
                                         "width": 100,
@@ -12485,7 +13592,7 @@ export const aggregateDraftScenarios = {
                                     },
                                     "hexagonalView": {
                                         "_type": "org.uengine.modeling.model.EventHexagonal",
-                                        "id": "3fd758ad-d1aa-2d00-84c6-e617a5ca321d",
+                                        "id": "502ba06b-125d-e2ba-b615-073e706b6993",
                                         "x": 500,
                                         "y": 650,
                                         "subWidth": 100,
@@ -12497,14 +13604,14 @@ export const aggregateDraftScenarios = {
                                     "relationCommandInfo": [],
                                     "trigger": "@PostPersist"
                                 },
-                                "from": "fdb46713-7a04-0545-7333-76bb78ef9e6b",
-                                "to": "3fd758ad-d1aa-2d00-84c6-e617a5ca321d",
+                                "from": "7e5e2488-3c94-6b60-2dde-a60fb11834fa",
+                                "to": "502ba06b-125d-e2ba-b615-073e706b6993",
                                 "relationView": {
-                                    "id": "14263a5f-ed03-3d09-14f9-14a9af8b5ccb",
+                                    "id": "48ef4437-9749-5751-7bd6-c2c24becf15b",
                                     "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
                                     "value": null,
-                                    "from": "fdb46713-7a04-0545-7333-76bb78ef9e6b",
-                                    "to": "3fd758ad-d1aa-2d00-84c6-e617a5ca321d",
+                                    "from": "7e5e2488-3c94-6b60-2dde-a60fb11834fa",
+                                    "to": "502ba06b-125d-e2ba-b615-073e706b6993",
                                     "needReconnect": true
                                 }
                             }
@@ -12918,10 +14025,10 @@ export const aggregateDraftScenarios = {
                     "currentGeneratedLength": 5107
                 },
                 "currentGeneratedLength": 5107,
-                "timestamp": "2025-09-16T05:45:18.312Z"
+                "timestamp": "2025-09-25T01:52:00.290Z"
             },
             {
-                "uniqueId": "b0e083b89632a46be0a9cb178e4cbc49",
+                "uniqueId": "6fad4aed87a0343622f8d34f0a1df7d2",
                 "type": "bcGenerationOption",
                 "isSummarizeStarted": false,
                 "isGeneratingBoundedContext": false,
@@ -12940,10 +14047,10 @@ export const aggregateDraftScenarios = {
                 },
                 "recommendedBoundedContextsNumber": 4,
                 "reasonOfRecommendedBoundedContextsNumber": "1) 추천하는 바운디드 컨텍스트는 다음과 같습니다: (1) 도서 관리(Book Management), (2) 대출/반납 관리(Loan/Return Management), (3) 예약 관리(Reservation Management), (4) 이력/조회 관리(History/Inquiry Management). 2) 각 컨텍스트의 비즈니스 도메인과 책임은 다음과 같습니다: 도서 관리는 도서의 등록, 상태 변경, 폐기 등 도서 자체의 라이프사이클을 담당합니다. 대출/반납 관리는 회원 인증, 대출/반납/연장 등 도서의 이동과 관련된 프로세스를 담당합니다. 예약 관리는 대출 불가 시 예약 신청 및 예약 상태 전환을 담당합니다. 이력/조회 관리는 대출 및 상태 변경 이력의 기록과 조회를 담당합니다. 3) 바운디드 컨텍스트 수는 각 도메인의 명확한 책임 분리, 이벤트 복잡성, 그리고 액터 간 상호작용(예: 도서 담당자, 회원, 시스템)의 분리를 근거로 산정했습니다. 4) 각 컨텍스트는 실제 조직 내 역할 분리(예: 사서, 회원, 시스템 관리자) 및 업무 흐름(등록/대출/예약/이력 관리)과 일치하며, 유지보수성과 확장성을 높입니다.",
-                "timestamp": "2025-09-16T05:45:20.505Z"
+                "timestamp": "2025-09-25T01:52:02.031Z"
             },
             {
-                "uniqueId": "90b0f0d20e948cddc5eb5c6adb3dc31a",
+                "uniqueId": "9351692d4406d1ae850c221b6fb22271",
                 "type": "boundedContextResult",
                 "result": {
                     "도메인 복잡도 분리+프로세스(value stream) 기반 분리": {
@@ -13143,52 +14250,16 @@ export const aggregateDraftScenarios = {
                                         ]
                                     ]
                                 ],
-                                "siteMap": [
-                                    {
-                                        "id": "book-list-view",
-                                        "title": "도서 목록 조회",
-                                        "name": "BookListView",
-                                        "description": "현재 보유 도서의 목록과 상태를 조회",
-                                        "boundedContext": "BookManagement",
-                                        "functionType": "view",
-                                        "uiRequirements": "도서명, ISBN, 저자, 출판사, 카테고리, 상태(대출가능/대출중/예약중/폐기) 필터 및 검색, 페이징 지원"
-                                    },
-                                    {
-                                        "id": "book-create-command",
-                                        "title": "도서 등록",
-                                        "name": "BookCreateCommand",
-                                        "description": "새로운 도서를 등록",
-                                        "boundedContext": "BookManagement",
-                                        "functionType": "command",
-                                        "uiRequirements": "도서명, ISBN(13자리, 중복확인), 저자, 출판사, 카테고리(소설/비소설/학술/잡지) 입력 폼, 등록 시 상태는 '대출가능'으로 설정"
-                                    },
-                                    {
-                                        "id": "book-edit-command",
-                                        "title": "도서 정보 수정",
-                                        "name": "BookEditCommand",
-                                        "description": "기존 도서의 정보를 수정",
-                                        "boundedContext": "BookManagement",
-                                        "functionType": "command",
-                                        "uiRequirements": "도서명, 저자, 출판사, 카테고리 등 수정, ISBN은 수정 불가, 상태 변경 불가"
-                                    },
-                                    {
-                                        "id": "book-dispose-command",
-                                        "title": "도서 폐기 처리",
-                                        "name": "BookDisposeCommand",
-                                        "description": "훼손 또는 분실된 도서를 폐기 처리",
-                                        "boundedContext": "BookManagement",
-                                        "functionType": "command",
-                                        "uiRequirements": "도서 목록에서 폐기 처리 버튼, 폐기 사유 입력, 폐기 시 상태를 '폐기'로 변경, 폐기 도서는 대출 불가"
-                                    },
-                                    {
-                                        "id": "book-status-change-view",
-                                        "title": "도서 상태 변경 이력 조회",
-                                        "name": "BookStatusChangeHistoryView",
-                                        "description": "도서별 상태 변경 이력을 조회",
-                                        "boundedContext": "BookManagement",
-                                        "functionType": "view",
-                                        "uiRequirements": "도서별 상태 변경(대출가능/대출중/예약중/폐기 등) 이력 리스트, 변경일시, 변경자, 변경 사유 표시"
-                                    }
+                                "commandNames": [
+                                    "RegisterBook",
+                                    "DiscardBook",
+                                    "UpdateBookStatus",
+                                    "ValidateIsbn"
+                                ],
+                                "readModelNames": [
+                                    "BookList",
+                                    "BookDetail",
+                                    "CategoryOptions"
                                 ]
                             },
                             {
@@ -13487,15 +14558,25 @@ export const aggregateDraftScenarios = {
                                         ]
                                     ]
                                 ],
-                                "siteMap": []
+                                "commandNames": [
+                                    "LoanBook",
+                                    "ReturnBook",
+                                    "ExtendLoan",
+                                    "ReserveBook"
+                                ],
+                                "readModelNames": [
+                                    "LoanStatusList",
+                                    "LoanDetail",
+                                    "SearchBookForLoan"
+                                ]
                             },
                             {
                                 "name": "LoanHistory",
                                 "alias": "이력 관리",
-                                "importance": "Generic Domain",
+                                "importance": "Supporting Domain",
                                 "complexity": 0.5,
                                 "differentiation": 0.5,
-                                "implementationStrategy": "PBC: PBC-Test",
+                                "implementationStrategy": "Transaction Script",
                                 "aggregates": [
                                     {
                                         "name": "LoanHistory",
@@ -13533,15 +14614,15 @@ export const aggregateDraftScenarios = {
                                             [
                                                 [
                                                     9,
-                                                    12
+                                                    15
                                                 ],
                                                 [
                                                     9,
-                                                    15
+                                                    19
                                                 ]
                                             ]
                                         ],
-                                        "text": "력과 상"
+                                        "text": "상태 변경"
                                     },
                                     {
                                         "type": "DDL",
@@ -13553,11 +14634,11 @@ export const aggregateDraftScenarios = {
                                                 ],
                                                 [
                                                     111,
-                                                    25
+                                                    9
                                                 ]
                                             ]
                                         ],
-                                        "text": "CREATE TABLE loan_history (\n    history_id INT AUTO_INCREMENT PRIMARY KEY,\n    loan_id INT NOT NULL,\n    action_type ENUM('대출', '반납', '연장', '연체알림', '분실신고') NOT NULL,\n    action_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    previous_due_date DATETIME NULL,\n    new_due_date DATETIME NULL,\n    notes TEXT,\n    processed_by VARCHAR(100),\n    FOREIGN KEY (loan_id) REFERENCES loans(loan_id),\n    INDEX idx_loan_id (loan_id),\n    INDEX idx_action_type (action_type),\n    INDEX idx_action_date"
+                                        "text": "CREATE TABLE loan_history (\n    history_id INT AUTO_INCREMENT PRIMARY KEY,\n    loan_id INT NOT NULL,\n    action_type ENUM('대출', '반납', '연장', '연체알림', '분실신고') NOT NULL,\n    action_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    previous_due_date DATETIME NULL,\n    new_due_date DATETIME NULL,\n    notes TEXT,\n    processed_by VARCHAR(100),\n    FOREIGN KEY (loan_id) REFERENCES loans(loan_id),\n    INDEX idx_loan_id (loan_id),\n    INDEX idx_action_type (action_type),\n    INDEX"
                                     }
                                 ],
                                 "role": "도서별 대출 및 예약 이력, 상태 변경 이력을 기록하고 조회할 수 있도록 한다.",
@@ -13573,7 +14654,11 @@ export const aggregateDraftScenarios = {
                                         ]
                                     ]
                                 ],
-                                "siteMap": []
+                                "commandNames": [],
+                                "readModelNames": [
+                                    "BookLoanHistory",
+                                    "BookStatusChangeHistory"
+                                ]
                             }
                         ],
                         "relations": [
@@ -13850,252 +14935,410 @@ export const aggregateDraftScenarios = {
                 ],
                 "currentGeneratedLength": 4161,
                 "userStory": "도서관의 도서 관리와 대출/반납을 통합적으로 관리하는 화면을 만들려고 해.\n\n'도서 관리' 화면에서는 새로운 도서를 등록하고 현재 보유한 도서들의 상태를 관리할 수 있어야 해. 도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해. 등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야 해.\n\n'대출/반납' 화면에서는 회원이 도서를 대출하고 반납하는 것을 관리할 수 있어야 해. 대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할 도서를 선택해야 해. 도서는 도서명이나 ISBN으로 검색할 수 있어야 해. 대출 기간은 7일/14일/30일 중에서 선택할 수 있어. 만약 대출하려는 도서가 이미 대출 중이라면, 예약 신청이 가능해야 해. 대출이 완료되면 해당 도서의 상태는 자동으로 '대출중'으로 변경되어야 해.\n\n대출 현황 화면에서는 현재 대출 중인 도서들의 목록을 볼 수 있어야 해. 각 대출 건에 대해 대출일, 반납예정일, 현재 상태(대출중/연체/반납완료)를 확인할 수 있어야 하고, 대출 중인 도서는 연장이나 반납 처리가 가능해야 해. 도서가 반납되면 자동으로 해당 도서의 상태가 '대출가능'으로 변경되어야 해. 만약 예약자가 있는 도서가 반납되면, 해당 도서는 '예약중' 상태로 변경되어야 해.\n\n각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해.\n",
-                "timestamp": "2025-09-16T05:45:23.200Z"
+                "timestamp": "2025-09-25T01:52:04.403Z"
             },
             {
-                "uniqueId": "78e828b20bda5c84702e1b068b1b950a",
+                "uniqueId": "d5431b3e040f40b4e12c14fba4f95742",
                 "type": "siteMapViewer",
                 "siteMap": [
                     {
-                        "id": "node-1758001555271-eg70hgt6m",
-                        "title": "도서 관리",
-                        "description": "도서 등록, 상태 관리, 폐기 처리 등 도서의 전체 생애주기 관리",
-                        "type": "root",
-                        "boundedContexts": [
-                            {
-                                "id": "BookManagement",
-                                "title": "BookManagement",
-                                "description": "도서 등록, 상태 관리, 폐기 처리를 담당하며 도서의 생애주기와 상태 변화를 관리한다."
-                            },
-                            {
-                                "id": "LoanAndReservation",
-                                "title": "LoanAndReservation",
-                                "description": "회원의 도서 대출, 반납, 연장, 예약을 관리하고 도서 상태 변경을 트리거한다."
-                            },
-                            {
-                                "id": "LoanHistory",
-                                "title": "LoanHistory",
-                                "description": "도서별 대출 및 예약 이력, 상태 변경 이력을 기록하고 조회할 수 있도록 한다."
-                            }
-                        ],
+                        "id": "node-1758765129266-axodzxuh9",
+                        "title": "도서관 도서 관리 및 대출 시스템",
+                        "url": "",
+                        "description": "도서관의 도서 등록, 상태 관리, 대출/반납/예약 및 이력 조회를 통합적으로 제공하는 웹사이트",
                         "children": [
                             {
-                                "id": "book-list-view",
-                                "title": "도서 목록 조회",
-                                "name": "BookListView",
-                                "description": "현재 보유 도서의 목록과 상태를 조회",
-                                "type": "navigation",
-                                "boundedContext": "BookManagement",
-                                "functionType": "view",
-                                "uiRequirements": "도서명, ISBN, 저자, 출판사, 카테고리, 상태(대출가능/대출중/예약중/폐기) 필터 및 검색, 페이징 지원",
-                                "children": []
+                                "id": "home",
+                                "title": "홈",
+                                "url": "/",
+                                "description": "도서관 시스템 메인 페이지 및 소개",
+                                "referencedCommands": [],
+                                "referencedReadModels": [],
+                                "children": [
+                                    {
+                                        "id": "navbar-home",
+                                        "title": "메인 네비게이션 바",
+                                        "url": "/메인-네비게이션-바",
+                                        "description": "도서 관리, 대출/반납, 대출 현황, 이력 조회 등 주요 메뉴 이동",
+                                        "referencedCommands": [],
+                                        "referencedReadModels": [],
+                                        "children": []
+                                    },
+                                    {
+                                        "id": "header-home",
+                                        "title": "헤더 섹션",
+                                        "url": "/헤더-섹션",
+                                        "description": "도서관 시스템 소개 및 주요 기능 안내",
+                                        "referencedCommands": [],
+                                        "referencedReadModels": [],
+                                        "children": []
+                                    },
+                                    {
+                                        "id": "quick-links",
+                                        "title": "빠른 이동 링크",
+                                        "url": "/빠른-이동-링크",
+                                        "description": "주요 서비스(도서 관리, 대출/반납, 대출 현황)로 바로가기",
+                                        "referencedCommands": [],
+                                        "referencedReadModels": [],
+                                        "children": []
+                                    },
+                                    {
+                                        "id": "footer-home",
+                                        "title": "푸터",
+                                        "url": "/푸터",
+                                        "description": "저작권, 연락처, 이용약관 등",
+                                        "referencedCommands": [],
+                                        "referencedReadModels": [],
+                                        "children": []
+                                    }
+                                ]
                             },
                             {
-                                "id": "book-create-command",
-                                "title": "도서 등록",
-                                "name": "BookCreateCommand",
-                                "description": "새로운 도서를 등록",
-                                "type": "navigation",
-                                "boundedContext": "BookManagement",
-                                "functionType": "command",
-                                "uiRequirements": "도서명, ISBN(13자리, 중복확인), 저자, 출판사, 카테고리(소설/비소설/학술/잡지) 입력 폼, 등록 시 상태는 '대출가능'으로 설정",
-                                "children": []
+                                "id": "book-management",
+                                "title": "도서 관리",
+                                "url": "/books",
+                                "description": "도서 등록, 목록 조회, 상태 관리, 폐기 처리 등 도서의 전체 생애주기 관리",
+                                "referencedCommands": [],
+                                "referencedReadModels": [],
+                                "children": [
+                                    {
+                                        "id": "navbar-books",
+                                        "title": "네비게이션 바",
+                                        "url": "/네비게이션-바",
+                                        "description": "도서 관리 내 주요 메뉴 이동",
+                                        "referencedCommands": [],
+                                        "referencedReadModels": [],
+                                        "children": []
+                                    },
+                                    {
+                                        "id": "book-register-form",
+                                        "title": "도서 등록 폼",
+                                        "url": "/도서-등록-폼",
+                                        "description": "신규 도서 등록 입력 폼 (도서명, ISBN, 저자, 출판사, 카테고리)",
+                                        "referencedCommands": [
+                                            "RegisterBook",
+                                            "ValidateIsbn"
+                                        ],
+                                        "referencedReadModels": [
+                                            "CategoryOptions"
+                                        ],
+                                        "children": []
+                                    },
+                                    {
+                                        "id": "book-list-section",
+                                        "title": "도서 목록 및 검색",
+                                        "url": "/도서-목록-및-검색",
+                                        "description": "보유 도서 목록, 상태별/카테고리별/키워드 검색 및 필터",
+                                        "referencedCommands": [],
+                                        "referencedReadModels": [
+                                            "BookList"
+                                        ],
+                                        "children": []
+                                    },
+                                    {
+                                        "id": "book-detail-modal",
+                                        "title": "도서 상세 정보/관리",
+                                        "url": "/도서-상세-정보/관리",
+                                        "description": "도서 상세 정보 조회 및 상태 변경, 폐기 처리",
+                                        "referencedCommands": [
+                                            "UpdateBookStatus",
+                                            "DiscardBook"
+                                        ],
+                                        "referencedReadModels": [
+                                            "BookDetail"
+                                        ],
+                                        "children": []
+                                    },
+                                    {
+                                        "id": "book-status-history",
+                                        "title": "도서 상태 변경 이력",
+                                        "url": "/도서-상태-변경-이력",
+                                        "description": "도서별 상태 변경 이력 조회",
+                                        "referencedCommands": [],
+                                        "referencedReadModels": [
+                                            "BookStatusChangeHistory"
+                                        ],
+                                        "children": []
+                                    },
+                                    {
+                                        "id": "footer-books",
+                                        "title": "푸터",
+                                        "url": "/푸터",
+                                        "description": "저작권, 연락처, 이용약관 등",
+                                        "referencedCommands": [],
+                                        "referencedReadModels": [],
+                                        "children": []
+                                    }
+                                ]
                             },
                             {
-                                "id": "book-edit-command",
-                                "title": "도서 정보 수정",
-                                "name": "BookEditCommand",
-                                "description": "기존 도서의 정보를 수정",
-                                "type": "navigation",
-                                "boundedContext": "BookManagement",
-                                "functionType": "command",
-                                "uiRequirements": "도서명, 저자, 출판사, 카테고리 등 수정, ISBN은 수정 불가, 상태 변경 불가",
-                                "children": []
+                                "id": "loan-and-return",
+                                "title": "대출/반납",
+                                "url": "/loans",
+                                "description": "회원 도서 대출, 반납, 연장, 예약 신청 및 관련 검색",
+                                "referencedCommands": [],
+                                "referencedReadModels": [],
+                                "children": [
+                                    {
+                                        "id": "navbar-loans",
+                                        "title": "네비게이션 바",
+                                        "url": "/네비게이션-바",
+                                        "description": "대출/반납 내 주요 메뉴 이동",
+                                        "referencedCommands": [],
+                                        "referencedReadModels": [],
+                                        "children": []
+                                    },
+                                    {
+                                        "id": "member-verification-form",
+                                        "title": "회원 확인 폼",
+                                        "url": "/회원-확인-폼",
+                                        "description": "회원번호, 이름 입력을 통한 회원 확인",
+                                        "referencedCommands": [],
+                                        "referencedReadModels": [],
+                                        "children": []
+                                    },
+                                    {
+                                        "id": "loan-book-search-form",
+                                        "title": "대출 도서 검색 폼",
+                                        "url": "/대출-도서-검색-폼",
+                                        "description": "도서명 또는 ISBN으로 대출 가능 도서 검색",
+                                        "referencedCommands": [],
+                                        "referencedReadModels": [
+                                            "SearchBookForLoan"
+                                        ],
+                                        "children": []
+                                    },
+                                    {
+                                        "id": "loan-application-form",
+                                        "title": "도서 대출 신청 폼",
+                                        "url": "/도서-대출-신청-폼",
+                                        "description": "도서 선택 및 대출 기간(7/14/30일) 선택 후 대출 신청",
+                                        "referencedCommands": [
+                                            "LoanBook"
+                                        ],
+                                        "referencedReadModels": [],
+                                        "children": []
+                                    },
+                                    {
+                                        "id": "reservation-application-form",
+                                        "title": "도서 예약 신청 폼",
+                                        "url": "/도서-예약-신청-폼",
+                                        "description": "대출 중인 도서에 대해 예약 신청",
+                                        "referencedCommands": [
+                                            "ReserveBook"
+                                        ],
+                                        "referencedReadModels": [],
+                                        "children": []
+                                    },
+                                    {
+                                        "id": "return-book-form",
+                                        "title": "도서 반납 처리 폼",
+                                        "url": "/도서-반납-처리-폼",
+                                        "description": "대출 도서 반납 처리",
+                                        "referencedCommands": [
+                                            "ReturnBook"
+                                        ],
+                                        "referencedReadModels": [],
+                                        "children": []
+                                    },
+                                    {
+                                        "id": "footer-loans",
+                                        "title": "푸터",
+                                        "url": "/푸터",
+                                        "description": "저작권, 연락처, 이용약관 등",
+                                        "referencedCommands": [],
+                                        "referencedReadModels": [],
+                                        "children": []
+                                    }
+                                ]
                             },
                             {
-                                "id": "book-dispose-command",
-                                "title": "도서 폐기 처리",
-                                "name": "BookDisposeCommand",
-                                "description": "훼손 또는 분실된 도서를 폐기 처리",
-                                "type": "navigation",
-                                "boundedContext": "BookManagement",
-                                "functionType": "command",
-                                "uiRequirements": "도서 목록에서 폐기 처리 버튼, 폐기 사유 입력, 폐기 시 상태를 '폐기'로 변경, 폐기 도서는 대출 불가",
-                                "children": []
+                                "id": "loan-status",
+                                "title": "대출 현황",
+                                "url": "/loan-status",
+                                "description": "현재 대출 중인 도서 목록, 연장/반납 처리, 대출 상태 확인",
+                                "referencedCommands": [],
+                                "referencedReadModels": [],
+                                "children": [
+                                    {
+                                        "id": "navbar-loan-status",
+                                        "title": "네비게이션 바",
+                                        "url": "/네비게이션-바",
+                                        "description": "대출 현황 내 주요 메뉴 이동",
+                                        "referencedCommands": [],
+                                        "referencedReadModels": [],
+                                        "children": []
+                                    },
+                                    {
+                                        "id": "loan-status-list",
+                                        "title": "대출 현황 목록",
+                                        "url": "/대출-현황-목록",
+                                        "description": "대출 중/연체/반납완료 도서 목록 및 필터",
+                                        "referencedCommands": [],
+                                        "referencedReadModels": [
+                                            "LoanStatusList"
+                                        ],
+                                        "children": []
+                                    },
+                                    {
+                                        "id": "loan-detail-modal",
+                                        "title": "대출 상세 정보 및 연장/반납",
+                                        "url": "/대출-상세-정보-및-연장/반납",
+                                        "description": "대출 상세 정보 조회, 연장 신청, 반납 처리",
+                                        "referencedCommands": [
+                                            "ExtendLoan",
+                                            "ReturnBook"
+                                        ],
+                                        "referencedReadModels": [
+                                            "LoanDetail"
+                                        ],
+                                        "children": []
+                                    },
+                                    {
+                                        "id": "footer-loan-status",
+                                        "title": "푸터",
+                                        "url": "/푸터",
+                                        "description": "저작권, 연락처, 이용약관 등",
+                                        "referencedCommands": [],
+                                        "referencedReadModels": [],
+                                        "children": []
+                                    }
+                                ]
                             },
                             {
-                                "id": "book-status-change-view",
-                                "title": "도서 상태 변경 이력 조회",
-                                "name": "BookStatusChangeHistoryView",
-                                "description": "도서별 상태 변경 이력을 조회",
-                                "type": "navigation",
-                                "boundedContext": "BookManagement",
-                                "functionType": "view",
-                                "uiRequirements": "도서별 상태 변경(대출가능/대출중/예약중/폐기 등) 이력 리스트, 변경일시, 변경자, 변경 사유 표시",
-                                "children": []
-                            }
-                        ]
-                    },
-                    {
-                        "id": "node-1758001555271-q8wvam9mq",
-                        "title": "대출/반납 관리",
-                        "description": "도서 대출, 반납, 연장, 예약 등 회원의 도서 이용 관리",
-                        "type": "root",
-                        "boundedContexts": [
-                            {
-                                "id": "BookManagement",
-                                "title": "BookManagement",
-                                "description": "도서 등록, 상태 관리, 폐기 처리를 담당하며 도서의 생애주기와 상태 변화를 관리한다."
+                                "id": "loan-history",
+                                "title": "도서별 대출/상태 이력",
+                                "url": "/books/history",
+                                "description": "도서별 대출 및 예약 이력, 상태 변경 이력 통합 조회",
+                                "referencedCommands": [],
+                                "referencedReadModels": [],
+                                "children": [
+                                    {
+                                        "id": "navbar-history",
+                                        "title": "네비게이션 바",
+                                        "url": "/네비게이션-바",
+                                        "description": "이력 조회 내 주요 메뉴 이동",
+                                        "referencedCommands": [],
+                                        "referencedReadModels": [],
+                                        "children": []
+                                    },
+                                    {
+                                        "id": "book-history-search-form",
+                                        "title": "도서 이력 검색 폼",
+                                        "url": "/도서-이력-검색-폼",
+                                        "description": "도서명, ISBN 등으로 도서 이력 조회",
+                                        "referencedCommands": [],
+                                        "referencedReadModels": [
+                                            "BookList"
+                                        ],
+                                        "children": []
+                                    },
+                                    {
+                                        "id": "book-loan-history-list",
+                                        "title": "도서별 대출/예약 이력",
+                                        "url": "/도서별-대출/예약-이력",
+                                        "description": "선택 도서의 대출 및 예약 이력 목록",
+                                        "referencedCommands": [],
+                                        "referencedReadModels": [
+                                            "BookLoanHistory"
+                                        ],
+                                        "children": []
+                                    },
+                                    {
+                                        "id": "book-status-history-list",
+                                        "title": "도서별 상태 변경 이력",
+                                        "url": "/도서별-상태-변경-이력",
+                                        "description": "선택 도서의 상태 변경 이력 목록",
+                                        "referencedCommands": [],
+                                        "referencedReadModels": [
+                                            "BookStatusChangeHistory"
+                                        ],
+                                        "children": []
+                                    },
+                                    {
+                                        "id": "footer-history",
+                                        "title": "푸터",
+                                        "url": "/푸터",
+                                        "description": "저작권, 연락처, 이용약관 등",
+                                        "referencedCommands": [],
+                                        "referencedReadModels": [],
+                                        "children": []
+                                    }
+                                ]
                             },
                             {
-                                "id": "LoanAndReservation",
-                                "title": "LoanAndReservation",
-                                "description": "회원의 도서 대출, 반납, 연장, 예약을 관리하고 도서 상태 변경을 트리거한다."
+                                "id": "about",
+                                "title": "도서관 소개",
+                                "url": "/about",
+                                "description": "도서관 및 시스템 소개, 이용 안내",
+                                "referencedCommands": [],
+                                "referencedReadModels": [],
+                                "children": [
+                                    {
+                                        "id": "navbar-about",
+                                        "title": "네비게이션 바",
+                                        "url": "/네비게이션-바",
+                                        "description": "소개 페이지 내 메뉴 이동",
+                                        "referencedCommands": [],
+                                        "referencedReadModels": [],
+                                        "children": []
+                                    },
+                                    {
+                                        "id": "about-content",
+                                        "title": "소개 콘텐츠",
+                                        "url": "/소개-콘텐츠",
+                                        "description": "도서관 및 시스템 소개, 이용 방법 안내",
+                                        "referencedCommands": [],
+                                        "referencedReadModels": [],
+                                        "children": []
+                                    },
+                                    {
+                                        "id": "footer-about",
+                                        "title": "푸터",
+                                        "url": "/푸터",
+                                        "description": "저작권, 연락처, 이용약관 등",
+                                        "referencedCommands": [],
+                                        "referencedReadModels": [],
+                                        "children": []
+                                    }
+                                ]
                             },
                             {
-                                "id": "LoanHistory",
-                                "title": "LoanHistory",
-                                "description": "도서별 대출 및 예약 이력, 상태 변경 이력을 기록하고 조회할 수 있도록 한다."
-                            }
-                        ],
-                        "children": [
-                            {
-                                "id": "loan-create-command",
-                                "title": "도서 대출 신청",
-                                "name": "LoanCreateCommand",
-                                "description": "회원이 도서를 대출 신청",
-                                "type": "navigation",
-                                "boundedContext": "LoanAndReservation",
-                                "functionType": "command",
-                                "uiRequirements": "회원번호, 이름으로 회원 확인, 도서명/ISBN 검색, 대출 기간(7/14/30일) 선택, 대출 가능 도서만 선택 가능, 대출 시 도서 상태 '대출중'으로 변경",
-                                "children": []
-                            },
-                            {
-                                "id": "loan-return-command",
-                                "title": "도서 반납 처리",
-                                "name": "LoanReturnCommand",
-                                "description": "회원이 대출한 도서를 반납",
-                                "type": "navigation",
-                                "boundedContext": "LoanAndReservation",
-                                "functionType": "command",
-                                "uiRequirements": "대출 목록에서 반납 버튼, 반납 시 도서 상태 '대출가능' 또는 예약자 존재 시 '예약중'으로 자동 변경",
-                                "children": []
-                            },
-                            {
-                                "id": "loan-extension-command",
-                                "title": "대출 연장 신청",
-                                "name": "LoanExtensionCommand",
-                                "description": "대출 중인 도서의 대출 기간 연장",
-                                "type": "navigation",
-                                "boundedContext": "LoanAndReservation",
-                                "functionType": "command",
-                                "uiRequirements": "대출 중인 도서에 대해 연장 버튼, 연장 가능 조건(예: 연체/예약자 없음) 확인, 연장 시 반납예정일 자동 갱신",
-                                "children": []
-                            },
-                            {
-                                "id": "reservation-create-command",
-                                "title": "도서 예약 신청",
-                                "name": "ReservationCreateCommand",
-                                "description": "대출 중인 도서에 대해 예약 신청",
-                                "type": "navigation",
-                                "boundedContext": "LoanAndReservation",
-                                "functionType": "command",
-                                "uiRequirements": "도서명/ISBN 검색, 대출 중인 도서만 예약 가능, 예약 시 예약자 정보 입력, 예약 완료 시 도서 상태 '예약중'으로 변경",
-                                "children": []
-                            }
-                        ]
-                    },
-                    {
-                        "id": "node-1758001555271-omsn576xu",
-                        "title": "대출 현황",
-                        "description": "현재 대출 중인 도서 및 대출 상태 관리",
-                        "type": "root",
-                        "boundedContexts": [
-                            {
-                                "id": "BookManagement",
-                                "title": "BookManagement",
-                                "description": "도서 등록, 상태 관리, 폐기 처리를 담당하며 도서의 생애주기와 상태 변화를 관리한다."
-                            },
-                            {
-                                "id": "LoanAndReservation",
-                                "title": "LoanAndReservation",
-                                "description": "회원의 도서 대출, 반납, 연장, 예약을 관리하고 도서 상태 변경을 트리거한다."
-                            },
-                            {
-                                "id": "LoanHistory",
-                                "title": "LoanHistory",
-                                "description": "도서별 대출 및 예약 이력, 상태 변경 이력을 기록하고 조회할 수 있도록 한다."
-                            }
-                        ],
-                        "children": [
-                            {
-                                "id": "loan-list-view",
-                                "title": "대출 목록 조회",
-                                "name": "LoanListView",
-                                "description": "현재 대출 중인 도서 목록 및 상태 조회",
-                                "type": "navigation",
-                                "boundedContext": "LoanAndReservation",
-                                "functionType": "view",
-                                "uiRequirements": "회원명, 도서명, 대출일, 반납예정일, 상태(대출중/연체/반납완료) 필터 및 검색, 연장/반납 처리 버튼 제공",
-                                "children": []
-                            },
-                            {
-                                "id": "loan-detail-view",
-                                "title": "대출 상세 조회",
-                                "name": "LoanDetailView",
-                                "description": "특정 대출 건의 상세 정보 조회",
-                                "type": "navigation",
-                                "boundedContext": "LoanAndReservation",
-                                "functionType": "view",
-                                "uiRequirements": "회원 정보, 도서 정보, 대출일, 반납예정일, 상태, 연장/반납 이력 등 상세 정보 표시",
-                                "children": []
-                            }
-                        ]
-                    },
-                    {
-                        "id": "node-1758001555271-l31h0fh6q",
-                        "title": "이력 조회",
-                        "description": "도서별 대출 및 상태 변경 이력 관리",
-                        "type": "root",
-                        "boundedContexts": [
-                            {
-                                "id": "BookManagement",
-                                "title": "BookManagement",
-                                "description": "도서 등록, 상태 관리, 폐기 처리를 담당하며 도서의 생애주기와 상태 변화를 관리한다."
-                            },
-                            {
-                                "id": "LoanAndReservation",
-                                "title": "LoanAndReservation",
-                                "description": "회원의 도서 대출, 반납, 연장, 예약을 관리하고 도서 상태 변경을 트리거한다."
-                            },
-                            {
-                                "id": "LoanHistory",
-                                "title": "LoanHistory",
-                                "description": "도서별 대출 및 예약 이력, 상태 변경 이력을 기록하고 조회할 수 있도록 한다."
-                            }
-                        ],
-                        "children": [
-                            {
-                                "id": "book-loan-history-view",
-                                "title": "도서별 대출 이력 조회",
-                                "name": "BookLoanHistoryView",
-                                "description": "특정 도서의 대출 및 예약 이력 조회",
-                                "type": "navigation",
-                                "boundedContext": "LoanHistory",
-                                "functionType": "view",
-                                "uiRequirements": "도서명/ISBN 검색, 대출/예약 일시, 회원 정보, 상태(대출/반납/예약 등) 이력 리스트 표시",
-                                "children": []
-                            },
-                            {
-                                "id": "book-status-history-view",
-                                "title": "도서별 상태 변경 이력 조회",
-                                "name": "BookStatusHistoryView",
-                                "description": "특정 도서의 상태 변경 이력 조회",
-                                "type": "navigation",
-                                "boundedContext": "LoanHistory",
-                                "functionType": "view",
-                                "uiRequirements": "도서명/ISBN 검색, 상태 변경 일시, 변경 전/후 상태, 변경자, 변경 사유 등 표시",
-                                "children": []
+                                "id": "contact",
+                                "title": "문의하기",
+                                "url": "/contact",
+                                "description": "도서관 문의 및 연락처 안내",
+                                "referencedCommands": [],
+                                "referencedReadModels": [],
+                                "children": [
+                                    {
+                                        "id": "navbar-contact",
+                                        "title": "네비게이션 바",
+                                        "url": "/네비게이션-바",
+                                        "description": "문의 페이지 내 메뉴 이동",
+                                        "referencedCommands": [],
+                                        "referencedReadModels": [],
+                                        "children": []
+                                    },
+                                    {
+                                        "id": "contact-form",
+                                        "title": "문의 폼",
+                                        "url": "/문의-폼",
+                                        "description": "문의 내용 입력 및 제출",
+                                        "referencedCommands": [],
+                                        "referencedReadModels": [],
+                                        "children": []
+                                    },
+                                    {
+                                        "id": "footer-contact",
+                                        "title": "푸터",
+                                        "url": "/푸터",
+                                        "description": "저작권, 연락처, 이용약관 등",
+                                        "referencedCommands": [],
+                                        "referencedReadModels": [],
+                                        "children": []
+                                    }
+                                ]
                             }
                         ]
                     }
@@ -14298,52 +15541,16 @@ export const aggregateDraftScenarios = {
                                     ]
                                 ]
                             ],
-                            "siteMap": [
-                                {
-                                    "id": "book-list-view",
-                                    "title": "도서 목록 조회",
-                                    "name": "BookListView",
-                                    "description": "현재 보유 도서의 목록과 상태를 조회",
-                                    "boundedContext": "BookManagement",
-                                    "functionType": "view",
-                                    "uiRequirements": "도서명, ISBN, 저자, 출판사, 카테고리, 상태(대출가능/대출중/예약중/폐기) 필터 및 검색, 페이징 지원"
-                                },
-                                {
-                                    "id": "book-create-command",
-                                    "title": "도서 등록",
-                                    "name": "BookCreateCommand",
-                                    "description": "새로운 도서를 등록",
-                                    "boundedContext": "BookManagement",
-                                    "functionType": "command",
-                                    "uiRequirements": "도서명, ISBN(13자리, 중복확인), 저자, 출판사, 카테고리(소설/비소설/학술/잡지) 입력 폼, 등록 시 상태는 '대출가능'으로 설정"
-                                },
-                                {
-                                    "id": "book-edit-command",
-                                    "title": "도서 정보 수정",
-                                    "name": "BookEditCommand",
-                                    "description": "기존 도서의 정보를 수정",
-                                    "boundedContext": "BookManagement",
-                                    "functionType": "command",
-                                    "uiRequirements": "도서명, 저자, 출판사, 카테고리 등 수정, ISBN은 수정 불가, 상태 변경 불가"
-                                },
-                                {
-                                    "id": "book-dispose-command",
-                                    "title": "도서 폐기 처리",
-                                    "name": "BookDisposeCommand",
-                                    "description": "훼손 또는 분실된 도서를 폐기 처리",
-                                    "boundedContext": "BookManagement",
-                                    "functionType": "command",
-                                    "uiRequirements": "도서 목록에서 폐기 처리 버튼, 폐기 사유 입력, 폐기 시 상태를 '폐기'로 변경, 폐기 도서는 대출 불가"
-                                },
-                                {
-                                    "id": "book-status-change-view",
-                                    "title": "도서 상태 변경 이력 조회",
-                                    "name": "BookStatusChangeHistoryView",
-                                    "description": "도서별 상태 변경 이력을 조회",
-                                    "boundedContext": "BookManagement",
-                                    "functionType": "view",
-                                    "uiRequirements": "도서별 상태 변경(대출가능/대출중/예약중/폐기 등) 이력 리스트, 변경일시, 변경자, 변경 사유 표시"
-                                }
+                            "commandNames": [
+                                "RegisterBook",
+                                "DiscardBook",
+                                "UpdateBookStatus",
+                                "ValidateIsbn"
+                            ],
+                            "readModelNames": [
+                                "BookList",
+                                "BookDetail",
+                                "CategoryOptions"
                             ]
                         },
                         {
@@ -14642,7 +15849,139 @@ export const aggregateDraftScenarios = {
                                     ]
                                 ]
                             ],
-                            "siteMap": []
+                            "commandNames": [
+                                "LoanBook",
+                                "ReturnBook",
+                                "ExtendLoan",
+                                "ReserveBook"
+                            ],
+                            "readModelNames": [
+                                "LoanStatusList",
+                                "LoanDetail",
+                                "SearchBookForLoan"
+                            ]
+                        },
+                        {
+                            "name": "LoanHistory",
+                            "alias": "이력 관리",
+                            "importance": "Supporting Domain",
+                            "complexity": 0.5,
+                            "differentiation": 0.5,
+                            "implementationStrategy": "Transaction Script",
+                            "aggregates": [
+                                {
+                                    "name": "LoanHistory",
+                                    "alias": "대출 이력"
+                                },
+                                {
+                                    "name": "ReservationHistory",
+                                    "alias": "예약 이력"
+                                }
+                            ],
+                            "events": [
+                                "LoanHistoryRecorded",
+                                "ReservationHistoryRecorded"
+                            ],
+                            "requirements": [
+                                {
+                                    "type": "userStory",
+                                    "refs": [
+                                        [
+                                            [
+                                                9,
+                                                8
+                                            ],
+                                            [
+                                                9,
+                                                12
+                                            ]
+                                        ]
+                                    ],
+                                    "text": "대출 이력"
+                                },
+                                {
+                                    "type": "userStory",
+                                    "refs": [
+                                        [
+                                            [
+                                                9,
+                                                15
+                                            ],
+                                            [
+                                                9,
+                                                19
+                                            ]
+                                        ]
+                                    ],
+                                    "text": "상태 변경"
+                                },
+                                {
+                                    "type": "DDL",
+                                    "refs": [
+                                        [
+                                            [
+                                                99,
+                                                1
+                                            ],
+                                            [
+                                                111,
+                                                9
+                                            ]
+                                        ]
+                                    ],
+                                    "text": "CREATE TABLE loan_history (\n    history_id INT AUTO_INCREMENT PRIMARY KEY,\n    loan_id INT NOT NULL,\n    action_type ENUM('대출', '반납', '연장', '연체알림', '분실신고') NOT NULL,\n    action_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    previous_due_date DATETIME NULL,\n    new_due_date DATETIME NULL,\n    notes TEXT,\n    processed_by VARCHAR(100),\n    FOREIGN KEY (loan_id) REFERENCES loans(loan_id),\n    INDEX idx_loan_id (loan_id),\n    INDEX idx_action_type (action_type),\n    INDEX"
+                                },
+                                {
+                                    "type": "Event",
+                                    "text": "{\n  \"name\": \"LoanHistoryRecorded\",\n  \"displayName\": \"대출 이력 기록됨\",\n  \"actor\": \"System\",\n  \"level\": 8,\n  \"description\": \"도서의 대출, 반납, 연장 등 대출 관련 이력이 시스템에 기록됨.\",\n  \"inputs\": [\n    \"대출/반납/연장 이벤트 정보\"\n  ],\n  \"outputs\": [\n    \"대출 이력 데이터\"\n  ],\n  \"nextEvents\": [],\n  \"refs\": [\n    [\n      [\n        9,\n        8\n      ],\n      [\n        9,\n        65\n      ]\n    ]\n  ]\n}",
+                                    "refs": [
+                                        [
+                                            [
+                                                9,
+                                                8
+                                            ],
+                                            [
+                                                9,
+                                                65
+                                            ]
+                                        ]
+                                    ]
+                                },
+                                {
+                                    "type": "Event",
+                                    "text": "{\n  \"name\": \"ReservationHistoryRecorded\",\n  \"displayName\": \"예약 이력 기록됨\",\n  \"actor\": \"System\",\n  \"level\": 9,\n  \"description\": \"도서 예약 관련 이력이 시스템에 기록됨.\",\n  \"inputs\": [\n    \"예약 이벤트 정보\"\n  ],\n  \"outputs\": [\n    \"예약 이력 데이터\"\n  ],\n  \"nextEvents\": [],\n  \"refs\": [\n    [\n      [\n        9,\n        15\n      ],\n      [\n        9,\n        65\n      ]\n    ]\n  ]\n}",
+                                    "refs": [
+                                        [
+                                            [
+                                                9,
+                                                15
+                                            ],
+                                            [
+                                                9,
+                                                65
+                                            ]
+                                        ]
+                                    ]
+                                }
+                            ],
+                            "role": "도서별 대출 및 예약 이력, 상태 변경 이력을 기록하고 조회할 수 있도록 한다.",
+                            "roleRefs": [
+                                [
+                                    [
+                                        9,
+                                        8
+                                    ],
+                                    [
+                                        9,
+                                        67
+                                    ]
+                                ]
+                            ],
+                            "commandNames": [],
+                            "readModelNames": [
+                                "BookLoanHistory",
+                                "BookStatusChangeHistory"
+                            ]
                         }
                     ],
                     "relations": [
@@ -14787,11 +16126,335 @@ export const aggregateDraftScenarios = {
                 "currentChunk": 0,
                 "totalChunks": 0,
                 "currentGeneratedLength": 0,
-                "timestamp": "2025-09-16T05:45:32.765Z"
+                "commandReadModelData": {
+                    "boundedContexts": [
+                        {
+                            "name": "BookManagement",
+                            "alias": "도서 관리",
+                            "commands": [
+                                {
+                                    "name": "RegisterBook",
+                                    "alias": "도서 등록",
+                                    "description": "새로운 도서를 등록한다.",
+                                    "actor": "admin",
+                                    "aggregate": "Book",
+                                    "properties": [
+                                        {
+                                            "name": "title",
+                                            "type": "String",
+                                            "description": "도서명"
+                                        },
+                                        {
+                                            "name": "isbn",
+                                            "type": "String",
+                                            "description": "13자리 ISBN"
+                                        },
+                                        {
+                                            "name": "author",
+                                            "type": "String",
+                                            "description": "저자"
+                                        },
+                                        {
+                                            "name": "publisher",
+                                            "type": "String",
+                                            "description": "출판사"
+                                        },
+                                        {
+                                            "name": "category",
+                                            "type": "String",
+                                            "description": "카테고리(소설/비소설/학술/잡지)"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "DiscardBook",
+                                    "alias": "도서 폐기 처리",
+                                    "description": "도서가 훼손되거나 분실된 경우 폐기 처리한다.",
+                                    "actor": "admin",
+                                    "aggregate": "Book",
+                                    "properties": [
+                                        {
+                                            "name": "bookId",
+                                            "type": "Long",
+                                            "description": "도서 식별자"
+                                        },
+                                        {
+                                            "name": "reason",
+                                            "type": "String",
+                                            "description": "폐기 사유"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "UpdateBookStatus",
+                                    "alias": "도서 상태 변경",
+                                    "description": "도서의 상태를 수동으로 변경한다.",
+                                    "actor": "admin",
+                                    "aggregate": "Book",
+                                    "properties": [
+                                        {
+                                            "name": "bookId",
+                                            "type": "Long",
+                                            "description": "도서 식별자"
+                                        },
+                                        {
+                                            "name": "status",
+                                            "type": "String",
+                                            "description": "변경할 상태(대출가능/대출중/예약중/폐기)"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "ValidateIsbn",
+                                    "alias": "ISBN 중복 및 유효성 확인",
+                                    "description": "ISBN의 유효성과 중복 여부를 확인한다.",
+                                    "actor": "admin",
+                                    "aggregate": "Book",
+                                    "properties": [
+                                        {
+                                            "name": "isbn",
+                                            "type": "String",
+                                            "description": "13자리 ISBN"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "readModels": [
+                                {
+                                    "name": "BookList",
+                                    "alias": "도서 목록",
+                                    "description": "현재 보유한 도서들의 목록과 상태를 조회한다.",
+                                    "actor": "admin",
+                                    "aggregate": "Book",
+                                    "isMultipleResult": true,
+                                    "queryParameters": [
+                                        {
+                                            "name": "status",
+                                            "type": "String",
+                                            "description": "도서 상태별 필터(대출가능/대출중/예약중/폐기)"
+                                        },
+                                        {
+                                            "name": "category",
+                                            "type": "String",
+                                            "description": "카테고리별 필터"
+                                        },
+                                        {
+                                            "name": "keyword",
+                                            "type": "String",
+                                            "description": "도서명/저자/ISBN 검색"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "BookDetail",
+                                    "alias": "도서 상세 정보",
+                                    "description": "특정 도서의 상세 정보를 조회한다.",
+                                    "actor": "admin",
+                                    "aggregate": "Book",
+                                    "isMultipleResult": false,
+                                    "queryParameters": [
+                                        {
+                                            "name": "bookId",
+                                            "type": "Long",
+                                            "description": "도서 식별자"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "CategoryOptions",
+                                    "alias": "카테고리 옵션 목록",
+                                    "description": "도서 등록 시 선택 가능한 카테고리 목록을 조회한다.",
+                                    "actor": "admin",
+                                    "aggregate": "Book",
+                                    "isMultipleResult": true,
+                                    "queryParameters": []
+                                }
+                            ]
+                        },
+                        {
+                            "name": "LoanAndReservation",
+                            "alias": "대출 및 예약 관리",
+                            "commands": [
+                                {
+                                    "name": "LoanBook",
+                                    "alias": "도서 대출",
+                                    "description": "회원이 도서를 대출한다.",
+                                    "actor": "user",
+                                    "aggregate": "Loan",
+                                    "properties": [
+                                        {
+                                            "name": "memberId",
+                                            "type": "Long",
+                                            "description": "회원번호"
+                                        },
+                                        {
+                                            "name": "memberName",
+                                            "type": "String",
+                                            "description": "회원 이름"
+                                        },
+                                        {
+                                            "name": "bookId",
+                                            "type": "Long",
+                                            "description": "대출할 도서 식별자"
+                                        },
+                                        {
+                                            "name": "loanPeriod",
+                                            "type": "Integer",
+                                            "description": "대출 기간(7/14/30일)"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "ReturnBook",
+                                    "alias": "도서 반납",
+                                    "description": "회원이 대출한 도서를 반납한다.",
+                                    "actor": "user",
+                                    "aggregate": "Loan",
+                                    "properties": [
+                                        {
+                                            "name": "loanId",
+                                            "type": "Long",
+                                            "description": "대출 식별자"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "ExtendLoan",
+                                    "alias": "대출 연장",
+                                    "description": "대출 중인 도서의 대출 기간을 연장한다.",
+                                    "actor": "user",
+                                    "aggregate": "Loan",
+                                    "properties": [
+                                        {
+                                            "name": "loanId",
+                                            "type": "Long",
+                                            "description": "대출 식별자"
+                                        },
+                                        {
+                                            "name": "extensionPeriod",
+                                            "type": "Integer",
+                                            "description": "연장 기간(7/14/30일)"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "ReserveBook",
+                                    "alias": "도서 예약",
+                                    "description": "대출 중인 도서에 대해 예약을 신청한다.",
+                                    "actor": "user",
+                                    "aggregate": "Reservation",
+                                    "properties": [
+                                        {
+                                            "name": "memberId",
+                                            "type": "Long",
+                                            "description": "회원번호"
+                                        },
+                                        {
+                                            "name": "bookId",
+                                            "type": "Long",
+                                            "description": "예약할 도서 식별자"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "readModels": [
+                                {
+                                    "name": "LoanStatusList",
+                                    "alias": "대출 현황 목록",
+                                    "description": "현재 대출 중인 도서들의 목록과 대출 상태를 조회한다.",
+                                    "actor": "admin",
+                                    "aggregate": "Loan",
+                                    "isMultipleResult": true,
+                                    "queryParameters": [
+                                        {
+                                            "name": "status",
+                                            "type": "String",
+                                            "description": "대출 상태(대출중/연체/반납완료)"
+                                        },
+                                        {
+                                            "name": "memberId",
+                                            "type": "Long",
+                                            "description": "회원별 필터"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "LoanDetail",
+                                    "alias": "대출 상세 정보",
+                                    "description": "특정 대출 건의 상세 정보를 조회한다.",
+                                    "actor": "admin",
+                                    "aggregate": "Loan",
+                                    "isMultipleResult": false,
+                                    "queryParameters": [
+                                        {
+                                            "name": "loanId",
+                                            "type": "Long",
+                                            "description": "대출 식별자"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "SearchBookForLoan",
+                                    "alias": "대출용 도서 검색",
+                                    "description": "도서명이나 ISBN으로 대출 가능한 도서를 검색한다.",
+                                    "actor": "user",
+                                    "aggregate": "Book",
+                                    "isMultipleResult": true,
+                                    "queryParameters": [
+                                        {
+                                            "name": "keyword",
+                                            "type": "String",
+                                            "description": "도서명 또는 ISBN"
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "name": "LoanHistory",
+                            "alias": "대출 및 상태 이력",
+                            "commands": [],
+                            "readModels": [
+                                {
+                                    "name": "BookLoanHistory",
+                                    "alias": "도서별 대출 이력",
+                                    "description": "특정 도서의 대출 및 예약 이력을 조회한다.",
+                                    "actor": "admin",
+                                    "aggregate": "LoanHistory",
+                                    "isMultipleResult": true,
+                                    "queryParameters": [
+                                        {
+                                            "name": "bookId",
+                                            "type": "Long",
+                                            "description": "도서 식별자"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "BookStatusChangeHistory",
+                                    "alias": "도서 상태 변경 이력",
+                                    "description": "특정 도서의 상태 변경 이력을 조회한다.",
+                                    "actor": "admin",
+                                    "aggregate": "Book",
+                                    "isMultipleResult": true,
+                                    "queryParameters": [
+                                        {
+                                            "name": "bookId",
+                                            "type": "Long",
+                                            "description": "도서 식별자"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "timestamp": "2025-09-25T01:52:08.988Z",
+                "currentProcessingStep": "generatingSiteMap"
             },
             {
                 "type": "aggregateDraftDialogDto",
-                "uniqueId": "1758001579115",
+                "uniqueId": "1758765135036",
                 "isShow": true,
                 "draftOptions": [
                     {
@@ -15020,7 +16683,7 @@ export const aggregateDraftScenarios = {
                                                         ],
                                                         [
                                                             32,
-                                                            22
+                                                            43
                                                         ]
                                                     ],
                                                     [
@@ -15042,16 +16705,6 @@ export const aggregateDraftScenarios = {
                                                             89,
                                                             19
                                                         ]
-                                                    ],
-                                                    [
-                                                        [
-                                                            3,
-                                                            183
-                                                        ],
-                                                        [
-                                                            3,
-                                                            265
-                                                        ]
                                                     ]
                                                 ]
                                             },
@@ -15066,23 +16719,110 @@ export const aggregateDraftScenarios = {
                                                         ],
                                                         [
                                                             31,
-                                                            41
+                                                            42
                                                         ]
                                                     ],
                                                     [
                                                         [
                                                             3,
-                                                            86
+                                                            57
                                                         ],
                                                         [
                                                             3,
-                                                            156
+                                                            100
+                                                        ]
+                                                    ],
+                                                    [
+                                                        [
+                                                            3,
+                                                            105
+                                                        ],
+                                                        [
+                                                            3,
+                                                            128
+                                                        ]
+                                                    ],
+                                                    [
+                                                        [
+                                                            3,
+                                                            136
+                                                        ],
+                                                        [
+                                                            3,
+                                                            161
                                                         ]
                                                     ]
                                                 ]
                                             }
                                         ],
                                         "valueObjects": [
+                                            {
+                                                "name": "BookSpecification",
+                                                "alias": "도서 상세 정보",
+                                                "referencedAggregateName": "",
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            3,
+                                                            66
+                                                        ],
+                                                        [
+                                                            3,
+                                                            93
+                                                        ]
+                                                    ],
+                                                    [
+                                                        [
+                                                            27,
+                                                            5
+                                                        ],
+                                                        [
+                                                            27,
+                                                            32
+                                                        ]
+                                                    ],
+                                                    [
+                                                        [
+                                                            28,
+                                                            1
+                                                        ],
+                                                        [
+                                                            28,
+                                                            37
+                                                        ]
+                                                    ],
+                                                    [
+                                                        [
+                                                            29,
+                                                            1
+                                                        ],
+                                                        [
+                                                            29,
+                                                            33
+                                                        ]
+                                                    ],
+                                                    [
+                                                        [
+                                                            30,
+                                                            1
+                                                        ],
+                                                        [
+                                                            30,
+                                                            36
+                                                        ]
+                                                    ],
+                                                    [
+                                                        [
+                                                            31,
+                                                            1
+                                                        ],
+                                                        [
+                                                            31,
+                                                            17
+                                                        ]
+                                                    ]
+                                                ]
+                                            },
                                             {
                                                 "name": "LoanReference",
                                                 "alias": "대출 참조",
@@ -15093,12 +16833,12 @@ export const aggregateDraftScenarios = {
                                                 "refs": [
                                                     [
                                                         [
-                                                            9,
-                                                            6
+                                                            3,
+                                                            184
                                                         ],
                                                         [
-                                                            9,
-                                                            10
+                                                            3,
+                                                            217
                                                         ]
                                                     ],
                                                     [
@@ -15429,22 +17169,22 @@ export const aggregateDraftScenarios = {
                                     }
                                 ],
                                 "pros": {
-                                    "cohesion": "도서의 등록, 상태 변경, 폐기 등 모든 핵심 도서 관리 기능이 Book Aggregate에 집중되어 있어 도메인 응집도가 매우 높음.",
-                                    "coupling": "대출/예약과의 연동은 ValueObject 참조로만 처리되어 타 컨텍스트와의 결합도가 낮음.",
-                                    "consistency": "도서 상태와 관련된 비즈니스 불변성이 단일 트랜잭션 내에서 강하게 보장됨.",
-                                    "encapsulation": "도서의 상태, 대출/예약 참조, 폐기 정보 등 모든 도메인 규칙이 Book 내부에 은닉되어 있음.",
-                                    "complexity": "구현 및 이해가 단순하며, 도서별 상태 관리가 한 곳에서 이루어져 개발자 부담이 적음.",
-                                    "independence": "Book Aggregate만으로 도서 관리의 대부분을 처리할 수 있어 타 Aggregate 변화에 영향이 적음.",
-                                    "performance": "도서 상태 변경, 폐기 등 주요 연산이 단일 Aggregate에서 처리되어 조회 및 갱신 성능이 우수함."
+                                    "cohesion": "도서의 등록, 상태 관리, 폐기 등 모든 도서 관련 기능이 Book Aggregate 내에 집중되어 있어 일관된 트랜잭션 경계를 제공한다.",
+                                    "coupling": "외부 컨텍스트(대출, 예약, 이력)와의 의존성을 ValueObject 참조로만 유지하여 결합도가 낮다.",
+                                    "consistency": "도서 상태 변경, 폐기 등 핵심 비즈니스 규칙을 Aggregate 내부에서 원자적으로 보장할 수 있다.",
+                                    "encapsulation": "도서의 상태, 상세 정보, 대출/예약 참조 등 도서 관리의 모든 세부 구현이 Aggregate 내부에 은닉된다.",
+                                    "complexity": "단일 Aggregate로 구조가 단순하며, 도서 관리 업무에 대한 이해와 유지보수가 용이하다.",
+                                    "independence": "도서 관리 정책 변경이 Aggregate 단위로 독립적으로 이루어질 수 있다.",
+                                    "performance": "단일 Aggregate 접근으로 도서 상태 및 정보 조회·변경 시 쿼리 효율이 높다."
                                 },
                                 "cons": {
-                                    "cohesion": "상태 변경 이력, 대출/예약 참조 등 다양한 책임이 Book에 집중되어 도메인 역할이 다소 혼재될 수 있음.",
-                                    "coupling": "Book이 모든 도서 관련 정보를 직접 관리하므로, 도서 이력이나 확장 요구가 커질 경우 Aggregate가 비대해질 수 있음.",
-                                    "consistency": "상태 변경 이력 등 부가 정보가 많아질수록 트랜잭션 크기가 커질 수 있음.",
-                                    "encapsulation": "상태 이력 등 부가 기능이 많아질 경우 도메인 규칙의 은닉성이 다소 약화될 수 있음.",
-                                    "complexity": "도서 관리와 이력 관리, 대출/예약 참조까지 모두 포함되어 Aggregate가 점차 복잡해질 수 있음.",
-                                    "independence": "이력 관리 등 부가 기능 확장 시 Book Aggregate의 독립성이 저하될 수 있음.",
-                                    "performance": "상태 변경 이력 등 부가 정보가 많아질 경우 일부 연산에서 성능 저하 가능성 있음."
+                                    "cohesion": "상태 이력, 대출/예약 참조 등 다양한 책임이 한 Aggregate에 집중되어 도서 관리가 복잡해질 수 있다.",
+                                    "coupling": "도서 상태 이력 등 확장 요구가 생기면 Aggregate 크기가 커져 외부 시스템과의 연동이 어려워질 수 있다.",
+                                    "consistency": "상태 이력 등 대용량 데이터가 누적될 경우 트랜잭션 처리에 부담이 될 수 있다.",
+                                    "encapsulation": "상태 이력, 대출/예약 등 서로 다른 도메인 관심사가 한 Aggregate에 혼재되어 캡슐화가 약해질 수 있다.",
+                                    "complexity": "도서 관리 업무가 확장될수록 Aggregate가 비대해져 도메인 복잡도가 증가한다.",
+                                    "independence": "상태 이력, 대출/예약 등 세부 기능 변경 시 전체 Aggregate에 영향이 갈 수 있다.",
+                                    "performance": "상태 이력, 대출/예약 등 데이터가 누적될수록 단일 Aggregate 접근 시 성능 저하가 발생할 수 있다."
                                 },
                                 "isAIRecommended": false,
                                 "boundedContext": {
@@ -18348,52 +20088,16 @@ export const aggregateDraftScenarios = {
                                                 "isDirectMatching": false
                                             }
                                         },
-                                        "siteMap": [
-                                            {
-                                                "id": "book-list-view",
-                                                "title": "도서 목록 조회",
-                                                "name": "BookListView",
-                                                "description": "현재 보유 도서의 목록과 상태를 조회",
-                                                "boundedContext": "BookManagement",
-                                                "functionType": "view",
-                                                "uiRequirements": "도서명, ISBN, 저자, 출판사, 카테고리, 상태(대출가능/대출중/예약중/폐기) 필터 및 검색, 페이징 지원"
-                                            },
-                                            {
-                                                "id": "book-create-command",
-                                                "title": "도서 등록",
-                                                "name": "BookCreateCommand",
-                                                "description": "새로운 도서를 등록",
-                                                "boundedContext": "BookManagement",
-                                                "functionType": "command",
-                                                "uiRequirements": "도서명, ISBN(13자리, 중복확인), 저자, 출판사, 카테고리(소설/비소설/학술/잡지) 입력 폼, 등록 시 상태는 '대출가능'으로 설정"
-                                            },
-                                            {
-                                                "id": "book-edit-command",
-                                                "title": "도서 정보 수정",
-                                                "name": "BookEditCommand",
-                                                "description": "기존 도서의 정보를 수정",
-                                                "boundedContext": "BookManagement",
-                                                "functionType": "command",
-                                                "uiRequirements": "도서명, 저자, 출판사, 카테고리 등 수정, ISBN은 수정 불가, 상태 변경 불가"
-                                            },
-                                            {
-                                                "id": "book-dispose-command",
-                                                "title": "도서 폐기 처리",
-                                                "name": "BookDisposeCommand",
-                                                "description": "훼손 또는 분실된 도서를 폐기 처리",
-                                                "boundedContext": "BookManagement",
-                                                "functionType": "command",
-                                                "uiRequirements": "도서 목록에서 폐기 처리 버튼, 폐기 사유 입력, 폐기 시 상태를 '폐기'로 변경, 폐기 도서는 대출 불가"
-                                            },
-                                            {
-                                                "id": "book-status-change-view",
-                                                "title": "도서 상태 변경 이력 조회",
-                                                "name": "BookStatusChangeHistoryView",
-                                                "description": "도서별 상태 변경 이력을 조회",
-                                                "boundedContext": "BookManagement",
-                                                "functionType": "view",
-                                                "uiRequirements": "도서별 상태 변경(대출가능/대출중/예약중/폐기 등) 이력 리스트, 변경일시, 변경자, 변경 사유 표시"
-                                            }
+                                        "commandNames": [
+                                            "RegisterBook",
+                                            "DiscardBook",
+                                            "UpdateBookStatus",
+                                            "ValidateIsbn"
+                                        ],
+                                        "readModelNames": [
+                                            "BookList",
+                                            "BookDetail",
+                                            "CategoryOptions"
                                         ]
                                     }
                                 },
@@ -18620,7 +20324,7 @@ export const aggregateDraftScenarios = {
                                                         ],
                                                         [
                                                             32,
-                                                            22
+                                                            43
                                                         ]
                                                     ],
                                                     [
@@ -18642,16 +20346,6 @@ export const aggregateDraftScenarios = {
                                                             89,
                                                             19
                                                         ]
-                                                    ],
-                                                    [
-                                                        [
-                                                            3,
-                                                            183
-                                                        ],
-                                                        [
-                                                            3,
-                                                            265
-                                                        ]
                                                     ]
                                                 ]
                                             },
@@ -18666,23 +20360,110 @@ export const aggregateDraftScenarios = {
                                                         ],
                                                         [
                                                             31,
-                                                            41
+                                                            42
                                                         ]
                                                     ],
                                                     [
                                                         [
                                                             3,
-                                                            86
+                                                            57
                                                         ],
                                                         [
                                                             3,
-                                                            156
+                                                            100
+                                                        ]
+                                                    ],
+                                                    [
+                                                        [
+                                                            3,
+                                                            105
+                                                        ],
+                                                        [
+                                                            3,
+                                                            128
+                                                        ]
+                                                    ],
+                                                    [
+                                                        [
+                                                            3,
+                                                            136
+                                                        ],
+                                                        [
+                                                            3,
+                                                            161
                                                         ]
                                                     ]
                                                 ]
                                             }
                                         ],
                                         "valueObjects": [
+                                            {
+                                                "name": "BookSpecification",
+                                                "alias": "도서 상세 정보",
+                                                "referencedAggregateName": "",
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            3,
+                                                            66
+                                                        ],
+                                                        [
+                                                            3,
+                                                            93
+                                                        ]
+                                                    ],
+                                                    [
+                                                        [
+                                                            27,
+                                                            5
+                                                        ],
+                                                        [
+                                                            27,
+                                                            32
+                                                        ]
+                                                    ],
+                                                    [
+                                                        [
+                                                            28,
+                                                            1
+                                                        ],
+                                                        [
+                                                            28,
+                                                            37
+                                                        ]
+                                                    ],
+                                                    [
+                                                        [
+                                                            29,
+                                                            1
+                                                        ],
+                                                        [
+                                                            29,
+                                                            33
+                                                        ]
+                                                    ],
+                                                    [
+                                                        [
+                                                            30,
+                                                            1
+                                                        ],
+                                                        [
+                                                            30,
+                                                            36
+                                                        ]
+                                                    ],
+                                                    [
+                                                        [
+                                                            31,
+                                                            1
+                                                        ],
+                                                        [
+                                                            31,
+                                                            17
+                                                        ]
+                                                    ]
+                                                ]
+                                            },
                                             {
                                                 "name": "LoanReference",
                                                 "alias": "대출 참조",
@@ -18693,12 +20474,12 @@ export const aggregateDraftScenarios = {
                                                 "refs": [
                                                     [
                                                         [
-                                                            9,
-                                                            6
+                                                            3,
+                                                            184
                                                         ],
                                                         [
-                                                            9,
-                                                            10
+                                                            3,
+                                                            217
                                                         ]
                                                     ],
                                                     [
@@ -19096,7 +20877,7 @@ export const aggregateDraftScenarios = {
                                                         ],
                                                         [
                                                             32,
-                                                            22
+                                                            43
                                                         ]
                                                     ],
                                                     [
@@ -19117,16 +20898,6 @@ export const aggregateDraftScenarios = {
                                                         [
                                                             89,
                                                             19
-                                                        ]
-                                                    ],
-                                                    [
-                                                        [
-                                                            3,
-                                                            183
-                                                        ],
-                                                        [
-                                                            3,
-                                                            265
                                                         ]
                                                     ]
                                                 ]
@@ -19158,7 +20929,7 @@ export const aggregateDraftScenarios = {
                                                         ],
                                                         [
                                                             93,
-                                                            25
+                                                            51
                                                         ]
                                                     ]
                                                 ]
@@ -19259,22 +21030,22 @@ export const aggregateDraftScenarios = {
                                     }
                                 ],
                                 "pros": {
-                                    "cohesion": "Book은 도서의 현재 상태와 핵심 정보에 집중하고, BookStatusHistory는 상태 변경 이력 관리에만 집중하여 역할이 명확하게 분리됨.",
-                                    "coupling": "이력 관리와 도서 관리가 분리되어 각 Aggregate의 변경이 서로에게 미치는 영향이 최소화됨.",
-                                    "consistency": "도서 상태 변경과 이력 기록이 별도 트랜잭션으로 관리되어 대용량 이력 처리 시에도 안정적임.",
-                                    "encapsulation": "상태 변경 이력 관리가 별도 Aggregate로 은닉되어 도서 관리 도메인 규칙의 명확성이 높음.",
-                                    "complexity": "각 Aggregate가 단일 책임 원칙에 따라 설계되어 도메인 복잡도가 낮음.",
-                                    "independence": "이력 관리, 도서 관리가 각각 독립적으로 확장 및 배포 가능함.",
-                                    "performance": "이력 데이터가 많아져도 Book Aggregate의 성능 저하 없이 별도로 관리 가능함."
+                                    "cohesion": "도서 정보와 상태 변경 이력을 별도 Aggregate로 분리해 각자의 책임과 라이프사이클을 명확히 구분한다.",
+                                    "coupling": "상태 이력 관리가 Book Aggregate와 분리되어, 이력 확장·변경 시 도서 관리에 영향이 적다.",
+                                    "consistency": "도서 상태 변경과 이력 기록이 분리되어 대용량 이력 데이터 관리에 유리하다.",
+                                    "encapsulation": "상태 이력 관리의 세부 구현이 BookStatusHistory Aggregate에 은닉되어 도서 관리와 분리된다.",
+                                    "complexity": "도서 관리와 상태 이력 관리가 분리되어 각 Aggregate의 복잡도가 낮아진다.",
+                                    "independence": "상태 이력 관리 정책 변경이 BookStatusHistory Aggregate 단위로 독립적으로 가능하다.",
+                                    "performance": "상태 이력 데이터가 많아져도 Book Aggregate의 성능 저하 없이 이력만 별도로 관리할 수 있다."
                                 },
                                 "cons": {
-                                    "cohesion": "도서 상태 변경 시 이력 기록을 위해 두 Aggregate 간의 연동 로직이 필요하여 일부 응집도가 분산됨.",
-                                    "coupling": "상태 변경 시 이력 기록을 위한 추가적인 애플리케이션 서비스 계층의 결합이 필요함.",
-                                    "consistency": "상태 변경과 이력 기록이 별도 트랜잭션으로 처리되어 일시적 불일치가 발생할 수 있음.",
-                                    "encapsulation": "상태 변경과 이력 관리가 분리되어 전체 도서 상태 추적을 위해 두 Aggregate를 모두 조회해야 함.",
-                                    "complexity": "상태 변경과 이력 기록의 동기화, 이벤트 발행 등 구현 복잡도가 증가함.",
-                                    "independence": "상태 변경과 이력 기록의 동시 확장 시 연동 로직 관리가 필요함.",
-                                    "performance": "상태 변경 시 이력 기록을 위한 추가 쓰기 연산이 발생하여 일부 연산에서 오버헤드가 있을 수 있음."
+                                    "cohesion": "도서 상태 변경 시 이력 기록을 위해 두 Aggregate 간의 오케스트레이션이 필요하다.",
+                                    "coupling": "상태 변경 트랜잭션이 두 Aggregate에 걸쳐 발생하므로, 일관성 보장을 위해 추가적인 처리 로직이 필요하다.",
+                                    "consistency": "상태 변경과 이력 기록이 분리되어 일시적으로 데이터 불일치가 발생할 수 있다.",
+                                    "encapsulation": "상태 변경과 이력 기록에 대한 비즈니스 규칙이 Aggregate 외부(Application Service 등)에서 관리되어야 한다.",
+                                    "complexity": "두 Aggregate 간의 연동 및 트랜잭션 관리 로직이 추가되어 시스템 복잡도가 증가한다.",
+                                    "independence": "도서 상태 변경과 이력 기록의 동기화 정책 변경 시 두 Aggregate 모두에 영향이 갈 수 있다.",
+                                    "performance": "상태 변경 시 두 Aggregate를 모두 접근해야 하므로 트랜잭션 처리 비용이 증가할 수 있다."
                                 },
                                 "isAIRecommended": true,
                                 "boundedContext": {
@@ -22178,61 +23949,25 @@ export const aggregateDraftScenarios = {
                                                 "isDirectMatching": false
                                             }
                                         },
-                                        "siteMap": [
-                                            {
-                                                "id": "book-list-view",
-                                                "title": "도서 목록 조회",
-                                                "name": "BookListView",
-                                                "description": "현재 보유 도서의 목록과 상태를 조회",
-                                                "boundedContext": "BookManagement",
-                                                "functionType": "view",
-                                                "uiRequirements": "도서명, ISBN, 저자, 출판사, 카테고리, 상태(대출가능/대출중/예약중/폐기) 필터 및 검색, 페이징 지원"
-                                            },
-                                            {
-                                                "id": "book-create-command",
-                                                "title": "도서 등록",
-                                                "name": "BookCreateCommand",
-                                                "description": "새로운 도서를 등록",
-                                                "boundedContext": "BookManagement",
-                                                "functionType": "command",
-                                                "uiRequirements": "도서명, ISBN(13자리, 중복확인), 저자, 출판사, 카테고리(소설/비소설/학술/잡지) 입력 폼, 등록 시 상태는 '대출가능'으로 설정"
-                                            },
-                                            {
-                                                "id": "book-edit-command",
-                                                "title": "도서 정보 수정",
-                                                "name": "BookEditCommand",
-                                                "description": "기존 도서의 정보를 수정",
-                                                "boundedContext": "BookManagement",
-                                                "functionType": "command",
-                                                "uiRequirements": "도서명, 저자, 출판사, 카테고리 등 수정, ISBN은 수정 불가, 상태 변경 불가"
-                                            },
-                                            {
-                                                "id": "book-dispose-command",
-                                                "title": "도서 폐기 처리",
-                                                "name": "BookDisposeCommand",
-                                                "description": "훼손 또는 분실된 도서를 폐기 처리",
-                                                "boundedContext": "BookManagement",
-                                                "functionType": "command",
-                                                "uiRequirements": "도서 목록에서 폐기 처리 버튼, 폐기 사유 입력, 폐기 시 상태를 '폐기'로 변경, 폐기 도서는 대출 불가"
-                                            },
-                                            {
-                                                "id": "book-status-change-view",
-                                                "title": "도서 상태 변경 이력 조회",
-                                                "name": "BookStatusChangeHistoryView",
-                                                "description": "도서별 상태 변경 이력을 조회",
-                                                "boundedContext": "BookManagement",
-                                                "functionType": "view",
-                                                "uiRequirements": "도서별 상태 변경(대출가능/대출중/예약중/폐기 등) 이력 리스트, 변경일시, 변경자, 변경 사유 표시"
-                                            }
+                                        "commandNames": [
+                                            "RegisterBook",
+                                            "DiscardBook",
+                                            "UpdateBookStatus",
+                                            "ValidateIsbn"
+                                        ],
+                                        "readModelNames": [
+                                            "BookList",
+                                            "BookDetail",
+                                            "CategoryOptions"
                                         ]
                                     }
                                 },
                                 "description": "# Bounded Context Overview: BookManagement (도서 관리)\n\n## Role\n도서 등록, 상태 관리, 폐기 처리를 담당하며 도서의 생애주기와 상태 변화를 관리한다.\n\n## Key Events\n- BookRegistered\n- BookStatusChanged\n- BookDisposed\n\n# Requirements\n\n## userStory\n\n도서 관리' 화면에서는 새로운 도서를 등록하고 현재 보유한 도서들의 상태를 관리할 수 있어야 해. 도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해. 등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야\n\n도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할\n\n## DDL\n\n```sql\n도서 테이블\nCREATE TABLE books (\n    book_id INT AUTO_INCREMENT PRIMARY KEY,\n    title VARCHAR(500) NOT NULL,\n    isbn VARCHAR(13) UNIQUE NOT NULL,\n    author VARCHAR(200) NOT NULL,\n    publisher VARCHAR(200) NOT NULL,\n    category ENUM('소설', '비소설', '학술', '잡지') NOT NULL,\n    status ENUM('대출가능', '대출중', '예약중', '폐기') DEFAULT '대출가능',\n    registration_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    disposal_date DATETIME NULL,\n    disposal_reason TEXT NULL,\n    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,\n    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n    INDEX idx_title (title),\n    INDEX idx_isbn (isbn),\n    INDEX idx_status (status),\n    INDEX idx_category (category)\n);\n```\n```sql\n도서 상태 변경 이력 테이블\nCREATE TABLE book_status_history (\n    history_id INT AUTO_INCREMENT PRIMARY KEY,\n    book_id INT NOT NULL,\n    previous_status ENUM('대출가능', '대출중', '예약중', '폐기'),\n    new_status ENUM('대출가능', '대출중', '예약중', '폐기') NOT NULL,\n    change_reason VARCHAR(200),\n    changed_by VARCHAR(100),\n    change_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    FOREIGN KEY (book_id) REFERENCES books(book_id),\n    INDEX idx_book_id (book_id),\n    INDEX idx_change_date (change_date)\n);\n```\n## Event\n\n```json\n{\n  \"name\": \"BookRegistered\",\n  \"displayName\": \"도서 등록됨\",\n  \"actor\": \"Librarian\",\n  \"level\": 1,\n  \"description\": \"사서가 새로운 도서를 등록하여 도서관 시스템에 추가하였음. 등록 시 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받고, ISBN 중복 및 유효성 검증이 완료됨.\",\n  \"inputs\": [\n    \"도서명\",\n    \"ISBN(13자리)\",\n    \"저자\",\n    \"출판사\",\n    \"카테고리(소설/비소설/학술/잡지)\"\n  ],\n  \"outputs\": [\n    \"신규 도서 정보\",\n    \"도서 상태: 대출가능\"\n  ],\n  \"nextEvents\": [\n    \"BookStatusChanged\"\n  ]\n}\n```\n\n```json\n{\n  \"name\": \"BookStatusChanged\",\n  \"displayName\": \"도서 상태 변경됨\",\n  \"actor\": \"System\",\n  \"level\": 2,\n  \"description\": \"도서의 대출/반납/예약/폐기 등 상태 변화가 발생하여 도서 상태가 자동 또는 수동으로 변경됨.\",\n  \"inputs\": [\n    \"도서 상태 변경 트리거(대출, 반납, 예약, 폐기 등)\",\n    \"도서 식별자\"\n  ],\n  \"outputs\": [\n    \"변경된 도서 상태\"\n  ],\n  \"nextEvents\": [\n    \"BookDisposed\",\n    \"BookLoaned\",\n    \"BookReturned\",\n    \"BookReserved\"\n  ]\n}\n```\n\n```json\n{\n  \"name\": \"BookDisposed\",\n  \"displayName\": \"도서 폐기됨\",\n  \"actor\": \"Librarian\",\n  \"level\": 3,\n  \"description\": \"도서가 훼손 또는 분실되어 사서에 의해 폐기 처리됨. 폐기된 도서는 더 이상 대출이 불가능함.\",\n  \"inputs\": [\n    \"도서 식별자\",\n    \"폐기 사유\"\n  ],\n  \"outputs\": [\n    \"도서 상태: 폐기\"\n  ],\n  \"nextEvents\": []\n}\n```\n\n## Context Relations\n\n### BookManagement-LoanAndReservation\n- **Type**: Pub/Sub\n- **Direction**: sends to 대출/반납 및 예약 (LoanAndReservation)\n- **Reason**: 도서 상태 변경(대출가능, 대출중, 예약중, 폐기 등)이 발생하면 대출/반납 및 예약 컨텍스트에서 이를 구독하여 대출/예약 프로세스에 반영한다.\n- **Interaction Pattern**: 도서 관리에서 도서 상태 변경 이벤트를 발행하면 대출/반납 및 예약 컨텍스트가 이를 구독하여 처리한다.\n\n### BookManagement-LoanHistory\n- **Type**: Pub/Sub\n- **Direction**: sends to 이력 관리 (LoanHistory)\n- **Reason**: 도서 등록, 폐기 등 도서 상태 변화 이력도 이력 관리 컨텍스트에서 기록할 수 있도록 이벤트를 발행한다.\n- **Interaction Pattern**: 도서 관리에서 도서 등록, 폐기 등 상태 변화 이벤트를 발행하면 이력 관리 컨텍스트가 이를 구독하여 상태 변경 이력을 기록한다."
                             }
                         ],
-                        "conclusions": "옵션 1은 도서 관리가 단일 트랜잭션 내에서 원자적으로 이루어져야 하거나, 시스템이 단순하고 이력 데이터가 적은 환경에 적합합니다. 옵션 2는 도서 상태 변경 이력의 대용량 관리, 이력 데이터의 독립적 확장 및 관리가 필요한 도서관 환경에 더욱 적합하며, 이력 관리와 도서 관리의 책임 분리가 중요한 경우 추천됩니다.",
+                        "conclusions": "옵션1은 도서 관리가 단순하고 상태 이력이 많지 않은 소규모 도서관, 혹은 도서별 상태 관리가 단일 트랜잭션 내에서 반드시 일관되게 처리되어야 하는 경우에 적합하다. 옵션2는 도서 상태 변경 이력이 많거나, 이력 데이터의 확장성과 성능이 중요한 중대형 도서관, 또는 도서 정보와 이력 관리의 책임을 분리해 유지보수성과 확장성을 높이고자 할 때 적합하다.",
                         "defaultOptionIndex": 1,
-                        "inference": "\n\n요구사항 분석 결과, 도서의 등록, 상태 변경, 폐기, 그리고 대출/예약/이력 컨텍스트와의 이벤트 연동이 핵심임을 확인하였습니다. 도서의 상태와 생애주기 관리가 원자적으로 이루어져야 하므로 Book Aggregate를 중심으로 설계하되, 옵션별로 대출/예약 참조 및 상태 이력 관리의 분리 여부에 따라 구조를 달리하였습니다. 첫 번째 옵션은 단일 Book Aggregate에 모든 도서 관련 기능을 통합하고, 두 번째 옵션은 Book과 BookStatusHistory Aggregate를 분리하여 이력 관리의 독립성과 확장성을 높였습니다."
+                        "inference": "\n\n요구사항과 이벤트, DDL, 컨텍스트 관계, 누적 초안(Loan, Reservation, LoanHistory, ReservationHistory 존재)을 종합적으로 분석했다. Book(도서) Aggregate는 반드시 포함해야 하며, 이미 존재하는 Loan, Reservation, LoanHistory, ReservationHistory Aggregate는 ValueObject 참조로만 활용해야 한다. 옵션1은 Book 단일 Aggregate 구조로 모든 도서 관리 기능을 집중시키고, 옵션2는 Book과 BookStatusHistory 두 개의 Aggregate로 도서 정보와 상태 이력을 분리하여 관리한다."
                     },
                     {
                         "boundedContext": "LoanAndReservation",
@@ -22439,16 +24174,6 @@ export const aggregateDraftScenarios = {
                                                 [
                                                     [
                                                         5,
-                                                        79
-                                                    ],
-                                                    [
-                                                        5,
-                                                        81
-                                                    ]
-                                                ],
-                                                [
-                                                    [
-                                                        5,
                                                         49
                                                     ],
                                                     [
@@ -22485,16 +24210,6 @@ export const aggregateDraftScenarios = {
                                                         5,
                                                         235
                                                     ]
-                                                ],
-                                                [
-                                                    [
-                                                        7,
-                                                        109
-                                                    ],
-                                                    [
-                                                        7,
-                                                        124
-                                                    ]
                                                 ]
                                             ]
                                         },
@@ -22510,7 +24225,7 @@ export const aggregateDraftScenarios = {
                                                         ],
                                                         [
                                                             53,
-                                                            40
+                                                            56
                                                         ]
                                                     ],
                                                     [
@@ -22644,6 +24359,76 @@ export const aggregateDraftScenarios = {
                                                             7,
                                                             175
                                                         ]
+                                                    ]
+                                                ]
+                                            },
+                                            {
+                                                "name": "LoanHistoryReference",
+                                                "alias": "대출 이력 참조",
+                                                "referencedAggregate": {
+                                                    "name": "LoanHistory",
+                                                    "alias": "대출 이력"
+                                                },
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            101,
+                                                            5
+                                                        ],
+                                                        [
+                                                            101,
+                                                            11
+                                                        ]
+                                                    ],
+                                                    [
+                                                        [
+                                                            108,
+                                                            5
+                                                        ],
+                                                        [
+                                                            108,
+                                                            25
+                                                        ]
+                                                    ],
+                                                    [
+                                                        [
+                                                            5,
+                                                            49
+                                                        ],
+                                                        [
+                                                            5,
+                                                            91
+                                                        ]
+                                                    ],
+                                                    [
+                                                        [
+                                                            5,
+                                                            59
+                                                        ],
+                                                        [
+                                                            5,
+                                                            77
+                                                        ]
+                                                    ],
+                                                    [
+                                                        [
+                                                            5,
+                                                            43
+                                                        ],
+                                                        [
+                                                            5,
+                                                            126
+                                                        ]
+                                                    ],
+                                                    [
+                                                        [
+                                                            5,
+                                                            198
+                                                        ],
+                                                        [
+                                                            5,
+                                                            235
+                                                        ]
                                                     ],
                                                     [
                                                         [
@@ -22673,36 +24458,6 @@ export const aggregateDraftScenarios = {
                                                         [
                                                             7,
                                                             124
-                                                        ]
-                                                    ]
-                                                ]
-                                            },
-                                            {
-                                                "name": "ReservationReference",
-                                                "alias": "예약 참조",
-                                                "referencedAggregate": {
-                                                    "name": "Reservation",
-                                                    "alias": "예약"
-                                                },
-                                                "refs": [
-                                                    [
-                                                        [
-                                                            101,
-                                                            5
-                                                        ],
-                                                        [
-                                                            101,
-                                                            11
-                                                        ]
-                                                    ],
-                                                    [
-                                                        [
-                                                            67,
-                                                            5
-                                                        ],
-                                                        [
-                                                            67,
-                                                            18
                                                         ]
                                                     ]
                                                 ]
@@ -23250,7 +25005,7 @@ export const aggregateDraftScenarios = {
                                                         ],
                                                         [
                                                             71,
-                                                            44
+                                                            60
                                                         ]
                                                     ],
                                                     [
@@ -23364,15 +25119,25 @@ export const aggregateDraftScenarios = {
                                                             7,
                                                             175
                                                         ]
-                                                    ],
+                                                    ]
+                                                ]
+                                            },
+                                            {
+                                                "name": "ReservationHistoryReference",
+                                                "alias": "예약 이력 참조",
+                                                "referencedAggregate": {
+                                                    "name": "ReservationHistory",
+                                                    "alias": "예약 이력"
+                                                },
+                                                "refs": [
                                                     [
                                                         [
-                                                            7,
-                                                            133
+                                                            5,
+                                                            183
                                                         ],
                                                         [
-                                                            7,
-                                                            167
+                                                            5,
+                                                            193
                                                         ]
                                                     ],
                                                     [
@@ -23383,16 +25148,6 @@ export const aggregateDraftScenarios = {
                                                         [
                                                             7,
                                                             175
-                                                        ]
-                                                    ],
-                                                    [
-                                                        [
-                                                            7,
-                                                            109
-                                                        ],
-                                                        [
-                                                            7,
-                                                            124
                                                         ]
                                                     ]
                                                 ]
@@ -23588,22 +25343,22 @@ export const aggregateDraftScenarios = {
                                     }
                                 ],
                                 "pros": {
-                                    "cohesion": "대출과 예약이 각각의 Aggregate로 분리되어 각 도메인 책임이 명확하며, 각 Aggregate가 자신의 비즈니스 규칙을 집중적으로 관리할 수 있습니다.",
-                                    "coupling": "Book, Reservation 간 참조는 ValueObject로 일방향으로만 이루어져 결합도가 낮고, 도서 관리 변경이 대출/예약에 직접적인 영향을 주지 않습니다.",
-                                    "consistency": "대출, 예약 각각의 트랜잭션 경계가 명확하여 상태 변경 시 원자성을 보장할 수 있습니다.",
-                                    "encapsulation": "각 Aggregate가 자신의 상태와 행위를 완전히 캡슐화하여 외부에서 내부 구현에 접근할 수 없습니다.",
-                                    "complexity": "Aggregate 수가 적절하여 도메인 복잡도를 효과적으로 관리할 수 있습니다.",
-                                    "independence": "대출과 예약 기능이 독립적으로 진화 및 확장될 수 있어 유지보수성이 높습니다.",
-                                    "performance": "대출/예약 각각의 조회 및 변경이 독립적으로 처리되어 동시성 및 성능에 유리합니다."
+                                    "cohesion": "대출과 예약 각각의 비즈니스 규칙과 상태 전이를 독립적으로 관리할 수 있어 각 Aggregate의 응집도가 높다.",
+                                    "coupling": "Loan과 Reservation이 Book을 ValueObject로 참조하므로 상호 간 결합도가 낮아 도메인 확장 및 유지보수에 유리하다.",
+                                    "consistency": "각 Aggregate 내에서 트랜잭션 경계가 명확해 대출/예약 상태 변경과 이력 기록의 일관성을 보장한다.",
+                                    "encapsulation": "대출과 예약의 도메인 로직이 Aggregate 내부에 잘 캡슐화되어 외부에서 불필요한 접근을 차단한다.",
+                                    "complexity": "각 Aggregate가 단일 책임을 가지므로 구현 및 이해가 용이하다.",
+                                    "independence": "대출과 예약 기능을 별도로 확장하거나 배포할 수 있어 서비스 독립성이 높다.",
+                                    "performance": "대출/예약 각각의 조회 및 변경이 독립적으로 이루어져 동시성 처리에 유리하다."
                                 },
                                 "cons": {
-                                    "cohesion": "대출과 예약 간의 상태 전이(예: 반납 시 예약 자동 처리 등) 로직이 Aggregate 간 조정 로직으로 분산될 수 있습니다.",
-                                    "coupling": "예약과 대출 간의 상태 동기화가 필요할 때, 두 Aggregate 간의 간접적 연동이 필요하여 구현이 복잡해질 수 있습니다.",
-                                    "consistency": "예약과 대출이 동시에 변경되어야 하는 복합 트랜잭션의 경우, 분산 트랜잭션 또는 이벤트 기반 보상 로직이 필요할 수 있습니다.",
-                                    "encapsulation": "예약과 대출의 복합 비즈니스 규칙(예: 예약 우선 순위 반영 등)이 Aggregate 외부에서 처리될 수 있습니다.",
-                                    "complexity": "예약과 대출의 상호작용을 조율하는 추가 서비스 계층이 필요할 수 있습니다.",
-                                    "independence": "예약과 대출의 상호작용이 많을 경우, 완전한 독립성 확보가 어려울 수 있습니다.",
-                                    "performance": "예약과 대출 정보를 통합 조회할 때 Aggregate 간 조인 또는 별도 조회가 필요하여 성능 저하가 발생할 수 있습니다."
+                                    "cohesion": "대출과 예약 간의 복합 비즈니스 규칙(예: 예약 우선순위에 따른 자동 대출 등)은 Aggregate 외부에서 처리해야 하므로 일부 응집도가 저하될 수 있다.",
+                                    "coupling": "대출/예약과 Book 간의 상태 동기화가 이벤트 기반으로 이루어져 일시적 불일치가 발생할 수 있다.",
+                                    "consistency": "대출과 예약이 동시에 변경되는 복합 트랜잭션은 애플리케이션 서비스 계층에서 별도 관리가 필요하다.",
+                                    "encapsulation": "이력 기록(LoanHistory, ReservationHistory)이 외부 컨텍스트에 위임되어 일부 도메인 규칙이 Aggregate 외부에 위치한다.",
+                                    "complexity": "이벤트 기반 동기화 및 이력 관리로 인해 전체 시스템의 흐름을 파악하는 데 추가적인 노력이 필요하다.",
+                                    "independence": "대출과 예약 간의 상호작용이 필요한 경우 Aggregate 간 조정 로직이 증가할 수 있다.",
+                                    "performance": "복합 조회(예: 회원별 대출/예약 현황 통합)는 여러 Aggregate를 조합해야 하므로 쿼리 복잡도가 증가할 수 있다."
                                 },
                                 "isAIRecommended": false,
                                 "boundedContext": {
@@ -27286,7 +29041,17 @@ export const aggregateDraftScenarios = {
                                                 "isDirectMatching": false
                                             }
                                         },
-                                        "siteMap": []
+                                        "commandNames": [
+                                            "LoanBook",
+                                            "ReturnBook",
+                                            "ExtendLoan",
+                                            "ReserveBook"
+                                        ],
+                                        "readModelNames": [
+                                            "LoanStatusList",
+                                            "LoanDetail",
+                                            "SearchBookForLoan"
+                                        ]
                                     }
                                 },
                                 "description": "# Bounded Context Overview: LoanAndReservation (대출/반납 및 예약)\n\n## Role\n회원의 도서 대출, 반납, 연장, 예약을 관리하고 도서 상태 변경을 트리거한다.\n\n## Key Events\n- BookLoaned\n- BookReserved\n- BookReturned\n- LoanExtended\n\n# Requirements\n\n## userStory\n\n대출/반납을 통합적으로 관리하는\n\n대출/반납' 화면에서는 회원이 도서를 대출하고 반납하는 것을 관리할 수 있어야 해. 대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할\n\n예약\n\n대출 현황 화면에서는 현재 대출 중인 도서들의 목록을 볼 수 있어야 해. 각 대출 건에 대해 대출일, 반납\n\n연장\n\n대출 이력과 상태\n\n## DDL\n\n```sql\nCREATE TABLE loans (\n    loan_id INT AUTO_INCREMENT PRIMARY KEY,\n    member_id VARCHAR(20) NOT NULL,\n    book_id INT NOT NULL,\n    loan_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    due_date DATETIME NOT NULL,\n    return_date DATETIME NULL,\n    loan_period_days INT NOT NULL CHECK (loan_period_days IN (7, 14, 30)),\n    status ENUM('대출중', '연체', '반납완료', '연장') DEFAULT '대출중',\n    extension_count INT DEFAULT 0,\n    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,\n    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n    FOREIGN KEY (member_id) REFERENCES members(member_id),\n    FOREIGN KEY (book_id) REFERENCES books(book_id),\n    INDEX idx_member_id (member_id),\n    INDEX idx_book_id (book_id),\n    INDEX idx_status (status),\n    INDEX idx_due_date (due_date)\n);\n```\n```sql\nCREATE TABLE reservations (\n    reservation_id INT AUTO_INCREMENT PRIMARY KEY,\n    member_id VARCHAR(20) NOT NULL,\n    book_id INT NOT NULL,\n    reservation_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    status ENUM('예약중', '예약완료', '예약취소', '예약만료') DEFAULT '예약중',\n    notification_sent BOOLEAN DEFAULT FALSE,\n    expiry_date DATETIME NULL,\n    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,\n    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n    FOREIGN KEY (member_id) REFERENCES members(member_id),\n    FOREIGN KEY (book_id) REFERENCES books(book_id),\n    INDEX idx_member_id (member_id),\n    INDEX idx_book_id (book_id),\n    INDEX idx_status (status),\n    INDEX idx_reservation_date (reservation_date)\n);\n```\n```sql\nCREATE TABLE loan_history (\n    history_id INT AUTO_INCREMENT PRIMARY KEY,\n    loan_id INT NOT NULL,\n    action_type ENUM('대출', '반납', '연장', '연체알림', '분실신고') NOT NULL,\n    action_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    previous_due_date DATETIME NULL,\n    new_due_date DATETIME NULL,\n    notes TEXT,\n    processed_by VARCHAR(100),\n    FOREIGN KEY (loan_id) REFERENCES loans(loan_id),\n    INDEX idx_loan_id (loan_id),\n    INDEX idx_action_type (action_type),\n    INDEX idx_action_date (action_date)\n);\n```\n## Event\n\n```json\n{\n  \"name\": \"BookLoaned\",\n  \"displayName\": \"도서 대출됨\",\n  \"actor\": \"Member\",\n  \"level\": 4,\n  \"description\": \"회원이 도서 대출을 신청하고, 회원 인증 및 도서 상태 확인 후 대출이 승인됨. 대출 기간이 설정되고 도서 상태가 '대출중'으로 변경됨.\",\n  \"inputs\": [\n    \"회원번호\",\n    \"이름\",\n    \"도서 식별자\",\n    \"대출 기간(7/14/30일)\"\n  ],\n  \"outputs\": [\n    \"대출 정보\",\n    \"도서 상태: 대출중\"\n  ],\n  \"nextEvents\": [\n    \"BookStatusChanged\",\n    \"LoanHistoryRecorded\"\n  ]\n}\n```\n\n```json\n{\n  \"name\": \"BookReserved\",\n  \"displayName\": \"도서 예약됨\",\n  \"actor\": \"Member\",\n  \"level\": 5,\n  \"description\": \"회원이 대출 중인 도서에 대해 예약을 신청함. 예약이 완료되면 도서 상태가 '예약중'으로 변경됨.\",\n  \"inputs\": [\n    \"회원번호\",\n    \"도서 식별자\"\n  ],\n  \"outputs\": [\n    \"예약 정보\",\n    \"도서 상태: 예약중\"\n  ],\n  \"nextEvents\": [\n    \"BookStatusChanged\",\n    \"ReservationHistoryRecorded\"\n  ]\n}\n```\n\n```json\n{\n  \"name\": \"BookReturned\",\n  \"displayName\": \"도서 반납됨\",\n  \"actor\": \"Member\",\n  \"level\": 6,\n  \"description\": \"회원이 대출한 도서를 반납함. 반납 시 도서 상태가 '대출가능'으로 변경되고, 예약자가 있을 경우 '예약중'으로 변경됨.\",\n  \"inputs\": [\n    \"회원번호\",\n    \"도서 식별자\"\n  ],\n  \"outputs\": [\n    \"도서 상태: 대출가능 또는 예약중\",\n    \"반납 처리 정보\"\n  ],\n  \"nextEvents\": [\n    \"BookStatusChanged\",\n    \"LoanHistoryRecorded\"\n  ]\n}\n```\n\n```json\n{\n  \"name\": \"LoanExtended\",\n  \"displayName\": \"대출 연장됨\",\n  \"actor\": \"Member\",\n  \"level\": 7,\n  \"description\": \"회원이 대출 중인 도서의 대출 기간을 연장함. 연장 후 대출 정보와 반납 예정일이 갱신됨.\",\n  \"inputs\": [\n    \"회원번호\",\n    \"도서 식별자\",\n    \"연장 기간\"\n  ],\n  \"outputs\": [\n    \"갱신된 대출 정보\",\n    \"새 반납 예정일\"\n  ],\n  \"nextEvents\": [\n    \"LoanHistoryRecorded\"\n  ]\n}\n```\n\n## Context Relations\n\n### BookManagement-LoanAndReservation\n- **Type**: Pub/Sub\n- **Direction**: receives from 도서 관리 (BookManagement)\n- **Reason**: 도서 상태 변경(대출가능, 대출중, 예약중, 폐기 등)이 발생하면 대출/반납 및 예약 컨텍스트에서 이를 구독하여 대출/예약 프로세스에 반영한다.\n- **Interaction Pattern**: 도서 관리에서 도서 상태 변경 이벤트를 발행하면 대출/반납 및 예약 컨텍스트가 이를 구독하여 처리한다.\n\n### LoanAndReservation-LoanHistory\n- **Type**: Pub/Sub\n- **Direction**: sends to 이력 관리 (LoanHistory)\n- **Reason**: 대출, 반납, 연장, 예약 등 이벤트 발생 시 이력 관리 컨텍스트에서 해당 이벤트를 구독하여 이력을 기록한다.\n- **Interaction Pattern**: 대출/반납 및 예약에서 대출/반납/연장/예약 이벤트를 발행하면 이력 관리 컨텍스트가 이를 구독하여 이력 데이터를 생성한다."
@@ -27491,16 +29256,6 @@ export const aggregateDraftScenarios = {
                                                 [
                                                     [
                                                         5,
-                                                        79
-                                                    ],
-                                                    [
-                                                        5,
-                                                        81
-                                                    ]
-                                                ],
-                                                [
-                                                    [
-                                                        5,
                                                         49
                                                     ],
                                                     [
@@ -27537,16 +29292,6 @@ export const aggregateDraftScenarios = {
                                                         5,
                                                         235
                                                     ]
-                                                ],
-                                                [
-                                                    [
-                                                        7,
-                                                        109
-                                                    ],
-                                                    [
-                                                        7,
-                                                        124
-                                                    ]
                                                 ]
                                             ]
                                         },
@@ -27562,7 +29307,7 @@ export const aggregateDraftScenarios = {
                                                         ],
                                                         [
                                                             53,
-                                                            40
+                                                            56
                                                         ]
                                                     ],
                                                     [
@@ -27695,6 +29440,272 @@ export const aggregateDraftScenarios = {
                                                         [
                                                             7,
                                                             175
+                                                        ]
+                                                    ]
+                                                ]
+                                            },
+                                            {
+                                                "name": "Reservation",
+                                                "alias": "예약",
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            66,
+                                                            1
+                                                        ],
+                                                        [
+                                                            66,
+                                                            27
+                                                        ]
+                                                    ],
+                                                    [
+                                                        [
+                                                            67,
+                                                            1
+                                                        ],
+                                                        [
+                                                            67,
+                                                            50
+                                                        ]
+                                                    ],
+                                                    [
+                                                        [
+                                                            68,
+                                                            1
+                                                        ],
+                                                        [
+                                                            68,
+                                                            35
+                                                        ]
+                                                    ],
+                                                    [
+                                                        [
+                                                            69,
+                                                            1
+                                                        ],
+                                                        [
+                                                            69,
+                                                            25
+                                                        ]
+                                                    ],
+                                                    [
+                                                        [
+                                                            70,
+                                                            1
+                                                        ],
+                                                        [
+                                                            70,
+                                                            56
+                                                        ]
+                                                    ],
+                                                    [
+                                                        [
+                                                            71,
+                                                            1
+                                                        ],
+                                                        [
+                                                            71,
+                                                            61
+                                                        ]
+                                                    ],
+                                                    [
+                                                        [
+                                                            72,
+                                                            1
+                                                        ],
+                                                        [
+                                                            72,
+                                                            44
+                                                        ]
+                                                    ],
+                                                    [
+                                                        [
+                                                            73,
+                                                            1
+                                                        ],
+                                                        [
+                                                            73,
+                                                            30
+                                                        ]
+                                                    ],
+                                                    [
+                                                        [
+                                                            74,
+                                                            1
+                                                        ],
+                                                        [
+                                                            74,
+                                                            50
+                                                        ]
+                                                    ],
+                                                    [
+                                                        [
+                                                            75,
+                                                            1
+                                                        ],
+                                                        [
+                                                            75,
+                                                            78
+                                                        ]
+                                                    ],
+                                                    [
+                                                        [
+                                                            76,
+                                                            1
+                                                        ],
+                                                        [
+                                                            76,
+                                                            58
+                                                        ]
+                                                    ],
+                                                    [
+                                                        [
+                                                            77,
+                                                            1
+                                                        ],
+                                                        [
+                                                            77,
+                                                            52
+                                                        ]
+                                                    ],
+                                                    [
+                                                        [
+                                                            78,
+                                                            1
+                                                        ],
+                                                        [
+                                                            78,
+                                                            36
+                                                        ]
+                                                    ],
+                                                    [
+                                                        [
+                                                            79,
+                                                            1
+                                                        ],
+                                                        [
+                                                            79,
+                                                            32
+                                                        ]
+                                                    ],
+                                                    [
+                                                        [
+                                                            80,
+                                                            1
+                                                        ],
+                                                        [
+                                                            80,
+                                                            30
+                                                        ]
+                                                    ],
+                                                    [
+                                                        [
+                                                            81,
+                                                            1
+                                                        ],
+                                                        [
+                                                            81,
+                                                            49
+                                                        ]
+                                                    ],
+                                                    [
+                                                        [
+                                                            82,
+                                                            1
+                                                        ],
+                                                        [
+                                                            82,
+                                                            2
+                                                        ]
+                                                    ],
+                                                    [
+                                                        [
+                                                            5,
+                                                            183
+                                                        ],
+                                                        [
+                                                            5,
+                                                            193
+                                                        ]
+                                                    ],
+                                                    [
+                                                        [
+                                                            7,
+                                                            167
+                                                        ],
+                                                        [
+                                                            7,
+                                                            175
+                                                        ]
+                                                    ]
+                                                ]
+                                            },
+                                            {
+                                                "name": "LoanHistoryReference",
+                                                "alias": "대출 이력 참조",
+                                                "referencedAggregate": {
+                                                    "name": "LoanHistory",
+                                                    "alias": "대출 이력"
+                                                },
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            101,
+                                                            5
+                                                        ],
+                                                        [
+                                                            101,
+                                                            11
+                                                        ]
+                                                    ],
+                                                    [
+                                                        [
+                                                            108,
+                                                            5
+                                                        ],
+                                                        [
+                                                            108,
+                                                            25
+                                                        ]
+                                                    ],
+                                                    [
+                                                        [
+                                                            5,
+                                                            49
+                                                        ],
+                                                        [
+                                                            5,
+                                                            91
+                                                        ]
+                                                    ],
+                                                    [
+                                                        [
+                                                            5,
+                                                            59
+                                                        ],
+                                                        [
+                                                            5,
+                                                            77
+                                                        ]
+                                                    ],
+                                                    [
+                                                        [
+                                                            5,
+                                                            43
+                                                        ],
+                                                        [
+                                                            5,
+                                                            126
+                                                        ]
+                                                    ],
+                                                    [
+                                                        [
+                                                            5,
+                                                            198
+                                                        ],
+                                                        [
+                                                            5,
+                                                            235
                                                         ]
                                                     ],
                                                     [
@@ -28125,22 +30136,22 @@ export const aggregateDraftScenarios = {
                                     }
                                 ],
                                 "pros": {
-                                    "cohesion": "Loan Aggregate가 대출/반납/연장 등 대출 관련 모든 비즈니스 규칙을 한 곳에서 집중적으로 관리하여 일관성이 높습니다.",
-                                    "coupling": "BookReference만을 통해 도서 정보를 참조하므로 외부 컨텍스트와의 결합도가 매우 낮습니다.",
-                                    "consistency": "대출 상태 변경, 연장, 반납 등 모든 트랜잭션이 하나의 Aggregate 내에서 원자적으로 처리됩니다.",
-                                    "encapsulation": "대출 관련 데이터와 행위가 완전히 캡슐화되어 외부에서 내부 구현에 접근할 수 없습니다.",
-                                    "complexity": "Aggregate가 하나뿐이므로 도메인 구조가 단순하고 이해하기 쉽습니다.",
-                                    "independence": "대출 기능만을 독립적으로 개발, 배포, 확장할 수 있습니다.",
-                                    "performance": "대출 관련 데이터 접근이 단일 Aggregate 내에서 이루어져 조회 및 변경 성능이 우수합니다."
+                                    "cohesion": "대출, 예약, 이력 등 대출 관련 모든 정보를 Loan Aggregate에 통합하여 대출 프로세스의 전체 흐름을 한 곳에서 관리할 수 있다.",
+                                    "coupling": "예약과 대출 간의 상태 전이 및 상호작용을 Aggregate 내부에서 직접 처리할 수 있어 결합도가 높아 복합 비즈니스 규칙 구현이 용이하다.",
+                                    "consistency": "대출과 예약의 상태 변경, 이력 기록이 단일 트랜잭션 내에서 일관성 있게 처리된다.",
+                                    "encapsulation": "대출과 예약, 이력 관리까지 모두 Loan Aggregate 내부에 캡슐화되어 외부 의존성이 줄어든다.",
+                                    "complexity": "대출/예약/이력의 통합 관리로 복잡한 상태 전이와 비즈니스 규칙을 Aggregate 내부에서 일관성 있게 구현할 수 있다.",
+                                    "independence": "대출 프로세스 전체를 단일 Aggregate로 관리하므로 기능 확장 시 일관성 있게 변경이 가능하다.",
+                                    "performance": "대출/예약/이력 관련 데이터 접근이 한 번의 Aggregate 조회로 가능해 조회 성능이 향상된다."
                                 },
                                 "cons": {
-                                    "cohesion": "예약 관련 기능이 별도의 Aggregate로 분리되지 않아 예약과 대출 간의 경계가 불분명해질 수 있습니다.",
-                                    "coupling": "예약 기능이 Loan Aggregate 외부에서 별도 관리될 경우, 두 기능 간의 연동이 복잡해질 수 있습니다.",
-                                    "consistency": "예약과 대출의 상태 동기화가 필요할 때, 일관성 보장이 어려울 수 있습니다.",
-                                    "encapsulation": "예약과 대출의 복합 규칙이 Aggregate 외부에서 처리되어 도메인 규칙이 분산될 수 있습니다.",
-                                    "complexity": "예약과 대출의 통합 비즈니스 로직이 필요할 경우, 서비스 계층이 복잡해질 수 있습니다.",
-                                    "independence": "예약 기능의 확장이나 변경 시 Loan Aggregate와의 연동을 별도로 고려해야 합니다.",
-                                    "performance": "예약과 대출 정보를 함께 조회할 때 추가적인 데이터 접근이 필요하여 성능 저하가 발생할 수 있습니다."
+                                    "cohesion": "대출, 예약, 이력 등 서로 다른 라이프사이클을 가진 도메인 개념이 하나의 Aggregate에 묶여 응집도가 저하될 수 있다.",
+                                    "coupling": "Aggregate가 비대해지면서 도메인 변경 시 영향 범위가 넓어지고, 유지보수 난이도가 증가한다.",
+                                    "consistency": "동시성 처리 시 여러 사용자가 동일 Loan Aggregate를 갱신하면 락 경합이 발생할 수 있다.",
+                                    "encapsulation": "예약 및 이력 관리의 책임이 Loan Aggregate에 집중되어 역할 분리가 어렵다.",
+                                    "complexity": "Aggregate가 커질수록 도메인 로직이 복잡해지고, 개발 및 테스트 난이도가 상승한다.",
+                                    "independence": "예약 또는 이력 관리만 별도로 확장하거나 배포하기 어렵다.",
+                                    "performance": "대출과 예약, 이력 등 모든 변경이 한 Aggregate에 집중되어 트래픽이 몰릴 경우 성능 저하가 발생할 수 있다."
                                 },
                                 "isAIRecommended": true,
                                 "boundedContext": {
@@ -31823,20 +33834,2763 @@ export const aggregateDraftScenarios = {
                                                 "isDirectMatching": false
                                             }
                                         },
-                                        "siteMap": []
+                                        "commandNames": [
+                                            "LoanBook",
+                                            "ReturnBook",
+                                            "ExtendLoan",
+                                            "ReserveBook"
+                                        ],
+                                        "readModelNames": [
+                                            "LoanStatusList",
+                                            "LoanDetail",
+                                            "SearchBookForLoan"
+                                        ]
                                     }
                                 },
                                 "description": "# Bounded Context Overview: LoanAndReservation (대출/반납 및 예약)\n\n## Role\n회원의 도서 대출, 반납, 연장, 예약을 관리하고 도서 상태 변경을 트리거한다.\n\n## Key Events\n- BookLoaned\n- BookReserved\n- BookReturned\n- LoanExtended\n\n# Requirements\n\n## userStory\n\n대출/반납을 통합적으로 관리하는\n\n대출/반납' 화면에서는 회원이 도서를 대출하고 반납하는 것을 관리할 수 있어야 해. 대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할\n\n예약\n\n대출 현황 화면에서는 현재 대출 중인 도서들의 목록을 볼 수 있어야 해. 각 대출 건에 대해 대출일, 반납\n\n연장\n\n대출 이력과 상태\n\n## DDL\n\n```sql\nCREATE TABLE loans (\n    loan_id INT AUTO_INCREMENT PRIMARY KEY,\n    member_id VARCHAR(20) NOT NULL,\n    book_id INT NOT NULL,\n    loan_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    due_date DATETIME NOT NULL,\n    return_date DATETIME NULL,\n    loan_period_days INT NOT NULL CHECK (loan_period_days IN (7, 14, 30)),\n    status ENUM('대출중', '연체', '반납완료', '연장') DEFAULT '대출중',\n    extension_count INT DEFAULT 0,\n    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,\n    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n    FOREIGN KEY (member_id) REFERENCES members(member_id),\n    FOREIGN KEY (book_id) REFERENCES books(book_id),\n    INDEX idx_member_id (member_id),\n    INDEX idx_book_id (book_id),\n    INDEX idx_status (status),\n    INDEX idx_due_date (due_date)\n);\n```\n```sql\nCREATE TABLE reservations (\n    reservation_id INT AUTO_INCREMENT PRIMARY KEY,\n    member_id VARCHAR(20) NOT NULL,\n    book_id INT NOT NULL,\n    reservation_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    status ENUM('예약중', '예약완료', '예약취소', '예약만료') DEFAULT '예약중',\n    notification_sent BOOLEAN DEFAULT FALSE,\n    expiry_date DATETIME NULL,\n    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,\n    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n    FOREIGN KEY (member_id) REFERENCES members(member_id),\n    FOREIGN KEY (book_id) REFERENCES books(book_id),\n    INDEX idx_member_id (member_id),\n    INDEX idx_book_id (book_id),\n    INDEX idx_status (status),\n    INDEX idx_reservation_date (reservation_date)\n);\n```\n```sql\nCREATE TABLE loan_history (\n    history_id INT AUTO_INCREMENT PRIMARY KEY,\n    loan_id INT NOT NULL,\n    action_type ENUM('대출', '반납', '연장', '연체알림', '분실신고') NOT NULL,\n    action_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    previous_due_date DATETIME NULL,\n    new_due_date DATETIME NULL,\n    notes TEXT,\n    processed_by VARCHAR(100),\n    FOREIGN KEY (loan_id) REFERENCES loans(loan_id),\n    INDEX idx_loan_id (loan_id),\n    INDEX idx_action_type (action_type),\n    INDEX idx_action_date (action_date)\n);\n```\n## Event\n\n```json\n{\n  \"name\": \"BookLoaned\",\n  \"displayName\": \"도서 대출됨\",\n  \"actor\": \"Member\",\n  \"level\": 4,\n  \"description\": \"회원이 도서 대출을 신청하고, 회원 인증 및 도서 상태 확인 후 대출이 승인됨. 대출 기간이 설정되고 도서 상태가 '대출중'으로 변경됨.\",\n  \"inputs\": [\n    \"회원번호\",\n    \"이름\",\n    \"도서 식별자\",\n    \"대출 기간(7/14/30일)\"\n  ],\n  \"outputs\": [\n    \"대출 정보\",\n    \"도서 상태: 대출중\"\n  ],\n  \"nextEvents\": [\n    \"BookStatusChanged\",\n    \"LoanHistoryRecorded\"\n  ]\n}\n```\n\n```json\n{\n  \"name\": \"BookReserved\",\n  \"displayName\": \"도서 예약됨\",\n  \"actor\": \"Member\",\n  \"level\": 5,\n  \"description\": \"회원이 대출 중인 도서에 대해 예약을 신청함. 예약이 완료되면 도서 상태가 '예약중'으로 변경됨.\",\n  \"inputs\": [\n    \"회원번호\",\n    \"도서 식별자\"\n  ],\n  \"outputs\": [\n    \"예약 정보\",\n    \"도서 상태: 예약중\"\n  ],\n  \"nextEvents\": [\n    \"BookStatusChanged\",\n    \"ReservationHistoryRecorded\"\n  ]\n}\n```\n\n```json\n{\n  \"name\": \"BookReturned\",\n  \"displayName\": \"도서 반납됨\",\n  \"actor\": \"Member\",\n  \"level\": 6,\n  \"description\": \"회원이 대출한 도서를 반납함. 반납 시 도서 상태가 '대출가능'으로 변경되고, 예약자가 있을 경우 '예약중'으로 변경됨.\",\n  \"inputs\": [\n    \"회원번호\",\n    \"도서 식별자\"\n  ],\n  \"outputs\": [\n    \"도서 상태: 대출가능 또는 예약중\",\n    \"반납 처리 정보\"\n  ],\n  \"nextEvents\": [\n    \"BookStatusChanged\",\n    \"LoanHistoryRecorded\"\n  ]\n}\n```\n\n```json\n{\n  \"name\": \"LoanExtended\",\n  \"displayName\": \"대출 연장됨\",\n  \"actor\": \"Member\",\n  \"level\": 7,\n  \"description\": \"회원이 대출 중인 도서의 대출 기간을 연장함. 연장 후 대출 정보와 반납 예정일이 갱신됨.\",\n  \"inputs\": [\n    \"회원번호\",\n    \"도서 식별자\",\n    \"연장 기간\"\n  ],\n  \"outputs\": [\n    \"갱신된 대출 정보\",\n    \"새 반납 예정일\"\n  ],\n  \"nextEvents\": [\n    \"LoanHistoryRecorded\"\n  ]\n}\n```\n\n## Context Relations\n\n### BookManagement-LoanAndReservation\n- **Type**: Pub/Sub\n- **Direction**: receives from 도서 관리 (BookManagement)\n- **Reason**: 도서 상태 변경(대출가능, 대출중, 예약중, 폐기 등)이 발생하면 대출/반납 및 예약 컨텍스트에서 이를 구독하여 대출/예약 프로세스에 반영한다.\n- **Interaction Pattern**: 도서 관리에서 도서 상태 변경 이벤트를 발행하면 대출/반납 및 예약 컨텍스트가 이를 구독하여 처리한다.\n\n### LoanAndReservation-LoanHistory\n- **Type**: Pub/Sub\n- **Direction**: sends to 이력 관리 (LoanHistory)\n- **Reason**: 대출, 반납, 연장, 예약 등 이벤트 발생 시 이력 관리 컨텍스트에서 해당 이벤트를 구독하여 이력을 기록한다.\n- **Interaction Pattern**: 대출/반납 및 예약에서 대출/반납/연장/예약 이벤트를 발행하면 이력 관리 컨텍스트가 이를 구독하여 이력 데이터를 생성한다."
                             }
                         ],
-                        "conclusions": "Option 1은 대출과 예약을 각각의 Aggregate로 분리하여 각 도메인 책임과 확장성을 극대화하고, 복잡한 도서관 환경에서의 유지보수성과 확장성에 유리합니다. Option 2는 대출 기능에 집중하여 단순한 도메인 구조와 높은 성능, 빠른 개발이 필요한 경우에 적합합니다. 복합적인 예약 정책이나 예약-대출 간의 긴밀한 연동이 필요하다면 Option 1, 단일 대출 중심의 간결한 시스템이 필요하다면 Option 2를 선택하는 것이 바람직합니다.",
+                        "conclusions": "옵션 1은 대출과 예약을 각각 독립 Aggregate로 분리하여 도메인 책임과 확장성을 중시하는 경우에 적합하다. 예를 들어, 대출과 예약의 업무 주체가 다르거나, 각 기능을 별도로 확장·운영해야 하는 도서관에 권장된다. 옵션 2는 대출, 예약, 이력까지 모든 대출 프로세스를 하나의 Aggregate로 통합 관리해야 하는 일관성 중심의 환경에 적합하다. 복합 트랜잭션, 상태 전이, 이력 관리가 빈번하게 동시에 발생하며, 단일 트랜잭션 내에서 모든 처리가 필요한 경우 옵션 2가 더 적합하다.",
                         "defaultOptionIndex": 1,
-                        "inference": "\n\n요구사항과 이벤트, DDL, 컨텍스트 관계, 기존 누적 초안(도서 및 도서 상태 이력은 ValueObject 참조로만 사용) 및 Aggregate 명칭 조건을 종합적으로 분석하였습니다. Option 1은 Loan과 Reservation을 하나의 Aggregate로 통합하여 대출/예약의 원자성을 극대화합니다. Option 2는 Loan과 Reservation을 별도의 Aggregate로 분리하여 각 도메인 책임과 확장성을 강조합니다."
+                        "inference": "\n\n요구사항과 이벤트, DDL, 컨텍스트 관계, 누적 초안 정보를 분석한 결과, Loan과 Reservation을 반드시 Aggregate로 생성해야 하며, Book, BookStatusHistory, LoanHistory, ReservationHistory는 이미 존재하므로 ValueObject 참조로 처리해야 한다. 이벤트의 트랜잭션 경계와 상태 변경, 이력 기록, 예약/대출의 독립성, 도메인 규칙을 고려하여 옵션별로 Aggregate 수를 다르게 설계하였다."
+                    },
+                    {
+                        "boundedContext": "LoanHistory",
+                        "boundedContextAlias": "이력 관리",
+                        "description": "# Bounded Context Overview: LoanHistory (이력 관리)\n\n## Role\n도서별 대출 및 예약 이력, 상태 변경 이력을 기록하고 조회할 수 있도록 한다.\n\n## Key Events\n- LoanHistoryRecorded\n- ReservationHistoryRecorded\n\n# Requirements\n\n## userStory\n\n대출 이력\n\n상태 변경\n\n## DDL\n\n```sql\nCREATE TABLE loan_history (\n    history_id INT AUTO_INCREMENT PRIMARY KEY,\n    loan_id INT NOT NULL,\n    action_type ENUM('대출', '반납', '연장', '연체알림', '분실신고') NOT NULL,\n    action_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    previous_due_date DATETIME NULL,\n    new_due_date DATETIME NULL,\n    notes TEXT,\n    processed_by VARCHAR(100),\n    FOREIGN KEY (loan_id) REFERENCES loans(loan_id),\n    INDEX idx_loan_id (loan_id),\n    INDEX idx_action_type (action_type),\n    INDEX\n```\n## Event\n\n```json\n{\n  \"name\": \"LoanHistoryRecorded\",\n  \"displayName\": \"대출 이력 기록됨\",\n  \"actor\": \"System\",\n  \"level\": 8,\n  \"description\": \"도서의 대출, 반납, 연장 등 대출 관련 이력이 시스템에 기록됨.\",\n  \"inputs\": [\n    \"대출/반납/연장 이벤트 정보\"\n  ],\n  \"outputs\": [\n    \"대출 이력 데이터\"\n  ],\n  \"nextEvents\": []\n}\n```\n\n```json\n{\n  \"name\": \"ReservationHistoryRecorded\",\n  \"displayName\": \"예약 이력 기록됨\",\n  \"actor\": \"System\",\n  \"level\": 9,\n  \"description\": \"도서 예약 관련 이력이 시스템에 기록됨.\",\n  \"inputs\": [\n    \"예약 이벤트 정보\"\n  ],\n  \"outputs\": [\n    \"예약 이력 데이터\"\n  ],\n  \"nextEvents\": []\n}\n```\n\n## Context Relations\n\n### LoanAndReservation-LoanHistory\n- **Type**: Pub/Sub\n- **Direction**: receives from 대출/반납 및 예약 (LoanAndReservation)\n- **Reason**: 대출, 반납, 연장, 예약 등 이벤트 발생 시 이력 관리 컨텍스트에서 해당 이벤트를 구독하여 이력을 기록한다.\n- **Interaction Pattern**: 대출/반납 및 예약에서 대출/반납/연장/예약 이벤트를 발행하면 이력 관리 컨텍스트가 이를 구독하여 이력 데이터를 생성한다.\n\n### BookManagement-LoanHistory\n- **Type**: Pub/Sub\n- **Direction**: receives from 도서 관리 (BookManagement)\n- **Reason**: 도서 등록, 폐기 등 도서 상태 변화 이력도 이력 관리 컨텍스트에서 기록할 수 있도록 이벤트를 발행한다.\n- **Interaction Pattern**: 도서 관리에서 도서 등록, 폐기 등 상태 변화 이벤트를 발행하면 이력 관리 컨텍스트가 이를 구독하여 상태 변경 이력을 기록한다.",
+                        "options": [
+                            {
+                                "structure": [
+                                    {
+                                        "aggregate": {
+                                            "name": "LoanHistory",
+                                            "alias": "대출 이력",
+                                            "refs": [
+                                                [
+                                                    [
+                                                        9,
+                                                        8
+                                                    ],
+                                                    [
+                                                        9,
+                                                        67
+                                                    ]
+                                                ],
+                                                [
+                                                    [
+                                                        99,
+                                                        14
+                                                    ],
+                                                    [
+                                                        99,
+                                                        27
+                                                    ]
+                                                ],
+                                                [
+                                                    [
+                                                        100,
+                                                        1
+                                                    ],
+                                                    [
+                                                        100,
+                                                        46
+                                                    ]
+                                                ],
+                                                [
+                                                    [
+                                                        101,
+                                                        1
+                                                    ],
+                                                    [
+                                                        101,
+                                                        25
+                                                    ]
+                                                ],
+                                                [
+                                                    [
+                                                        102,
+                                                        1
+                                                    ],
+                                                    [
+                                                        102,
+                                                        64
+                                                    ]
+                                                ],
+                                                [
+                                                    [
+                                                        103,
+                                                        1
+                                                    ],
+                                                    [
+                                                        103,
+                                                        51
+                                                    ]
+                                                ],
+                                                [
+                                                    [
+                                                        104,
+                                                        1
+                                                    ],
+                                                    [
+                                                        104,
+                                                        36
+                                                    ]
+                                                ],
+                                                [
+                                                    [
+                                                        105,
+                                                        1
+                                                    ],
+                                                    [
+                                                        105,
+                                                        31
+                                                    ]
+                                                ],
+                                                [
+                                                    [
+                                                        106,
+                                                        1
+                                                    ],
+                                                    [
+                                                        106,
+                                                        15
+                                                    ]
+                                                ],
+                                                [
+                                                    [
+                                                        107,
+                                                        1
+                                                    ],
+                                                    [
+                                                        107,
+                                                        30
+                                                    ]
+                                                ],
+                                                [
+                                                    [
+                                                        108,
+                                                        1
+                                                    ],
+                                                    [
+                                                        108,
+                                                        52
+                                                    ]
+                                                ],
+                                                [
+                                                    [
+                                                        109,
+                                                        1
+                                                    ],
+                                                    [
+                                                        109,
+                                                        32
+                                                    ]
+                                                ],
+                                                [
+                                                    [
+                                                        110,
+                                                        1
+                                                    ],
+                                                    [
+                                                        110,
+                                                        40
+                                                    ]
+                                                ],
+                                                [
+                                                    [
+                                                        111,
+                                                        1
+                                                    ],
+                                                    [
+                                                        111,
+                                                        9
+                                                    ]
+                                                ],
+                                                [
+                                                    [
+                                                        9,
+                                                        8
+                                                    ],
+                                                    [
+                                                        9,
+                                                        65
+                                                    ]
+                                                ]
+                                            ]
+                                        },
+                                        "enumerations": [
+                                            {
+                                                "name": "LoanActionType",
+                                                "alias": "대출 이력 액션 유형",
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            102,
+                                                            5
+                                                        ],
+                                                        [
+                                                            102,
+                                                            52
+                                                        ]
+                                                    ]
+                                                ]
+                                            }
+                                        ],
+                                        "valueObjects": [
+                                            {
+                                                "name": "LoanReference",
+                                                "alias": "대출 참조",
+                                                "referencedAggregate": {
+                                                    "name": "Loan",
+                                                    "alias": "대출"
+                                                },
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            101,
+                                                            5
+                                                        ],
+                                                        [
+                                                            101,
+                                                            11
+                                                        ]
+                                                    ],
+                                                    [
+                                                        [
+                                                            108,
+                                                            5
+                                                        ],
+                                                        [
+                                                            108,
+                                                            51
+                                                        ]
+                                                    ]
+                                                ]
+                                            },
+                                            {
+                                                "name": "BookReference",
+                                                "alias": "도서 참조",
+                                                "referencedAggregate": {
+                                                    "name": "Book",
+                                                    "alias": "도서"
+                                                },
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            8
+                                                        ],
+                                                        [
+                                                            9,
+                                                            67
+                                                        ]
+                                                    ]
+                                                ]
+                                            }
+                                        ],
+                                        "previewAttributes": [
+                                            {
+                                                "fieldName": "history_id",
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            100,
+                                                            5
+                                                        ],
+                                                        [
+                                                            100,
+                                                            45
+                                                        ]
+                                                    ]
+                                                ]
+                                            },
+                                            {
+                                                "fieldName": "loan_id",
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            101,
+                                                            5
+                                                        ],
+                                                        [
+                                                            101,
+                                                            24
+                                                        ]
+                                                    ]
+                                                ]
+                                            },
+                                            {
+                                                "fieldName": "action_date",
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            103,
+                                                            5
+                                                        ],
+                                                        [
+                                                            103,
+                                                            50
+                                                        ]
+                                                    ]
+                                                ]
+                                            },
+                                            {
+                                                "fieldName": "previous_due_date",
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            104,
+                                                            5
+                                                        ],
+                                                        [
+                                                            104,
+                                                            35
+                                                        ]
+                                                    ]
+                                                ]
+                                            },
+                                            {
+                                                "fieldName": "new_due_date",
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            105,
+                                                            5
+                                                        ],
+                                                        [
+                                                            105,
+                                                            30
+                                                        ]
+                                                    ]
+                                                ]
+                                            },
+                                            {
+                                                "fieldName": "notes",
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            106,
+                                                            5
+                                                        ],
+                                                        [
+                                                            106,
+                                                            14
+                                                        ]
+                                                    ]
+                                                ]
+                                            },
+                                            {
+                                                "fieldName": "processed_by",
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            107,
+                                                            5
+                                                        ],
+                                                        [
+                                                            107,
+                                                            29
+                                                        ]
+                                                    ]
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "aggregate": {
+                                            "name": "ReservationHistory",
+                                            "alias": "예약 이력",
+                                            "refs": [
+                                                [
+                                                    [
+                                                        9,
+                                                        8
+                                                    ],
+                                                    [
+                                                        9,
+                                                        67
+                                                    ]
+                                                ],
+                                                [
+                                                    [
+                                                        9,
+                                                        15
+                                                    ],
+                                                    [
+                                                        9,
+                                                        65
+                                                    ]
+                                                ]
+                                            ]
+                                        },
+                                        "enumerations": [
+                                            {
+                                                "name": "ReservationActionType",
+                                                "alias": "예약 이력 액션 유형",
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            15
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ]
+                                            }
+                                        ],
+                                        "valueObjects": [
+                                            {
+                                                "name": "Reservation",
+                                                "alias": "예약",
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            15
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ]
+                                            },
+                                            {
+                                                "name": "BookReference",
+                                                "alias": "도서 참조",
+                                                "referencedAggregate": {
+                                                    "name": "Book",
+                                                    "alias": "도서"
+                                                },
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            8
+                                                        ],
+                                                        [
+                                                            9,
+                                                            67
+                                                        ]
+                                                    ]
+                                                ]
+                                            }
+                                        ],
+                                        "previewAttributes": []
+                                    }
+                                ],
+                                "pros": {
+                                    "cohesion": "대출 이력과 예약 이력을 별도의 Aggregate로 분리하여 각 도메인 책임이 명확하게 구분된다.",
+                                    "coupling": "Loan, Reservation, Book 등 외부 Aggregate와의 참조가 ValueObject로 일관되게 관리되어 결합도가 낮다.",
+                                    "consistency": "각 이력의 트랜잭션 경계가 명확하여, 대출/예약 이벤트 발생 시 이력 기록의 원자성이 보장된다.",
+                                    "encapsulation": "이력별 도메인 규칙과 상태 전이가 Aggregate 내부에 잘 은닉되어 있다.",
+                                    "complexity": "각 Aggregate가 단일 책임 원칙을 따르므로 도메인 복잡도가 낮고 유지보수가 용이하다.",
+                                    "independence": "대출 이력과 예약 이력이 독립적으로 진화 및 확장될 수 있다.",
+                                    "performance": "이력별로 데이터 접근이 분리되어 대량 데이터 조회 시 성능 저하가 적다."
+                                },
+                                "cons": {
+                                    "cohesion": "이력 데이터가 분산되어 있어 복합 이력 조회(예: 대출과 예약 이력 동시 조회) 시 추가 조인이 필요하다.",
+                                    "coupling": "이력 간 연관 이벤트 처리 시 애플리케이션 서비스 계층에서 조정 로직이 필요하다.",
+                                    "consistency": "복합 이력 동기화가 필요한 경우 트랜잭션 경계가 Aggregate 단위로 분리되어 있어 일관성 유지가 복잡해질 수 있다.",
+                                    "encapsulation": "이력 간 공통 규칙(예: 동일 도서에 대한 이력 통합 관리)이 Aggregate 외부에서 처리되어야 한다.",
+                                    "complexity": "이력 유형이 추가될 경우 Aggregate가 계속 늘어나 도메인 구조가 복잡해질 수 있다.",
+                                    "independence": "복합 이력 분석이나 통계 기능 개발 시 Aggregate 간 데이터 통합이 필요하다.",
+                                    "performance": "복합 이력 조회 시 여러 테이블을 조인해야 하므로 단일 이력에 비해 조회 성능이 저하될 수 있다."
+                                },
+                                "isAIRecommended": false,
+                                "boundedContext": {
+                                    "name": "LoanHistory",
+                                    "alias": "이력 관리",
+                                    "displayName": "이력 관리",
+                                    "description": "# Bounded Context Overview: LoanHistory (이력 관리)\n\n## Role\n도서별 대출 및 예약 이력, 상태 변경 이력을 기록하고 조회할 수 있도록 한다.\n\n## Key Events\n- LoanHistoryRecorded\n- ReservationHistoryRecorded\n\n# Requirements\n\n## userStory\n\n대출 이력\n\n상태 변경\n\n## DDL\n\n```sql\nCREATE TABLE loan_history (\n    history_id INT AUTO_INCREMENT PRIMARY KEY,\n    loan_id INT NOT NULL,\n    action_type ENUM('대출', '반납', '연장', '연체알림', '분실신고') NOT NULL,\n    action_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    previous_due_date DATETIME NULL,\n    new_due_date DATETIME NULL,\n    notes TEXT,\n    processed_by VARCHAR(100),\n    FOREIGN KEY (loan_id) REFERENCES loans(loan_id),\n    INDEX idx_loan_id (loan_id),\n    INDEX idx_action_type (action_type),\n    INDEX\n```\n## Event\n\n```json\n{\n  \"name\": \"LoanHistoryRecorded\",\n  \"displayName\": \"대출 이력 기록됨\",\n  \"actor\": \"System\",\n  \"level\": 8,\n  \"description\": \"도서의 대출, 반납, 연장 등 대출 관련 이력이 시스템에 기록됨.\",\n  \"inputs\": [\n    \"대출/반납/연장 이벤트 정보\"\n  ],\n  \"outputs\": [\n    \"대출 이력 데이터\"\n  ],\n  \"nextEvents\": []\n}\n```\n\n```json\n{\n  \"name\": \"ReservationHistoryRecorded\",\n  \"displayName\": \"예약 이력 기록됨\",\n  \"actor\": \"System\",\n  \"level\": 9,\n  \"description\": \"도서 예약 관련 이력이 시스템에 기록됨.\",\n  \"inputs\": [\n    \"예약 이벤트 정보\"\n  ],\n  \"outputs\": [\n    \"예약 이력 데이터\"\n  ],\n  \"nextEvents\": []\n}\n```\n\n## Context Relations\n\n### LoanAndReservation-LoanHistory\n- **Type**: Pub/Sub\n- **Direction**: receives from 대출/반납 및 예약 (LoanAndReservation)\n- **Reason**: 대출, 반납, 연장, 예약 등 이벤트 발생 시 이력 관리 컨텍스트에서 해당 이벤트를 구독하여 이력을 기록한다.\n- **Interaction Pattern**: 대출/반납 및 예약에서 대출/반납/연장/예약 이벤트를 발행하면 이력 관리 컨텍스트가 이를 구독하여 이력 데이터를 생성한다.\n\n### BookManagement-LoanHistory\n- **Type**: Pub/Sub\n- **Direction**: receives from 도서 관리 (BookManagement)\n- **Reason**: 도서 등록, 폐기 등 도서 상태 변화 이력도 이력 관리 컨텍스트에서 기록할 수 있도록 이벤트를 발행한다.\n- **Interaction Pattern**: 도서 관리에서 도서 등록, 폐기 등 상태 변화 이벤트를 발행하면 이력 관리 컨텍스트가 이를 구독하여 상태 변경 이력을 기록한다.",
+                                    "aggregates": [
+                                        {
+                                            "name": "LoanHistory",
+                                            "alias": "대출 이력"
+                                        },
+                                        {
+                                            "name": "ReservationHistory",
+                                            "alias": "예약 이력"
+                                        }
+                                    ],
+                                    "requirements": {
+                                        "userStory": "대출 이력\n상태 변경",
+                                        "ddl": "CREATE TABLE loan_history (\n    history_id INT AUTO_INCREMENT PRIMARY KEY,\n    loan_id INT NOT NULL,\n    action_type ENUM('대출', '반납', '연장', '연체알림', '분실신고') NOT NULL,\n    action_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    previous_due_date DATETIME NULL,\n    new_due_date DATETIME NULL,\n    notes TEXT,\n    processed_by VARCHAR(100),\n    FOREIGN KEY (loan_id) REFERENCES loans(loan_id),\n    INDEX idx_loan_id (loan_id),\n    INDEX idx_action_type (action_type),\n    INDEX",
+                                        "event": "{\n  \"name\": \"LoanHistoryRecorded\",\n  \"displayName\": \"대출 이력 기록됨\",\n  \"actor\": \"System\",\n  \"level\": 8,\n  \"description\": \"도서의 대출, 반납, 연장 등 대출 관련 이력이 시스템에 기록됨.\",\n  \"inputs\": [\n    \"대출/반납/연장 이벤트 정보\"\n  ],\n  \"outputs\": [\n    \"대출 이력 데이터\"\n  ],\n  \"nextEvents\": [],\n  \"refs\": [\n    [\n      [\n        9,\n        8\n      ],\n      [\n        9,\n        65\n      ]\n    ]\n  ]\n}\n{\n  \"name\": \"ReservationHistoryRecorded\",\n  \"displayName\": \"예약 이력 기록됨\",\n  \"actor\": \"System\",\n  \"level\": 9,\n  \"description\": \"도서 예약 관련 이력이 시스템에 기록됨.\",\n  \"inputs\": [\n    \"예약 이벤트 정보\"\n  ],\n  \"outputs\": [\n    \"예약 이력 데이터\"\n  ],\n  \"nextEvents\": [],\n  \"refs\": [\n    [\n      [\n        9,\n        15\n      ],\n      [\n        9,\n        65\n      ]\n    ]\n  ]\n}",
+                                        "eventNames": "LoanHistoryRecorded, ReservationHistoryRecorded 이벤트가 발생할 수 있어.",
+                                        "ddlFields": [
+                                            {
+                                                "fieldName": "history_id",
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            100,
+                                                            5
+                                                        ],
+                                                        [
+                                                            100,
+                                                            45
+                                                        ]
+                                                    ]
+                                                ]
+                                            },
+                                            {
+                                                "fieldName": "loan_id",
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            101,
+                                                            5
+                                                        ],
+                                                        [
+                                                            101,
+                                                            24
+                                                        ]
+                                                    ]
+                                                ]
+                                            },
+                                            {
+                                                "fieldName": "action_date",
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            103,
+                                                            5
+                                                        ],
+                                                        [
+                                                            103,
+                                                            50
+                                                        ]
+                                                    ]
+                                                ]
+                                            },
+                                            {
+                                                "fieldName": "previous_due_date",
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            104,
+                                                            5
+                                                        ],
+                                                        [
+                                                            104,
+                                                            35
+                                                        ]
+                                                    ]
+                                                ]
+                                            },
+                                            {
+                                                "fieldName": "new_due_date",
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            105,
+                                                            5
+                                                        ],
+                                                        [
+                                                            105,
+                                                            30
+                                                        ]
+                                                    ]
+                                                ]
+                                            },
+                                            {
+                                                "fieldName": "notes",
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            106,
+                                                            5
+                                                        ],
+                                                        [
+                                                            106,
+                                                            14
+                                                        ]
+                                                    ]
+                                                ]
+                                            },
+                                            {
+                                                "fieldName": "processed_by",
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            107,
+                                                            5
+                                                        ],
+                                                        [
+                                                            107,
+                                                            29
+                                                        ]
+                                                    ]
+                                                ]
+                                            }
+                                        ],
+                                        "description": "# Bounded Context Overview: LoanHistory (이력 관리)\n\n## Role\n도서별 대출 및 예약 이력, 상태 변경 이력을 기록하고 조회할 수 있도록 한다.\n\n## Key Events\n- LoanHistoryRecorded\n- ReservationHistoryRecorded\n\n# Requirements\n\n## userStory\n\n대출 이력\n\n상태 변경\n\n## DDL\n\n```sql\nCREATE TABLE loan_history (\n    history_id INT AUTO_INCREMENT PRIMARY KEY,\n    loan_id INT NOT NULL,\n    action_type ENUM('대출', '반납', '연장', '연체알림', '분실신고') NOT NULL,\n    action_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    previous_due_date DATETIME NULL,\n    new_due_date DATETIME NULL,\n    notes TEXT,\n    processed_by VARCHAR(100),\n    FOREIGN KEY (loan_id) REFERENCES loans(loan_id),\n    INDEX idx_loan_id (loan_id),\n    INDEX idx_action_type (action_type),\n    INDEX\n```\n## Event\n\n```json\n{\n  \"name\": \"LoanHistoryRecorded\",\n  \"displayName\": \"대출 이력 기록됨\",\n  \"actor\": \"System\",\n  \"level\": 8,\n  \"description\": \"도서의 대출, 반납, 연장 등 대출 관련 이력이 시스템에 기록됨.\",\n  \"inputs\": [\n    \"대출/반납/연장 이벤트 정보\"\n  ],\n  \"outputs\": [\n    \"대출 이력 데이터\"\n  ],\n  \"nextEvents\": []\n}\n```\n\n```json\n{\n  \"name\": \"ReservationHistoryRecorded\",\n  \"displayName\": \"예약 이력 기록됨\",\n  \"actor\": \"System\",\n  \"level\": 9,\n  \"description\": \"도서 예약 관련 이력이 시스템에 기록됨.\",\n  \"inputs\": [\n    \"예약 이벤트 정보\"\n  ],\n  \"outputs\": [\n    \"예약 이력 데이터\"\n  ],\n  \"nextEvents\": []\n}\n```\n\n## Context Relations\n\n### LoanAndReservation-LoanHistory\n- **Type**: Pub/Sub\n- **Direction**: receives from 대출/반납 및 예약 (LoanAndReservation)\n- **Reason**: 대출, 반납, 연장, 예약 등 이벤트 발생 시 이력 관리 컨텍스트에서 해당 이벤트를 구독하여 이력을 기록한다.\n- **Interaction Pattern**: 대출/반납 및 예약에서 대출/반납/연장/예약 이벤트를 발행하면 이력 관리 컨텍스트가 이를 구독하여 이력 데이터를 생성한다.\n\n### BookManagement-LoanHistory\n- **Type**: Pub/Sub\n- **Direction**: receives from 도서 관리 (BookManagement)\n- **Reason**: 도서 등록, 폐기 등 도서 상태 변화 이력도 이력 관리 컨텍스트에서 기록할 수 있도록 이벤트를 발행한다.\n- **Interaction Pattern**: 도서 관리에서 도서 등록, 폐기 등 상태 변화 이벤트를 발행하면 이력 관리 컨텍스트가 이를 구독하여 상태 변경 이력을 기록한다.",
+                                        "traceMap": {
+                                            "4": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            8
+                                                        ],
+                                                        [
+                                                            9,
+                                                            67
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "7": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            8
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "8": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            15
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "14": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            1
+                                                        ],
+                                                        [
+                                                            9,
+                                                            5
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": true
+                                            },
+                                            "16": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            1
+                                                        ],
+                                                        [
+                                                            9,
+                                                            5
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": true
+                                            },
+                                            "21": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            99,
+                                                            1
+                                                        ],
+                                                        [
+                                                            99,
+                                                            27
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": true
+                                            },
+                                            "22": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            100,
+                                                            1
+                                                        ],
+                                                        [
+                                                            100,
+                                                            46
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": true
+                                            },
+                                            "23": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            101,
+                                                            1
+                                                        ],
+                                                        [
+                                                            101,
+                                                            25
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": true
+                                            },
+                                            "24": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            102,
+                                                            1
+                                                        ],
+                                                        [
+                                                            102,
+                                                            64
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": true
+                                            },
+                                            "25": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            103,
+                                                            1
+                                                        ],
+                                                        [
+                                                            103,
+                                                            51
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": true
+                                            },
+                                            "26": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            104,
+                                                            1
+                                                        ],
+                                                        [
+                                                            104,
+                                                            36
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": true
+                                            },
+                                            "27": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            105,
+                                                            1
+                                                        ],
+                                                        [
+                                                            105,
+                                                            31
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": true
+                                            },
+                                            "28": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            106,
+                                                            1
+                                                        ],
+                                                        [
+                                                            106,
+                                                            15
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": true
+                                            },
+                                            "29": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            107,
+                                                            1
+                                                        ],
+                                                        [
+                                                            107,
+                                                            30
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": true
+                                            },
+                                            "30": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            108,
+                                                            1
+                                                        ],
+                                                        [
+                                                            108,
+                                                            52
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": true
+                                            },
+                                            "31": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            109,
+                                                            1
+                                                        ],
+                                                        [
+                                                            109,
+                                                            32
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": true
+                                            },
+                                            "32": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            110,
+                                                            1
+                                                        ],
+                                                        [
+                                                            110,
+                                                            40
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": true
+                                            },
+                                            "33": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            111,
+                                                            1
+                                                        ],
+                                                        [
+                                                            111,
+                                                            9
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": true
+                                            },
+                                            "38": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            8
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "39": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            8
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "40": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            8
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "41": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            8
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "42": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            8
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "43": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            8
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "44": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            8
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "45": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            8
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "46": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            8
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "47": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            8
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "48": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            8
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "49": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            8
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "50": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            8
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "51": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            8
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "55": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            15
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "56": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            15
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "57": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            15
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "58": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            15
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "59": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            15
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "60": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            15
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "61": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            15
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "62": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            15
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "63": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            15
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "64": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            15
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "65": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            15
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "66": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            15
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "67": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            15
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "68": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            15
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "74": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            7,
+                                                            1
+                                                        ],
+                                                        [
+                                                            9,
+                                                            67
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "75": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            7,
+                                                            1
+                                                        ],
+                                                        [
+                                                            9,
+                                                            67
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "76": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            7,
+                                                            1
+                                                        ],
+                                                        [
+                                                            9,
+                                                            67
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "77": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            7,
+                                                            1
+                                                        ],
+                                                        [
+                                                            9,
+                                                            67
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "80": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            3,
+                                                            1
+                                                        ],
+                                                        [
+                                                            9,
+                                                            67
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "81": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            3,
+                                                            1
+                                                        ],
+                                                        [
+                                                            9,
+                                                            67
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "82": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            3,
+                                                            1
+                                                        ],
+                                                        [
+                                                            9,
+                                                            67
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "83": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            3,
+                                                            1
+                                                        ],
+                                                        [
+                                                            9,
+                                                            67
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            }
+                                        },
+                                        "commandNames": [],
+                                        "readModelNames": [
+                                            "BookLoanHistory",
+                                            "BookStatusChangeHistory"
+                                        ]
+                                    }
+                                },
+                                "description": "# Bounded Context Overview: LoanHistory (이력 관리)\n\n## Role\n도서별 대출 및 예약 이력, 상태 변경 이력을 기록하고 조회할 수 있도록 한다.\n\n## Key Events\n- LoanHistoryRecorded\n- ReservationHistoryRecorded\n\n# Requirements\n\n## userStory\n\n대출 이력\n\n상태 변경\n\n## DDL\n\n```sql\nCREATE TABLE loan_history (\n    history_id INT AUTO_INCREMENT PRIMARY KEY,\n    loan_id INT NOT NULL,\n    action_type ENUM('대출', '반납', '연장', '연체알림', '분실신고') NOT NULL,\n    action_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    previous_due_date DATETIME NULL,\n    new_due_date DATETIME NULL,\n    notes TEXT,\n    processed_by VARCHAR(100),\n    FOREIGN KEY (loan_id) REFERENCES loans(loan_id),\n    INDEX idx_loan_id (loan_id),\n    INDEX idx_action_type (action_type),\n    INDEX\n```\n## Event\n\n```json\n{\n  \"name\": \"LoanHistoryRecorded\",\n  \"displayName\": \"대출 이력 기록됨\",\n  \"actor\": \"System\",\n  \"level\": 8,\n  \"description\": \"도서의 대출, 반납, 연장 등 대출 관련 이력이 시스템에 기록됨.\",\n  \"inputs\": [\n    \"대출/반납/연장 이벤트 정보\"\n  ],\n  \"outputs\": [\n    \"대출 이력 데이터\"\n  ],\n  \"nextEvents\": []\n}\n```\n\n```json\n{\n  \"name\": \"ReservationHistoryRecorded\",\n  \"displayName\": \"예약 이력 기록됨\",\n  \"actor\": \"System\",\n  \"level\": 9,\n  \"description\": \"도서 예약 관련 이력이 시스템에 기록됨.\",\n  \"inputs\": [\n    \"예약 이벤트 정보\"\n  ],\n  \"outputs\": [\n    \"예약 이력 데이터\"\n  ],\n  \"nextEvents\": []\n}\n```\n\n## Context Relations\n\n### LoanAndReservation-LoanHistory\n- **Type**: Pub/Sub\n- **Direction**: receives from 대출/반납 및 예약 (LoanAndReservation)\n- **Reason**: 대출, 반납, 연장, 예약 등 이벤트 발생 시 이력 관리 컨텍스트에서 해당 이벤트를 구독하여 이력을 기록한다.\n- **Interaction Pattern**: 대출/반납 및 예약에서 대출/반납/연장/예약 이벤트를 발행하면 이력 관리 컨텍스트가 이를 구독하여 이력 데이터를 생성한다.\n\n### BookManagement-LoanHistory\n- **Type**: Pub/Sub\n- **Direction**: receives from 도서 관리 (BookManagement)\n- **Reason**: 도서 등록, 폐기 등 도서 상태 변화 이력도 이력 관리 컨텍스트에서 기록할 수 있도록 이벤트를 발행한다.\n- **Interaction Pattern**: 도서 관리에서 도서 등록, 폐기 등 상태 변화 이벤트를 발행하면 이력 관리 컨텍스트가 이를 구독하여 상태 변경 이력을 기록한다."
+                            },
+                            {
+                                "structure": [
+                                    {
+                                        "aggregate": {
+                                            "name": "LoanHistory",
+                                            "alias": "대출 및 예약 이력 통합",
+                                            "refs": [
+                                                [
+                                                    [
+                                                        9,
+                                                        8
+                                                    ],
+                                                    [
+                                                        9,
+                                                        67
+                                                    ]
+                                                ],
+                                                [
+                                                    [
+                                                        99,
+                                                        14
+                                                    ],
+                                                    [
+                                                        99,
+                                                        27
+                                                    ]
+                                                ],
+                                                [
+                                                    [
+                                                        100,
+                                                        1
+                                                    ],
+                                                    [
+                                                        100,
+                                                        46
+                                                    ]
+                                                ],
+                                                [
+                                                    [
+                                                        101,
+                                                        1
+                                                    ],
+                                                    [
+                                                        101,
+                                                        25
+                                                    ]
+                                                ],
+                                                [
+                                                    [
+                                                        102,
+                                                        1
+                                                    ],
+                                                    [
+                                                        102,
+                                                        64
+                                                    ]
+                                                ],
+                                                [
+                                                    [
+                                                        103,
+                                                        1
+                                                    ],
+                                                    [
+                                                        103,
+                                                        51
+                                                    ]
+                                                ],
+                                                [
+                                                    [
+                                                        104,
+                                                        1
+                                                    ],
+                                                    [
+                                                        104,
+                                                        36
+                                                    ]
+                                                ],
+                                                [
+                                                    [
+                                                        105,
+                                                        1
+                                                    ],
+                                                    [
+                                                        105,
+                                                        31
+                                                    ]
+                                                ],
+                                                [
+                                                    [
+                                                        106,
+                                                        1
+                                                    ],
+                                                    [
+                                                        106,
+                                                        15
+                                                    ]
+                                                ],
+                                                [
+                                                    [
+                                                        107,
+                                                        1
+                                                    ],
+                                                    [
+                                                        107,
+                                                        30
+                                                    ]
+                                                ],
+                                                [
+                                                    [
+                                                        108,
+                                                        1
+                                                    ],
+                                                    [
+                                                        108,
+                                                        52
+                                                    ]
+                                                ],
+                                                [
+                                                    [
+                                                        109,
+                                                        1
+                                                    ],
+                                                    [
+                                                        109,
+                                                        32
+                                                    ]
+                                                ],
+                                                [
+                                                    [
+                                                        110,
+                                                        1
+                                                    ],
+                                                    [
+                                                        110,
+                                                        40
+                                                    ]
+                                                ],
+                                                [
+                                                    [
+                                                        111,
+                                                        1
+                                                    ],
+                                                    [
+                                                        111,
+                                                        9
+                                                    ]
+                                                ],
+                                                [
+                                                    [
+                                                        9,
+                                                        8
+                                                    ],
+                                                    [
+                                                        9,
+                                                        65
+                                                    ]
+                                                ]
+                                            ]
+                                        },
+                                        "enumerations": [
+                                            {
+                                                "name": "HistoryActionType",
+                                                "alias": "이력 액션 유형",
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            102,
+                                                            5
+                                                        ],
+                                                        [
+                                                            102,
+                                                            52
+                                                        ]
+                                                    ],
+                                                    [
+                                                        [
+                                                            9,
+                                                            8
+                                                        ],
+                                                        [
+                                                            9,
+                                                            67
+                                                        ]
+                                                    ]
+                                                ]
+                                            }
+                                        ],
+                                        "valueObjects": [
+                                            {
+                                                "name": "LoanReference",
+                                                "alias": "대출 참조",
+                                                "referencedAggregate": {
+                                                    "name": "Loan",
+                                                    "alias": "대출"
+                                                },
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            101,
+                                                            5
+                                                        ],
+                                                        [
+                                                            101,
+                                                            11
+                                                        ]
+                                                    ],
+                                                    [
+                                                        [
+                                                            108,
+                                                            5
+                                                        ],
+                                                        [
+                                                            108,
+                                                            51
+                                                        ]
+                                                    ]
+                                                ]
+                                            },
+                                            {
+                                                "name": "Reservation",
+                                                "alias": "예약",
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            15
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ]
+                                            },
+                                            {
+                                                "name": "BookReference",
+                                                "alias": "도서 참조",
+                                                "referencedAggregate": {
+                                                    "name": "Book",
+                                                    "alias": "도서"
+                                                },
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            8
+                                                        ],
+                                                        [
+                                                            9,
+                                                            67
+                                                        ]
+                                                    ]
+                                                ]
+                                            }
+                                        ],
+                                        "previewAttributes": [
+                                            {
+                                                "fieldName": "history_id",
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            100,
+                                                            5
+                                                        ],
+                                                        [
+                                                            100,
+                                                            45
+                                                        ]
+                                                    ]
+                                                ]
+                                            },
+                                            {
+                                                "fieldName": "loan_id",
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            101,
+                                                            5
+                                                        ],
+                                                        [
+                                                            101,
+                                                            24
+                                                        ]
+                                                    ]
+                                                ]
+                                            },
+                                            {
+                                                "fieldName": "action_date",
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            103,
+                                                            5
+                                                        ],
+                                                        [
+                                                            103,
+                                                            50
+                                                        ]
+                                                    ]
+                                                ]
+                                            },
+                                            {
+                                                "fieldName": "previous_due_date",
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            104,
+                                                            5
+                                                        ],
+                                                        [
+                                                            104,
+                                                            35
+                                                        ]
+                                                    ]
+                                                ]
+                                            },
+                                            {
+                                                "fieldName": "new_due_date",
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            105,
+                                                            5
+                                                        ],
+                                                        [
+                                                            105,
+                                                            30
+                                                        ]
+                                                    ]
+                                                ]
+                                            },
+                                            {
+                                                "fieldName": "notes",
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            106,
+                                                            5
+                                                        ],
+                                                        [
+                                                            106,
+                                                            14
+                                                        ]
+                                                    ]
+                                                ]
+                                            },
+                                            {
+                                                "fieldName": "processed_by",
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            107,
+                                                            5
+                                                        ],
+                                                        [
+                                                            107,
+                                                            29
+                                                        ]
+                                                    ]
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                ],
+                                "pros": {
+                                    "cohesion": "대출 및 예약 이력 관리가 하나의 Aggregate에 통합되어 이력 관련 도메인 규칙을 일관되게 적용할 수 있다.",
+                                    "coupling": "이력 데이터가 한 곳에 집중되어 외부 시스템과의 연동 및 데이터 분석이 단순하다.",
+                                    "consistency": "모든 이력 기록이 단일 트랜잭션 경계 내에서 처리되어 데이터 일관성이 높다.",
+                                    "encapsulation": "이력 관리와 관련된 모든 규칙과 상태 전이가 Aggregate 내부에 집중되어 있다.",
+                                    "complexity": "이력 데이터 구조가 단순해져 개발 및 유지보수가 용이하다.",
+                                    "independence": "이력 관리 기능이 독립적으로 배포 및 확장 가능하다.",
+                                    "performance": "복합 이력 조회 시 단일 테이블에서 빠르게 데이터를 조회할 수 있다."
+                                },
+                                "cons": {
+                                    "cohesion": "대출 이력과 예약 이력의 도메인 규칙이 다를 경우 단일 Aggregate 내에서 책임이 혼재될 수 있다.",
+                                    "coupling": "이력 유형별로 도메인 규칙이 복잡해질수록 Aggregate 내부가 비대해질 수 있다.",
+                                    "consistency": "이력 유형별로 별도 트랜잭션 경계가 필요한 경우 유연성이 떨어진다.",
+                                    "encapsulation": "이력 유형별로 규칙이 달라질 때 Aggregate 내부 코드가 복잡해질 수 있다.",
+                                    "complexity": "이력 유형이 늘어날수록 단일 Aggregate가 지나치게 커져 관리가 어려워질 수 있다.",
+                                    "independence": "대출 이력 또는 예약 이력만 별도로 확장하거나 변경하기 어렵다.",
+                                    "performance": "이력 데이터가 많아질수록 단일 테이블의 크기가 커져 조회 및 인덱싱 성능이 저하될 수 있다."
+                                },
+                                "isAIRecommended": true,
+                                "boundedContext": {
+                                    "name": "LoanHistory",
+                                    "alias": "이력 관리",
+                                    "displayName": "이력 관리",
+                                    "description": "# Bounded Context Overview: LoanHistory (이력 관리)\n\n## Role\n도서별 대출 및 예약 이력, 상태 변경 이력을 기록하고 조회할 수 있도록 한다.\n\n## Key Events\n- LoanHistoryRecorded\n- ReservationHistoryRecorded\n\n# Requirements\n\n## userStory\n\n대출 이력\n\n상태 변경\n\n## DDL\n\n```sql\nCREATE TABLE loan_history (\n    history_id INT AUTO_INCREMENT PRIMARY KEY,\n    loan_id INT NOT NULL,\n    action_type ENUM('대출', '반납', '연장', '연체알림', '분실신고') NOT NULL,\n    action_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    previous_due_date DATETIME NULL,\n    new_due_date DATETIME NULL,\n    notes TEXT,\n    processed_by VARCHAR(100),\n    FOREIGN KEY (loan_id) REFERENCES loans(loan_id),\n    INDEX idx_loan_id (loan_id),\n    INDEX idx_action_type (action_type),\n    INDEX\n```\n## Event\n\n```json\n{\n  \"name\": \"LoanHistoryRecorded\",\n  \"displayName\": \"대출 이력 기록됨\",\n  \"actor\": \"System\",\n  \"level\": 8,\n  \"description\": \"도서의 대출, 반납, 연장 등 대출 관련 이력이 시스템에 기록됨.\",\n  \"inputs\": [\n    \"대출/반납/연장 이벤트 정보\"\n  ],\n  \"outputs\": [\n    \"대출 이력 데이터\"\n  ],\n  \"nextEvents\": []\n}\n```\n\n```json\n{\n  \"name\": \"ReservationHistoryRecorded\",\n  \"displayName\": \"예약 이력 기록됨\",\n  \"actor\": \"System\",\n  \"level\": 9,\n  \"description\": \"도서 예약 관련 이력이 시스템에 기록됨.\",\n  \"inputs\": [\n    \"예약 이벤트 정보\"\n  ],\n  \"outputs\": [\n    \"예약 이력 데이터\"\n  ],\n  \"nextEvents\": []\n}\n```\n\n## Context Relations\n\n### LoanAndReservation-LoanHistory\n- **Type**: Pub/Sub\n- **Direction**: receives from 대출/반납 및 예약 (LoanAndReservation)\n- **Reason**: 대출, 반납, 연장, 예약 등 이벤트 발생 시 이력 관리 컨텍스트에서 해당 이벤트를 구독하여 이력을 기록한다.\n- **Interaction Pattern**: 대출/반납 및 예약에서 대출/반납/연장/예약 이벤트를 발행하면 이력 관리 컨텍스트가 이를 구독하여 이력 데이터를 생성한다.\n\n### BookManagement-LoanHistory\n- **Type**: Pub/Sub\n- **Direction**: receives from 도서 관리 (BookManagement)\n- **Reason**: 도서 등록, 폐기 등 도서 상태 변화 이력도 이력 관리 컨텍스트에서 기록할 수 있도록 이벤트를 발행한다.\n- **Interaction Pattern**: 도서 관리에서 도서 등록, 폐기 등 상태 변화 이벤트를 발행하면 이력 관리 컨텍스트가 이를 구독하여 상태 변경 이력을 기록한다.",
+                                    "aggregates": [
+                                        {
+                                            "name": "LoanHistory",
+                                            "alias": "대출 이력"
+                                        },
+                                        {
+                                            "name": "ReservationHistory",
+                                            "alias": "예약 이력"
+                                        }
+                                    ],
+                                    "requirements": {
+                                        "userStory": "대출 이력\n상태 변경",
+                                        "ddl": "CREATE TABLE loan_history (\n    history_id INT AUTO_INCREMENT PRIMARY KEY,\n    loan_id INT NOT NULL,\n    action_type ENUM('대출', '반납', '연장', '연체알림', '분실신고') NOT NULL,\n    action_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    previous_due_date DATETIME NULL,\n    new_due_date DATETIME NULL,\n    notes TEXT,\n    processed_by VARCHAR(100),\n    FOREIGN KEY (loan_id) REFERENCES loans(loan_id),\n    INDEX idx_loan_id (loan_id),\n    INDEX idx_action_type (action_type),\n    INDEX",
+                                        "event": "{\n  \"name\": \"LoanHistoryRecorded\",\n  \"displayName\": \"대출 이력 기록됨\",\n  \"actor\": \"System\",\n  \"level\": 8,\n  \"description\": \"도서의 대출, 반납, 연장 등 대출 관련 이력이 시스템에 기록됨.\",\n  \"inputs\": [\n    \"대출/반납/연장 이벤트 정보\"\n  ],\n  \"outputs\": [\n    \"대출 이력 데이터\"\n  ],\n  \"nextEvents\": [],\n  \"refs\": [\n    [\n      [\n        9,\n        8\n      ],\n      [\n        9,\n        65\n      ]\n    ]\n  ]\n}\n{\n  \"name\": \"ReservationHistoryRecorded\",\n  \"displayName\": \"예약 이력 기록됨\",\n  \"actor\": \"System\",\n  \"level\": 9,\n  \"description\": \"도서 예약 관련 이력이 시스템에 기록됨.\",\n  \"inputs\": [\n    \"예약 이벤트 정보\"\n  ],\n  \"outputs\": [\n    \"예약 이력 데이터\"\n  ],\n  \"nextEvents\": [],\n  \"refs\": [\n    [\n      [\n        9,\n        15\n      ],\n      [\n        9,\n        65\n      ]\n    ]\n  ]\n}",
+                                        "eventNames": "LoanHistoryRecorded, ReservationHistoryRecorded 이벤트가 발생할 수 있어.",
+                                        "ddlFields": [
+                                            {
+                                                "fieldName": "history_id",
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            100,
+                                                            5
+                                                        ],
+                                                        [
+                                                            100,
+                                                            45
+                                                        ]
+                                                    ]
+                                                ]
+                                            },
+                                            {
+                                                "fieldName": "loan_id",
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            101,
+                                                            5
+                                                        ],
+                                                        [
+                                                            101,
+                                                            24
+                                                        ]
+                                                    ]
+                                                ]
+                                            },
+                                            {
+                                                "fieldName": "action_date",
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            103,
+                                                            5
+                                                        ],
+                                                        [
+                                                            103,
+                                                            50
+                                                        ]
+                                                    ]
+                                                ]
+                                            },
+                                            {
+                                                "fieldName": "previous_due_date",
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            104,
+                                                            5
+                                                        ],
+                                                        [
+                                                            104,
+                                                            35
+                                                        ]
+                                                    ]
+                                                ]
+                                            },
+                                            {
+                                                "fieldName": "new_due_date",
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            105,
+                                                            5
+                                                        ],
+                                                        [
+                                                            105,
+                                                            30
+                                                        ]
+                                                    ]
+                                                ]
+                                            },
+                                            {
+                                                "fieldName": "notes",
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            106,
+                                                            5
+                                                        ],
+                                                        [
+                                                            106,
+                                                            14
+                                                        ]
+                                                    ]
+                                                ]
+                                            },
+                                            {
+                                                "fieldName": "processed_by",
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            107,
+                                                            5
+                                                        ],
+                                                        [
+                                                            107,
+                                                            29
+                                                        ]
+                                                    ]
+                                                ]
+                                            }
+                                        ],
+                                        "description": "# Bounded Context Overview: LoanHistory (이력 관리)\n\n## Role\n도서별 대출 및 예약 이력, 상태 변경 이력을 기록하고 조회할 수 있도록 한다.\n\n## Key Events\n- LoanHistoryRecorded\n- ReservationHistoryRecorded\n\n# Requirements\n\n## userStory\n\n대출 이력\n\n상태 변경\n\n## DDL\n\n```sql\nCREATE TABLE loan_history (\n    history_id INT AUTO_INCREMENT PRIMARY KEY,\n    loan_id INT NOT NULL,\n    action_type ENUM('대출', '반납', '연장', '연체알림', '분실신고') NOT NULL,\n    action_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    previous_due_date DATETIME NULL,\n    new_due_date DATETIME NULL,\n    notes TEXT,\n    processed_by VARCHAR(100),\n    FOREIGN KEY (loan_id) REFERENCES loans(loan_id),\n    INDEX idx_loan_id (loan_id),\n    INDEX idx_action_type (action_type),\n    INDEX\n```\n## Event\n\n```json\n{\n  \"name\": \"LoanHistoryRecorded\",\n  \"displayName\": \"대출 이력 기록됨\",\n  \"actor\": \"System\",\n  \"level\": 8,\n  \"description\": \"도서의 대출, 반납, 연장 등 대출 관련 이력이 시스템에 기록됨.\",\n  \"inputs\": [\n    \"대출/반납/연장 이벤트 정보\"\n  ],\n  \"outputs\": [\n    \"대출 이력 데이터\"\n  ],\n  \"nextEvents\": []\n}\n```\n\n```json\n{\n  \"name\": \"ReservationHistoryRecorded\",\n  \"displayName\": \"예약 이력 기록됨\",\n  \"actor\": \"System\",\n  \"level\": 9,\n  \"description\": \"도서 예약 관련 이력이 시스템에 기록됨.\",\n  \"inputs\": [\n    \"예약 이벤트 정보\"\n  ],\n  \"outputs\": [\n    \"예약 이력 데이터\"\n  ],\n  \"nextEvents\": []\n}\n```\n\n## Context Relations\n\n### LoanAndReservation-LoanHistory\n- **Type**: Pub/Sub\n- **Direction**: receives from 대출/반납 및 예약 (LoanAndReservation)\n- **Reason**: 대출, 반납, 연장, 예약 등 이벤트 발생 시 이력 관리 컨텍스트에서 해당 이벤트를 구독하여 이력을 기록한다.\n- **Interaction Pattern**: 대출/반납 및 예약에서 대출/반납/연장/예약 이벤트를 발행하면 이력 관리 컨텍스트가 이를 구독하여 이력 데이터를 생성한다.\n\n### BookManagement-LoanHistory\n- **Type**: Pub/Sub\n- **Direction**: receives from 도서 관리 (BookManagement)\n- **Reason**: 도서 등록, 폐기 등 도서 상태 변화 이력도 이력 관리 컨텍스트에서 기록할 수 있도록 이벤트를 발행한다.\n- **Interaction Pattern**: 도서 관리에서 도서 등록, 폐기 등 상태 변화 이벤트를 발행하면 이력 관리 컨텍스트가 이를 구독하여 상태 변경 이력을 기록한다.",
+                                        "traceMap": {
+                                            "4": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            8
+                                                        ],
+                                                        [
+                                                            9,
+                                                            67
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "7": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            8
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "8": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            15
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "14": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            1
+                                                        ],
+                                                        [
+                                                            9,
+                                                            5
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": true
+                                            },
+                                            "16": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            1
+                                                        ],
+                                                        [
+                                                            9,
+                                                            5
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": true
+                                            },
+                                            "21": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            99,
+                                                            1
+                                                        ],
+                                                        [
+                                                            99,
+                                                            27
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": true
+                                            },
+                                            "22": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            100,
+                                                            1
+                                                        ],
+                                                        [
+                                                            100,
+                                                            46
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": true
+                                            },
+                                            "23": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            101,
+                                                            1
+                                                        ],
+                                                        [
+                                                            101,
+                                                            25
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": true
+                                            },
+                                            "24": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            102,
+                                                            1
+                                                        ],
+                                                        [
+                                                            102,
+                                                            64
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": true
+                                            },
+                                            "25": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            103,
+                                                            1
+                                                        ],
+                                                        [
+                                                            103,
+                                                            51
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": true
+                                            },
+                                            "26": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            104,
+                                                            1
+                                                        ],
+                                                        [
+                                                            104,
+                                                            36
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": true
+                                            },
+                                            "27": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            105,
+                                                            1
+                                                        ],
+                                                        [
+                                                            105,
+                                                            31
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": true
+                                            },
+                                            "28": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            106,
+                                                            1
+                                                        ],
+                                                        [
+                                                            106,
+                                                            15
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": true
+                                            },
+                                            "29": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            107,
+                                                            1
+                                                        ],
+                                                        [
+                                                            107,
+                                                            30
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": true
+                                            },
+                                            "30": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            108,
+                                                            1
+                                                        ],
+                                                        [
+                                                            108,
+                                                            52
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": true
+                                            },
+                                            "31": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            109,
+                                                            1
+                                                        ],
+                                                        [
+                                                            109,
+                                                            32
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": true
+                                            },
+                                            "32": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            110,
+                                                            1
+                                                        ],
+                                                        [
+                                                            110,
+                                                            40
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": true
+                                            },
+                                            "33": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            111,
+                                                            1
+                                                        ],
+                                                        [
+                                                            111,
+                                                            9
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": true
+                                            },
+                                            "38": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            8
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "39": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            8
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "40": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            8
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "41": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            8
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "42": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            8
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "43": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            8
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "44": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            8
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "45": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            8
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "46": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            8
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "47": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            8
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "48": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            8
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "49": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            8
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "50": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            8
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "51": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            8
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "55": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            15
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "56": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            15
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "57": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            15
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "58": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            15
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "59": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            15
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "60": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            15
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "61": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            15
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "62": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            15
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "63": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            15
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "64": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            15
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "65": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            15
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "66": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            15
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "67": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            15
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "68": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            9,
+                                                            15
+                                                        ],
+                                                        [
+                                                            9,
+                                                            65
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "74": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            7,
+                                                            1
+                                                        ],
+                                                        [
+                                                            9,
+                                                            67
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "75": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            7,
+                                                            1
+                                                        ],
+                                                        [
+                                                            9,
+                                                            67
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "76": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            7,
+                                                            1
+                                                        ],
+                                                        [
+                                                            9,
+                                                            67
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "77": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            7,
+                                                            1
+                                                        ],
+                                                        [
+                                                            9,
+                                                            67
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "80": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            3,
+                                                            1
+                                                        ],
+                                                        [
+                                                            9,
+                                                            67
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "81": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            3,
+                                                            1
+                                                        ],
+                                                        [
+                                                            9,
+                                                            67
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "82": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            3,
+                                                            1
+                                                        ],
+                                                        [
+                                                            9,
+                                                            67
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            },
+                                            "83": {
+                                                "refs": [
+                                                    [
+                                                        [
+                                                            3,
+                                                            1
+                                                        ],
+                                                        [
+                                                            9,
+                                                            67
+                                                        ]
+                                                    ]
+                                                ],
+                                                "isDirectMatching": false
+                                            }
+                                        },
+                                        "commandNames": [],
+                                        "readModelNames": [
+                                            "BookLoanHistory",
+                                            "BookStatusChangeHistory"
+                                        ]
+                                    }
+                                },
+                                "description": "# Bounded Context Overview: LoanHistory (이력 관리)\n\n## Role\n도서별 대출 및 예약 이력, 상태 변경 이력을 기록하고 조회할 수 있도록 한다.\n\n## Key Events\n- LoanHistoryRecorded\n- ReservationHistoryRecorded\n\n# Requirements\n\n## userStory\n\n대출 이력\n\n상태 변경\n\n## DDL\n\n```sql\nCREATE TABLE loan_history (\n    history_id INT AUTO_INCREMENT PRIMARY KEY,\n    loan_id INT NOT NULL,\n    action_type ENUM('대출', '반납', '연장', '연체알림', '분실신고') NOT NULL,\n    action_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    previous_due_date DATETIME NULL,\n    new_due_date DATETIME NULL,\n    notes TEXT,\n    processed_by VARCHAR(100),\n    FOREIGN KEY (loan_id) REFERENCES loans(loan_id),\n    INDEX idx_loan_id (loan_id),\n    INDEX idx_action_type (action_type),\n    INDEX\n```\n## Event\n\n```json\n{\n  \"name\": \"LoanHistoryRecorded\",\n  \"displayName\": \"대출 이력 기록됨\",\n  \"actor\": \"System\",\n  \"level\": 8,\n  \"description\": \"도서의 대출, 반납, 연장 등 대출 관련 이력이 시스템에 기록됨.\",\n  \"inputs\": [\n    \"대출/반납/연장 이벤트 정보\"\n  ],\n  \"outputs\": [\n    \"대출 이력 데이터\"\n  ],\n  \"nextEvents\": []\n}\n```\n\n```json\n{\n  \"name\": \"ReservationHistoryRecorded\",\n  \"displayName\": \"예약 이력 기록됨\",\n  \"actor\": \"System\",\n  \"level\": 9,\n  \"description\": \"도서 예약 관련 이력이 시스템에 기록됨.\",\n  \"inputs\": [\n    \"예약 이벤트 정보\"\n  ],\n  \"outputs\": [\n    \"예약 이력 데이터\"\n  ],\n  \"nextEvents\": []\n}\n```\n\n## Context Relations\n\n### LoanAndReservation-LoanHistory\n- **Type**: Pub/Sub\n- **Direction**: receives from 대출/반납 및 예약 (LoanAndReservation)\n- **Reason**: 대출, 반납, 연장, 예약 등 이벤트 발생 시 이력 관리 컨텍스트에서 해당 이벤트를 구독하여 이력을 기록한다.\n- **Interaction Pattern**: 대출/반납 및 예약에서 대출/반납/연장/예약 이벤트를 발행하면 이력 관리 컨텍스트가 이를 구독하여 이력 데이터를 생성한다.\n\n### BookManagement-LoanHistory\n- **Type**: Pub/Sub\n- **Direction**: receives from 도서 관리 (BookManagement)\n- **Reason**: 도서 등록, 폐기 등 도서 상태 변화 이력도 이력 관리 컨텍스트에서 기록할 수 있도록 이벤트를 발행한다.\n- **Interaction Pattern**: 도서 관리에서 도서 등록, 폐기 등 상태 변화 이벤트를 발행하면 이력 관리 컨텍스트가 이를 구독하여 상태 변경 이력을 기록한다."
+                            }
+                        ],
+                        "conclusions": "옵션 1은 대출 이력과 예약 이력의 도메인 규칙이 명확히 분리되어 있고, 두 이력의 관리 및 확장이 독립적으로 필요한 경우에 적합합니다. 옵션 2는 이력 데이터가 단일 테이블에 집중되어 복합 이력 조회 및 통합 관리가 중요한 도서관, 또는 이력 유형이 많지 않은 환경에 적합합니다. 본 도메인에서는 이력 데이터의 통합 관리와 복합 조회의 빈도가 높을 것으로 예상되어 옵션 2를 기본안으로 선택합니다.",
+                        "defaultOptionIndex": 1,
+                        "inference": "\n\n요구사항과 누적된 설계 초안을 분석한 결과, LoanHistory 컨텍스트에서는 반드시 LoanHistory(대출 이력)와 ReservationHistory(예약 이력) Aggregate를 포함해야 하며, Book, BookStatusHistory, Loan Aggregate는 ValueObject 참조로만 사용해야 한다. 이벤트 및 컨텍스트 관계를 고려하여, 첫 번째 옵션은 LoanHistory와 ReservationHistory 두 개의 Aggregate로 구성하고, 두 번째 옵션은 LoanHistory 단일 Aggregate에 모든 이력 기록을 통합한다."
                     }
                 ],
                 "draftUIInfos": {
                     "leftBoundedContextCount": 0,
-                    "directMessage": "Assigning DDL fields to aggregates for option 1... (1782 characters generated)",
+                    "directMessage": "Assigning DDL fields to aggregates for option 1... (898 characters generated)",
                     "progress": 67
                 },
                 "isGeneratorButtonEnabled": true,
@@ -34745,52 +39499,16 @@ export const aggregateDraftScenarios = {
                                             "isDirectMatching": false
                                         }
                                     },
-                                    "siteMap": [
-                                        {
-                                            "id": "book-list-view",
-                                            "title": "도서 목록 조회",
-                                            "name": "BookListView",
-                                            "description": "현재 보유 도서의 목록과 상태를 조회",
-                                            "boundedContext": "BookManagement",
-                                            "functionType": "view",
-                                            "uiRequirements": "도서명, ISBN, 저자, 출판사, 카테고리, 상태(대출가능/대출중/예약중/폐기) 필터 및 검색, 페이징 지원"
-                                        },
-                                        {
-                                            "id": "book-create-command",
-                                            "title": "도서 등록",
-                                            "name": "BookCreateCommand",
-                                            "description": "새로운 도서를 등록",
-                                            "boundedContext": "BookManagement",
-                                            "functionType": "command",
-                                            "uiRequirements": "도서명, ISBN(13자리, 중복확인), 저자, 출판사, 카테고리(소설/비소설/학술/잡지) 입력 폼, 등록 시 상태는 '대출가능'으로 설정"
-                                        },
-                                        {
-                                            "id": "book-edit-command",
-                                            "title": "도서 정보 수정",
-                                            "name": "BookEditCommand",
-                                            "description": "기존 도서의 정보를 수정",
-                                            "boundedContext": "BookManagement",
-                                            "functionType": "command",
-                                            "uiRequirements": "도서명, 저자, 출판사, 카테고리 등 수정, ISBN은 수정 불가, 상태 변경 불가"
-                                        },
-                                        {
-                                            "id": "book-dispose-command",
-                                            "title": "도서 폐기 처리",
-                                            "name": "BookDisposeCommand",
-                                            "description": "훼손 또는 분실된 도서를 폐기 처리",
-                                            "boundedContext": "BookManagement",
-                                            "functionType": "command",
-                                            "uiRequirements": "도서 목록에서 폐기 처리 버튼, 폐기 사유 입력, 폐기 시 상태를 '폐기'로 변경, 폐기 도서는 대출 불가"
-                                        },
-                                        {
-                                            "id": "book-status-change-view",
-                                            "title": "도서 상태 변경 이력 조회",
-                                            "name": "BookStatusChangeHistoryView",
-                                            "description": "도서별 상태 변경 이력을 조회",
-                                            "boundedContext": "BookManagement",
-                                            "functionType": "view",
-                                            "uiRequirements": "도서별 상태 변경(대출가능/대출중/예약중/폐기 등) 이력 리스트, 변경일시, 변경자, 변경 사유 표시"
-                                        }
+                                    "commandNames": [
+                                        "RegisterBook",
+                                        "DiscardBook",
+                                        "UpdateBookStatus",
+                                        "ValidateIsbn"
+                                    ],
+                                    "readModelNames": [
+                                        "BookList",
+                                        "BookDetail",
+                                        "CategoryOptions"
                                     ]
                                 }
                             },
@@ -38477,10 +43195,970 @@ export const aggregateDraftScenarios = {
                                             "isDirectMatching": false
                                         }
                                     },
-                                    "siteMap": []
+                                    "commandNames": [
+                                        "LoanBook",
+                                        "ReturnBook",
+                                        "ExtendLoan",
+                                        "ReserveBook"
+                                    ],
+                                    "readModelNames": [
+                                        "LoanStatusList",
+                                        "LoanDetail",
+                                        "SearchBookForLoan"
+                                    ]
                                 }
                             },
                             "description": "# Bounded Context Overview: LoanAndReservation (대출/반납 및 예약)\n\n## Role\n회원의 도서 대출, 반납, 연장, 예약을 관리하고 도서 상태 변경을 트리거한다.\n\n## Key Events\n- BookLoaned\n- BookReserved\n- BookReturned\n- LoanExtended\n\n# Requirements\n\n## userStory\n\n대출/반납을 통합적으로 관리하는\n\n대출/반납' 화면에서는 회원이 도서를 대출하고 반납하는 것을 관리할 수 있어야 해. 대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할\n\n예약\n\n대출 현황 화면에서는 현재 대출 중인 도서들의 목록을 볼 수 있어야 해. 각 대출 건에 대해 대출일, 반납\n\n연장\n\n대출 이력과 상태\n\n## DDL\n\n```sql\nCREATE TABLE loans (\n    loan_id INT AUTO_INCREMENT PRIMARY KEY,\n    member_id VARCHAR(20) NOT NULL,\n    book_id INT NOT NULL,\n    loan_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    due_date DATETIME NOT NULL,\n    return_date DATETIME NULL,\n    loan_period_days INT NOT NULL CHECK (loan_period_days IN (7, 14, 30)),\n    status ENUM('대출중', '연체', '반납완료', '연장') DEFAULT '대출중',\n    extension_count INT DEFAULT 0,\n    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,\n    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n    FOREIGN KEY (member_id) REFERENCES members(member_id),\n    FOREIGN KEY (book_id) REFERENCES books(book_id),\n    INDEX idx_member_id (member_id),\n    INDEX idx_book_id (book_id),\n    INDEX idx_status (status),\n    INDEX idx_due_date (due_date)\n);\n```\n```sql\nCREATE TABLE reservations (\n    reservation_id INT AUTO_INCREMENT PRIMARY KEY,\n    member_id VARCHAR(20) NOT NULL,\n    book_id INT NOT NULL,\n    reservation_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    status ENUM('예약중', '예약완료', '예약취소', '예약만료') DEFAULT '예약중',\n    notification_sent BOOLEAN DEFAULT FALSE,\n    expiry_date DATETIME NULL,\n    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,\n    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n    FOREIGN KEY (member_id) REFERENCES members(member_id),\n    FOREIGN KEY (book_id) REFERENCES books(book_id),\n    INDEX idx_member_id (member_id),\n    INDEX idx_book_id (book_id),\n    INDEX idx_status (status),\n    INDEX idx_reservation_date (reservation_date)\n);\n```\n```sql\nCREATE TABLE loan_history (\n    history_id INT AUTO_INCREMENT PRIMARY KEY,\n    loan_id INT NOT NULL,\n    action_type ENUM('대출', '반납', '연장', '연체알림', '분실신고') NOT NULL,\n    action_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    previous_due_date DATETIME NULL,\n    new_due_date DATETIME NULL,\n    notes TEXT,\n    processed_by VARCHAR(100),\n    FOREIGN KEY (loan_id) REFERENCES loans(loan_id),\n    INDEX idx_loan_id (loan_id),\n    INDEX idx_action_type (action_type),\n    INDEX idx_action_date (action_date)\n);\n```\n## Event\n\n```json\n{\n  \"name\": \"BookLoaned\",\n  \"displayName\": \"도서 대출됨\",\n  \"actor\": \"Member\",\n  \"level\": 4,\n  \"description\": \"회원이 도서 대출을 신청하고, 회원 인증 및 도서 상태 확인 후 대출이 승인됨. 대출 기간이 설정되고 도서 상태가 '대출중'으로 변경됨.\",\n  \"inputs\": [\n    \"회원번호\",\n    \"이름\",\n    \"도서 식별자\",\n    \"대출 기간(7/14/30일)\"\n  ],\n  \"outputs\": [\n    \"대출 정보\",\n    \"도서 상태: 대출중\"\n  ],\n  \"nextEvents\": [\n    \"BookStatusChanged\",\n    \"LoanHistoryRecorded\"\n  ]\n}\n```\n\n```json\n{\n  \"name\": \"BookReserved\",\n  \"displayName\": \"도서 예약됨\",\n  \"actor\": \"Member\",\n  \"level\": 5,\n  \"description\": \"회원이 대출 중인 도서에 대해 예약을 신청함. 예약이 완료되면 도서 상태가 '예약중'으로 변경됨.\",\n  \"inputs\": [\n    \"회원번호\",\n    \"도서 식별자\"\n  ],\n  \"outputs\": [\n    \"예약 정보\",\n    \"도서 상태: 예약중\"\n  ],\n  \"nextEvents\": [\n    \"BookStatusChanged\",\n    \"ReservationHistoryRecorded\"\n  ]\n}\n```\n\n```json\n{\n  \"name\": \"BookReturned\",\n  \"displayName\": \"도서 반납됨\",\n  \"actor\": \"Member\",\n  \"level\": 6,\n  \"description\": \"회원이 대출한 도서를 반납함. 반납 시 도서 상태가 '대출가능'으로 변경되고, 예약자가 있을 경우 '예약중'으로 변경됨.\",\n  \"inputs\": [\n    \"회원번호\",\n    \"도서 식별자\"\n  ],\n  \"outputs\": [\n    \"도서 상태: 대출가능 또는 예약중\",\n    \"반납 처리 정보\"\n  ],\n  \"nextEvents\": [\n    \"BookStatusChanged\",\n    \"LoanHistoryRecorded\"\n  ]\n}\n```\n\n```json\n{\n  \"name\": \"LoanExtended\",\n  \"displayName\": \"대출 연장됨\",\n  \"actor\": \"Member\",\n  \"level\": 7,\n  \"description\": \"회원이 대출 중인 도서의 대출 기간을 연장함. 연장 후 대출 정보와 반납 예정일이 갱신됨.\",\n  \"inputs\": [\n    \"회원번호\",\n    \"도서 식별자\",\n    \"연장 기간\"\n  ],\n  \"outputs\": [\n    \"갱신된 대출 정보\",\n    \"새 반납 예정일\"\n  ],\n  \"nextEvents\": [\n    \"LoanHistoryRecorded\"\n  ]\n}\n```\n\n## Context Relations\n\n### BookManagement-LoanAndReservation\n- **Type**: Pub/Sub\n- **Direction**: receives from 도서 관리 (BookManagement)\n- **Reason**: 도서 상태 변경(대출가능, 대출중, 예약중, 폐기 등)이 발생하면 대출/반납 및 예약 컨텍스트에서 이를 구독하여 대출/예약 프로세스에 반영한다.\n- **Interaction Pattern**: 도서 관리에서 도서 상태 변경 이벤트를 발행하면 대출/반납 및 예약 컨텍스트가 이를 구독하여 처리한다.\n\n### LoanAndReservation-LoanHistory\n- **Type**: Pub/Sub\n- **Direction**: sends to 이력 관리 (LoanHistory)\n- **Reason**: 대출, 반납, 연장, 예약 등 이벤트 발생 시 이력 관리 컨텍스트에서 해당 이벤트를 구독하여 이력을 기록한다.\n- **Interaction Pattern**: 대출/반납 및 예약에서 대출/반납/연장/예약 이벤트를 발행하면 이력 관리 컨텍스트가 이를 구독하여 이력 데이터를 생성한다."
+                        },
+                        {
+                            "boundedContext": {
+                                "name": "LoanHistory",
+                                "alias": "이력 관리",
+                                "displayName": "이력 관리",
+                                "description": "# Bounded Context Overview: LoanHistory (이력 관리)\n\n## Role\n도서별 대출 및 예약 이력, 상태 변경 이력을 기록하고 조회할 수 있도록 한다.\n\n## Key Events\n- LoanHistoryRecorded\n- ReservationHistoryRecorded\n\n# Requirements\n\n## userStory\n\n대출 이력\n\n상태 변경\n\n## DDL\n\n```sql\nCREATE TABLE loan_history (\n    history_id INT AUTO_INCREMENT PRIMARY KEY,\n    loan_id INT NOT NULL,\n    action_type ENUM('대출', '반납', '연장', '연체알림', '분실신고') NOT NULL,\n    action_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    previous_due_date DATETIME NULL,\n    new_due_date DATETIME NULL,\n    notes TEXT,\n    processed_by VARCHAR(100),\n    FOREIGN KEY (loan_id) REFERENCES loans(loan_id),\n    INDEX idx_loan_id (loan_id),\n    INDEX idx_action_type (action_type),\n    INDEX\n```\n## Event\n\n```json\n{\n  \"name\": \"LoanHistoryRecorded\",\n  \"displayName\": \"대출 이력 기록됨\",\n  \"actor\": \"System\",\n  \"level\": 8,\n  \"description\": \"도서의 대출, 반납, 연장 등 대출 관련 이력이 시스템에 기록됨.\",\n  \"inputs\": [\n    \"대출/반납/연장 이벤트 정보\"\n  ],\n  \"outputs\": [\n    \"대출 이력 데이터\"\n  ],\n  \"nextEvents\": []\n}\n```\n\n```json\n{\n  \"name\": \"ReservationHistoryRecorded\",\n  \"displayName\": \"예약 이력 기록됨\",\n  \"actor\": \"System\",\n  \"level\": 9,\n  \"description\": \"도서 예약 관련 이력이 시스템에 기록됨.\",\n  \"inputs\": [\n    \"예약 이벤트 정보\"\n  ],\n  \"outputs\": [\n    \"예약 이력 데이터\"\n  ],\n  \"nextEvents\": []\n}\n```\n\n## Context Relations\n\n### LoanAndReservation-LoanHistory\n- **Type**: Pub/Sub\n- **Direction**: receives from 대출/반납 및 예약 (LoanAndReservation)\n- **Reason**: 대출, 반납, 연장, 예약 등 이벤트 발생 시 이력 관리 컨텍스트에서 해당 이벤트를 구독하여 이력을 기록한다.\n- **Interaction Pattern**: 대출/반납 및 예약에서 대출/반납/연장/예약 이벤트를 발행하면 이력 관리 컨텍스트가 이를 구독하여 이력 데이터를 생성한다.\n\n### BookManagement-LoanHistory\n- **Type**: Pub/Sub\n- **Direction**: receives from 도서 관리 (BookManagement)\n- **Reason**: 도서 등록, 폐기 등 도서 상태 변화 이력도 이력 관리 컨텍스트에서 기록할 수 있도록 이벤트를 발행한다.\n- **Interaction Pattern**: 도서 관리에서 도서 등록, 폐기 등 상태 변화 이벤트를 발행하면 이력 관리 컨텍스트가 이를 구독하여 상태 변경 이력을 기록한다.",
+                                "aggregates": [
+                                    {
+                                        "name": "LoanHistory",
+                                        "alias": "대출 이력"
+                                    },
+                                    {
+                                        "name": "ReservationHistory",
+                                        "alias": "예약 이력"
+                                    }
+                                ],
+                                "requirements": {
+                                    "userStory": "대출 이력\n상태 변경",
+                                    "ddl": "CREATE TABLE loan_history (\n    history_id INT AUTO_INCREMENT PRIMARY KEY,\n    loan_id INT NOT NULL,\n    action_type ENUM('대출', '반납', '연장', '연체알림', '분실신고') NOT NULL,\n    action_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    previous_due_date DATETIME NULL,\n    new_due_date DATETIME NULL,\n    notes TEXT,\n    processed_by VARCHAR(100),\n    FOREIGN KEY (loan_id) REFERENCES loans(loan_id),\n    INDEX idx_loan_id (loan_id),\n    INDEX idx_action_type (action_type),\n    INDEX",
+                                    "event": "{\n  \"name\": \"LoanHistoryRecorded\",\n  \"displayName\": \"대출 이력 기록됨\",\n  \"actor\": \"System\",\n  \"level\": 8,\n  \"description\": \"도서의 대출, 반납, 연장 등 대출 관련 이력이 시스템에 기록됨.\",\n  \"inputs\": [\n    \"대출/반납/연장 이벤트 정보\"\n  ],\n  \"outputs\": [\n    \"대출 이력 데이터\"\n  ],\n  \"nextEvents\": [],\n  \"refs\": [\n    [\n      [\n        9,\n        8\n      ],\n      [\n        9,\n        65\n      ]\n    ]\n  ]\n}\n{\n  \"name\": \"ReservationHistoryRecorded\",\n  \"displayName\": \"예약 이력 기록됨\",\n  \"actor\": \"System\",\n  \"level\": 9,\n  \"description\": \"도서 예약 관련 이력이 시스템에 기록됨.\",\n  \"inputs\": [\n    \"예약 이벤트 정보\"\n  ],\n  \"outputs\": [\n    \"예약 이력 데이터\"\n  ],\n  \"nextEvents\": [],\n  \"refs\": [\n    [\n      [\n        9,\n        15\n      ],\n      [\n        9,\n        65\n      ]\n    ]\n  ]\n}",
+                                    "eventNames": "LoanHistoryRecorded, ReservationHistoryRecorded 이벤트가 발생할 수 있어.",
+                                    "ddlFields": [
+                                        {
+                                            "fieldName": "history_id",
+                                            "refs": [
+                                                [
+                                                    [
+                                                        100,
+                                                        5
+                                                    ],
+                                                    [
+                                                        100,
+                                                        45
+                                                    ]
+                                                ]
+                                            ]
+                                        },
+                                        {
+                                            "fieldName": "loan_id",
+                                            "refs": [
+                                                [
+                                                    [
+                                                        101,
+                                                        5
+                                                    ],
+                                                    [
+                                                        101,
+                                                        24
+                                                    ]
+                                                ]
+                                            ]
+                                        },
+                                        {
+                                            "fieldName": "action_date",
+                                            "refs": [
+                                                [
+                                                    [
+                                                        103,
+                                                        5
+                                                    ],
+                                                    [
+                                                        103,
+                                                        50
+                                                    ]
+                                                ]
+                                            ]
+                                        },
+                                        {
+                                            "fieldName": "previous_due_date",
+                                            "refs": [
+                                                [
+                                                    [
+                                                        104,
+                                                        5
+                                                    ],
+                                                    [
+                                                        104,
+                                                        35
+                                                    ]
+                                                ]
+                                            ]
+                                        },
+                                        {
+                                            "fieldName": "new_due_date",
+                                            "refs": [
+                                                [
+                                                    [
+                                                        105,
+                                                        5
+                                                    ],
+                                                    [
+                                                        105,
+                                                        30
+                                                    ]
+                                                ]
+                                            ]
+                                        },
+                                        {
+                                            "fieldName": "notes",
+                                            "refs": [
+                                                [
+                                                    [
+                                                        106,
+                                                        5
+                                                    ],
+                                                    [
+                                                        106,
+                                                        14
+                                                    ]
+                                                ]
+                                            ]
+                                        },
+                                        {
+                                            "fieldName": "processed_by",
+                                            "refs": [
+                                                [
+                                                    [
+                                                        107,
+                                                        5
+                                                    ],
+                                                    [
+                                                        107,
+                                                        29
+                                                    ]
+                                                ]
+                                            ]
+                                        }
+                                    ],
+                                    "description": "# Bounded Context Overview: LoanHistory (이력 관리)\n\n## Role\n도서별 대출 및 예약 이력, 상태 변경 이력을 기록하고 조회할 수 있도록 한다.\n\n## Key Events\n- LoanHistoryRecorded\n- ReservationHistoryRecorded\n\n# Requirements\n\n## userStory\n\n대출 이력\n\n상태 변경\n\n## DDL\n\n```sql\nCREATE TABLE loan_history (\n    history_id INT AUTO_INCREMENT PRIMARY KEY,\n    loan_id INT NOT NULL,\n    action_type ENUM('대출', '반납', '연장', '연체알림', '분실신고') NOT NULL,\n    action_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    previous_due_date DATETIME NULL,\n    new_due_date DATETIME NULL,\n    notes TEXT,\n    processed_by VARCHAR(100),\n    FOREIGN KEY (loan_id) REFERENCES loans(loan_id),\n    INDEX idx_loan_id (loan_id),\n    INDEX idx_action_type (action_type),\n    INDEX\n```\n## Event\n\n```json\n{\n  \"name\": \"LoanHistoryRecorded\",\n  \"displayName\": \"대출 이력 기록됨\",\n  \"actor\": \"System\",\n  \"level\": 8,\n  \"description\": \"도서의 대출, 반납, 연장 등 대출 관련 이력이 시스템에 기록됨.\",\n  \"inputs\": [\n    \"대출/반납/연장 이벤트 정보\"\n  ],\n  \"outputs\": [\n    \"대출 이력 데이터\"\n  ],\n  \"nextEvents\": []\n}\n```\n\n```json\n{\n  \"name\": \"ReservationHistoryRecorded\",\n  \"displayName\": \"예약 이력 기록됨\",\n  \"actor\": \"System\",\n  \"level\": 9,\n  \"description\": \"도서 예약 관련 이력이 시스템에 기록됨.\",\n  \"inputs\": [\n    \"예약 이벤트 정보\"\n  ],\n  \"outputs\": [\n    \"예약 이력 데이터\"\n  ],\n  \"nextEvents\": []\n}\n```\n\n## Context Relations\n\n### LoanAndReservation-LoanHistory\n- **Type**: Pub/Sub\n- **Direction**: receives from 대출/반납 및 예약 (LoanAndReservation)\n- **Reason**: 대출, 반납, 연장, 예약 등 이벤트 발생 시 이력 관리 컨텍스트에서 해당 이벤트를 구독하여 이력을 기록한다.\n- **Interaction Pattern**: 대출/반납 및 예약에서 대출/반납/연장/예약 이벤트를 발행하면 이력 관리 컨텍스트가 이를 구독하여 이력 데이터를 생성한다.\n\n### BookManagement-LoanHistory\n- **Type**: Pub/Sub\n- **Direction**: receives from 도서 관리 (BookManagement)\n- **Reason**: 도서 등록, 폐기 등 도서 상태 변화 이력도 이력 관리 컨텍스트에서 기록할 수 있도록 이벤트를 발행한다.\n- **Interaction Pattern**: 도서 관리에서 도서 등록, 폐기 등 상태 변화 이벤트를 발행하면 이력 관리 컨텍스트가 이를 구독하여 상태 변경 이력을 기록한다.",
+                                    "traceMap": {
+                                        "4": {
+                                            "refs": [
+                                                [
+                                                    [
+                                                        9,
+                                                        8
+                                                    ],
+                                                    [
+                                                        9,
+                                                        67
+                                                    ]
+                                                ]
+                                            ],
+                                            "isDirectMatching": false
+                                        },
+                                        "7": {
+                                            "refs": [
+                                                [
+                                                    [
+                                                        9,
+                                                        8
+                                                    ],
+                                                    [
+                                                        9,
+                                                        65
+                                                    ]
+                                                ]
+                                            ],
+                                            "isDirectMatching": false
+                                        },
+                                        "8": {
+                                            "refs": [
+                                                [
+                                                    [
+                                                        9,
+                                                        15
+                                                    ],
+                                                    [
+                                                        9,
+                                                        65
+                                                    ]
+                                                ]
+                                            ],
+                                            "isDirectMatching": false
+                                        },
+                                        "14": {
+                                            "refs": [
+                                                [
+                                                    [
+                                                        9,
+                                                        1
+                                                    ],
+                                                    [
+                                                        9,
+                                                        5
+                                                    ]
+                                                ]
+                                            ],
+                                            "isDirectMatching": true
+                                        },
+                                        "16": {
+                                            "refs": [
+                                                [
+                                                    [
+                                                        9,
+                                                        1
+                                                    ],
+                                                    [
+                                                        9,
+                                                        5
+                                                    ]
+                                                ]
+                                            ],
+                                            "isDirectMatching": true
+                                        },
+                                        "21": {
+                                            "refs": [
+                                                [
+                                                    [
+                                                        99,
+                                                        1
+                                                    ],
+                                                    [
+                                                        99,
+                                                        27
+                                                    ]
+                                                ]
+                                            ],
+                                            "isDirectMatching": true
+                                        },
+                                        "22": {
+                                            "refs": [
+                                                [
+                                                    [
+                                                        100,
+                                                        1
+                                                    ],
+                                                    [
+                                                        100,
+                                                        46
+                                                    ]
+                                                ]
+                                            ],
+                                            "isDirectMatching": true
+                                        },
+                                        "23": {
+                                            "refs": [
+                                                [
+                                                    [
+                                                        101,
+                                                        1
+                                                    ],
+                                                    [
+                                                        101,
+                                                        25
+                                                    ]
+                                                ]
+                                            ],
+                                            "isDirectMatching": true
+                                        },
+                                        "24": {
+                                            "refs": [
+                                                [
+                                                    [
+                                                        102,
+                                                        1
+                                                    ],
+                                                    [
+                                                        102,
+                                                        64
+                                                    ]
+                                                ]
+                                            ],
+                                            "isDirectMatching": true
+                                        },
+                                        "25": {
+                                            "refs": [
+                                                [
+                                                    [
+                                                        103,
+                                                        1
+                                                    ],
+                                                    [
+                                                        103,
+                                                        51
+                                                    ]
+                                                ]
+                                            ],
+                                            "isDirectMatching": true
+                                        },
+                                        "26": {
+                                            "refs": [
+                                                [
+                                                    [
+                                                        104,
+                                                        1
+                                                    ],
+                                                    [
+                                                        104,
+                                                        36
+                                                    ]
+                                                ]
+                                            ],
+                                            "isDirectMatching": true
+                                        },
+                                        "27": {
+                                            "refs": [
+                                                [
+                                                    [
+                                                        105,
+                                                        1
+                                                    ],
+                                                    [
+                                                        105,
+                                                        31
+                                                    ]
+                                                ]
+                                            ],
+                                            "isDirectMatching": true
+                                        },
+                                        "28": {
+                                            "refs": [
+                                                [
+                                                    [
+                                                        106,
+                                                        1
+                                                    ],
+                                                    [
+                                                        106,
+                                                        15
+                                                    ]
+                                                ]
+                                            ],
+                                            "isDirectMatching": true
+                                        },
+                                        "29": {
+                                            "refs": [
+                                                [
+                                                    [
+                                                        107,
+                                                        1
+                                                    ],
+                                                    [
+                                                        107,
+                                                        30
+                                                    ]
+                                                ]
+                                            ],
+                                            "isDirectMatching": true
+                                        },
+                                        "30": {
+                                            "refs": [
+                                                [
+                                                    [
+                                                        108,
+                                                        1
+                                                    ],
+                                                    [
+                                                        108,
+                                                        52
+                                                    ]
+                                                ]
+                                            ],
+                                            "isDirectMatching": true
+                                        },
+                                        "31": {
+                                            "refs": [
+                                                [
+                                                    [
+                                                        109,
+                                                        1
+                                                    ],
+                                                    [
+                                                        109,
+                                                        32
+                                                    ]
+                                                ]
+                                            ],
+                                            "isDirectMatching": true
+                                        },
+                                        "32": {
+                                            "refs": [
+                                                [
+                                                    [
+                                                        110,
+                                                        1
+                                                    ],
+                                                    [
+                                                        110,
+                                                        40
+                                                    ]
+                                                ]
+                                            ],
+                                            "isDirectMatching": true
+                                        },
+                                        "33": {
+                                            "refs": [
+                                                [
+                                                    [
+                                                        111,
+                                                        1
+                                                    ],
+                                                    [
+                                                        111,
+                                                        9
+                                                    ]
+                                                ]
+                                            ],
+                                            "isDirectMatching": true
+                                        },
+                                        "38": {
+                                            "refs": [
+                                                [
+                                                    [
+                                                        9,
+                                                        8
+                                                    ],
+                                                    [
+                                                        9,
+                                                        65
+                                                    ]
+                                                ]
+                                            ],
+                                            "isDirectMatching": false
+                                        },
+                                        "39": {
+                                            "refs": [
+                                                [
+                                                    [
+                                                        9,
+                                                        8
+                                                    ],
+                                                    [
+                                                        9,
+                                                        65
+                                                    ]
+                                                ]
+                                            ],
+                                            "isDirectMatching": false
+                                        },
+                                        "40": {
+                                            "refs": [
+                                                [
+                                                    [
+                                                        9,
+                                                        8
+                                                    ],
+                                                    [
+                                                        9,
+                                                        65
+                                                    ]
+                                                ]
+                                            ],
+                                            "isDirectMatching": false
+                                        },
+                                        "41": {
+                                            "refs": [
+                                                [
+                                                    [
+                                                        9,
+                                                        8
+                                                    ],
+                                                    [
+                                                        9,
+                                                        65
+                                                    ]
+                                                ]
+                                            ],
+                                            "isDirectMatching": false
+                                        },
+                                        "42": {
+                                            "refs": [
+                                                [
+                                                    [
+                                                        9,
+                                                        8
+                                                    ],
+                                                    [
+                                                        9,
+                                                        65
+                                                    ]
+                                                ]
+                                            ],
+                                            "isDirectMatching": false
+                                        },
+                                        "43": {
+                                            "refs": [
+                                                [
+                                                    [
+                                                        9,
+                                                        8
+                                                    ],
+                                                    [
+                                                        9,
+                                                        65
+                                                    ]
+                                                ]
+                                            ],
+                                            "isDirectMatching": false
+                                        },
+                                        "44": {
+                                            "refs": [
+                                                [
+                                                    [
+                                                        9,
+                                                        8
+                                                    ],
+                                                    [
+                                                        9,
+                                                        65
+                                                    ]
+                                                ]
+                                            ],
+                                            "isDirectMatching": false
+                                        },
+                                        "45": {
+                                            "refs": [
+                                                [
+                                                    [
+                                                        9,
+                                                        8
+                                                    ],
+                                                    [
+                                                        9,
+                                                        65
+                                                    ]
+                                                ]
+                                            ],
+                                            "isDirectMatching": false
+                                        },
+                                        "46": {
+                                            "refs": [
+                                                [
+                                                    [
+                                                        9,
+                                                        8
+                                                    ],
+                                                    [
+                                                        9,
+                                                        65
+                                                    ]
+                                                ]
+                                            ],
+                                            "isDirectMatching": false
+                                        },
+                                        "47": {
+                                            "refs": [
+                                                [
+                                                    [
+                                                        9,
+                                                        8
+                                                    ],
+                                                    [
+                                                        9,
+                                                        65
+                                                    ]
+                                                ]
+                                            ],
+                                            "isDirectMatching": false
+                                        },
+                                        "48": {
+                                            "refs": [
+                                                [
+                                                    [
+                                                        9,
+                                                        8
+                                                    ],
+                                                    [
+                                                        9,
+                                                        65
+                                                    ]
+                                                ]
+                                            ],
+                                            "isDirectMatching": false
+                                        },
+                                        "49": {
+                                            "refs": [
+                                                [
+                                                    [
+                                                        9,
+                                                        8
+                                                    ],
+                                                    [
+                                                        9,
+                                                        65
+                                                    ]
+                                                ]
+                                            ],
+                                            "isDirectMatching": false
+                                        },
+                                        "50": {
+                                            "refs": [
+                                                [
+                                                    [
+                                                        9,
+                                                        8
+                                                    ],
+                                                    [
+                                                        9,
+                                                        65
+                                                    ]
+                                                ]
+                                            ],
+                                            "isDirectMatching": false
+                                        },
+                                        "51": {
+                                            "refs": [
+                                                [
+                                                    [
+                                                        9,
+                                                        8
+                                                    ],
+                                                    [
+                                                        9,
+                                                        65
+                                                    ]
+                                                ]
+                                            ],
+                                            "isDirectMatching": false
+                                        },
+                                        "55": {
+                                            "refs": [
+                                                [
+                                                    [
+                                                        9,
+                                                        15
+                                                    ],
+                                                    [
+                                                        9,
+                                                        65
+                                                    ]
+                                                ]
+                                            ],
+                                            "isDirectMatching": false
+                                        },
+                                        "56": {
+                                            "refs": [
+                                                [
+                                                    [
+                                                        9,
+                                                        15
+                                                    ],
+                                                    [
+                                                        9,
+                                                        65
+                                                    ]
+                                                ]
+                                            ],
+                                            "isDirectMatching": false
+                                        },
+                                        "57": {
+                                            "refs": [
+                                                [
+                                                    [
+                                                        9,
+                                                        15
+                                                    ],
+                                                    [
+                                                        9,
+                                                        65
+                                                    ]
+                                                ]
+                                            ],
+                                            "isDirectMatching": false
+                                        },
+                                        "58": {
+                                            "refs": [
+                                                [
+                                                    [
+                                                        9,
+                                                        15
+                                                    ],
+                                                    [
+                                                        9,
+                                                        65
+                                                    ]
+                                                ]
+                                            ],
+                                            "isDirectMatching": false
+                                        },
+                                        "59": {
+                                            "refs": [
+                                                [
+                                                    [
+                                                        9,
+                                                        15
+                                                    ],
+                                                    [
+                                                        9,
+                                                        65
+                                                    ]
+                                                ]
+                                            ],
+                                            "isDirectMatching": false
+                                        },
+                                        "60": {
+                                            "refs": [
+                                                [
+                                                    [
+                                                        9,
+                                                        15
+                                                    ],
+                                                    [
+                                                        9,
+                                                        65
+                                                    ]
+                                                ]
+                                            ],
+                                            "isDirectMatching": false
+                                        },
+                                        "61": {
+                                            "refs": [
+                                                [
+                                                    [
+                                                        9,
+                                                        15
+                                                    ],
+                                                    [
+                                                        9,
+                                                        65
+                                                    ]
+                                                ]
+                                            ],
+                                            "isDirectMatching": false
+                                        },
+                                        "62": {
+                                            "refs": [
+                                                [
+                                                    [
+                                                        9,
+                                                        15
+                                                    ],
+                                                    [
+                                                        9,
+                                                        65
+                                                    ]
+                                                ]
+                                            ],
+                                            "isDirectMatching": false
+                                        },
+                                        "63": {
+                                            "refs": [
+                                                [
+                                                    [
+                                                        9,
+                                                        15
+                                                    ],
+                                                    [
+                                                        9,
+                                                        65
+                                                    ]
+                                                ]
+                                            ],
+                                            "isDirectMatching": false
+                                        },
+                                        "64": {
+                                            "refs": [
+                                                [
+                                                    [
+                                                        9,
+                                                        15
+                                                    ],
+                                                    [
+                                                        9,
+                                                        65
+                                                    ]
+                                                ]
+                                            ],
+                                            "isDirectMatching": false
+                                        },
+                                        "65": {
+                                            "refs": [
+                                                [
+                                                    [
+                                                        9,
+                                                        15
+                                                    ],
+                                                    [
+                                                        9,
+                                                        65
+                                                    ]
+                                                ]
+                                            ],
+                                            "isDirectMatching": false
+                                        },
+                                        "66": {
+                                            "refs": [
+                                                [
+                                                    [
+                                                        9,
+                                                        15
+                                                    ],
+                                                    [
+                                                        9,
+                                                        65
+                                                    ]
+                                                ]
+                                            ],
+                                            "isDirectMatching": false
+                                        },
+                                        "67": {
+                                            "refs": [
+                                                [
+                                                    [
+                                                        9,
+                                                        15
+                                                    ],
+                                                    [
+                                                        9,
+                                                        65
+                                                    ]
+                                                ]
+                                            ],
+                                            "isDirectMatching": false
+                                        },
+                                        "68": {
+                                            "refs": [
+                                                [
+                                                    [
+                                                        9,
+                                                        15
+                                                    ],
+                                                    [
+                                                        9,
+                                                        65
+                                                    ]
+                                                ]
+                                            ],
+                                            "isDirectMatching": false
+                                        },
+                                        "74": {
+                                            "refs": [
+                                                [
+                                                    [
+                                                        7,
+                                                        1
+                                                    ],
+                                                    [
+                                                        9,
+                                                        67
+                                                    ]
+                                                ]
+                                            ],
+                                            "isDirectMatching": false
+                                        },
+                                        "75": {
+                                            "refs": [
+                                                [
+                                                    [
+                                                        7,
+                                                        1
+                                                    ],
+                                                    [
+                                                        9,
+                                                        67
+                                                    ]
+                                                ]
+                                            ],
+                                            "isDirectMatching": false
+                                        },
+                                        "76": {
+                                            "refs": [
+                                                [
+                                                    [
+                                                        7,
+                                                        1
+                                                    ],
+                                                    [
+                                                        9,
+                                                        67
+                                                    ]
+                                                ]
+                                            ],
+                                            "isDirectMatching": false
+                                        },
+                                        "77": {
+                                            "refs": [
+                                                [
+                                                    [
+                                                        7,
+                                                        1
+                                                    ],
+                                                    [
+                                                        9,
+                                                        67
+                                                    ]
+                                                ]
+                                            ],
+                                            "isDirectMatching": false
+                                        },
+                                        "80": {
+                                            "refs": [
+                                                [
+                                                    [
+                                                        3,
+                                                        1
+                                                    ],
+                                                    [
+                                                        9,
+                                                        67
+                                                    ]
+                                                ]
+                                            ],
+                                            "isDirectMatching": false
+                                        },
+                                        "81": {
+                                            "refs": [
+                                                [
+                                                    [
+                                                        3,
+                                                        1
+                                                    ],
+                                                    [
+                                                        9,
+                                                        67
+                                                    ]
+                                                ]
+                                            ],
+                                            "isDirectMatching": false
+                                        },
+                                        "82": {
+                                            "refs": [
+                                                [
+                                                    [
+                                                        3,
+                                                        1
+                                                    ],
+                                                    [
+                                                        9,
+                                                        67
+                                                    ]
+                                                ]
+                                            ],
+                                            "isDirectMatching": false
+                                        },
+                                        "83": {
+                                            "refs": [
+                                                [
+                                                    [
+                                                        3,
+                                                        1
+                                                    ],
+                                                    [
+                                                        9,
+                                                        67
+                                                    ]
+                                                ]
+                                            ],
+                                            "isDirectMatching": false
+                                        }
+                                    },
+                                    "commandNames": [],
+                                    "readModelNames": [
+                                        "BookLoanHistory",
+                                        "BookStatusChangeHistory"
+                                    ]
+                                }
+                            },
+                            "description": "# Bounded Context Overview: LoanHistory (이력 관리)\n\n## Role\n도서별 대출 및 예약 이력, 상태 변경 이력을 기록하고 조회할 수 있도록 한다.\n\n## Key Events\n- LoanHistoryRecorded\n- ReservationHistoryRecorded\n\n# Requirements\n\n## userStory\n\n대출 이력\n\n상태 변경\n\n## DDL\n\n```sql\nCREATE TABLE loan_history (\n    history_id INT AUTO_INCREMENT PRIMARY KEY,\n    loan_id INT NOT NULL,\n    action_type ENUM('대출', '반납', '연장', '연체알림', '분실신고') NOT NULL,\n    action_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    previous_due_date DATETIME NULL,\n    new_due_date DATETIME NULL,\n    notes TEXT,\n    processed_by VARCHAR(100),\n    FOREIGN KEY (loan_id) REFERENCES loans(loan_id),\n    INDEX idx_loan_id (loan_id),\n    INDEX idx_action_type (action_type),\n    INDEX\n```\n## Event\n\n```json\n{\n  \"name\": \"LoanHistoryRecorded\",\n  \"displayName\": \"대출 이력 기록됨\",\n  \"actor\": \"System\",\n  \"level\": 8,\n  \"description\": \"도서의 대출, 반납, 연장 등 대출 관련 이력이 시스템에 기록됨.\",\n  \"inputs\": [\n    \"대출/반납/연장 이벤트 정보\"\n  ],\n  \"outputs\": [\n    \"대출 이력 데이터\"\n  ],\n  \"nextEvents\": []\n}\n```\n\n```json\n{\n  \"name\": \"ReservationHistoryRecorded\",\n  \"displayName\": \"예약 이력 기록됨\",\n  \"actor\": \"System\",\n  \"level\": 9,\n  \"description\": \"도서 예약 관련 이력이 시스템에 기록됨.\",\n  \"inputs\": [\n    \"예약 이벤트 정보\"\n  ],\n  \"outputs\": [\n    \"예약 이력 데이터\"\n  ],\n  \"nextEvents\": []\n}\n```\n\n## Context Relations\n\n### LoanAndReservation-LoanHistory\n- **Type**: Pub/Sub\n- **Direction**: receives from 대출/반납 및 예약 (LoanAndReservation)\n- **Reason**: 대출, 반납, 연장, 예약 등 이벤트 발생 시 이력 관리 컨텍스트에서 해당 이벤트를 구독하여 이력을 기록한다.\n- **Interaction Pattern**: 대출/반납 및 예약에서 대출/반납/연장/예약 이벤트를 발행하면 이력 관리 컨텍스트가 이를 구독하여 이력 데이터를 생성한다.\n\n### BookManagement-LoanHistory\n- **Type**: Pub/Sub\n- **Direction**: receives from 도서 관리 (BookManagement)\n- **Reason**: 도서 등록, 폐기 등 도서 상태 변화 이력도 이력 관리 컨텍스트에서 기록할 수 있도록 이벤트를 발행한다.\n- **Interaction Pattern**: 도서 관리에서 도서 등록, 폐기 등 상태 변화 이벤트를 발행하면 이력 관리 컨텍스트가 이를 구독하여 상태 변경 이력을 기록한다."
                         }
                     ],
                     "initialAccumulatedDrafts": {
@@ -38507,6 +44185,24 @@ export const aggregateDraftScenarios = {
                                 "aggregate": {
                                     "name": "Reservation",
                                     "alias": "예약"
+                                },
+                                "enumerations": [],
+                                "valueObjects": []
+                            }
+                        ],
+                        "LoanHistory": [
+                            {
+                                "aggregate": {
+                                    "name": "LoanHistory",
+                                    "alias": "대출 이력"
+                                },
+                                "enumerations": [],
+                                "valueObjects": []
+                            },
+                            {
+                                "aggregate": {
+                                    "name": "ReservationHistory",
+                                    "alias": "예약 이력"
                                 },
                                 "enumerations": [],
                                 "valueObjects": []
@@ -38736,7 +44432,7 @@ export const aggregateDraftScenarios = {
                                                 ],
                                                 [
                                                     32,
-                                                    22
+                                                    43
                                                 ]
                                             ],
                                             [
@@ -38758,16 +44454,6 @@ export const aggregateDraftScenarios = {
                                                     89,
                                                     19
                                                 ]
-                                            ],
-                                            [
-                                                [
-                                                    3,
-                                                    183
-                                                ],
-                                                [
-                                                    3,
-                                                    265
-                                                ]
                                             ]
                                         ]
                                     },
@@ -38782,23 +44468,110 @@ export const aggregateDraftScenarios = {
                                                 ],
                                                 [
                                                     31,
-                                                    41
+                                                    42
                                                 ]
                                             ],
                                             [
                                                 [
                                                     3,
-                                                    86
+                                                    57
                                                 ],
                                                 [
                                                     3,
-                                                    156
+                                                    100
+                                                ]
+                                            ],
+                                            [
+                                                [
+                                                    3,
+                                                    105
+                                                ],
+                                                [
+                                                    3,
+                                                    128
+                                                ]
+                                            ],
+                                            [
+                                                [
+                                                    3,
+                                                    136
+                                                ],
+                                                [
+                                                    3,
+                                                    161
                                                 ]
                                             ]
                                         ]
                                     }
                                 ],
                                 "valueObjects": [
+                                    {
+                                        "name": "BookSpecification",
+                                        "alias": "도서 상세 정보",
+                                        "referencedAggregateName": "",
+                                        "refs": [
+                                            [
+                                                [
+                                                    3,
+                                                    66
+                                                ],
+                                                [
+                                                    3,
+                                                    93
+                                                ]
+                                            ],
+                                            [
+                                                [
+                                                    27,
+                                                    5
+                                                ],
+                                                [
+                                                    27,
+                                                    32
+                                                ]
+                                            ],
+                                            [
+                                                [
+                                                    28,
+                                                    1
+                                                ],
+                                                [
+                                                    28,
+                                                    37
+                                                ]
+                                            ],
+                                            [
+                                                [
+                                                    29,
+                                                    1
+                                                ],
+                                                [
+                                                    29,
+                                                    33
+                                                ]
+                                            ],
+                                            [
+                                                [
+                                                    30,
+                                                    1
+                                                ],
+                                                [
+                                                    30,
+                                                    36
+                                                ]
+                                            ],
+                                            [
+                                                [
+                                                    31,
+                                                    1
+                                                ],
+                                                [
+                                                    31,
+                                                    17
+                                                ]
+                                            ]
+                                        ]
+                                    },
                                     {
                                         "name": "LoanReference",
                                         "alias": "대출 참조",
@@ -38809,12 +44582,12 @@ export const aggregateDraftScenarios = {
                                         "refs": [
                                             [
                                                 [
-                                                    9,
-                                                    6
+                                                    3,
+                                                    184
                                                 ],
                                                 [
-                                                    9,
-                                                    10
+                                                    3,
+                                                    217
                                                 ]
                                             ],
                                             [
@@ -39145,22 +44918,22 @@ export const aggregateDraftScenarios = {
                             }
                         ],
                         "pros": {
-                            "cohesion": "도서의 등록, 상태 변경, 폐기 등 모든 핵심 도서 관리 기능이 Book Aggregate에 집중되어 있어 도메인 응집도가 매우 높음.",
-                            "coupling": "대출/예약과의 연동은 ValueObject 참조로만 처리되어 타 컨텍스트와의 결합도가 낮음.",
-                            "consistency": "도서 상태와 관련된 비즈니스 불변성이 단일 트랜잭션 내에서 강하게 보장됨.",
-                            "encapsulation": "도서의 상태, 대출/예약 참조, 폐기 정보 등 모든 도메인 규칙이 Book 내부에 은닉되어 있음.",
-                            "complexity": "구현 및 이해가 단순하며, 도서별 상태 관리가 한 곳에서 이루어져 개발자 부담이 적음.",
-                            "independence": "Book Aggregate만으로 도서 관리의 대부분을 처리할 수 있어 타 Aggregate 변화에 영향이 적음.",
-                            "performance": "도서 상태 변경, 폐기 등 주요 연산이 단일 Aggregate에서 처리되어 조회 및 갱신 성능이 우수함."
+                            "cohesion": "도서의 등록, 상태 관리, 폐기 등 모든 도서 관련 기능이 Book Aggregate 내에 집중되어 있어 일관된 트랜잭션 경계를 제공한다.",
+                            "coupling": "외부 컨텍스트(대출, 예약, 이력)와의 의존성을 ValueObject 참조로만 유지하여 결합도가 낮다.",
+                            "consistency": "도서 상태 변경, 폐기 등 핵심 비즈니스 규칙을 Aggregate 내부에서 원자적으로 보장할 수 있다.",
+                            "encapsulation": "도서의 상태, 상세 정보, 대출/예약 참조 등 도서 관리의 모든 세부 구현이 Aggregate 내부에 은닉된다.",
+                            "complexity": "단일 Aggregate로 구조가 단순하며, 도서 관리 업무에 대한 이해와 유지보수가 용이하다.",
+                            "independence": "도서 관리 정책 변경이 Aggregate 단위로 독립적으로 이루어질 수 있다.",
+                            "performance": "단일 Aggregate 접근으로 도서 상태 및 정보 조회·변경 시 쿼리 효율이 높다."
                         },
                         "cons": {
-                            "cohesion": "상태 변경 이력, 대출/예약 참조 등 다양한 책임이 Book에 집중되어 도메인 역할이 다소 혼재될 수 있음.",
-                            "coupling": "Book이 모든 도서 관련 정보를 직접 관리하므로, 도서 이력이나 확장 요구가 커질 경우 Aggregate가 비대해질 수 있음.",
-                            "consistency": "상태 변경 이력 등 부가 정보가 많아질수록 트랜잭션 크기가 커질 수 있음.",
-                            "encapsulation": "상태 이력 등 부가 기능이 많아질 경우 도메인 규칙의 은닉성이 다소 약화될 수 있음.",
-                            "complexity": "도서 관리와 이력 관리, 대출/예약 참조까지 모두 포함되어 Aggregate가 점차 복잡해질 수 있음.",
-                            "independence": "이력 관리 등 부가 기능 확장 시 Book Aggregate의 독립성이 저하될 수 있음.",
-                            "performance": "상태 변경 이력 등 부가 정보가 많아질 경우 일부 연산에서 성능 저하 가능성 있음."
+                            "cohesion": "상태 이력, 대출/예약 참조 등 다양한 책임이 한 Aggregate에 집중되어 도서 관리가 복잡해질 수 있다.",
+                            "coupling": "도서 상태 이력 등 확장 요구가 생기면 Aggregate 크기가 커져 외부 시스템과의 연동이 어려워질 수 있다.",
+                            "consistency": "상태 이력 등 대용량 데이터가 누적될 경우 트랜잭션 처리에 부담이 될 수 있다.",
+                            "encapsulation": "상태 이력, 대출/예약 등 서로 다른 도메인 관심사가 한 Aggregate에 혼재되어 캡슐화가 약해질 수 있다.",
+                            "complexity": "도서 관리 업무가 확장될수록 Aggregate가 비대해져 도메인 복잡도가 증가한다.",
+                            "independence": "상태 이력, 대출/예약 등 세부 기능 변경 시 전체 Aggregate에 영향이 갈 수 있다.",
+                            "performance": "상태 이력, 대출/예약 등 데이터가 누적될수록 단일 Aggregate 접근 시 성능 저하가 발생할 수 있다."
                         },
                         "isAIRecommended": false,
                         "boundedContext": {
@@ -42064,52 +47837,16 @@ export const aggregateDraftScenarios = {
                                         "isDirectMatching": false
                                     }
                                 },
-                                "siteMap": [
-                                    {
-                                        "id": "book-list-view",
-                                        "title": "도서 목록 조회",
-                                        "name": "BookListView",
-                                        "description": "현재 보유 도서의 목록과 상태를 조회",
-                                        "boundedContext": "BookManagement",
-                                        "functionType": "view",
-                                        "uiRequirements": "도서명, ISBN, 저자, 출판사, 카테고리, 상태(대출가능/대출중/예약중/폐기) 필터 및 검색, 페이징 지원"
-                                    },
-                                    {
-                                        "id": "book-create-command",
-                                        "title": "도서 등록",
-                                        "name": "BookCreateCommand",
-                                        "description": "새로운 도서를 등록",
-                                        "boundedContext": "BookManagement",
-                                        "functionType": "command",
-                                        "uiRequirements": "도서명, ISBN(13자리, 중복확인), 저자, 출판사, 카테고리(소설/비소설/학술/잡지) 입력 폼, 등록 시 상태는 '대출가능'으로 설정"
-                                    },
-                                    {
-                                        "id": "book-edit-command",
-                                        "title": "도서 정보 수정",
-                                        "name": "BookEditCommand",
-                                        "description": "기존 도서의 정보를 수정",
-                                        "boundedContext": "BookManagement",
-                                        "functionType": "command",
-                                        "uiRequirements": "도서명, 저자, 출판사, 카테고리 등 수정, ISBN은 수정 불가, 상태 변경 불가"
-                                    },
-                                    {
-                                        "id": "book-dispose-command",
-                                        "title": "도서 폐기 처리",
-                                        "name": "BookDisposeCommand",
-                                        "description": "훼손 또는 분실된 도서를 폐기 처리",
-                                        "boundedContext": "BookManagement",
-                                        "functionType": "command",
-                                        "uiRequirements": "도서 목록에서 폐기 처리 버튼, 폐기 사유 입력, 폐기 시 상태를 '폐기'로 변경, 폐기 도서는 대출 불가"
-                                    },
-                                    {
-                                        "id": "book-status-change-view",
-                                        "title": "도서 상태 변경 이력 조회",
-                                        "name": "BookStatusChangeHistoryView",
-                                        "description": "도서별 상태 변경 이력을 조회",
-                                        "boundedContext": "BookManagement",
-                                        "functionType": "view",
-                                        "uiRequirements": "도서별 상태 변경(대출가능/대출중/예약중/폐기 등) 이력 리스트, 변경일시, 변경자, 변경 사유 표시"
-                                    }
+                                "commandNames": [
+                                    "RegisterBook",
+                                    "DiscardBook",
+                                    "UpdateBookStatus",
+                                    "ValidateIsbn"
+                                ],
+                                "readModelNames": [
+                                    "BookList",
+                                    "BookDetail",
+                                    "CategoryOptions"
                                 ]
                             }
                         },
@@ -42315,16 +48052,6 @@ export const aggregateDraftScenarios = {
                                         [
                                             [
                                                 5,
-                                                79
-                                            ],
-                                            [
-                                                5,
-                                                81
-                                            ]
-                                        ],
-                                        [
-                                            [
-                                                5,
                                                 49
                                             ],
                                             [
@@ -42361,16 +48088,6 @@ export const aggregateDraftScenarios = {
                                                 5,
                                                 235
                                             ]
-                                        ],
-                                        [
-                                            [
-                                                7,
-                                                109
-                                            ],
-                                            [
-                                                7,
-                                                124
-                                            ]
                                         ]
                                     ]
                                 },
@@ -42386,7 +48103,7 @@ export const aggregateDraftScenarios = {
                                                 ],
                                                 [
                                                     53,
-                                                    40
+                                                    56
                                                 ]
                                             ],
                                             [
@@ -42520,6 +48237,272 @@ export const aggregateDraftScenarios = {
                                                     7,
                                                     175
                                                 ]
+                                            ]
+                                        ]
+                                    },
+                                    {
+                                        "name": "Reservation",
+                                        "alias": "예약",
+                                        "refs": [
+                                            [
+                                                [
+                                                    66,
+                                                    1
+                                                ],
+                                                [
+                                                    66,
+                                                    27
+                                                ]
+                                            ],
+                                            [
+                                                [
+                                                    67,
+                                                    1
+                                                ],
+                                                [
+                                                    67,
+                                                    50
+                                                ]
+                                            ],
+                                            [
+                                                [
+                                                    68,
+                                                    1
+                                                ],
+                                                [
+                                                    68,
+                                                    35
+                                                ]
+                                            ],
+                                            [
+                                                [
+                                                    69,
+                                                    1
+                                                ],
+                                                [
+                                                    69,
+                                                    25
+                                                ]
+                                            ],
+                                            [
+                                                [
+                                                    70,
+                                                    1
+                                                ],
+                                                [
+                                                    70,
+                                                    56
+                                                ]
+                                            ],
+                                            [
+                                                [
+                                                    71,
+                                                    1
+                                                ],
+                                                [
+                                                    71,
+                                                    61
+                                                ]
+                                            ],
+                                            [
+                                                [
+                                                    72,
+                                                    1
+                                                ],
+                                                [
+                                                    72,
+                                                    44
+                                                ]
+                                            ],
+                                            [
+                                                [
+                                                    73,
+                                                    1
+                                                ],
+                                                [
+                                                    73,
+                                                    30
+                                                ]
+                                            ],
+                                            [
+                                                [
+                                                    74,
+                                                    1
+                                                ],
+                                                [
+                                                    74,
+                                                    50
+                                                ]
+                                            ],
+                                            [
+                                                [
+                                                    75,
+                                                    1
+                                                ],
+                                                [
+                                                    75,
+                                                    78
+                                                ]
+                                            ],
+                                            [
+                                                [
+                                                    76,
+                                                    1
+                                                ],
+                                                [
+                                                    76,
+                                                    58
+                                                ]
+                                            ],
+                                            [
+                                                [
+                                                    77,
+                                                    1
+                                                ],
+                                                [
+                                                    77,
+                                                    52
+                                                ]
+                                            ],
+                                            [
+                                                [
+                                                    78,
+                                                    1
+                                                ],
+                                                [
+                                                    78,
+                                                    36
+                                                ]
+                                            ],
+                                            [
+                                                [
+                                                    79,
+                                                    1
+                                                ],
+                                                [
+                                                    79,
+                                                    32
+                                                ]
+                                            ],
+                                            [
+                                                [
+                                                    80,
+                                                    1
+                                                ],
+                                                [
+                                                    80,
+                                                    30
+                                                ]
+                                            ],
+                                            [
+                                                [
+                                                    81,
+                                                    1
+                                                ],
+                                                [
+                                                    81,
+                                                    49
+                                                ]
+                                            ],
+                                            [
+                                                [
+                                                    82,
+                                                    1
+                                                ],
+                                                [
+                                                    82,
+                                                    2
+                                                ]
+                                            ],
+                                            [
+                                                [
+                                                    5,
+                                                    183
+                                                ],
+                                                [
+                                                    5,
+                                                    193
+                                                ]
+                                            ],
+                                            [
+                                                [
+                                                    7,
+                                                    167
+                                                ],
+                                                [
+                                                    7,
+                                                    175
+                                                ]
+                                            ]
+                                        ]
+                                    },
+                                    {
+                                        "name": "LoanHistoryReference",
+                                        "alias": "대출 이력 참조",
+                                        "referencedAggregate": {
+                                            "name": "LoanHistory",
+                                            "alias": "대출 이력"
+                                        },
+                                        "refs": [
+                                            [
+                                                [
+                                                    101,
+                                                    5
+                                                ],
+                                                [
+                                                    101,
+                                                    11
+                                                ]
+                                            ],
+                                            [
+                                                [
+                                                    108,
+                                                    5
+                                                ],
+                                                [
+                                                    108,
+                                                    25
+                                                ]
+                                            ],
+                                            [
+                                                [
+                                                    5,
+                                                    49
+                                                ],
+                                                [
+                                                    5,
+                                                    91
+                                                ]
+                                            ],
+                                            [
+                                                [
+                                                    5,
+                                                    59
+                                                ],
+                                                [
+                                                    5,
+                                                    77
+                                                ]
+                                            ],
+                                            [
+                                                [
+                                                    5,
+                                                    43
+                                                ],
+                                                [
+                                                    5,
+                                                    126
+                                                ]
+                                            ],
+                                            [
+                                                [
+                                                    5,
+                                                    198
+                                                ],
+                                                [
+                                                    5,
+                                                    235
+                                                ]
                                             ],
                                             [
                                                 [
@@ -42549,36 +48532,6 @@ export const aggregateDraftScenarios = {
                                                 [
                                                     7,
                                                     124
-                                                ]
-                                            ]
-                                        ]
-                                    },
-                                    {
-                                        "name": "ReservationReference",
-                                        "alias": "예약 참조",
-                                        "referencedAggregate": {
-                                            "name": "Reservation",
-                                            "alias": "예약"
-                                        },
-                                        "refs": [
-                                            [
-                                                [
-                                                    101,
-                                                    5
-                                                ],
-                                                [
-                                                    101,
-                                                    11
-                                                ]
-                                            ],
-                                            [
-                                                [
-                                                    67,
-                                                    5
-                                                ],
-                                                [
-                                                    67,
-                                                    18
                                                 ]
                                             ]
                                         ]
@@ -42811,6 +48764,66 @@ export const aggregateDraftScenarios = {
                                         ]
                                     },
                                     {
+                                        "fieldName": "reservation_id",
+                                        "refs": [
+                                            [
+                                                [
+                                                    67,
+                                                    5
+                                                ],
+                                                [
+                                                    67,
+                                                    45
+                                                ]
+                                            ]
+                                        ]
+                                    },
+                                    {
+                                        "fieldName": "reservation_date",
+                                        "refs": [
+                                            [
+                                                [
+                                                    70,
+                                                    5
+                                                ],
+                                                [
+                                                    70,
+                                                    55
+                                                ]
+                                            ]
+                                        ]
+                                    },
+                                    {
+                                        "fieldName": "notification_sent",
+                                        "refs": [
+                                            [
+                                                [
+                                                    72,
+                                                    5
+                                                ],
+                                                [
+                                                    72,
+                                                    37
+                                                ]
+                                            ]
+                                        ]
+                                    },
+                                    {
+                                        "fieldName": "expiry_date",
+                                        "refs": [
+                                            [
+                                                [
+                                                    73,
+                                                    5
+                                                ],
+                                                [
+                                                    73,
+                                                    29
+                                                ]
+                                            ]
+                                        ]
+                                    },
+                                    {
                                         "fieldName": "history_id",
                                         "refs": [
                                             [
@@ -42916,572 +48929,27 @@ export const aggregateDraftScenarios = {
                                         ]
                                     }
                                 ]
-                            },
-                            {
-                                "aggregate": {
-                                    "name": "Reservation",
-                                    "alias": "예약",
-                                    "refs": [
-                                        [
-                                            [
-                                                66,
-                                                1
-                                            ],
-                                            [
-                                                66,
-                                                27
-                                            ]
-                                        ],
-                                        [
-                                            [
-                                                67,
-                                                1
-                                            ],
-                                            [
-                                                67,
-                                                50
-                                            ]
-                                        ],
-                                        [
-                                            [
-                                                68,
-                                                1
-                                            ],
-                                            [
-                                                68,
-                                                35
-                                            ]
-                                        ],
-                                        [
-                                            [
-                                                69,
-                                                1
-                                            ],
-                                            [
-                                                69,
-                                                25
-                                            ]
-                                        ],
-                                        [
-                                            [
-                                                70,
-                                                1
-                                            ],
-                                            [
-                                                70,
-                                                56
-                                            ]
-                                        ],
-                                        [
-                                            [
-                                                71,
-                                                1
-                                            ],
-                                            [
-                                                71,
-                                                61
-                                            ]
-                                        ],
-                                        [
-                                            [
-                                                72,
-                                                1
-                                            ],
-                                            [
-                                                72,
-                                                44
-                                            ]
-                                        ],
-                                        [
-                                            [
-                                                73,
-                                                1
-                                            ],
-                                            [
-                                                73,
-                                                30
-                                            ]
-                                        ],
-                                        [
-                                            [
-                                                74,
-                                                1
-                                            ],
-                                            [
-                                                74,
-                                                50
-                                            ]
-                                        ],
-                                        [
-                                            [
-                                                75,
-                                                1
-                                            ],
-                                            [
-                                                75,
-                                                78
-                                            ]
-                                        ],
-                                        [
-                                            [
-                                                76,
-                                                1
-                                            ],
-                                            [
-                                                76,
-                                                58
-                                            ]
-                                        ],
-                                        [
-                                            [
-                                                77,
-                                                1
-                                            ],
-                                            [
-                                                77,
-                                                52
-                                            ]
-                                        ],
-                                        [
-                                            [
-                                                78,
-                                                1
-                                            ],
-                                            [
-                                                78,
-                                                36
-                                            ]
-                                        ],
-                                        [
-                                            [
-                                                79,
-                                                1
-                                            ],
-                                            [
-                                                79,
-                                                32
-                                            ]
-                                        ],
-                                        [
-                                            [
-                                                80,
-                                                1
-                                            ],
-                                            [
-                                                80,
-                                                30
-                                            ]
-                                        ],
-                                        [
-                                            [
-                                                81,
-                                                1
-                                            ],
-                                            [
-                                                81,
-                                                49
-                                            ]
-                                        ],
-                                        [
-                                            [
-                                                82,
-                                                1
-                                            ],
-                                            [
-                                                82,
-                                                2
-                                            ]
-                                        ],
-                                        [
-                                            [
-                                                5,
-                                                183
-                                            ],
-                                            [
-                                                5,
-                                                193
-                                            ]
-                                        ],
-                                        [
-                                            [
-                                                7,
-                                                167
-                                            ],
-                                            [
-                                                7,
-                                                175
-                                            ]
-                                        ]
-                                    ]
-                                },
-                                "enumerations": [
-                                    {
-                                        "name": "ReservationStatus",
-                                        "alias": "예약 상태",
-                                        "refs": [
-                                            [
-                                                [
-                                                    71,
-                                                    5
-                                                ],
-                                                [
-                                                    71,
-                                                    44
-                                                ]
-                                            ],
-                                            [
-                                                [
-                                                    5,
-                                                    183
-                                                ],
-                                                [
-                                                    5,
-                                                    193
-                                                ]
-                                            ],
-                                            [
-                                                [
-                                                    7,
-                                                    167
-                                                ],
-                                                [
-                                                    7,
-                                                    175
-                                                ]
-                                            ]
-                                        ]
-                                    }
-                                ],
-                                "valueObjects": [
-                                    {
-                                        "name": "BookReference",
-                                        "alias": "도서 참조",
-                                        "referencedAggregate": {
-                                            "name": "Book",
-                                            "alias": "도서"
-                                        },
-                                        "refs": [
-                                            [
-                                                [
-                                                    48,
-                                                    5
-                                                ],
-                                                [
-                                                    48,
-                                                    11
-                                                ]
-                                            ],
-                                            [
-                                                [
-                                                    69,
-                                                    5
-                                                ],
-                                                [
-                                                    69,
-                                                    11
-                                                ]
-                                            ],
-                                            [
-                                                [
-                                                    5,
-                                                    49
-                                                ],
-                                                [
-                                                    5,
-                                                    91
-                                                ]
-                                            ],
-                                            [
-                                                [
-                                                    5,
-                                                    59
-                                                ],
-                                                [
-                                                    5,
-                                                    77
-                                                ]
-                                            ],
-                                            [
-                                                [
-                                                    5,
-                                                    43
-                                                ],
-                                                [
-                                                    5,
-                                                    126
-                                                ]
-                                            ],
-                                            [
-                                                [
-                                                    5,
-                                                    198
-                                                ],
-                                                [
-                                                    5,
-                                                    235
-                                                ]
-                                            ],
-                                            [
-                                                [
-                                                    5,
-                                                    183
-                                                ],
-                                                [
-                                                    5,
-                                                    193
-                                                ]
-                                            ],
-                                            [
-                                                [
-                                                    7,
-                                                    167
-                                                ],
-                                                [
-                                                    7,
-                                                    175
-                                                ]
-                                            ],
-                                            [
-                                                [
-                                                    7,
-                                                    133
-                                                ],
-                                                [
-                                                    7,
-                                                    167
-                                                ]
-                                            ],
-                                            [
-                                                [
-                                                    7,
-                                                    167
-                                                ],
-                                                [
-                                                    7,
-                                                    175
-                                                ]
-                                            ],
-                                            [
-                                                [
-                                                    7,
-                                                    109
-                                                ],
-                                                [
-                                                    7,
-                                                    124
-                                                ]
-                                            ]
-                                        ]
-                                    }
-                                ],
-                                "previewAttributes": [
-                                    {
-                                        "fieldName": "reservation_id",
-                                        "refs": [
-                                            [
-                                                [
-                                                    67,
-                                                    5
-                                                ],
-                                                [
-                                                    67,
-                                                    45
-                                                ]
-                                            ]
-                                        ]
-                                    },
-                                    {
-                                        "fieldName": "member_id",
-                                        "refs": [
-                                            [
-                                                [
-                                                    47,
-                                                    5
-                                                ],
-                                                [
-                                                    47,
-                                                    34
-                                                ]
-                                            ],
-                                            [
-                                                [
-                                                    68,
-                                                    5
-                                                ],
-                                                [
-                                                    68,
-                                                    34
-                                                ]
-                                            ]
-                                        ]
-                                    },
-                                    {
-                                        "fieldName": "book_id",
-                                        "refs": [
-                                            [
-                                                [
-                                                    48,
-                                                    5
-                                                ],
-                                                [
-                                                    48,
-                                                    24
-                                                ]
-                                            ],
-                                            [
-                                                [
-                                                    69,
-                                                    5
-                                                ],
-                                                [
-                                                    69,
-                                                    24
-                                                ]
-                                            ]
-                                        ]
-                                    },
-                                    {
-                                        "fieldName": "reservation_date",
-                                        "refs": [
-                                            [
-                                                [
-                                                    70,
-                                                    5
-                                                ],
-                                                [
-                                                    70,
-                                                    55
-                                                ]
-                                            ]
-                                        ]
-                                    },
-                                    {
-                                        "fieldName": "status",
-                                        "refs": [
-                                            [
-                                                [
-                                                    53,
-                                                    5
-                                                ],
-                                                [
-                                                    53,
-                                                    50
-                                                ]
-                                            ],
-                                            [
-                                                [
-                                                    71,
-                                                    5
-                                                ],
-                                                [
-                                                    71,
-                                                    54
-                                                ]
-                                            ]
-                                        ]
-                                    },
-                                    {
-                                        "fieldName": "notification_sent",
-                                        "refs": [
-                                            [
-                                                [
-                                                    72,
-                                                    5
-                                                ],
-                                                [
-                                                    72,
-                                                    37
-                                                ]
-                                            ]
-                                        ]
-                                    },
-                                    {
-                                        "fieldName": "expiry_date",
-                                        "refs": [
-                                            [
-                                                [
-                                                    73,
-                                                    5
-                                                ],
-                                                [
-                                                    73,
-                                                    29
-                                                ]
-                                            ]
-                                        ]
-                                    },
-                                    {
-                                        "fieldName": "created_at",
-                                        "refs": [
-                                            [
-                                                [
-                                                    55,
-                                                    5
-                                                ],
-                                                [
-                                                    55,
-                                                    49
-                                                ]
-                                            ],
-                                            [
-                                                [
-                                                    74,
-                                                    5
-                                                ],
-                                                [
-                                                    74,
-                                                    49
-                                                ]
-                                            ]
-                                        ]
-                                    },
-                                    {
-                                        "fieldName": "updated_at",
-                                        "refs": [
-                                            [
-                                                [
-                                                    56,
-                                                    5
-                                                ],
-                                                [
-                                                    56,
-                                                    77
-                                                ]
-                                            ],
-                                            [
-                                                [
-                                                    75,
-                                                    5
-                                                ],
-                                                [
-                                                    75,
-                                                    77
-                                                ]
-                                            ]
-                                        ]
-                                    }
-                                ]
                             }
                         ],
                         "pros": {
-                            "cohesion": "대출과 예약이 각각의 Aggregate로 분리되어 각 도메인 책임이 명확하며, 각 Aggregate가 자신의 비즈니스 규칙을 집중적으로 관리할 수 있습니다.",
-                            "coupling": "Book, Reservation 간 참조는 ValueObject로 일방향으로만 이루어져 결합도가 낮고, 도서 관리 변경이 대출/예약에 직접적인 영향을 주지 않습니다.",
-                            "consistency": "대출, 예약 각각의 트랜잭션 경계가 명확하여 상태 변경 시 원자성을 보장할 수 있습니다.",
-                            "encapsulation": "각 Aggregate가 자신의 상태와 행위를 완전히 캡슐화하여 외부에서 내부 구현에 접근할 수 없습니다.",
-                            "complexity": "Aggregate 수가 적절하여 도메인 복잡도를 효과적으로 관리할 수 있습니다.",
-                            "independence": "대출과 예약 기능이 독립적으로 진화 및 확장될 수 있어 유지보수성이 높습니다.",
-                            "performance": "대출/예약 각각의 조회 및 변경이 독립적으로 처리되어 동시성 및 성능에 유리합니다."
+                            "cohesion": "대출, 예약, 이력 등 대출 관련 모든 정보를 Loan Aggregate에 통합하여 대출 프로세스의 전체 흐름을 한 곳에서 관리할 수 있다.",
+                            "coupling": "예약과 대출 간의 상태 전이 및 상호작용을 Aggregate 내부에서 직접 처리할 수 있어 결합도가 높아 복합 비즈니스 규칙 구현이 용이하다.",
+                            "consistency": "대출과 예약의 상태 변경, 이력 기록이 단일 트랜잭션 내에서 일관성 있게 처리된다.",
+                            "encapsulation": "대출과 예약, 이력 관리까지 모두 Loan Aggregate 내부에 캡슐화되어 외부 의존성이 줄어든다.",
+                            "complexity": "대출/예약/이력의 통합 관리로 복잡한 상태 전이와 비즈니스 규칙을 Aggregate 내부에서 일관성 있게 구현할 수 있다.",
+                            "independence": "대출 프로세스 전체를 단일 Aggregate로 관리하므로 기능 확장 시 일관성 있게 변경이 가능하다.",
+                            "performance": "대출/예약/이력 관련 데이터 접근이 한 번의 Aggregate 조회로 가능해 조회 성능이 향상된다."
                         },
                         "cons": {
-                            "cohesion": "대출과 예약 간의 상태 전이(예: 반납 시 예약 자동 처리 등) 로직이 Aggregate 간 조정 로직으로 분산될 수 있습니다.",
-                            "coupling": "예약과 대출 간의 상태 동기화가 필요할 때, 두 Aggregate 간의 간접적 연동이 필요하여 구현이 복잡해질 수 있습니다.",
-                            "consistency": "예약과 대출이 동시에 변경되어야 하는 복합 트랜잭션의 경우, 분산 트랜잭션 또는 이벤트 기반 보상 로직이 필요할 수 있습니다.",
-                            "encapsulation": "예약과 대출의 복합 비즈니스 규칙(예: 예약 우선 순위 반영 등)이 Aggregate 외부에서 처리될 수 있습니다.",
-                            "complexity": "예약과 대출의 상호작용을 조율하는 추가 서비스 계층이 필요할 수 있습니다.",
-                            "independence": "예약과 대출의 상호작용이 많을 경우, 완전한 독립성 확보가 어려울 수 있습니다.",
-                            "performance": "예약과 대출 정보를 통합 조회할 때 Aggregate 간 조인 또는 별도 조회가 필요하여 성능 저하가 발생할 수 있습니다."
+                            "cohesion": "대출, 예약, 이력 등 서로 다른 라이프사이클을 가진 도메인 개념이 하나의 Aggregate에 묶여 응집도가 저하될 수 있다.",
+                            "coupling": "Aggregate가 비대해지면서 도메인 변경 시 영향 범위가 넓어지고, 유지보수 난이도가 증가한다.",
+                            "consistency": "동시성 처리 시 여러 사용자가 동일 Loan Aggregate를 갱신하면 락 경합이 발생할 수 있다.",
+                            "encapsulation": "예약 및 이력 관리의 책임이 Loan Aggregate에 집중되어 역할 분리가 어렵다.",
+                            "complexity": "Aggregate가 커질수록 도메인 로직이 복잡해지고, 개발 및 테스트 난이도가 상승한다.",
+                            "independence": "예약 또는 이력 관리만 별도로 확장하거나 배포하기 어렵다.",
+                            "performance": "대출과 예약, 이력 등 모든 변경이 한 Aggregate에 집중되어 트래픽이 몰릴 경우 성능 저하가 발생할 수 있다."
                         },
-                        "isAIRecommended": false,
+                        "isAIRecommended": true,
                         "boundedContext": {
                             "name": "LoanAndReservation",
                             "alias": "대출/반납 및 예약",
@@ -47162,135 +52630,1417 @@ export const aggregateDraftScenarios = {
                                         "isDirectMatching": false
                                     }
                                 },
-                                "siteMap": []
+                                "commandNames": [
+                                    "LoanBook",
+                                    "ReturnBook",
+                                    "ExtendLoan",
+                                    "ReserveBook"
+                                ],
+                                "readModelNames": [
+                                    "LoanStatusList",
+                                    "LoanDetail",
+                                    "SearchBookForLoan"
+                                ]
                             }
                         },
                         "description": "# Bounded Context Overview: LoanAndReservation (대출/반납 및 예약)\n\n## Role\n회원의 도서 대출, 반납, 연장, 예약을 관리하고 도서 상태 변경을 트리거한다.\n\n## Key Events\n- BookLoaned\n- BookReserved\n- BookReturned\n- LoanExtended\n\n# Requirements\n\n## userStory\n\n대출/반납을 통합적으로 관리하는\n\n대출/반납' 화면에서는 회원이 도서를 대출하고 반납하는 것을 관리할 수 있어야 해. 대출 신청 시에는 회원번호와 이름으로 회원을 확인하고, 대출할\n\n예약\n\n대출 현황 화면에서는 현재 대출 중인 도서들의 목록을 볼 수 있어야 해. 각 대출 건에 대해 대출일, 반납\n\n연장\n\n대출 이력과 상태\n\n## DDL\n\n```sql\nCREATE TABLE loans (\n    loan_id INT AUTO_INCREMENT PRIMARY KEY,\n    member_id VARCHAR(20) NOT NULL,\n    book_id INT NOT NULL,\n    loan_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    due_date DATETIME NOT NULL,\n    return_date DATETIME NULL,\n    loan_period_days INT NOT NULL CHECK (loan_period_days IN (7, 14, 30)),\n    status ENUM('대출중', '연체', '반납완료', '연장') DEFAULT '대출중',\n    extension_count INT DEFAULT 0,\n    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,\n    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n    FOREIGN KEY (member_id) REFERENCES members(member_id),\n    FOREIGN KEY (book_id) REFERENCES books(book_id),\n    INDEX idx_member_id (member_id),\n    INDEX idx_book_id (book_id),\n    INDEX idx_status (status),\n    INDEX idx_due_date (due_date)\n);\n```\n```sql\nCREATE TABLE reservations (\n    reservation_id INT AUTO_INCREMENT PRIMARY KEY,\n    member_id VARCHAR(20) NOT NULL,\n    book_id INT NOT NULL,\n    reservation_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    status ENUM('예약중', '예약완료', '예약취소', '예약만료') DEFAULT '예약중',\n    notification_sent BOOLEAN DEFAULT FALSE,\n    expiry_date DATETIME NULL,\n    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,\n    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n    FOREIGN KEY (member_id) REFERENCES members(member_id),\n    FOREIGN KEY (book_id) REFERENCES books(book_id),\n    INDEX idx_member_id (member_id),\n    INDEX idx_book_id (book_id),\n    INDEX idx_status (status),\n    INDEX idx_reservation_date (reservation_date)\n);\n```\n```sql\nCREATE TABLE loan_history (\n    history_id INT AUTO_INCREMENT PRIMARY KEY,\n    loan_id INT NOT NULL,\n    action_type ENUM('대출', '반납', '연장', '연체알림', '분실신고') NOT NULL,\n    action_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    previous_due_date DATETIME NULL,\n    new_due_date DATETIME NULL,\n    notes TEXT,\n    processed_by VARCHAR(100),\n    FOREIGN KEY (loan_id) REFERENCES loans(loan_id),\n    INDEX idx_loan_id (loan_id),\n    INDEX idx_action_type (action_type),\n    INDEX idx_action_date (action_date)\n);\n```\n## Event\n\n```json\n{\n  \"name\": \"BookLoaned\",\n  \"displayName\": \"도서 대출됨\",\n  \"actor\": \"Member\",\n  \"level\": 4,\n  \"description\": \"회원이 도서 대출을 신청하고, 회원 인증 및 도서 상태 확인 후 대출이 승인됨. 대출 기간이 설정되고 도서 상태가 '대출중'으로 변경됨.\",\n  \"inputs\": [\n    \"회원번호\",\n    \"이름\",\n    \"도서 식별자\",\n    \"대출 기간(7/14/30일)\"\n  ],\n  \"outputs\": [\n    \"대출 정보\",\n    \"도서 상태: 대출중\"\n  ],\n  \"nextEvents\": [\n    \"BookStatusChanged\",\n    \"LoanHistoryRecorded\"\n  ]\n}\n```\n\n```json\n{\n  \"name\": \"BookReserved\",\n  \"displayName\": \"도서 예약됨\",\n  \"actor\": \"Member\",\n  \"level\": 5,\n  \"description\": \"회원이 대출 중인 도서에 대해 예약을 신청함. 예약이 완료되면 도서 상태가 '예약중'으로 변경됨.\",\n  \"inputs\": [\n    \"회원번호\",\n    \"도서 식별자\"\n  ],\n  \"outputs\": [\n    \"예약 정보\",\n    \"도서 상태: 예약중\"\n  ],\n  \"nextEvents\": [\n    \"BookStatusChanged\",\n    \"ReservationHistoryRecorded\"\n  ]\n}\n```\n\n```json\n{\n  \"name\": \"BookReturned\",\n  \"displayName\": \"도서 반납됨\",\n  \"actor\": \"Member\",\n  \"level\": 6,\n  \"description\": \"회원이 대출한 도서를 반납함. 반납 시 도서 상태가 '대출가능'으로 변경되고, 예약자가 있을 경우 '예약중'으로 변경됨.\",\n  \"inputs\": [\n    \"회원번호\",\n    \"도서 식별자\"\n  ],\n  \"outputs\": [\n    \"도서 상태: 대출가능 또는 예약중\",\n    \"반납 처리 정보\"\n  ],\n  \"nextEvents\": [\n    \"BookStatusChanged\",\n    \"LoanHistoryRecorded\"\n  ]\n}\n```\n\n```json\n{\n  \"name\": \"LoanExtended\",\n  \"displayName\": \"대출 연장됨\",\n  \"actor\": \"Member\",\n  \"level\": 7,\n  \"description\": \"회원이 대출 중인 도서의 대출 기간을 연장함. 연장 후 대출 정보와 반납 예정일이 갱신됨.\",\n  \"inputs\": [\n    \"회원번호\",\n    \"도서 식별자\",\n    \"연장 기간\"\n  ],\n  \"outputs\": [\n    \"갱신된 대출 정보\",\n    \"새 반납 예정일\"\n  ],\n  \"nextEvents\": [\n    \"LoanHistoryRecorded\"\n  ]\n}\n```\n\n## Context Relations\n\n### BookManagement-LoanAndReservation\n- **Type**: Pub/Sub\n- **Direction**: receives from 도서 관리 (BookManagement)\n- **Reason**: 도서 상태 변경(대출가능, 대출중, 예약중, 폐기 등)이 발생하면 대출/반납 및 예약 컨텍스트에서 이를 구독하여 대출/예약 프로세스에 반영한다.\n- **Interaction Pattern**: 도서 관리에서 도서 상태 변경 이벤트를 발행하면 대출/반납 및 예약 컨텍스트가 이를 구독하여 처리한다.\n\n### LoanAndReservation-LoanHistory\n- **Type**: Pub/Sub\n- **Direction**: sends to 이력 관리 (LoanHistory)\n- **Reason**: 대출, 반납, 연장, 예약 등 이벤트 발생 시 이력 관리 컨텍스트에서 해당 이벤트를 구독하여 이력을 기록한다.\n- **Interaction Pattern**: 대출/반납 및 예약에서 대출/반납/연장/예약 이벤트를 발행하면 이력 관리 컨텍스트가 이를 구독하여 이력 데이터를 생성한다."
+                    },
+                    "LoanHistory": {
+                        "structure": [
+                            {
+                                "aggregate": {
+                                    "name": "LoanHistory",
+                                    "alias": "대출 이력",
+                                    "refs": [
+                                        [
+                                            [
+                                                9,
+                                                8
+                                            ],
+                                            [
+                                                9,
+                                                67
+                                            ]
+                                        ],
+                                        [
+                                            [
+                                                99,
+                                                14
+                                            ],
+                                            [
+                                                99,
+                                                27
+                                            ]
+                                        ],
+                                        [
+                                            [
+                                                100,
+                                                1
+                                            ],
+                                            [
+                                                100,
+                                                46
+                                            ]
+                                        ],
+                                        [
+                                            [
+                                                101,
+                                                1
+                                            ],
+                                            [
+                                                101,
+                                                25
+                                            ]
+                                        ],
+                                        [
+                                            [
+                                                102,
+                                                1
+                                            ],
+                                            [
+                                                102,
+                                                64
+                                            ]
+                                        ],
+                                        [
+                                            [
+                                                103,
+                                                1
+                                            ],
+                                            [
+                                                103,
+                                                51
+                                            ]
+                                        ],
+                                        [
+                                            [
+                                                104,
+                                                1
+                                            ],
+                                            [
+                                                104,
+                                                36
+                                            ]
+                                        ],
+                                        [
+                                            [
+                                                105,
+                                                1
+                                            ],
+                                            [
+                                                105,
+                                                31
+                                            ]
+                                        ],
+                                        [
+                                            [
+                                                106,
+                                                1
+                                            ],
+                                            [
+                                                106,
+                                                15
+                                            ]
+                                        ],
+                                        [
+                                            [
+                                                107,
+                                                1
+                                            ],
+                                            [
+                                                107,
+                                                30
+                                            ]
+                                        ],
+                                        [
+                                            [
+                                                108,
+                                                1
+                                            ],
+                                            [
+                                                108,
+                                                52
+                                            ]
+                                        ],
+                                        [
+                                            [
+                                                109,
+                                                1
+                                            ],
+                                            [
+                                                109,
+                                                32
+                                            ]
+                                        ],
+                                        [
+                                            [
+                                                110,
+                                                1
+                                            ],
+                                            [
+                                                110,
+                                                40
+                                            ]
+                                        ],
+                                        [
+                                            [
+                                                111,
+                                                1
+                                            ],
+                                            [
+                                                111,
+                                                9
+                                            ]
+                                        ],
+                                        [
+                                            [
+                                                9,
+                                                8
+                                            ],
+                                            [
+                                                9,
+                                                65
+                                            ]
+                                        ]
+                                    ]
+                                },
+                                "enumerations": [
+                                    {
+                                        "name": "LoanActionType",
+                                        "alias": "대출 이력 액션 유형",
+                                        "refs": [
+                                            [
+                                                [
+                                                    102,
+                                                    5
+                                                ],
+                                                [
+                                                    102,
+                                                    52
+                                                ]
+                                            ]
+                                        ]
+                                    }
+                                ],
+                                "valueObjects": [
+                                    {
+                                        "name": "LoanReference",
+                                        "alias": "대출 참조",
+                                        "referencedAggregate": {
+                                            "name": "Loan",
+                                            "alias": "대출"
+                                        },
+                                        "refs": [
+                                            [
+                                                [
+                                                    101,
+                                                    5
+                                                ],
+                                                [
+                                                    101,
+                                                    11
+                                                ]
+                                            ],
+                                            [
+                                                [
+                                                    108,
+                                                    5
+                                                ],
+                                                [
+                                                    108,
+                                                    51
+                                                ]
+                                            ]
+                                        ]
+                                    },
+                                    {
+                                        "name": "BookReference",
+                                        "alias": "도서 참조",
+                                        "referencedAggregate": {
+                                            "name": "Book",
+                                            "alias": "도서"
+                                        },
+                                        "refs": [
+                                            [
+                                                [
+                                                    9,
+                                                    8
+                                                ],
+                                                [
+                                                    9,
+                                                    67
+                                                ]
+                                            ]
+                                        ]
+                                    }
+                                ],
+                                "previewAttributes": [
+                                    {
+                                        "fieldName": "history_id",
+                                        "refs": [
+                                            [
+                                                [
+                                                    100,
+                                                    5
+                                                ],
+                                                [
+                                                    100,
+                                                    45
+                                                ]
+                                            ]
+                                        ]
+                                    },
+                                    {
+                                        "fieldName": "loan_id",
+                                        "refs": [
+                                            [
+                                                [
+                                                    101,
+                                                    5
+                                                ],
+                                                [
+                                                    101,
+                                                    24
+                                                ]
+                                            ]
+                                        ]
+                                    },
+                                    {
+                                        "fieldName": "action_date",
+                                        "refs": [
+                                            [
+                                                [
+                                                    103,
+                                                    5
+                                                ],
+                                                [
+                                                    103,
+                                                    50
+                                                ]
+                                            ]
+                                        ]
+                                    },
+                                    {
+                                        "fieldName": "previous_due_date",
+                                        "refs": [
+                                            [
+                                                [
+                                                    104,
+                                                    5
+                                                ],
+                                                [
+                                                    104,
+                                                    35
+                                                ]
+                                            ]
+                                        ]
+                                    },
+                                    {
+                                        "fieldName": "new_due_date",
+                                        "refs": [
+                                            [
+                                                [
+                                                    105,
+                                                    5
+                                                ],
+                                                [
+                                                    105,
+                                                    30
+                                                ]
+                                            ]
+                                        ]
+                                    },
+                                    {
+                                        "fieldName": "notes",
+                                        "refs": [
+                                            [
+                                                [
+                                                    106,
+                                                    5
+                                                ],
+                                                [
+                                                    106,
+                                                    14
+                                                ]
+                                            ]
+                                        ]
+                                    },
+                                    {
+                                        "fieldName": "processed_by",
+                                        "refs": [
+                                            [
+                                                [
+                                                    107,
+                                                    5
+                                                ],
+                                                [
+                                                    107,
+                                                    29
+                                                ]
+                                            ]
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "aggregate": {
+                                    "name": "ReservationHistory",
+                                    "alias": "예약 이력",
+                                    "refs": [
+                                        [
+                                            [
+                                                9,
+                                                8
+                                            ],
+                                            [
+                                                9,
+                                                67
+                                            ]
+                                        ],
+                                        [
+                                            [
+                                                9,
+                                                15
+                                            ],
+                                            [
+                                                9,
+                                                65
+                                            ]
+                                        ]
+                                    ]
+                                },
+                                "enumerations": [
+                                    {
+                                        "name": "ReservationActionType",
+                                        "alias": "예약 이력 액션 유형",
+                                        "refs": [
+                                            [
+                                                [
+                                                    9,
+                                                    15
+                                                ],
+                                                [
+                                                    9,
+                                                    65
+                                                ]
+                                            ]
+                                        ]
+                                    }
+                                ],
+                                "valueObjects": [
+                                    {
+                                        "name": "Reservation",
+                                        "alias": "예약",
+                                        "refs": [
+                                            [
+                                                [
+                                                    9,
+                                                    15
+                                                ],
+                                                [
+                                                    9,
+                                                    65
+                                                ]
+                                            ]
+                                        ]
+                                    },
+                                    {
+                                        "name": "BookReference",
+                                        "alias": "도서 참조",
+                                        "referencedAggregate": {
+                                            "name": "Book",
+                                            "alias": "도서"
+                                        },
+                                        "refs": [
+                                            [
+                                                [
+                                                    9,
+                                                    8
+                                                ],
+                                                [
+                                                    9,
+                                                    67
+                                                ]
+                                            ]
+                                        ]
+                                    }
+                                ],
+                                "previewAttributes": []
+                            }
+                        ],
+                        "pros": {
+                            "cohesion": "대출 이력과 예약 이력을 별도의 Aggregate로 분리하여 각 도메인 책임이 명확하게 구분된다.",
+                            "coupling": "Loan, Reservation, Book 등 외부 Aggregate와의 참조가 ValueObject로 일관되게 관리되어 결합도가 낮다.",
+                            "consistency": "각 이력의 트랜잭션 경계가 명확하여, 대출/예약 이벤트 발생 시 이력 기록의 원자성이 보장된다.",
+                            "encapsulation": "이력별 도메인 규칙과 상태 전이가 Aggregate 내부에 잘 은닉되어 있다.",
+                            "complexity": "각 Aggregate가 단일 책임 원칙을 따르므로 도메인 복잡도가 낮고 유지보수가 용이하다.",
+                            "independence": "대출 이력과 예약 이력이 독립적으로 진화 및 확장될 수 있다.",
+                            "performance": "이력별로 데이터 접근이 분리되어 대량 데이터 조회 시 성능 저하가 적다."
+                        },
+                        "cons": {
+                            "cohesion": "이력 데이터가 분산되어 있어 복합 이력 조회(예: 대출과 예약 이력 동시 조회) 시 추가 조인이 필요하다.",
+                            "coupling": "이력 간 연관 이벤트 처리 시 애플리케이션 서비스 계층에서 조정 로직이 필요하다.",
+                            "consistency": "복합 이력 동기화가 필요한 경우 트랜잭션 경계가 Aggregate 단위로 분리되어 있어 일관성 유지가 복잡해질 수 있다.",
+                            "encapsulation": "이력 간 공통 규칙(예: 동일 도서에 대한 이력 통합 관리)이 Aggregate 외부에서 처리되어야 한다.",
+                            "complexity": "이력 유형이 추가될 경우 Aggregate가 계속 늘어나 도메인 구조가 복잡해질 수 있다.",
+                            "independence": "복합 이력 분석이나 통계 기능 개발 시 Aggregate 간 데이터 통합이 필요하다.",
+                            "performance": "복합 이력 조회 시 여러 테이블을 조인해야 하므로 단일 이력에 비해 조회 성능이 저하될 수 있다."
+                        },
+                        "isAIRecommended": false,
+                        "boundedContext": {
+                            "name": "LoanHistory",
+                            "alias": "이력 관리",
+                            "displayName": "이력 관리",
+                            "description": "# Bounded Context Overview: LoanHistory (이력 관리)\n\n## Role\n도서별 대출 및 예약 이력, 상태 변경 이력을 기록하고 조회할 수 있도록 한다.\n\n## Key Events\n- LoanHistoryRecorded\n- ReservationHistoryRecorded\n\n# Requirements\n\n## userStory\n\n대출 이력\n\n상태 변경\n\n## DDL\n\n```sql\nCREATE TABLE loan_history (\n    history_id INT AUTO_INCREMENT PRIMARY KEY,\n    loan_id INT NOT NULL,\n    action_type ENUM('대출', '반납', '연장', '연체알림', '분실신고') NOT NULL,\n    action_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    previous_due_date DATETIME NULL,\n    new_due_date DATETIME NULL,\n    notes TEXT,\n    processed_by VARCHAR(100),\n    FOREIGN KEY (loan_id) REFERENCES loans(loan_id),\n    INDEX idx_loan_id (loan_id),\n    INDEX idx_action_type (action_type),\n    INDEX\n```\n## Event\n\n```json\n{\n  \"name\": \"LoanHistoryRecorded\",\n  \"displayName\": \"대출 이력 기록됨\",\n  \"actor\": \"System\",\n  \"level\": 8,\n  \"description\": \"도서의 대출, 반납, 연장 등 대출 관련 이력이 시스템에 기록됨.\",\n  \"inputs\": [\n    \"대출/반납/연장 이벤트 정보\"\n  ],\n  \"outputs\": [\n    \"대출 이력 데이터\"\n  ],\n  \"nextEvents\": []\n}\n```\n\n```json\n{\n  \"name\": \"ReservationHistoryRecorded\",\n  \"displayName\": \"예약 이력 기록됨\",\n  \"actor\": \"System\",\n  \"level\": 9,\n  \"description\": \"도서 예약 관련 이력이 시스템에 기록됨.\",\n  \"inputs\": [\n    \"예약 이벤트 정보\"\n  ],\n  \"outputs\": [\n    \"예약 이력 데이터\"\n  ],\n  \"nextEvents\": []\n}\n```\n\n## Context Relations\n\n### LoanAndReservation-LoanHistory\n- **Type**: Pub/Sub\n- **Direction**: receives from 대출/반납 및 예약 (LoanAndReservation)\n- **Reason**: 대출, 반납, 연장, 예약 등 이벤트 발생 시 이력 관리 컨텍스트에서 해당 이벤트를 구독하여 이력을 기록한다.\n- **Interaction Pattern**: 대출/반납 및 예약에서 대출/반납/연장/예약 이벤트를 발행하면 이력 관리 컨텍스트가 이를 구독하여 이력 데이터를 생성한다.\n\n### BookManagement-LoanHistory\n- **Type**: Pub/Sub\n- **Direction**: receives from 도서 관리 (BookManagement)\n- **Reason**: 도서 등록, 폐기 등 도서 상태 변화 이력도 이력 관리 컨텍스트에서 기록할 수 있도록 이벤트를 발행한다.\n- **Interaction Pattern**: 도서 관리에서 도서 등록, 폐기 등 상태 변화 이벤트를 발행하면 이력 관리 컨텍스트가 이를 구독하여 상태 변경 이력을 기록한다.",
+                            "aggregates": [
+                                {
+                                    "name": "LoanHistory",
+                                    "alias": "대출 이력"
+                                },
+                                {
+                                    "name": "ReservationHistory",
+                                    "alias": "예약 이력"
+                                }
+                            ],
+                            "requirements": {
+                                "userStory": "대출 이력\n상태 변경",
+                                "ddl": "CREATE TABLE loan_history (\n    history_id INT AUTO_INCREMENT PRIMARY KEY,\n    loan_id INT NOT NULL,\n    action_type ENUM('대출', '반납', '연장', '연체알림', '분실신고') NOT NULL,\n    action_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    previous_due_date DATETIME NULL,\n    new_due_date DATETIME NULL,\n    notes TEXT,\n    processed_by VARCHAR(100),\n    FOREIGN KEY (loan_id) REFERENCES loans(loan_id),\n    INDEX idx_loan_id (loan_id),\n    INDEX idx_action_type (action_type),\n    INDEX",
+                                "event": "{\n  \"name\": \"LoanHistoryRecorded\",\n  \"displayName\": \"대출 이력 기록됨\",\n  \"actor\": \"System\",\n  \"level\": 8,\n  \"description\": \"도서의 대출, 반납, 연장 등 대출 관련 이력이 시스템에 기록됨.\",\n  \"inputs\": [\n    \"대출/반납/연장 이벤트 정보\"\n  ],\n  \"outputs\": [\n    \"대출 이력 데이터\"\n  ],\n  \"nextEvents\": [],\n  \"refs\": [\n    [\n      [\n        9,\n        8\n      ],\n      [\n        9,\n        65\n      ]\n    ]\n  ]\n}\n{\n  \"name\": \"ReservationHistoryRecorded\",\n  \"displayName\": \"예약 이력 기록됨\",\n  \"actor\": \"System\",\n  \"level\": 9,\n  \"description\": \"도서 예약 관련 이력이 시스템에 기록됨.\",\n  \"inputs\": [\n    \"예약 이벤트 정보\"\n  ],\n  \"outputs\": [\n    \"예약 이력 데이터\"\n  ],\n  \"nextEvents\": [],\n  \"refs\": [\n    [\n      [\n        9,\n        15\n      ],\n      [\n        9,\n        65\n      ]\n    ]\n  ]\n}",
+                                "eventNames": "LoanHistoryRecorded, ReservationHistoryRecorded 이벤트가 발생할 수 있어.",
+                                "ddlFields": [
+                                    {
+                                        "fieldName": "history_id",
+                                        "refs": [
+                                            [
+                                                [
+                                                    100,
+                                                    5
+                                                ],
+                                                [
+                                                    100,
+                                                    45
+                                                ]
+                                            ]
+                                        ]
+                                    },
+                                    {
+                                        "fieldName": "loan_id",
+                                        "refs": [
+                                            [
+                                                [
+                                                    101,
+                                                    5
+                                                ],
+                                                [
+                                                    101,
+                                                    24
+                                                ]
+                                            ]
+                                        ]
+                                    },
+                                    {
+                                        "fieldName": "action_date",
+                                        "refs": [
+                                            [
+                                                [
+                                                    103,
+                                                    5
+                                                ],
+                                                [
+                                                    103,
+                                                    50
+                                                ]
+                                            ]
+                                        ]
+                                    },
+                                    {
+                                        "fieldName": "previous_due_date",
+                                        "refs": [
+                                            [
+                                                [
+                                                    104,
+                                                    5
+                                                ],
+                                                [
+                                                    104,
+                                                    35
+                                                ]
+                                            ]
+                                        ]
+                                    },
+                                    {
+                                        "fieldName": "new_due_date",
+                                        "refs": [
+                                            [
+                                                [
+                                                    105,
+                                                    5
+                                                ],
+                                                [
+                                                    105,
+                                                    30
+                                                ]
+                                            ]
+                                        ]
+                                    },
+                                    {
+                                        "fieldName": "notes",
+                                        "refs": [
+                                            [
+                                                [
+                                                    106,
+                                                    5
+                                                ],
+                                                [
+                                                    106,
+                                                    14
+                                                ]
+                                            ]
+                                        ]
+                                    },
+                                    {
+                                        "fieldName": "processed_by",
+                                        "refs": [
+                                            [
+                                                [
+                                                    107,
+                                                    5
+                                                ],
+                                                [
+                                                    107,
+                                                    29
+                                                ]
+                                            ]
+                                        ]
+                                    }
+                                ],
+                                "description": "# Bounded Context Overview: LoanHistory (이력 관리)\n\n## Role\n도서별 대출 및 예약 이력, 상태 변경 이력을 기록하고 조회할 수 있도록 한다.\n\n## Key Events\n- LoanHistoryRecorded\n- ReservationHistoryRecorded\n\n# Requirements\n\n## userStory\n\n대출 이력\n\n상태 변경\n\n## DDL\n\n```sql\nCREATE TABLE loan_history (\n    history_id INT AUTO_INCREMENT PRIMARY KEY,\n    loan_id INT NOT NULL,\n    action_type ENUM('대출', '반납', '연장', '연체알림', '분실신고') NOT NULL,\n    action_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    previous_due_date DATETIME NULL,\n    new_due_date DATETIME NULL,\n    notes TEXT,\n    processed_by VARCHAR(100),\n    FOREIGN KEY (loan_id) REFERENCES loans(loan_id),\n    INDEX idx_loan_id (loan_id),\n    INDEX idx_action_type (action_type),\n    INDEX\n```\n## Event\n\n```json\n{\n  \"name\": \"LoanHistoryRecorded\",\n  \"displayName\": \"대출 이력 기록됨\",\n  \"actor\": \"System\",\n  \"level\": 8,\n  \"description\": \"도서의 대출, 반납, 연장 등 대출 관련 이력이 시스템에 기록됨.\",\n  \"inputs\": [\n    \"대출/반납/연장 이벤트 정보\"\n  ],\n  \"outputs\": [\n    \"대출 이력 데이터\"\n  ],\n  \"nextEvents\": []\n}\n```\n\n```json\n{\n  \"name\": \"ReservationHistoryRecorded\",\n  \"displayName\": \"예약 이력 기록됨\",\n  \"actor\": \"System\",\n  \"level\": 9,\n  \"description\": \"도서 예약 관련 이력이 시스템에 기록됨.\",\n  \"inputs\": [\n    \"예약 이벤트 정보\"\n  ],\n  \"outputs\": [\n    \"예약 이력 데이터\"\n  ],\n  \"nextEvents\": []\n}\n```\n\n## Context Relations\n\n### LoanAndReservation-LoanHistory\n- **Type**: Pub/Sub\n- **Direction**: receives from 대출/반납 및 예약 (LoanAndReservation)\n- **Reason**: 대출, 반납, 연장, 예약 등 이벤트 발생 시 이력 관리 컨텍스트에서 해당 이벤트를 구독하여 이력을 기록한다.\n- **Interaction Pattern**: 대출/반납 및 예약에서 대출/반납/연장/예약 이벤트를 발행하면 이력 관리 컨텍스트가 이를 구독하여 이력 데이터를 생성한다.\n\n### BookManagement-LoanHistory\n- **Type**: Pub/Sub\n- **Direction**: receives from 도서 관리 (BookManagement)\n- **Reason**: 도서 등록, 폐기 등 도서 상태 변화 이력도 이력 관리 컨텍스트에서 기록할 수 있도록 이벤트를 발행한다.\n- **Interaction Pattern**: 도서 관리에서 도서 등록, 폐기 등 상태 변화 이벤트를 발행하면 이력 관리 컨텍스트가 이를 구독하여 상태 변경 이력을 기록한다.",
+                                "traceMap": {
+                                    "4": {
+                                        "refs": [
+                                            [
+                                                [
+                                                    9,
+                                                    8
+                                                ],
+                                                [
+                                                    9,
+                                                    67
+                                                ]
+                                            ]
+                                        ],
+                                        "isDirectMatching": false
+                                    },
+                                    "7": {
+                                        "refs": [
+                                            [
+                                                [
+                                                    9,
+                                                    8
+                                                ],
+                                                [
+                                                    9,
+                                                    65
+                                                ]
+                                            ]
+                                        ],
+                                        "isDirectMatching": false
+                                    },
+                                    "8": {
+                                        "refs": [
+                                            [
+                                                [
+                                                    9,
+                                                    15
+                                                ],
+                                                [
+                                                    9,
+                                                    65
+                                                ]
+                                            ]
+                                        ],
+                                        "isDirectMatching": false
+                                    },
+                                    "14": {
+                                        "refs": [
+                                            [
+                                                [
+                                                    9,
+                                                    1
+                                                ],
+                                                [
+                                                    9,
+                                                    5
+                                                ]
+                                            ]
+                                        ],
+                                        "isDirectMatching": true
+                                    },
+                                    "16": {
+                                        "refs": [
+                                            [
+                                                [
+                                                    9,
+                                                    1
+                                                ],
+                                                [
+                                                    9,
+                                                    5
+                                                ]
+                                            ]
+                                        ],
+                                        "isDirectMatching": true
+                                    },
+                                    "21": {
+                                        "refs": [
+                                            [
+                                                [
+                                                    99,
+                                                    1
+                                                ],
+                                                [
+                                                    99,
+                                                    27
+                                                ]
+                                            ]
+                                        ],
+                                        "isDirectMatching": true
+                                    },
+                                    "22": {
+                                        "refs": [
+                                            [
+                                                [
+                                                    100,
+                                                    1
+                                                ],
+                                                [
+                                                    100,
+                                                    46
+                                                ]
+                                            ]
+                                        ],
+                                        "isDirectMatching": true
+                                    },
+                                    "23": {
+                                        "refs": [
+                                            [
+                                                [
+                                                    101,
+                                                    1
+                                                ],
+                                                [
+                                                    101,
+                                                    25
+                                                ]
+                                            ]
+                                        ],
+                                        "isDirectMatching": true
+                                    },
+                                    "24": {
+                                        "refs": [
+                                            [
+                                                [
+                                                    102,
+                                                    1
+                                                ],
+                                                [
+                                                    102,
+                                                    64
+                                                ]
+                                            ]
+                                        ],
+                                        "isDirectMatching": true
+                                    },
+                                    "25": {
+                                        "refs": [
+                                            [
+                                                [
+                                                    103,
+                                                    1
+                                                ],
+                                                [
+                                                    103,
+                                                    51
+                                                ]
+                                            ]
+                                        ],
+                                        "isDirectMatching": true
+                                    },
+                                    "26": {
+                                        "refs": [
+                                            [
+                                                [
+                                                    104,
+                                                    1
+                                                ],
+                                                [
+                                                    104,
+                                                    36
+                                                ]
+                                            ]
+                                        ],
+                                        "isDirectMatching": true
+                                    },
+                                    "27": {
+                                        "refs": [
+                                            [
+                                                [
+                                                    105,
+                                                    1
+                                                ],
+                                                [
+                                                    105,
+                                                    31
+                                                ]
+                                            ]
+                                        ],
+                                        "isDirectMatching": true
+                                    },
+                                    "28": {
+                                        "refs": [
+                                            [
+                                                [
+                                                    106,
+                                                    1
+                                                ],
+                                                [
+                                                    106,
+                                                    15
+                                                ]
+                                            ]
+                                        ],
+                                        "isDirectMatching": true
+                                    },
+                                    "29": {
+                                        "refs": [
+                                            [
+                                                [
+                                                    107,
+                                                    1
+                                                ],
+                                                [
+                                                    107,
+                                                    30
+                                                ]
+                                            ]
+                                        ],
+                                        "isDirectMatching": true
+                                    },
+                                    "30": {
+                                        "refs": [
+                                            [
+                                                [
+                                                    108,
+                                                    1
+                                                ],
+                                                [
+                                                    108,
+                                                    52
+                                                ]
+                                            ]
+                                        ],
+                                        "isDirectMatching": true
+                                    },
+                                    "31": {
+                                        "refs": [
+                                            [
+                                                [
+                                                    109,
+                                                    1
+                                                ],
+                                                [
+                                                    109,
+                                                    32
+                                                ]
+                                            ]
+                                        ],
+                                        "isDirectMatching": true
+                                    },
+                                    "32": {
+                                        "refs": [
+                                            [
+                                                [
+                                                    110,
+                                                    1
+                                                ],
+                                                [
+                                                    110,
+                                                    40
+                                                ]
+                                            ]
+                                        ],
+                                        "isDirectMatching": true
+                                    },
+                                    "33": {
+                                        "refs": [
+                                            [
+                                                [
+                                                    111,
+                                                    1
+                                                ],
+                                                [
+                                                    111,
+                                                    9
+                                                ]
+                                            ]
+                                        ],
+                                        "isDirectMatching": true
+                                    },
+                                    "38": {
+                                        "refs": [
+                                            [
+                                                [
+                                                    9,
+                                                    8
+                                                ],
+                                                [
+                                                    9,
+                                                    65
+                                                ]
+                                            ]
+                                        ],
+                                        "isDirectMatching": false
+                                    },
+                                    "39": {
+                                        "refs": [
+                                            [
+                                                [
+                                                    9,
+                                                    8
+                                                ],
+                                                [
+                                                    9,
+                                                    65
+                                                ]
+                                            ]
+                                        ],
+                                        "isDirectMatching": false
+                                    },
+                                    "40": {
+                                        "refs": [
+                                            [
+                                                [
+                                                    9,
+                                                    8
+                                                ],
+                                                [
+                                                    9,
+                                                    65
+                                                ]
+                                            ]
+                                        ],
+                                        "isDirectMatching": false
+                                    },
+                                    "41": {
+                                        "refs": [
+                                            [
+                                                [
+                                                    9,
+                                                    8
+                                                ],
+                                                [
+                                                    9,
+                                                    65
+                                                ]
+                                            ]
+                                        ],
+                                        "isDirectMatching": false
+                                    },
+                                    "42": {
+                                        "refs": [
+                                            [
+                                                [
+                                                    9,
+                                                    8
+                                                ],
+                                                [
+                                                    9,
+                                                    65
+                                                ]
+                                            ]
+                                        ],
+                                        "isDirectMatching": false
+                                    },
+                                    "43": {
+                                        "refs": [
+                                            [
+                                                [
+                                                    9,
+                                                    8
+                                                ],
+                                                [
+                                                    9,
+                                                    65
+                                                ]
+                                            ]
+                                        ],
+                                        "isDirectMatching": false
+                                    },
+                                    "44": {
+                                        "refs": [
+                                            [
+                                                [
+                                                    9,
+                                                    8
+                                                ],
+                                                [
+                                                    9,
+                                                    65
+                                                ]
+                                            ]
+                                        ],
+                                        "isDirectMatching": false
+                                    },
+                                    "45": {
+                                        "refs": [
+                                            [
+                                                [
+                                                    9,
+                                                    8
+                                                ],
+                                                [
+                                                    9,
+                                                    65
+                                                ]
+                                            ]
+                                        ],
+                                        "isDirectMatching": false
+                                    },
+                                    "46": {
+                                        "refs": [
+                                            [
+                                                [
+                                                    9,
+                                                    8
+                                                ],
+                                                [
+                                                    9,
+                                                    65
+                                                ]
+                                            ]
+                                        ],
+                                        "isDirectMatching": false
+                                    },
+                                    "47": {
+                                        "refs": [
+                                            [
+                                                [
+                                                    9,
+                                                    8
+                                                ],
+                                                [
+                                                    9,
+                                                    65
+                                                ]
+                                            ]
+                                        ],
+                                        "isDirectMatching": false
+                                    },
+                                    "48": {
+                                        "refs": [
+                                            [
+                                                [
+                                                    9,
+                                                    8
+                                                ],
+                                                [
+                                                    9,
+                                                    65
+                                                ]
+                                            ]
+                                        ],
+                                        "isDirectMatching": false
+                                    },
+                                    "49": {
+                                        "refs": [
+                                            [
+                                                [
+                                                    9,
+                                                    8
+                                                ],
+                                                [
+                                                    9,
+                                                    65
+                                                ]
+                                            ]
+                                        ],
+                                        "isDirectMatching": false
+                                    },
+                                    "50": {
+                                        "refs": [
+                                            [
+                                                [
+                                                    9,
+                                                    8
+                                                ],
+                                                [
+                                                    9,
+                                                    65
+                                                ]
+                                            ]
+                                        ],
+                                        "isDirectMatching": false
+                                    },
+                                    "51": {
+                                        "refs": [
+                                            [
+                                                [
+                                                    9,
+                                                    8
+                                                ],
+                                                [
+                                                    9,
+                                                    65
+                                                ]
+                                            ]
+                                        ],
+                                        "isDirectMatching": false
+                                    },
+                                    "55": {
+                                        "refs": [
+                                            [
+                                                [
+                                                    9,
+                                                    15
+                                                ],
+                                                [
+                                                    9,
+                                                    65
+                                                ]
+                                            ]
+                                        ],
+                                        "isDirectMatching": false
+                                    },
+                                    "56": {
+                                        "refs": [
+                                            [
+                                                [
+                                                    9,
+                                                    15
+                                                ],
+                                                [
+                                                    9,
+                                                    65
+                                                ]
+                                            ]
+                                        ],
+                                        "isDirectMatching": false
+                                    },
+                                    "57": {
+                                        "refs": [
+                                            [
+                                                [
+                                                    9,
+                                                    15
+                                                ],
+                                                [
+                                                    9,
+                                                    65
+                                                ]
+                                            ]
+                                        ],
+                                        "isDirectMatching": false
+                                    },
+                                    "58": {
+                                        "refs": [
+                                            [
+                                                [
+                                                    9,
+                                                    15
+                                                ],
+                                                [
+                                                    9,
+                                                    65
+                                                ]
+                                            ]
+                                        ],
+                                        "isDirectMatching": false
+                                    },
+                                    "59": {
+                                        "refs": [
+                                            [
+                                                [
+                                                    9,
+                                                    15
+                                                ],
+                                                [
+                                                    9,
+                                                    65
+                                                ]
+                                            ]
+                                        ],
+                                        "isDirectMatching": false
+                                    },
+                                    "60": {
+                                        "refs": [
+                                            [
+                                                [
+                                                    9,
+                                                    15
+                                                ],
+                                                [
+                                                    9,
+                                                    65
+                                                ]
+                                            ]
+                                        ],
+                                        "isDirectMatching": false
+                                    },
+                                    "61": {
+                                        "refs": [
+                                            [
+                                                [
+                                                    9,
+                                                    15
+                                                ],
+                                                [
+                                                    9,
+                                                    65
+                                                ]
+                                            ]
+                                        ],
+                                        "isDirectMatching": false
+                                    },
+                                    "62": {
+                                        "refs": [
+                                            [
+                                                [
+                                                    9,
+                                                    15
+                                                ],
+                                                [
+                                                    9,
+                                                    65
+                                                ]
+                                            ]
+                                        ],
+                                        "isDirectMatching": false
+                                    },
+                                    "63": {
+                                        "refs": [
+                                            [
+                                                [
+                                                    9,
+                                                    15
+                                                ],
+                                                [
+                                                    9,
+                                                    65
+                                                ]
+                                            ]
+                                        ],
+                                        "isDirectMatching": false
+                                    },
+                                    "64": {
+                                        "refs": [
+                                            [
+                                                [
+                                                    9,
+                                                    15
+                                                ],
+                                                [
+                                                    9,
+                                                    65
+                                                ]
+                                            ]
+                                        ],
+                                        "isDirectMatching": false
+                                    },
+                                    "65": {
+                                        "refs": [
+                                            [
+                                                [
+                                                    9,
+                                                    15
+                                                ],
+                                                [
+                                                    9,
+                                                    65
+                                                ]
+                                            ]
+                                        ],
+                                        "isDirectMatching": false
+                                    },
+                                    "66": {
+                                        "refs": [
+                                            [
+                                                [
+                                                    9,
+                                                    15
+                                                ],
+                                                [
+                                                    9,
+                                                    65
+                                                ]
+                                            ]
+                                        ],
+                                        "isDirectMatching": false
+                                    },
+                                    "67": {
+                                        "refs": [
+                                            [
+                                                [
+                                                    9,
+                                                    15
+                                                ],
+                                                [
+                                                    9,
+                                                    65
+                                                ]
+                                            ]
+                                        ],
+                                        "isDirectMatching": false
+                                    },
+                                    "68": {
+                                        "refs": [
+                                            [
+                                                [
+                                                    9,
+                                                    15
+                                                ],
+                                                [
+                                                    9,
+                                                    65
+                                                ]
+                                            ]
+                                        ],
+                                        "isDirectMatching": false
+                                    },
+                                    "74": {
+                                        "refs": [
+                                            [
+                                                [
+                                                    7,
+                                                    1
+                                                ],
+                                                [
+                                                    9,
+                                                    67
+                                                ]
+                                            ]
+                                        ],
+                                        "isDirectMatching": false
+                                    },
+                                    "75": {
+                                        "refs": [
+                                            [
+                                                [
+                                                    7,
+                                                    1
+                                                ],
+                                                [
+                                                    9,
+                                                    67
+                                                ]
+                                            ]
+                                        ],
+                                        "isDirectMatching": false
+                                    },
+                                    "76": {
+                                        "refs": [
+                                            [
+                                                [
+                                                    7,
+                                                    1
+                                                ],
+                                                [
+                                                    9,
+                                                    67
+                                                ]
+                                            ]
+                                        ],
+                                        "isDirectMatching": false
+                                    },
+                                    "77": {
+                                        "refs": [
+                                            [
+                                                [
+                                                    7,
+                                                    1
+                                                ],
+                                                [
+                                                    9,
+                                                    67
+                                                ]
+                                            ]
+                                        ],
+                                        "isDirectMatching": false
+                                    },
+                                    "80": {
+                                        "refs": [
+                                            [
+                                                [
+                                                    3,
+                                                    1
+                                                ],
+                                                [
+                                                    9,
+                                                    67
+                                                ]
+                                            ]
+                                        ],
+                                        "isDirectMatching": false
+                                    },
+                                    "81": {
+                                        "refs": [
+                                            [
+                                                [
+                                                    3,
+                                                    1
+                                                ],
+                                                [
+                                                    9,
+                                                    67
+                                                ]
+                                            ]
+                                        ],
+                                        "isDirectMatching": false
+                                    },
+                                    "82": {
+                                        "refs": [
+                                            [
+                                                [
+                                                    3,
+                                                    1
+                                                ],
+                                                [
+                                                    9,
+                                                    67
+                                                ]
+                                            ]
+                                        ],
+                                        "isDirectMatching": false
+                                    },
+                                    "83": {
+                                        "refs": [
+                                            [
+                                                [
+                                                    3,
+                                                    1
+                                                ],
+                                                [
+                                                    9,
+                                                    67
+                                                ]
+                                            ]
+                                        ],
+                                        "isDirectMatching": false
+                                    }
+                                },
+                                "commandNames": [],
+                                "readModelNames": [
+                                    "BookLoanHistory",
+                                    "BookStatusChangeHistory"
+                                ]
+                            }
+                        },
+                        "description": "# Bounded Context Overview: LoanHistory (이력 관리)\n\n## Role\n도서별 대출 및 예약 이력, 상태 변경 이력을 기록하고 조회할 수 있도록 한다.\n\n## Key Events\n- LoanHistoryRecorded\n- ReservationHistoryRecorded\n\n# Requirements\n\n## userStory\n\n대출 이력\n\n상태 변경\n\n## DDL\n\n```sql\nCREATE TABLE loan_history (\n    history_id INT AUTO_INCREMENT PRIMARY KEY,\n    loan_id INT NOT NULL,\n    action_type ENUM('대출', '반납', '연장', '연체알림', '분실신고') NOT NULL,\n    action_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    previous_due_date DATETIME NULL,\n    new_due_date DATETIME NULL,\n    notes TEXT,\n    processed_by VARCHAR(100),\n    FOREIGN KEY (loan_id) REFERENCES loans(loan_id),\n    INDEX idx_loan_id (loan_id),\n    INDEX idx_action_type (action_type),\n    INDEX\n```\n## Event\n\n```json\n{\n  \"name\": \"LoanHistoryRecorded\",\n  \"displayName\": \"대출 이력 기록됨\",\n  \"actor\": \"System\",\n  \"level\": 8,\n  \"description\": \"도서의 대출, 반납, 연장 등 대출 관련 이력이 시스템에 기록됨.\",\n  \"inputs\": [\n    \"대출/반납/연장 이벤트 정보\"\n  ],\n  \"outputs\": [\n    \"대출 이력 데이터\"\n  ],\n  \"nextEvents\": []\n}\n```\n\n```json\n{\n  \"name\": \"ReservationHistoryRecorded\",\n  \"displayName\": \"예약 이력 기록됨\",\n  \"actor\": \"System\",\n  \"level\": 9,\n  \"description\": \"도서 예약 관련 이력이 시스템에 기록됨.\",\n  \"inputs\": [\n    \"예약 이벤트 정보\"\n  ],\n  \"outputs\": [\n    \"예약 이력 데이터\"\n  ],\n  \"nextEvents\": []\n}\n```\n\n## Context Relations\n\n### LoanAndReservation-LoanHistory\n- **Type**: Pub/Sub\n- **Direction**: receives from 대출/반납 및 예약 (LoanAndReservation)\n- **Reason**: 대출, 반납, 연장, 예약 등 이벤트 발생 시 이력 관리 컨텍스트에서 해당 이벤트를 구독하여 이력을 기록한다.\n- **Interaction Pattern**: 대출/반납 및 예약에서 대출/반납/연장/예약 이벤트를 발행하면 이력 관리 컨텍스트가 이를 구독하여 이력 데이터를 생성한다.\n\n### BookManagement-LoanHistory\n- **Type**: Pub/Sub\n- **Direction**: receives from 도서 관리 (BookManagement)\n- **Reason**: 도서 등록, 폐기 등 도서 상태 변화 이력도 이력 관리 컨텍스트에서 기록할 수 있도록 이벤트를 발행한다.\n- **Interaction Pattern**: 도서 관리에서 도서 등록, 폐기 등 상태 변화 이벤트를 발행하면 이력 관리 컨텍스트가 이를 구독하여 상태 변경 이력을 기록한다."
                     }
                 }
             }
         ],
         "frontEndResults": [],
-        "pbcResults": [
-            {
-                "name": "LoanHistory",
-                "alias": "이력 관리",
-                "importance": "Generic Domain",
-                "complexity": 0.5,
-                "differentiation": 0.5,
-                "implementationStrategy": "PBC: PBC-Test",
-                "aggregates": [
-                    {
-                        "name": "LoanHistory",
-                        "alias": "대출 이력"
-                    },
-                    {
-                        "name": "ReservationHistory",
-                        "alias": "예약 이력"
-                    }
-                ],
-                "events": [
-                    "LoanHistoryRecorded",
-                    "ReservationHistoryRecorded"
-                ],
-                "requirements": [
-                    {
-                        "type": "userStory",
-                        "refs": [
-                            [
-                                [
-                                    9,
-                                    8
-                                ],
-                                [
-                                    9,
-                                    12
-                                ]
-                            ]
-                        ],
-                        "text": "대출 이력"
-                    },
-                    {
-                        "type": "userStory",
-                        "refs": [
-                            [
-                                [
-                                    9,
-                                    12
-                                ],
-                                [
-                                    9,
-                                    15
-                                ]
-                            ]
-                        ],
-                        "text": "력과 상"
-                    },
-                    {
-                        "type": "DDL",
-                        "refs": [
-                            [
-                                [
-                                    99,
-                                    1
-                                ],
-                                [
-                                    111,
-                                    25
-                                ]
-                            ]
-                        ],
-                        "text": "CREATE TABLE loan_history (\n    history_id INT AUTO_INCREMENT PRIMARY KEY,\n    loan_id INT NOT NULL,\n    action_type ENUM('대출', '반납', '연장', '연체알림', '분실신고') NOT NULL,\n    action_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    previous_due_date DATETIME NULL,\n    new_due_date DATETIME NULL,\n    notes TEXT,\n    processed_by VARCHAR(100),\n    FOREIGN KEY (loan_id) REFERENCES loans(loan_id),\n    INDEX idx_loan_id (loan_id),\n    INDEX idx_action_type (action_type),\n    INDEX idx_action_date"
-                    },
-                    {
-                        "type": "Event",
-                        "text": "{\n  \"name\": \"LoanHistoryRecorded\",\n  \"displayName\": \"대출 이력 기록됨\",\n  \"actor\": \"System\",\n  \"level\": 8,\n  \"description\": \"도서의 대출, 반납, 연장 등 대출 관련 이력이 시스템에 기록됨.\",\n  \"inputs\": [\n    \"대출/반납/연장 이벤트 정보\"\n  ],\n  \"outputs\": [\n    \"대출 이력 데이터\"\n  ],\n  \"nextEvents\": [],\n  \"refs\": [\n    [\n      [\n        9,\n        8\n      ],\n      [\n        9,\n        65\n      ]\n    ]\n  ]\n}",
-                        "refs": [
-                            [
-                                [
-                                    9,
-                                    8
-                                ],
-                                [
-                                    9,
-                                    65
-                                ]
-                            ]
-                        ]
-                    },
-                    {
-                        "type": "Event",
-                        "text": "{\n  \"name\": \"ReservationHistoryRecorded\",\n  \"displayName\": \"예약 이력 기록됨\",\n  \"actor\": \"System\",\n  \"level\": 9,\n  \"description\": \"도서 예약 관련 이력이 시스템에 기록됨.\",\n  \"inputs\": [\n    \"예약 이벤트 정보\"\n  ],\n  \"outputs\": [\n    \"예약 이력 데이터\"\n  ],\n  \"nextEvents\": [],\n  \"refs\": [\n    [\n      [\n        9,\n        15\n      ],\n      [\n        9,\n        65\n      ]\n    ]\n  ]\n}",
-                        "refs": [
-                            [
-                                [
-                                    9,
-                                    15
-                                ],
-                                [
-                                    9,
-                                    65
-                                ]
-                            ]
-                        ]
-                    }
-                ],
-                "role": "도서별 대출 및 예약 이력, 상태 변경 이력을 기록하고 조회할 수 있도록 한다.",
-                "roleRefs": [
-                    [
-                        [
-                            9,
-                            8
-                        ],
-                        [
-                            9,
-                            67
-                        ]
-                    ]
-                ],
-                "siteMap": []
-            }
-        ],
+        "pbcResults": [],
         "pbcLists": [
             {
                 "name": "chat-vue3-en",
@@ -47417,10 +54167,10 @@ export const aggregateDraftScenarios = {
             "author": "EYCl46CwWAWvpz2E1BCUpVgPIpa2",
             "authorEmail": "shinseongjin@uengine.org",
             "comment": "",
-            "createdTimeStamp": 1758001496825,
+            "createdTimeStamp": 1758765106561,
             "inputDDL": "-- 회원 테이블\nCREATE TABLE members (\n    member_id VARCHAR(20) PRIMARY KEY,\n    member_name VARCHAR(100) NOT NULL,\n    phone VARCHAR(20),\n    email VARCHAR(100),\n    address TEXT,\n    registration_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    status ENUM('ACTIVE', 'INACTIVE', 'SUSPENDED') DEFAULT 'ACTIVE',\n    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,\n    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP\n);\n\n-- 도서 테이블\nCREATE TABLE books (\n    book_id INT AUTO_INCREMENT PRIMARY KEY,\n    title VARCHAR(500) NOT NULL,\n    isbn VARCHAR(13) UNIQUE NOT NULL,\n    author VARCHAR(200) NOT NULL,\n    publisher VARCHAR(200) NOT NULL,\n    category ENUM('소설', '비소설', '학술', '잡지') NOT NULL,\n    status ENUM('대출가능', '대출중', '예약중', '폐기') DEFAULT '대출가능',\n    registration_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    disposal_date DATETIME NULL,\n    disposal_reason TEXT NULL,\n    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,\n    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n    INDEX idx_title (title),\n    INDEX idx_isbn (isbn),\n    INDEX idx_status (status),\n    INDEX idx_category (category)\n);\n\n-- 대출 테이블\nCREATE TABLE loans (\n    loan_id INT AUTO_INCREMENT PRIMARY KEY,\n    member_id VARCHAR(20) NOT NULL,\n    book_id INT NOT NULL,\n    loan_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    due_date DATETIME NOT NULL,\n    return_date DATETIME NULL,\n    loan_period_days INT NOT NULL CHECK (loan_period_days IN (7, 14, 30)),\n    status ENUM('대출중', '연체', '반납완료', '연장') DEFAULT '대출중',\n    extension_count INT DEFAULT 0,\n    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,\n    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n    FOREIGN KEY (member_id) REFERENCES members(member_id),\n    FOREIGN KEY (book_id) REFERENCES books(book_id),\n    INDEX idx_member_id (member_id),\n    INDEX idx_book_id (book_id),\n    INDEX idx_status (status),\n    INDEX idx_due_date (due_date)\n);\n\n-- 예약 테이블\nCREATE TABLE reservations (\n    reservation_id INT AUTO_INCREMENT PRIMARY KEY,\n    member_id VARCHAR(20) NOT NULL,\n    book_id INT NOT NULL,\n    reservation_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    status ENUM('예약중', '예약완료', '예약취소', '예약만료') DEFAULT '예약중',\n    notification_sent BOOLEAN DEFAULT FALSE,\n    expiry_date DATETIME NULL,\n    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,\n    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n    FOREIGN KEY (member_id) REFERENCES members(member_id),\n    FOREIGN KEY (book_id) REFERENCES books(book_id),\n    INDEX idx_member_id (member_id),\n    INDEX idx_book_id (book_id),\n    INDEX idx_status (status),\n    INDEX idx_reservation_date (reservation_date)\n);\n\n-- 도서 상태 변경 이력 테이블\nCREATE TABLE book_status_history (\n    history_id INT AUTO_INCREMENT PRIMARY KEY,\n    book_id INT NOT NULL,\n    previous_status ENUM('대출가능', '대출중', '예약중', '폐기'),\n    new_status ENUM('대출가능', '대출중', '예약중', '폐기') NOT NULL,\n    change_reason VARCHAR(200),\n    changed_by VARCHAR(100),\n    change_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    FOREIGN KEY (book_id) REFERENCES books(book_id),\n    INDEX idx_book_id (book_id),\n    INDEX idx_change_date (change_date)\n);\n\n-- 대출 이력 테이블 (모든 대출 활동의 상세 로그)\nCREATE TABLE loan_history (\n    history_id INT AUTO_INCREMENT PRIMARY KEY,\n    loan_id INT NOT NULL,\n    action_type ENUM('대출', '반납', '연장', '연체알림', '분실신고') NOT NULL,\n    action_date DATETIME DEFAULT CURRENT_TIMESTAMP,\n    previous_due_date DATETIME NULL,\n    new_due_date DATETIME NULL,\n    notes TEXT,\n    processed_by VARCHAR(100),\n    FOREIGN KEY (loan_id) REFERENCES loans(loan_id),\n    INDEX idx_loan_id (loan_id),\n    INDEX idx_action_type (action_type),\n    INDEX idx_action_date (action_date)\n);\n\n-- 연체 관리 테이블\nCREATE TABLE overdue_records (\n    overdue_id INT AUTO_INCREMENT PRIMARY KEY,\n    loan_id INT NOT NULL,\n    overdue_days INT NOT NULL,\n    fine_amount DECIMAL(10,2) DEFAULT 0.00,\n    fine_paid BOOLEAN DEFAULT FALSE,\n    notification_count INT DEFAULT 0,\n    last_notification_date DATETIME NULL,\n    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,\n    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n    FOREIGN KEY (loan_id) REFERENCES loans(loan_id),\n    INDEX idx_loan_id (loan_id),\n    INDEX idx_overdue_days (overdue_days)\n);",
-            "lastModifiedTimeStamp": 1758001496825,
-            "projectId": "163972132_project_4c558c54796d8f22083465e17f4f3173",
+            "lastModifiedTimeStamp": 1758765106561,
+            "projectId": "163972132_project_7339a13846cce7d2c16bc3db85f10593",
             "projectName": "",
             "prompt": "",
             "summarizedResult": "",
@@ -47434,9 +54184,9 @@ export const aggregateDraftScenarios = {
             "projectName": "Requirements Analysis",
             "content": {
                 "elements": {
-                    "390d9ad6-e8b1-0508-75ce-07a946d754a9": {
+                    "d609b7ba-a17c-2b11-7229-857be7c15442": {
                         "_type": "org.uengine.modeling.model.Actor",
-                        "id": "390d9ad6-e8b1-0508-75ce-07a946d754a9",
+                        "id": "d609b7ba-a17c-2b11-7229-857be7c15442",
                         "name": "Librarian",
                         "oldName": "",
                         "displayName": "",
@@ -47444,7 +54194,7 @@ export const aggregateDraftScenarios = {
                         "author": null,
                         "elementView": {
                             "_type": "org.uengine.modeling.model.Actor",
-                            "id": "390d9ad6-e8b1-0508-75ce-07a946d754a9",
+                            "id": "d609b7ba-a17c-2b11-7229-857be7c15442",
                             "x": 150,
                             "y": 150,
                             "width": 100,
@@ -47453,9 +54203,9 @@ export const aggregateDraftScenarios = {
                         },
                         "boundedContext": {}
                     },
-                    "95caa185-a0dd-6d33-2345-575c86309c45": {
+                    "aaaea731-76a8-cb6f-a3ea-22aebc7c2924": {
                         "_type": "org.uengine.modeling.model.Actor",
-                        "id": "95caa185-a0dd-6d33-2345-575c86309c45",
+                        "id": "aaaea731-76a8-cb6f-a3ea-22aebc7c2924",
                         "name": "Member",
                         "oldName": "",
                         "displayName": "",
@@ -47463,7 +54213,7 @@ export const aggregateDraftScenarios = {
                         "author": null,
                         "elementView": {
                             "_type": "org.uengine.modeling.model.Actor",
-                            "id": "95caa185-a0dd-6d33-2345-575c86309c45",
+                            "id": "aaaea731-76a8-cb6f-a3ea-22aebc7c2924",
                             "x": 150,
                             "y": 400,
                             "width": 100,
@@ -47472,9 +54222,9 @@ export const aggregateDraftScenarios = {
                         },
                         "boundedContext": {}
                     },
-                    "2b568279-36d9-f183-03c4-d3934740d482": {
+                    "171dca44-b5c0-17a3-2a2f-3746b2029347": {
                         "_type": "org.uengine.modeling.model.Actor",
-                        "id": "2b568279-36d9-f183-03c4-d3934740d482",
+                        "id": "171dca44-b5c0-17a3-2a2f-3746b2029347",
                         "name": "System",
                         "oldName": "",
                         "displayName": "",
@@ -47482,7 +54232,7 @@ export const aggregateDraftScenarios = {
                         "author": null,
                         "elementView": {
                             "_type": "org.uengine.modeling.model.Actor",
-                            "id": "2b568279-36d9-f183-03c4-d3934740d482",
+                            "id": "171dca44-b5c0-17a3-2a2f-3746b2029347",
                             "x": 150,
                             "y": 650,
                             "width": 100,
@@ -47491,9 +54241,9 @@ export const aggregateDraftScenarios = {
                         },
                         "boundedContext": {}
                     },
-                    "1f8b1907-ad9c-3d11-b02d-c329e2202b80": {
+                    "39e955bb-2889-13ee-43d6-f9c04704e8aa": {
                         "_type": "org.uengine.modeling.model.Event",
-                        "id": "1f8b1907-ad9c-3d11-b02d-c329e2202b80",
+                        "id": "39e955bb-2889-13ee-43d6-f9c04704e8aa",
                         "visibility": "public",
                         "name": "BookRegistered",
                         "oldName": "",
@@ -47518,7 +54268,7 @@ export const aggregateDraftScenarios = {
                         "mirrorElement": null,
                         "elementView": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "1f8b1907-ad9c-3d11-b02d-c329e2202b80",
+                            "id": "39e955bb-2889-13ee-43d6-f9c04704e8aa",
                             "x": 300,
                             "y": 150,
                             "width": 100,
@@ -47528,7 +54278,7 @@ export const aggregateDraftScenarios = {
                         },
                         "hexagonalView": {
                             "_type": "org.uengine.modeling.model.EventHexagonal",
-                            "id": "1f8b1907-ad9c-3d11-b02d-c329e2202b80",
+                            "id": "39e955bb-2889-13ee-43d6-f9c04704e8aa",
                             "x": 300,
                             "y": 150,
                             "subWidth": 100,
@@ -47540,9 +54290,9 @@ export const aggregateDraftScenarios = {
                         "relationCommandInfo": [],
                         "trigger": "@PostPersist"
                     },
-                    "46430672-409c-9699-4fd8-1c403afb6ae0": {
+                    "4006544a-46e2-20b3-091f-ace9dbf97109": {
                         "_type": "org.uengine.modeling.model.Event",
-                        "id": "46430672-409c-9699-4fd8-1c403afb6ae0",
+                        "id": "4006544a-46e2-20b3-091f-ace9dbf97109",
                         "visibility": "public",
                         "name": "BookDisposed",
                         "oldName": "",
@@ -47567,7 +54317,7 @@ export const aggregateDraftScenarios = {
                         "mirrorElement": null,
                         "elementView": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "46430672-409c-9699-4fd8-1c403afb6ae0",
+                            "id": "4006544a-46e2-20b3-091f-ace9dbf97109",
                             "x": 500,
                             "y": 150,
                             "width": 100,
@@ -47577,7 +54327,7 @@ export const aggregateDraftScenarios = {
                         },
                         "hexagonalView": {
                             "_type": "org.uengine.modeling.model.EventHexagonal",
-                            "id": "46430672-409c-9699-4fd8-1c403afb6ae0",
+                            "id": "4006544a-46e2-20b3-091f-ace9dbf97109",
                             "x": 500,
                             "y": 150,
                             "subWidth": 100,
@@ -47589,9 +54339,9 @@ export const aggregateDraftScenarios = {
                         "relationCommandInfo": [],
                         "trigger": "@PostPersist"
                     },
-                    "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb": {
+                    "33d20dfd-41e2-329f-f21e-d951acc196dc": {
                         "_type": "org.uengine.modeling.model.Event",
-                        "id": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                        "id": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                         "visibility": "public",
                         "name": "BookStatusChanged",
                         "oldName": "",
@@ -47616,7 +54366,7 @@ export const aggregateDraftScenarios = {
                         "mirrorElement": null,
                         "elementView": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                            "id": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                             "x": 300,
                             "y": 650,
                             "width": 100,
@@ -47626,7 +54376,7 @@ export const aggregateDraftScenarios = {
                         },
                         "hexagonalView": {
                             "_type": "org.uengine.modeling.model.EventHexagonal",
-                            "id": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                            "id": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                             "x": 300,
                             "y": 650,
                             "subWidth": 100,
@@ -47638,9 +54388,9 @@ export const aggregateDraftScenarios = {
                         "relationCommandInfo": [],
                         "trigger": "@PostPersist"
                     },
-                    "3fd758ad-d1aa-2d00-84c6-e617a5ca321d": {
+                    "502ba06b-125d-e2ba-b615-073e706b6993": {
                         "_type": "org.uengine.modeling.model.Event",
-                        "id": "3fd758ad-d1aa-2d00-84c6-e617a5ca321d",
+                        "id": "502ba06b-125d-e2ba-b615-073e706b6993",
                         "visibility": "public",
                         "name": "LoanHistoryRecorded",
                         "oldName": "",
@@ -47665,7 +54415,7 @@ export const aggregateDraftScenarios = {
                         "mirrorElement": null,
                         "elementView": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "3fd758ad-d1aa-2d00-84c6-e617a5ca321d",
+                            "id": "502ba06b-125d-e2ba-b615-073e706b6993",
                             "x": 500,
                             "y": 650,
                             "width": 100,
@@ -47675,7 +54425,7 @@ export const aggregateDraftScenarios = {
                         },
                         "hexagonalView": {
                             "_type": "org.uengine.modeling.model.EventHexagonal",
-                            "id": "3fd758ad-d1aa-2d00-84c6-e617a5ca321d",
+                            "id": "502ba06b-125d-e2ba-b615-073e706b6993",
                             "x": 500,
                             "y": 650,
                             "subWidth": 100,
@@ -47687,9 +54437,9 @@ export const aggregateDraftScenarios = {
                         "relationCommandInfo": [],
                         "trigger": "@PostPersist"
                     },
-                    "0c5189db-fb16-d909-f227-0d57f711a17b": {
+                    "f86575ae-5efb-bb6e-9570-f8b02222054f": {
                         "_type": "org.uengine.modeling.model.Event",
-                        "id": "0c5189db-fb16-d909-f227-0d57f711a17b",
+                        "id": "f86575ae-5efb-bb6e-9570-f8b02222054f",
                         "visibility": "public",
                         "name": "ReservationHistoryRecorded",
                         "oldName": "",
@@ -47714,7 +54464,7 @@ export const aggregateDraftScenarios = {
                         "mirrorElement": null,
                         "elementView": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "0c5189db-fb16-d909-f227-0d57f711a17b",
+                            "id": "f86575ae-5efb-bb6e-9570-f8b02222054f",
                             "x": 700,
                             "y": 650,
                             "width": 100,
@@ -47724,7 +54474,7 @@ export const aggregateDraftScenarios = {
                         },
                         "hexagonalView": {
                             "_type": "org.uengine.modeling.model.EventHexagonal",
-                            "id": "0c5189db-fb16-d909-f227-0d57f711a17b",
+                            "id": "f86575ae-5efb-bb6e-9570-f8b02222054f",
                             "x": 700,
                             "y": 650,
                             "subWidth": 100,
@@ -47736,9 +54486,9 @@ export const aggregateDraftScenarios = {
                         "relationCommandInfo": [],
                         "trigger": "@PostPersist"
                     },
-                    "6f1d672f-a24c-3ce2-a1d8-001277df7fc7": {
+                    "2c5c3155-2cbe-acad-a41c-18c2ac2583ec": {
                         "_type": "org.uengine.modeling.model.Event",
-                        "id": "6f1d672f-a24c-3ce2-a1d8-001277df7fc7",
+                        "id": "2c5c3155-2cbe-acad-a41c-18c2ac2583ec",
                         "visibility": "public",
                         "name": "BookLoaned",
                         "oldName": "",
@@ -47763,7 +54513,7 @@ export const aggregateDraftScenarios = {
                         "mirrorElement": null,
                         "elementView": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "6f1d672f-a24c-3ce2-a1d8-001277df7fc7",
+                            "id": "2c5c3155-2cbe-acad-a41c-18c2ac2583ec",
                             "x": 300,
                             "y": 400,
                             "width": 100,
@@ -47773,7 +54523,7 @@ export const aggregateDraftScenarios = {
                         },
                         "hexagonalView": {
                             "_type": "org.uengine.modeling.model.EventHexagonal",
-                            "id": "6f1d672f-a24c-3ce2-a1d8-001277df7fc7",
+                            "id": "2c5c3155-2cbe-acad-a41c-18c2ac2583ec",
                             "x": 300,
                             "y": 400,
                             "subWidth": 100,
@@ -47785,9 +54535,9 @@ export const aggregateDraftScenarios = {
                         "relationCommandInfo": [],
                         "trigger": "@PostPersist"
                     },
-                    "d858202f-6448-5f92-839f-057850558645": {
+                    "dae2e159-2892-5ae3-3f28-f7ca33ca3b86": {
                         "_type": "org.uengine.modeling.model.Event",
-                        "id": "d858202f-6448-5f92-839f-057850558645",
+                        "id": "dae2e159-2892-5ae3-3f28-f7ca33ca3b86",
                         "visibility": "public",
                         "name": "BookReserved",
                         "oldName": "",
@@ -47812,7 +54562,7 @@ export const aggregateDraftScenarios = {
                         "mirrorElement": null,
                         "elementView": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "d858202f-6448-5f92-839f-057850558645",
+                            "id": "dae2e159-2892-5ae3-3f28-f7ca33ca3b86",
                             "x": 500,
                             "y": 400,
                             "width": 100,
@@ -47822,7 +54572,7 @@ export const aggregateDraftScenarios = {
                         },
                         "hexagonalView": {
                             "_type": "org.uengine.modeling.model.EventHexagonal",
-                            "id": "d858202f-6448-5f92-839f-057850558645",
+                            "id": "dae2e159-2892-5ae3-3f28-f7ca33ca3b86",
                             "x": 500,
                             "y": 400,
                             "subWidth": 100,
@@ -47834,9 +54584,9 @@ export const aggregateDraftScenarios = {
                         "relationCommandInfo": [],
                         "trigger": "@PostPersist"
                     },
-                    "69c6b800-fbe8-b39d-7671-bb7c9a5a9fde": {
+                    "259c838a-8e2b-4d53-e282-92e7b9f4c351": {
                         "_type": "org.uengine.modeling.model.Event",
-                        "id": "69c6b800-fbe8-b39d-7671-bb7c9a5a9fde",
+                        "id": "259c838a-8e2b-4d53-e282-92e7b9f4c351",
                         "visibility": "public",
                         "name": "BookReturned",
                         "oldName": "",
@@ -47861,7 +54611,7 @@ export const aggregateDraftScenarios = {
                         "mirrorElement": null,
                         "elementView": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "69c6b800-fbe8-b39d-7671-bb7c9a5a9fde",
+                            "id": "259c838a-8e2b-4d53-e282-92e7b9f4c351",
                             "x": 700,
                             "y": 400,
                             "width": 100,
@@ -47871,7 +54621,7 @@ export const aggregateDraftScenarios = {
                         },
                         "hexagonalView": {
                             "_type": "org.uengine.modeling.model.EventHexagonal",
-                            "id": "69c6b800-fbe8-b39d-7671-bb7c9a5a9fde",
+                            "id": "259c838a-8e2b-4d53-e282-92e7b9f4c351",
                             "x": 700,
                             "y": 400,
                             "subWidth": 100,
@@ -47883,9 +54633,9 @@ export const aggregateDraftScenarios = {
                         "relationCommandInfo": [],
                         "trigger": "@PostPersist"
                     },
-                    "fdb46713-7a04-0545-7333-76bb78ef9e6b": {
+                    "7e5e2488-3c94-6b60-2dde-a60fb11834fa": {
                         "_type": "org.uengine.modeling.model.Event",
-                        "id": "fdb46713-7a04-0545-7333-76bb78ef9e6b",
+                        "id": "7e5e2488-3c94-6b60-2dde-a60fb11834fa",
                         "visibility": "public",
                         "name": "LoanExtended",
                         "oldName": "",
@@ -47910,7 +54660,7 @@ export const aggregateDraftScenarios = {
                         "mirrorElement": null,
                         "elementView": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "fdb46713-7a04-0545-7333-76bb78ef9e6b",
+                            "id": "7e5e2488-3c94-6b60-2dde-a60fb11834fa",
                             "x": 900,
                             "y": 400,
                             "width": 100,
@@ -47920,7 +54670,7 @@ export const aggregateDraftScenarios = {
                         },
                         "hexagonalView": {
                             "_type": "org.uengine.modeling.model.EventHexagonal",
-                            "id": "fdb46713-7a04-0545-7333-76bb78ef9e6b",
+                            "id": "7e5e2488-3c94-6b60-2dde-a60fb11834fa",
                             "x": 900,
                             "y": 400,
                             "subWidth": 100,
@@ -47934,18 +54684,18 @@ export const aggregateDraftScenarios = {
                     }
                 },
                 "relations": {
-                    "1145e43c-b5f5-f11d-4ce6-8284718bd16d": {
+                    "094e1cd1-4d3e-739c-83f2-a4fbd6655d7f": {
                         "_type": "org.uengine.modeling.model.Line",
-                        "id": "1145e43c-b5f5-f11d-4ce6-8284718bd16d",
+                        "id": "094e1cd1-4d3e-739c-83f2-a4fbd6655d7f",
                         "name": "",
                         "author": null,
                         "oldName": "",
                         "displayName": "",
-                        "from": "1145e43c-b5f5-f11d-4ce6-8284718bd16d",
-                        "to": "1145e43c-b5f5-f11d-4ce6-8284718bd16d",
+                        "from": "094e1cd1-4d3e-739c-83f2-a4fbd6655d7f",
+                        "to": "094e1cd1-4d3e-739c-83f2-a4fbd6655d7f",
                         "description": "",
                         "relationView": {
-                            "id": "1145e43c-b5f5-f11d-4ce6-8284718bd16d",
+                            "id": "094e1cd1-4d3e-739c-83f2-a4fbd6655d7f",
                             "value": "[[0,275],[2000,275]]"
                         },
                         "size": 10,
@@ -47954,18 +54704,18 @@ export const aggregateDraftScenarios = {
                         "imgSrc": "https://www.msaez.io:8081/static/image/symbol/edge.png",
                         "vertices": "[[0,275],[2000,275]]"
                     },
-                    "1a7be36f-bc74-c430-34fc-05d2731ae1e7": {
+                    "9700580c-1970-b461-ad81-676a95123e95": {
                         "_type": "org.uengine.modeling.model.Line",
-                        "id": "1a7be36f-bc74-c430-34fc-05d2731ae1e7",
+                        "id": "9700580c-1970-b461-ad81-676a95123e95",
                         "name": "",
                         "author": null,
                         "oldName": "",
                         "displayName": "",
-                        "from": "1a7be36f-bc74-c430-34fc-05d2731ae1e7",
-                        "to": "1a7be36f-bc74-c430-34fc-05d2731ae1e7",
+                        "from": "9700580c-1970-b461-ad81-676a95123e95",
+                        "to": "9700580c-1970-b461-ad81-676a95123e95",
                         "description": "",
                         "relationView": {
-                            "id": "1a7be36f-bc74-c430-34fc-05d2731ae1e7",
+                            "id": "9700580c-1970-b461-ad81-676a95123e95",
                             "value": "[[0,525],[2000,525]]"
                         },
                         "size": 10,
@@ -47974,18 +54724,18 @@ export const aggregateDraftScenarios = {
                         "imgSrc": "https://www.msaez.io:8081/static/image/symbol/edge.png",
                         "vertices": "[[0,525],[2000,525]]"
                     },
-                    "2c8dc285-d342-8b02-4648-9c8765948650": {
+                    "887ca9dd-3cb0-8764-9176-787875c4f6ed": {
                         "_type": "org.uengine.modeling.model.Line",
-                        "id": "2c8dc285-d342-8b02-4648-9c8765948650",
+                        "id": "887ca9dd-3cb0-8764-9176-787875c4f6ed",
                         "name": "",
                         "author": null,
                         "oldName": "",
                         "displayName": "",
-                        "from": "2c8dc285-d342-8b02-4648-9c8765948650",
-                        "to": "2c8dc285-d342-8b02-4648-9c8765948650",
+                        "from": "887ca9dd-3cb0-8764-9176-787875c4f6ed",
+                        "to": "887ca9dd-3cb0-8764-9176-787875c4f6ed",
                         "description": "",
                         "relationView": {
-                            "id": "2c8dc285-d342-8b02-4648-9c8765948650",
+                            "id": "887ca9dd-3cb0-8764-9176-787875c4f6ed",
                             "value": "[[0,775],[2000,775]]"
                         },
                         "size": 10,
@@ -47994,14 +54744,14 @@ export const aggregateDraftScenarios = {
                         "imgSrc": "https://www.msaez.io:8081/static/image/symbol/edge.png",
                         "vertices": "[[0,775],[2000,775]]"
                     },
-                    "08de7859-04f0-9f44-9d01-34a8f16de0f8": {
+                    "2bc8c8c5-c18d-754d-f9de-f1a1b02b251d": {
                         "_type": "org.uengine.modeling.model.Relation",
-                        "id": "08de7859-04f0-9f44-9d01-34a8f16de0f8",
+                        "id": "2bc8c8c5-c18d-754d-f9de-f1a1b02b251d",
                         "name": "1",
                         "displayName": "1",
                         "sourceElement": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "1f8b1907-ad9c-3d11-b02d-c329e2202b80",
+                            "id": "39e955bb-2889-13ee-43d6-f9c04704e8aa",
                             "visibility": "public",
                             "name": "BookRegistered",
                             "oldName": "",
@@ -48026,7 +54776,7 @@ export const aggregateDraftScenarios = {
                             "mirrorElement": null,
                             "elementView": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "1f8b1907-ad9c-3d11-b02d-c329e2202b80",
+                                "id": "39e955bb-2889-13ee-43d6-f9c04704e8aa",
                                 "x": 300,
                                 "y": 150,
                                 "width": 100,
@@ -48036,7 +54786,7 @@ export const aggregateDraftScenarios = {
                             },
                             "hexagonalView": {
                                 "_type": "org.uengine.modeling.model.EventHexagonal",
-                                "id": "1f8b1907-ad9c-3d11-b02d-c329e2202b80",
+                                "id": "39e955bb-2889-13ee-43d6-f9c04704e8aa",
                                 "x": 300,
                                 "y": 150,
                                 "subWidth": 100,
@@ -48050,7 +54800,7 @@ export const aggregateDraftScenarios = {
                         },
                         "targetElement": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                            "id": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                             "visibility": "public",
                             "name": "BookStatusChanged",
                             "oldName": "",
@@ -48075,7 +54825,7 @@ export const aggregateDraftScenarios = {
                             "mirrorElement": null,
                             "elementView": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                                "id": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                                 "x": 300,
                                 "y": 650,
                                 "width": 100,
@@ -48085,7 +54835,7 @@ export const aggregateDraftScenarios = {
                             },
                             "hexagonalView": {
                                 "_type": "org.uengine.modeling.model.EventHexagonal",
-                                "id": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                                "id": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                                 "x": 300,
                                 "y": 650,
                                 "subWidth": 100,
@@ -48097,25 +54847,25 @@ export const aggregateDraftScenarios = {
                             "relationCommandInfo": [],
                             "trigger": "@PostPersist"
                         },
-                        "from": "1f8b1907-ad9c-3d11-b02d-c329e2202b80",
-                        "to": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                        "from": "39e955bb-2889-13ee-43d6-f9c04704e8aa",
+                        "to": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                         "relationView": {
-                            "id": "08de7859-04f0-9f44-9d01-34a8f16de0f8",
+                            "id": "2bc8c8c5-c18d-754d-f9de-f1a1b02b251d",
                             "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
                             "value": null,
-                            "from": "1f8b1907-ad9c-3d11-b02d-c329e2202b80",
-                            "to": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                            "from": "39e955bb-2889-13ee-43d6-f9c04704e8aa",
+                            "to": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                             "needReconnect": true
                         }
                     },
-                    "5126cbe9-4654-ddff-1703-d9c350d09e40": {
+                    "e7b7a299-3bb1-4f1b-eb11-203907e78050": {
                         "_type": "org.uengine.modeling.model.Relation",
-                        "id": "5126cbe9-4654-ddff-1703-d9c350d09e40",
+                        "id": "e7b7a299-3bb1-4f1b-eb11-203907e78050",
                         "name": "2",
                         "displayName": "2",
                         "sourceElement": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                            "id": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                             "visibility": "public",
                             "name": "BookStatusChanged",
                             "oldName": "",
@@ -48140,7 +54890,7 @@ export const aggregateDraftScenarios = {
                             "mirrorElement": null,
                             "elementView": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                                "id": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                                 "x": 300,
                                 "y": 650,
                                 "width": 100,
@@ -48150,7 +54900,7 @@ export const aggregateDraftScenarios = {
                             },
                             "hexagonalView": {
                                 "_type": "org.uengine.modeling.model.EventHexagonal",
-                                "id": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                                "id": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                                 "x": 300,
                                 "y": 650,
                                 "subWidth": 100,
@@ -48164,7 +54914,7 @@ export const aggregateDraftScenarios = {
                         },
                         "targetElement": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "46430672-409c-9699-4fd8-1c403afb6ae0",
+                            "id": "4006544a-46e2-20b3-091f-ace9dbf97109",
                             "visibility": "public",
                             "name": "BookDisposed",
                             "oldName": "",
@@ -48189,7 +54939,7 @@ export const aggregateDraftScenarios = {
                             "mirrorElement": null,
                             "elementView": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "46430672-409c-9699-4fd8-1c403afb6ae0",
+                                "id": "4006544a-46e2-20b3-091f-ace9dbf97109",
                                 "x": 500,
                                 "y": 150,
                                 "width": 100,
@@ -48199,7 +54949,7 @@ export const aggregateDraftScenarios = {
                             },
                             "hexagonalView": {
                                 "_type": "org.uengine.modeling.model.EventHexagonal",
-                                "id": "46430672-409c-9699-4fd8-1c403afb6ae0",
+                                "id": "4006544a-46e2-20b3-091f-ace9dbf97109",
                                 "x": 500,
                                 "y": 150,
                                 "subWidth": 100,
@@ -48211,25 +54961,25 @@ export const aggregateDraftScenarios = {
                             "relationCommandInfo": [],
                             "trigger": "@PostPersist"
                         },
-                        "from": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
-                        "to": "46430672-409c-9699-4fd8-1c403afb6ae0",
+                        "from": "33d20dfd-41e2-329f-f21e-d951acc196dc",
+                        "to": "4006544a-46e2-20b3-091f-ace9dbf97109",
                         "relationView": {
-                            "id": "5126cbe9-4654-ddff-1703-d9c350d09e40",
+                            "id": "e7b7a299-3bb1-4f1b-eb11-203907e78050",
                             "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
                             "value": null,
-                            "from": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
-                            "to": "46430672-409c-9699-4fd8-1c403afb6ae0",
+                            "from": "33d20dfd-41e2-329f-f21e-d951acc196dc",
+                            "to": "4006544a-46e2-20b3-091f-ace9dbf97109",
                             "needReconnect": true
                         }
                     },
-                    "c851c068-8abb-87d9-1c2a-1e80ed443591": {
+                    "88615bd2-d1b2-b3b1-25e0-6689ab67d1cc": {
                         "_type": "org.uengine.modeling.model.Relation",
-                        "id": "c851c068-8abb-87d9-1c2a-1e80ed443591",
+                        "id": "88615bd2-d1b2-b3b1-25e0-6689ab67d1cc",
                         "name": "2",
                         "displayName": "2",
                         "sourceElement": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                            "id": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                             "visibility": "public",
                             "name": "BookStatusChanged",
                             "oldName": "",
@@ -48254,7 +55004,7 @@ export const aggregateDraftScenarios = {
                             "mirrorElement": null,
                             "elementView": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                                "id": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                                 "x": 300,
                                 "y": 650,
                                 "width": 100,
@@ -48264,7 +55014,7 @@ export const aggregateDraftScenarios = {
                             },
                             "hexagonalView": {
                                 "_type": "org.uengine.modeling.model.EventHexagonal",
-                                "id": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                                "id": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                                 "x": 300,
                                 "y": 650,
                                 "subWidth": 100,
@@ -48278,7 +55028,7 @@ export const aggregateDraftScenarios = {
                         },
                         "targetElement": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "6f1d672f-a24c-3ce2-a1d8-001277df7fc7",
+                            "id": "2c5c3155-2cbe-acad-a41c-18c2ac2583ec",
                             "visibility": "public",
                             "name": "BookLoaned",
                             "oldName": "",
@@ -48303,7 +55053,7 @@ export const aggregateDraftScenarios = {
                             "mirrorElement": null,
                             "elementView": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "6f1d672f-a24c-3ce2-a1d8-001277df7fc7",
+                                "id": "2c5c3155-2cbe-acad-a41c-18c2ac2583ec",
                                 "x": 300,
                                 "y": 400,
                                 "width": 100,
@@ -48313,7 +55063,7 @@ export const aggregateDraftScenarios = {
                             },
                             "hexagonalView": {
                                 "_type": "org.uengine.modeling.model.EventHexagonal",
-                                "id": "6f1d672f-a24c-3ce2-a1d8-001277df7fc7",
+                                "id": "2c5c3155-2cbe-acad-a41c-18c2ac2583ec",
                                 "x": 300,
                                 "y": 400,
                                 "subWidth": 100,
@@ -48325,25 +55075,25 @@ export const aggregateDraftScenarios = {
                             "relationCommandInfo": [],
                             "trigger": "@PostPersist"
                         },
-                        "from": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
-                        "to": "6f1d672f-a24c-3ce2-a1d8-001277df7fc7",
+                        "from": "33d20dfd-41e2-329f-f21e-d951acc196dc",
+                        "to": "2c5c3155-2cbe-acad-a41c-18c2ac2583ec",
                         "relationView": {
-                            "id": "c851c068-8abb-87d9-1c2a-1e80ed443591",
+                            "id": "88615bd2-d1b2-b3b1-25e0-6689ab67d1cc",
                             "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
                             "value": null,
-                            "from": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
-                            "to": "6f1d672f-a24c-3ce2-a1d8-001277df7fc7",
+                            "from": "33d20dfd-41e2-329f-f21e-d951acc196dc",
+                            "to": "2c5c3155-2cbe-acad-a41c-18c2ac2583ec",
                             "needReconnect": true
                         }
                     },
-                    "bde18cde-2136-ad9e-f9b0-1257e6ebc558": {
+                    "4f2622e1-9dfb-5148-36ba-afcac0ed7d24": {
                         "_type": "org.uengine.modeling.model.Relation",
-                        "id": "bde18cde-2136-ad9e-f9b0-1257e6ebc558",
+                        "id": "4f2622e1-9dfb-5148-36ba-afcac0ed7d24",
                         "name": "2",
                         "displayName": "2",
                         "sourceElement": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                            "id": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                             "visibility": "public",
                             "name": "BookStatusChanged",
                             "oldName": "",
@@ -48368,7 +55118,7 @@ export const aggregateDraftScenarios = {
                             "mirrorElement": null,
                             "elementView": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                                "id": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                                 "x": 300,
                                 "y": 650,
                                 "width": 100,
@@ -48378,7 +55128,7 @@ export const aggregateDraftScenarios = {
                             },
                             "hexagonalView": {
                                 "_type": "org.uengine.modeling.model.EventHexagonal",
-                                "id": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                                "id": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                                 "x": 300,
                                 "y": 650,
                                 "subWidth": 100,
@@ -48392,7 +55142,7 @@ export const aggregateDraftScenarios = {
                         },
                         "targetElement": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "69c6b800-fbe8-b39d-7671-bb7c9a5a9fde",
+                            "id": "259c838a-8e2b-4d53-e282-92e7b9f4c351",
                             "visibility": "public",
                             "name": "BookReturned",
                             "oldName": "",
@@ -48417,7 +55167,7 @@ export const aggregateDraftScenarios = {
                             "mirrorElement": null,
                             "elementView": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "69c6b800-fbe8-b39d-7671-bb7c9a5a9fde",
+                                "id": "259c838a-8e2b-4d53-e282-92e7b9f4c351",
                                 "x": 700,
                                 "y": 400,
                                 "width": 100,
@@ -48427,7 +55177,7 @@ export const aggregateDraftScenarios = {
                             },
                             "hexagonalView": {
                                 "_type": "org.uengine.modeling.model.EventHexagonal",
-                                "id": "69c6b800-fbe8-b39d-7671-bb7c9a5a9fde",
+                                "id": "259c838a-8e2b-4d53-e282-92e7b9f4c351",
                                 "x": 700,
                                 "y": 400,
                                 "subWidth": 100,
@@ -48439,25 +55189,25 @@ export const aggregateDraftScenarios = {
                             "relationCommandInfo": [],
                             "trigger": "@PostPersist"
                         },
-                        "from": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
-                        "to": "69c6b800-fbe8-b39d-7671-bb7c9a5a9fde",
+                        "from": "33d20dfd-41e2-329f-f21e-d951acc196dc",
+                        "to": "259c838a-8e2b-4d53-e282-92e7b9f4c351",
                         "relationView": {
-                            "id": "bde18cde-2136-ad9e-f9b0-1257e6ebc558",
+                            "id": "4f2622e1-9dfb-5148-36ba-afcac0ed7d24",
                             "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
                             "value": null,
-                            "from": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
-                            "to": "69c6b800-fbe8-b39d-7671-bb7c9a5a9fde",
+                            "from": "33d20dfd-41e2-329f-f21e-d951acc196dc",
+                            "to": "259c838a-8e2b-4d53-e282-92e7b9f4c351",
                             "needReconnect": true
                         }
                     },
-                    "2f9fb1a8-a85c-57be-3df8-b6cce24a96eb": {
+                    "4eee1503-8fa4-4772-1e34-da7c19530d77": {
                         "_type": "org.uengine.modeling.model.Relation",
-                        "id": "2f9fb1a8-a85c-57be-3df8-b6cce24a96eb",
+                        "id": "4eee1503-8fa4-4772-1e34-da7c19530d77",
                         "name": "2",
                         "displayName": "2",
                         "sourceElement": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                            "id": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                             "visibility": "public",
                             "name": "BookStatusChanged",
                             "oldName": "",
@@ -48482,7 +55232,7 @@ export const aggregateDraftScenarios = {
                             "mirrorElement": null,
                             "elementView": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                                "id": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                                 "x": 300,
                                 "y": 650,
                                 "width": 100,
@@ -48492,7 +55242,7 @@ export const aggregateDraftScenarios = {
                             },
                             "hexagonalView": {
                                 "_type": "org.uengine.modeling.model.EventHexagonal",
-                                "id": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                                "id": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                                 "x": 300,
                                 "y": 650,
                                 "subWidth": 100,
@@ -48506,7 +55256,7 @@ export const aggregateDraftScenarios = {
                         },
                         "targetElement": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "d858202f-6448-5f92-839f-057850558645",
+                            "id": "dae2e159-2892-5ae3-3f28-f7ca33ca3b86",
                             "visibility": "public",
                             "name": "BookReserved",
                             "oldName": "",
@@ -48531,7 +55281,7 @@ export const aggregateDraftScenarios = {
                             "mirrorElement": null,
                             "elementView": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "d858202f-6448-5f92-839f-057850558645",
+                                "id": "dae2e159-2892-5ae3-3f28-f7ca33ca3b86",
                                 "x": 500,
                                 "y": 400,
                                 "width": 100,
@@ -48541,7 +55291,7 @@ export const aggregateDraftScenarios = {
                             },
                             "hexagonalView": {
                                 "_type": "org.uengine.modeling.model.EventHexagonal",
-                                "id": "d858202f-6448-5f92-839f-057850558645",
+                                "id": "dae2e159-2892-5ae3-3f28-f7ca33ca3b86",
                                 "x": 500,
                                 "y": 400,
                                 "subWidth": 100,
@@ -48553,25 +55303,25 @@ export const aggregateDraftScenarios = {
                             "relationCommandInfo": [],
                             "trigger": "@PostPersist"
                         },
-                        "from": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
-                        "to": "d858202f-6448-5f92-839f-057850558645",
+                        "from": "33d20dfd-41e2-329f-f21e-d951acc196dc",
+                        "to": "dae2e159-2892-5ae3-3f28-f7ca33ca3b86",
                         "relationView": {
-                            "id": "2f9fb1a8-a85c-57be-3df8-b6cce24a96eb",
+                            "id": "4eee1503-8fa4-4772-1e34-da7c19530d77",
                             "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
                             "value": null,
-                            "from": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
-                            "to": "d858202f-6448-5f92-839f-057850558645",
+                            "from": "33d20dfd-41e2-329f-f21e-d951acc196dc",
+                            "to": "dae2e159-2892-5ae3-3f28-f7ca33ca3b86",
                             "needReconnect": true
                         }
                     },
-                    "156064f6-b46c-dbd1-66e7-aec2612bee9a": {
+                    "3f64b1d9-2d58-a122-c89d-5e21269c65d0": {
                         "_type": "org.uengine.modeling.model.Relation",
-                        "id": "156064f6-b46c-dbd1-66e7-aec2612bee9a",
+                        "id": "3f64b1d9-2d58-a122-c89d-5e21269c65d0",
                         "name": "4",
                         "displayName": "4",
                         "sourceElement": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "6f1d672f-a24c-3ce2-a1d8-001277df7fc7",
+                            "id": "2c5c3155-2cbe-acad-a41c-18c2ac2583ec",
                             "visibility": "public",
                             "name": "BookLoaned",
                             "oldName": "",
@@ -48596,7 +55346,7 @@ export const aggregateDraftScenarios = {
                             "mirrorElement": null,
                             "elementView": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "6f1d672f-a24c-3ce2-a1d8-001277df7fc7",
+                                "id": "2c5c3155-2cbe-acad-a41c-18c2ac2583ec",
                                 "x": 300,
                                 "y": 400,
                                 "width": 100,
@@ -48606,7 +55356,7 @@ export const aggregateDraftScenarios = {
                             },
                             "hexagonalView": {
                                 "_type": "org.uengine.modeling.model.EventHexagonal",
-                                "id": "6f1d672f-a24c-3ce2-a1d8-001277df7fc7",
+                                "id": "2c5c3155-2cbe-acad-a41c-18c2ac2583ec",
                                 "x": 300,
                                 "y": 400,
                                 "subWidth": 100,
@@ -48620,7 +55370,7 @@ export const aggregateDraftScenarios = {
                         },
                         "targetElement": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                            "id": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                             "visibility": "public",
                             "name": "BookStatusChanged",
                             "oldName": "",
@@ -48645,7 +55395,7 @@ export const aggregateDraftScenarios = {
                             "mirrorElement": null,
                             "elementView": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                                "id": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                                 "x": 300,
                                 "y": 650,
                                 "width": 100,
@@ -48655,7 +55405,7 @@ export const aggregateDraftScenarios = {
                             },
                             "hexagonalView": {
                                 "_type": "org.uengine.modeling.model.EventHexagonal",
-                                "id": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                                "id": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                                 "x": 300,
                                 "y": 650,
                                 "subWidth": 100,
@@ -48667,25 +55417,25 @@ export const aggregateDraftScenarios = {
                             "relationCommandInfo": [],
                             "trigger": "@PostPersist"
                         },
-                        "from": "6f1d672f-a24c-3ce2-a1d8-001277df7fc7",
-                        "to": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                        "from": "2c5c3155-2cbe-acad-a41c-18c2ac2583ec",
+                        "to": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                         "relationView": {
-                            "id": "156064f6-b46c-dbd1-66e7-aec2612bee9a",
+                            "id": "3f64b1d9-2d58-a122-c89d-5e21269c65d0",
                             "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
                             "value": null,
-                            "from": "6f1d672f-a24c-3ce2-a1d8-001277df7fc7",
-                            "to": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                            "from": "2c5c3155-2cbe-acad-a41c-18c2ac2583ec",
+                            "to": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                             "needReconnect": true
                         }
                     },
-                    "0badfcbf-da89-28f3-1fc8-2176df4c90c2": {
+                    "b0053bd9-ddb5-d979-2c68-73594113884d": {
                         "_type": "org.uengine.modeling.model.Relation",
-                        "id": "0badfcbf-da89-28f3-1fc8-2176df4c90c2",
+                        "id": "b0053bd9-ddb5-d979-2c68-73594113884d",
                         "name": "4",
                         "displayName": "4",
                         "sourceElement": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "6f1d672f-a24c-3ce2-a1d8-001277df7fc7",
+                            "id": "2c5c3155-2cbe-acad-a41c-18c2ac2583ec",
                             "visibility": "public",
                             "name": "BookLoaned",
                             "oldName": "",
@@ -48710,7 +55460,7 @@ export const aggregateDraftScenarios = {
                             "mirrorElement": null,
                             "elementView": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "6f1d672f-a24c-3ce2-a1d8-001277df7fc7",
+                                "id": "2c5c3155-2cbe-acad-a41c-18c2ac2583ec",
                                 "x": 300,
                                 "y": 400,
                                 "width": 100,
@@ -48720,7 +55470,7 @@ export const aggregateDraftScenarios = {
                             },
                             "hexagonalView": {
                                 "_type": "org.uengine.modeling.model.EventHexagonal",
-                                "id": "6f1d672f-a24c-3ce2-a1d8-001277df7fc7",
+                                "id": "2c5c3155-2cbe-acad-a41c-18c2ac2583ec",
                                 "x": 300,
                                 "y": 400,
                                 "subWidth": 100,
@@ -48734,7 +55484,7 @@ export const aggregateDraftScenarios = {
                         },
                         "targetElement": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "3fd758ad-d1aa-2d00-84c6-e617a5ca321d",
+                            "id": "502ba06b-125d-e2ba-b615-073e706b6993",
                             "visibility": "public",
                             "name": "LoanHistoryRecorded",
                             "oldName": "",
@@ -48759,7 +55509,7 @@ export const aggregateDraftScenarios = {
                             "mirrorElement": null,
                             "elementView": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "3fd758ad-d1aa-2d00-84c6-e617a5ca321d",
+                                "id": "502ba06b-125d-e2ba-b615-073e706b6993",
                                 "x": 500,
                                 "y": 650,
                                 "width": 100,
@@ -48769,7 +55519,7 @@ export const aggregateDraftScenarios = {
                             },
                             "hexagonalView": {
                                 "_type": "org.uengine.modeling.model.EventHexagonal",
-                                "id": "3fd758ad-d1aa-2d00-84c6-e617a5ca321d",
+                                "id": "502ba06b-125d-e2ba-b615-073e706b6993",
                                 "x": 500,
                                 "y": 650,
                                 "subWidth": 100,
@@ -48781,25 +55531,25 @@ export const aggregateDraftScenarios = {
                             "relationCommandInfo": [],
                             "trigger": "@PostPersist"
                         },
-                        "from": "6f1d672f-a24c-3ce2-a1d8-001277df7fc7",
-                        "to": "3fd758ad-d1aa-2d00-84c6-e617a5ca321d",
+                        "from": "2c5c3155-2cbe-acad-a41c-18c2ac2583ec",
+                        "to": "502ba06b-125d-e2ba-b615-073e706b6993",
                         "relationView": {
-                            "id": "0badfcbf-da89-28f3-1fc8-2176df4c90c2",
+                            "id": "b0053bd9-ddb5-d979-2c68-73594113884d",
                             "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
                             "value": null,
-                            "from": "6f1d672f-a24c-3ce2-a1d8-001277df7fc7",
-                            "to": "3fd758ad-d1aa-2d00-84c6-e617a5ca321d",
+                            "from": "2c5c3155-2cbe-acad-a41c-18c2ac2583ec",
+                            "to": "502ba06b-125d-e2ba-b615-073e706b6993",
                             "needReconnect": true
                         }
                     },
-                    "2c9e22a8-f6b9-0ee6-a0ee-e0cff1eef916": {
+                    "dad1d9f6-5f71-119b-8c0b-434de6999a38": {
                         "_type": "org.uengine.modeling.model.Relation",
-                        "id": "2c9e22a8-f6b9-0ee6-a0ee-e0cff1eef916",
+                        "id": "dad1d9f6-5f71-119b-8c0b-434de6999a38",
                         "name": "5",
                         "displayName": "5",
                         "sourceElement": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "d858202f-6448-5f92-839f-057850558645",
+                            "id": "dae2e159-2892-5ae3-3f28-f7ca33ca3b86",
                             "visibility": "public",
                             "name": "BookReserved",
                             "oldName": "",
@@ -48824,7 +55574,7 @@ export const aggregateDraftScenarios = {
                             "mirrorElement": null,
                             "elementView": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "d858202f-6448-5f92-839f-057850558645",
+                                "id": "dae2e159-2892-5ae3-3f28-f7ca33ca3b86",
                                 "x": 500,
                                 "y": 400,
                                 "width": 100,
@@ -48834,7 +55584,7 @@ export const aggregateDraftScenarios = {
                             },
                             "hexagonalView": {
                                 "_type": "org.uengine.modeling.model.EventHexagonal",
-                                "id": "d858202f-6448-5f92-839f-057850558645",
+                                "id": "dae2e159-2892-5ae3-3f28-f7ca33ca3b86",
                                 "x": 500,
                                 "y": 400,
                                 "subWidth": 100,
@@ -48848,7 +55598,7 @@ export const aggregateDraftScenarios = {
                         },
                         "targetElement": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                            "id": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                             "visibility": "public",
                             "name": "BookStatusChanged",
                             "oldName": "",
@@ -48873,7 +55623,7 @@ export const aggregateDraftScenarios = {
                             "mirrorElement": null,
                             "elementView": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                                "id": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                                 "x": 300,
                                 "y": 650,
                                 "width": 100,
@@ -48883,7 +55633,7 @@ export const aggregateDraftScenarios = {
                             },
                             "hexagonalView": {
                                 "_type": "org.uengine.modeling.model.EventHexagonal",
-                                "id": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                                "id": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                                 "x": 300,
                                 "y": 650,
                                 "subWidth": 100,
@@ -48895,25 +55645,25 @@ export const aggregateDraftScenarios = {
                             "relationCommandInfo": [],
                             "trigger": "@PostPersist"
                         },
-                        "from": "d858202f-6448-5f92-839f-057850558645",
-                        "to": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                        "from": "dae2e159-2892-5ae3-3f28-f7ca33ca3b86",
+                        "to": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                         "relationView": {
-                            "id": "2c9e22a8-f6b9-0ee6-a0ee-e0cff1eef916",
+                            "id": "dad1d9f6-5f71-119b-8c0b-434de6999a38",
                             "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
                             "value": null,
-                            "from": "d858202f-6448-5f92-839f-057850558645",
-                            "to": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                            "from": "dae2e159-2892-5ae3-3f28-f7ca33ca3b86",
+                            "to": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                             "needReconnect": true
                         }
                     },
-                    "6b599222-08e9-f779-3f93-85e57557d253": {
+                    "dc3314ec-1557-1670-7d19-baf4c789345c": {
                         "_type": "org.uengine.modeling.model.Relation",
-                        "id": "6b599222-08e9-f779-3f93-85e57557d253",
+                        "id": "dc3314ec-1557-1670-7d19-baf4c789345c",
                         "name": "5",
                         "displayName": "5",
                         "sourceElement": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "d858202f-6448-5f92-839f-057850558645",
+                            "id": "dae2e159-2892-5ae3-3f28-f7ca33ca3b86",
                             "visibility": "public",
                             "name": "BookReserved",
                             "oldName": "",
@@ -48938,7 +55688,7 @@ export const aggregateDraftScenarios = {
                             "mirrorElement": null,
                             "elementView": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "d858202f-6448-5f92-839f-057850558645",
+                                "id": "dae2e159-2892-5ae3-3f28-f7ca33ca3b86",
                                 "x": 500,
                                 "y": 400,
                                 "width": 100,
@@ -48948,7 +55698,7 @@ export const aggregateDraftScenarios = {
                             },
                             "hexagonalView": {
                                 "_type": "org.uengine.modeling.model.EventHexagonal",
-                                "id": "d858202f-6448-5f92-839f-057850558645",
+                                "id": "dae2e159-2892-5ae3-3f28-f7ca33ca3b86",
                                 "x": 500,
                                 "y": 400,
                                 "subWidth": 100,
@@ -48962,7 +55712,7 @@ export const aggregateDraftScenarios = {
                         },
                         "targetElement": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "0c5189db-fb16-d909-f227-0d57f711a17b",
+                            "id": "f86575ae-5efb-bb6e-9570-f8b02222054f",
                             "visibility": "public",
                             "name": "ReservationHistoryRecorded",
                             "oldName": "",
@@ -48987,7 +55737,7 @@ export const aggregateDraftScenarios = {
                             "mirrorElement": null,
                             "elementView": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "0c5189db-fb16-d909-f227-0d57f711a17b",
+                                "id": "f86575ae-5efb-bb6e-9570-f8b02222054f",
                                 "x": 700,
                                 "y": 650,
                                 "width": 100,
@@ -48997,7 +55747,7 @@ export const aggregateDraftScenarios = {
                             },
                             "hexagonalView": {
                                 "_type": "org.uengine.modeling.model.EventHexagonal",
-                                "id": "0c5189db-fb16-d909-f227-0d57f711a17b",
+                                "id": "f86575ae-5efb-bb6e-9570-f8b02222054f",
                                 "x": 700,
                                 "y": 650,
                                 "subWidth": 100,
@@ -49009,25 +55759,25 @@ export const aggregateDraftScenarios = {
                             "relationCommandInfo": [],
                             "trigger": "@PostPersist"
                         },
-                        "from": "d858202f-6448-5f92-839f-057850558645",
-                        "to": "0c5189db-fb16-d909-f227-0d57f711a17b",
+                        "from": "dae2e159-2892-5ae3-3f28-f7ca33ca3b86",
+                        "to": "f86575ae-5efb-bb6e-9570-f8b02222054f",
                         "relationView": {
-                            "id": "6b599222-08e9-f779-3f93-85e57557d253",
+                            "id": "dc3314ec-1557-1670-7d19-baf4c789345c",
                             "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
                             "value": null,
-                            "from": "d858202f-6448-5f92-839f-057850558645",
-                            "to": "0c5189db-fb16-d909-f227-0d57f711a17b",
+                            "from": "dae2e159-2892-5ae3-3f28-f7ca33ca3b86",
+                            "to": "f86575ae-5efb-bb6e-9570-f8b02222054f",
                             "needReconnect": true
                         }
                     },
-                    "9609f7f4-f5a0-b5ca-4c01-e7543b2eaf23": {
+                    "b944f399-015b-20b1-c3eb-d5946655fa55": {
                         "_type": "org.uengine.modeling.model.Relation",
-                        "id": "9609f7f4-f5a0-b5ca-4c01-e7543b2eaf23",
+                        "id": "b944f399-015b-20b1-c3eb-d5946655fa55",
                         "name": "6",
                         "displayName": "6",
                         "sourceElement": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "69c6b800-fbe8-b39d-7671-bb7c9a5a9fde",
+                            "id": "259c838a-8e2b-4d53-e282-92e7b9f4c351",
                             "visibility": "public",
                             "name": "BookReturned",
                             "oldName": "",
@@ -49052,7 +55802,7 @@ export const aggregateDraftScenarios = {
                             "mirrorElement": null,
                             "elementView": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "69c6b800-fbe8-b39d-7671-bb7c9a5a9fde",
+                                "id": "259c838a-8e2b-4d53-e282-92e7b9f4c351",
                                 "x": 700,
                                 "y": 400,
                                 "width": 100,
@@ -49062,7 +55812,7 @@ export const aggregateDraftScenarios = {
                             },
                             "hexagonalView": {
                                 "_type": "org.uengine.modeling.model.EventHexagonal",
-                                "id": "69c6b800-fbe8-b39d-7671-bb7c9a5a9fde",
+                                "id": "259c838a-8e2b-4d53-e282-92e7b9f4c351",
                                 "x": 700,
                                 "y": 400,
                                 "subWidth": 100,
@@ -49076,7 +55826,7 @@ export const aggregateDraftScenarios = {
                         },
                         "targetElement": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                            "id": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                             "visibility": "public",
                             "name": "BookStatusChanged",
                             "oldName": "",
@@ -49101,7 +55851,7 @@ export const aggregateDraftScenarios = {
                             "mirrorElement": null,
                             "elementView": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                                "id": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                                 "x": 300,
                                 "y": 650,
                                 "width": 100,
@@ -49111,7 +55861,7 @@ export const aggregateDraftScenarios = {
                             },
                             "hexagonalView": {
                                 "_type": "org.uengine.modeling.model.EventHexagonal",
-                                "id": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                                "id": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                                 "x": 300,
                                 "y": 650,
                                 "subWidth": 100,
@@ -49123,25 +55873,25 @@ export const aggregateDraftScenarios = {
                             "relationCommandInfo": [],
                             "trigger": "@PostPersist"
                         },
-                        "from": "69c6b800-fbe8-b39d-7671-bb7c9a5a9fde",
-                        "to": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                        "from": "259c838a-8e2b-4d53-e282-92e7b9f4c351",
+                        "to": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                         "relationView": {
-                            "id": "9609f7f4-f5a0-b5ca-4c01-e7543b2eaf23",
+                            "id": "b944f399-015b-20b1-c3eb-d5946655fa55",
                             "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
                             "value": null,
-                            "from": "69c6b800-fbe8-b39d-7671-bb7c9a5a9fde",
-                            "to": "c80d52a4-a410-c5b4-8f69-c658dd4ae1fb",
+                            "from": "259c838a-8e2b-4d53-e282-92e7b9f4c351",
+                            "to": "33d20dfd-41e2-329f-f21e-d951acc196dc",
                             "needReconnect": true
                         }
                     },
-                    "ed4c3414-3bb0-b268-2d63-04ef6a8b5c93": {
+                    "fed722e6-a0ed-dd78-9879-cc88f4462b04": {
                         "_type": "org.uengine.modeling.model.Relation",
-                        "id": "ed4c3414-3bb0-b268-2d63-04ef6a8b5c93",
+                        "id": "fed722e6-a0ed-dd78-9879-cc88f4462b04",
                         "name": "6",
                         "displayName": "6",
                         "sourceElement": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "69c6b800-fbe8-b39d-7671-bb7c9a5a9fde",
+                            "id": "259c838a-8e2b-4d53-e282-92e7b9f4c351",
                             "visibility": "public",
                             "name": "BookReturned",
                             "oldName": "",
@@ -49166,7 +55916,7 @@ export const aggregateDraftScenarios = {
                             "mirrorElement": null,
                             "elementView": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "69c6b800-fbe8-b39d-7671-bb7c9a5a9fde",
+                                "id": "259c838a-8e2b-4d53-e282-92e7b9f4c351",
                                 "x": 700,
                                 "y": 400,
                                 "width": 100,
@@ -49176,7 +55926,7 @@ export const aggregateDraftScenarios = {
                             },
                             "hexagonalView": {
                                 "_type": "org.uengine.modeling.model.EventHexagonal",
-                                "id": "69c6b800-fbe8-b39d-7671-bb7c9a5a9fde",
+                                "id": "259c838a-8e2b-4d53-e282-92e7b9f4c351",
                                 "x": 700,
                                 "y": 400,
                                 "subWidth": 100,
@@ -49190,7 +55940,7 @@ export const aggregateDraftScenarios = {
                         },
                         "targetElement": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "3fd758ad-d1aa-2d00-84c6-e617a5ca321d",
+                            "id": "502ba06b-125d-e2ba-b615-073e706b6993",
                             "visibility": "public",
                             "name": "LoanHistoryRecorded",
                             "oldName": "",
@@ -49215,7 +55965,7 @@ export const aggregateDraftScenarios = {
                             "mirrorElement": null,
                             "elementView": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "3fd758ad-d1aa-2d00-84c6-e617a5ca321d",
+                                "id": "502ba06b-125d-e2ba-b615-073e706b6993",
                                 "x": 500,
                                 "y": 650,
                                 "width": 100,
@@ -49225,7 +55975,7 @@ export const aggregateDraftScenarios = {
                             },
                             "hexagonalView": {
                                 "_type": "org.uengine.modeling.model.EventHexagonal",
-                                "id": "3fd758ad-d1aa-2d00-84c6-e617a5ca321d",
+                                "id": "502ba06b-125d-e2ba-b615-073e706b6993",
                                 "x": 500,
                                 "y": 650,
                                 "subWidth": 100,
@@ -49237,25 +55987,25 @@ export const aggregateDraftScenarios = {
                             "relationCommandInfo": [],
                             "trigger": "@PostPersist"
                         },
-                        "from": "69c6b800-fbe8-b39d-7671-bb7c9a5a9fde",
-                        "to": "3fd758ad-d1aa-2d00-84c6-e617a5ca321d",
+                        "from": "259c838a-8e2b-4d53-e282-92e7b9f4c351",
+                        "to": "502ba06b-125d-e2ba-b615-073e706b6993",
                         "relationView": {
-                            "id": "ed4c3414-3bb0-b268-2d63-04ef6a8b5c93",
+                            "id": "fed722e6-a0ed-dd78-9879-cc88f4462b04",
                             "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
                             "value": null,
-                            "from": "69c6b800-fbe8-b39d-7671-bb7c9a5a9fde",
-                            "to": "3fd758ad-d1aa-2d00-84c6-e617a5ca321d",
+                            "from": "259c838a-8e2b-4d53-e282-92e7b9f4c351",
+                            "to": "502ba06b-125d-e2ba-b615-073e706b6993",
                             "needReconnect": true
                         }
                     },
-                    "14263a5f-ed03-3d09-14f9-14a9af8b5ccb": {
+                    "48ef4437-9749-5751-7bd6-c2c24becf15b": {
                         "_type": "org.uengine.modeling.model.Relation",
-                        "id": "14263a5f-ed03-3d09-14f9-14a9af8b5ccb",
+                        "id": "48ef4437-9749-5751-7bd6-c2c24becf15b",
                         "name": "7",
                         "displayName": "7",
                         "sourceElement": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "fdb46713-7a04-0545-7333-76bb78ef9e6b",
+                            "id": "7e5e2488-3c94-6b60-2dde-a60fb11834fa",
                             "visibility": "public",
                             "name": "LoanExtended",
                             "oldName": "",
@@ -49280,7 +56030,7 @@ export const aggregateDraftScenarios = {
                             "mirrorElement": null,
                             "elementView": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "fdb46713-7a04-0545-7333-76bb78ef9e6b",
+                                "id": "7e5e2488-3c94-6b60-2dde-a60fb11834fa",
                                 "x": 900,
                                 "y": 400,
                                 "width": 100,
@@ -49290,7 +56040,7 @@ export const aggregateDraftScenarios = {
                             },
                             "hexagonalView": {
                                 "_type": "org.uengine.modeling.model.EventHexagonal",
-                                "id": "fdb46713-7a04-0545-7333-76bb78ef9e6b",
+                                "id": "7e5e2488-3c94-6b60-2dde-a60fb11834fa",
                                 "x": 900,
                                 "y": 400,
                                 "subWidth": 100,
@@ -49304,7 +56054,7 @@ export const aggregateDraftScenarios = {
                         },
                         "targetElement": {
                             "_type": "org.uengine.modeling.model.Event",
-                            "id": "3fd758ad-d1aa-2d00-84c6-e617a5ca321d",
+                            "id": "502ba06b-125d-e2ba-b615-073e706b6993",
                             "visibility": "public",
                             "name": "LoanHistoryRecorded",
                             "oldName": "",
@@ -49329,7 +56079,7 @@ export const aggregateDraftScenarios = {
                             "mirrorElement": null,
                             "elementView": {
                                 "_type": "org.uengine.modeling.model.Event",
-                                "id": "3fd758ad-d1aa-2d00-84c6-e617a5ca321d",
+                                "id": "502ba06b-125d-e2ba-b615-073e706b6993",
                                 "x": 500,
                                 "y": 650,
                                 "width": 100,
@@ -49339,7 +56089,7 @@ export const aggregateDraftScenarios = {
                             },
                             "hexagonalView": {
                                 "_type": "org.uengine.modeling.model.EventHexagonal",
-                                "id": "3fd758ad-d1aa-2d00-84c6-e617a5ca321d",
+                                "id": "502ba06b-125d-e2ba-b615-073e706b6993",
                                 "x": 500,
                                 "y": 650,
                                 "subWidth": 100,
@@ -49351,14 +56101,14 @@ export const aggregateDraftScenarios = {
                             "relationCommandInfo": [],
                             "trigger": "@PostPersist"
                         },
-                        "from": "fdb46713-7a04-0545-7333-76bb78ef9e6b",
-                        "to": "3fd758ad-d1aa-2d00-84c6-e617a5ca321d",
+                        "from": "7e5e2488-3c94-6b60-2dde-a60fb11834fa",
+                        "to": "502ba06b-125d-e2ba-b615-073e706b6993",
                         "relationView": {
-                            "id": "14263a5f-ed03-3d09-14f9-14a9af8b5ccb",
+                            "id": "48ef4437-9749-5751-7bd6-c2c24becf15b",
                             "style": "{\"arrow-start\":\"none\",\"arrow-end\":\"block\",\"stroke\":\"grey\",\"stroke-width\":\"1.4\",\"font-size\":\"12px\",\"font-weight\":\"bold\"}",
                             "value": null,
-                            "from": "fdb46713-7a04-0545-7333-76bb78ef9e6b",
-                            "to": "3fd758ad-d1aa-2d00-84c6-e617a5ca321d",
+                            "from": "7e5e2488-3c94-6b60-2dde-a60fb11834fa",
+                            "to": "502ba06b-125d-e2ba-b615-073e706b6993",
                             "needReconnect": true
                         }
                     }
