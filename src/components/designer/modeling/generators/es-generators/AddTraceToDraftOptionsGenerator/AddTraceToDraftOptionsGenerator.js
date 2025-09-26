@@ -182,6 +182,7 @@ class AddTraceToDraftOptionsGenerator extends FormattedJSONAIGenerator{
 
         inputParams.lineNumberedRequirements = TextTraceUtil.addLineNumbers(inputParams.functionalRequirements)
         inputParams.allDomainObjects = this._extractAllDomainObjects(inputParams.generatedDraftOptions)
+        inputParams.filteredGeneratedDraftOptions = this._filterGeneratedDraftOptions(inputParams.generatedDraftOptions)
     }
     __validateClientInput(inputParams){
         DataValidationUtil.validateData(inputParams, {
@@ -329,6 +330,45 @@ class AddTraceToDraftOptionsGenerator extends FormattedJSONAIGenerator{
         allObjects.valueObjects = [...new Map(allObjects.valueObjects.map(item => [item.name, item])).values()]
 
         return allObjects
+    }
+
+    _filterGeneratedDraftOptions(generatedDraftOptions) {
+        const filteredGeneratedDraftOptions = []
+        for(const option of generatedDraftOptions) {
+            const filteredStructure = []
+            for(const structure of option.structure) {
+                const filteredAggregateInfo = {
+                    aggregate: {
+                        name: "",
+                        alias: ""
+                    },
+                    enumerations: [],
+                    valueObjects: []
+                }
+
+                if(structure.aggregate) {
+                    filteredAggregateInfo.aggregate.name = structure.aggregate.name
+                    filteredAggregateInfo.aggregate.alias = structure.aggregate.alias
+                }
+                if(structure.enumerations) {
+                    filteredAggregateInfo.enumerations = structure.enumerations.map(enumeration => ({
+                        name: enumeration.name,
+                        alias: enumeration.alias
+                    }))
+                }
+                if(structure.valueObjects) {
+                    filteredAggregateInfo.valueObjects = structure.valueObjects.map(valueObject => ({
+                        name: valueObject.name,
+                        alias: valueObject.alias
+                    }))
+                }
+
+                filteredStructure.push(filteredAggregateInfo)
+            }
+            if(filteredStructure.length === 0) continue;
+            filteredGeneratedDraftOptions.push(filteredStructure)
+        }
+        return filteredGeneratedDraftOptions
     }
 
 
@@ -481,7 +521,7 @@ Multiple ranges can be included if a domain object references multiple parts of 
 
     __buildJsonUserQueryInputFormat() {
         return {
-            "Generated Draft Options": this.client.input.generatedDraftOptions,
+            "Generated Draft Options": this.client.input.filteredGeneratedDraftOptions,
             "Target Bounded Context Name": this.client.input.boundedContextName,
             "Functional Requirements": this.client.input.lineNumberedRequirements,
             "Domain Objects to Trace": this.client.input.allDomainObjects,
@@ -504,7 +544,27 @@ Multiple ranges can be included if a domain object references multiple parts of 
         if (!returnObj.modelValue.aiOutput) return;
 
         returnObj.modelValue.output = returnObj.modelValue.aiOutput
+        if(!this.__isValidOutput(returnObj.modelValue.output, this.client.input.allDomainObjects)) {
+            throw new Error("Invalid AI output")
+        }
+
         this._convertRefsToIndexes(returnObj.modelValue.output)
+    }
+    __isValidOutput(output, allDomainObjects) {
+        const objectTypes = ['aggregates', 'enumerations', 'valueObjects'];
+        for (const objectType of objectTypes) {
+            const outputObjects = output[objectType];
+            const domainObjects = allDomainObjects[objectType];
+
+            const outputObjectNames = new Set(outputObjects.map(obj => obj.name));
+            for (const domainObject of domainObjects) {
+                if (!domainObject.name || !outputObjectNames.has(domainObject.name)) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     _convertRefsToIndexes(output) {

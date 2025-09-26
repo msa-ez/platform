@@ -917,7 +917,8 @@ import { value } from 'jsonpath';
                         requirements.ddlFields = []
                     requirements.description = bcDescriptionWithMappingIndex.markdown
                     requirements.traceMap = bcDescriptionWithMappingIndex.traceMap
-                    if(bc.siteMap) requirements.siteMap = bc.siteMap
+                    requirements.commandNames = bc.commandNames || []
+                    requirements.readModelNames = bc.readModelNames || []
 
                     passedGeneratorInputs.push({
                         boundedContext: {
@@ -1591,6 +1592,18 @@ import { value } from 'jsonpath';
                         currentProcessingStep: 'extractingCommandsAndReadModels'
                     });
                     
+                    try {
+                        me._mapCommandReadModelDataToBoundedContexts(me.commandReadModelData);
+                        const bcMsg = me.messages.find(msg => msg.type === 'boundedContextResult');
+                        if (bcMsg) {
+                            me.updateMessageState(bcMsg.uniqueId, {
+                                result: JSON.parse(JSON.stringify(me.resultDevideBoundedContext))
+                            });
+                        }
+                    } catch (e) {
+                        console.warn('Failed to map sitemap to bounded contexts:', e);
+                    }
+
                     // 추출 완료 후 자동으로 사이트맵 생성 진행
                     setTimeout(() => {
                         me.generateSiteMap();
@@ -1632,15 +1645,6 @@ import { value } from 'jsonpath';
                             });
                         }
 
-                        // BC 매핑도 부분 업데이트
-                        me.mapSiteMapToBoundedContexts(partialTree);
-                        const bcMsg = me.messages.find(msg => msg.type === 'boundedContextResult');
-                        if (bcMsg) {
-                            me.updateMessageState(bcMsg.uniqueId, {
-                                result: JSON.parse(JSON.stringify(me.resultDevideBoundedContext))
-                            });
-                        }
-
                         localStorage.setItem("siteMap", JSON.stringify(me.siteMap));
                         me.$emit("update:draft", me.messages);
                     } catch(e) {
@@ -1657,19 +1661,6 @@ import { value } from 'jsonpath';
                         isGenerating: false,
                         currentGeneratedLength: me.currentGeneratedLength
                     });
-
-                    // Map sitemap nodes to bounded contexts under selected aspect
-                    try {
-                        me.mapSiteMapToBoundedContexts(me.siteMap);
-                        const bcMsg = me.messages.find(msg => msg.type === 'boundedContextResult');
-                        if (bcMsg) {
-                            me.updateMessageState(bcMsg.uniqueId, {
-                                result: JSON.parse(JSON.stringify(me.resultDevideBoundedContext))
-                            });
-                        }
-                    } catch (e) {
-                        console.warn('Failed to map sitemap to bounded contexts:', e);
-                    }
 
                     localStorage.setItem("siteMap", JSON.stringify(me.siteMap));
                     me.$emit("update:draft", me.messages)
@@ -3075,17 +3066,6 @@ import { value } from 'jsonpath';
                             siteMap: this.siteMap,
                             isGenerating: false
                         });
-                        try {
-                            this.mapSiteMapToBoundedContexts(this.siteMap);
-                            const bcMsg = this.messages.find(msg => msg.type === 'boundedContextResult');
-                            if (bcMsg) {
-                                this.updateMessageState(bcMsg.uniqueId, {
-                                    result: JSON.parse(JSON.stringify(this.resultDevideBoundedContext))
-                                });
-                            }
-                        } catch (e) {
-                            console.warn('Failed to map sitemap to bounded contexts:', e);
-                        }
                         this.$emit('update:draft', this.messages)
                     });
                 } else {
@@ -3098,50 +3078,28 @@ import { value } from 'jsonpath';
                 return siteMapTree && Array.isArray(siteMapTree) && siteMapTree.length > 0 ? siteMapTree[0] : null;
             },
             
-            mapSiteMapToBoundedContexts(siteMapTree) {
-                if (!siteMapTree || !Array.isArray(siteMapTree) || siteMapTree.length === 0) return;
-                const root = this.getSiteMapRoot(siteMapTree);
-                if (!root) return;
+            _mapCommandReadModelDataToBoundedContexts(commandReadModelData) {
+                if(!commandReadModelData || !commandReadModelData.boundedContexts || !Array.isArray(commandReadModelData.boundedContexts))
+                    throw new Error('Invalid commandReadModelData');
                 
+                const bcCommandNames = {}
+                const bcReadModelNames = {}
+                for(const bc of commandReadModelData.boundedContexts){
+                    const commandNames = (bc.commands) ? bc.commands.map(command => command.name) : [];
+                    bcCommandNames[bc.name] = commandNames;
+                    
+                    const readModelNames = (bc.readModels) ? bc.readModels.map(readModel => readModel.name) : [];
+                    bcReadModelNames[bc.name] = readModelNames;
+                }
+
                 const aspect = this.selectedAspect || Object.keys(this.resultDevideBoundedContext)[0];
                 if (!aspect || !this.resultDevideBoundedContext[aspect]) return;
 
                 const bcArray = this.resultDevideBoundedContext[aspect].boundedContexts || [];
-                const aliasSet = new Set(bcArray.map(bc => bc.alias).filter(Boolean));
-                const nameSet = new Set(bcArray.map(bc => bc.name).filter(Boolean));
-
-                // Reset existing siteMap fields to avoid stale data
-                bcArray.forEach(bc => { bc.siteMap = []; });
-
-                const pushNodeToBC = (node) => {
-                    if (!node || !node.boundedContext) return;
-                    let bc = null;
-                    if (aliasSet.has(node.boundedContext)) {
-                        bc = bcArray.find(b => b.alias === node.boundedContext);
-                    } else if (nameSet.has(node.boundedContext)) {
-                        bc = bcArray.find(b => b.name === node.boundedContext);
-                    }
-                    if (bc) {
-                        if (!Array.isArray(bc.siteMap)) bc.siteMap = [];
-                        bc.siteMap.push({
-                            id: node.id,
-                            title: node.title,
-                            name: node.name,
-                            description: node.description || '',
-                            boundedContext: node.boundedContext,
-                            functionType: node.functionType || "",
-                            uiRequirements: node.uiRequirements || '',
-                        });
-                    }
-                };
-
-                const traverse = (node) => {
-                    if (!node) return;
-                    if (node.type === 'navigation') pushNodeToBC(node);
-                    if (Array.isArray(node.children)) node.children.forEach(traverse);
-                };
-
-                traverse(root);
+                for(const bc of bcArray){
+                    bc.commandNames = bcCommandNames[bc.name] || [];
+                    bc.readModelNames = bcReadModelNames[bc.name] || [];
+                }
             }
         }
     }
