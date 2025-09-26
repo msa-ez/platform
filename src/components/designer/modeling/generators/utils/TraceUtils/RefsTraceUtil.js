@@ -159,7 +159,7 @@ class RefsTraceUtil {
 
             const refs = summarizedRequirements[lineNumber - 1].refs;
             if(refs && Array.isArray(refs) && refs.length > 0) {
-                convertedRefs.push(refs);
+                convertedRefs.push(...refs);
             }
         }
         return convertedRefs;

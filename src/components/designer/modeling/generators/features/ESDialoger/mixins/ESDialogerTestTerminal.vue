@@ -24,7 +24,8 @@ import {
     ESDialogerTraceUtilTest
 } from "../utils";
 import {
-     TraceUtilTest 
+     TraceUtilTest,
+     TraceMarkdownUtilTest
 } from "../../../utils";
 
 export default {
@@ -83,6 +84,7 @@ export default {
                 AddTraceToDraftOptionsGeneratorTest: {command: async () => { await AddTraceToDraftOptionsGeneratorTest.test() }},
                 ESDialogerTraceUtilTest: {command: async () => { await ESDialogerTraceUtilTest.test() }},
                 testRefsMergeUtil: {command: async () => { await TraceUtilTest.testRefsMergeUtil() }},
+                TraceMarkdownUtilTest: {command: async () => { await TraceMarkdownUtilTest.test() }},
             }
             
             // 전체 명령어 목록을 콘솔에 출력

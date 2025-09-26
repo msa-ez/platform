@@ -3,4 +3,4 @@ export const { JsonParsingUtil, JsonParsingUtilTest } = require("./JsonParsingUt
 export const zodResponseFormat = require("./zodResponseFormat");
 export const LocalStorageCleanUtil = require("./LocalStorageCleanUtil");
 export const DataValidationUtil = require("./DataValidationUtil");
-export const { EventStormingCanvasTraceUtil, TextTraceUtil, RefsTraceUtil, TraceMarkdownUtil, RefsMergeUtil, TraceUtilTest } = require("./TraceUtils");
+export const { EventStormingCanvasTraceUtil, TextTraceUtil, RefsTraceUtil, TraceMarkdownUtil, RefsMergeUtil, TraceUtilTest, TraceMarkdownUtilTest } = require("./TraceUtils");
