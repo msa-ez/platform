@@ -23,11 +23,8 @@ class RecursiveRequirementsSummarizer extends RequirementsSummarizer {
     }
 
     makeUserStoryChunks(text) {
-        const chunks = this.textChunker.splitIntoChunksByLine(text);
-        const textChunks = chunks.map(chunk => chunk.text)
-        return textChunks;
+        return this.textChunker.splitIntoChunksByLine(text);
     }
-
 
 
     async summarizeRecursively(text) {
