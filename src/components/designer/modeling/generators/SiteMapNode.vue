@@ -32,6 +32,10 @@
                     :placeholder="isRoot ? $t('siteMap.node.siteTitle') : $t('siteMap.node.pageTitle')"
                     @input="updateNode"
                 />
+                <!-- 노드 삭제 버튼 (우측 상단 구석) -->
+                <button class="node-delete-btn" @click="$emit('delete-node', node.id)" :title="$t('siteMap.node.deleteNode')" :disabled="isGenerating" v-if="!isRoot">
+                    <i class="fas fa-trash"></i>
+                </button>
             </div>
             <div class="node-url" v-if="node.url && !isRoot">
                 <div class="field-label">{{ $t('siteMap.node.url') }}</div>
@@ -53,39 +57,21 @@
                 />
             </div>
             
-            <!-- Command/ReadModel 참조 정보 -->
+            <!-- Reference 정보 -->
             <div class="node-references" v-if="hasReferences">
                 <div class="references-section">
-                    <div class="reference-group" v-if="node.referencedCommands && node.referencedCommands.length > 0">
+                    <div class="reference-group" v-if="node.reference">
                         <div class="reference-label">
-                            <i class="fas fa-terminal"></i>
-                            {{ $t('siteMap.node.referencedCommands') }}
+                            <i class="fas fa-link"></i>
+                            {{ $t('siteMap.node.reference') }}
                         </div>
                         <div class="reference-tags">
                             <span 
-                                v-for="command in node.referencedCommands" 
-                                :key="command" 
-                                class="reference-tag command-tag"
-                                :title="$t('siteMap.node.commandTooltip', { command })"
+                                class="reference-tag"
+                                :class="getReferenceTypeClass(node.reference)"
+                                :title="$t('siteMap.node.referenceTooltip', { reference: node.reference })"
                             >
-                                {{ command }}
-                            </span>
-                        </div>
-                    </div>
-                    
-                    <div class="reference-group" v-if="node.referencedReadModels && node.referencedReadModels.length > 0">
-                        <div class="reference-label">
-                            <i class="fas fa-eye"></i>
-                            {{ $t('siteMap.node.referencedReadModels') }}
-                        </div>
-                        <div class="reference-tags">
-                            <span 
-                                v-for="readModel in node.referencedReadModels" 
-                                :key="readModel" 
-                                class="reference-tag readmodel-tag"
-                                :title="$t('siteMap.node.readModelTooltip', { readModel })"
-                            >
-                                {{ readModel }}
+                                {{ node.reference }}
                             </span>
                         </div>
                     </div>
@@ -98,9 +84,6 @@
                 <!-- 추가 버튼 표시 -->
                 <button class="action-btn" @click="$emit('add-child', node.id)" :title="isRoot ? '페이지 추가' : $t('siteMap.node.addChildNode')" :disabled="isGenerating">
                     <i class="fas fa-plus"></i>
-                </button>
-                <button class="action-btn delete-btn" @click="$emit('delete-node', node.id)" :title="$t('siteMap.node.deleteNode')" :disabled="isGenerating">
-                    <i class="fas fa-trash"></i>
                 </button>
             </div>
         </div>
@@ -115,16 +98,15 @@
                 >
                     <!-- 페이지 그룹 (자식 노드가 있는 경우) -->
                     <div v-if="child.children && child.children.length > 0" class="page-group">
-                        <!-- 그룹 우측 상단 추가 버튼 -->
-                        <button class="add-component-corner-btn" @click="$emit('add-child', child.id)" :title="child.title + '에 구성요소 추가'" :disabled="isGenerating">
-                            <i class="fas fa-plus"></i>
-                        </button>
-                        
                         <div class="page-group-header">
                             <div class="page-group-title">
                                 <i :class="getPageTypeIcon(child)" style="margin-right: 8px;"></i>
                                 {{ child.title }}
                             </div>
+                            <!-- 그룹 삭제 버튼 (우측 상단 구석) -->
+                            <button class="group-delete-btn" @click="$emit('delete-node', child.id)" :title="$t('siteMap.node.deleteNode')" :disabled="isGenerating">
+                                <i class="fas fa-trash"></i>
+                            </button>
                         </div>
                         <div class="page-components">
                             <div 
@@ -150,12 +132,17 @@
                                             :placeholder="$t('siteMap.node.pageDescription')"
                                         />
                                     </div>
-                                    <div class="component-actions">
-                                        <button class="action-btn small delete-btn" @click="$emit('delete-node', component.id)" :title="$t('siteMap.node.deleteNode')" :disabled="isGenerating">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </div>
+                                    <!-- 컴포넌트 삭제 버튼 (우측 상단 구석) -->
+                                    <button class="component-delete-btn" @click="$emit('delete-node', component.id)" :title="$t('siteMap.node.deleteNode')" :disabled="isGenerating">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
                                 </div>
+                            </div>
+                            <!-- 그룹 하단에 컴포넌트 추가 버튼 -->
+                            <div class="add-component-section">
+                                <button class="add-component-btn" @click="$emit('add-child', child.id)" :title="child.title + '에 구성요소 추가'" :disabled="isGenerating">
+                                    <i class="fas fa-plus"></i>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -241,8 +228,7 @@ export default {
             if (this.node.children && this.node.children.length > 0) {
                 return false;
             }
-            return (this.node.referencedCommands && this.node.referencedCommands.length > 0) ||
-                   (this.node.referencedReadModels && this.node.referencedReadModels.length > 0);
+            return this.node.reference && this.node.reference.trim() !== '';
         }
     },
     methods: {
@@ -272,6 +258,21 @@ export default {
                 return 'fas fa-file';
             }
         },
+        
+        getReferenceTypeClass(reference) {
+            if (!reference) return '';
+            // Command인지 ReadModel인지 구분 (일반적인 네이밍 패턴 기반)
+            if (reference.includes('Command') || reference.includes('Create') || 
+                reference.includes('Update') || reference.includes('Delete') ||
+                reference.includes('Login') || reference.includes('Register')) {
+                return 'command-tag';
+            } else if (reference.includes('ReadModel') || reference.includes('View') || 
+                      reference.includes('Search') || reference.includes('List') ||
+                      reference.includes('Detail') || reference.includes('Profile')) {
+                return 'readmodel-tag';
+            }
+            return 'reference-tag';
+        }
 
     }
 };
@@ -877,5 +878,153 @@ export default {
         font-size: 9px;
         padding: 1px 4px;
     }
+}
+
+/* 노드 삭제 버튼 (우측 상단 구석) */
+.node-delete-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: transparent;
+    color: #6c757d;
+    font-size: 13px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    opacity: 0.7;
+    z-index: 10;
+}
+
+.node-delete-btn:hover {
+    opacity: 1;
+    transform: scale(1.1);
+    color: #dc3545;
+}
+
+.node-delete-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* 그룹 삭제 버튼 */
+.group-delete-btn {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    width: 22px;
+    height: 22px;
+    border: none;
+    background: transparent;
+    color: #6c757d;
+    font-size: 13px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    opacity: 0.7;
+    z-index: 10;
+}
+
+.group-delete-btn:hover {
+    opacity: 1;
+    transform: scale(1.1);
+    color: #dc3545;
+}
+
+.group-delete-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* 컴포넌트 삭제 버튼 */
+.component-delete-btn {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 20px;
+    height: 20px;
+    border: none;
+    background: transparent;
+    color: #6c757d;
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    opacity: 0.7;
+    z-index: 10;
+}
+
+.component-delete-btn:hover {
+    opacity: 1;
+    transform: scale(1.1);
+    color: #dc3545;
+}
+
+.component-delete-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* 컴포넌트 추가 섹션 */
+.add-component-section {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed #dee2e6;
+    text-align: center;
+}
+
+.add-component-btn {
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.add-component-btn:hover {
+    background: #0056b3;
+    transform: scale(1.1);
+}
+
+.add-component-btn:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* 페이지 그룹 헤더 위치 조정 */
+.page-group-header {
+    position: relative;
+    padding-right: 30px; /* 삭제 버튼을 위한 공간 확보 */
+}
+
+/* 컴포넌트 콘텐츠 위치 조정 */
+.component-content {
+    position: relative;
+    padding-right: 25px; /* 삭제 버튼을 위한 공간 확보 */
+}
+
+/* 노드 타이틀 위치 조정 */
+.node-title {
+    position: relative;
+    padding-right: 30px; /* 삭제 버튼을 위한 공간 확보 */
 }
 </style>
