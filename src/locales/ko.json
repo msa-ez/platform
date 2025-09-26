@@ -757,7 +757,9 @@
       "deleteNode": "페이지 삭제",
       "expand": "펼치기",
       "collapse": "접기",
-      "collapsed": "{count}개 하위 페이지 접힘"
+      "collapsed": "{count}개 하위 페이지 접힘",
+      "reference": "참조",
+      "referenceTooltip": "참조된 {reference}"
     },
     "empty": {
       "title": "사이트맵이 비어있습니다",

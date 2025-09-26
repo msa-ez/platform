@@ -1576,6 +1576,12 @@ import { value } from 'jsonpath';
 
                 // Command/ReadModel 추출 완료 처리
                 if (me.state.generator === "CommandReadModelExtractor" || me.state.generator === "RecursiveCommandReadModelExtractor") {
+                    // 모든 청크가 완료되었을 때만 처리
+                    if (me.state.generator === "RecursiveCommandReadModelExtractor") {
+                        return;
+                    }
+                    
+                    // 일반 CommandReadModelExtractor의 경우
                     me.commandReadModelData = model.extractedData || model;
                     me.isExtractingCommandReadModel = false;
 
@@ -2981,8 +2987,17 @@ import { value } from 'jsonpath';
                         this.commandReadModelData = result.extractedData;
                         this.isExtractingCommandReadModel = false;
                         
+                        // 추출 완료 상태 업데이트 (100% 완료 표시)
+                        this.updateMessageState(this.messages.find(msg => msg.type === 'siteMapViewer').uniqueId, {
+                            commandReadModelData: this.commandReadModelData,
+                            processingRate: 100,
+                            currentProcessingStep: 'extractingCommandsAndReadModels'
+                        });
+                        
                         // 추출 완료 후 자동으로 사이트맵 생성 진행
-                        this.generateSiteMap();
+                        setTimeout(() => {
+                            this.generateSiteMap();
+                        }, 500);
                     }).catch(error => {
                         console.error('Command/ReadModel extraction failed:', error);
                         this.isExtractingCommandReadModel = false;
@@ -2995,12 +3010,8 @@ import { value } from 'jsonpath';
             },
 
             generateSiteMap(){
-                if(!this.alertGenerateWarning("siteMapViewer")){
-                    return;
-                }
-
-                // Command/ReadModel 데이터가 없으면 먼저 추출
-                if (!this.commandReadModelData) {
+                // Command/ReadModel 데이터가 없고, 현재 추출 중이 아니면 먼저 추출
+                if (!this.commandReadModelData && !this.isExtractingCommandReadModel) {
                     this.generateCommandReadModelExtraction();
                     return;
                 }

@@ -280,23 +280,9 @@ class RecursiveSiteMapGenerator extends SiteMapGenerator {
                 if (!existing.description && child.description) existing.description = child.description;
                 if (!existing.uiRequirements && child.uiRequirements) existing.uiRequirements = child.uiRequirements;
                 
-                // Command/ReadModel 참조 정보 병합
-                if (child.referencedCommands && Array.isArray(child.referencedCommands)) {
-                    if (!existing.referencedCommands) existing.referencedCommands = [];
-                    child.referencedCommands.forEach(cmd => {
-                        if (!existing.referencedCommands.includes(cmd)) {
-                            existing.referencedCommands.push(cmd);
-                        }
-                    });
-                }
-                
-                if (child.referencedReadModels && Array.isArray(child.referencedReadModels)) {
-                    if (!existing.referencedReadModels) existing.referencedReadModels = [];
-                    child.referencedReadModels.forEach(readModel => {
-                        if (!existing.referencedReadModels.includes(readModel)) {
-                            existing.referencedReadModels.push(readModel);
-                        }
-                    });
+                // Reference 정보 병합 (단일 reference만 유지)
+                if (child.reference && !existing.reference) {
+                    existing.reference = child.reference;
                 }
                 
                 if (Array.isArray(child.children) && child.children.length > 0) {
