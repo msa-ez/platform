@@ -2349,8 +2349,9 @@ import { value } from 'jsonpath';
                     }
 
                     //siteMap 전달
-                    if(!(localStorage.getItem("siteMap"))) localStorage.setItem("siteMap", JSON.stringify(this.siteMap))
-
+                    if(!(localStorage.getItem("siteMap"))) {
+                        localStorage.setItem("siteMap", JSON.stringify(this.siteMap))
+                    }
                     
                     this.state = {
                         ...this.state,
