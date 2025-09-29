@@ -1604,6 +1604,8 @@ import { value } from 'jsonpath';
                         console.warn('Failed to map sitemap to bounded contexts:', e);
                     }
 
+                    me.$emit("update:projectInfo", {commandReadModelData: me.commandReadModelData});
+
                     // 추출 완료 후 자동으로 사이트맵 생성 진행
                     setTimeout(() => {
                         me.generateSiteMap();

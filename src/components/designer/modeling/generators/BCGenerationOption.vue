@@ -167,7 +167,7 @@ export default {
                 additionalOptions: '',
                 aspectDetails: {},
                 isProtocolMode: true,
-                isGenerateFrontEnd: false
+                isGenerateFrontEnd: true
             },
             availableAspects: [
                 this.$t('DevideBoundedContextDialog.domainAspect'),
