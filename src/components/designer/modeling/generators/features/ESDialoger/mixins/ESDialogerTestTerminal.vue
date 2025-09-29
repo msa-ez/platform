@@ -85,6 +85,7 @@ export default {
                 ESDialogerTraceUtilTest: {command: async () => { await ESDialogerTraceUtilTest.test() }},
                 testRefsMergeUtil: {command: async () => { await TraceUtilTest.testRefsMergeUtil() }},
                 TraceMarkdownUtilTest: {command: async () => { await TraceMarkdownUtilTest.test() }},
+                UserStoryChunksTest: {command: async () => { await RecursiveRequirementsSummarizerTest.testMakeUserStoryChunks() }},
             }
             
             // 전체 명령어 목록을 콘솔에 출력

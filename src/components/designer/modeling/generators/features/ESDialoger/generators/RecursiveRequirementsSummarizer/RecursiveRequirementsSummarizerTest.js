@@ -1,5 +1,5 @@
 const RecursiveRequirementsSummarizer = require("../../../../RecursiveRequirementsSummarizer")
-const { recursiveRequirementsSummarizerInputs } = require("./mocks");
+const { recursiveRequirementsSummarizerInputs, userStoryChunksTestInput } = require("./mocks");
 
 class RecursiveRequirementsSummarizerTest {
     static async test() {
@@ -42,6 +42,21 @@ class RecursiveRequirementsSummarizerTest {
 
         const finalResult = await generator.summarizeRecursively(inputs[1].text)
         console.log("[*] 최종 결과: ", finalResult)
+    }
+
+    static async testMakeUserStoryChunks() {
+        const generator = new RecursiveRequirementsSummarizer({
+            onModelCreated: (model) => {
+                console.log("[*] 모델 생성: ", model)
+            },
+            onGenerationFinished: (model) => {
+                console.log("[*] 결과 모델: ", model)
+                generator.handleGenerationFinished(model)
+            }
+        })
+
+        const chunks = generator.makeUserStoryChunks(userStoryChunksTestInput.usedUserStory + "\n" + userStoryChunksTestInput.usedInputDDL);
+        console.log("[*] 최종 결과: ", chunks)
     }
 }
 

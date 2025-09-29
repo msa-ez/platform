@@ -115,18 +115,21 @@ class RecursiveRequirementsSummarizer extends RequirementsSummarizer {
                 return;
             }
 
-            summary.refs.forEach(ref => {
+            const validSummaryRefs = []
+            for(const ref of summary.refs) {
                 if(!ref || !Array.isArray(ref) || ref.length !== 2 || !Array.isArray(ref[1]) || ref[1].length !== 2) {
-                    return;
+                    continue;
                 }
-
                 if(ref[1][1] === -1) {
                     const matchLine = originalRequirementsLines[ref[1][0] - 1];
-                    if(!matchLine) return;
-
+                    if(!matchLine || !matchLine.trim()) {
+                        continue;
+                    }
                     ref[1][1] = matchLine.length;
                 }
-            });
+                validSummaryRefs.push(ref);
+            }
+            summary.refs = validSummaryRefs;
         });
     }
 
