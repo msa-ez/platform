@@ -127,7 +127,7 @@ class TextChunker {
      * @returns {string} 마지막 라인들
      */
     getLastLines(text, targetSize) {
-        const lines = text.split('\n');
+        const lines = text.trimEnd().split('\n'); // 마지막에 \n이 있을 경우, \n\n으로 의도치 않은 추가가 발생할 수 있음
         let result = '';
         
         for (let i = lines.length - 1; i >= 0; i--) {

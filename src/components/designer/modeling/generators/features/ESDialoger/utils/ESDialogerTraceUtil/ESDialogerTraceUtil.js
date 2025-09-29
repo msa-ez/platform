@@ -252,7 +252,7 @@ class ESDialogerTraceUtil {
      * refs에 존재하는 인덱스 정보가 원천 정보에 대해서 유효한 인덱스인지를 최종 검증해서 에러 전파 방지
      */
     static __validateIndexOfRefs(draftOptions, projectInfo) {
-        const userText = [projectInfo.userStory, projectInfo.ddl].filter(text => text).join("\n")
+        const userText = [projectInfo.userStory, projectInfo.ddl].join("\n")
         const userTextLines = userText.split("\n")
 
         let isInvalid = false;

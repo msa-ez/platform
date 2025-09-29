@@ -4,13 +4,14 @@ const { requirementsMappingGeneratorInputs } = require("./mocks");
 class RequirementsMappingGeneratorTest {
     static async test() {
         const inputs = structuredClone(requirementsMappingGeneratorInputs)
+        await this.testRequirementsMappingGenerator(inputs.baseInput, inputs.requirementChunks[1])
 
-        const startTime = Date.now()
-        for(let i = 0; i < inputs.requirementChunks.length; i++) {
-            await this.testRequirementsMappingGenerator(inputs.baseInput, inputs.requirementChunks[i])
-        }
-        const endTime = Date.now()
-        console.log(`[*] 모든 처리에 걸린 시간: ${endTime - startTime}ms`)
+        // const startTime = Date.now()
+        // for(let i = 0; i < inputs.requirementChunks.length; i++) {
+        //     await this.testRequirementsMappingGenerator(inputs.baseInput, inputs.requirementChunks[i])
+        // }
+        // const endTime = Date.now()
+        // console.log(`[*] 모든 처리에 걸린 시간: ${endTime - startTime}ms`)
     }
 
     static async testRequirementsMappingGenerator(baseInput, requirementChunk) {
