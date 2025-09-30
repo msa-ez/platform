@@ -2722,8 +2722,7 @@
                 },
 
                 selectedElement: null,
-                siteMapViewerDialog: false,
-                isForcelySaveTried: false
+                siteMapViewerDialog: false
             };
         },
         computed: {
@@ -4759,12 +4758,6 @@
             },
 
             async _saveModelForcely() {
-                // 캔버스를 한번 저장한 이후에 다시 저장을 시도 할 경우, 예외가 발생함. 따라서, 이후에는 스냅샷을 사용하도록 전환
-                if(this.isForcelySaveTried) {
-                    this._sanpshotModelForcely()
-                    return
-                }
-
                 this.storageCondition = {
                     "action": "save",
                     "title": "SAVE",
@@ -4778,7 +4771,6 @@
                     "loading": true
                 }
 
-                this.isForcelySaveTried = true
                 await this.saveModel()
             },
 
@@ -8983,8 +8975,6 @@
             async loadSiteMap(){
                 if(!this.value['siteMap']) this.value['siteMap'] = [];
                 this.value['siteMap'] = this.siteMap;
-
-                await this._saveModelForcely();
                 localStorage.removeItem("siteMap");
             },
 
@@ -9002,7 +8992,7 @@
                 this.$set(this.value, "siteMap", data.siteMap);
 
                 this.siteMapViewerDialog = false;
-                await this._saveModelForcely();
+                await this._sanpshotModelForcely();
             },
 
             handleOpenUIPanel(uiElement) {
