@@ -1891,6 +1891,7 @@
                     // // es model list update for Project Model
                     localStorage.setItem('modelListUpdate', Date.now().toString())
                 } catch (e) {
+                    console.error("[!] 모델 저장 중 에러 발생", {error: e})
                     me.alertInfo.text = 'SAVE-ERROR: ' + e
                     me.alertInfo.show = true
                 }

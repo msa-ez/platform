@@ -249,48 +249,64 @@ class ESDialogerTraceUtil {
         }
     }
     /**
-     * refs에 존재하는 인덱스 정보가 원천 정보에 대해서 유효한 인덱스인지를 최종 검증해서 에러 전파 방지
+     * refs에 존재하는 인덱스 정보가 원천 정보에 대해서 유효한 인덱스인지를 최종 검증하고, 유효하지 않은 ref는 제거
      */
     static __validateIndexOfRefs(draftOptions, projectInfo) {
         const userText = [projectInfo.userStory, projectInfo.ddl].join("\n")
         const userTextLines = userText.split("\n")
 
-        let isInvalid = false;
-        let errorMessage = "";
+        let removedCount = 0;
+        let errorMessages = [];
+        
         RefsTraceUtil.searchRefsArrayRecursively(draftOptions, (refsArray) => {
+            const validRefs = [];
+            
             refsArray.forEach(refArray => {
                 try {
-
-                    const startLineIndex = refArray[0][0] -1
+                    const startLineIndex = refArray[0][0] - 1
                     const startColumnIndex = refArray[0][1] - 1
                     const endLineIndex = refArray[1][0] - 1
                     const endColumnIndex = refArray[1][1] - 1
 
+                    let isValid = true;
+
                     if(userTextLines.length <= startLineIndex || userTextLines.length <= endLineIndex) {
-                        isInvalid = true;
-                        errorMessage += `Invalid ref : ${JSON.stringify(refArray)}\n`;
+                        isValid = false;
                     }
 
-                    const startLineContent = userTextLines[startLineIndex]
-                    if(startLineContent.length <= startColumnIndex) {
-                        isInvalid = true;
-                        errorMessage += `Invalid ref : ${JSON.stringify(refArray)}\n`;
+                    if(isValid) {
+                        const startLineContent = userTextLines[startLineIndex]
+                        if(startLineContent.length <= startColumnIndex) {
+                            isValid = false;
+                        }
                     }
 
-                    const endLineContent = userTextLines[endLineIndex]
-                    if(endLineContent.length <= endColumnIndex) {
-                        isInvalid = true;
-                        errorMessage += `Invalid ref : ${JSON.stringify(refArray)}\n`;
+                    if(isValid) {
+                        const endLineContent = userTextLines[endLineIndex]
+                        if(endLineContent.length <= endColumnIndex) {
+                            isValid = false;
+                        }
+                    }
+
+                    if(isValid) {
+                        validRefs.push(refArray);
+                    } else {
+                        removedCount++;
+                        errorMessages.push(`Invalid ref removed: ${JSON.stringify(refArray)}`);
                     }
 
                 } catch(e) {
-                    isInvalid = true;
-                    errorMessage += `Invalid ref : ${JSON.stringify(refArray)}\n`;
+                    removedCount++;
+                    errorMessages.push(`Invalid ref removed (exception): ${JSON.stringify(refArray)} - ${e.message}`);
                 }
             })
+            
+            return validRefs ? validRefs : undefined;
         })
-        if(isInvalid) {
-            throw new Error(errorMessage);
+        
+        if(errorMessages.length > 0) {
+            console.error(`[ESDialogerTraceUtil] Removed ${removedCount} invalid refs:`);
+            errorMessages.forEach(msg => console.error(`[ESDialogerTraceUtil] ${msg}`));
         }
     }
 }

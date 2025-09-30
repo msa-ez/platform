@@ -2722,6 +2722,7 @@
 
                 selectedElement: null,
                 siteMapViewerDialog: false,
+                isForcelySaveTried: false
             };
         },
         computed: {
@@ -4714,8 +4715,11 @@
                     )
 
                     
-                    if(!this.value.langgraphStudioInfos) this.value.langgraphStudioInfos = {}
-                    this.value.langgraphStudioInfos.esGenerator = {jobId: jobId, isCompleted:false, traceInfo: traceInfo}
+                    if(!this.value.langgraphStudioInfos) 
+                        this.$set(this.value, "langgraphStudioInfos", {})
+                    this.$set(
+                        this.value.langgraphStudioInfos, "esGenerator", {jobId: jobId, isCompleted:false, traceInfo: traceInfo}
+                    )
 
                     if(isAlreadyTried) {
                         await this._sanpshotModelForcely()
@@ -4754,6 +4758,12 @@
             },
 
             async _saveModelForcely() {
+                // 캔버스를 한번 저장한 이후에 다시 저장을 시도 할 경우, 예외가 발생함. 따라서, 이후에는 스냅샷을 사용하도록 전환
+                if(this.isForcelySaveTried) {
+                    this._sanpshotModelForcely()
+                    return
+                }
+
                 this.storageCondition = {
                     "action": "save",
                     "title": "SAVE",
@@ -4766,8 +4776,8 @@
                     "error": null,
                     "loading": true
                 }
-                    
 
+                this.isForcelySaveTried = true
                 await this.saveModel()
             },
 
