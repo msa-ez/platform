@@ -200,6 +200,11 @@ class TraceInfoViewerUtil {
             throw new Error(`Invalid Enum trace info. Can not find traceMaps for ${boundedContextTraceName}.`);
         }
 
+        if(this._isValidEnumTraceInfoStructureRefs(traceInfo, boundedContextTraceName, enumValue.traceName)) {
+            const enumRefs = traceInfo.structureRefs[boundedContextTraceName].enumerations[enumValue.traceName];
+            return this.showTraceInfoViewer(component, enumRefs);
+        }
+
         const bcTraceMap = traceInfo.traceMaps[boundedContextTraceName];
         const originalRefs = RefsTraceUtil.convertToOriginalRefsUsingTraceMap(enumValue.refs, bcTraceMap);
         
@@ -327,6 +332,13 @@ class TraceInfoViewerUtil {
                traceInfo.structureRefs[boundedContextName].aggregates &&
                traceInfo.structureRefs[boundedContextName].aggregates[modelClassTraceName] &&
                traceInfo.userInputs;
+    }
+
+    static _isValidEnumTraceInfoStructureRefs(traceInfo, boundedContextName, enumTraceName) {
+        return traceInfo && traceInfo.structureRefs && 
+               traceInfo.structureRefs[boundedContextName] && 
+               traceInfo.structureRefs[boundedContextName].enumerations &&
+               traceInfo.structureRefs[boundedContextName].enumerations[enumTraceName]
     }
 
     static _isValidEntityTraceValue(entityValue) {

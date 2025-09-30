@@ -3395,11 +3395,6 @@
             //     this.highlightingEnabled = storedHighlighting === 'true';
             // }
 
-            // siteMap 로드
-            if(!me.value.siteMap && localStorage.getItem("siteMap")){
-                me.loadSiteMap();
-            }
-
             me.$EventBus.$on("openSiteMap", function () {
                 me.openSiteMapViewer()
             });
@@ -4720,6 +4715,11 @@
                     this.$set(
                         this.value.langgraphStudioInfos, "esGenerator", {jobId: jobId, isCompleted:false, traceInfo: traceInfo}
                     )
+
+                    if(!this.value.siteMap && localStorage.getItem("siteMap")){
+                        this.$set(this.value, "siteMap", JSON.parse(localStorage.getItem("siteMap")))
+                        localStorage.removeItem("siteMap");
+                    }
 
                     if(isAlreadyTried) {
                         await this._sanpshotModelForcely()
@@ -8970,12 +8970,6 @@
                 else {
                     this.traceInfoViewerDto.isUsable = false
                 }
-            },
-
-            async loadSiteMap(){
-                if(!this.value['siteMap']) this.value['siteMap'] = [];
-                this.value['siteMap'] = this.siteMap;
-                localStorage.removeItem("siteMap");
             },
 
             openSiteMapViewer(){

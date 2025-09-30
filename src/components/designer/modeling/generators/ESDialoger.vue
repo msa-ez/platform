@@ -2409,6 +2409,7 @@ import { value } from 'jsonpath';
                 this.collectedMockDatas.aggregateDraftScenarios.projectInfo = structuredClone(this.projectInfo)
                 this.collectedMockDatas.aggregateDraftScenarios.requirementsValidationResult = structuredClone(this.requirementsValidationResult)
                 this.collectedMockDatas.aggregateDraftScenarios.commandReadModelData = structuredClone(this.commandReadModelData)
+                this.collectedMockDatas.aggregateDraftScenarios.siteMap = structuredClone(this.siteMap)
                 console.log("[*] 시나리오별 테스트를 위한 Mock 데이터 구축 완료", {collectedMockDatas: this.collectedMockDatas.aggregateDraftScenarios})
             },
 

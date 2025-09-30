@@ -165,6 +165,7 @@ export default {
             this.projectInfo = selectedScenario.projectInfo
             this.requirementsValidationResult = selectedScenario.requirementsValidationResult
             this.commandReadModelData = selectedScenario.commandReadModelData
+            this.siteMap = selectedScenario.siteMap
         },
 
         _mermaidStringTest() {
