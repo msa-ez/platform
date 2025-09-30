@@ -1293,6 +1293,7 @@
                 if(info.summarizedResult) this.$set(this.projectInfo, 'summarizedResult', info.summarizedResult);
                 if(info.usedUserStory) this.$set(this.projectInfo, 'usedUserStory', info.usedUserStory);
                 if(info.usedInputDDL) this.$set(this.projectInfo, 'usedInputDDL', info.usedInputDDL);
+                if(info.commandReadModelData) this.$set(this.projectInfo, 'commandReadModelData', info.commandReadModelData);
                 await this.putObject(`db://definitions/${this.projectInfo.projectId}/information`, this.projectInfo)
             },
             async updateInputDDL(content){

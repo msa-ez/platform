@@ -1597,7 +1597,7 @@
                             left: 0;
                             width: 100%;
                             height: 100%;
-                            z-index: 100;
+                            z-index: 3;
                             background-color: white;
                         "
                     >
@@ -1606,7 +1606,7 @@
                             @click="siteMapViewerDialog = false"
                             style="
                                 position: absolute;
-                                z-index: 101;
+                                z-index: 4;
                                 right: 20px;
                                 top: 20px;
                                 color: gray;
@@ -1620,6 +1620,7 @@
                             :siteMap="value.siteMap"
                             :modelValue="value"
                             @close:siteMapViewer="closeSiteMapViewer"
+                            @open-ui-panel="handleOpenUIPanel"
                         >
                         </site-map-viewer>
                     </div>
@@ -9002,6 +9003,30 @@
 
                 this.siteMapViewerDialog = false;
                 await this._saveModelForcely();
+            },
+
+            handleOpenUIPanel(uiElement) {
+                // UI 요소의 ID로 해당 컴포넌트에 접근
+                const elementId = uiElement.id;
+                
+                if (this.$refs[elementId] && this.$refs[elementId][0]) {
+                    // UI 컴포넌트의 openPanel 메서드 호출
+                    const uiComponent = this.$refs[elementId][0];
+                    
+                    if (typeof uiComponent.openPanel === 'function') {
+                        // 먼저 요소를 선택 상태로 만들기
+                        if (typeof uiComponent.selectedActivity === 'function') {
+                            uiComponent.selectedActivity();
+                        }
+                        
+                        // 그 다음 패널 열기
+                        uiComponent.openPanel();
+                    } else {
+                        console.warn('UI 컴포넌트에 openPanel 메서드가 없습니다.');
+                    }
+                } else {
+                    console.warn(`UI 요소 '${elementId}'에 해당하는 컴포넌트를 찾을 수 없습니다.`);
+                }
             },
         },
     };

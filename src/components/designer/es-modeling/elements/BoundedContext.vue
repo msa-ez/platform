@@ -84,40 +84,30 @@
                         </sub-elements>
                 </geometry-element>
             </sub-elements>
-
             <sub-elements v-else>
                 <geometry-rect
                         v-if="movingElement"
-                        :_style="{
-                            'fill-r': 1,
-                            'fill-cx': .1,
-                            'fill-cy': .1,
-                            'stroke-width': 1.4,
-                            'stroke': '#000000',
-                            'fill': '#e3e1e1',
-                            'fill-opacity': .5,
-                            'vertical-align': 'top',
-                            'font-weight': 'bold',
-                            'font-size': '16',
-                            'r': '1'
-                        }"
+                        :_style="getMovingGeometryRectStyle"
                 ></geometry-rect>
                 <geometry-rect
                         v-else
-                        :_style="{
-                            'fill-r': 1,
-                            'fill-cx': .1,
-                            'fill-cy': .1,
-                            'stroke-width': 1.4,
-                            'stroke': '#000000',
-                            'fill-opacity': 1,
-                            'vertical-align': 'top',
-                            'font-weight': 'bold',
-                            'font-size': '16',
-                            'r': '1'
-                        }"
+                        :_style="getGeometryRectStyle"
                 ></geometry-rect>
+                
+                <!-- UI BoundedContext에 이미지 오버레이 추가 -->
+                <image-element
+                        v-if="shouldShowSiteMapImage"
+                        :image="siteMapImageSrc"
+                        :x="0"
+                        :y="0"
+                        :width="elementCoordinate.width"
+                        :height="elementCoordinate.height"
+                        :_style="{
+                            'z-index': 1
+                        }"
+                ></image-element>
             </sub-elements>
+            
 
             <storming-sub-controller
                     :type="value._type"
@@ -242,6 +232,49 @@
                     description: this.value.description,
                     boundedContext: this.value,
                 }
+            },
+            shouldShowSiteMapImage() {
+                return this.value.name === 'ui';
+            },
+            siteMapImageSrc() {
+                return '/static/image/symbol/site_map_bc.png';
+            },
+            getGeometryRectStyle() {
+                const baseStyle = {
+                    'fill-r': 1,
+                    'fill-cx': .1,
+                    'fill-cy': .1,
+                    'stroke-width': 1.4,
+                    'stroke': '#000000',
+                    'fill-opacity': 1,
+                    'vertical-align': 'top',
+                    'font-weight': 'bold',
+                    'font-size': '16',
+                    'r': '1'
+                };
+                
+                // name이 'ui'일 때는 기본 스타일만 사용 (이미지는 image-element로 처리)
+                
+                return baseStyle;
+            },
+            getMovingGeometryRectStyle() {
+                const baseStyle = {
+                    'fill-r': 1,
+                    'fill-cx': .1,
+                    'fill-cy': .1,
+                    'stroke-width': 1.4,
+                    'stroke': '#000000',
+                    'fill': '#e3e1e1',
+                    'fill-opacity': .5,
+                    'vertical-align': 'top',
+                    'font-weight': 'bold',
+                    'font-size': '16',
+                    'r': '1'
+                };
+                
+                // name이 'ui'일 때는 기본 스타일만 사용 (이미지는 image-element로 처리)
+                
+                return baseStyle;
             }
         },
         data: function () {
@@ -294,6 +327,7 @@
                 var $tr = $('#' + me.value.elementView.id);
                 $tr.parent().children().first().before($tr)
             }
+            
         },
         methods: {
             async selectMain(){
@@ -681,6 +715,6 @@
     }
 </script>
 
+<style scoped lang="scss" rel="stylesheet/scss">
 
-
-
+</style>

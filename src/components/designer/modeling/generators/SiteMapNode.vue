@@ -116,7 +116,11 @@
                             >
                                 <div class="component-content">
                                     <div class="component-title">
-                                        <i :class="getPageTypeIcon(component)" style="margin-right: 8px;"></i>
+                                        <button class="ui-icon-button" 
+                                                @click.stop="openUIPanel(component.title)"
+                                                :title="'UI 패널 열기: ' + component.title">
+                                            <i :class="getPageTypeIcon(component)"></i>
+                                        </button>
                                         <input 
                                             v-model="component.title" 
                                             class="component-input title-input"
@@ -152,10 +156,12 @@
                             :isGenerating="isGenerating"
                             :node="child"
                             :parent-title="node.title"
+                            :canvas="canvas"
                             @add-child="$emit('add-child', $event)"
                             @delete-node="$emit('delete-node', $event)"
                             @update-node="$emit('update-node', $event)"
                             @node-collapse-changed="$emit('node-collapse-changed', $event)"
+                            @open-ui-panel="$emit('open-ui-panel', $event)"
                         />
                     </div>
                 </div>
@@ -214,6 +220,10 @@ export default {
         isRoot: {
             type: Boolean,
             default: false
+        },
+        canvas: {
+            type: Object,
+            default: () => ({})
         }
     },
     data() {
@@ -272,6 +282,35 @@ export default {
                 return 'readmodel-tag';
             }
             return 'reference-tag';
+        },
+
+        openUIPanel(nodeTitle) {
+            if (!this.canvas || !this.canvas.elements) {
+                console.warn('Canvas 또는 elements가 없습니다.');
+                return;
+            }
+
+            // canvas의 elements에서 UI 타입이고 이름이 같은 요소를 찾기
+            const uiElements = Object.values(this.canvas.elements).filter(element => {
+                return element && 
+                       element._type === 'org.uengine.modeling.model.UI' && 
+                       element.name === nodeTitle+"UI";
+            });
+
+            if (uiElements.length === 0) {
+                alert(`'${nodeTitle}UI'와 일치하는 UI 요소를 찾을 수 없습니다.`);
+                return;
+            }
+
+            if (uiElements.length > 1) {
+                console.warn(`'${nodeTitle}UI'와 일치하는 UI 요소가 ${uiElements.length}개 있습니다. 첫 번째 요소를 선택합니다.`);
+            }
+
+            const uiElement = uiElements[0];
+            
+            // UI 요소의 패널을 열기 위해 해당 요소의 openPanel 메서드 호출
+            // 부모 컴포넌트를 통해 UI 요소에 접근
+            this.$emit('open-ui-panel', uiElement);
         }
 
     }
@@ -1026,5 +1065,40 @@ export default {
 .node-title {
     position: relative;
     padding-right: 30px; /* 삭제 버튼을 위한 공간 확보 */
+}
+
+/* UI 아이콘 버튼 스타일 */
+.ui-icon-button {
+    margin-right: 8px;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 6px;
+    border-radius: 4px;
+    font-size: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    min-height: 32px;
+    color: #6c757d;
+    transition: all 0.2s ease;
+    vertical-align: middle;
+}
+
+.ui-icon-button:hover {
+    color: #007bff !important;
+    background-color: rgba(0, 123, 255, 0.1);
+    transform: scale(1.1);
+}
+
+.ui-icon-button:active {
+    transform: scale(0.95);
+    color: #0056b3 !important;
+}
+
+.ui-icon-button:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.3);
 }
 </style>

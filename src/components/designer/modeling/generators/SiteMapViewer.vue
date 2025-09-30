@@ -63,10 +63,12 @@
                             :node="rootNode"
                             :parent-title="null"
                             :is-root="true"
+                            :canvas="modelValue"
                             @add-child="handleAddChild"
                             @delete-node="deleteNode"
                             @update-node="updateNode"
                             @node-collapse-changed="handleNodeCollapseChanged"
+                            @open-ui-panel="handleOpenUIPanel"
                         />
                     </div>
                 </div>
@@ -553,7 +555,8 @@ export default {
                 target.tagName === 'TEXTAREA' || 
                 target.tagName === 'SELECT' || 
                 target.tagName === 'BUTTON' ||
-                target.closest('input, textarea, select, button')) {
+                target.tagName === 'I' ||
+                target.closest('input, textarea, select, button, .ui-icon-button')) {
                 return;
             }
             
@@ -572,7 +575,8 @@ export default {
                 target.tagName === 'TEXTAREA' || 
                 target.tagName === 'SELECT' || 
                 target.tagName === 'BUTTON' ||
-                target.closest('input, textarea, select, button')) {
+                target.tagName === 'I' ||
+                target.closest('input, textarea, select, button, .ui-icon-button')) {
                 return;
             }
             
@@ -873,8 +877,13 @@ export default {
             };
             
             this.scrollAnimationId = requestAnimationFrame(animate);
-        }
+        },
 
+        handleOpenUIPanel(uiElement) {
+            // UI 요소의 패널을 열기 위해 부모 컴포넌트(EventStormingModelCanvas)에 요청
+            // 부모 컴포넌트가 실제 canvas이고 UI 요소들을 렌더링하고 있음
+            this.$emit('open-ui-panel', uiElement);
+        }
         
     }
 };
