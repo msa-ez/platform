@@ -21,10 +21,6 @@
             </button>
             
             <div class="node-title">
-                <div class="node-parent-info" v-if="parentTitle && parentTitle.trim() !== ''">
-                    <i class="fas fa-level-up-alt"></i>
-                    <span>{{ parentTitle }}</span>
-                </div>
                 <input 
                     v-model="node.title" 
                     :disabled="isGenerating"
@@ -36,16 +32,6 @@
                 <button class="node-delete-btn" @click="$emit('delete-node', node.id)" :title="$t('siteMap.node.deleteNode')" :disabled="isGenerating" v-if="!isRoot">
                     <i class="fas fa-trash"></i>
                 </button>
-            </div>
-            <div class="node-url" v-if="node.url && !isRoot">
-                <div class="field-label">{{ $t('siteMap.node.url') }}</div>
-                <input 
-                    v-model="node.url" 
-                    :disabled="isGenerating"
-                    class="node-input url-input"
-                    :placeholder="$t('siteMap.node.urlPlaceholder')"
-                    @input="updateNode"
-                />
             </div>
             <div class="node-description">
                 <input 
@@ -97,7 +83,9 @@
                     class="child-node"
                 >
                     <!-- 페이지 그룹 (자식 노드가 있는 경우) -->
-                    <div v-if="child.children && child.children.length > 0" class="page-group">
+                    <div v-if="child.children && child.children.length > 0" 
+                         class="page-group"
+                         :class="{ 'drag-over': dragOverGroup === child.id }">
                         <div class="page-group-header">
                             <div class="page-group-title">
                                 <i :class="getPageTypeIcon(child)" style="margin-right: 8px;"></i>
@@ -110,11 +98,31 @@
                         </div>
                         <div class="page-components">
                             <div 
-                                v-for="component in child.children" 
+                                v-for="(component, componentIndex) in child.children" 
                                 :key="component.id"
-                                class="component-node"
+                                class="component-wrapper"
+                                @dragover="handleComponentDragOver($event, child.id, componentIndex)"
+                                @drop="handleComponentDrop($event, child.id, componentIndex)"
                             >
-                                <div class="component-content">
+                                <!-- 드롭 위치 placeholder -->
+                                <div 
+                                    v-if="dragOverGroup === child.id && dropTargetIndex === componentIndex && draggedComponent && draggedComponent.id !== component.id"
+                                    class="drop-placeholder"
+                                >
+                                    <div class="placeholder-content">
+                                        <i class="fas fa-arrow-down"></i>
+                                        <span>여기에 드롭</span>
+                                    </div>
+                                </div>
+                                
+                                <div 
+                                    class="component-node"
+                                    :class="{ 'dragging': draggedComponent && draggedComponent.id === component.id }"
+                                    draggable="true"
+                                    @dragstart="handleDragStart($event, component, child.id)"
+                                    @dragend="handleDragEnd($event)"
+                                >
+                                    <div class="component-content">
                                     <div class="component-title">
                                         <button class="ui-icon-button" 
                                                 @click.stop="openUIPanel(component.title)"
@@ -142,8 +150,25 @@
                                     </button>
                                 </div>
                             </div>
+                            </div>
+                            
+                            <!-- 맨 마지막 위치에 드롭하는 경우의 placeholder -->
+                            <div 
+                                v-if="dragOverGroup === child.id && dropTargetIndex === child.children.length && draggedComponent"
+                                class="drop-placeholder"
+                                @dragover.stop.prevent
+                                @dragenter.stop.prevent
+                            >
+                                <div class="placeholder-content">
+                                    <i class="fas fa-arrow-down"></i>
+                                    <span>여기에 드롭</span>
+                                </div>
+                            </div>
+                            
                             <!-- 그룹 하단에 컴포넌트 추가 버튼 -->
-                            <div class="add-component-section">
+                            <div class="add-component-section"
+                                 @dragover="handleComponentDragOver($event, child.id, child.children.length)"
+                                 @drop="handleComponentDrop($event, child.id, child.children.length)">
                                 <button class="add-component-btn" @click="$emit('add-child', child.id)" :title="child.title + '에 구성요소 추가'" :disabled="isGenerating">
                                     <i class="fas fa-plus"></i>
                                 </button>
@@ -229,7 +254,11 @@ export default {
     data() {
         return {
             isCollapsed: false,
-            updateTimeout: null
+            updateTimeout: null,
+            draggedComponent: null,
+            draggedFromGroup: null,
+            dragOverGroup: null,
+            dropTargetIndex: null
         };
     },
     computed: {
@@ -311,6 +340,142 @@ export default {
             // UI 요소의 패널을 열기 위해 해당 요소의 openPanel 메서드 호출
             // 부모 컴포넌트를 통해 UI 요소에 접근
             this.$emit('open-ui-panel', uiElement);
+        },
+
+        // Drag & Drop 관련 메서드
+        handleDragStart(event, component, groupId) {
+            this.draggedComponent = component;
+            this.draggedFromGroup = groupId;
+            event.dataTransfer.effectAllowed = 'move';
+            event.dataTransfer.setData('text/html', event.target.innerHTML);
+            // inline style 대신 CSS 클래스로 처리
+        },
+
+        handleDragEnd(event) {
+            // 상태 초기화
+            this.draggedComponent = null;
+            this.draggedFromGroup = null;
+            this.dragOverGroup = null;
+            this.dropTargetIndex = null;
+        },
+
+        handleDragOver(event, groupId) {
+            event.preventDefault();
+            event.dataTransfer.dropEffect = 'move';
+            this.dragOverGroup = groupId;
+        },
+
+        handleDragLeave(event, groupId) {
+            if (this.dragOverGroup === groupId) {
+                this.dragOverGroup = null;
+            }
+        },
+
+        // 컴포넌트 위로 드래그할 때
+        handleComponentDragOver(event, groupId, componentIndex) {
+            if (!this.draggedComponent) return;
+            
+            event.preventDefault();
+            event.stopPropagation();
+            event.dataTransfer.dropEffect = 'move';
+            
+            // 즉시 상태 업데이트
+            this.dragOverGroup = groupId;
+            this.dropTargetIndex = componentIndex;
+        },
+
+        // 컴포넌트에 드롭할 때
+        handleComponentDrop(event, targetGroupId, targetIndex) {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            if (!this.draggedComponent || !this.draggedFromGroup) {
+                console.warn('No dragged component or source group');
+                return;
+            }
+
+            // 원본 그룹에서 컴포넌트 찾기
+            const sourceGroup = this.node.children.find(child => child.id === this.draggedFromGroup);
+            const targetGroup = this.node.children.find(child => child.id === targetGroupId);
+
+            if (!sourceGroup || !targetGroup) {
+                console.warn('Source or target group not found');
+                return;
+            }
+
+            // 원본 그룹에서 컴포넌트 제거
+            const componentIndex = sourceGroup.children.findIndex(c => c.id === this.draggedComponent.id);
+            if (componentIndex === -1) {
+                console.warn('Component not found in source group');
+                return;
+            }
+
+            const [movedComponent] = sourceGroup.children.splice(componentIndex, 1);
+            
+            // 같은 그룹 내에서 이동하는 경우 인덱스 조정
+            let insertIndex = targetIndex;
+            if (this.draggedFromGroup === targetGroupId && componentIndex < targetIndex) {
+                insertIndex--;
+            }
+            
+            // 대상 그룹의 지정된 위치에 컴포넌트 삽입
+            targetGroup.children.splice(insertIndex, 0, movedComponent);
+            
+            console.log('Component moved successfully:', {
+                from: this.draggedFromGroup,
+                to: targetGroupId,
+                index: insertIndex
+            });
+            
+            // 부모 컴포넌트에 변경 알림
+            this.$emit('update-node', this.node.id, {
+                children: this.node.children
+            });
+
+            // 상태 완전히 초기화
+            this.$nextTick(() => {
+                this.draggedComponent = null;
+                this.draggedFromGroup = null;
+                this.dragOverGroup = null;
+                this.dropTargetIndex = null;
+            });
+        },
+
+        handleDrop(event, targetGroupId) {
+            event.preventDefault();
+            
+            if (!this.draggedComponent || !this.draggedFromGroup) {
+                return;
+            }
+
+            // 원본 그룹에서 컴포넌트 찾기
+            const sourceGroup = this.node.children.find(child => child.id === this.draggedFromGroup);
+            const targetGroup = this.node.children.find(child => child.id === targetGroupId);
+
+            if (!sourceGroup || !targetGroup) {
+                return;
+            }
+
+            // 원본 그룹에서 컴포넌트 제거
+            const componentIndex = sourceGroup.children.findIndex(c => c.id === this.draggedComponent.id);
+            if (componentIndex > -1) {
+                const [movedComponent] = sourceGroup.children.splice(componentIndex, 1);
+                
+                // dropTargetIndex가 설정되어 있으면 해당 위치에, 없으면 맨 아래에 추가
+                if (this.dropTargetIndex !== null) {
+                    targetGroup.children.splice(this.dropTargetIndex, 0, movedComponent);
+                } else {
+                    targetGroup.children.push(movedComponent);
+                }
+                
+                // 부모 컴포넌트에 변경 알림
+                this.$emit('update-node', this.node.id, {
+                    children: this.node.children
+                });
+            }
+
+            this.dragOverGroup = null;
+            this.dropTargetIndex = null;
         }
 
     }
@@ -330,7 +495,7 @@ export default {
     background: white;
     border: 2px solid #007bff;
     border-radius: 8px;
-    padding: 16px;
+    padding: 12px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     transition: all 0.2s ease;
     position: relative;
@@ -346,8 +511,8 @@ export default {
 
 .collapse-btn {
     position: absolute;
-    top: 16px;
-    right: 16px;
+    top: 12px;
+    right: 12px;
     background: none;
     border: none;
     color: #6c757d;
@@ -368,14 +533,14 @@ export default {
 }
 
 .node-title {
-    margin-bottom: 12px;
+    margin-bottom: 6px;
     padding-right: 40px;
 }
 
 .node-parent-info {
     font-size: 11px;
     color: #6c757d;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
     display: flex;
     align-items: center;
     gap: 4px;
@@ -392,7 +557,7 @@ export default {
     font-size: 16px;
     font-weight: 600;
     color: #212529;
-    padding: 4px 0;
+    padding: 2px 0;
     outline: none;
 }
 
@@ -403,21 +568,21 @@ export default {
 }
 
 .node-url {
-    margin-bottom: 8px;
+    margin-bottom: 6px;
 }
 
 .field-label {
     font-size: 11px;
     color: #6c757d;
     font-weight: 500;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
 }
 
 .url-input {
     width: 100%;
     border: 1px solid #dee2e6;
     border-radius: 4px;
-    padding: 4px 8px;
+    padding: 3px 6px;
     font-size: 12px;
     font-family: 'Courier New', monospace;
     background: #f8f9fa;
@@ -430,17 +595,17 @@ export default {
 }
 
 .node-description {
-    margin-bottom: 12px;
+    margin-bottom: 8px;
 }
 
 .description-input {
     width: 100%;
     border: 1px solid #dee2e6;
     border-radius: 4px;
-    padding: 6px 8px;
+    padding: 4px 6px;
     font-size: 13px;
     resize: vertical;
-    min-height: 40px;
+    min-height: 28px;
     font-family: inherit;
 }
 
@@ -545,6 +710,13 @@ export default {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
+/* 드래그 오버 상태 - transform 제거하여 레이아웃 변경 방지 */
+.page-group.drag-over {
+    background: #e3f2fd;
+    border-color: #2196f3;
+    box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+}
+
 /* 페이지 그룹으로 가는 세로선 */
 .page-group::before {
     content: '';
@@ -616,8 +788,15 @@ export default {
 .page-components {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 8px;
     width: 100%;
+}
+
+/* 컴포넌트 wrapper */
+.component-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
 }
 
 /* 구성요소 노드 */
@@ -625,14 +804,87 @@ export default {
     background: white;
     border: 1px solid #dee2e6;
     border-radius: 8px;
-    padding: 12px;
+    padding: 8px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    transition: all 0.2s ease;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    cursor: move;
+    cursor: grab;
+    position: relative;
+    opacity: 1;
 }
 
 .component-node:hover {
     border-color: #007bff;
     box-shadow: 0 2px 6px rgba(0, 123, 255, 0.15);
+}
+
+.component-node:active {
+    cursor: grabbing;
+}
+
+/* 드래그 중인 컴포넌트 (인라인 스타일로 설정되지만 CSS도 추가) */
+.component-node[draggable="true"]:active {
+    opacity: 0.5;
+}
+
+/* 드래그 앤 드롭 힌트 추가 */
+.component-node::before {
+    content: '⋮⋮';
+    position: absolute;
+    left: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #dee2e6;
+    font-size: 12px;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.component-node:hover::before {
+    opacity: 1;
+}
+
+/* 드래그 중인 컴포넌트 스타일 */
+.component-node.dragging {
+    opacity: 0.4 !important;
+    background: #f8f9fa !important;
+    border-style: dashed !important;
+    transform: scale(0.98) !important;
+}
+
+/* 드래그가 끝난 후 즉시 원래 상태로 복구 */
+.component-node:not(.dragging) {
+    opacity: 1 !important;
+}
+
+/* 드롭 placeholder 스타일 */
+.drop-placeholder {
+    height: 60px;
+    margin: 8px 0;
+    border: 2px dashed #2196f3;
+    border-radius: 8px;
+    background: #e3f2fd;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    pointer-events: none; /* 마우스 이벤트 차단으로 무한 루프 방지 */
+}
+
+
+.placeholder-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #1976d2;
+    font-weight: 600;
+    font-size: 13px;
+    z-index: 1;
+}
+
+.placeholder-content i {
+    font-size: 16px;
 }
 
 /* 구성요소 액션 버튼들 */
@@ -653,13 +905,15 @@ export default {
 /* 구성요소 내용 */
 .component-content {
     padding: 0;
+    padding-left: 12px;
+    position: relative;
 }
 
 .component-title {
     font-weight: 600;
     font-size: 14px;
     color: #495057;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
     display: flex;
     align-items: center;
 }
@@ -698,7 +952,7 @@ export default {
 .description-input {
     font-size: 12px;
     color: #6c757d;
-    margin-top: 4px;
+    margin-top: 2px;
 }
 
 
@@ -831,8 +1085,8 @@ export default {
 
 /* Command/ReadModel 참조 정보 스타일 */
 .node-references {
-    margin-top: 12px;
-    padding: 8px;
+    margin-top: 6px;
+    padding: 6px;
     background: #f8f9fa;
     border-radius: 6px;
     border: 1px solid #e9ecef;
@@ -841,13 +1095,13 @@ export default {
 .references-section {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 4px;
 }
 
 .reference-group {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 2px;
 }
 
 .reference-label {
