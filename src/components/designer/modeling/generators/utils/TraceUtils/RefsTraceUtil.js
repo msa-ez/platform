@@ -1,22 +1,22 @@
 const TextTraceUtil = require("./TextTraceUtil");
 
 class RefsTraceUtil {
-    static convertRefsToIndexes(data, lineNumberedRequirements) {
+    static convertRefsToIndexes(data, lineNumberedRequirements, isUseXmlBase = false) {
         if (!data || !lineNumberedRequirements) return data;
 
         const lines = lineNumberedRequirements.split('\n');
-        const startLineOffset = TextTraceUtil.getMinLineNumberOfRequirements(lineNumberedRequirements) - 1;
+        const startLineOffset = TextTraceUtil.getMinLineNumberOfRequirements(lineNumberedRequirements, isUseXmlBase) - 1;
 
         return this.searchRefsArrayRecursively(data, (refsArray) => {
-            return this._convertRefsArray(refsArray, lines, startLineOffset);
+            return this._convertRefsArray(refsArray, lines, startLineOffset, isUseXmlBase);
         });
     }
 
-    static _convertRefsArray(refsArray, lines, startLineOffset) {
-        return refsArray.map(refRange => this._convertSingleRefRange(refRange, lines, startLineOffset));
+    static _convertRefsArray(refsArray, lines, startLineOffset, isUseXmlBase = false) {
+        return refsArray.map(refRange => this._convertSingleRefRange(refRange, lines, startLineOffset, isUseXmlBase));
     }
 
-    static _convertSingleRefRange(refRange, lines, startLineOffset) {
+    static _convertSingleRefRange(refRange, lines, startLineOffset, isUseXmlBase = false) {
         try {
             // Validate ref range structure
             if (!this.__isValidRefRange(refRange)) {
@@ -26,11 +26,11 @@ class RefsTraceUtil {
 
             // Handle single reference format: [[lineNumber, phrase]]
             if (refRange.length === 1) {
-                return this._convertSingleRef(refRange[0], lines, startLineOffset);
+                return this._convertSingleRef(refRange[0], lines, startLineOffset, isUseXmlBase);
             }
 
             // Handle dual reference format: [[start], [end]]
-            return this._convertDualRef(refRange, lines, startLineOffset);
+            return this._convertDualRef(refRange, lines, startLineOffset, isUseXmlBase);
         } catch (error) {
             console.warn('Failed to convert ref range:', refRange, error);
             return refRange;
@@ -40,7 +40,7 @@ class RefsTraceUtil {
         return Array.isArray(refRange) && (refRange.length === 1 || refRange.length === 2);
     }
 
-    static _convertSingleRef(singleRef, lines, startLineOffset) {
+    static _convertSingleRef(singleRef, lines, startLineOffset, isUseXmlBase = false) {
         if (!Array.isArray(singleRef) || singleRef.length !== 2) {
             console.warn('Invalid single ref structure:', singleRef);
             return [singleRef];
@@ -53,7 +53,7 @@ class RefsTraceUtil {
             return [[lineNumber, phrase]];
         }
 
-        const lineContent = this._getLineContent(lines, lineNumber, startLineOffset);
+        const lineContent = this._getLineContent(lines, lineNumber, startLineOffset, isUseXmlBase);
         const phraseIndex = lineContent.indexOf(phrase);
         
         if (phraseIndex !== -1) {
@@ -68,7 +68,7 @@ class RefsTraceUtil {
         }
     }
 
-    static _convertDualRef(refRange, lines, startLineOffset) {
+    static _convertDualRef(refRange, lines, startLineOffset, isUseXmlBase = false) {
         const [startRef, endRef] = refRange;
         
         if (!Array.isArray(startRef) || !Array.isArray(endRef) || 
@@ -85,8 +85,8 @@ class RefsTraceUtil {
             return refRange;
         }
 
-        const startLineContent = this._getLineContent(lines, startLine, startLineOffset);
-        const endLineContent = this._getLineContent(lines, endLine, startLineOffset);
+        const startLineContent = this._getLineContent(lines, startLine, startLineOffset, isUseXmlBase);
+        const endLineContent = this._getLineContent(lines, endLine, startLineOffset, isUseXmlBase);
 
         const startIndex = this._findColumnForWords(startLineContent, startPhrase);
         const endIndex = this._findColumnForWords(endLineContent, endPhrase, true);
@@ -106,19 +106,25 @@ class RefsTraceUtil {
         return isEndPosition ? index + phrase.length : index + 1;
     }
 
-    static _getLineContent(lines, lineNumber, startLineOffset) {
+    static _getLineContent(lines, lineNumber, startLineOffset, isUseXmlBase = false) {
         const adjustedLineNumber = lineNumber - startLineOffset;
         if (adjustedLineNumber < 1 || adjustedLineNumber > lines.length) {
             throw new Error(`Line number ${adjustedLineNumber} is out of range`);
         }
         
         const line = lines[adjustedLineNumber - 1]; // Convert to 0-based index
-        return this._stripLineNumberPrefix(line);
+        return this._stripLineNumberPrefix(line, isUseXmlBase);
     }
 
-    static _stripLineNumberPrefix(line) {
-        const colonIndex = line.indexOf(': ');
-        return colonIndex !== -1 ? line.substring(colonIndex + 2) : line;
+    static _stripLineNumberPrefix(line, isUseXmlBase = false) {
+        if(isUseXmlBase) {
+            const match = line.match(/^<\d+>(.*)<\/\d+>$/);
+            return match ? match[1] : line;
+        }
+        else {
+            const colonIndex = line.indexOf(': ');
+            return colonIndex !== -1 ? line.substring(colonIndex + 2) : line;
+        }
     }
 
 
@@ -279,35 +285,60 @@ class RefsTraceUtil {
      * @param {number} maxLine - 유효한 최대 라인 번호
      * @returns {Object} - 변환된 데이터 객체
      */
-    static sanitizeAndConvertRefs(data, lineNumberedRequirements) {
+    static sanitizeAndConvertRefs(data, lineNumberedRequirements, isUseXmlBase = false) {
         if (!data || !lineNumberedRequirements) return data;
-        const { minLine, maxLine } = TextTraceUtil.getLineNumberRangeOfRequirements(lineNumberedRequirements);
+        const { minLine, maxLine } = TextTraceUtil.getLineNumberRangeOfRequirements(lineNumberedRequirements, isUseXmlBase);
 
         const lines = lineNumberedRequirements.split('\n').map(line => {
-            const idx = line.indexOf(': ');
-            return idx !== -1 ? line.substring(idx + 2) : line;
+            if(isUseXmlBase) {
+                const match = line.match(/^<\d+>(.*)<\/\d+>$/);
+                return match ? match[1] : line;
+            }
+            else {
+                const idx = line.indexOf(': ');
+                return idx !== -1 ? line.substring(idx + 2) : line;
+            }
         });
         const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
 
-        // 1단계: 재귀적으로 모든 refs 속성을 찾아서 정리 (구문/라인 검증)
-        const sanitizedData = this.searchRefsArrayRecursively(data, (refsArray) => {
+        // 1단계: refs의 구조에 맞지 않은 데이터 제거
+        const filteredData = this._filterInvalidRefs(data);
+
+        // 2단계: refs의 라인번호가 실제 구문을 포함하는지 검증 및 가능한 경우 교정 작업
+        const sanitizedData = this.searchRefsArrayRecursively(filteredData, (refsArray) => {
             return this._sanitizeRefsArray(refsArray, lines, minLine, maxLine, clamp);
         });
 
-        // 2단계: convertRefsToIndexes로 칼럼 좌표 변환
+        // 3단계: convertRefsToIndexes로 구문을 실제 칼럼 좌표로 변환
         let convertedData;
         try {
-            convertedData = this.convertRefsToIndexes(sanitizedData, lineNumberedRequirements);
+            convertedData = this.convertRefsToIndexes(sanitizedData, lineNumberedRequirements, isUseXmlBase);
         } catch (e) {
             console.warn('Failed to convert refs to indexes:', e);
             convertedData = sanitizedData;
         }
 
-        // 3단계: 최종 클램핑 처리
+        // 4단계: 최종 클램핑 처리
         const finalData = this.searchRefsArrayRecursively(convertedData, (refsArray) => {
             return this._clampRefsArray(refsArray, lines, minLine, maxLine, clamp);
         });
         return finalData;
+    }
+
+    static _filterInvalidRefs(data) {
+        return this.searchRefsArrayRecursively(data, (refsArray) => {
+            const filteredRefs = [];
+            for(const refs of refsArray) {
+                if(!refs || !Array.isArray(refs) || refs.length !== 2 ||
+                   !refs[0] || !Array.isArray(refs[0]) || refs[0].length !== 2 ||
+                   !refs[1] || !Array.isArray(refs[1]) || refs[1].length !== 2) {
+                    console.warn("Invalid refs format found. Ignoring...", refs);
+                    continue;
+                }
+                filteredRefs.push(refs);
+            }
+            return filteredRefs;
+        });
     }
 
     static _sanitizeRefsArray(refsArray, lines, minLine, maxLine, clamp) {
@@ -332,10 +363,14 @@ class RefsTraceUtil {
                     return content.includes(phrase);
                 };
                 if (has(line)) return line;
+
+                console.warn("Phrase not found in line. Trying to relocate...", phrase, line);
                 for (let d = 1; d <= 5; d++) {
                     if (line - d >= minLine && has(line - d)) return line - d;
                     if (line + d <= maxLine && has(line + d)) return line + d;
                 }
+
+                console.warn("Phrase not found in range. Keeping the original line...", phrase, line);
                 return line; // 못 찾으면 원래 라인 유지
             };
 
@@ -412,6 +447,42 @@ class RefsTraceUtil {
         
         // Return primitive values as-is
         return obj;
+    }
+
+
+    static validateRefs(data, originalRequirements, startLineOffset=0) {
+        if(!data || !originalRequirements) return;
+
+        const lines = originalRequirements.split('\n');
+        const invalidRefs = [];
+        this.searchRefsArrayRecursively(data, (refsArray) => {
+            try {
+                for(const refs of refsArray) {
+                    const startLineIndex = refs[0][0] - 1 - startLineOffset;
+                    const startColumnIndex = refs[0][1] - 1;
+                    const endLineIndex = refs[1][0] - 1 - startLineOffset;
+                    const endColumnIndex = refs[1][1] - 1;
+        
+                    const startLineContent = lines[startLineIndex];
+                    const endLineContent = lines[endLineIndex];
+                    if(!startLineContent || !endLineContent) {
+                        invalidRefs.push(refs);
+                        continue;
+                    }
+        
+                    if(startColumnIndex < 0 || startColumnIndex > startLineContent.length || endColumnIndex < 0 || endColumnIndex > endLineContent.length) {
+                        invalidRefs.push(refs);
+                    }
+                }  
+            }
+            catch(e) {
+                invalidRefs.push(refs);
+            }
+        });
+        if(invalidRefs.length > 0) {
+            console.error(`[RefsTraceUtil] Invalid refs found in validateRefs: ${JSON.stringify(invalidRefs)}`);
+            throw new Error(`Invalid refs found in validateRefs: ${JSON.stringify(invalidRefs)}`);
+        }
     }
 }
 

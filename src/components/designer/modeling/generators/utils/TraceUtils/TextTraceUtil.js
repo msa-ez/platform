@@ -63,34 +63,47 @@ class TextTraceUtil {
         return `* Referenced Requirements\n${description}`
     }
 
-    static addLineNumbers(requirements, startIndex = 1) {
+    static addLineNumbers(requirements, startIndex = 1, isUseXmlBase = false) {
         if (!requirements) return '';
-        const lines = requirements.split('\n');
-        return lines.map((line, index) => `${index + startIndex}: ${line}`).join('\n');
+        
+        const results = []
+        for(const [index, line] of requirements.split('\n').entries()) {
+            const lineNumber = index + startIndex;
+            if(isUseXmlBase)
+                results.push(`<${lineNumber}>${line}</${lineNumber}>`)
+            else
+                results.push(`${lineNumber}: ${line}`)
+        }
+        return results.join('\n');
     }
 
 
-    static getLineNumberRangeOfRequirements(lineNumberedRequirements) {
-        const minLine = this.getMinLineNumberOfRequirements(lineNumberedRequirements);
-        const maxLine = this.getMaxLineNumberOfRequirements(lineNumberedRequirements);
+    static getLineNumberRangeOfRequirements(lineNumberedRequirements, isUseXmlBase = false) {
+        const minLine = this.getMinLineNumberOfRequirements(lineNumberedRequirements, isUseXmlBase);
+        const maxLine = this.getMaxLineNumberOfRequirements(lineNumberedRequirements, isUseXmlBase);
         return { minLine, maxLine };
     }
 
-    static getMinLineNumberOfRequirements(lineNumberedRequirements) {
+    static getMinLineNumberOfRequirements(lineNumberedRequirements, isUseXmlBase = false) {
         const lines = lineNumberedRequirements.trim().split('\n');
         const firstLine = lines[0];
-        const minLine = this._extractLineNumber(firstLine);
+        const minLine = this._extractLineNumber(firstLine, isUseXmlBase);
         return minLine !== null ? minLine : 1;
     }
 
-    static getMaxLineNumberOfRequirements(lineNumberedRequirements) {
+    static getMaxLineNumberOfRequirements(lineNumberedRequirements, isUseXmlBase = false) {
         const lines = lineNumberedRequirements.trim().split('\n');
         const lastLine = lines[lines.length - 1];
-        const maxLine = this._extractLineNumber(lastLine);
+        const maxLine = this._extractLineNumber(lastLine, isUseXmlBase);
         return maxLine !== null ? maxLine : lines.length;
     }
 
-    static _extractLineNumber(lineNumberedRequirement) {
+    static _extractLineNumber(lineNumberedRequirement, isUseXmlBase = false) {
+        if(isUseXmlBase) {
+            const match = lineNumberedRequirement.match(/^<(\d+)>/);
+            return match ? parseInt(match[1], 10) : null;
+        }
+
         const match = lineNumberedRequirement.match(/^(\d+):/);
         return match ? parseInt(match[1], 10) : null;
     }

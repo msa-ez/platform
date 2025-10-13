@@ -1,0 +1,37 @@
+import runRequirementsValidationGenerator from "./RequirementsValidationGenerator/runRequirementsValidationGenerator"
+import runRecursiveRequirementsValidationGenerator from "./RecursiveRequirementsValidationGenerator/runRecursiveRequirementsValidationGenerator"
+import runDevideBoundedContextGenerator from "./DevideBoundedContextGenerator/runDevideBoundedContextGenerator"
+import runRequirementsMappingGenerator from "./RequirementsMappingGenerator/runRequirementsMappingGenerator"
+
+export const runGeneratorCommandRegistry = {
+    RequirementsValidationGenerator: {
+        handler: runRequirementsValidationGenerator,
+        description: "RequirementsValidationGenerator 실행",
+        usage: "run runGenerator RequirementsValidationGenerator"
+    },
+    RecursiveRequirementsValidationGenerator: {
+        handler: runRecursiveRequirementsValidationGenerator,
+        description: "RecursiveRequirementsValidationGenerator 실행",
+        usage: "run runGenerator RecursiveRequirementsValidationGenerator"
+    },
+    DevideBoundedContextGenerator: {
+        handler: runDevideBoundedContextGenerator,
+        description: "DevideBoundedContextGenerator 실행",
+        usage: "run runGenerator DevideBoundedContextGenerator"
+    },
+    RequirementsMappingGenerator: {
+        handler: runRequirementsMappingGenerator,
+        description: "RequirementsMappingGenerator 실행",
+        usage: "run runGenerator RequirementsMappingGenerator"
+    }
+}
+
+export const runGenerator = async function (commandArgs, client) {
+    const generatorName = commandArgs[0]
+    const command = runGeneratorCommandRegistry[generatorName]
+    if(!command) {
+        alert(`유효하지 않은 Generator 이름입니다. ${generatorName}`)
+        return false
+    }
+    return await command.handler(commandArgs, client)
+}
