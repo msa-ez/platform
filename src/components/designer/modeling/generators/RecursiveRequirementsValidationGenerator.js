@@ -1,6 +1,6 @@
 const RequirementsValidationGenerator = require("./RequirementsValidationGenerator");
 const TextChunker = require("./TextChunker");
-const { TextTraceUtil, RefsTraceUtil } = require("./utils");
+const { TextTraceUtil } = require("./utils");
 
 class RecursiveRequirementsValidationGenerator extends RequirementsValidationGenerator {
     constructor(client) {
@@ -21,7 +21,8 @@ class RecursiveRequirementsValidationGenerator extends RequirementsValidationGen
             },
             analysisResult: {
                 events: [],
-                actors: []
+                actors: [],
+                recommendedBoundedContextsNumber: 3
             }
         };
 
@@ -48,7 +49,7 @@ class RecursiveRequirementsValidationGenerator extends RequirementsValidationGen
         this.currentChunks = this.textChunker.splitIntoChunksByLine(text);
         
         for (const chunkData of this.currentChunks) {
-            const result = await this.processChunk(chunkData);
+            await this.processChunk(chunkData);
             this.currentChunkIndex++;
             // validateRecursively에서는 누적하지 않음
         }
@@ -101,6 +102,8 @@ class RecursiveRequirementsValidationGenerator extends RequirementsValidationGen
         const existingActorNames = new Set(this.accumulatedResults.analysisResult.actors.map(a => a.name));
         const newActors = model.analysisResult.actors.filter(a => !existingActorNames.has(a.name));
         this.accumulatedResults.analysisResult.actors.push(...newActors);
+
+        this.accumulatedResults.analysisResult.recommendedBoundedContextsNumber = model.analysisResult.recommendedBoundedContextsNumber;
     }
 
     // 4. 최종 결과 반환
@@ -303,22 +306,7 @@ class RecursiveRequirementsValidationGenerator extends RequirementsValidationGen
      */
     _getLineNumberedRequirements() {
         const requirements = this.client.input['requirements']['userStory'] || '';
-        return TextTraceUtil.addLineNumbers(requirements, this.currentChunkStartLine);
-    }
-
-    /**
-     * 부모 클래스의 _convertEventRefsToIndexes 오버라이드
-     * 원본 텍스트 전체를 기준으로 refs 인덱스를 계산
-     */
-    _convertEventRefsToIndexes(model) {
-        if (!model.content || !model.content.events) return;
-        if (!this.originalRequirements) return;
-
-        // 원본 텍스트 전체에 라인 번호를 부여
-        const lineNumberedOriginalRequirements = TextTraceUtil.addLineNumbers(this.originalRequirements);
-        if (!lineNumberedOriginalRequirements) return;
-
-        model.content.events = RefsTraceUtil.convertRefsToIndexes(model.content.events, lineNumberedOriginalRequirements);
+        return TextTraceUtil.addLineNumbers(requirements, this.currentChunkStartLine, true);
     }
 }
 

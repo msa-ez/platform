@@ -464,7 +464,7 @@ class BaseAPIClient {
 
 
         const languageToUse = g.fixedLanguage || g.preferredLanguage || "English"
-        const contentToAppend = "\n[Please generate the response in " + languageToUse + " while ensuring that all code elements (e.g., variable names, function names) remain in English.]"
+        const contentToAppend = "\n<language_guide>Please generate the response in " + languageToUse + " while ensuring that all code elements (e.g., variable names, function names) remain in English.</language_guide>"
 
 
         let promptsToBuild = {

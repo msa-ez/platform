@@ -1,6 +1,6 @@
 const AIGenerator = require("./AIGenerator");
 const { TokenCounter, JsonParsingUtil } = require("./utils")
-const { GeneratorLockKeyError, GeneratorNetworkError, TokenNotInputedError, AiModelSettingError } = require("./errors")
+const { GeneratorLockKeyError, GeneratorNetworkError, TokenNotInputedError, AiModelSettingError } = require("./errors");
 
 const DEFAULT_CONFIG = {
     MAX_RETRY_COUNT: 3,
@@ -87,13 +87,14 @@ const DEFAULT_CONFIG = {
  *   __buildJsonResponseFormat() 메서드를 구현해야 합니다.
  */
 class FormattedJSONAIGenerator extends AIGenerator {
-    constructor(client, options, modelType){
+    constructor(client, options, modelType, isXmlBased=false){
         if(!client) throw new Error(`[!] client 파라미터가 전달되지 않으면 제대로 동작하지 않습니다.`)
         super(client, options, modelType)
 
         this.usedModelType = modelType
         this.generatorName = this.constructor.name
         this.isFirstResponse = true // 스트리밍시에 첫번째 메세지 도착시 로직들(다이얼로그 오픈 등)을 수행하기 위해서 추적함
+        this.isXmlBased = isXmlBased // XML 기반으로 프롬프트를 생성하는지 여부
 
         this.MAX_RETRY_COUNT = DEFAULT_CONFIG.MAX_RETRY_COUNT
         this.leftRetryCount = this.MAX_RETRY_COUNT
@@ -298,12 +299,14 @@ class FormattedJSONAIGenerator extends AIGenerator {
 
     _getJsonRestorePrompt(jsonOutputText){
         return {
-            system: `The given JSON object is not grammatically valid.
+            system: `<request type="json_restore">
+The given JSON object is not grammatically valid.
 Please fix this JSON object and return a valid JSON object.
 
 Rules:
 1. Output only the modified JSON object.
-2. Do not include any additional text or comments.`,
+2. Do not include any additional text or comments.
+</request>`,
             user: [jsonOutputText],
             assistant: []
         }
@@ -444,6 +447,15 @@ Rules:
 
 
     __buildSystemPrompt(){
+        const personaInfo = this.__buildPersonaInfo()
+        if(personaInfo) {
+            return `<persona_and_role>
+    <persona>${personaInfo.persona}</persona>
+    <goal>${personaInfo.goal}</goal>
+    <backstory>${personaInfo.backstory}</backstory>
+</persona_and_role>`
+        }
+
         return this.__buildAgentRolePrompt()
     }
 
@@ -456,6 +468,9 @@ Rules:
      */
     __buildAgentRolePrompt(){
         return ``
+    }
+    __buildPersonaInfo() {
+        return null
     }
 
     /**
@@ -499,12 +514,6 @@ ${afterJsonFormat.trim()}
 
 
     __buildUserPrompt(){
-        const inputsToString = (inputs) => {
-            return Object.entries(inputs)
-                .map(([key, value]) => `- ${key.trim()}\n${typeof value === 'string' ? value.trim() : JSON.stringify(value)}`).join("\n\n")
-        }
-
-        
         const guidelines = [
             this.__buildTaskGuidelinesPrompt(),
             this.__buildInferenceGuidelinesPrompt(),
@@ -514,17 +523,34 @@ ${afterJsonFormat.trim()}
 
         const exampleInputs = this.__buildJsonExampleInputFormat()
         const userInputs = this.__buildJsonUserQueryInputFormat()
-        const endComment = "\n\nThis is the entire guideline.\nWhen you're ready, please output 'Approved.' Then I will begin user input."
+        const endComment = "\n\n<request>This is the entire guideline. When you're ready, please output 'Approved.' Then I will begin user input.</request>"
 
         userInputs.retiedCount = this.retiedCount
 
 
         let userPrompts = []
         userPrompts.push(guidelines.join("\n\n") + endComment)
-        if(exampleInputs) userPrompts.push(inputsToString(exampleInputs))
-        if(userInputs) userPrompts.push(inputsToString(userInputs))
+        if(exampleInputs) userPrompts.push(this._inputsToString(exampleInputs, this.isXmlBased))
+        if(userInputs) userPrompts.push(this._inputsToString(userInputs, this.isXmlBased))
         return userPrompts
     }
+
+    _inputsToString(inputs, isXmlBased) {
+        const processedInputs = []
+        for(const [key, value] of Object.entries(inputs)) {
+            const processedKey = key.trim()
+            const processedValue = typeof value === 'string' ? value.trim() : JSON.stringify(value)
+            if(isXmlBased) {
+                processedInputs.push(`<${processedKey}>${processedValue}</${processedKey}>`)
+            } else {
+                processedInputs.push(`- ${processedKey}\n${processedValue}`)
+            }
+        }
+
+        const joinedInputs = processedInputs.join("\n\n")
+        return (isXmlBased) ? `<inputs>\n${joinedInputs}\n</inputs>` : joinedInputs
+    }
+
 
     __buildJsonExampleInputFormat(){ return null }
     __buildJsonUserQueryInputFormat(){ return {} }

@@ -4,7 +4,7 @@ const { zodResponseFormat, DataValidationUtil, TextTraceUtil, RefsTraceUtil } = 
 
 class RequirementsValidationGenerator extends FormattedJSONAIGenerator {
     constructor(client) {
-        super(client, {}, "thinkingModel");
+        super(client, {}, "thinkingModel", true);
         
         this.generatorName = 'RequirementsValidationGenerator';
         this.checkInputParamsKeys = ["requirements"];
@@ -44,7 +44,7 @@ class RequirementsValidationGenerator extends FormattedJSONAIGenerator {
     }
 
 
-    async onGenerateBefore(inputParams, generatorName) {
+    async onGenerateBefore(inputParams) {
         DataValidationUtil.validateData(inputParams, {
             type: 'object',
             properties: {
@@ -63,161 +63,211 @@ class RequirementsValidationGenerator extends FormattedJSONAIGenerator {
     }
 
 
-    __buildAgentRolePrompt() {
-        return `You are an expert business analyst and domain-driven design specialist. Your primary mission is to transform requirements into a comprehensive Big Picture Event Storming model. You possess deep expertise in:
-- Business process analysis and requirements decomposition
-- Domain-driven design principles and event storming methodologies
-- Actor identification and responsibility mapping
-- Event flow orchestration and bounded context design`;
+    __buildPersonaInfo() {
+        return {
+            persona: "Expert Business Analyst & Domain-Driven Design Specialist",
+            goal: "To transform business requirements into a comprehensive Big Picture Event Storming model that accurately represents the domain's business processes, actors, and event flows.",
+            backstory: "With extensive experience in business process analysis and domain-driven design, I specialize in decomposing complex requirements into event-driven models. I excel at identifying domain events, mapping actor responsibilities, and orchestrating event flows that capture the complete business narrative. My expertise lies in ensuring every significant business moment is represented as a domain event, creating clear bounded context boundaries, and maintaining traceability back to source requirements. I understand that a well-crafted event storming model serves as the foundation for successful microservices architecture and domain-driven design implementation."
+        }
     }
 
     __buildTaskGuidelinesPrompt() {
-        return `## User Story Analysis Process
-- **Business Goals Focus**: Prioritize business objectives and user value delivery
-- **Scenario Extraction**: Identify and document all user scenarios and workflows
-- **Business Rules**: Capture implicit and explicit business rules and constraints
-- **Process Dependencies**: Map relationships and dependencies between processes
+        return `<instruction>
+    <core_instructions>
+        <title>Event Storming Model Generation Task</title>
+        <task_description>Your task is to analyze business requirements and transform them into a comprehensive Big Picture Event Storming model. This model will serve as the foundation for domain-driven design and microservices architecture.</task_description>
+        
+        <input_description>
+            <title>You will be given:</title>
+            <item id="1">**Requirements Document:** Business requirements with line numbers for traceability</item>
+            <item id="2">**Context from Previous Analysis:** Summary of events and actors from previous chunks (if this is a continuation)</item>
+        </input_description>
 
-## Event Discovery Methodology
-- **Comprehensive Coverage**: Convert EVERY significant business moment into domain events
-- **Complete State Capture**: Ensure ALL state changes are represented as events
-- **Flow Completeness**: Include ALL happy path scenarios AND exception flows
-- **Naming Convention**: Use past participle form for event names (e.g., OrderPlaced, PaymentProcessed)
-- **No Omissions**: Do not skip or summarize any business processes
+        <guidelines>
+            <title>Event Storming Analysis Guidelines</title>
+            
+            <section id="requirements_analysis">
+                <title>Requirements Analysis Process</title>
+                <rule id="1">**Thorough Examination:** Examine requirements in detail before generating events and actors</rule>
+                <rule id="2">**Business Goals Focus:** Prioritize business objectives and user value delivery</rule>
+                <rule id="3">**Scenario Extraction:** Identify and document all user scenarios and workflows</rule>
+                <rule id="4">**Business Rules Capture:** Extract both implicit and explicit business rules and constraints</rule>
+                <rule id="5">**Process Dependencies:** Map relationships and dependencies between business processes</rule>
+            </section>
 
-## Actor Identification Strategy
-- **Event Ownership**: Group events by their responsible actors (human or system)
-- **Process Ownership**: Establish clear accountability for each business process
-- **Interaction Mapping**: Define clear interaction points between different actors
-- **Swimlane Organization**: Create logical swimlanes for visual organization
+            <section id="event_discovery">
+                <title>Event Discovery Methodology</title>
+                <rule id="1">**Comprehensive Coverage:** Convert EVERY significant business moment into domain events</rule>
+                <rule id="2">**Complete State Capture:** Ensure ALL business-significant state changes are represented as events</rule>
+                <rule id="3">**Flow Completeness:** Include both happy path scenarios AND exception flows</rule>
+                <rule id="4">**State Change Focus:** Generate events ONLY for business-significant state changes. Do NOT create events for read-only operations such as data lookups, views, searches, or queries, as these do not represent a state transition in the domain.</rule>
+                <rule id="5">**No Omissions:** Do not skip or summarize any business processes</rule>
+                <rule id="6">**Naming Convention:** Use PascalCase and past participle form for event names (e.g., OrderPlaced, PaymentProcessed)</rule>
+                <rule id="7">**Primary Business Actions:** Focus on the primary business action (the cause) rather than secondary consequences or technical side effects. For example, instead of an event like "HistoryRecordCreated" or "NotificationSent", the event should be the action that *caused* the history or notification, such as "BookLoaned" or "OrderShipped". Tracking and logging are often consequences of primary events, not events themselves.</rule>
+            </section>
 
-## Event Flow Validation Rules
-- **Story Representation**: Ensure every user story is reflected through events
-- **Business Rule Compliance**: Verify that business rules are properly represented
-- **Coverage Validation**: Confirm complete process coverage without gaps
-- **Chain Completeness**: Validate that event chains are logically complete
+            <section id="actor_identification">
+                <title>Actor Identification Strategy</title>
+                <rule id="1">**Event Ownership:** Group events by their responsible actors (human or system)</rule>
+                <rule id="2">**Process Ownership:** Establish clear accountability for each business process</rule>
+                <rule id="3">**Interaction Mapping:** Define clear interaction points between different actors</rule>
+                <rule id="4">**Naming Consistency:** Ensure actor names are consistent with exact spacing and case matching</rule>
+                <rule id="5">**Responsibility Separation:** Keep actor responsibilities distinct and non-overlapping</rule>
+            </section>
 
-## Quality Standards
-1. **Business Significance**: Focus on business-significant state changes
-2. **Clarity**: Use clear, action-oriented event names
-3. **Completeness**: Ensure comprehensive process coverage
-4. **Exception Handling**: Include exception scenarios in the model
-5. **Sequence Logic**: Maintain clear and logical event sequences
-6. **Actor Separation**: Keep actor responsibilities distinct and non-overlapping
-7. **Rule Reflection**: Ensure all business rules are reflected in the event model
-8. **Traceability**: Always include refs linking events to specific requirement lines
+            <section id="event_flow">
+                <title>Event Flow and Relationships</title>
+                <rule id="1">**Story Representation:** Ensure every user story is reflected through events</rule>
+                <rule id="2">**Chain Completeness:** Validate that event chains are logically complete</rule>
+                <rule id="3">**Event Connections:** Consider connections to existing events when defining nextEvents</rule>
+                <rule id="4">**Sequence Logic:** Maintain clear and logical event sequences using level numbers</rule>
+            </section>
 
-## Requirements Analysis Priority
-- **Detailed Examination**: Thoroughly examine requirements details before generating events and actors
-- **State Change Focus**: Generate events for ALL state changes (excluding simple CRUD operations or search operations)
-- **No Omissions**: Every business-significant state change must be captured
+            <section id="bounded_context">
+                <title>Bounded Context Recommendation</title>
+                <rule id="1">**Context Analysis:** Analyze actor interactions, domain boundaries, and business capabilities</rule>
+                <rule id="2">**Recommended Number:** Suggest between 3 to 15 bounded contexts based on complexity</rule>
+                <rule id="3">**Clear Justification:** Provide detailed rationale explaining which specific bounded contexts are recommended and why</rule>
+                <rule id="4">**Domain Alignment:** Ensure bounded contexts align with business capabilities and organizational structure</rule>
+            </section>
 
-## Consistency Requirements
-- **Actor Naming**: Ensure actor names are consistent (exact spacing and case matching)
-- **Event Connections**: Consider connections to existing events when defining nextEvents
-- **Bounded Context Alignment**: Align event groupings with recommended bounded contexts
+            <section id="traceability">
+                <title>Source Traceability Requirements</title>
+                <rule id="1">**Mandatory Refs:** Every event MUST include refs linking back to specific requirement lines</rule>
+                <rule id="2">**Refs Format:** Use format [[[startLineNumber, "minimal_start_phrase"], [endLineNumber, "minimal_end_phrase"]]]</rule>
+                <rule id="3">**Minimal Phrases:** Use 1-2 word phrases that uniquely identify the position in the line</rule>
+                <rule id="4">**Valid Line Numbers:** Refs must reference valid line numbers from the requirements section</rule>
+                <rule id="5">**Multiple References:** Include multiple ranges if an event references multiple parts of requirements</rule>
+            </section>
 
-## Format Requirements
-- All field names must match exactly as shown
-- Event names must be PascalCase and past participle
-- Actor names must be consistent across events and actors arrays
-- Refs must reference valid line numbers from the requirements section
-- Level numbers should indicate event sequence/priority
+            <section id="consistency">
+                <title>Consistency with Previous Analysis</title>
+                <rule id="1">**Actor Name Matching:** When using existing actor names from previous chunks, ensure exact spacing and case matching</rule>
+                <rule id="2">**Event Continuity:** Consider potential connections to existing events when defining nextEvents</rule>
+                <rule id="3">**Context Alignment:** Align event groupings with the overall bounded context structure</rule>
+            </section>
+        </guidelines>
 
-## EXAMPLE of refs format
-If requirements contain:
-1: # Course Management System
-2: 
-3: Students can enroll in courses
-4: Instructors can create course content
-5: System validates enrollment prerequisites
-
-And you generate events like:
-- "StudentEnrolled" event -> refs: [[[3, "Students"], [3, "enroll"]]]
-- "CourseContentCreated" event -> refs: [[[4, "Instructors"], [4, "content"]]]
-- "EnrollmentValidated" event -> refs: [[[5, "validates"], [5, "prerequisites"]]]
-
-The refs array contains ranges where each range is [[startLine, startPhrase], [endLine, endPhrase]].
-The phrases should be MINIMAL words (1-2 words) that uniquely identify the position in the line.
-Use the shortest possible phrase that can locate the specific part of requirements.
-Multiple ranges can be included if an event references multiple parts of requirements.
-`;
-    }
-
-    __buildJsonResponseFormat() {
-        return `{
+        <refs_format_example>
+            <title>Example of refs Format</title>
+            <description>If requirements contain:</description>
+            <example_requirements>
+<1># Course Management System</1>
+<2></2> 
+<3>Students can enroll in courses</3>
+<4>Instructors can create course content</4>
+<5>System validates enrollment prerequisites</5>
+            </example_requirements>
+            <example_refs>
+- "StudentEnrolled" event → refs: [[[3, "Students"], [3, "enroll"]]]
+- "CourseContentCreated" event → refs: [[[4, "Instructors"], [4, "content"]]]
+- "EnrollmentValidated" event → refs: [[[5, "validates"], [5, "prerequisites"]]]
+            </example_refs>
+        </refs_format_example>
+    </core_instructions>
+    
+    <output_format>
+        <title>JSON Output Format</title>
+        <description>The output must be a JSON object structured as follows:</description>
+        <schema>
+{
     "type": "ANALYSIS_RESULT",
     "content": {
-        "recommendedBoundedContextsNumber": "Number of recommended bounded contexts based on actor interactions, domain boundaries, and business capabilities", // type: number (minimum 3, maximum 15)
-        "reasonOfRecommendedBoundedContextsNumber": "Detailed analysis explaining: 1) Which specific bounded contexts are recommended and why, 2) The business domains and responsibilities of each bounded context, 3) The rationale for the number of bounded contexts based on actor interactions, event complexity, and domain boundaries, 4) How the bounded contexts align with business capabilities and organizational structure",
+        "recommendedBoundedContextsNumber": (number: 3-15),
+        "reasonOfRecommendedBoundedContextsNumber": "(Detailed analysis explaining: 1) Which specific bounded contexts are recommended and why, 2) The business domains and responsibilities of each bounded context, 3) The rationale for the number based on actor interactions, event complexity, and domain boundaries, 4) How the bounded contexts align with business capabilities and organizational structure)",
         "events": [
             {
-                "name": "EventName", // PascalCase & Past Participle (e.g., OrderPlaced, PaymentProcessed)
-                "displayName": "Event Display Name", // Natural language & Past Participle (e.g., "주문 완료됨")
-                "actor": "ActorName", // Must exactly match an actor name from actors array
-                "level": 1, // Event sequence priority (start from 1)
-                "description": "Detailed description of what happened and why this event occurred",
-                "inputs": ["Required data or conditions for this event to occur"],
-                "outputs": ["Resulting data or state changes from this event"],
-                "nextEvents": ["SubsequentEventName1", "SubsequentEventName2"], // Names of subsequent events in the process flow
-                "refs": [[[startLineNumber, "minimal start phrase"], [endLineNumber, "minimal end phrase"]]] // Reference to source requirements. Use minimal 1-2 word phrases that uniquely identify the position
+                "name": "(EventName in PascalCase & Past Participle)",
+                "displayName": "(Natural language display name)",
+                "actor": "(ActorName - must match an actor from actors array)",
+                "level": (number: event sequence priority starting from 1),
+                "description": "(Detailed description of what happened and why)",
+                "inputs": ["(Required data or conditions)"],
+                "outputs": ["(Resulting data or state changes)"],
+                "nextEvents": ["(SubsequentEventName1)", "(SubsequentEventName2)"],
+                "refs": [[[(startLineNumber), "(minimal_start_phrase)"], [(endLineNumber), "(minimal_end_phrase)"]]]
             }
         ],
         "actors": [
             {
-                "name": "ActorName", // Human or System name (exact match with event.actor values)
-                "events": ["AssociatedEventName1", "AssociatedEventName2"], // Event names owned by this actor
-                "lane": 0 // Vertical position for swimlane (0-based index)
+                "name": "(ActorName - exact match with event.actor values)",
+                "events": ["(AssociatedEventName1)", "(AssociatedEventName2)"],
+                "lane": (number: 0-based vertical position for swimlane)
             }
         ]
     }
-}`;
+}
+        </schema>
+        <field_requirements>
+            <requirement id="1">All field names must match exactly as shown in the schema</requirement>
+            <requirement id="2">Event names must be PascalCase and past participle form</requirement>
+            <requirement id="3">Actor names must be consistent across events and actors arrays</requirement>
+            <requirement id="4">Level numbers should indicate event sequence/priority</requirement>
+        </field_requirements>
+    </output_format>
+</instruction>`;
     }
 
 
     __buildJsonUserQueryInputFormat() {
         const lineNumberedRequirements = this._getLineNumberedRequirements();
-        const lineNumberValidationPrompt = TextTraceUtil.getLineNumberValidationPrompt(lineNumberedRequirements);
         const previousChunkSummary = this._getPreviousChunkSummary();
         
         return {
-            "Requirements Document": lineNumberedRequirements,
-            "Context from Previous Analysis": previousChunkSummary,
-            "Line Number Validation Note": lineNumberValidationPrompt
+            "context_from_previous_analysis": previousChunkSummary,
+            "requirements_document": lineNumberedRequirements
         };
     }
 
     _getLineNumberedRequirements() {
-        return TextTraceUtil.addLineNumbers(
-            this.client.input['requirements']['userStory']
-        );
+        return TextTraceUtil.addLineNumbers(this.client.input['requirements']['userStory'], 1, true);
     }
 
     _getPreviousChunkSummary() {
         if (!this.previousChunkSummary.events.length) {
-            return "None (this is the first chunk)";
+            return `<previous_chunk_context>
+    <status>first_chunk</status>
+    <description>This is the first chunk. No previous context available.</description>
+</previous_chunk_context>`;
         }
 
-        const eventSummary = this.previousChunkSummary.events
-            .map(e => `- Event "${e.name}" by ${e.actor}${e.nextEvents.length ? ` leads to: ${e.nextEvents.join(', ')}` : ''}`)
+        const eventsXml = this.previousChunkSummary.events
+            .map(e => {
+                const nextEventsXml = e.nextEvents.length 
+                    ? `\n            <next_events>${e.nextEvents.map(ne => `<event>${ne}</event>`).join('')}</next_events>`
+                    : '';
+                return `        <event>
+            <name>${e.name}</name>
+            <actor>${e.actor}</actor>${nextEventsXml}
+        </event>`;
+            })
             .join('\n');
 
-        const actorSummary = this.previousChunkSummary.actors
-            .map(a => `- Actor "${a.name}" handles: ${a.events.join(', ')}`)
+        const actorsXml = this.previousChunkSummary.actors
+            .map(a => `        <actor>
+            <name>${a.name}</name>
+            <handled_events>${a.events.map(evt => `<event>${evt}</event>`).join('')}</handled_events>
+        </actor>`)
             .join('\n');
 
-        return `
-Generated Summary of Previous Chunk:
-Previously identified events:
-${eventSummary}
-
-Previously identified actors:
-${actorSummary}
-
-Please ensure new events and actors are consistent with these existing elements.
-Make sure that when using existing actor names, there is no difference in spacing and case difference.
-Consider potential connections to these existing events when defining nextEvents.
-`;
+        return `<previous_chunk_context>
+    <status>continuation</status>
+    <description>This is a continuation of a previous analysis. Maintain consistency with the following existing elements.</description>
+    
+    <previously_identified_events>
+${eventsXml}
+    </previously_identified_events>
+    
+    <previously_identified_actors>
+${actorsXml}
+    </previously_identified_actors>
+    
+    <consistency_requirements>
+        <requirement>Ensure new events and actors are consistent with these existing elements</requirement>
+        <requirement>When using existing actor names, match spacing and case exactly</requirement>
+        <requirement>Consider potential connections to existing events when defining nextEvents</requirement>
+    </consistency_requirements>
+</previous_chunk_context>`;
     }
 
 
@@ -244,7 +294,10 @@ Consider potential connections to these existing events when defining nextEvents
 
         if (model.content && model.content.events && model.content.events.length > 0) {
             const lineNumberedRequirements = this._getLineNumberedRequirements();
-            model.content = RefsTraceUtil.sanitizeAndConvertRefs(model.content, lineNumberedRequirements);
+            model.content = RefsTraceUtil.sanitizeAndConvertRefs(model.content, lineNumberedRequirements, true);
+            
+            const startLineOffset = (this.currentChunkStartLine) ? this.currentChunkStartLine - 1 : 0;
+            RefsTraceUtil.validateRefs(model.content, this.client.input['requirements']['userStory'], startLineOffset);
         }
 
         // 모델 요소 생성

@@ -1,4 +1,4 @@
-export const aggregateDraftScenarios = {
+export const senarioMocks = {
     "libraryApplication": {
         "selectedStructureOption": {
             "boundedContexts": [

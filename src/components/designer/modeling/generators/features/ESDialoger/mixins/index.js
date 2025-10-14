@@ -1,1 +1,1 @@
-export const ESDialogerTestTerminal = require("./ESDialogerTestTerminal.vue").default;
+export const { ESDialogerTerminal } = require("./ESDialogerTerminal");

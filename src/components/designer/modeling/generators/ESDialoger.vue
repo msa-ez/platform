@@ -277,7 +277,7 @@
 
     import { 
         ESDialogerMessages,
-        ESDialogerTestTerminal,
+        ESDialogerTerminal,
         MessageFactory,
         AIModelSetting,
         ESDialogerTraceUtil,
@@ -289,7 +289,7 @@ import { value } from 'jsonpath';
         name: 'es-dialoger',
         mixins:[
             StorageBase,
-            ESDialogerTestTerminal
+            ESDialogerTerminal
         ],
         props: {
             value: {
