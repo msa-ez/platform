@@ -42,8 +42,29 @@ class RecursiveCommandReadModelExtractor extends CommandReadModelExtractor {
     }
 
     splitRequirementsIntoChunks(requirementsText) {
-        if (!requirementsText || requirementsText.length <= this.chunkSize) {
-            return [requirementsText];
+        // 요구사항 유효성 검사
+        if (!requirementsText || typeof requirementsText !== 'string') {
+            console.warn('RecursiveCommandReadModelExtractor: Invalid or empty requirements text');
+            return [];
+        }
+
+        const trimmedText = requirementsText.trim();
+        if (trimmedText.length === 0) {
+            console.warn('RecursiveCommandReadModelExtractor: Empty requirements text after trimming');
+            return [];
+        }
+
+        if (trimmedText.length <= this.chunkSize) {
+            return [{
+                content: trimmedText,
+                chunkIndex: 0,
+                isValid: this.validateChunkContent(trimmedText),
+                sourceInfo: {
+                    startPosition: 0,
+                    endPosition: trimmedText.length,
+                    originalLength: trimmedText.length
+                }
+            }];
         }
 
         // 전체 컨텍스트 크기 계산하여 청크 크기 동적 조정
@@ -54,28 +75,77 @@ class RecursiveCommandReadModelExtractor extends CommandReadModelExtractor {
 
         const chunks = [];
         let currentChunk = '';
-        const sentences = requirementsText.split(/[.!?]\s+/);
+        let currentPosition = 0;
+        const sentences = trimmedText.split(/[.!?]\s+/);
         
-        for (const sentence of sentences) {
-            if ((currentChunk + sentence).length <= adjustedChunkSize) {
-                currentChunk += (currentChunk ? '. ' : '') + sentence;
+        for (let i = 0; i < sentences.length; i++) {
+            const sentence = sentences[i];
+            const testChunk = currentChunk + (currentChunk ? '. ' : '') + sentence;
+            
+            if (testChunk.length <= adjustedChunkSize) {
+                currentChunk = testChunk;
             } else {
                 if (currentChunk) {
-                    chunks.push(currentChunk);
+                    const chunkData = this.createChunkData(currentChunk, chunks.length, currentPosition);
+                    chunks.push(chunkData);
+                    currentPosition += currentChunk.length;
                     currentChunk = sentence;
                 } else {
                     // 문장이 너무 긴 경우 강제로 자르기
-                    chunks.push(sentence.substring(0, adjustedChunkSize));
+                    const truncatedSentence = sentence.substring(0, adjustedChunkSize);
+                    const chunkData = this.createChunkData(truncatedSentence, chunks.length, currentPosition);
+                    chunks.push(chunkData);
+                    currentPosition += truncatedSentence.length;
                     currentChunk = sentence.substring(adjustedChunkSize);
                 }
             }
         }
         
         if (currentChunk) {
-            chunks.push(currentChunk);
+            const chunkData = this.createChunkData(currentChunk, chunks.length, currentPosition);
+            chunks.push(chunkData);
         }
         
         return chunks;
+    }
+
+    createChunkData(content, chunkIndex, startPosition) {
+        return {
+            content: content.trim(),
+            chunkIndex: chunkIndex,
+            isValid: this.validateChunkContent(content),
+            sourceInfo: {
+                startPosition: startPosition,
+                endPosition: startPosition + content.length,
+                originalLength: content.length
+            }
+        };
+    }
+
+    validateChunkContent(content) {
+        if (!content || typeof content !== 'string') {
+            return false;
+        }
+
+        const trimmed = content.trim();
+        if (trimmed.length === 0) {
+            return false;
+        }
+
+        // 최소 의미있는 문장 길이 체크 (최소 10자)
+        if (trimmed.length < 10) {
+            console.warn(`RecursiveCommandReadModelExtractor: Chunk too short (${trimmed.length} chars): "${trimmed}"`);
+            return false;
+        }
+
+        // 의미있는 단어가 있는지 체크 (최소 2개 단어)
+        const words = trimmed.split(/\s+/).filter(word => word.length > 0);
+        if (words.length < 2) {
+            console.warn(`RecursiveCommandReadModelExtractor: Chunk has insufficient words (${words.length}): "${trimmed}"`);
+            return false;
+        }
+
+        return true;
     }
 
     calculateTotalContextSize() {
@@ -120,6 +190,14 @@ class RecursiveCommandReadModelExtractor extends CommandReadModelExtractor {
 
         const currentChunk = this.requirementsChunks[this.currentChunkIndex];
         
+        // 청크 유효성 검사
+        if (!currentChunk || !currentChunk.isValid) {
+            console.warn(`RecursiveCommandReadModelExtractor: Skipping invalid chunk ${this.currentChunkIndex}:`, currentChunk);
+            this.currentChunkIndex++;
+            setTimeout(() => this.processNextChunk(), 100);
+            return;
+        }
+
         // 이전 결과 요약과 함께 현재 청크 처리
         const promptWithContext = this.createRecursivePrompt(currentChunk);
         
@@ -129,7 +207,7 @@ class RecursiveCommandReadModelExtractor extends CommandReadModelExtractor {
         this.updateProgress();
         
         this.generate().then(result => {
-            this.handleGenerationFinished(result);
+            this.handleGenerationFinished(result, currentChunk);
         }).catch(error => {
             console.error('Chunk processing error:', error);
             this.currentChunkIndex++;
@@ -145,8 +223,8 @@ class RecursiveCommandReadModelExtractor extends CommandReadModelExtractor {
         PREVIOUS EXTRACTED DATA SUMMARY:
         ${accumulatedSummary}
 
-        CURRENT REQUIREMENTS CHUNK:
-        ${currentChunk}
+        CURRENT REQUIREMENTS CHUNK (Chunk ${currentChunk.chunkIndex + 1}):
+        ${currentChunk.content}
 
         BOUNDED CONTEXTS:
         ${JSON.stringify(this.client.input.resultDevideBoundedContext || [])}
@@ -156,12 +234,14 @@ class RecursiveCommandReadModelExtractor extends CommandReadModelExtractor {
         2. Merge with the previous accumulated data
         3. Avoid duplicates based on name and functionality
         4. Ensure proper categorization by Bounded Context
+        5. Include source tracking information for each extracted item
 
         EXTRACTION GUIDELINES:
         - Focus on NEW operations not already in the previous summary
         - Maintain consistency with existing naming conventions
         - Ensure proper Bounded Context assignment
         - Use the same output format as the base extractor
+        - Add source tracking metadata to each Command and ReadModel
 
         OUTPUT FORMAT:
         {
@@ -170,8 +250,34 @@ class RecursiveCommandReadModelExtractor extends CommandReadModelExtractor {
               {
                 "name": "BoundedContextName",
                 "alias": "BoundedContextAlias", 
-                "commands": [...],
-                "readModels": [...]
+                "commands": [
+                  {
+                    "name": "CommandName",
+                    "description": "Command description",
+                    "sourceInfo": {
+                      "chunkIndex": ${currentChunk.chunkIndex},
+                      "sourceText": "relevant source text from requirements",
+                      "position": {
+                        "start": 0,
+                        "end": 100
+                      }
+                    }
+                  }
+                ],
+                "readModels": [
+                  {
+                    "name": "ReadModelName", 
+                    "description": "ReadModel description",
+                    "sourceInfo": {
+                      "chunkIndex": ${currentChunk.chunkIndex},
+                      "sourceText": "relevant source text from requirements",
+                      "position": {
+                        "start": 0,
+                        "end": 100
+                      }
+                    }
+                  }
+                ]
               }
             ]
           }
@@ -193,10 +299,12 @@ class RecursiveCommandReadModelExtractor extends CommandReadModelExtractor {
         }).join('\n');
     }
 
-    handleGenerationFinished(model) {
+    handleGenerationFinished(model, currentChunk) {
         try {
             if (model && model.extractedData && model.extractedData.boundedContexts) {
-                this.accumulated = this.mergeExtractedData(this.accumulated, model.extractedData);
+                // 출처 정보를 추가하여 데이터 병합
+                const enrichedData = this.enrichWithSourceInfo(model.extractedData, currentChunk);
+                this.accumulated = this.mergeExtractedData(this.accumulated, enrichedData);
             }
 
             // 다음 청크로 진행하기 전에 진행률 업데이트
@@ -209,6 +317,115 @@ class RecursiveCommandReadModelExtractor extends CommandReadModelExtractor {
             this.updateProgress();
             setTimeout(() => this.processNextChunk(), 100);
         }
+    }
+
+    enrichWithSourceInfo(extractedData, currentChunk) {
+        if (!extractedData || !extractedData.boundedContexts) {
+            return extractedData;
+        }
+
+        const enrichedData = {
+            ...extractedData,
+            boundedContexts: extractedData.boundedContexts.map(bc => ({
+                ...bc,
+                commands: bc.commands ? bc.commands.map(cmd => this.addSourceInfoToItem(cmd, currentChunk)) : [],
+                readModels: bc.readModels ? bc.readModels.map(rm => this.addSourceInfoToItem(rm, currentChunk)) : []
+            }))
+        };
+
+        return enrichedData;
+    }
+
+    addSourceInfoToItem(item, currentChunk) {
+        // 이미 sourceInfo가 있는 경우 유지, 없는 경우 추가
+        if (!item.sourceInfo) {
+            item.sourceInfo = {
+                chunkIndex: currentChunk.chunkIndex,
+                sourceText: this.extractRelevantSourceText(item, currentChunk.content),
+                position: {
+                    start: 0,
+                    end: currentChunk.content.length
+                },
+                chunkSourceInfo: currentChunk.sourceInfo
+            };
+        }
+        return item;
+    }
+
+    extractRelevantSourceText(item, chunkContent) {
+        // Command나 ReadModel의 이름이나 설명과 관련된 텍스트를 찾아서 반환
+        const itemName = item.name || '';
+        const itemDescription = item.description || '';
+        
+        // 청크 내용에서 관련 텍스트 찾기 (간단한 키워드 매칭)
+        const keywords = [itemName, ...itemDescription.split(' ').filter(word => word.length > 3)];
+        const relevantText = keywords
+            .map(keyword => {
+                const index = chunkContent.toLowerCase().indexOf(keyword.toLowerCase());
+                if (index !== -1) {
+                    const start = Math.max(0, index - 50);
+                    const end = Math.min(chunkContent.length, index + keyword.length + 50);
+                    return chunkContent.substring(start, end);
+                }
+                return null;
+            })
+            .filter(text => text !== null)
+            .join(' ... ');
+
+        return relevantText || chunkContent.substring(0, 200) + '...';
+    }
+
+    // 부모 클래스의 mergeExtractedData를 오버라이드하여 출처 정보 보존
+    mergeExtractedData(existingData, newData) {
+        if (!existingData || !existingData.boundedContexts) {
+            return newData;
+        }
+
+        const mergedBoundedContexts = [...existingData.boundedContexts];
+
+        newData.boundedContexts.forEach(newBC => {
+            const existingBCIndex = mergedBoundedContexts.findIndex(
+                bc => bc.name === newBC.name
+            );
+
+            if (existingBCIndex !== -1) {
+                // 중복 제거하면서 출처 정보 보존
+                const existingCommands = mergedBoundedContexts[existingBCIndex].commands || [];
+                const existingReadModels = mergedBoundedContexts[existingBCIndex].readModels || [];
+                
+                // 새로운 Commands 추가 (중복 제거)
+                const newCommands = (newBC.commands || []).filter(newCmd => 
+                    !existingCommands.some(existingCmd => 
+                        existingCmd.name === newCmd.name && 
+                        existingCmd.description === newCmd.description
+                    )
+                );
+                
+                // 새로운 ReadModels 추가 (중복 제거)
+                const newReadModels = (newBC.readModels || []).filter(newRm => 
+                    !existingReadModels.some(existingRm => 
+                        existingRm.name === newRm.name && 
+                        existingRm.description === newRm.description
+                    )
+                );
+
+                mergedBoundedContexts[existingBCIndex].commands = [
+                    ...existingCommands,
+                    ...newCommands
+                ];
+                mergedBoundedContexts[existingBCIndex].readModels = [
+                    ...existingReadModels,
+                    ...newReadModels
+                ];
+            } else {
+                mergedBoundedContexts.push(newBC);
+            }
+        });
+
+        return {
+            ...existingData,
+            boundedContexts: mergedBoundedContexts
+        };
     }
 
     updateProgress() {

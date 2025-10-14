@@ -7,14 +7,32 @@ class SiteMapGenerator extends JsonAIGenerator {
     }
 
     createPrompt() {
+        const hasExistingNavigation = this.client.input.existingNavigation && 
+                                      this.client.input.existingNavigation.length > 0;
+        
+        let existingDataPrompt = '';
+        if (hasExistingNavigation) {
+            const existingTitles = this.extractExistingTitles(this.client.input.existingNavigation);
+            existingDataPrompt = `
+ALREADY GENERATED PAGES (DO NOT DUPLICATE):
+${existingTitles.join(', ')}
+
+IMPORTANT: 
+- Only generate NEW pages and components from the current requirements chunk
+- Do not regenerate pages that are already in the list above
+- If a requirement relates to an existing page, skip it
+- Focus only on extracting NEW content from the current chunk
+`;
+        }
+
         return `You are an expert UX designer and web architect. Generate a comprehensive website sitemap JSON structure based on user requirements.
 
         REQUIREMENTS:
         ${this.client.input.requirements}
 
-        EXISTING DATA:
-        Navigation: ${JSON.stringify(this.client.input.existingNavigation || [])}
-        Bounded Contexts: ${JSON.stringify(this.client.input.existingBoundedContexts || [])}
+        ${existingDataPrompt}
+
+        BOUNDED CONTEXTS:
         Bounded Contexts List: ${JSON.stringify(this.client.input.resultDevideBoundedContext.filter(bc => bc.name !== 'ui'))}
         Command/ReadModel Data: ${JSON.stringify(this.client.input.commandReadModelData || {})}
 
@@ -203,6 +221,21 @@ class SiteMapGenerator extends JsonAIGenerator {
         return `node-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     }
 
+    extractExistingTitles(navigation) {
+        const titles = [];
+        const extractRecursive = (nodes) => {
+            for (const node of nodes) {
+                if (node.title) {
+                    titles.push(node.title);
+                }
+                if (node.children && Array.isArray(node.children)) {
+                    extractRecursive(node.children);
+                }
+            }
+        };
+        extractRecursive(navigation);
+        return titles;
+    }
 
 }
 

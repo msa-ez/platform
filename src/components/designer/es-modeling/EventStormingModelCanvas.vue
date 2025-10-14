@@ -4716,9 +4716,14 @@
                         this.value.langgraphStudioInfos, "esGenerator", {jobId: jobId, isCompleted:false, traceInfo: traceInfo}
                     )
 
-                    if(!this.value.siteMap && localStorage.getItem("siteMap")){
-                        this.$set(this.value, "siteMap", JSON.parse(localStorage.getItem("siteMap")))
-                        localStorage.removeItem("siteMap");
+                    if(!this.value.siteMap && localStorage.getItem("associatedProjectId")){
+                        let draft = await me.list(`db://definitions/${localStorage.getItem("associatedProjectId")}/draft`)
+                        if(draft) {
+                            let siteMapMessage = draft.find(draft => draft.type === "siteMapViewer")
+                            this.$set(this.value, "siteMap", siteMapMessage.siteMap)
+                        }
+
+                        localStorage.removeItem("associatedProjectId")
                     }
 
                     if(isAlreadyTried) {

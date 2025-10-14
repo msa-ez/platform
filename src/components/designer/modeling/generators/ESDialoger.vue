@@ -1448,6 +1448,8 @@ import { value } from 'jsonpath';
                                 await addPropertyWithDelay(newMessage, 'siteMap', msg.siteMap.length > 0 ? msg.siteMap : []);
                                 await addPropertyWithDelay(newMessage, 'commandReadModelData', msg.commandReadModelData);
 
+                                this.commandReadModelData = msg.commandReadModelData;
+
                                 this.siteMap = msg.siteMap.length > 0 ? msg.siteMap : [];
                                 break;
 
@@ -1647,7 +1649,7 @@ import { value } from 'jsonpath';
                             });
                         }
 
-                        localStorage.setItem("siteMap", JSON.stringify(me.siteMap));
+                        // localStorage.setItem("siteMap", JSON.stringify(me.siteMap));
                         me.$emit("update:draft", me.messages);
                     } catch(e) {
                         console.warn('Recursive sitemap incremental update failed:', e);
@@ -1664,7 +1666,7 @@ import { value } from 'jsonpath';
                         currentGeneratedLength: me.currentGeneratedLength
                     });
 
-                    localStorage.setItem("siteMap", JSON.stringify(me.siteMap));
+                    // localStorage.setItem("siteMap", JSON.stringify(me.siteMap));
                     me.$emit("update:draft", me.messages)
                 }
 
@@ -2348,10 +2350,8 @@ import { value } from 'jsonpath';
                         })
                     }
 
-                    //siteMap 전달
-                    if(!(localStorage.getItem("siteMap"))) {
-                        localStorage.setItem("siteMap", JSON.stringify(this.siteMap))
-                    }
+                    // Associated Project ID 저장
+                    localStorage.setItem("associatedProjectId", this.projectInfo.projectId)
                     
                     this.state = {
                         ...this.state,
@@ -2860,7 +2860,7 @@ import { value } from 'jsonpath';
                 this.updateMessageState(this.messages.find(message => message.type === 'siteMapViewer').uniqueId, {
                     siteMap: siteMap
                 });
-                localStorage.setItem("siteMap", JSON.stringify(this.siteMap));
+                // localStorage.setItem("siteMap", JSON.stringify(this.siteMap));
                 this.$emit('update:draft', this.messages)
             },
 
