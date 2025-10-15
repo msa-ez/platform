@@ -147,6 +147,9 @@
             _refreshFirebaseIdToken(){
                 return this.db._refreshFirebaseIdToken()
             },
+            _getFirebaseIdToken(){
+                return this.db._getFirebaseIdToken()
+            },
             _getUserInfo(){
                 return this.db._getUserInfo()
             },

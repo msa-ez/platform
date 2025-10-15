@@ -143,7 +143,7 @@ class BaseAPIClient {
             return Promise.reject(new TokenNotInputedError());
         }
     
-        return new Promise((resolve, reject) => {
+        return new Promise(async (resolve, reject) => {
             try {
                 g.state = 'running';
                 g.messages = this._getMessages(generateOption);
@@ -152,7 +152,7 @@ class BaseAPIClient {
                 g.gptResponseId = null;
                 g.firstResponseTime = null
                 g.requestStartTime = new Date().getTime()
-                const requestParams = this._makeRequestParams(g.messages, g.modelInfo, token);
+                const requestParams = await this._makeRequestParams(g.messages, g.modelInfo, token);
     
                 const requestInfo = this._makeRequestInfo(requestParams, g.messages)
                 previousRequestInfos.push(requestInfo)
@@ -271,7 +271,7 @@ class BaseAPIClient {
      * **상위 클래스에서 반드시 재정의해야하는 메소드**
      * 각 모델에 따라서 적절한 POST 요청 파라미터를 반환해야 함
      */
-    _makeRequestParams(messages, modelInfo, token){
+    async _makeRequestParams(messages, modelInfo, token){
         // return {
         //     requestUrl: "",
         //     requestData: JSON.stringify({}),

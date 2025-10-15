@@ -1,5 +1,6 @@
 const BaseAPIClient = require('./BaseAPIClient');
 const { TextParseHelper } = require('../helpers');
+const { LitellmProxyUtil, FirebaseUtil } = require('../../../utils');
 
 class OpenAIClient extends BaseAPIClient {
   constructor(client, options, model, aiGenerator) {
@@ -18,44 +19,26 @@ class OpenAIClient extends BaseAPIClient {
   }
 
 
-  _makeRequestParams(messages, modelInfo, token){
+  async _makeRequestParams(messages, modelInfo, token){
     const requestData = this._makeRequestData(messages, modelInfo)
 
     this.isStream = requestData.stream
-    const baseURL = (!modelInfo.baseURL) ? "https://api.openai.com" : modelInfo.baseURL
-    if(baseURL.startsWith("https://")) {
-      return {
-        requestUrl: baseURL + "/v1/chat/completions",
-        requestData: JSON.stringify(requestData),
-        requestHeaders: {
-          "content-type": "application/json",
-          "authorization": "Bearer " + token
-        }
-      }
-    } else {
-      return {
-        requestUrl: "http://localhost:4000/proxy/stream",
-        requestData: JSON.stringify(requestData),
-        requestHeaders: {
-          "content-type": "application/json",
-          "param-url": baseURL + "/v1/chat/completions",
-          "param-error-label": "OpenAICompatible",
-          "param-reject-unauthorized": "false",
-          "param-is-use-agent": "false",
-          "param-method": "POST",
-          "param-headers": JSON.stringify({
-            "content-type": "application/json",
-            "authorization": "Bearer " + token,
-            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-          })
-        }
+    const completionsURL = await LitellmProxyUtil.getChatCompletionsURL()
+    const gwtToken = await FirebaseUtil.getCurrentUserGWTToken()
+    
+    return {
+      requestUrl: completionsURL,
+      requestData: JSON.stringify(requestData),
+      requestHeaders: {
+        "content-type": "application/json",
+        "authorization": "Bearer " + gwtToken
       }
     }
   }
 
   _makeRequestData(messages, modelInfo) {
     const requestData = {
-      model: modelInfo.requestModelName,
+      model: "gpt-4.1-proxy",
       messages: messages,
       temperature: this.aiGenerator.temperature || modelInfo.requestArgs.temperature,
       frequency_penalty: modelInfo.requestArgs.frequencyPenalty,

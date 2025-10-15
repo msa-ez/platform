@@ -1,10 +1,22 @@
 import runXmlUtil from "./XmlUtil/runXmlUtil"
+import runFirebaseUtil from "./FirebaseUtil/runFirebaseUtil"
+import runLitellmProxyUtil from "./LitellmProxyUtil/runLitellmProxyUtil"
 
 export const runUtilCommandRegistry = {
     XmlUtil: {
         handler: runXmlUtil,
         description: "XmlUtil 실행",
         usage: "run runUtil XmlUtil"
+    },
+    FirebaseUtil: {
+        handler: runFirebaseUtil,
+        description: "FirebaseUtil 실행",
+        usage: "run runUtil FirebaseUtil"
+    },
+    LitellmProxyUtil: {
+        handler: runLitellmProxyUtil,
+        description: "LitellmProxyUtil 실행",
+        usage: "run runUtil LitellmProxyUtil"
     }
 }
 

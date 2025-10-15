@@ -37,6 +37,20 @@
                     }
                 })
             },
+            _getFirebaseIdToken() {
+                return new Promise(function (resolve, reject) {
+                    try{
+                        firebase.auth().currentUser.getIdToken()
+                        .then(function(idToken) {
+                            resolve(idToken)
+                        }).catch(function(error) {
+                            resolve(null)
+                        });
+                    }catch (e) {
+                        resolve(undefined)
+                    }
+                })
+            },
             _getUserInfo() {
                 return new Promise(function (resolve, reject) {
                     try{

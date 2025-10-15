@@ -1,0 +1,106 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: litellm-proxy-gateway
+  labels:
+    app: litellm-proxy-gateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: litellm-proxy-gateway
+  template:
+    metadata:
+      labels:
+        app: litellm-proxy-gateway
+    spec:
+      containers:
+      - name: gateway
+        image: asia-northeast3-docker.pkg.dev/eventstorming-tool-db/eventstorming-repo/litellm-proxy-gateway:latest
+        ports:
+        - containerPort: 3000
+          name: http
+        env:
+        - name: PORT
+          value: "3000"
+        - name: LITELLM_URL
+          value: "http://litellm-proxy-service:4000"
+        - name: FIREBASE_PROJECT_ID
+          value: "eventstorming-tool-db"
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: ./.auth/serviceAccountKey.json
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        volumeMounts:
+        - name: firebase-key-volume
+          mountPath: /app/.auth
+          readOnly: true
+      volumes:
+        - name: firebase-key-volume
+          secret:
+            secretName: firebase-key
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: litellm-proxy
+  labels:
+    app: litellm-proxy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: litellm-proxy
+  template:
+    metadata:
+      labels:
+        app: litellm-proxy
+    spec:
+      containers:
+      - name: litellm
+        image: asia-northeast3-docker.pkg.dev/eventstorming-tool-db/eventstorming-repo/litellm-proxy:latest
+        ports:
+        - containerPort: 4000
+          name: http
+        env:
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: litellm-secrets
+              key: openai-api-key
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "200m"
+          limits:
+            memory: "512Mi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 4000
+          initialDelaySeconds: 15
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 4000
+          initialDelaySeconds: 10
+          periodSeconds: 10

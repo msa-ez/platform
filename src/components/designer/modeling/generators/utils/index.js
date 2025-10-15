@@ -6,3 +6,5 @@ export const LocalStorageCleanUtil = require("./LocalStorageCleanUtil");
 export const DataValidationUtil = require("./DataValidationUtil");
 export const { EventStormingCanvasTraceUtil, TextTraceUtil, RefsTraceUtil, TraceMarkdownUtil, RefsMergeUtil, TraceUtilTest, TraceMarkdownUtilTest } = require("./TraceUtils");
 export const XmlUtil = require("./XmlUtil");
+export const FirebaseUtil = require("./FirebaseUtil");
+export const LitellmProxyUtil = require("./LitellmProxyUtil");

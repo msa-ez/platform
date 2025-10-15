@@ -191,6 +191,9 @@
             async refreshFirebaseIdToken() {
                 return await this._refreshFirebaseIdToken()
             },
+            async getFirebaseIdToken() {
+                return await this._getFirebaseIdToken()
+            },
             async getUserInfo() {
                 return await this._getUserInfo()
             },
