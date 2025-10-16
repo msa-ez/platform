@@ -1,16 +1,16 @@
-export const assignPreviewFieldsToAggregateDraftInputs = {
-    "description": "# Bounded Context Overview: BookManagement (도서 관리)\n\n## Role\n도서 등록, 도서 상태 관리(대출가능/대출중/예약중/폐기) 및 도서 정보(도서명, ISBN, 저자, 출판사, 카테고리) 관리를 담당한다. ISBN 중복 및 자리수 유효성 검증, 카테고리 분류, 도서의 상태 변동, 폐기 처리 등을 수행한다.\n\n## Key Events\n- BookRegistered\n- BookDiscarded\n- BookStateChanged\n\n# Requirements\n\n## userStory\n\n'도서 관리' 화면에서는 새로운 도서를 등록하고 현재 보유한 도서들의 상태를 관리할 수 있어야 해. 도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해. 등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야 해.\n\n각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할 수 있어야 해.\n\n## Event\n\n```json\n{\n  \"name\": \"BookRegistered\",\n  \"displayName\": \"도서 등록됨\",\n  \"actor\": \"사서\",\n  \"level\": 1,\n  \"description\": \"사서가 신규 도서 정보를 입력하고, 유효성(ISBN 중복/자리수, 카테고리) 검증 후 도서를 등록하였음.\",\n  \"inputs\": [\n    \"도서명\",\n    \"ISBN(13자리)\",\n    \"저자\",\n    \"출판사\",\n    \"카테고리(소설/비소설/학술/잡지)\"\n  ],\n  \"outputs\": [\n    \"신규 도서 생성\",\n    \"도서 상태 '대출가능' 설정\"\n  ],\n  \"nextEvents\": [\n    \"BookStateChanged\"\n  ]\n}\n```\n\n```json\n{\n  \"name\": \"BookStateChanged\",\n  \"displayName\": \"도서 상태 변경됨\",\n  \"actor\": \"도서관리시스템\",\n  \"level\": 2,\n  \"description\": \"도서가 등록, 대출, 반납, 예약, 폐기 등 상황 변화에 따라 상태가 자동으로 변경됨.\",\n  \"inputs\": [\n    \"도서 상태 변경 조건 발생(대출/반납/예약/폐기)\"\n  ],\n  \"outputs\": [\n    \"도서 상태: 대출가능/대출중/예약중/폐기\"\n  ],\n  \"nextEvents\": [\n    \"BookLoaned\",\n    \"BookReturned\",\n    \"BookReserved\",\n    \"BookDiscarded\"\n  ]\n}\n```\n\n```json\n{\n  \"name\": \"BookDiscarded\",\n  \"displayName\": \"도서 폐기됨\",\n  \"actor\": \"사서\",\n  \"level\": 3,\n  \"description\": \"사서가 훼손, 분실 등으로 도서를 폐기 처리함. 폐기된 도서는 대출 불가.\",\n  \"inputs\": [\n    \"도서\",\n    \"폐기 사유\"\n  ],\n  \"outputs\": [\n    \"도서 상태 '폐기'로 변경\",\n    \"대출 불가 처리\"\n  ],\n  \"nextEvents\": [\n    \"BookStateChanged\"\n  ]\n}\n```\n\n## Context Relations\n\n### BookManagement-LoanProcessing\n- **Type**: Pub/Sub\n- **Direction**: sends to 대출/반납 처리 (LoanProcessing)\n- **Reason**: 도서 상태 변경 등 주요 이벤트가 대출/반납 프로세스에 영향을 미치므로, 느슨한 결합과 확장성을 위해 pub/sub을 적용했다.\n- **Interaction Pattern**: 도서 등록, 폐기, 상태 변경 이벤트가 발생하면 대출/반납 처리 컨텍스트가 이를 구독하여 내부 상태를 동기화한다.\n\n### BookManagement-HistoryManagement\n- **Type**: Pub/Sub\n- **Direction**: sends to 이력 관리 (HistoryManagement)\n- **Reason**: 도서 등록/상태 변경 이벤트가 이력 관리의 기록 트리거가 되므로, pub/sub을 적용해 독립성과 유연성을 보장했다.\n- **Interaction Pattern**: 도서 관리 컨텍스트에서 도서 등록/상태 변경이 발생하면 이력 관리 컨텍스트가 이를 구독해 상태 변경 이력을 기록한다.",
+export const assignPreviewFieldsToAggregateDraftInput = {
+    "description": "# Bounded Context Overview: BookManagement (도서 관리)\n\n## Role\n도서 등록, 상태 관리(대출가능/대출중/예약중/폐기), ISBN 중복 및 유효성 검증, 도서 폐기 등 도서의 전체 라이프사이클을 관리한다.\n\n## Key Events\n- BookRegistered\n- BookDiscarded\n- BookStatusChanged\n\n# Requirements\n\n## userStory\n\n도서관의 도서 관리와 대출/반납을 통합적으로 관리하는\n\n'도서 관리' 화면에서는 새로운 도서를 등록하고 현재 보유한 도서들의 상태를 관리할 수 있어야 해. 도서 등록 시에는 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받아야 해. ISBN은 13자리 숫자여야 하고 중복 확인이 필요해. 카테고리는 소설/비소설/학술/잡지 중에서 선택할 수 있어야 해. 등록된 도서는 처음에 '대출가능' 상태가 되고, 이후 대출/반납 상황에 따라 '대출중', '예약중' 상태로 자동으로 변경되어야 해. 도서가 훼손되거나 분실된 경우 '폐기' 처리가 가능해야 하며, 폐기된 도서는 더 이상 대출이 불가능해야\n\n각 도서별로 대출 이력과 상태 변경 이력을 조회할 수 있어야 하고, 이를 통해 도서의 대출 현황과 상태 변화를 추적할\n\n## Event\n\n```json\n{\n  \"name\": \"BookRegistered\",\n  \"displayName\": \"도서 등록됨\",\n  \"actor\": \"Librarian\",\n  \"level\": 1,\n  \"description\": \"사서가 새로운 도서를 도서 관리 화면에서 등록함. 도서명, ISBN, 저자, 출판사, 카테고리 정보를 입력받고, ISBN 중복 및 유효성 검증을 통과한 후 도서가 등록됨. 등록된 도서는 '대출가능' 상태가 됨.\",\n  \"inputs\": [\n    \"도서명\",\n    \"ISBN(13자리)\",\n    \"저자\",\n    \"출판사\",\n    \"카테고리(소설/비소설/학술/잡지)\"\n  ],\n  \"outputs\": [\n    \"신규 도서(대출가능 상태)\"\n  ],\n  \"nextEvents\": [\n    \"BookStatusChanged\"\n  ]\n}\n```\n\n```json\n{\n  \"name\": \"BookStatusChanged\",\n  \"displayName\": \"도서 상태 변경됨\",\n  \"actor\": \"System\",\n  \"level\": 2,\n  \"description\": \"도서가 등록, 대출, 반납, 예약, 폐기 등 주요 이벤트 발생 시 상태가 자동으로 변경됨. 예: 등록 시 '대출가능', 대출 시 '대출중', 반납 시 '대출가능' 또는 '예약중', 폐기 시 '폐기' 등.\",\n  \"inputs\": [\n    \"도서 이벤트(등록/대출/반납/예약/폐기 등)\"\n  ],\n  \"outputs\": [\n    \"도서 상태 변경\"\n  ],\n  \"nextEvents\": [\n    \"BookLoaned\",\n    \"BookReturned\",\n    \"BookReserved\",\n    \"BookDiscarded\"\n  ]\n}\n```\n\n```json\n{\n  \"name\": \"BookDiscarded\",\n  \"displayName\": \"도서 폐기됨\",\n  \"actor\": \"Librarian\",\n  \"level\": 7,\n  \"description\": \"사서가 훼손되거나 분실된 도서를 폐기 처리함. 폐기된 도서는 더 이상 대출이 불가능함.\",\n  \"inputs\": [\n    \"도서명 또는 ISBN\",\n    \"폐기 사유\"\n  ],\n  \"outputs\": [\n    \"도서 상태 '폐기'\"\n  ],\n  \"nextEvents\": []\n}\n```\n\n## Context Relations\n\n### LoanProcess→BookManagement\n- **Type**: Pub/Sub\n- **Direction**: receives from 대출/반납 프로세스 (LoanProcess)\n- **Reason**: 대출/반납/연장/예약 등 회원의 행위가 발생하면 도서의 상태 변경이 필요하므로, 이벤트 기반으로 도서 관리 컨텍스트에 상태 변경을 전달한다. 느슨한 결합을 위해 Pub/Sub 패턴을 적용한다.\n- **Interaction Pattern**: 대출/반납 프로세스에서 도서 상태 변경 이벤트를 발행하면, 도서 관리 컨텍스트가 이를 구독하여 상태를 변경한다.\n\n### BookManagement→BookHistory\n- **Type**: Pub/Sub\n- **Direction**: sends to 이력 관리 (BookHistory)\n- **Reason**: 도서의 상태가 변경될 때마다 이력 관리 컨텍스트가 해당 이벤트를 구독하여 상태 변경 이력을 기록한다.\n- **Interaction Pattern**: 도서 관리 컨텍스트에서 상태 변경 이벤트가 발생하면, 이력 관리 컨텍스트가 이를 구독하여 이력을 저장한다.",
     "traceMap": {
         "4": {
             "refs": [
                 [
                     [
-                        1,
-                        1
+                        3,
+                        2
                     ],
                     [
                         3,
-                        305
+                        304
                     ]
                 ]
             ],
@@ -21,11 +21,11 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
                 [
                     [
                         3,
-                        15
+                        57
                     ],
                     [
                         3,
-                        102
+                        177
                     ]
                 ]
             ],
@@ -36,11 +36,11 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
                 [
                     [
                         3,
-                        246
+                        264
                     ],
                     [
                         3,
-                        304
+                        286
                     ]
                 ]
             ],
@@ -51,11 +51,21 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
                 [
                     [
                         3,
-                        40
+                        1
                     ],
                     [
                         3,
-                        243
+                        238
+                    ]
+                ],
+                [
+                    [
+                        7,
+                        150
+                    ],
+                    [
+                        7,
+                        159
                     ]
                 ]
             ],
@@ -65,12 +75,12 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
             "refs": [
                 [
                     [
-                        3,
+                        1,
                         1
                     ],
                     [
-                        3,
-                        305
+                        1,
+                        29
                     ]
                 ]
             ],
@@ -80,57 +90,42 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
             "refs": [
                 [
                     [
-                        9,
+                        3,
                         1
                     ],
                     [
-                        9,
-                        74
+                        3,
+                        302
                     ]
                 ]
             ],
             "isDirectMatching": true
         },
-        "22": {
+        "19": {
             "refs": [
                 [
                     [
-                        3,
-                        15
+                        9,
+                        1
                     ],
                     [
-                        3,
-                        102
+                        9,
+                        65
                     ]
                 ]
             ],
-            "isDirectMatching": false
-        },
-        "23": {
-            "refs": [
-                [
-                    [
-                        3,
-                        15
-                    ],
-                    [
-                        3,
-                        102
-                    ]
-                ]
-            ],
-            "isDirectMatching": false
+            "isDirectMatching": true
         },
         "24": {
             "refs": [
                 [
                     [
                         3,
-                        15
+                        57
                     ],
                     [
                         3,
-                        102
+                        177
                     ]
                 ]
             ],
@@ -141,11 +136,11 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
                 [
                     [
                         3,
-                        15
+                        57
                     ],
                     [
                         3,
-                        102
+                        177
                     ]
                 ]
             ],
@@ -156,11 +151,11 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
                 [
                     [
                         3,
-                        15
+                        57
                     ],
                     [
                         3,
-                        102
+                        177
                     ]
                 ]
             ],
@@ -171,11 +166,11 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
                 [
                     [
                         3,
-                        15
+                        57
                     ],
                     [
                         3,
-                        102
+                        177
                     ]
                 ]
             ],
@@ -186,11 +181,11 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
                 [
                     [
                         3,
-                        15
+                        57
                     ],
                     [
                         3,
-                        102
+                        177
                     ]
                 ]
             ],
@@ -201,11 +196,11 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
                 [
                     [
                         3,
-                        15
+                        57
                     ],
                     [
                         3,
-                        102
+                        177
                     ]
                 ]
             ],
@@ -216,11 +211,11 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
                 [
                     [
                         3,
-                        15
+                        57
                     ],
                     [
                         3,
-                        102
+                        177
                     ]
                 ]
             ],
@@ -231,11 +226,11 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
                 [
                     [
                         3,
-                        15
+                        57
                     ],
                     [
                         3,
-                        102
+                        177
                     ]
                 ]
             ],
@@ -246,11 +241,11 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
                 [
                     [
                         3,
-                        15
+                        57
                     ],
                     [
                         3,
-                        102
+                        177
                     ]
                 ]
             ],
@@ -261,11 +256,11 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
                 [
                     [
                         3,
-                        15
+                        57
                     ],
                     [
                         3,
-                        102
+                        177
                     ]
                 ]
             ],
@@ -276,11 +271,11 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
                 [
                     [
                         3,
-                        15
+                        57
                     ],
                     [
                         3,
-                        102
+                        177
                     ]
                 ]
             ],
@@ -291,11 +286,11 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
                 [
                     [
                         3,
-                        15
+                        57
                     ],
                     [
                         3,
-                        102
+                        177
                     ]
                 ]
             ],
@@ -306,11 +301,11 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
                 [
                     [
                         3,
-                        15
+                        57
                     ],
                     [
                         3,
-                        102
+                        177
                     ]
                 ]
             ],
@@ -321,11 +316,11 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
                 [
                     [
                         3,
-                        15
+                        57
                     ],
                     [
                         3,
-                        102
+                        177
                     ]
                 ]
             ],
@@ -336,11 +331,11 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
                 [
                     [
                         3,
-                        15
+                        57
                     ],
                     [
                         3,
-                        102
+                        177
                     ]
                 ]
             ],
@@ -351,11 +346,11 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
                 [
                     [
                         3,
-                        15
+                        57
                     ],
                     [
                         3,
-                        102
+                        177
                     ]
                 ]
             ],
@@ -366,11 +361,11 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
                 [
                     [
                         3,
-                        15
+                        57
                     ],
                     [
                         3,
-                        102
+                        177
                     ]
                 ]
             ],
@@ -381,11 +376,11 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
                 [
                     [
                         3,
-                        15
+                        57
                     ],
                     [
                         3,
-                        102
+                        177
                     ]
                 ]
             ],
@@ -396,26 +391,26 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
                 [
                     [
                         3,
-                        15
+                        57
                     ],
                     [
                         3,
-                        102
+                        177
                     ]
                 ]
             ],
             "isDirectMatching": false
         },
-        "46": {
+        "43": {
             "refs": [
                 [
                     [
                         3,
-                        40
+                        57
                     ],
                     [
                         3,
-                        243
+                        177
                     ]
                 ]
             ],
@@ -426,11 +421,21 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
                 [
                     [
                         3,
-                        40
+                        1
                     ],
                     [
                         3,
-                        243
+                        238
+                    ]
+                ],
+                [
+                    [
+                        7,
+                        150
+                    ],
+                    [
+                        7,
+                        159
                     ]
                 ]
             ],
@@ -441,11 +446,21 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
                 [
                     [
                         3,
-                        40
+                        1
                     ],
                     [
                         3,
-                        243
+                        238
+                    ]
+                ],
+                [
+                    [
+                        7,
+                        150
+                    ],
+                    [
+                        7,
+                        159
                     ]
                 ]
             ],
@@ -456,11 +471,21 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
                 [
                     [
                         3,
-                        40
+                        1
                     ],
                     [
                         3,
-                        243
+                        238
+                    ]
+                ],
+                [
+                    [
+                        7,
+                        150
+                    ],
+                    [
+                        7,
+                        159
                     ]
                 ]
             ],
@@ -471,11 +496,21 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
                 [
                     [
                         3,
-                        40
+                        1
                     ],
                     [
                         3,
-                        243
+                        238
+                    ]
+                ],
+                [
+                    [
+                        7,
+                        150
+                    ],
+                    [
+                        7,
+                        159
                     ]
                 ]
             ],
@@ -486,11 +521,21 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
                 [
                     [
                         3,
-                        40
+                        1
                     ],
                     [
                         3,
-                        243
+                        238
+                    ]
+                ],
+                [
+                    [
+                        7,
+                        150
+                    ],
+                    [
+                        7,
+                        159
                     ]
                 ]
             ],
@@ -501,11 +546,21 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
                 [
                     [
                         3,
-                        40
+                        1
                     ],
                     [
                         3,
-                        243
+                        238
+                    ]
+                ],
+                [
+                    [
+                        7,
+                        150
+                    ],
+                    [
+                        7,
+                        159
                     ]
                 ]
             ],
@@ -516,11 +571,21 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
                 [
                     [
                         3,
-                        40
+                        1
                     ],
                     [
                         3,
-                        243
+                        238
+                    ]
+                ],
+                [
+                    [
+                        7,
+                        150
+                    ],
+                    [
+                        7,
+                        159
                     ]
                 ]
             ],
@@ -531,11 +596,21 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
                 [
                     [
                         3,
-                        40
+                        1
                     ],
                     [
                         3,
-                        243
+                        238
+                    ]
+                ],
+                [
+                    [
+                        7,
+                        150
+                    ],
+                    [
+                        7,
+                        159
                     ]
                 ]
             ],
@@ -546,11 +621,21 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
                 [
                     [
                         3,
-                        40
+                        1
                     ],
                     [
                         3,
-                        243
+                        238
+                    ]
+                ],
+                [
+                    [
+                        7,
+                        150
+                    ],
+                    [
+                        7,
+                        159
                     ]
                 ]
             ],
@@ -561,11 +646,21 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
                 [
                     [
                         3,
-                        40
+                        1
                     ],
                     [
                         3,
-                        243
+                        238
+                    ]
+                ],
+                [
+                    [
+                        7,
+                        150
+                    ],
+                    [
+                        7,
+                        159
                     ]
                 ]
             ],
@@ -576,11 +671,21 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
                 [
                     [
                         3,
-                        40
+                        1
                     ],
                     [
                         3,
-                        243
+                        238
+                    ]
+                ],
+                [
+                    [
+                        7,
+                        150
+                    ],
+                    [
+                        7,
+                        159
                     ]
                 ]
             ],
@@ -591,11 +696,21 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
                 [
                     [
                         3,
-                        40
+                        1
                     ],
                     [
                         3,
-                        243
+                        238
+                    ]
+                ],
+                [
+                    [
+                        7,
+                        150
+                    ],
+                    [
+                        7,
+                        159
                     ]
                 ]
             ],
@@ -606,11 +721,21 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
                 [
                     [
                         3,
-                        40
+                        1
                     ],
                     [
                         3,
-                        243
+                        238
+                    ]
+                ],
+                [
+                    [
+                        7,
+                        150
+                    ],
+                    [
+                        7,
+                        159
                     ]
                 ]
             ],
@@ -621,11 +746,21 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
                 [
                     [
                         3,
-                        40
+                        1
                     ],
                     [
                         3,
-                        243
+                        238
+                    ]
+                ],
+                [
+                    [
+                        7,
+                        150
+                    ],
+                    [
+                        7,
+                        159
                     ]
                 ]
             ],
@@ -636,11 +771,21 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
                 [
                     [
                         3,
-                        40
+                        1
                     ],
                     [
                         3,
-                        243
+                        238
+                    ]
+                ],
+                [
+                    [
+                        7,
+                        150
+                    ],
+                    [
+                        7,
+                        159
                     ]
                 ]
             ],
@@ -651,11 +796,21 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
                 [
                     [
                         3,
-                        40
+                        1
                     ],
                     [
                         3,
-                        243
+                        238
+                    ]
+                ],
+                [
+                    [
+                        7,
+                        150
+                    ],
+                    [
+                        7,
+                        159
                     ]
                 ]
             ],
@@ -666,11 +821,21 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
                 [
                     [
                         3,
-                        40
+                        1
                     ],
                     [
                         3,
-                        243
+                        238
+                    ]
+                ],
+                [
+                    [
+                        7,
+                        150
+                    ],
+                    [
+                        7,
+                        159
                     ]
                 ]
             ],
@@ -681,26 +846,46 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
                 [
                     [
                         3,
-                        40
+                        1
                     ],
                     [
                         3,
-                        243
+                        238
+                    ]
+                ],
+                [
+                    [
+                        7,
+                        150
+                    ],
+                    [
+                        7,
+                        159
                     ]
                 ]
             ],
             "isDirectMatching": false
         },
-        "68": {
+        "65": {
             "refs": [
                 [
                     [
                         3,
-                        246
+                        1
                     ],
                     [
                         3,
-                        304
+                        238
+                    ]
+                ],
+                [
+                    [
+                        7,
+                        150
+                    ],
+                    [
+                        7,
+                        159
                     ]
                 ]
             ],
@@ -711,11 +896,11 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
                 [
                     [
                         3,
-                        246
+                        264
                     ],
                     [
                         3,
-                        304
+                        286
                     ]
                 ]
             ],
@@ -726,11 +911,11 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
                 [
                     [
                         3,
-                        246
+                        264
                     ],
                     [
                         3,
-                        304
+                        286
                     ]
                 ]
             ],
@@ -741,11 +926,11 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
                 [
                     [
                         3,
-                        246
+                        264
                     ],
                     [
                         3,
-                        304
+                        286
                     ]
                 ]
             ],
@@ -756,11 +941,11 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
                 [
                     [
                         3,
-                        246
+                        264
                     ],
                     [
                         3,
-                        304
+                        286
                     ]
                 ]
             ],
@@ -771,11 +956,11 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
                 [
                     [
                         3,
-                        246
+                        264
                     ],
                     [
                         3,
-                        304
+                        286
                     ]
                 ]
             ],
@@ -786,11 +971,11 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
                 [
                     [
                         3,
-                        246
+                        264
                     ],
                     [
                         3,
-                        304
+                        286
                     ]
                 ]
             ],
@@ -801,11 +986,11 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
                 [
                     [
                         3,
-                        246
+                        264
                     ],
                     [
                         3,
-                        304
+                        286
                     ]
                 ]
             ],
@@ -816,11 +1001,11 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
                 [
                     [
                         3,
-                        246
+                        264
                     ],
                     [
                         3,
-                        304
+                        286
                     ]
                 ]
             ],
@@ -831,11 +1016,11 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
                 [
                     [
                         3,
-                        246
+                        264
                     ],
                     [
                         3,
-                        304
+                        286
                     ]
                 ]
             ],
@@ -846,11 +1031,11 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
                 [
                     [
                         3,
-                        246
+                        264
                     ],
                     [
                         3,
-                        304
+                        286
                     ]
                 ]
             ],
@@ -861,11 +1046,11 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
                 [
                     [
                         3,
-                        246
+                        264
                     ],
                     [
                         3,
-                        304
+                        286
                     ]
                 ]
             ],
@@ -876,11 +1061,11 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
                 [
                     [
                         3,
-                        246
+                        264
                     ],
                     [
                         3,
-                        304
+                        286
                     ]
                 ]
             ],
@@ -891,11 +1076,11 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
                 [
                     [
                         3,
-                        246
+                        264
                     ],
                     [
                         3,
-                        304
+                        286
                     ]
                 ]
             ],
@@ -906,11 +1091,11 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
                 [
                     [
                         3,
-                        246
+                        264
                     ],
                     [
                         3,
-                        304
+                        286
                     ]
                 ]
             ],
@@ -921,41 +1106,41 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
                 [
                     [
                         3,
-                        246
+                        264
                     ],
                     [
                         3,
-                        304
+                        286
                     ]
                 ]
             ],
             "isDirectMatching": false
         },
-        "84": {
+        "89": {
             "refs": [
                 [
                     [
-                        3,
-                        246
+                        5,
+                        2
                     ],
                     [
-                        3,
-                        304
+                        7,
+                        169
                     ]
                 ]
             ],
             "isDirectMatching": false
         },
-        "85": {
+        "90": {
             "refs": [
                 [
                     [
-                        3,
-                        246
+                        5,
+                        2
                     ],
                     [
-                        3,
-                        304
+                        7,
+                        169
                     ]
                 ]
             ],
@@ -965,12 +1150,12 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
             "refs": [
                 [
                     [
-                        3,
-                        172
+                        5,
+                        2
                     ],
                     [
                         7,
-                        170
+                        169
                     ]
                 ]
             ],
@@ -980,42 +1165,42 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
             "refs": [
                 [
                     [
-                        3,
-                        172
+                        5,
+                        2
                     ],
                     [
                         7,
-                        170
+                        169
                     ]
                 ]
             ],
             "isDirectMatching": false
         },
-        "93": {
+        "95": {
             "refs": [
                 [
                     [
-                        3,
-                        172
+                        9,
+                        8
                     ],
                     [
-                        7,
-                        170
+                        9,
+                        73
                     ]
                 ]
             ],
             "isDirectMatching": false
         },
-        "94": {
+        "96": {
             "refs": [
                 [
                     [
-                        3,
-                        172
+                        9,
+                        8
                     ],
                     [
-                        7,
-                        170
+                        9,
+                        73
                     ]
                 ]
             ],
@@ -1026,11 +1211,11 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
                 [
                     [
                         9,
-                        15
+                        8
                     ],
                     [
                         9,
-                        74
+                        73
                     ]
                 ]
             ],
@@ -1041,41 +1226,11 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
                 [
                     [
                         9,
-                        15
+                        8
                     ],
                     [
                         9,
-                        74
-                    ]
-                ]
-            ],
-            "isDirectMatching": false
-        },
-        "99": {
-            "refs": [
-                [
-                    [
-                        9,
-                        15
-                    ],
-                    [
-                        9,
-                        74
-                    ]
-                ]
-            ],
-            "isDirectMatching": false
-        },
-        "100": {
-            "refs": [
-                [
-                    [
-                        9,
-                        15
-                    ],
-                    [
-                        9,
-                        74
+                        73
                     ]
                 ]
             ],
@@ -1086,7 +1241,11 @@ export const assignPreviewFieldsToAggregateDraftInputs = {
         {
             "name": "Book",
             "alias": "도서"
+        },
+        {
+            "name": "BookCategory",
+            "alias": "도서 카테고리"
         }
     ],
-    "generatorKey": "option 1"
+    "generatorKey": "option 2"
 }

@@ -1,6 +1,6 @@
 const { TestRunner } = require("../../../../../utils");
-import { testGenerator } from "./generator/testGenerator";
 import { testUtil } from "./util/testUtil";
+import { testGenerator } from "./generator/testGenerator";
 
 export const testCommandRegistry = {
     all: {
@@ -10,11 +10,11 @@ export const testCommandRegistry = {
     }
 }
 
-export const testCommand = function (suiteName, commandArgs, client) {
+export const testCommand = async function (suiteName, commandArgs, client) {
     const runner = new TestRunner();
 
-    testGenerator(commandArgs, client, runner);
     testUtil(commandArgs, client, runner);
+    testGenerator(commandArgs, client, runner);
 
     if(suiteName === "all") {
         runner.runTests();
