@@ -47,16 +47,15 @@ class DevideBoundedContextGeneratorLangGraph {
             BoundedContextLangGraphProxy.watchJob(
                 jobId,
                 // onUpdate (사용하지 않음)
-                (thoughts, boundedContexts, relations, explanations, logs, progress, currentGeneratedLength) => {
+                (devisionAspect, thoughts, boundedContexts, relations, explanations, logs, progress, currentGeneratedLength) => {
                     // User Story Generator와 동일하게 onUpdate는 사용하지 않음
                 },
                 // onComplete
-                (thoughts, boundedContexts, relations, explanations, logs, progress, isFailed) => {
+                (devisionAspect, thoughts, boundedContexts, relations, explanations, logs, progress, isFailed) => {
                     if (hasResolved) return;
                     hasResolved = true;
                     
                     console.log('[DevideBoundedContextGeneratorLangGraph] onComplete 호출:', {
-                        thoughts: thoughts ? thoughts.substring(0, 50) + '...' : '',
                         boundedContextsCount: boundedContexts ? boundedContexts.length : 0,
                         relationsCount: relations ? relations.length : 0,
                         explanationsCount: explanations ? explanations.length : 0,
@@ -72,6 +71,7 @@ class DevideBoundedContextGeneratorLangGraph {
                     const result = {
                         modelValue: {
                             output: {
+                                devisionAspect,
                                 thoughts,
                                 boundedContexts,
                                 relations,
@@ -84,7 +84,7 @@ class DevideBoundedContextGeneratorLangGraph {
                     
                     // onGenerationFinished 호출 (User Story Generator와 동일한 방식)
                     if (this.client.onGenerationFinished) {
-                        this.client.onGenerationFinished(result);
+                        this.client.onGenerationSucceeded(result);
                     }
                     
                     console.log('[DevideBoundedContextGeneratorLangGraph] onGenerationFinished 호출 후, resolve');

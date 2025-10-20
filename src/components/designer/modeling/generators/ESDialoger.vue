@@ -1850,7 +1850,7 @@ import { value } from 'jsonpath';
                     me.mappingRequirements();
                 }
 
-                if(me.state.generator === "DevideBoundedContextGenerator"){
+                if(me.state.generator === "DevideBoundedContextGeneratorLangGraph"){
                     me.devisionAspectIndex = 0;
                     me.currentGeneratedLength = 0;
                     me.processingState.isGeneratingBoundedContext = false;

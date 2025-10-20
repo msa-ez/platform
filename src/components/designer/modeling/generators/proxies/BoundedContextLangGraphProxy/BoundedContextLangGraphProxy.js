@@ -195,6 +195,25 @@ class BoundedContextLangGraphProxy {
             console.log('[BoundedContextLangGraphProxy] _watchJobStatus isCompleted 감지:', isCompleted);
             if (isCompleted) {
                 jobState.isCompleted = isCompleted;
+                
+                // 완료 시 전체 outputs 객체 읽기
+                const outputs = await storage.getObject(`${this._getJobPath(jobId)}/state/outputs`);
+                
+                if (outputs) {
+                    if (outputs.devisionAspect !== null && outputs.devisionAspect !== undefined) {
+                        jobState.devisionAspect = outputs.devisionAspect;
+                    }
+                    if (outputs.thoughts !== null && outputs.thoughts !== undefined) {
+                        jobState.thoughts = outputs.thoughts;
+                    }
+                    if (outputs.relations !== null && outputs.relations !== undefined) {
+                        jobState.relations = this._restoreArrayFromFirebase(outputs.relations);
+                    }
+                    if (outputs.explanations !== null && outputs.explanations !== undefined) {
+                        jobState.explanations = this._restoreArrayFromFirebase(outputs.explanations);
+                    }
+                }
+                
                 await parseState();
             }
         });
@@ -233,6 +252,25 @@ class BoundedContextLangGraphProxy {
         storage.watch(`${this._getJobPath(jobId)}/state/outputs/boundedContexts`, async (boundedContexts) => {
             if (boundedContexts) {
                 jobState.boundedContexts = this._restoreArrayFromFirebase(boundedContexts);
+                
+                // 전체 outputs 객체 읽기
+                const outputs = await storage.getObject(`${this._getJobPath(jobId)}/state/outputs`);
+                
+                if (outputs) {
+                    if (outputs.devisionAspect !== null && outputs.devisionAspect !== undefined) {
+                        jobState.devisionAspect = outputs.devisionAspect;
+                    }
+                    if (outputs.thoughts !== null && outputs.thoughts !== undefined) {
+                        jobState.thoughts = outputs.thoughts;
+                    }
+                    if (outputs.relations !== null && outputs.relations !== undefined) {
+                        jobState.relations = this._restoreArrayFromFirebase(outputs.relations);
+                    }
+                    if (outputs.explanations !== null && outputs.explanations !== undefined) {
+                        jobState.explanations = this._restoreArrayFromFirebase(outputs.explanations);
+                    }
+                }
+                
                 await parseState();
             }
         });
@@ -255,6 +293,7 @@ class BoundedContextLangGraphProxy {
      */
     static async _parseAndNotifyJobState(jobState, callbacks) {
         const state = {
+            devisionAspect: jobState.devisionAspect || '',
             thoughts: jobState.thoughts || '',
             boundedContexts: jobState.boundedContexts || [],
             relations: jobState.relations || [],
@@ -276,6 +315,7 @@ class BoundedContextLangGraphProxy {
         if (state.isCompleted) {
             console.log('[BoundedContextLangGraphProxy] _parseAndNotifyJobState onComplete 호출:', state.boundedContexts.length);
             await callbacks.onComplete(
+                state.devisionAspect,
                 state.thoughts,
                 state.boundedContexts,
                 state.relations,
@@ -287,6 +327,7 @@ class BoundedContextLangGraphProxy {
         } else {
             console.log('[BoundedContextLangGraphProxy] _parseAndNotifyJobState onUpdate 호출:', state.boundedContexts.length);
             await callbacks.onUpdate(
+                state.devisionAspect,
                 state.thoughts,
                 state.boundedContexts,
                 state.relations,
