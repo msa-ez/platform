@@ -422,6 +422,13 @@ import { value } from 'jsonpath';
                             
                             try {
                                 const result = await new Promise((resolve, reject) => {
+                                    const processErrorMessage = (returnObj) => {
+                                        const errorMessage = "An error occurred while adding preview properties based on DDL to the aggregate.\nPlease try again in a moment.\nError message: " + returnObj.errorMessage
+                                        console.error(errorMessage)
+                                        alert(errorMessage)
+                                        reject(new Error(errorMessage))
+                                    }
+
                                     const generator = new AssignDDLFieldsToAggregateDraft({
                                         onSend: () => {
                                             this.workingMessages.AggregateDraftDialogDto.draftUIInfos = {
@@ -435,21 +442,15 @@ import { value } from 'jsonpath';
                                             this.workingMessages.AggregateDraftDialogDto.draftUIInfos.progress = returnObj.progress
                                         },
                                         onGenerationSucceeded: (returnObj) => {
-                                            try {
-                                                resolve(returnObj.modelValue.output);
-                                            } catch (error) {
-                                                console.error(`[*] Option ${optionIndex} field assignment processing error:`, error);
-                                                reject(error);
-                                            }
+                                            resolve(returnObj.modelValue.output);
                                         },
                                         onError: (returnObj) => {
-                                            console.error(`[*] Option ${optionIndex} field assignment generation error:`, returnObj.errorMessage);
-                                            reject(new Error(returnObj.errorMessage || 'Field assignment generation failed'));
+                                            processErrorMessage(returnObj)
                                         },
                                         onRetry: (returnObj) => {
                                             console.warn(`[*] Option ${optionIndex} field assignment retry:`, returnObj.errorMessage);
                                             if (returnObj.isDied) {
-                                                reject(new Error(returnObj.errorMessage || 'Field assignment generation failed after retries'));
+                                                processErrorMessage(returnObj)
                                             }
                                         }
                                     });
@@ -544,6 +545,13 @@ import { value } from 'jsonpath';
                         try {
 
                             const result = await new Promise((resolve, reject) => {
+                                const processErrorMessage = (returnObj) => {
+                                    const errorMessage = "An error occurred while adding the preview property to the aggregate.\nPlease try again in a moment.\nError message: " + returnObj.errorMessage
+                                    console.error(errorMessage)
+                                    alert(errorMessage)
+                                    reject(new Error(errorMessage))
+                                }
+
                                 const generator = new AssignPreviewFieldsToAggregateDraft({
                                     onSend: () => {
                                         this.workingMessages.AggregateDraftDialogDto.draftUIInfos = {
@@ -557,21 +565,15 @@ import { value } from 'jsonpath';
                                         this.workingMessages.AggregateDraftDialogDto.draftUIInfos.progress = returnObj.progress
                                     },
                                     onGenerationSucceeded: (returnObj) => {
-                                        try {
-                                            resolve(returnObj.modelValue.output);
-                                        } catch (error) {
-                                            console.error(`[*] Option ${optionIndex} field assignment processing error:`, error);
-                                            reject(error);
-                                        }
+                                        resolve(returnObj.modelValue.output);
                                     },
                                     onError: (returnObj) => {
-                                        console.error(`[*] Option ${optionIndex} field assignment generation error:`, returnObj.errorMessage);
-                                        reject(new Error(returnObj.errorMessage || 'Field assignment generation failed'));
+                                        processErrorMessage(returnObj)
                                     },
                                     onRetry: (returnObj) => {
                                         console.warn(`[*] Option ${optionIndex} field assignment retry:`, returnObj.errorMessage);
                                         if (returnObj.isDied) {
-                                            reject(new Error(returnObj.errorMessage || 'Field assignment generation failed after retries'));
+                                            processErrorMessage(returnObj)
                                         }
                                     }
                                 });
@@ -661,6 +663,13 @@ import { value } from 'jsonpath';
                 if(!ddlRequirements.length) return []
                 
                 return new Promise((resolve, reject) => {
+                    const processErrorMessage = (returnObj) => {
+                        const errorMessage = "An error occurred while extracting core fields from the DDL.\nPlease try again in a moment.\nError message: " + returnObj.errorMessage
+                        console.error(errorMessage)
+                        alert(errorMessage)
+                        reject(new Error(errorMessage))
+                    }
+
                     if(!this.generators.ExtractDDLFieldsGenerator.generator) {
                         this.generators.ExtractDDLFieldsGenerator.generator = new ExtractDDLFieldsGenerator({
                             onSend: (input, stopCallback) => {
@@ -685,14 +694,13 @@ import { value } from 'jsonpath';
                     }
 
                     this.generators.ExtractDDLFieldsGenerator.generator.client.onError = (returnObj) => {
-                        console.error('ExtractDDLFieldsGenerator Error:', returnObj.errorMessage)
-                        reject(new Error(returnObj.errorMessage || 'Error occurred while extracting DDL fields'))
+                        processErrorMessage(returnObj)
                     }
 
                     this.generators.ExtractDDLFieldsGenerator.generator.client.onRetry = (returnObj) => {
                         console.warn('ExtractDDLFieldsGenerator Retry:', returnObj.errorMessage)
                         if(returnObj.isDied) {
-                            reject(new Error(returnObj.errorMessage || 'Failed to extract DDL fields'))
+                            processErrorMessage(returnObj)
                         }
                     }
 
@@ -2367,14 +2375,16 @@ import { value } from 'jsonpath';
 
                 let selectedStructureOption = this.resultDevideBoundedContext[this.boundedContextVersion.aspect]
                 
-                if(selectedStructureOption){
-                    this.collectedMockDatas.aggregateDraftScenarios.selectedStructureOption = structuredClone(selectedStructureOption)
-                }
-                if(this.resultDevideBoundedContext){
-                    this.collectedMockDatas.aggregateDraftScenarios.resultDevideBoundedContext = structuredClone(this.resultDevideBoundedContext)
-                }
-                if(this.boundedContextVersion){
-                    this.collectedMockDatas.aggregateDraftScenarios.boundedContextVersion = structuredClone(this.boundedContextVersion)
+                if(this.isTerminalEnabled) {
+                    if(selectedStructureOption){
+                        this.collectedMockDatas.aggregateDraftScenarios.selectedStructureOption = structuredClone(selectedStructureOption)
+                    }
+                    if(this.resultDevideBoundedContext){
+                        this.collectedMockDatas.aggregateDraftScenarios.resultDevideBoundedContext = structuredClone(this.resultDevideBoundedContext)
+                    }
+                    if(this.boundedContextVersion){
+                        this.collectedMockDatas.aggregateDraftScenarios.boundedContextVersion = structuredClone(this.boundedContextVersion)
+                    }
                 }
 
                 // 요약 결과가 없어도, 상세한 매핑을 위해 원본 매핑 진행
@@ -2414,7 +2424,7 @@ import { value } from 'jsonpath';
                 try {
 
                     if(this.isServerProject) this.state.associatedProject = this.modelIds.projectId
-                    this._makeCollectedMockDatas(draftOptions)
+                    if(this.isTerminalEnabled) this._makeCollectedMockDatas(draftOptions)
 
                     draftOptions = ESDialogerTraceUtil.extractTraceInfoFromDraftOptions(draftOptions, {
                         userStory: this.projectInfo.usedUserStory,
@@ -2501,7 +2511,7 @@ import { value } from 'jsonpath';
                 this.collectedMockDatas.aggregateDraftScenarios.requirementsValidationResult = structuredClone(this.requirementsValidationResult)
                 this.collectedMockDatas.aggregateDraftScenarios.commandReadModelData = structuredClone(this.commandReadModelData)
                 this.collectedMockDatas.aggregateDraftScenarios.siteMap = structuredClone(this.siteMap)
-                console.log("[*] 시나리오별 테스트를 위한 Mock 데이터 구축 완료", {collectedMockDatas: this.collectedMockDatas.aggregateDraftScenarios})
+                console.log("[#] 시나리오별 테스트를 위한 Mock 데이터 구축 완료", {collectedMockDatas: this.collectedMockDatas.aggregateDraftScenarios})
             },
 
             

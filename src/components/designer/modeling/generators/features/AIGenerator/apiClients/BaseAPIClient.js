@@ -1,7 +1,6 @@
 const { COUNTRY_CODE_LANG_MAP, DEFAULT_LANG, REQUEST_ARG_KEYS } = require("./contants");
-const { ModelInfoHelper } = require("../helpers")
-const { HashUtil, RequestUtil, TokenUtil } = require("../utils")
-const { GeneratorLockKeyError, TokenNotInputedError, AiModelSettingError } = require("../../../errors")
+const { RequestUtil, TokenUtil, AICacheUtil } = require("../utils")
+const { GeneratorLockKeyError, TokenNotInputedError } = require("../../../errors")
 const store = require("../../../../../../../store").default;
 
 
@@ -63,7 +62,9 @@ class BaseAPIClient {
             stopSignaled: false,
             gptResponseId: null,
             openaiToken: null,
-            parsedTexts: {}
+            parsedTexts: {},
+            generatorName: g.generatorName || "unknown",
+            cacheTag: g.generatorName || "unknown"
         })
 
         if(options) {
@@ -143,7 +144,7 @@ class BaseAPIClient {
             return Promise.reject(new TokenNotInputedError());
         }
     
-        return new Promise((resolve, reject) => {
+        return new Promise(async (resolve, reject) => {
             try {
                 g.state = 'running';
                 g.messages = this._getMessages(generateOption);
@@ -152,7 +153,7 @@ class BaseAPIClient {
                 g.gptResponseId = null;
                 g.firstResponseTime = null
                 g.requestStartTime = new Date().getTime()
-                const requestParams = this._makeRequestParams(g.messages, g.modelInfo, token);
+                const requestParams = await this._makeRequestParams(g.messages, g.modelInfo, token);
     
                 const requestInfo = this._makeRequestInfo(requestParams, g.messages)
                 previousRequestInfos.push(requestInfo)
@@ -161,8 +162,7 @@ class BaseAPIClient {
         
 
                 if(localStorage.getItem("useCache") === "true") {
-                    const hashKey = HashUtil.generateHashKey(JSON.stringify(g.messages));
-                    let existingResult = localStorage.getItem("cache-" + hashKey);
+                    let existingResult = await AICacheUtil.get(JSON.stringify(g.messages));
         
                     if(existingResult){
                         setTimeout(()=>{
@@ -271,7 +271,7 @@ class BaseAPIClient {
      * **상위 클래스에서 반드시 재정의해야하는 메소드**
      * 각 모델에 따라서 적절한 POST 요청 파라미터를 반환해야 함
      */
-    _makeRequestParams(messages, modelInfo, token){
+    async _makeRequestParams(messages, modelInfo, token){
         // return {
         //     requestUrl: "",
         //     requestData: JSON.stringify({}),
@@ -399,8 +399,7 @@ class BaseAPIClient {
 
 
         if(localStorage.getItem("useCache") === "true"){
-            let hashKey = HashUtil.generateHashKey(JSON.stringify(g.messages))
-            localStorage.setItem("cache-" + hashKey, g.modelJson)
+            AICacheUtil.set(JSON.stringify(g.messages), g.modelJson, g.cacheTag)
         }
     }
 

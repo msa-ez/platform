@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  # LiteLLM Proxy - 내부 네트워크에서만 접근 가능
+  litellm-proxy:
+    build:
+      context: ./litellm-proxy
+      dockerfile: Dockerfile
+    container_name: litellm-proxy-container
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    ports:
+      # 로컬 테스트를 위해 포트를 노출하지만, 프로덕션에서는 제거
+      - "4000:4000"
+    networks:
+      - litellm-internal
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Gateway - 외부에서 접근 가능
+  litellm-gateway:
+    build:
+      context: ./litellm-proxy-gateway
+      dockerfile: Dockerfile
+    container_name: litellm-gateway-container
+    environment:
+      - PORT=3000
+      - LITELLM_URL=http://litellm-proxy:4000
+      - FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID:-eventstorming-tool-db}
+      # Firebase Admin SDK 서비스 계정 키 (선택사항)
+      # - GOOGLE_APPLICATION_CREDENTIALS=/app/secrets/serviceAccountKey.json
+    ports:
+      - "3000:3000"
+    networks:
+      - litellm-internal
+    depends_on:
+      - litellm-proxy
+    restart: unless-stopped
+    # volumes:
+    #   - ./firebase-key.json:/app/secrets/serviceAccountKey.json:ro
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health', (r) => { process.exit(r.statusCode === 200 ? 0 : 1); });"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  litellm-internal:
+    driver: bridge
+

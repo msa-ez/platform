@@ -10,6 +10,63 @@ export const getCommandRegistry = {
         },
         description: "특정 값을 콘솔에 출력",
         usage: "get direct <값 이름>"
+    },
+    status: {
+        handler: (commandArgs, client) => {
+            const status = {
+                selectedAspect: client.selectedAspect,
+                boundedContextVersion: client.boundedContextVersion,
+                resultDevideBoundedContext: client.resultDevideBoundedContext,
+                projectInfo: client.projectInfo,
+                state: client.state,
+                messages: client.messages,
+                workingMessages: client.workingMessages,
+                frontEndResults: client.frontEndResults,
+                boundedContexts: client.boundedContexts,
+                pbcResults: client.pbcResults,
+                pbcLists: client.pbcLists,
+                requirementsValidationResult: client.requirementsValidationResult,
+                commandReadModelData: client.commandReadModelData,
+                siteMap: client.siteMap
+            }
+            console.log(`[#] 상태 >`)
+            console.log(status)
+            return status
+        },
+        description: "현재 ESDialoger의 주요 상태 변수들 출력",
+        usage: "get status"
+    },
+    config: {
+        handler: (commandArgs, client) => {
+            const configInfos = {
+                isUseTerminal: {
+                    value: localStorage.getItem("isUseTerminal") || "false",
+                    description: "MSEAZ에서 Alt+T를 통한 콘솔 명령어 기능 사용 여부",
+                },
+                is_local_eventstorming_generator: {
+                    value: localStorage.getItem("is_local_eventstorming_generator") || "false",
+                    description: "로컬에서 구동되는 이벤트 스토밍 생성 서비스 사용 여부",
+                },
+                is_pass_health_check: {
+                    value: localStorage.getItem("is_pass_health_check") || "false",
+                    description: "Job 요청시에 이벤트 스토밍 생성 서비스에 대한 Health 체크를 하지 않을지 여부",
+                },
+                useCache: {
+                    value: localStorage.getItem("useCache") || "false",
+                    description: "AI 응답시 캐시 저장 및 사용 여부",
+                }
+            }
+
+            console.log(`# 키 이름 / 값 / 설명`)
+            console.log(`--------------------------------`)
+            for(const key in configInfos) {
+                console.log(`   - ${key} / ${configInfos[key].value} / ${configInfos[key].description}`)
+            }
+            console.log(`--------------------------------`)
+            return configInfos
+        },
+        description: "MSAEZ에서 전역적으로 사용되는 로컬 스톨리지 설정 값 출력",
+        usage: "get config"
     }
 }
 

@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: litellm-proxy-gateway-service
+  labels:
+    app: litellm-proxy-gateway
+spec:
+  type: ClusterIP  # Ingress를 통해 외부 노출
+  ports:
+  - port: 80
+    targetPort: 3000
+    protocol: TCP
+    name: http
+  selector:
+    app: litellm-proxy-gateway
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: litellm-proxy-service
+  labels:
+    app: litellm-proxy
+spec:
+  type: ClusterIP  # 내부 네트워크에서만 접근 가능
+  ports:
+  - port: 4000
+    targetPort: 4000
+    protocol: TCP
+    name: http
+  selector:
+    app: litellm-proxy
+

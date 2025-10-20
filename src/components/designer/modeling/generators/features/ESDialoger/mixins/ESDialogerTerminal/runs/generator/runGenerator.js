@@ -2,6 +2,9 @@ import runRequirementsValidationGenerator from "./RequirementsValidationGenerato
 import runRecursiveRequirementsValidationGenerator from "./RecursiveRequirementsValidationGenerator/runRecursiveRequirementsValidationGenerator"
 import runDevideBoundedContextGenerator from "./DevideBoundedContextGenerator/runDevideBoundedContextGenerator"
 import runRequirementsMappingGenerator from "./RequirementsMappingGenerator/runRequirementsMappingGenerator"
+import runExtractDDLFieldsGenerator from "./ExtractDDLFieldsGenerator/runExtractDDLFieldsGenerator"
+import runAddTraceToDraftOptionsGenerator from "./AddTraceToDraftOptionsGenerator/runAddTraceToDraftOptionsGenerator"
+import runAssignPreviewFieldsToAggregateDraft from "./AssignPreviewFieldsToAggregateDraft/runAssignPreviewFieldsToAggregateDraft"
 
 export const runGeneratorCommandRegistry = {
     RequirementsValidationGenerator: {
@@ -23,6 +26,21 @@ export const runGeneratorCommandRegistry = {
         handler: runRequirementsMappingGenerator,
         description: "RequirementsMappingGenerator 실행",
         usage: "run runGenerator RequirementsMappingGenerator"
+    },
+    ExtractDDLFieldsGenerator: {
+        handler: runExtractDDLFieldsGenerator,
+        description: "ExtractDDLFieldsGenerator 실행",
+        usage: "run runGenerator ExtractDDLFieldsGenerator (DDLLineRefSplitter)"
+    },
+    AddTraceToDraftOptionsGenerator: {
+        handler: runAddTraceToDraftOptionsGenerator,
+        description: "AddTraceToDraftOptionsGenerator 실행",
+        usage: "run runGenerator AddTraceToDraftOptionsGenerator"
+    },
+    AssignPreviewFieldsToAggregateDraft: {
+        handler: runAssignPreviewFieldsToAggregateDraft,
+        description: "AssignPreviewFieldsToAggregateDraft 실행",
+        usage: "run runGenerator AssignPreviewFieldsToAggregateDraft"
     }
 }
 

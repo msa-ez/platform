@@ -91,12 +91,28 @@ export default class TestRunner {
                     throw new Error(`Expected falsy value, but got ${actual}`);
                 }
             },
+            toBeGreaterThan(expected) {
+                if(actual === null || actual === undefined) {
+                    throw new Error(`Expected ${actual} to have a number value`);
+                }
+                if (actual <= expected) {
+                    throw new Error(`Expected ${actual} to be greater than ${expected}`);
+                }
+            },
             toBeGreaterOrEqualThan(expected) {
                 if(actual === null || actual === undefined) {
                     throw new Error(`Expected ${actual} to have a number value`);
                 }
                 if (actual < expected) {
                     throw new Error(`Expected ${actual} to be greater or equal than ${expected}`);
+                }
+            },
+            toBeLessThan(expected) {
+                if(actual === null || actual === undefined) {
+                    throw new Error(`Expected ${actual} to have a number value`);
+                }
+                if (actual >= expected) {
+                    throw new Error(`Expected ${actual} to be less than ${expected}`);
                 }
             },
             toBeLessOrEqualThan(expected) {
