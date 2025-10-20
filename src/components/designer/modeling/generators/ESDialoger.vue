@@ -110,6 +110,11 @@
                     <v-btn :disabled="getDisabledValidateBtn() || !isEditable" class="auto-modeling-btn" color="primary" @click="validateRequirements()">
                         {{ $t('ESDialoger.validateRequirements') }}
                     </v-btn>
+                    <v-btn 
+                        :disabled="getDisabledValidateBtn() || !isEditable" class="auto-modeling-btn" color="primary" @click="onShowBCGenerationOption()"
+                    >
+                        {{ $t('RequirementAnalysis.createBoundedContext') }}
+                    </v-btn>
                 </v-row>
                 
                 <!-- Processing Progress Bar -->
@@ -233,6 +238,7 @@
     import { VueTypedJs } from 'vue-typed-js'
     import Generator from './UserStoryGenerator.js'
     import RecursiveUserStoryGenerator from './RecursiveUserStoryGenerator.js'
+    import RecursiveUserStoryGeneratorLangGraph from './RecursiveUserStoryGeneratorLangGraph.js'
     //import UserStoryGenerator from './UserStoryGenerator.js'
     // import StorageBase from "../StorageBase";
     import StorageBase from '../../../CommonStorageBase.vue';
@@ -255,9 +261,11 @@
     } from './utils'
     
     import DevideBoundedContextGenerator from './DevideBoundedContextGenerator.js'
-
+    import DevideBoundedContextGeneratorLangGraph from './DevideBoundedContextGeneratorLangGraph.js'
+    
     //Requirements Summarizer
     import RecursiveRequirementsSummarizer from './RecursiveRequirementsSummarizer.js';
+    import RecursiveRequirementsSummarizerLangGraph from './RecursiveRequirementsSummarizerLangGraph.js';
     import RequirementsMappingGenerator from './RequirementsMappingGenerator.js';
     
     // Requirements Validation Generator
@@ -1576,6 +1584,34 @@ import { value } from 'jsonpath';
                     return;
                 }
 
+                // DevideBoundedContextGeneratorLangGraph 완료 처리
+                if (me.state.generator === "DevideBoundedContextGeneratorLangGraph") {
+                    const bcResult = model.modelValue.output;
+                    if (bcResult) {
+                        me.resultDevideBoundedContext[me.selectedAspect] = {
+                            thoughts: bcResult.thoughts,
+                            boundedContexts: bcResult.boundedContexts,
+                            relations: bcResult.relations,
+                            explanations: bcResult.explanations
+                        };
+                        
+                        // 메시지 업데이트
+                        const bcMessage = me.messages.find(msg => msg.type === 'boundedContextResult');
+                        if (bcMessage) {
+                            const updatedResult = JSON.parse(JSON.stringify(me.resultDevideBoundedContext));
+                            
+                            me.updateMessageState(bcMessage.uniqueId, {
+                                result: updatedResult,
+                                selectedAspect: me.selectedAspect,
+                                isGeneratingBoundedContext: false
+                            });
+                        }
+                    }
+                    
+                    me.processingState.isGeneratingBoundedContext = false;
+                    return;
+                }
+
                 // Command/ReadModel 추출 완료 처리
                 if (me.state.generator === "CommandReadModelExtractor" || me.state.generator === "RecursiveCommandReadModelExtractor") {
                     // 모든 청크가 완료되었을 때만 처리
@@ -1671,8 +1707,11 @@ import { value } from 'jsonpath';
                 }
 
                 // Recursive UserStory: 청크 단위 결과는 생성기 내부에서 누적 처리하며 진행상황/부분결과 업데이트
-                if (me.state.generator === "RecursiveUserStoryGenerator") {
-                    me.generator.handleGenerationFinished(model);
+                if (me.state.generator === "RecursiveUserStoryGenerator" || me.state.generator === "RecursiveUserStoryGeneratorLangGraph") {
+                    // handleGenerationFinished가 있는 경우에만 호출 (기존 방식)
+                    if (me.generator.handleGenerationFinished) {
+                        me.generator.handleGenerationFinished(model);
+                    }
 
                     try {
                         const total = me.generator.currentChunks.length || 1;
@@ -1683,6 +1722,7 @@ import { value } from 'jsonpath';
                         if (accumulated && (accumulated.userStories || accumulated.actors || accumulated.businessRules)) {
                             const userStoryContent = me.convertUserStoriesToText(accumulated);
                             me.$emit('update:userStory', userStoryContent, false);
+                            console.log('[ESDialoger] Updated userStory content, stories:', accumulated.userStories.length);
                         }
 
                         // 현재 처리 상태 표시 (선언된 데이터 활용)
@@ -1869,20 +1909,41 @@ import { value } from 'jsonpath';
                 const shouldUseRecursive = requirementsText && requirementsText.length > 24000;
                 
                 if (shouldUseRecursive) {
-                    this.state.generator = "RecursiveUserStoryGenerator";
-                    this.generatorName = "RecursiveUserStoryGenerator";
-                    this.generator = new RecursiveUserStoryGenerator(this);
+                    this.state.generator = "RecursiveUserStoryGeneratorLangGraph";
+                    this.generatorName = "RecursiveUserStoryGeneratorLangGraph";
+                    this.generator = new RecursiveUserStoryGeneratorLangGraph(this);
                     
-                    // recursive 처리 시작
+                    // onModelUpdated 콜백 정의 (청크 단위 업데이트)
+                    this.onModelUpdated = (accumulated) => {
+                        console.log('[ESDialoger] onModelUpdated called with:', accumulated);
+                        if (accumulated && (accumulated.userStories || accumulated.actors || accumulated.businessRules)) {
+                            const userStoryContent = this.convertUserStoriesToText(accumulated);
+                            this.$emit('update:userStory', userStoryContent, false);
+                            console.log('[ESDialoger] userStory updated with', accumulated.userStories.length, 'stories');
+                        }
+                    };
+                    
+                    // updateProgress 콜백 정의 (진행률 표시)
+                    this.updateProgress = (progress) => {
+                        console.log('[ESDialoger] updateProgress called:', progress);
+                        this.processingRate = progress;
+                        this.done = (progress >= 100);
+                    };
+                    
+                    // recursive 처리 시작 (LangGraph Backend 사용)
+                    console.log('Starting LangGraph UserStory generation...');
                     this.generator.generateRecursively(this.projectInfo.userStory).then(result => {
                         console.log('Recursive user story generation completed:', result);
                         // 최종 결과를 userStory로 설정
                         if (result) {
                             const userStoryContent = this.convertUserStoriesToText(result);
                             this.$emit('update:userStory', userStoryContent, true);
+                            this.done = true;
+                            this.processingRate = 0;
                         }
                     }).catch(error => {
                         console.error('Recursive generation failed:', error);
+                        this.done = true;
                     });
                 } else {
                     this.state.generator = "EventOnlyESGenerator";
@@ -2122,14 +2183,24 @@ import { value } from 'jsonpath';
             },
 
             async summarizeRequirements() {
-                this.generator = new RecursiveRequirementsSummarizer(this);
-                this.state.generator = "RecursiveRequirementsSummarizer";
-                this.generatorName = "RecursiveRequirementsSummarizer";
+                // LangGraph Backend 사용
+                const useLangGraph = true;
+                
+                if (useLangGraph) {
+                    this.generator = new RecursiveRequirementsSummarizerLangGraph(this);
+                    this.state.generator = "RecursiveRequirementsSummarizerLangGraph";
+                    this.generatorName = "RecursiveRequirementsSummarizerLangGraph";
+                } else {
+                    this.generator = new RecursiveRequirementsSummarizer(this);
+                    this.state.generator = "RecursiveRequirementsSummarizer";
+                    this.generatorName = "RecursiveRequirementsSummarizer";
+                }
 
                 this.processingState.isSummarizeStarted = true;
 
                 try {
                     const summarizedResult = await this.generator.summarizeRecursively(this.projectInfo.usedUserStory);
+                    
                     // 요약 결과 저장
                     this.userStoryChunks = this.generator.makeUserStoryChunks(this.projectInfo.usedUserStory + "\n" + this.projectInfo.usedInputDDL);
                     this.userStoryChunksIndex = 0;
@@ -2146,10 +2217,12 @@ import { value } from 'jsonpath';
 
                     // BC 생성이 대기 중이었다면 진행
                     if (this.pendingBCGeneration) {
+                        this.pendingBCGeneration = false;
                         this.generateDevideBoundedContext();
                     }
                 } catch (error) {
                     console.error('Summarization failed:', error);
+                    this.processingState.isSummarizeStarted = false;
                 }
             },
 
@@ -2191,7 +2264,7 @@ import { value } from 'jsonpath';
                 this.generator.generate();
             },
 
-            generateDevideBoundedContext(){
+            async generateDevideBoundedContext(){
                 if(!this.alertGenerateWarning("DevideBoundedContextGenerator")){
                     return;
                 }
@@ -2206,9 +2279,19 @@ import { value } from 'jsonpath';
                     return;
                 }
                 
-                this.generator = new DevideBoundedContextGenerator(this);
-                this.state.generator = "DevideBoundedContextGenerator";
-                this.generatorName = "DevideBoundedContextGenerator";
+                // LangGraph Backend 사용
+                const useLangGraph = true;
+                
+                if (useLangGraph) {
+                    this.generator = new DevideBoundedContextGeneratorLangGraph(this);
+                    this.state.generator = "DevideBoundedContextGeneratorLangGraph";
+                    this.generatorName = "DevideBoundedContextGeneratorLangGraph";
+                } else {
+                    const DevideBoundedContextGenerator = require('./DevideBoundedContextGenerator');
+                    this.generator = new DevideBoundedContextGenerator(this);
+                    this.state.generator = "DevideBoundedContextGenerator";
+                    this.generatorName = "DevideBoundedContextGenerator";
+                }
 
                 this.devisionAspectIndex = 0;
                 this.input['devisionAspect'] = this.selectedAspect;
@@ -2219,16 +2302,24 @@ import { value } from 'jsonpath';
                 this.input['requirements'] = {
                     userStory: this.projectInfo.usedUserStory,
                     summarizedResult: this.summarizedResult || {},
-                    analysisResult: this.requirementsValidationResult.analysisResult,
+                    analysisResult: this.requirementsValidationResult && this.requirementsValidationResult.analysisResult ? this.requirementsValidationResult.analysisResult : { actors: [], events: [] },
                     pbcInfo: this.pbcLists.map(pbc => ({
                         name: pbc.name,
                         description: pbc.description
                     }))
                 };
 
-                this.generator.generate();
                 this.processingState.isGeneratingBoundedContext = true;
                 this.currentGeneratedLength = 0;
+
+                try {
+                    console.log('[ESDialoger] BC 생성 시작...');
+                    await this.generator.generate();
+                    // onGenerationFinished에서 처리됨
+                } catch (error) {
+                    console.error('[ESDialoger] BC 생성 실패:', error);
+                    this.processingState.isGeneratingBoundedContext = false;
+                }
             },
 
             generateFrontEnd(){
@@ -2502,8 +2593,8 @@ import { value } from 'jsonpath';
                         isStartMapping: this.processingState.isStartMapping,
                         isAnalizing: this.processingState.isAnalizing,
                         generateOption: {},
-                        recommendedBoundedContextsNumber: this.requirementsValidationResult.analysisResult.recommendedBoundedContextsNumber,
-                        reasonOfRecommendedBoundedContextsNumber: this.requirementsValidationResult.analysisResult.reasonOfRecommendedBoundedContextsNumber,
+                        recommendedBoundedContextsNumber: this.requirementsValidationResult && this.requirementsValidationResult.analysisResult ? this.requirementsValidationResult.analysisResult.recommendedBoundedContextsNumber : 2,
+                        reasonOfRecommendedBoundedContextsNumber: this.requirementsValidationResult && this.requirementsValidationResult.analysisResult ? this.requirementsValidationResult.analysisResult.reasonOfRecommendedBoundedContextsNumber : "",
                         timestamp: new Date()
                     };
                 } else if(type === "siteMapViewer") {
@@ -2585,6 +2676,22 @@ import { value } from 'jsonpath';
             },
 
             onShowBCGenerationOption(){
+                if(!this.projectInfo || !this.projectInfo.userStory){
+                    alert("Can not found User Story. You need to input User Story to proceed.");
+                    return;
+                }
+
+                // 요구사항 검증 이후에 요구사항 입력창을 유저가 수정한 경우, 이후 로직이 망가질 수 있기 때문에 별도로 저장 후 사용
+                this.projectInfo.usedUserStory = this.projectInfo.userStory || ''
+                this.projectInfo.usedInputDDL = this.projectInfo.inputDDL || ''
+                this.$emit("update:projectInfo", {
+                    usedUserStory: this.projectInfo.usedUserStory,
+                    usedInputDDL: this.projectInfo.usedInputDDL
+                })
+                
+                const usedUserStory = this.projectInfo.usedUserStory;
+                this.$emit("update:userStory", usedUserStory, true);
+                
                 if(this.messages.every(message => message.type != "bcGenerationOption")){
                     this.messages.push(this.generateMessage("bcGenerationOption", {}))
                 }
