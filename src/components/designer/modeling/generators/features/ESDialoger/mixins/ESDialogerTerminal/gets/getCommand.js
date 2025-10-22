@@ -43,13 +43,9 @@ export const getCommandRegistry = {
                     value: localStorage.getItem("isUseTerminal") || "false",
                     description: "MSEAZ에서 Alt+T를 통한 콘솔 명령어 기능 사용 여부",
                 },
-                is_local_eventstorming_generator: {
-                    value: localStorage.getItem("is_local_eventstorming_generator") || "false",
-                    description: "로컬에서 구동되는 이벤트 스토밍 생성 서비스 사용 여부",
-                },
-                is_pass_health_check: {
-                    value: localStorage.getItem("is_pass_health_check") || "false",
-                    description: "Job 요청시에 이벤트 스토밍 생성 서비스에 대한 Health 체크를 하지 않을지 여부",
+                job_namespace_suffix: {
+                    value: localStorage.getItem("job_namespace_suffix") || "",
+                    description: "요청되는 Job에 suffix를 붙여서 고유한 테스트 환경을 만듬",
                 },
                 useCache: {
                     value: localStorage.getItem("useCache") || "false",
