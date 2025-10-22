@@ -1,4 +1,5 @@
 const JsonAIGenerator = require("./JsonAIGenerator");
+const { RefsTraceUtil } = require("./utils");
 
 class SiteMapGenerator extends JsonAIGenerator {
     constructor(client) {
@@ -7,6 +8,16 @@ class SiteMapGenerator extends JsonAIGenerator {
     }
 
     createPrompt() {
+        const promptParams = {}
+        promptParams.requirements = this.client.input.requirements
+        promptParams.resultDevideBoundedContext = JSON.stringify(
+            this.client.input.resultDevideBoundedContext.filter(bc => bc.name !== 'ui')
+        )
+        promptParams.commandReadModelData = JSON.stringify(RefsTraceUtil.removeRefsAttributes(
+            this.client.input.commandReadModelData || {}
+        ))
+
+
         const hasExistingNavigation = this.client.input.existingNavigation && 
                                       this.client.input.existingNavigation.length > 0;
         
@@ -28,13 +39,13 @@ IMPORTANT:
         return `You are an expert UX designer and web architect. Generate a comprehensive website sitemap JSON structure based on user requirements.
 
         REQUIREMENTS:
-        ${this.client.input.requirements}
+        ${promptParams.requirements}
 
         ${existingDataPrompt}
 
         BOUNDED CONTEXTS:
-        Bounded Contexts List: ${JSON.stringify(this.client.input.resultDevideBoundedContext.filter(bc => bc.name !== 'ui'))}
-        Command/ReadModel Data: ${JSON.stringify(this.client.input.commandReadModelData || {})}
+        Bounded Contexts List: ${promptParams.resultDevideBoundedContext}
+        Command/ReadModel Data: ${promptParams.commandReadModelData}
 
         TASK:
         Generate a user-friendly website sitemap that represents actual web pages and sections.

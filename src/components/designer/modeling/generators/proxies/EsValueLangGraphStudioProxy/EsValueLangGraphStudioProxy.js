@@ -2,7 +2,6 @@ const StorageBase = require('../../../../../CommonStorageBase.vue').default;
 const firebase = require('firebase');
 
 class EsValueLangGraphStudioProxy {
-    // 상수 정의
     static get PATHS() {
         return {
             CONFIG: 'db://configs/eventstorming_generator',
@@ -12,24 +11,17 @@ class EsValueLangGraphStudioProxy {
         };
     }
 
-    static get NAMESPACES() {
-        return {
-            DEFAULT: 'eventstorming_generator',
-            LOCAL: 'eventstorming_generator_local'
-        };
+    static get NAMESPACE() {
+        return (this.JOB_NAMESPACE_SUFFIX) ? `eventstorming_generator_${this.JOB_NAMESPACE_SUFFIX}` : "eventstorming_generator";
     }
 
-    static get STORAGE_KEYS() {
-        return {
-            LOCAL_GENERATOR: 'is_local_eventstorming_generator',
-            IS_PASS_HEALTH_CHECK: 'is_pass_health_check'
-        };
+    static get JOB_NAMESPACE_SUFFIX() {
+        return localStorage.getItem('job_namespace_suffix') || '';
     }
 
 
     static async healthCheckUsingConfig() {
-        if(localStorage.getItem(this.STORAGE_KEYS.LOCAL_GENERATOR) === 'true') return true;
-        if(localStorage.getItem(this.STORAGE_KEYS.IS_PASS_HEALTH_CHECK) === 'true') return true;
+        if(this.JOB_NAMESPACE_SUFFIX) return true;
 
         try {
             const storage = new Vue(StorageBase);
@@ -63,6 +55,14 @@ class EsValueLangGraphStudioProxy {
         return jobId;
     }
 
+    static async removeJob(jobId) {
+        const storage = new Vue(StorageBase);
+        await storage.setObject(this._getJobStatePath(jobId), {
+            "isRemoveRequested": true
+        });
+    }
+
+
     static watchJob(jobId, onUpdate, onComplete, onWaiting, onFailed) {
         const storage = new Vue(StorageBase);
         const jobState = this._initializeJobState(storage, jobId);
@@ -70,15 +70,7 @@ class EsValueLangGraphStudioProxy {
         
         this._setupJobWatchers(storage, jobId, jobState, callbacks);
     }
-
-    static async removeJob(jobId) {
-        const storage = new Vue(StorageBase);
-        await storage.setObject(this._getJobStatePath(jobId), {
-            "isRemoveRequested": true
-        });
-    }
     
-    // 작업 상태 초기화
     static _initializeJobState(storage, jobId) {
         let accumulatedOutputState = this._restoreDataFromFirebase(
             storage.getObject(`${this._getJobPath(jobId)}/state/outputs`)
@@ -97,27 +89,20 @@ class EsValueLangGraphStudioProxy {
         return accumulatedOutputState;
     }
 
-    // 모든 워처 설정
     static _setupJobWatchers(storage, jobId, jobState, callbacks) {
         const parseState = async () => await this._parseAndNotifyJobState(jobState, callbacks);
         
-        // 대기 중인 작업 수 감시
         this._watchWaitingJobCount(storage, jobId, callbacks.onWaiting);
         
-        // 작업 상태 감시
         this._watchJobStatus(storage, jobId, jobState, callbacks.onFailed, parseState);
         
-        // 진행률 감시
         this._watchJobProgress(storage, jobId, jobState, parseState);
         
-        // 로그 감시
         this._watchJobLogs(storage, jobId, jobState, parseState);
         
-        // ES 값 감시 (elements, relations)
         this._watchEsValues(storage, jobId, jobState, parseState);
     }
 
-    // 대기 중인 작업 수 감시
     static _watchWaitingJobCount(storage, jobId, onWaiting) {
         storage.watch(`${this._getRequestJobPath(jobId)}/waitingJobCount`, async (waitingJobCount) => {
             if (waitingJobCount && waitingJobCount > 0) {
@@ -126,9 +111,7 @@ class EsValueLangGraphStudioProxy {
         });
     }
 
-    // 작업 상태 감시 (완료/실패)
     static _watchJobStatus(storage, jobId, jobState, onFailed, parseState) {
-        // 실패 상태 감시
         storage.watch(`${this._getJobPath(jobId)}/state/outputs/isFailed`, async (isFailed) => {
             if (!isFailed) return;
             
@@ -148,7 +131,6 @@ class EsValueLangGraphStudioProxy {
         });
     }
 
-    // 작업 진행률 감시
     static _watchJobProgress(storage, jobId, jobState, parseState) {
         storage.watch(`${this._getJobPath(jobId)}/state/outputs/totalProgressCount`, async (totalProgressCount) => {
             if (!totalProgressCount) return;
@@ -165,7 +147,6 @@ class EsValueLangGraphStudioProxy {
         });
     }
 
-    // 로그 감시
     static _watchJobLogs(storage, jobId, jobState, parseState) {
         storage.watch_added(`${this._getJobPath(jobId)}/state/outputs/logs`, null, async (log) => {
             if (!log) return;
@@ -175,9 +156,7 @@ class EsValueLangGraphStudioProxy {
         });
     }
 
-    // ES 값 감시 (elements, relations)
     static _watchEsValues(storage, jobId, jobState, parseState) {
-        // Elements 감시
         this._watchEsValueCollection(
             storage, 
             jobId, 
@@ -186,7 +165,6 @@ class EsValueLangGraphStudioProxy {
             parseState
         );
 
-        // Relations 감시
         this._watchEsValueCollection(
             storage, 
             jobId, 
@@ -196,11 +174,9 @@ class EsValueLangGraphStudioProxy {
         );
     }
 
-    // ES 값 컬렉션 감시 (공통 로직)
     static _watchEsValueCollection(storage, jobId, collectionName, targetCollection, parseState) {
         const basePath = `${this._getJobPath(jobId)}/state/outputs/esValue/${collectionName}`;
         
-        // 변경 감시
         storage.watch_changed(basePath, async (item, key) => {
             if (!item || !key) return;
             
@@ -208,7 +184,6 @@ class EsValueLangGraphStudioProxy {
             await parseState();
         });
 
-        // 추가 감시
         storage.watch_added(basePath, null, async (item) => {
             if (!item || !item.id) return;
             
@@ -217,7 +192,6 @@ class EsValueLangGraphStudioProxy {
         });
     }
 
-    // 작업 상태 파싱 및 콜백 호출
     static async _parseAndNotifyJobState(jobState, callbacks) {
         const state = this._parseJobState(jobState);
         this._addElementRefToState(state.esValue);
@@ -226,23 +200,6 @@ class EsValueLangGraphStudioProxy {
             await callbacks.onComplete(state.esValue, state.logs, state.totalPercentage, state.isFailed);
         } else {
             await callbacks.onUpdate(state.esValue, state.logs, state.totalPercentage, state.isFailed);
-        }
-    }
-
-    static _addElementRefToState(esValue) {
-        if(!esValue || !esValue.elements || !esValue.relations) return;
-
-        const relations = esValue.relations;
-        const elements = esValue.elements;
-        
-        for(const relationKey of Object.keys(relations)) {
-            const relation = relations[relationKey];
-            if(!relation.from || !elements[relation.from] || !relation.to || !elements[relation.to]) {
-                continue;
-            }
-
-            relation.sourceElement = elements[relation.from];
-            relation.targetElement = elements[relation.to];
         }
     }
 
@@ -262,31 +219,23 @@ class EsValueLangGraphStudioProxy {
         };
     }
 
+    static _addElementRefToState(esValue) {
+        if(!esValue || !esValue.elements || !esValue.relations) return;
 
-    static _getJobPath(jobId) {
-        return `db://${this.PATHS.JOBS}/${this._getNamespace()}/${jobId}`;
+        const relations = esValue.relations;
+        const elements = esValue.elements;
+        
+        for(const relationKey of Object.keys(relations)) {
+            const relation = relations[relationKey];
+            if(!relation.from || !elements[relation.from] || !relation.to || !elements[relation.to]) {
+                continue;
+            }
+
+            relation.sourceElement = elements[relation.from];
+            relation.targetElement = elements[relation.to];
+        }
     }
 
-    static _getRequestJobPath(jobId) {
-        return `db://${this.PATHS.REQUESTED_JOBS}/${this._getNamespace()}/${jobId}`;
-    }
-
-    static _getJobStatePath(jobId) {
-        return `db://${this.PATHS.JOB_STATES}/${this._getNamespace()}/${jobId}`;
-    }
-
-    static _getNamespace() {
-        return localStorage.getItem(this.STORAGE_KEYS.LOCAL_GENERATOR) === 'true' 
-            ? this.NAMESPACES.LOCAL 
-            : this.NAMESPACES.DEFAULT;
-    }
-
-
-    /**
-     * Firebase에서 가져온 데이터를 원본 형태로 복원
-     * @param {Object} data Firebase에서 가져온 데이터
-     * @returns {Object} 복원된 데이터
-     */
     static _restoreDataFromFirebase(data) {
         const processValue = (value) => {
             if (value === "@") {
@@ -319,6 +268,19 @@ class EsValueLangGraphStudioProxy {
             return result;
         }
         return data;
+    }
+
+
+    static _getJobPath(jobId) {
+        return `db://${this.PATHS.JOBS}/${this.NAMESPACE}/${jobId}`;
+    }
+
+    static _getRequestJobPath(jobId) {
+        return `db://${this.PATHS.REQUESTED_JOBS}/${this.NAMESPACE}/${jobId}`;
+    }
+
+    static _getJobStatePath(jobId) {
+        return `db://${this.PATHS.JOB_STATES}/${this.NAMESPACE}/${jobId}`;
     }
 }
 

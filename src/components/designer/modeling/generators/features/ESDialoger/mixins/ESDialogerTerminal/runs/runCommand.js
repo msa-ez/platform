@@ -1,20 +1,14 @@
-import requestEventStormingGenerate from "./etc/requestEventStormingGenerate"
-import requestAggregateDraftGenerate from "./etc/requestAggregateDraftGenerate"
+import requestRunFromSenario from "./etc/requestRunFromSenario"
 import showScenarioMessages from "./etc/showScenarioMessages"
 import showMermaidTestUIMessage from "./etc/showMermaidTestUIMessage"
 import { runGenerator } from "./generator/runGenerator"
 import { runUtil } from "./util/runUtil"
 
 export const runCommandRegistry = {
-    requestEventStormingGenerate: {
-        handler: requestEventStormingGenerate,
-        description: "특정 시나리오를 기반으로 이벤트 스토밍 생성",
-        usage: "run requestEventStormingGenerate (<시나리오 이름>)"
-    },
-    requestAggregateDraftGenerate: {
-        handler: requestAggregateDraftGenerate,
-        description: "특정 시나리오를 기반으로 애그리거트 초안 생성",
-        usage: "run requestAggregateDraftGenerate (<시나리오 이름>)"
+    requestRunFromSenario: {
+        handler: requestRunFromSenario,
+        description: "특정 시나리오를 기반으로 특정한 부분에 대한 요청을 수행",
+        usage: "run requestRunFromSenario <siteMapGenerate|aggregateDraftGenerate|eventStormingGenerate> (<시나리오 이름>)"
     },
     showScenarioMessages: {
         handler: showScenarioMessages,

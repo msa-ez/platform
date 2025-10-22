@@ -933,8 +933,10 @@ import { value } from 'jsonpath';
                         requirements.ddlFields = []
                     requirements.description = bcDescriptionWithMappingIndex.markdown
                     requirements.traceMap = bcDescriptionWithMappingIndex.traceMap
-                    requirements.commandNames = bc.commandNames || []
-                    requirements.readModelNames = bc.readModelNames || []
+                    requirements.commandInfos = bc.commandInfos || []
+                    requirements.commandNames = bc.commandInfos.map(command => command.name) || []
+                    requirements.readModelInfos = bc.readModelInfos || []
+                    requirements.readModelNames = bc.readModelInfos.map(readModel => readModel.name) || []
 
                     passedGeneratorInputs.push({
                         boundedContext: {
@@ -1619,45 +1621,6 @@ import { value } from 'jsonpath';
                 //     return;
                 // }
 
-                // Command/ReadModel 추출 완료 처리
-                if (me.state.generator === "CommandReadModelExtractor" || me.state.generator === "RecursiveCommandReadModelExtractor") {
-                    // 모든 청크가 완료되었을 때만 처리
-                    if (me.state.generator === "RecursiveCommandReadModelExtractor") {
-                        return;
-                    }
-                    
-                    // 일반 CommandReadModelExtractor의 경우
-                    me.commandReadModelData = model.extractedData || model;
-                    me.isExtractingCommandReadModel = false;
-
-                    // 추출 완료 상태 업데이트 (100% 완료 표시)
-                    me.updateMessageState(me.messages.find(msg => msg.type === 'siteMapViewer').uniqueId, {
-                        commandReadModelData: me.commandReadModelData,
-                        processingRate: 100,
-                        currentProcessingStep: 'extractingCommandsAndReadModels'
-                    });
-                    
-                    try {
-                        me._mapCommandReadModelDataToBoundedContexts(me.commandReadModelData);
-                        const bcMsg = me.messages.find(msg => msg.type === 'boundedContextResult');
-                        if (bcMsg) {
-                            me.updateMessageState(bcMsg.uniqueId, {
-                                result: JSON.parse(JSON.stringify(me.resultDevideBoundedContext))
-                            });
-                        }
-                    } catch (e) {
-                        console.warn('Failed to map sitemap to bounded contexts:', e);
-                    }
-
-                    me.$emit("update:projectInfo", {commandReadModelData: me.commandReadModelData});
-
-                    // 추출 완료 후 자동으로 사이트맵 생성 진행
-                    setTimeout(() => {
-                        me.generateSiteMap();
-                    }, 500);
-                    return;
-                }
-
                 // Recursive SiteMap: 청크 단위 결과는 생성기 내부에서 누적 처리하며 진행상황/부분결과 업데이트
                 if (me.state.generator === "RecursiveSiteMapGenerator") {
                     me.generator.handleGenerationFinished(model.siteMap);
@@ -1748,6 +1711,7 @@ import { value } from 'jsonpath';
                 }
             },  
 
+            
             async onGenerationSucceeded(returnObj) {
                 var me = this;
                 me.done = true;
@@ -1805,6 +1769,11 @@ import { value } from 'jsonpath';
                     });
 
                     me.$emit("update:draft", me.messages);
+                }
+
+                if (me.state.generator === "CommandReadModelExtractor") {
+                    me._handleCommandReadModelExtractorResult(model.extractedData);
+                    return;
                 }
 
                 if(me.state.generator === "RequirementsMappingGenerator"){
@@ -1896,6 +1865,66 @@ import { value } from 'jsonpath';
                     console.log("output: ", model)
                 }
             },
+
+            _handleCommandReadModelExtractorResult(extractedData){
+                this.commandReadModelData = extractedData;
+                this.isExtractingCommandReadModel = false;
+
+                const siteMapMsg = this.messages.find(msg => msg.type === 'siteMapViewer')
+                if(siteMapMsg){
+                    this.updateMessageState(siteMapMsg.uniqueId, {
+                        commandReadModelData: this.commandReadModelData,
+                        processingRate: 100,
+                        currentProcessingStep: 'extractingCommandsAndReadModels'
+                    });
+                }
+                
+                try {
+                    this._mapCommandReadModelDataToBoundedContexts(this.commandReadModelData);
+                    const bcMsg = this.messages.find(msg => msg.type === 'boundedContextResult');
+                    if (bcMsg) {
+                        this.updateMessageState(bcMsg.uniqueId, {
+                            result: JSON.parse(JSON.stringify(this.resultDevideBoundedContext))
+                        });
+                    }
+
+                } catch (e) {
+                    console.warn('Failed to map sitemap to bounded contexts:', e);
+                }
+
+                this.$emit("update:projectInfo", {commandReadModelData: this.commandReadModelData});
+                setTimeout(() => {
+                    this.generateSiteMap();
+                }, 500);
+            },
+
+            _mapCommandReadModelDataToBoundedContexts(commandReadModelData) {
+                if(!commandReadModelData || !commandReadModelData.boundedContexts || !Array.isArray(commandReadModelData.boundedContexts))
+                    throw new Error('Invalid commandReadModelData');
+                
+                const bcCommandInfos = {}
+                const bcReadModelInfos = {}
+                for(const bc of commandReadModelData.boundedContexts){
+                    bcCommandInfos[bc.name] = (bc.commands) ? bc.commands.map(command => ({
+                        name: command.name,
+                        refs: command.refs
+                    })) : [];
+                    bcReadModelInfos[bc.name] = (bc.readModels) ? bc.readModels.map(readModel => ({
+                        name: readModel.name,
+                        refs: readModel.refs
+                    })) : [];
+                }
+
+                const aspect = this.selectedAspect || Object.keys(this.resultDevideBoundedContext)[0];
+                if (!aspect || !this.resultDevideBoundedContext[aspect]) return;
+
+                const bcArray = this.resultDevideBoundedContext[aspect].boundedContexts || [];
+                for(const bc of bcArray){
+                    bc.commandInfos = bcCommandInfos[bc.name] || [];
+                    bc.readModelInfos = bcReadModelInfos[bc.name] || [];
+                }
+            },
+
 
             generateUserStory(){
                 if(!this.projectInfo.userStory){
@@ -2512,6 +2541,7 @@ import { value } from 'jsonpath';
                 this.collectedMockDatas.aggregateDraftScenarios.requirementsValidationResult = structuredClone(this.requirementsValidationResult)
                 this.collectedMockDatas.aggregateDraftScenarios.commandReadModelData = structuredClone(this.commandReadModelData)
                 this.collectedMockDatas.aggregateDraftScenarios.siteMap = structuredClone(this.siteMap)
+                this.collectedMockDatas.aggregateDraftScenarios.selectedAspect = this.selectedAspect
                 console.log("[#] 시나리오별 테스트를 위한 Mock 데이터 구축 완료", {collectedMockDatas: this.collectedMockDatas.aggregateDraftScenarios})
             },
 
@@ -3156,20 +3186,7 @@ import { value } from 'jsonpath';
                     });
                 } else if (shouldUseRecursive) {
                     this.generator.generateRecursively(this.projectInfo.usedUserStory).then(result => {
-                        this.commandReadModelData = result.extractedData;
-                        this.isExtractingCommandReadModel = false;
-                        
-                        // 추출 완료 상태 업데이트 (100% 완료 표시)
-                        this.updateMessageState(this.messages.find(msg => msg.type === 'siteMapViewer').uniqueId, {
-                            commandReadModelData: this.commandReadModelData,
-                            processingRate: 100,
-                            currentProcessingStep: 'extractingCommandsAndReadModels'
-                        });
-                        
-                        // 추출 완료 후 자동으로 사이트맵 생성 진행
-                        setTimeout(() => {
-                            this.generateSiteMap();
-                        }, 500);
+                        this._handleCommandReadModelExtractorResult(result.extractedData);
                     }).catch(error => {
                         console.error('Command/ReadModel extraction failed:', error);
                         this.isExtractingCommandReadModel = false;
@@ -3290,30 +3307,6 @@ import { value } from 'jsonpath';
             // 사이트맵 루트 노드 안전하게 가져오기
             getSiteMapRoot(siteMapTree) {
                 return siteMapTree && Array.isArray(siteMapTree) && siteMapTree.length > 0 ? siteMapTree[0] : null;
-            },
-            
-            _mapCommandReadModelDataToBoundedContexts(commandReadModelData) {
-                if(!commandReadModelData || !commandReadModelData.boundedContexts || !Array.isArray(commandReadModelData.boundedContexts))
-                    throw new Error('Invalid commandReadModelData');
-                
-                const bcCommandNames = {}
-                const bcReadModelNames = {}
-                for(const bc of commandReadModelData.boundedContexts){
-                    const commandNames = (bc.commands) ? bc.commands.map(command => command.name) : [];
-                    bcCommandNames[bc.name] = commandNames;
-                    
-                    const readModelNames = (bc.readModels) ? bc.readModels.map(readModel => readModel.name) : [];
-                    bcReadModelNames[bc.name] = readModelNames;
-                }
-
-                const aspect = this.selectedAspect || Object.keys(this.resultDevideBoundedContext)[0];
-                if (!aspect || !this.resultDevideBoundedContext[aspect]) return;
-
-                const bcArray = this.resultDevideBoundedContext[aspect].boundedContexts || [];
-                for(const bc of bcArray){
-                    bc.commandNames = bcCommandNames[bc.name] || [];
-                    bc.readModelNames = bcReadModelNames[bc.name] || [];
-                }
             }
         }
     }

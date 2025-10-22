@@ -258,7 +258,7 @@
 
 <script>
     import RuleExampleDialog from "../RuleExampleDialog.vue";
-    import { TraceInfoViewerUtil } from "../../modeling/generators/features/EventStormingModelCanvas";
+    import { TraceInfoViewerUtil, TraceInfoController } from "../../modeling/generators/features/EventStormingModelCanvas";
 
     export default {
         name: 'common-panel',
@@ -468,6 +468,12 @@
                         case "org.uengine.modeling.model.Aggregate":
                             TraceInfoViewerUtil.openTraceInfoViewerForAggregate(this, this.value);
                             break;
+                        case "org.uengine.modeling.model.Command":
+                        case "org.uengine.modeling.model.View":
+                        case "org.uengine.modeling.model.Event":
+                            const traceInfoController = new TraceInfoController(this.value, this)
+                            traceInfoController.showTraceInfoViewer()
+                            break;
                         default:
                             TraceInfoViewerUtil.openTraceInfoViewerForElement(this, this.value);
                             break;
@@ -482,7 +488,17 @@
             },
 
             isTraceInfoViewerUsable() {
-                return TraceInfoViewerUtil.isTraceInfoViewerUsable(this) && this.value && this.value.refs && this.value.refs.length > 0;
+                if(this.value && this.value._type) {
+                    switch(this.value._type) {
+                        case "org.uengine.modeling.model.Command":
+                        case "org.uengine.modeling.model.View":
+                        case "org.uengine.modeling.model.Event":
+                            const traceInfoController = new TraceInfoController(this.value, this)
+                            return traceInfoController.isRefsExist()
+                        default:
+                            return TraceInfoViewerUtil.isTraceInfoViewerUsable(this) && this.value && this.value.refs && this.value.refs.length > 0;
+                    }
+                }
             },
 
             openHistory() {

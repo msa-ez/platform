@@ -2139,7 +2139,7 @@
     import ModelDraftDialogForDistribution from "../context-mapping-modeling/dialogs/ModelDraftDialogForDistribution.vue"
     import BoundedContextRelocateActionsGenerator from "../modeling/generators/es-ddl-generators/BoundedContextRelocateActionsGenerator"
     import ModelDraftDialog from "../modeling/ModelDraftDialog"
-    import EventStormingTestTerminal from "./testTerminals/EventStormingTestTerminal.vue";
+    import EventStormingTerminal from "./terminal/EventStormingTerminal.vue";
 
     import EventStormingModelHistory from "./EventStormingModelHistory.vue";
 
@@ -2208,7 +2208,7 @@
     // import ModelCodeGenerator from "../modeling/ModelCodeGenerator";
     export default {
         name: "event-storming-model-canvas",
-        mixins: [ModelCanvas, EventStormingTestTerminal],
+        mixins: [ModelCanvas, EventStormingTerminal],
         components: {
             UIWizardDialoger,
             AutoModelingDialog,
