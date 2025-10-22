@@ -1592,33 +1592,32 @@ import { value } from 'jsonpath';
                     return;
                 }
 
-                // DevideBoundedContextGeneratorLangGraph 완료 처리
-                if (me.state.generator === "DevideBoundedContextGeneratorLangGraph") {
-                    const bcResult = model.modelValue.output;
-                    if (bcResult) {
-                        me.resultDevideBoundedContext[me.selectedAspect] = {
-                            thoughts: bcResult.thoughts,
-                            boundedContexts: bcResult.boundedContexts,
-                            relations: bcResult.relations,
-                            explanations: bcResult.explanations
-                        };
+                // if (me.state.generator === "DevideBoundedContextGeneratorLangGraph" || me.state.generator === "DevideBoundedContextGenerator") {
+                //     const bcResult = model.modelValue.output;
+                //     if (bcResult) {
+                //         me.resultDevideBoundedContext[me.selectedAspect] = {
+                //             thoughts: bcResult.thoughts,
+                //             boundedContexts: bcResult.boundedContexts,
+                //             relations: bcResult.relations,
+                //             explanations: bcResult.explanations
+                //         };
                         
-                        // 메시지 업데이트
-                        const bcMessage = me.messages.find(msg => msg.type === 'boundedContextResult');
-                        if (bcMessage) {
-                            const updatedResult = JSON.parse(JSON.stringify(me.resultDevideBoundedContext));
+                //         // 메시지 업데이트
+                //         const bcMessage = me.messages.find(msg => msg.type === 'boundedContextResult');
+                //         if (bcMessage) {
+                //             const updatedResult = JSON.parse(JSON.stringify(me.resultDevideBoundedContext));
                             
-                            me.updateMessageState(bcMessage.uniqueId, {
-                                result: updatedResult,
-                                selectedAspect: me.selectedAspect,
-                                isGeneratingBoundedContext: false
-                            });
-                        }
-                    }
+                //             me.updateMessageState(bcMessage.uniqueId, {
+                //                 result: updatedResult,
+                //                 selectedAspect: me.selectedAspect,
+                //                 isGeneratingBoundedContext: false
+                //             });
+                //         }
+                //     }
                     
-                    me.processingState.isGeneratingBoundedContext = false;
-                    return;
-                }
+                //     me.processingState.isGeneratingBoundedContext = false;
+                //     return;
+                // }
 
                 // Command/ReadModel 추출 완료 처리
                 if (me.state.generator === "CommandReadModelExtractor" || me.state.generator === "RecursiveCommandReadModelExtractor") {
@@ -1850,7 +1849,7 @@ import { value } from 'jsonpath';
                     me.mappingRequirements();
                 }
 
-                if(me.state.generator === "DevideBoundedContextGeneratorLangGraph"){
+                if(me.state.generator === "DevideBoundedContextGeneratorLangGraph" || me.state.generator === "DevideBoundedContextGenerator"){
                     me.devisionAspectIndex = 0;
                     me.currentGeneratedLength = 0;
                     me.processingState.isGeneratingBoundedContext = false;
@@ -1912,54 +1911,29 @@ import { value } from 'jsonpath';
             async generate(){
                 let issuedTimeStamp = Date.now()
                 
-                // 요구사항 길이에 따라 적절한 generator 선택
-                const requirementsText = this.projectInfo.userStory || '';
-                const shouldUseRecursive = requirementsText && requirementsText.length > 24000;
+                // 로컬 스토리지에서 LangGraph 사용 여부 확인 (기본값: false)
+                const useLangGraph = localStorage.getItem('useLangGraph') === 'true';
                 
-                if (shouldUseRecursive) {
-                    this.state.generator = "RecursiveUserStoryGeneratorLangGraph";
-                    this.generatorName = "RecursiveUserStoryGeneratorLangGraph";
-                    this.generator = new RecursiveUserStoryGeneratorLangGraph(this);
-                    
-                    // onModelUpdated 콜백 정의 (청크 단위 업데이트)
-                    this.onModelUpdated = (accumulated) => {
-                        console.log('[ESDialoger] onModelUpdated called with:', accumulated);
-                        if (accumulated && (accumulated.userStories || accumulated.actors || accumulated.businessRules)) {
-                            const userStoryContent = this.convertUserStoriesToText(accumulated);
-                            this.$emit('update:userStory', userStoryContent, false);
-                            console.log('[ESDialoger] userStory updated with', accumulated.userStories.length, 'stories');
-                        }
-                    };
-                    
-                    // updateProgress 콜백 정의 (진행률 표시)
-                    this.updateProgress = (progress) => {
-                        console.log('[ESDialoger] updateProgress called:', progress);
-                        this.processingRate = progress;
-                        this.done = (progress >= 100);
-                    };
-                    
-                    // recursive 처리 시작 (LangGraph Backend 사용)
-                    console.log('Starting LangGraph UserStory generation...');
-                    this.generator.generateRecursively(this.projectInfo.userStory).then(result => {
-                        console.log('Recursive user story generation completed:', result);
-                        // 최종 결과를 userStory로 설정
-                        if (result) {
-                            const userStoryContent = this.convertUserStoriesToText(result);
-                            this.$emit('update:userStory', userStoryContent, true);
-                            this.done = true;
-                            this.processingRate = 0;
-                        }
-                    }).catch(error => {
-                        console.error('Recursive generation failed:', error);
-                        this.done = true;
-                    });
+                let GeneratorClass;
+                if (useLangGraph) {
+                    GeneratorClass = require('./UserStoryGeneratorLangGraph').default;
+                    this.state.generator = "UserStoryGeneratorLangGraph";
+                    this.generatorName = "UserStoryGeneratorLangGraph";
                 } else {
+                    GeneratorClass = require('./UserStoryGenerator').default;
                     this.state.generator = "EventOnlyESGenerator";
                     this.generatorName = "EventOnlyESGenerator";
-                    this.generator = new Generator(this);
-                    this.generator.generate();
                 }
-
+                
+                this.generator = new GeneratorClass(this);
+                
+                // updateProgress 콜백 정의 (진행률 표시)
+                this.updateProgress = (progress) => {
+                    console.log('[ESDialoger] updateProgress called:', progress);
+                    this.processingRate = progress;
+                    this.done = (progress >= 100);
+                };
+                
                 this.input.businessModel = this.cachedModels["BMGenerator"]
                 this.input.painpointAnalysis = this.cachedModels["CJMGenerator"]
                 this.input.title = this.projectInfo.prompt
@@ -1982,6 +1956,28 @@ import { value } from 'jsonpath';
                 this.state.startTemplateGenerate = true
                 this.done = false;
                 this.projectInfo.userStory = '';
+                
+                if (useLangGraph) {
+                    this.generator.generate(this.projectInfo.userStory).then(result => {
+                        // 최종 결과를 userStory로 설정
+                        if (result) {
+                            if (result.textResponse) {
+                                this.$emit('update:userStory', result.textResponse, true);
+                            } else {
+                                const userStoryContent = this.convertUserStoriesToText(result);
+                                this.$emit('update:userStory', userStoryContent, true);
+                            }
+                            this.done = true;
+                            this.processingRate = 0;
+                        }
+                    }).catch(error => {
+                        console.error('User story generation failed:', error);
+                        this.done = true;
+                    });
+                } else {
+                    // 프론트엔드 생성기 사용 (기존 로직)
+                    this.generator.generate();
+                }
             },
 
             // JSON 구조화된 유저스토리를 텍스트로 변환
@@ -2191,18 +2187,21 @@ import { value } from 'jsonpath';
             },
 
             async summarizeRequirements() {
-                // LangGraph Backend 사용
-                const useLangGraph = true;
+                // 로컬 스토리지에서 LangGraph 사용 여부 확인 (기본값: false)
+                const useLangGraph = localStorage.getItem('useLangGraph') === 'true';
                 
+                let GeneratorClass;
                 if (useLangGraph) {
-                    this.generator = new RecursiveRequirementsSummarizerLangGraph(this);
+                    GeneratorClass = require('./RecursiveRequirementsSummarizerLangGraph').default;
                     this.state.generator = "RecursiveRequirementsSummarizerLangGraph";
                     this.generatorName = "RecursiveRequirementsSummarizerLangGraph";
                 } else {
-                    this.generator = new RecursiveRequirementsSummarizer(this);
+                    GeneratorClass = require('./RecursiveRequirementsSummarizer');
                     this.state.generator = "RecursiveRequirementsSummarizer";
                     this.generatorName = "RecursiveRequirementsSummarizer";
                 }
+                
+                this.generator = new GeneratorClass(this);
 
                 this.processingState.isSummarizeStarted = true;
 
@@ -2287,20 +2286,22 @@ import { value } from 'jsonpath';
                     return;
                 }
                 
-                // LangGraph Backend 사용
-                const useLangGraph = true;
+                // 로컬 스토리지에서 LangGraph 사용 여부 확인 (기본값: false)
+                const useLangGraph = localStorage.getItem('useLangGraph') === 'true';
                 
+                let GeneratorClass;
                 if (useLangGraph) {
-                    this.generator = new DevideBoundedContextGeneratorLangGraph(this);
+                    GeneratorClass = require('./DevideBoundedContextGeneratorLangGraph');
                     this.state.generator = "DevideBoundedContextGeneratorLangGraph";
                     this.generatorName = "DevideBoundedContextGeneratorLangGraph";
                 } else {
-                    const DevideBoundedContextGenerator = require('./DevideBoundedContextGenerator');
-                    this.generator = new DevideBoundedContextGenerator(this);
+                    GeneratorClass = require('./DevideBoundedContextGenerator');
                     this.state.generator = "DevideBoundedContextGenerator";
                     this.generatorName = "DevideBoundedContextGenerator";
                 }
 
+                this.generator = new GeneratorClass(this);
+                
                 this.devisionAspectIndex = 0;
                 this.input['devisionAspect'] = this.selectedAspect;
                 this.messages.push(this.generateMessage("boundedContextResult", {}))
@@ -3067,8 +3068,27 @@ import { value } from 'jsonpath';
                 const requirementsText = this.projectInfo.usedUserStory || '';
                 const shouldUseRecursive = requirementsText && requirementsText.length > 24000;
 
-                this.generator = shouldUseRecursive ? new RecursiveCommandReadModelExtractor(this) : new CommandReadModelExtractor(this);
-                this.state.generator = shouldUseRecursive ? "RecursiveCommandReadModelExtractor" : "CommandReadModelExtractor";
+                // 로컬 스토리지에서 LangGraph 사용 여부 확인 (기본값: false)
+                const useLangGraph = localStorage.getItem('useLangGraph') === 'true';
+                
+                let GeneratorClass;
+                if (useLangGraph) {
+                    if (shouldUseRecursive) {
+                        GeneratorClass = require('./RecursiveCommandReadModelExtractorLangGraph');
+                        this.state.generator = "RecursiveCommandReadModelExtractorLangGraph";
+                        this.generatorName = "RecursiveCommandReadModelExtractorLangGraph";
+                    } else {
+                        GeneratorClass = require('./CommandReadModelExtractorLangGraph');
+                        this.state.generator = "CommandReadModelExtractorLangGraph";
+                        this.generatorName = "CommandReadModelExtractorLangGraph";
+                    }
+                } else {
+                    GeneratorClass = shouldUseRecursive ? RecursiveCommandReadModelExtractor : CommandReadModelExtractor;
+                    this.state.generator = shouldUseRecursive ? "RecursiveCommandReadModelExtractor" : "CommandReadModelExtractor";
+                    this.generatorName = shouldUseRecursive ? "RecursiveCommandReadModelExtractor" : "CommandReadModelExtractor";
+                }
+                
+                this.generator = new GeneratorClass(this);
 
                 this.input['requirements'] = this.projectInfo.usedUserStory;
                 this.input['resultDevideBoundedContext'] = JSON.parse(JSON.stringify(this.resultDevideBoundedContext[this.selectedAspect].boundedContexts.filter(bc => !bc.implementationStrategy.includes('PBC:')))).map(bc => {
@@ -3104,7 +3124,37 @@ import { value } from 'jsonpath';
                     totalChunks: 0
                 });
 
-                if (shouldUseRecursive) {
+                // LangGraph 사용 시
+                if (useLangGraph) {
+                    const boundedContexts = this.input['resultDevideBoundedContext'];
+                    this.generator.extractRecursively(this.projectInfo.usedUserStory, boundedContexts).then(result => {
+                        this.commandReadModelData = result.extractedData;
+                        this.isExtractingCommandReadModel = false;
+                        
+                        // 추출 완료 상태 업데이트 (100% 완료 표시)
+                        this.updateMessageState(this.messages.find(msg => msg.type === 'siteMapViewer').uniqueId, {
+                            commandReadModelData: this.commandReadModelData,
+                            processingRate: 100,
+                            currentProcessingStep: 'extractingCommandsAndReadModels'
+                        });
+                        
+                        // 추출 완료 후 자동으로 사이트맵 생성 진행
+                        setTimeout(() => {
+                            this.generateSiteMap();
+                        }, 500);
+                    }).catch(error => {
+                        console.error('Command/ReadModel extraction failed:', error);
+                        this.isExtractingCommandReadModel = false;
+                        
+                        const siteMapViewerMessage = this.messages.find(msg => msg.type === 'siteMapViewer');
+                        if (siteMapViewerMessage) {
+                            this.updateMessageState(siteMapViewerMessage.uniqueId, {
+                                isGenerating: false,
+                                errorMessage: 'Command/ReadModel 추출 실패: ' + (error.message || error)
+                            });
+                        }
+                    });
+                } else if (shouldUseRecursive) {
                     this.generator.generateRecursively(this.projectInfo.usedUserStory).then(result => {
                         this.commandReadModelData = result.extractedData;
                         this.isExtractingCommandReadModel = false;
@@ -3123,8 +3173,15 @@ import { value } from 'jsonpath';
                     }).catch(error => {
                         console.error('Command/ReadModel extraction failed:', error);
                         this.isExtractingCommandReadModel = false;
-                        // 실패해도 사이트맵 생성 진행
-                        this.generateSiteMap();
+                        
+                        // 에러 메시지 표시 (무한 루프 방지를 위해 generateSiteMap 호출 안함)
+                        const siteMapViewerMessage = this.messages.find(msg => msg.type === 'siteMapViewer');
+                        if (siteMapViewerMessage) {
+                            this.updateMessageState(siteMapViewerMessage.uniqueId, {
+                                isGenerating: false,
+                                errorMessage: 'Command/ReadModel 추출 실패: ' + (error.message || error)
+                            });
+                        }
                     });
                 } else {
                     this.generator.generate();
@@ -3141,8 +3198,27 @@ import { value } from 'jsonpath';
                 const requirementsText = this.projectInfo.usedUserStory || '';
                 const shouldUseRecursive = requirementsText && requirementsText.length > 24000;
 
-                this.generator = shouldUseRecursive ? new RecursiveSiteMapGenerator(this) : new SiteMapGenerator(this);
-                this.state.generator = shouldUseRecursive ? "RecursiveSiteMapGenerator" : "SiteMapGenerator";
+                // 로컬 스토리지에서 LangGraph 사용 여부 확인 (기본값: false)
+                const useLangGraph = localStorage.getItem('useLangGraph') === 'true';
+                
+                let GeneratorClass;
+                if (useLangGraph) {
+                    if (shouldUseRecursive) {
+                        GeneratorClass = require('./RecursiveSiteMapGeneratorLangGraph');
+                        this.state.generator = "RecursiveSiteMapGeneratorLangGraph";
+                        this.generatorName = "RecursiveSiteMapGeneratorLangGraph";
+                    } else {
+                        GeneratorClass = require('./SiteMapGeneratorLangGraph');
+                        this.state.generator = "SiteMapGeneratorLangGraph";
+                        this.generatorName = "SiteMapGeneratorLangGraph";
+                    }
+                } else {
+                    GeneratorClass = shouldUseRecursive ? RecursiveSiteMapGenerator : SiteMapGenerator;
+                    this.state.generator = shouldUseRecursive ? "RecursiveSiteMapGenerator" : "SiteMapGenerator";
+                    this.generatorName = shouldUseRecursive ? "RecursiveSiteMapGenerator" : "SiteMapGenerator";
+                }
+                
+                this.generator = new GeneratorClass(this);
 
                 this.input['requirements'] = this.projectInfo.usedUserStory;
                 this.input['resultDevideBoundedContext'] = JSON.parse(JSON.stringify(this.resultDevideBoundedContext[this.selectedAspect].boundedContexts.filter(bc => !bc.implementationStrategy.includes('PBC:')))).map(bc => {
@@ -3181,7 +3257,23 @@ import { value } from 'jsonpath';
                     totalChunks: 0
                 });
                 
-                if (shouldUseRecursive) {
+                if (useLangGraph) {
+                    const boundedContexts = this.input['resultDevideBoundedContext'];
+                    const existingNavigation = this.siteMap || [];
+                    this.generator.generateRecursively(
+                        this.projectInfo.usedUserStory,
+                        boundedContexts,
+                        this.commandReadModelData,
+                        existingNavigation
+                    ).then(result => {
+                        this.siteMap = result.siteMap.treeData || [];
+                        this.updateMessageState(this.messages.find(msg => msg.type === 'siteMapViewer').uniqueId, {
+                            siteMap: this.siteMap,
+                            isGenerating: false
+                        });
+                        this.$emit('update:draft', this.messages)
+                    });
+                } else if (shouldUseRecursive) {
                     this.generator.generateRecursively(this.projectInfo.usedUserStory).then(result => {
                         this.siteMap = result.treeData;
                         this.updateMessageState(this.messages.find(msg => msg.type === 'siteMapViewer').uniqueId, {

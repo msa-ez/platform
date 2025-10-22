@@ -113,6 +113,9 @@ class UserStoryLangGraphProxy {
         if (accumulatedOutputState.isCompleted === undefined) {
             accumulatedOutputState.isCompleted = false;
         }
+        if (!accumulatedOutputState.textResponse) {
+            accumulatedOutputState.textResponse = null;
+        }
         if (accumulatedOutputState.isFailed === undefined) {
             accumulatedOutputState.isFailed = false;
         }
@@ -206,8 +209,39 @@ class UserStoryLangGraphProxy {
         // User Stories 배열 전체 감시 (camelCase)
         storage.watch(`${this._getJobPath(jobId)}/state/outputs/userStories`, async (userStories) => {
             if (userStories) {
-                // Firebase 배열 복원 (camelCase로 저장)
                 jobState.userStories = this._restoreArrayFromFirebase(userStories);
+                await parseState();
+            }
+        });
+        
+        // Actors 감시
+        storage.watch(`${this._getJobPath(jobId)}/state/outputs/actors`, async (actors) => {
+            if (actors) {
+                jobState.actors = this._restoreArrayFromFirebase(actors);
+                await parseState();
+            }
+        });
+        
+        // Business Rules 감시
+        storage.watch(`${this._getJobPath(jobId)}/state/outputs/businessRules`, async (businessRules) => {
+            if (businessRules) {
+                jobState.businessRules = this._restoreArrayFromFirebase(businessRules);
+                await parseState();
+            }
+        });
+        
+        // Bounded Contexts 감시
+        storage.watch(`${this._getJobPath(jobId)}/state/outputs/boundedContexts`, async (boundedContexts) => {
+            if (boundedContexts) {
+                jobState.boundedContexts = this._restoreArrayFromFirebase(boundedContexts);
+                await parseState();
+            }
+        });
+        
+        // Text Response 감시 (텍스트 모드용)
+        storage.watch(`${this._getJobPath(jobId)}/state/outputs/textResponse`, async (textResponse) => {
+            if (textResponse) {
+                jobState.textResponse = textResponse;
                 await parseState();
             }
         });
@@ -231,7 +265,11 @@ class UserStoryLangGraphProxy {
      */
     static async _parseAndNotifyJobState(jobState, callbacks) {
         const state = {
-            user_stories: jobState.userStories || jobState.user_stories || [],  // camelCase 우선
+            userStories: jobState.userStories || [],
+            actors: jobState.actors || [],
+            businessRules: jobState.businessRules || [],
+            boundedContexts: jobState.boundedContexts || [],
+            textResponse: jobState.textResponse || null,
             logs: jobState.logs || [],
             progress: jobState.progress || 0,
             isCompleted: jobState.isCompleted || false,
@@ -241,14 +279,14 @@ class UserStoryLangGraphProxy {
 
         if (state.isCompleted) {
             await callbacks.onComplete(
-                state.user_stories,
+                state,
                 state.logs,
                 state.progress,
                 state.isFailed
             );
         } else {
             await callbacks.onUpdate(
-                state.user_stories,
+                state,
                 state.logs,
                 state.progress
             );

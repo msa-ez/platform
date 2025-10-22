@@ -41,12 +41,13 @@ class RecursiveUserStoryGeneratorLangGraph {
      * @returns {Promise<Object>} 생성된 User Stories
      */
     async generateRecursively(requirementsText) {
+        // 요구사항이 없으면 가상 시나리오 생성
         if (!requirementsText || requirementsText.length === 0) {
-            console.warn('[RecursiveUserStoryGeneratorLangGraph] Empty requirements text');
-            return this._createEmptyResult();
+            console.log('[RecursiveUserStoryGeneratorLangGraph] Empty requirements text, generating virtual scenario');
+            requirementsText = this._generateVirtualScenario();
         }
 
-        // 요구사항을 청크로 나눔 (기존 방식과 동일)
+        // 요구사항을 청크로 나눔
         this.currentChunks = this.textChunker.splitIntoChunks(requirementsText);
         this.currentChunkIndex = 0;
         this.accumulated = {
@@ -399,6 +400,78 @@ class RecursiveUserStoryGeneratorLangGraph {
                 name: bc.name || ''
             }))
         };
+    }
+
+    /**
+     * 가상 시나리오 생성 (기존 UserStoryGenerator와 동일한 로직)
+     */
+    _generateVirtualScenario() {
+        let modelDescription = "";
+
+        // Painpoint Analysis가 있으면 사용
+        if (this.client.input.painpointAnalysis) {
+            let modelPerPersona = this.client.input.painpointAnalysis;
+            modelDescription += "Persona definition and he(or her)'s painpoints and possible solutions as follows: \n\n";
+            Object.keys(this.client.input.painpointAnalysis).forEach(persona => {
+                modelDescription += "- " + persona + "\n";
+                let relations = modelPerPersona[persona].relations;
+                Object.keys(relations).forEach(key => {
+                    let painPoint = relations[key].sourceElement.name;
+                    let possibleSolution = relations[key].targetElement.name;
+                    modelDescription += `${painPoint}:${possibleSolution}\n`;
+                });
+            });
+        } else if (this.client.input.personas && this.client.input.personas.length > 0) {
+            // Personas가 있으면 사용
+            let personas = this.client.input.personas;
+            modelDescription += "Create pain points and possible solutions that may arise by considering the following Personas. \n\n";
+            for (var i = 0; i < personas.length; i++) {
+                modelDescription += "- " + personas[i].persona + "\n";
+            }
+        }
+
+        // Business Model이 있으면 추가
+        if (this.client.input.businessModel) {
+            modelDescription += "\n Detailed Business Model of the service is: \n";
+            let elementsByTypes = {};
+            let model = this.client.input.businessModel;
+            Object.keys(model).forEach(key => {
+                let element = model[key];
+                if (!elementsByTypes[element._type]) elementsByTypes[element._type] = [];
+                elementsByTypes[element._type].push(element.name);
+            });
+
+            modelDescription += "\n" + Object.keys(elementsByTypes).reduce((sum, type) => {
+                let shortType = type.split(".").pop();
+                let stickers = elementsByTypes[type].join(", ");
+                return sum + `${shortType}:${stickers}\n`;
+            }, "");
+        }
+
+        // 서비스 제목 추가
+        const serviceTitle = this.client.input.title || "Digital Platform";
+        modelDescription += `\n\nThe response is must be in the same language with the service name. Also, please list bounded contexts in the perspective of ${this.client.input.separationPrinciple || 'domain complexity'}.`;
+
+        return `Please generate a comprehensive analysis for ${serviceTitle} with the following requests:
+
+${modelDescription}
+
+1. Actors:
+- List all actors (users, external systems, etc.) that interact with the system
+- Describe each actor's role and responsibilities
+
+2. User Stories (in detailed usecase spec):
+- Create detailed user stories for each actor
+- Each story should include "As a", "I want to", "So that" format
+- Include acceptance criteria for each story
+
+3. Business Rules:
+- Define business rules and constraints
+- Include validation rules and business logic
+
+4. Bounded Contexts:
+- Identify bounded contexts based on the separation principle
+- Define clear boundaries and responsibilities for each context`;
     }
 
     /**
