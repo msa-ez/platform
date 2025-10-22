@@ -88,11 +88,21 @@ class RecursiveUserStoryGeneratorLangGraph {
                 // Firebase Job 생성 (이전 청크의 요약 정보만 전달 - 컨텍스트 사이즈 최소화)
                 const existingSummary = this._createExistingSummary(this.accumulated);
                 
+
+                const makeJobParams = {
+                    jobId: this.jobId,
+                    requirements: chunkText,
+                    boundedContexts: boundedContexts,
+                    existingSummary: existingSummary
+                }
+                console.log(
+                    `[DEBUG][RecursiveUserStoryGeneratorLangGraph] ${this.currentChunkIndex + 1}번째 청크 생성 요청 작업 수행`, structuredClone(makeJobParams)
+                )
                 await UserStoryLangGraphProxy.makeNewJob(
-                    this.jobId,
-                    chunkText,
-                    boundedContexts,
-                    existingSummary  // ✅ title/name만 포함된 요약 정보
+                    makeJobParams.jobId,
+                    makeJobParams.requirements,
+                    makeJobParams.boundedContexts,
+                    makeJobParams.existingSummary  // ✅ title/name만 포함된 요약 정보
                 );
                 
                 // Job 완료를 Promise로 기다림
@@ -232,6 +242,14 @@ class RecursiveUserStoryGeneratorLangGraph {
             }
             return;
         }
+
+        console.log(
+            `[DEBUG][RecursiveUserStoryGeneratorLangGraph] ${this.currentChunkIndex + 1}번째 청크 생성 완료: `, structuredClone({
+                userStories: userStories,
+                logs: logs,
+                progress: progress
+            })
+        )
         
         // LangGraph 결과를 기존 형식으로 변환
         const title = (this.client.input && this.client.input.title) || '';

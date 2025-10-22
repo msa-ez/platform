@@ -1,39 +1,44 @@
 const CommandReadModelExtractor = require('./CommandReadModelExtractor');
+const TextChunker = require("./TextChunker");
+const { TextTraceUtil, XmlUtil, RefsTraceUtil } = require("./utils");
+const { ChunkIterator } = require("./iterators");
 
 class RecursiveCommandReadModelExtractor extends CommandReadModelExtractor {
     constructor(client) {
         super(client);
+        this.textChunker = new TextChunker({
+            chunkSize: 25000,
+            spareSize: 2000
+        });
         this.generatorName = 'RecursiveCommandReadModelExtractor';
-        
-        // 청크 처리 관련 상태
-        this.chunkSize = 8000; // 토큰 기준으로 청크 크기 설정
-        this.currentChunkIndex = 0;
-        this.requirementsChunks = [];
+
+        this._init();
+    }
+
+    _init(requirementsText) {
+        if(requirementsText) {
+            this.chunkIterator = new ChunkIterator(this.textChunker, requirementsText)
+        }
+
+        this.generatedResults = [];
         this.accumulated = {
             boundedContexts: []
         };
-        this.isProcessing = false;
+        this.isProcessing = true;
     }
+
 
     async generateRecursively(requirementsText) {
         try {
-            this.requirementsChunks = this.splitRequirementsIntoChunks(requirementsText);
-            this.currentChunkIndex = 0;
-            this.accumulated = {
-                boundedContexts: []
-            };
-            this.isProcessing = true;
 
-            // 초기 진행률 업데이트 (총 청크 수 설정)
-            this.updateProgress();
-
+            this._init(requirementsText);
             return new Promise((resolve, reject) => {
                 this.resolve = resolve;
                 this.reject = reject;
-                this.processNextChunk();
+                this._processNextChunk();
             });
         } catch (error) {
-            console.error('RecursiveCommandReadModelExtractor error:', error);
+            console.error('[!] RecursiveCommandReadModelExtractor error:', error);
             return {
                 extractedData: { boundedContexts: [] },
                 currentGeneratedLength: 0
@@ -41,145 +46,9 @@ class RecursiveCommandReadModelExtractor extends CommandReadModelExtractor {
         }
     }
 
-    splitRequirementsIntoChunks(requirementsText) {
-        // 요구사항 유효성 검사
-        if (!requirementsText || typeof requirementsText !== 'string') {
-            console.warn('RecursiveCommandReadModelExtractor: Invalid or empty requirements text');
-            return [];
-        }
-
-        const trimmedText = requirementsText.trim();
-        if (trimmedText.length === 0) {
-            console.warn('RecursiveCommandReadModelExtractor: Empty requirements text after trimming');
-            return [];
-        }
-
-        if (trimmedText.length <= this.chunkSize) {
-            return [{
-                content: trimmedText,
-                chunkIndex: 0,
-                isValid: this.validateChunkContent(trimmedText),
-                sourceInfo: {
-                    startPosition: 0,
-                    endPosition: trimmedText.length,
-                    originalLength: trimmedText.length
-                }
-            }];
-        }
-
-        // 전체 컨텍스트 크기 계산하여 청크 크기 동적 조정
-        const totalContextSize = this.calculateTotalContextSize();
-        const adjustedChunkSize = Math.max(15000, this.chunkSize - totalContextSize);
-        
-        console.log(`RecursiveCommandReadModelExtractor - Total context size: ${totalContextSize}, Adjusted chunk size: ${adjustedChunkSize}`);
-
-        const chunks = [];
-        let currentChunk = '';
-        let currentPosition = 0;
-        const sentences = trimmedText.split(/[.!?]\s+/);
-        
-        for (let i = 0; i < sentences.length; i++) {
-            const sentence = sentences[i];
-            const testChunk = currentChunk + (currentChunk ? '. ' : '') + sentence;
-            
-            if (testChunk.length <= adjustedChunkSize) {
-                currentChunk = testChunk;
-            } else {
-                if (currentChunk) {
-                    const chunkData = this.createChunkData(currentChunk, chunks.length, currentPosition);
-                    chunks.push(chunkData);
-                    currentPosition += currentChunk.length;
-                    currentChunk = sentence;
-                } else {
-                    // 문장이 너무 긴 경우 강제로 자르기
-                    const truncatedSentence = sentence.substring(0, adjustedChunkSize);
-                    const chunkData = this.createChunkData(truncatedSentence, chunks.length, currentPosition);
-                    chunks.push(chunkData);
-                    currentPosition += truncatedSentence.length;
-                    currentChunk = sentence.substring(adjustedChunkSize);
-                }
-            }
-        }
-        
-        if (currentChunk) {
-            const chunkData = this.createChunkData(currentChunk, chunks.length, currentPosition);
-            chunks.push(chunkData);
-        }
-        
-        return chunks;
-    }
-
-    createChunkData(content, chunkIndex, startPosition) {
-        return {
-            content: content.trim(),
-            chunkIndex: chunkIndex,
-            isValid: this.validateChunkContent(content),
-            sourceInfo: {
-                startPosition: startPosition,
-                endPosition: startPosition + content.length,
-                originalLength: content.length
-            }
-        };
-    }
-
-    validateChunkContent(content) {
-        if (!content || typeof content !== 'string') {
-            return false;
-        }
-
-        const trimmed = content.trim();
-        if (trimmed.length === 0) {
-            return false;
-        }
-
-        // 최소 의미있는 문장 길이 체크 (최소 10자)
-        if (trimmed.length < 10) {
-            console.warn(`RecursiveCommandReadModelExtractor: Chunk too short (${trimmed.length} chars): "${trimmed}"`);
-            return false;
-        }
-
-        // 의미있는 단어가 있는지 체크 (최소 2개 단어)
-        const words = trimmed.split(/\s+/).filter(word => word.length > 0);
-        if (words.length < 2) {
-            console.warn(`RecursiveCommandReadModelExtractor: Chunk has insufficient words (${words.length}): "${trimmed}"`);
-            return false;
-        }
-
-        return true;
-    }
-
-    calculateTotalContextSize() {
-        try {
-            let totalSize = 0;
-            
-            // 1. 프롬프트 템플릿 크기 (대략 5000자 추정)
-            totalSize += 5000;
-            
-            // 2. Bounded Contexts 데이터 크기
-            if (this.client.input && this.client.input.resultDevideBoundedContext) {
-                const bcJson = JSON.stringify(this.client.input.resultDevideBoundedContext);
-                totalSize += bcJson.length;
-            }
-            
-            // 3. 누적된 Bounded Contexts 데이터 크기
-            if (this.accumulated && this.accumulated.boundedContexts) {
-                const accumulatedJson = JSON.stringify(this.accumulated);
-                totalSize += accumulatedJson.length;
-            }
-            
-            // 4. 안전 마진 (10%)
-            totalSize = Math.round(totalSize * 1.1);
-            
-            return totalSize;
-            
-        } catch (e) {
-            console.warn('Failed to calculate total context size:', e);
-            return 5000; // 기본값으로 5KB 추정
-        }
-    }
-
-    processNextChunk() {
-        if (this.currentChunkIndex >= this.requirementsChunks.length) {
+    _processNextChunk() {
+        // 최종적인 결과 반환
+        if (!this._moveToNextChunk()) {
             this.isProcessing = false;
             this.resolve({
                 extractedData: this.accumulated,
@@ -188,239 +57,220 @@ class RecursiveCommandReadModelExtractor extends CommandReadModelExtractor {
             return;
         }
 
-        const currentChunk = this.requirementsChunks[this.currentChunkIndex];
-        
-        // 청크 유효성 검사
-        if (!currentChunk || !currentChunk.isValid) {
-            console.warn(`RecursiveCommandReadModelExtractor: Skipping invalid chunk ${this.currentChunkIndex}:`, currentChunk);
-            this.currentChunkIndex++;
-            setTimeout(() => this.processNextChunk(), 100);
-            return;
-        }
+        this.client.input.requirements = this.chunkIterator.getCurrentChunkText();
+        this.client.input.additional_requirements = this._createAdditionalRequirementsPrompt();;  
 
-        // 이전 결과 요약과 함께 현재 청크 처리
-        const promptWithContext = this.createRecursivePrompt(currentChunk);
-        
-        this.client.input.requirements = promptWithContext;
-        
-        // 진행 상황 업데이트
-        this.updateProgress();
-        
-        this.generate().then(result => {
-            this.handleGenerationFinished(result, currentChunk);
+        this.generate().then(returnObj => {
+            this._handleGenerationFinished(returnObj.modelValue.output);
         }).catch(error => {
             console.error('Chunk processing error:', error);
-            this.currentChunkIndex++;
-            setTimeout(() => this.processNextChunk(), 100);
+            setTimeout(() => this._processNextChunk(), 100);
         });
     }
 
-    createRecursivePrompt(currentChunk) {
-        const accumulatedSummary = this.createAccumulatedSummary();
-        
-        return `You are an expert DDD architect. Extract Commands and ReadModels from the following requirements chunk and merge with previous results.
-
-        PREVIOUS EXTRACTED DATA SUMMARY:
-        ${accumulatedSummary}
-
-        CURRENT REQUIREMENTS CHUNK (Chunk ${currentChunk.chunkIndex + 1}):
-        ${currentChunk.content}
-
-        BOUNDED CONTEXTS:
-        ${JSON.stringify(this.client.input.resultDevideBoundedContext || [])}
-
-        TASK:
-        1. Extract Commands and ReadModels from the current chunk
-        2. Merge with the previous accumulated data
-        3. Avoid duplicates based on name and functionality
-        4. Ensure proper categorization by Bounded Context
-        5. Include source tracking information for each extracted item
-
-        EXTRACTION GUIDELINES:
-        - Focus on NEW operations not already in the previous summary
-        - Maintain consistency with existing naming conventions
-        - Ensure proper Bounded Context assignment
-        - Use the same output format as the base extractor
-        - Add source tracking metadata to each Command and ReadModel
-
-        OUTPUT FORMAT:
-        {
-          "extractedData": {
-            "boundedContexts": [
-              {
-                "name": "BoundedContextName",
-                "alias": "BoundedContextAlias", 
-                "commands": [
-                  {
-                    "name": "CommandName",
-                    "description": "Command description",
-                    "sourceInfo": {
-                      "chunkIndex": ${currentChunk.chunkIndex},
-                      "sourceText": "relevant source text from requirements",
-                      "position": {
-                        "start": 0,
-                        "end": 100
-                      }
-                    }
-                  }
-                ],
-                "readModels": [
-                  {
-                    "name": "ReadModelName", 
-                    "description": "ReadModel description",
-                    "sourceInfo": {
-                      "chunkIndex": ${currentChunk.chunkIndex},
-                      "sourceText": "relevant source text from requirements",
-                      "position": {
-                        "start": 0,
-                        "end": 100
-                      }
-                    }
-                  }
-                ]
-              }
-            ]
-          }
+    _moveToNextChunk() {
+        const hasMoreChunks = this.chunkIterator.hasMoreChunks();
+        if (!hasMoreChunks) {
+            return false;
         }
-
-        Return ONLY JSON, no explanations.`;
+        
+        this.chunkIterator.moveToNextChunk();
+        this.updateProgress();
+        return true;
     }
 
-    createAccumulatedSummary() {
+    _createAdditionalRequirementsPrompt() {
+        const accumulatedSummary = this._createAccumulatedSummary();
+        
+        return `<instruction>
+    <recursive_extraction_task>
+        <title>Incremental Command and ReadModel Extraction - New Items Only</title>
+        <task_description>Extract ONLY NEW Commands and ReadModels from the current requirements chunk that are NOT already present in the previously accumulated results. The system will handle merging automatically.</task_description>
+
+        <task_objectives>
+            <title>Task Objectives</title>
+            <objective id="1">
+                <name>Extract ONLY New Operations from Current Chunk</name>
+                <description>Identify and extract ONLY NEW Commands and ReadModels from the current requirements chunk that are NOT already in previous results</description>
+            </objective>
+            <objective id="2">
+                <name>Avoid Duplicates</name>
+                <description>DO NOT return any Commands or ReadModels that already exist in the previously accumulated results</description>
+            </objective>
+            <objective id="3">
+                <name>Maintain Bounded Context Categorization</name>
+                <description>Ensure all extracted items are properly assigned to their appropriate Bounded Context</description>
+            </objective>
+            <objective id="4">
+                <name>Include Source Tracking</name>
+                <description>Add refs metadata to each extracted Command and ReadModel for traceability to source requirements</description>
+            </objective>
+            <objective id="5">
+                <name>System Handles Merging</name>
+                <description>The merging of new results with previous results is handled automatically by the system - you only provide new items</description>
+            </objective>
+        </task_objectives>
+
+        <extraction_guidelines>
+            <title>Recursive Extraction Guidelines</title>
+            
+            <guideline id="1">
+                <name>Extract ONLY New Operations</name>
+                <description>Extract ONLY operations that are NOT already present in the previous summary</description>
+                <critical_instruction>DO NOT return any Commands or ReadModels that are already listed in the "Previously Accumulated Results" section below</critical_instruction>
+                <rationale>The merging logic is handled by the system - you must return only newly discovered operations from the current chunk</rationale>
+            </guideline>
+            
+            <guideline id="2">
+                <name>Naming Consistency</name>
+                <description>Maintain consistency with naming conventions established in previous extractions</description>
+                <details>
+                    <item>Use the same naming patterns (PascalCase, Verb+Noun for Commands, Noun+Purpose for ReadModels)</item>
+                    <item>Align with existing terminology and domain language</item>
+                </details>
+            </guideline>
+            
+            <guideline id="3">
+                <name>Bounded Context Alignment</name>
+                <description>Ensure proper Bounded Context assignment consistent with previous extractions</description>
+                <details>
+                    <item>Assign to the same Bounded Context if the operation belongs to the same domain area</item>
+                    <item>Maintain aggregate alignment within each Bounded Context</item>
+                </details>
+            </guideline>
+            
+            <guideline id="4">
+                <name>Output Format Consistency</name>
+                <description>Use the exact same JSON output format as the base CommandReadModelExtractor</description>
+                <format_reference>Follow the extractedData structure with boundedContexts array containing commands and readModels</format_reference>
+            </guideline>
+            
+            <guideline id="5">
+                <name>Source Tracking Metadata</name>
+                <description>Every extracted Command and ReadModel must include refs array for traceability</description>
+                <refs_format>Use format [[[startLineNumber, "minimal_start_phrase"], [endLineNumber, "minimal_end_phrase"]]]</refs_format>
+            </guideline>
+        </extraction_guidelines>
+
+        <duplicate_avoidance_rules>
+            <title>Duplicate Avoidance Rules</title>
+            <critical_rule>You must EXCLUDE any Commands or ReadModels that match the following criteria with items in "Previously Accumulated Results":</critical_rule>
+            
+            <rule id="1">
+                <name>Name Matching</name>
+                <description>Skip if Command/ReadModel name already exists (case-sensitive comparison)</description>
+            </rule>
+            
+            <rule id="2">
+                <name>Bounded Context Matching</name>
+                <description>Skip if the same name exists within the same Bounded Context</description>
+            </rule>
+            
+            <rule id="3">
+                <name>Functional Equivalence</name>
+                <description>Skip if functionally equivalent operation already exists, even with slightly different naming</description>
+            </rule>
+            
+            <rule id="4">
+                <name>Return Empty Arrays if No New Items</name>
+                <description>If no new operations are found in the current chunk, return empty commands and readModels arrays for each bounded context</description>
+            </rule>
+        </duplicate_avoidance_rules>
+
+        <output_requirements>
+            <title>Output Requirements</title>
+            <critical_requirement>⚠️ IMPORTANT: Return ONLY NEW items discovered in the current chunk. DO NOT include items already in "Previously Accumulated Results"</critical_requirement>
+            <requirement id="1">Return ONLY valid JSON output, no explanations or additional text</requirement>
+            <requirement id="2">Use the exact same structure as the base CommandReadModelExtractor output</requirement>
+            <requirement id="3">Return ONLY NEW Commands and ReadModels found in the current chunk that are NOT in the previous accumulated results</requirement>
+            <requirement id="4">The system will automatically merge your new results with previous results - you must not duplicate existing items</requirement>
+            <requirement id="5">Ensure all commands and readModels have required fields: name, actor, aggregate, description, refs</requirement>
+            <requirement id="6">Maintain proper JSON formatting and syntax</requirement>
+            <requirement id="7">If no new items are found, return empty arrays for commands and readModels</requirement>
+        </output_requirements>
+
+        <previous_extracted_data_summary>
+            <title>Previously Accumulated Results - DO NOT RETURN THESE AGAIN</title>
+            <warning>⚠️ The items listed below have ALREADY been extracted and processed. DO NOT include them in your output.</warning>
+            <description>The following Commands and ReadModels were already extracted from previous requirement chunks and must be EXCLUDED from your current extraction:</description>
+            <exclusion_list>
+${accumulatedSummary}
+            </exclusion_list>
+            <reminder>Extract ONLY new operations from the current chunk that are NOT listed above</reminder>
+        </previous_extracted_data_summary>
+    </recursive_extraction_task>
+</instruction>`;
+    }
+
+    _createAccumulatedSummary() {
         if (!this.accumulated.boundedContexts || this.accumulated.boundedContexts.length === 0) {
             return "No previous data available.";
         }
 
-        return this.accumulated.boundedContexts.map(bc => {
-            const commandNames = bc.commands ? bc.commands.map(cmd => cmd.name).join(', ') : 'None';
-            const readModelNames = bc.readModels ? bc.readModels.map(rm => rm.name).join(', ') : 'None';
-            
-            return `- ${bc.name} (${bc.alias}): Commands=[${commandNames}], ReadModels=[${readModelNames}]`;
-        }).join('\n');
+        const summaryData = []
+        for(const bc of this.accumulated.boundedContexts) {
+            const commandNames = bc.commands ? bc.commands.map(cmd => cmd.name) : [];
+            const readModelNames = bc.readModels ? bc.readModels.map(rm => rm.name) : [];
+            summaryData.push({
+                boundedContextName: bc.name,
+                commands: commandNames,
+                readModels: readModelNames
+            });
+        }
+        return XmlUtil.from_dict(summaryData);
     }
 
-    handleGenerationFinished(model, currentChunk) {
+    
+    _handleGenerationFinished(model) {
         try {
             if (model && model.extractedData && model.extractedData.boundedContexts) {
-                // 출처 정보를 추가하여 데이터 병합
-                const enrichedData = this.enrichWithSourceInfo(model.extractedData, currentChunk);
-                this.accumulated = this.mergeExtractedData(this.accumulated, enrichedData);
+                this.generatedResults.push(model);
+                this.accumulated = this._mergeExtractedData(this.accumulated, model.extractedData);
             }
-
-            // 다음 청크로 진행하기 전에 진행률 업데이트
-            this.currentChunkIndex++;
-            this.updateProgress();
-            setTimeout(() => this.processNextChunk(), 100);
         } catch (error) {
             console.error('Error handling generation finished:', error);
-            this.currentChunkIndex++;
-            this.updateProgress();
-            setTimeout(() => this.processNextChunk(), 100);
-        }
-    }
-
-    enrichWithSourceInfo(extractedData, currentChunk) {
-        if (!extractedData || !extractedData.boundedContexts) {
-            return extractedData;
         }
 
-        const enrichedData = {
-            ...extractedData,
-            boundedContexts: extractedData.boundedContexts.map(bc => ({
-                ...bc,
-                commands: bc.commands ? bc.commands.map(cmd => this.addSourceInfoToItem(cmd, currentChunk)) : [],
-                readModels: bc.readModels ? bc.readModels.map(rm => this.addSourceInfoToItem(rm, currentChunk)) : []
-            }))
-        };
-
-        return enrichedData;
+        setTimeout(() => this._processNextChunk(), 100);
     }
 
-    addSourceInfoToItem(item, currentChunk) {
-        // 이미 sourceInfo가 있는 경우 유지, 없는 경우 추가
-        if (!item.sourceInfo) {
-            item.sourceInfo = {
-                chunkIndex: currentChunk.chunkIndex,
-                sourceText: this.extractRelevantSourceText(item, currentChunk.content),
-                position: {
-                    start: 0,
-                    end: currentChunk.content.length
-                },
-                chunkSourceInfo: currentChunk.sourceInfo
-            };
-        }
-        return item;
-    }
-
-    extractRelevantSourceText(item, chunkContent) {
-        // Command나 ReadModel의 이름이나 설명과 관련된 텍스트를 찾아서 반환
-        const itemName = item.name || '';
-        const itemDescription = item.description || '';
-        
-        // 청크 내용에서 관련 텍스트 찾기 (간단한 키워드 매칭)
-        const keywords = [itemName, ...itemDescription.split(' ').filter(word => word.length > 3)];
-        const relevantText = keywords
-            .map(keyword => {
-                const index = chunkContent.toLowerCase().indexOf(keyword.toLowerCase());
-                if (index !== -1) {
-                    const start = Math.max(0, index - 50);
-                    const end = Math.min(chunkContent.length, index + keyword.length + 50);
-                    return chunkContent.substring(start, end);
-                }
-                return null;
-            })
-            .filter(text => text !== null)
-            .join(' ... ');
-
-        return relevantText || chunkContent.substring(0, 200) + '...';
-    }
-
-    // 부모 클래스의 mergeExtractedData를 오버라이드하여 출처 정보 보존
-    mergeExtractedData(existingData, newData) {
+    _mergeExtractedData(existingData, newData) {
         if (!existingData || !existingData.boundedContexts) {
             return newData;
         }
 
         const mergedBoundedContexts = [...existingData.boundedContexts];
-
-        newData.boundedContexts.forEach(newBC => {
+        for(const newBC of newData.boundedContexts) {
             const existingBCIndex = mergedBoundedContexts.findIndex(
                 bc => bc.name === newBC.name
             );
-
-            if (existingBCIndex !== -1) {
-                // 중복 제거하면서 출처 정보 보존
-                const existingCommands = mergedBoundedContexts[existingBCIndex].commands || [];
-                const existingReadModels = mergedBoundedContexts[existingBCIndex].readModels || [];
-                
-                // 새로운 Commands 추가 (중복 제거)
-                const newCommands = (newBC.commands || []).filter(newCmd => 
-                    !existingCommands.some(existingCmd => 
-                        existingCmd.name === newCmd.name && 
-                        existingCmd.description === newCmd.description
-                    )
-                );
-                
-                // 새로운 ReadModels 추가 (중복 제거)
-                const newReadModels = (newBC.readModels || []).filter(newRm => 
-                    !existingReadModels.some(existingRm => 
-                        existingRm.name === newRm.name && 
-                        existingRm.description === newRm.description
-                    )
-                );
-
-                mergedBoundedContexts[existingBCIndex].commands = [
-                    ...existingCommands,
-                    ...newCommands
-                ];
-                mergedBoundedContexts[existingBCIndex].readModels = [
-                    ...existingReadModels,
-                    ...newReadModels
-                ];
-            } else {
+            if(existingBCIndex === -1) {
                 mergedBoundedContexts.push(newBC);
+                continue;
             }
-        });
+
+            const existingCommands = mergedBoundedContexts[existingBCIndex].commands || [];
+            const newCommands = (newBC.commands || []).filter(newCmd => 
+                !existingCommands.some(existingCmd => 
+                    existingCmd.name === newCmd.name
+                )
+            );
+            mergedBoundedContexts[existingBCIndex].commands = [
+                ...existingCommands,
+                ...newCommands
+            ];
+
+            const existingReadModels = mergedBoundedContexts[existingBCIndex].readModels || [];
+            const newReadModels = (newBC.readModels || []).filter(newRm => 
+                !existingReadModels.some(existingRm => 
+                    existingRm.name === newRm.name
+                )
+            );
+            mergedBoundedContexts[existingBCIndex].readModels = [
+                ...existingReadModels,
+                ...newReadModels
+            ];
+        }
 
         return {
             ...existingData,
@@ -428,30 +278,38 @@ class RecursiveCommandReadModelExtractor extends CommandReadModelExtractor {
         };
     }
 
+
+    _getLineNumberedRequirements() {
+        return TextTraceUtil.addLineNumbers(
+            this.chunkIterator.getCurrentChunkText(), this.chunkIterator.getCurrentChunkStartLine(), true
+        );
+    }
+
+    _validateRefs(extractedData, requirements) {
+        RefsTraceUtil.validateRefs(
+            extractedData, 
+            requirements,
+            this.chunkIterator.getCurrentChunkStartLine() - 1
+        );
+    }
+
+
     updateProgress() {
         if (this.client && this.client.updateMessageState) {
-            const progress = Math.round((this.currentChunkIndex / this.requirementsChunks.length) * 100);
+            const currentChunkIndex = Math.max(this.chunkIterator.getCurrentChunkIndex(), 0);
+            const progress = Math.round((currentChunkIndex / this.chunkIterator.getTotalChunks()) * 100);
             const siteMapViewerMessage = this.client.messages.find(msg => msg.type === 'siteMapViewer');
             const messageId = siteMapViewerMessage ? siteMapViewerMessage.uniqueId : null;
             
             if (messageId) {
                 this.client.updateMessageState(messageId, {
                     processingRate: progress,
-                    currentChunk: this.currentChunkIndex + 1,
-                    totalChunks: this.requirementsChunks.length,
+                    currentChunk: currentChunkIndex + 1,
+                    totalChunks: this.chunkIterator.getTotalChunks(),
                     currentProcessingStep: 'extractingCommandsAndReadModels'
                 });
             }
         }
-    }
-
-    getProgressInfo() {
-        return {
-            isProcessing: this.isProcessing,
-            currentChunk: this.currentChunkIndex + 1,
-            totalChunks: this.requirementsChunks.length,
-            progress: Math.round((this.currentChunkIndex / this.requirementsChunks.length) * 100)
-        };
     }
 }
 

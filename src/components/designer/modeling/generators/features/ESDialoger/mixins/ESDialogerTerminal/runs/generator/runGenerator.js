@@ -5,6 +5,8 @@ import runRequirementsMappingGenerator from "./RequirementsMappingGenerator/runR
 import runExtractDDLFieldsGenerator from "./ExtractDDLFieldsGenerator/runExtractDDLFieldsGenerator"
 import runAddTraceToDraftOptionsGenerator from "./AddTraceToDraftOptionsGenerator/runAddTraceToDraftOptionsGenerator"
 import runAssignPreviewFieldsToAggregateDraft from "./AssignPreviewFieldsToAggregateDraft/runAssignPreviewFieldsToAggregateDraft"
+import runCommandReadModelExtractor from "./CommandReadModelExtractor/runCommandReadModelExtractor"
+import runRecursiveCommandReadModelExtractor from "./RecursiveCommandReadModelExtractor/runRecursiveCommandReadModelExtractor"
 
 export const runGeneratorCommandRegistry = {
     RequirementsValidationGenerator: {
@@ -21,6 +23,16 @@ export const runGeneratorCommandRegistry = {
         handler: runDevideBoundedContextGenerator,
         description: "DevideBoundedContextGenerator 실행",
         usage: "run runGenerator DevideBoundedContextGenerator"
+    },
+    CommandReadModelExtractor: {
+        handler: runCommandReadModelExtractor,
+        description: "CommandReadModelExtractor 실행",
+        usage: "run runGenerator CommandReadModelExtractor"
+    },
+    RecursiveCommandReadModelExtractor: {
+        handler: runRecursiveCommandReadModelExtractor,
+        description: "RecursiveCommandReadModelExtractor 실행",
+        usage: "run runGenerator RecursiveCommandReadModelExtractor"
     },
     RequirementsMappingGenerator: {
         handler: runRequirementsMappingGenerator,

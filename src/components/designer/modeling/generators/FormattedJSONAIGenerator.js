@@ -181,7 +181,7 @@ class FormattedJSONAIGenerator extends AIGenerator {
 
         try {
 
-            await super.generate()
+            return await super.generate()
 
         } catch(e) {
 
@@ -217,14 +217,13 @@ class FormattedJSONAIGenerator extends AIGenerator {
             this.leftNetworkRetryCount--
             if(this.leftNetworkRetryCount > 0) {
                 console.log(`[*] ${this.generatorName}에 대한 생성 도중 네트워크 의심 에러 발생! 재시도 중...`, networkErrorReturnObj)
-                await this.generate()
+                return await this.generate()
             }
             else {
                 console.error(`[!] ${this.generatorName}에 대한 생성 도중 네트워크 의심 에러 발생! 재시도 실패!`, networkErrorReturnObj)
                 // alert(`[!] A network error occurred during AI generation. Please try again later or review the relevant options. : ${e.message}`)
                 throw new GeneratorNetworkError(e.message, e)
             }
-
         }
     }
     // generate() 호출 전에 파라미터를 완전히 구성하기 어려운 특수한 케이스에서 사용됨

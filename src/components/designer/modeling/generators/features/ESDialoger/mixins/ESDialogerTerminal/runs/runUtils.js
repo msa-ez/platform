@@ -1,7 +1,9 @@
-import { senarioMocks }  from "./mocks"
+import { getDelayedMockedDatas }  from "../mocks"
 
 class RunUtils {
-    static initValueWithSelectedScenario(senarioName, client) {
+    static async initValueWithSelectedScenario(senarioName, client) {
+        const senarioMocks = await getDelayedMockedDatas("senarioMocks")
+
         if(!senarioName) {
             senarioName = Object.keys(senarioMocks)[0]
         }
@@ -19,11 +21,18 @@ class RunUtils {
         client.frontEndResults = selectedScenario.frontEndResults
         client.pbcResults = selectedScenario.pbcResults
         client.pbcLists = selectedScenario.pbcLists
-        client.projectInfo = selectedScenario.projectInfo
+        RunUtils._initValueToExistingObject(client.projectInfo, selectedScenario.projectInfo)
         client.requirementsValidationResult = selectedScenario.requirementsValidationResult
         client.commandReadModelData = selectedScenario.commandReadModelData
         client.siteMap = selectedScenario.siteMap
+        client.selectedAspect = selectedScenario.selectedAspect
         return selectedScenario
+    }
+
+    static _initValueToExistingObject(existingObject, newObject) {
+        for(const key of Object.keys(newObject)) {
+            existingObject[key] = newObject[key]
+        }
     }
 }
 

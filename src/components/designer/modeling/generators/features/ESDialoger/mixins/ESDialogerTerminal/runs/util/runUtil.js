@@ -2,6 +2,9 @@ import runXmlUtil from "./XmlUtil/runXmlUtil"
 import runFirebaseUtil from "./FirebaseUtil/runFirebaseUtil"
 import runLitellmProxyUtil from "./LitellmProxyUtil/runLitellmProxyUtil"
 import runAICacheUtil from "./AICacheUtil/runAICacheUtil"
+import runTextChunker from "./TextChunker/runTextChunker"
+import runChunkIterator from "./ChunkIterator/runChunkIterator"
+import runESDialogerTraceUtil from "./ESDialogerTraceUtil/runESDialogerTraceUtil"
 
 export const runUtilCommandRegistry = {
     FirebaseUtil: {
@@ -23,6 +26,21 @@ export const runUtilCommandRegistry = {
         handler: runXmlUtil,
         description: "XmlUtil 실행",
         usage: "run runUtil XmlUtil"
+    },
+    TextChunker: {
+        handler: runTextChunker,
+        description: "TextChunker 실행",
+        usage: "run runUtil TextChunker <splitIntoChunksByLine>"
+    },
+    ChunkIterator: {
+        handler: runChunkIterator,
+        description: "ChunkIterator 실행",
+        usage: "run runUtil ChunkIterator"
+    },
+    ESDialogerTraceUtil: {
+        handler: runESDialogerTraceUtil,
+        description: "ESDialogerTraceUtil 실행",
+        usage: "run runUtil ESDialogerTraceUtil"
     }
 }
 

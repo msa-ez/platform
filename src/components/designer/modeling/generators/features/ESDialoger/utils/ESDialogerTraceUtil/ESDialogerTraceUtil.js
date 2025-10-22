@@ -15,6 +15,7 @@ class ESDialogerTraceUtil {
             structureRefs: {},
             idValueObjectRefs: {},
             traceMaps: {},
+            commandRefs: {},
             userInputs: projectInfo
         };
         
@@ -31,6 +32,10 @@ class ESDialogerTraceUtil {
                 valueObjects: {}
             };
             result.traceInfo.idValueObjectRefs[boundedContextName] = {};
+            result.traceInfo.commandRefs[boundedContextName] = {
+                commands: {},
+                readModels: {}
+            }
             
             boundedContext.structure.forEach(structureItem => {
                 const aggregateName = structureItem.aggregate.name;
@@ -57,9 +62,25 @@ class ESDialogerTraceUtil {
                     delete valueObject.refs;
                 })
             });
-            
+
             result.traceInfo.traceMaps[boundedContextName] = boundedContext.boundedContext.requirements.traceMap;
             delete boundedContext.boundedContext.requirements.traceMap;
+
+            if(boundedContext.boundedContext.requirements.commandInfos) {
+                for(let commandInfo of boundedContext.boundedContext.requirements.commandInfos) {
+                    if(!commandInfo.name || !commandInfo.refs) continue
+                    result.traceInfo.commandRefs[boundedContextName].commands[commandInfo.name] = commandInfo.refs
+                }
+                delete boundedContext.boundedContext.requirements.commandInfos
+            }
+
+            if(boundedContext.boundedContext.requirements.readModelInfos) {
+                for(let readModel of boundedContext.boundedContext.requirements.readModelInfos) {
+                    if(!readModel.name || !readModel.refs) continue
+                    result.traceInfo.commandRefs[boundedContextName].readModels[readModel.name] = readModel.refs
+                }
+                delete boundedContext.boundedContext.requirements.readModelInfos
+            }
         });
         
         return result;

@@ -316,7 +316,6 @@ ${actorsXml}
             currentGeneratedLength: returnObj.modelRawValue ? returnObj.modelRawValue.length : 0
         };
     }
-
     __isValidAIOutput(aiOutput) {
         return aiOutput && typeof aiOutput === 'object';
     }

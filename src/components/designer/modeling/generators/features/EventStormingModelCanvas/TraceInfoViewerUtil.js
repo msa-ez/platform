@@ -56,9 +56,23 @@ class TraceInfoViewerUtil {
             throw new Error(`Invalid Element trace info. Can not find traceMaps for ${boundedContextTraceName}.`);
         }
 
-        const bcTraceMap = traceInfo.traceMaps[boundedContextTraceName];
-        const originalRefs = RefsTraceUtil.convertToOriginalRefsUsingTraceMap(elementValue.refs, bcTraceMap);
-        
+        let originalRefs = null;
+        if(elementValue._type === "org.uengine.modeling.model.Command") {
+            if(traceInfo.commandRefs && traceInfo.commandRefs[boundedContextTraceName] && traceInfo.commandRefs[boundedContextTraceName].commands && traceInfo.commandRefs[boundedContextTraceName].commands[elementValue.traceName]) {
+                originalRefs = traceInfo.commandRefs[boundedContextTraceName].commands[elementValue.traceName];
+            }
+        }
+        else if(elementValue._type === "org.uengine.modeling.model.View") {
+            if(traceInfo.commandRefs && traceInfo.commandRefs[boundedContextTraceName] && traceInfo.commandRefs[boundedContextTraceName].readModels && traceInfo.commandRefs[boundedContextTraceName].readModels[elementValue.traceName]) {
+                originalRefs = traceInfo.commandRefs[boundedContextTraceName].readModels[elementValue.traceName];
+            }
+        }
+
+        if(!originalRefs) {
+            const bcTraceMap = traceInfo.traceMaps[boundedContextTraceName];
+            originalRefs = RefsTraceUtil.convertToOriginalRefsUsingTraceMap(elementValue.refs, bcTraceMap);
+        }
+
         return this.showTraceInfoViewer(component, originalRefs);
     }
 
