@@ -8,3 +8,4 @@ export const { EventStormingCanvasTraceUtil, TextTraceUtil, RefsTraceUtil, Trace
 export const XmlUtil = require("./XmlUtil");
 export const FirebaseUtil = require("./FirebaseUtil");
 export const LitellmProxyUtil = require("./LitellmProxyUtil");
+export const LoggingUtil = require("./LoggingUtil");
