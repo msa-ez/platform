@@ -2221,7 +2221,7 @@ import { value } from 'jsonpath';
                 
                 let GeneratorClass;
                 if (useLangGraph) {
-                    GeneratorClass = require('./RecursiveRequirementsSummarizerLangGraph').default;
+                    GeneratorClass = require('./RecursiveRequirementsSummarizerLangGraph');
                     this.state.generator = "RecursiveRequirementsSummarizerLangGraph";
                     this.generatorName = "RecursiveRequirementsSummarizerLangGraph";
                 } else {
