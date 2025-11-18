@@ -156,10 +156,14 @@ class RecursiveUserStoryGeneratorLangGraph {
     /**
      * 진행 중 업데이트 처리
      */
-    async _handleUpdate(userStories, logs, progress) {
+    async _handleUpdate(state, logs, progress) {
+        // Proxy의 onUpdate는 전체 state 객체를 전달
+        const userStories = state.userStories || [];
         
         // User Stories를 accumulated 형식으로 변환
-        this._convertToAccumulatedFormat(userStories);
+        if (Array.isArray(userStories) && userStories.length > 0) {
+            this._convertToAccumulatedFormat(userStories);
+        }
         
         // 진행 상황을 클라이언트에 알림
         if (this.client.onModelUpdated) {
@@ -233,9 +237,9 @@ class RecursiveUserStoryGeneratorLangGraph {
     /**
      * 청크 완료 처리 (Firebase 이벤트 핸들러)
      */
-    async _handleChunkComplete(userStories, logs, progress, isFailed) {
+    async _handleChunkComplete(state, logs, progress, isFailed) {
         if (isFailed) {
-            const errorLog = logs.find(log => log.level === 'error');
+            const errorLog = Array.isArray(logs) ? logs.find(log => log && log.level === 'error') : null;
             const errorMsg = errorLog ? errorLog.message : 'Unknown error occurred';
             console.error(`[LangGraph] ❌ Job 실패: ${errorMsg}`);
             if (this.rejectCurrentProcess) {
@@ -244,9 +248,18 @@ class RecursiveUserStoryGeneratorLangGraph {
             return;
         }
 
+        // Proxy의 onComplete는 전체 state 객체를 전달
+        const userStories = state.userStories || [];
+        const actors = state.actors || [];
+        const businessRules = state.businessRules || [];
+        const boundedContexts = state.boundedContexts || [];
+
         console.log(
             `[DEBUG][RecursiveUserStoryGeneratorLangGraph] ${this.currentChunkIndex + 1}번째 청크 생성 완료: `, structuredClone({
                 userStories: userStories,
+                actors: actors,
+                businessRules: businessRules,
+                boundedContexts: boundedContexts,
                 logs: logs,
                 progress: progress
             })
@@ -256,9 +269,9 @@ class RecursiveUserStoryGeneratorLangGraph {
         const title = (this.client.input && this.client.input.title) || '';
         const model = {
             userStories: userStories,
-            actors: [],
-            businessRules: [],
-            boundedContexts: [],
+            actors: actors,
+            businessRules: businessRules,
+            boundedContexts: boundedContexts,
             title: title
         };
         

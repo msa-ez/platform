@@ -118,8 +118,17 @@ class JsonParsingUtil {
 
             if(!textToParse) // 부분적으로 완성된 경우 해당 값을 사용
                 textToParse = textParts[textParts.length - 1].trim()
-        } else
+        } else {
             textToParse = text.trim()
+            // 비코드펜스 텍스트에서 불필요한 설명을 제거하고 첫 { 부터 마지막 } 까지 추출
+            if (textToParse.indexOf('{') !== -1 && textToParse.lastIndexOf('}') !== -1) {
+                const start = textToParse.indexOf('{')
+                const end = textToParse.lastIndexOf('}')
+                if (end > start) {
+                    textToParse = textToParse.substring(start, end + 1).trim()
+                }
+            }
+        }
 
         return textToParse
     }
