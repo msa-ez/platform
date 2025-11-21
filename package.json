@@ -61,6 +61,7 @@
     "diff": "^5.0.0",
     "diff-match-patch": "^1.0.5",
     "dns": "^0.2.2",
+    "docx": "^9.5.1",
     "dotenv": "^8.2.0",
     "element-ui": "^2.13.2",
     "es6-error": "^4.1.1",
