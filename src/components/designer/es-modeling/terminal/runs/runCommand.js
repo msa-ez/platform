@@ -1,9 +1,17 @@
+import createEventStormingFromDraftOptions from "./etc/createEventStormingFromDraftOptions"
 import showAIProgressUI from "./etc/showAIProgressUI"
 import showTraceInfoViwerUI from "./etc/showTraceInfoViwerUI"
 import makeUIRunTimeTemplateHtml from "./etc/makeUIRunTimeTemplateHtml"
+import runProxyInputObjectConverter from "./etc/runProxyInputObjectConverter"
+import runGetTraceInfoFromJob from "./etc/runGetTraceInfoFromJob"
 import getOriginalTraceInfo from "./traceInfo/getOriginalTraceInfo"
 
 export const runCommandRegistry = {
+    createEventStormingFromDraftOptions: {
+        handler: createEventStormingFromDraftOptions,
+        description: "초안 옵션들을 기반으로 EventStorming 모델을 새롭게 생성",
+        usage: "run createEventStormingFromDraftOptions"
+    },
     showAIProgressUI: {
         handler: showAIProgressUI,
         description: "AI 생성 진행상황을 표시하는 UI를 Mocked된 데이터로 표시",
@@ -19,10 +27,20 @@ export const runCommandRegistry = {
         description: "UI의 runTimeTemplateHtml을 생성",
         usage: "run makeUIRunTimeTemplateHtml"
     },
+    runProxyInputObjectConverter: {
+        handler: runProxyInputObjectConverter,
+        description: "특정 프록시에 대한 Converter를 실행",
+        usage: "run runProxyInputObjectConverter <toEsProxyInputObject>"
+    },
     getOriginalTraceInfo: {
         handler: getOriginalTraceInfo,
         description: "특정 타입 요소의 원본 TraceInfo를 출력",
         usage: "run getOriginalTraceInfo <command|readModel|event>"
+    },
+    getTraceInfoFromJob: {
+        handler: runGetTraceInfoFromJob,
+        description: "특정 Job ID의 TraceInfo를 출력",
+        usage: "run getTraceInfoFromJob <jobId>"
     }
 }
 

@@ -1,6 +1,12 @@
 class LoggingUtil {
     constructor(namespace) {
         this.namespace = namespace || 'DEFAULT';
+        this.logLevels = {
+            'DEBUG': 0,
+            'INFO': 1,
+            'WARNING': 2,
+            'ERROR': 3
+        };
     }
 
     static makeFromNamespace(namespace) {
@@ -26,6 +32,20 @@ class LoggingUtil {
 
 
     _log(level, message, ...args) {
+        // localStorage에서 log_level 확인
+        const configuredLevel = localStorage.getItem('log_level');
+        
+        // log_level이 설정되어 있으면 레벨 필터링 수행
+        if (configuredLevel) {
+            const configuredLevelValue = this.logLevels[configuredLevel.toUpperCase()];
+            const currentLevelValue = this.logLevels[level];
+            
+            // 현재 로그 레벨이 설정된 레벨보다 낮으면 출력하지 않음
+            if (configuredLevelValue !== undefined && currentLevelValue < configuredLevelValue) {
+                return;
+            }
+        }
+        
         const time = this._getFormattedTime();
         const prefix = `[${time}][${level}][${this.namespace}]`;
         const fullMessage = `${prefix} ${message}`;

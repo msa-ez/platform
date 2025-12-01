@@ -55,4 +55,11 @@ export default class CanvasExplorer extends CanvasExploreAbstract {
         }
         return relatedCommands
     }
+
+    iterateElements(callback) {
+        if(!this.canvas || !this.canvas.value || !this.canvas.value.elements) return
+        for(let element of Object.values(this.canvas.value.elements)) {
+            callback(element)
+        }
+    }
 }

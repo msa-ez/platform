@@ -1904,7 +1904,7 @@ import { value } from 'jsonpath';
                     model = model.modelValue.output
                 }
 
-                if(model && (model.currentGeneratedLength || model.modelValue.output.currentGeneratedLength)){
+                if((model && model.modelValue && model.modelValue.output && model.modelValue.output.currentGeneratedLength) || (model && model.currentGeneratedLength)){
                     this.currentGeneratedLength = model.currentGeneratedLength || model.modelValue.output.currentGeneratedLength;
                     if(this.state.generator === "RequirementsValidationGenerator" || 
                         this.state.generator === "RecursiveRequirementsValidationGenerator" ||

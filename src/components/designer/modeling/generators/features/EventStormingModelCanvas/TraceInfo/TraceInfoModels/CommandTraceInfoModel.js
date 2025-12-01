@@ -7,43 +7,48 @@ export default class CommandTraceInfoModel extends TraceInfoModelAbstract {
     }
 
     getOriginalRefs() {
-        if(!this.value || !this.value.boundedContext || !this.value.boundedContext.id) {
+        if(!this.__isValidCommandTraceValue(this.value)) {
             return null;
         }
 
-        
-        const boundedContext = this.canvasExplorer.getElementById(this.value.boundedContext.id)
-        if(!boundedContext || !boundedContext.traceName) {
+
+        const boundedContextTraceName = this.getBoundedContextTraceName()
+        if(!boundedContextTraceName) {
             return null;
         }
-        const boundedContextTraceName = boundedContext.traceName
-        
 
-        const traceInfo = this.canvasExplorer.getTraceInfo()
+        const traceInfo = this.getTraceInfo()
         if(!traceInfo) {
             return null;
         }
 
-        if(this.__isValidCommandRefsValueExists(this.value, boundedContextTraceName, traceInfo)) {
+        
+        // TYPE 1: 트레이스 정보 자체에 Command 참조 정보가 존재함(프로젝트를 기반으로 생성)
+        if(this.__isValidCommandTraceInfo(traceInfo, boundedContextTraceName, this.value.traceName)) {
             return traceInfo.commandRefs[boundedContextTraceName].commands[this.value.traceName];
         }
 
-
-        if(!traceInfo.traceMaps || !traceInfo.traceMaps[boundedContextTraceName]) {
-            return null;
+        // TYPE 2: Command 내부에 refs 정보가 있으며, 참조하는 요구사항에 대한 인덱스 맵핑 정보가 traceInfo에 존재함(특수한 예외 케이스)
+        if(this.value.refs && traceInfo.traceMaps && traceInfo.traceMaps[boundedContextTraceName]) {
+            return RefsTraceUtil.convertToOriginalRefsUsingTraceMap(
+                this.value.refs, traceInfo.traceMaps[boundedContextTraceName]
+            );
         }
 
-        const bcTraceMap = traceInfo.traceMaps[boundedContextTraceName]
-        if(!bcTraceMap || !this.value.refs) {
-            return null;
+        // TYPE 3: Command 내부에 refs 정보가 있으며, 참조하는 요구사항에 대한 인덱스 맵핑 정보가 traceInfo에 존재하지 않음(A2A를 기반으로 생성)
+        if(this.value.refs) {
+            return this.value.refs;
         }
 
-        return RefsTraceUtil.convertToOriginalRefsUsingTraceMap(this.value.refs, bcTraceMap);
+        return null;
     }
-    __isValidCommandRefsValueExists(value, boundedContextTraceName, traceInfo) {
-        return value.traceName && traceInfo.commandRefs && 
+    __isValidCommandTraceValue(value) {
+        return value && value.boundedContext && value.boundedContext.id && value.traceName;
+    }
+    __isValidCommandTraceInfo(traceInfo, boundedContextTraceName, commandTraceName) {
+        return traceInfo && traceInfo.commandRefs && 
                traceInfo.commandRefs[boundedContextTraceName] && 
                traceInfo.commandRefs[boundedContextTraceName].commands && 
-               traceInfo.commandRefs[boundedContextTraceName].commands[value.traceName]
+               traceInfo.commandRefs[boundedContextTraceName].commands[commandTraceName]
     }
 }

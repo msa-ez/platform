@@ -195,7 +195,7 @@
             },
             handleResize() {
                 // 창 크기 변경 시 컴포넌트 위치 재조정
-                if (this.$el && !this.isDragging) {
+                if (this.$el && this.$el.getBoundingClientRect && !this.isDragging) {
                     const rect = this.$el.getBoundingClientRect()
                     const actualWidth = rect.width
                     const actualHeight = rect.height
