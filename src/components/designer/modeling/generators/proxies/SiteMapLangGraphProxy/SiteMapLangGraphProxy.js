@@ -68,6 +68,7 @@ class SiteMapLangGraphProxy {
                     siteMap: {},
                     logs: [],
                     progress: 0,
+                    currentGeneratedLength: 0,
                     isCompleted: false,
                     isFailed: false,
                     error: ''
@@ -117,17 +118,20 @@ class SiteMapLangGraphProxy {
             siteMap: outputs.siteMap || {},
             logs: outputs.logs || [],
             progress: outputs.progress || 0,
+            currentGeneratedLength: outputs.currentGeneratedLength || 0,
             isCompleted: outputs.isCompleted || false,
             isFailed: outputs.isFailed || false,
             error: outputs.error || ''
         };
+        const currentGeneratedLength = state.currentGeneratedLength || this._calculateGeneratedLength(state.siteMap);
         
         // 완료 콜백
         if (state.isCompleted && this.callbacks.onComplete) {
             this.callbacks.onComplete({
                 siteMap: state.siteMap,
                 logs: state.logs,
-                progress: state.progress
+                progress: state.progress,
+                currentGeneratedLength
             });
             this._cleanup();
             return;
@@ -148,7 +152,8 @@ class SiteMapLangGraphProxy {
             this.callbacks.onUpdate({
                 siteMap: state.siteMap,
                 logs: state.logs,
-                progress: state.progress
+                progress: state.progress,
+                currentGeneratedLength
             });
         }
     }
@@ -165,6 +170,17 @@ class SiteMapLangGraphProxy {
      */
     destroy() {
         this._cleanup();
+    }
+
+    _calculateGeneratedLength(siteMap) {
+        if (!siteMap) {
+            return 0;
+        }
+        try {
+            return JSON.stringify(siteMap).length;
+        } catch (e) {
+            return 0;
+        }
     }
 
     // ========== Firebase 경로 헬퍼 메서드 ==========

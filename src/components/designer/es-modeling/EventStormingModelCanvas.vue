@@ -4720,7 +4720,9 @@
                         let draft = await me.list(`db://definitions/${localStorage.getItem("associatedProjectId")}/draft`)
                         if(draft) {
                             let siteMapMessage = draft.find(draft => draft.type === "siteMapViewer")
-                            this.$set(this.value, "siteMap", siteMapMessage.siteMap)
+                            if(siteMapMessage && siteMapMessage.siteMap) {
+                                this.$set(this.value, "siteMap", siteMapMessage.siteMap)
+                            }
                         }
 
                         localStorage.removeItem("associatedProjectId")

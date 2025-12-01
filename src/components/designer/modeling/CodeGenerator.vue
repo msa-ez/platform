@@ -208,6 +208,19 @@
                         <span>{{ $t('CodeGenerator.editTemplate') }}</span>
                     </v-tooltip>
 
+                    <v-tooltip bottom>
+                        <template v-slot:activator="{ on, attrs }">
+                            <v-btn v-on="on" class="code-preview-btn"
+                                    icon fab
+                                    :disabled="!hasAggregateElements"
+                                    @click="exportAggregatesJson()"
+                            >
+                                <v-icon size="22">mdi-file-export</v-icon>
+                            </v-btn>
+                        </template>
+                        <span>Export Aggregates JSON</span>
+                    </v-tooltip>
+
                     <v-tooltip bottom v-if="editableTemplate">
                         <template v-slot:activator="{ on, attrs }">
                             <v-btn v-on="on" class="code-preview-btn"
@@ -2076,6 +2089,12 @@
                     return true
                 }
                 return false
+            },
+            hasAggregateElements() {
+                if (!this.value || !this.value.elements) {
+                    return false
+                }
+                return Object.values(this.value.elements).some(element => this._isAggregateElement(element))
             },
             isClosedSeparatePanel() {
                 if (this.separatePanelInfo.current > 98) {
@@ -4219,6 +4238,295 @@ jobs:
                 });
 
                 return code;
+            },
+            exportAggregatesJson(){
+                const me = this;
+
+                if(!me.value || !me.value.elements){
+                    me._showGitSnackBar({
+                        text: 'No model is loaded.',
+                        color: 'warning',
+                        icon: 'alert',
+                        title: null,
+                    });
+                    return;
+                }
+
+                const aggregates = Object.values(me.value.elements)
+                    .filter(element => me._isAggregateElement(element))
+                    .map(element => me._buildAggregatePayload(element))
+                    .filter(Boolean);
+
+                if(aggregates.length === 0){
+                    me._showGitSnackBar({
+                        text: 'No aggregates found to export.',
+                        color: 'warning',
+                        icon: 'alert',
+                        title: null,
+                    });
+                    return;
+                }
+
+                const filteredProjectName = me.core && me.core.filterProjectName
+                    ? me.core.filterProjectName(me.projectName)
+                    : (me.projectName || 'eventstorming');
+                const fileName = `${filteredProjectName || 'eventstorming'}-aggregates.json`;
+
+                try{
+                    const jsonString = JSON.stringify(aggregates, null, 2);
+                    const blob = new Blob([jsonString], { type: 'application/json;charset=utf-8' });
+                    saveAs(blob, fileName);
+                    me._showGitSnackBar({
+                        text: 'Aggregates JSON exported.',
+                        color: 'success',
+                        icon: 'check_circle',
+                        title: 'Success',
+                    });
+                }catch(error){
+                    console.error('Export aggregates JSON error: ', error);
+                    me._showGitSnackBar({
+                        text: 'Failed to export aggregates JSON.',
+                        color: 'error',
+                        icon: 'alert',
+                        title: 'Error',
+                    });
+                }
+            },
+            _buildAggregatePayload(aggregate){
+                if(!aggregate){
+                    return null;
+                }
+
+                const payload = this._omitEmptyValues({
+                    id: aggregate.id,
+                    name: aggregate.name,
+                    displayName: aggregate.displayName,
+                    namePlural: aggregate.namePlural,
+                    namePascalCase: aggregate.namePascalCase,
+                    nameCamelCase: aggregate.nameCamelCase,
+                });
+
+                if(aggregate.boundedContext){
+                    if(typeof aggregate.boundedContext === 'object'){
+                        if(aggregate.boundedContext.id){
+                            payload.boundedContextId = aggregate.boundedContext.id;
+                        }
+                        if(aggregate.boundedContext.name){
+                            payload.boundedContextName = aggregate.boundedContext.name;
+                        }
+                    }else{
+                        payload.boundedContextId = aggregate.boundedContext;
+                    }
+                }
+
+                const aggregateRoot = aggregate.aggregateRoot || {};
+                const rootFields = this._simplifyFieldDescriptors(aggregateRoot.fieldDescriptors);
+                const rootEntities = this._simplifyEntities(aggregateRoot.entities);
+
+                const aggregateRootPayload = {};
+                if(rootFields.length){
+                    aggregateRootPayload.fieldDescriptors = rootFields;
+                }
+                if(rootEntities.length){
+                    aggregateRootPayload.entities = rootEntities;
+                }
+
+                if(Object.keys(aggregateRootPayload).length){
+                    payload.aggregateRoot = aggregateRootPayload;
+                }
+
+                return this._omitEmptyValues(payload);
+            },
+            _simplifyFieldDescriptors(fieldDescriptors){
+                if(!Array.isArray(fieldDescriptors)){
+                    return [];
+                }
+
+                const allowedKeys = [
+                    'name',
+                    'className',
+                    'isKey',
+                    'isNullable',
+                    'isUnique',
+                    'defaultValue',
+                    'length',
+                    'precision',
+                    'scale',
+                    'description',
+                    'referenceClass',
+                    'isVO',
+                    'label',
+                    'isList',
+                    'classId',
+                    'displayName',
+                ];
+                const uniqueGuard = new Set();
+
+                return fieldDescriptors
+                    .filter(Boolean)
+                    .map(descriptor => {
+                        const simplified = {};
+                        allowedKeys.forEach(key => {
+                            const value = descriptor[key];
+                            if(value !== undefined && value !== null && value !== ''){
+                                simplified[key] = value;
+                            }
+                        });
+                        return simplified;
+                    })
+                    .filter(descriptor => {
+                        const uniqueKey = `${descriptor.name || ''}::${descriptor.className || ''}::${descriptor.isKey ? 1 : 0}`;
+                        if(uniqueGuard.has(uniqueKey)){
+                            return false;
+                        }
+                        uniqueGuard.add(uniqueKey);
+                        return Object.keys(descriptor).length > 0;
+                    });
+            },
+            _simplifyEntities(entities){
+                if(!entities || !entities.elements){
+                    return [];
+                }
+
+                return Object.values(entities.elements)
+                    .filter(Boolean)
+                    .map(entity => {
+                        const baseInfo = this._omitEmptyValues({
+                            id: entity.id,
+                            name: entity.name,
+                            type: entity._type,
+                            isVO: entity.isVO,
+                            displayName: entity.displayName,
+                            description: entity.description,
+                            isEnum: this._isEnumEntity(entity),
+                        });
+
+                        if(this._isEnumEntity(entity)){
+                            const items = Array.isArray(entity.items)
+                                ? entity.items
+                                    .filter(Boolean)
+                                    .map(item => this._omitEmptyValues({
+                                        name: item.name,
+                                        value: item.value,
+                                        displayName: item.displayName,
+                                        description: item.description,
+                                    }))
+                                    .filter(item => Object.keys(item).length > 0)
+                                : [];
+                            if(items.length){
+                                baseInfo.items = items;
+                            }
+                        } else {
+                            const fields = this._simplifyFieldDescriptors(entity.fieldDescriptors);
+                            if(fields.length){
+                                baseInfo.fieldDescriptors = fields;
+                            }
+                        }
+
+                        const entityRelations = this._simplifyEntityRelations(entity.id, entities.relations);
+                        if(entityRelations.length){
+                            baseInfo.relations = entityRelations;
+                        }
+
+                        return this._omitEmptyValues(baseInfo);
+                    })
+                    .filter(entity => Object.keys(entity).length > 0);
+            },
+            _simplifyEntityRelations(entityId, relations){
+                if(!relations || !entityId){
+                    return [];
+                }
+
+                return Object.values(relations)
+                    .filter(relation => relation && relation.sourceElement && relation.targetElement)
+                    .filter(relation => relation.from === entityId || relation.to === entityId
+                        || (relation.sourceElement && relation.sourceElement.id === entityId)
+                        || (relation.targetElement && relation.targetElement.id === entityId))
+                    .map(relation => this._omitEmptyValues({
+                        id: relation.id,
+                        name: relation.name || relation.displayName,
+                        type: relation._type,
+                        relationType: relation.relationType,
+                        sourceMultiplicity: relation.sourceMultiplicity,
+                        targetMultiplicity: relation.targetMultiplicity,
+                        from: relation.from || (relation.sourceElement && relation.sourceElement.id),
+                        to: relation.to || (relation.targetElement && relation.targetElement.id),
+                    }))
+                    .filter(relation => Object.keys(relation).length > 0);
+            },
+            _omitEmptyValues(obj){
+                if(!obj || typeof obj !== 'object'){
+                    return obj;
+                }
+
+                const cleaned = Array.isArray(obj) ? [] : {};
+
+                Object.keys(obj).forEach(key => {
+                    const value = obj[key];
+
+                    if(value === undefined || value === null){
+                        return;
+                    }
+
+                    if(Array.isArray(value)){
+                        const filteredArray = value
+                            .map(item => this._omitEmptyValues(item))
+                            .filter(item => {
+                                if(item === undefined || item === null){
+                                    return false;
+                                }
+                                if(typeof item === 'object'){
+                                    return Object.keys(item).length > 0;
+                                }
+                                return item !== '';
+                            });
+
+                        if(filteredArray.length){
+                            cleaned[key] = filteredArray;
+                        }
+                        return;
+                    }
+
+                    if(typeof value === 'object'){
+                        const nested = this._omitEmptyValues(value);
+                        if(nested && Object.keys(nested).length){
+                            cleaned[key] = nested;
+                        }
+                        return;
+                    }
+
+                    if(value === ''){
+                        return;
+                    }
+
+                    cleaned[key] = value;
+                });
+
+                return cleaned;
+            },
+            _isAggregateElement(element){
+                if(!element || !element._type){
+                    return false;
+                }
+                return element._type === 'org.uengine.modeling.model.Aggregate'
+                    || element._type.endsWith('.Aggregate')
+                    || element._type.endsWith('Aggregate');
+            },
+            _isEnumEntity(entity){
+                if(!entity || !entity._type){
+                    return false;
+                }
+
+                const typeLower = entity._type.toLowerCase();
+                return typeLower.includes('.enum') || typeLower.endsWith('enum');
+            },
+            _showGitSnackBar({ text, color = 'primary', icon = null, title = null, timeout = 3000 }){
+                this.gitSnackBar.show = true;
+                this.gitSnackBar.timeout = timeout;
+                this.gitSnackBar.Text = text;
+                this.gitSnackBar.Color = color;
+                this.gitSnackBar.icon = icon;
+                this.gitSnackBar.title = title;
             },
             async downloadArchive(){
                 var me = this

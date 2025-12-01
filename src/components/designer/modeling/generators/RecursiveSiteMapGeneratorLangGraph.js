@@ -41,6 +41,17 @@ class RecursiveSiteMapGeneratorLangGraph {
                             currentProcessingStep: 'generatingSiteMap'
                         });
                     }
+
+                    const length = this._getGeneratedLength(result && result.siteMap, result && result.currentGeneratedLength);
+                    if (this.client.onModelCreated) {
+                        this.client.onModelCreated({
+                            modelValue: {
+                                output: {
+                                    currentGeneratedLength: length
+                                }
+                            }
+                        });
+                    }
                 },
                 
                 onComplete: (result) => {
@@ -48,6 +59,7 @@ class RecursiveSiteMapGeneratorLangGraph {
                     isResolved = true;
                     
                     const siteMapData = result.siteMap || {};
+                    const length = this._getGeneratedLength(siteMapData, result.currentGeneratedLength);
                     const treeData = [{
                         id: this._generateNodeId(),
                         title: siteMapData.title || '새로운 웹사이트',
@@ -62,8 +74,19 @@ class RecursiveSiteMapGeneratorLangGraph {
                             description: siteMapData.description || '웹사이트 설명',
                             pages: siteMapData.pages || [],
                             treeData: treeData
-                        }
+                        },
+                        currentGeneratedLength: length
                     };
+
+                    if (this.client.onModelCreated) {
+                        this.client.onModelCreated({
+                            modelValue: {
+                                output: {
+                                    currentGeneratedLength: length
+                                }
+                            }
+                        });
+                    }
                     
                     resolve(finalResult);
                 },
@@ -120,6 +143,17 @@ class RecursiveSiteMapGeneratorLangGraph {
         if (this.proxy) {
             this.proxy.destroy();
             this.proxy = null;
+        }
+    }
+
+    _getGeneratedLength(siteMap = {}, fallbackLength = 0) {
+        if (fallbackLength && typeof fallbackLength === 'number') {
+            return fallbackLength;
+        }
+        try {
+            return JSON.stringify(siteMap).length;
+        } catch (e) {
+            return 0;
         }
     }
 }

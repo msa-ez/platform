@@ -128,6 +128,9 @@ class BoundedContextLangGraphProxy {
         if (!accumulatedOutputState.progress) {
             accumulatedOutputState.progress = 0;
         }
+        if (!accumulatedOutputState.currentGeneratedLength) {
+            accumulatedOutputState.currentGeneratedLength = 0;
+        }
         if (!accumulatedOutputState.isCompleted) {
             accumulatedOutputState.isCompleted = false;
         }
@@ -241,6 +244,7 @@ class BoundedContextLangGraphProxy {
         storage.watch(`${this._getJobPath(jobId)}/state/outputs/currentGeneratedLength`, async (currentGeneratedLength) => {
             if (currentGeneratedLength !== null && currentGeneratedLength !== undefined) {
                 jobState.currentGeneratedLength = currentGeneratedLength;
+                await parseState();
             }
         });
     }
@@ -322,6 +326,7 @@ class BoundedContextLangGraphProxy {
                 state.explanations,
                 state.logs,
                 state.progress,
+                state.currentGeneratedLength || 0,
                 state.isFailed
             );
         } else {
@@ -373,11 +378,25 @@ class BoundedContextLangGraphProxy {
     static _restoreDataFromFirebase(firebaseData) {
         if (!firebaseData) return null;
         
+        // @ placeholder 처리 (빈 배열/객체 마커)
+        if (firebaseData === "@") {
+            return null;  // 빈 문자열 → null
+        }
+        
         if (Array.isArray(firebaseData)) {
+            // ["@"] → [] (빈 배열 마커)
+            if (firebaseData.length === 1 && firebaseData[0] === "@") {
+                return [];
+            }
             return firebaseData.map(item => this._restoreDataFromFirebase(item));
         }
         
         if (typeof firebaseData === 'object') {
+            // {"@": true} → {} (빈 객체 마커)
+            if (Object.keys(firebaseData).length === 1 && firebaseData["@"] === true) {
+                return {};
+            }
+            
             const restored = {};
             for (const [key, value] of Object.entries(firebaseData)) {
                 restored[key] = this._restoreDataFromFirebase(value);

@@ -48,10 +48,20 @@ class DevideBoundedContextGeneratorLangGraph {
                 jobId,
                 // onUpdate (사용하지 않음)
                 (devisionAspect, thoughts, boundedContexts, relations, explanations, logs, progress, currentGeneratedLength) => {
-                    // User Story Generator와 동일하게 onUpdate는 사용하지 않음
+                    const length = currentGeneratedLength || this._getGeneratedLength(boundedContexts, relations, explanations);
+                    
+                    if (this.client.onModelCreated) {
+                        this.client.onModelCreated({
+                            modelValue: {
+                                output: {
+                                    currentGeneratedLength: length
+                                }
+                            }
+                        });
+                    }
                 },
                 // onComplete
-                (devisionAspect, thoughts, boundedContexts, relations, explanations, logs, progress, isFailed) => {
+                (devisionAspect, thoughts, boundedContexts, relations, explanations, logs, progress, currentGeneratedLength, isFailed) => {
                     if (hasResolved) return;
                     hasResolved = true;
                     
@@ -67,6 +77,8 @@ class DevideBoundedContextGeneratorLangGraph {
                         return;
                     }
                     
+                    const length = currentGeneratedLength || this._getGeneratedLength(boundedContexts, relations, explanations);
+                    
                     // User Story Generator와 동일한 형식으로 변환
                     const result = {
                         modelValue: {
@@ -77,10 +89,21 @@ class DevideBoundedContextGeneratorLangGraph {
                                 relations,
                                 explanations,
                                 logs,
-                                progress
+                                progress,
+                                currentGeneratedLength: length
                             }
                         }
                     };
+                    
+                    if (this.client.onModelCreated) {
+                        this.client.onModelCreated({
+                            modelValue: {
+                                output: {
+                                    currentGeneratedLength: length
+                                }
+                            }
+                        });
+                    }
                     
                     // onGenerationFinished 호출 (User Story Generator와 동일한 방식)
                     if (this.client.onGenerationFinished) {
@@ -114,6 +137,18 @@ class DevideBoundedContextGeneratorLangGraph {
         const timestamp = Date.now();
         const random = Math.random().toString(36).substring(2, 11);
         return `bcgen-${timestamp}-${random}`;
+    }
+
+    _getGeneratedLength(boundedContexts = [], relations = [], explanations = []) {
+        try {
+            return JSON.stringify({
+                boundedContexts,
+                relations,
+                explanations
+            }).length;
+        } catch (e) {
+            return 0;
+        }
     }
 }
 

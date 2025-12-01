@@ -104,7 +104,7 @@
                                         <v-icon>mdi-file-pdf-box</v-icon>
                                     </v-btn>
                                 </template>
-                                <span>Export to PDF</span>
+                                <span>Export to Document</span>
                             </v-tooltip>
 
                             <!-- Join Request Button -->

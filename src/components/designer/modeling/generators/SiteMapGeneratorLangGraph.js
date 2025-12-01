@@ -20,7 +20,16 @@ class SiteMapGeneratorLangGraph {
             
             this.proxy = new SiteMapLangGraphProxy({
                 onUpdate: (result) => {
-                    // 진행 중 업데이트는 무시 (필요시 구현)
+                    const length = this._getGeneratedLength(result && result.siteMap, result && result.currentGeneratedLength);
+                    if (this.client.onModelCreated) {
+                        this.client.onModelCreated({
+                            modelValue: {
+                                output: {
+                                    currentGeneratedLength: length
+                                }
+                            }
+                        });
+                    }
                 },
                 
                 onComplete: (result) => {
@@ -29,6 +38,7 @@ class SiteMapGeneratorLangGraph {
                     
                     // treeData 형식으로 변환
                     const siteMapData = result.siteMap || {};
+                    const length = this._getGeneratedLength(siteMapData, result.currentGeneratedLength);
                     const treeData = [{
                         id: this._generateNodeId(),
                         title: siteMapData.title || '새로운 웹사이트',
@@ -43,8 +53,19 @@ class SiteMapGeneratorLangGraph {
                             description: siteMapData.description || '웹사이트 설명',
                             pages: siteMapData.pages || [],
                             treeData: treeData
-                        }
+                        },
+                        currentGeneratedLength: length
                     };
+                    
+                    if (this.client.onModelCreated) {
+                        this.client.onModelCreated({
+                            modelValue: {
+                                output: {
+                                    currentGeneratedLength: length
+                                }
+                            }
+                        });
+                    }
                     
                     resolve(finalResult);
                 },
@@ -89,6 +110,17 @@ class SiteMapGeneratorLangGraph {
         if (this.proxy) {
             this.proxy.destroy();
             this.proxy = null;
+        }
+    }
+
+    _getGeneratedLength(siteMap = {}, fallbackLength = 0) {
+        if (fallbackLength && typeof fallbackLength === 'number') {
+            return fallbackLength;
+        }
+        try {
+            return JSON.stringify(siteMap).length;
+        } catch (e) {
+            return 0;
         }
     }
 }
