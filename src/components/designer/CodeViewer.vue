@@ -86,7 +86,7 @@
                         </div>
                     </v-card>
                 </div>
-                <v-col v-if="showGpt" cols="12">
+                <!-- <v-col v-if="showGpt" cols="12">
                     <v-row>
                         <v-card class="pa-2" @scroll="handleScroll" id="scroll-text" style="width: 100%; max-height: 86vh; z-index: 1000; overflow-y: scroll; background-color: #FFFFFF; margin-top: -4px;">
                             <v-row class="ma-0 pa-0 pr-8">
@@ -131,7 +131,6 @@
                                 </v-btn>
                             </div>
                             <div style="display: flex; align-items: center;">
-                                <!-- explainProject -->
                                 <v-text-field
                                     v-model="chatPrompt"
                                     ref="input"
@@ -190,7 +189,7 @@
                             </div>
                         </v-card>
                     </v-row>
-                </v-col>
+                </v-col> -->
             </v-card-text>
         </div>
     </div>
