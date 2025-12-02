@@ -7,10 +7,10 @@ export const { CommandGWTGeneratorByFunctions, CommandGWTGeneratorByFunctionsTes
 export const { CreatePolicyActionsByFunctions, CreatePolicyActionsByFunctionsTest } = require("./CreatePolicyActionsByFunctions");
 export const { PreProcessingFunctionsGenerator, PreProcessingFunctionsGeneratorTest } = require("./PreProcessingFunctionsGenerator");
 export const { DraftGeneratorByFunctions, DraftGeneratorByFunctionsTest } = require("./DraftGeneratorByFunctions");
-export const { ExtractDDLFieldsGenerator, ExtractDDLFieldsGeneratorTest } = require("./ExtractDDLFieldsGenerator");
+export const { ExtractDDLFieldsGenerator, DDLLineRefSplitter } = require("./ExtractDDLFieldsGenerator");
 export const { AssignDDLFieldsToAggregateDraft, AssignDDLFieldsToAggregateDraftTest } = require("./AssignDDLFieldsToAggregateDraft");
-export const { AssignPreviewFieldsToAggregateDraft, AssignPreviewFieldsToAggregateDraftTest } = require("./AssignPreviewFieldsToAggregateDraft");
+export const { AssignPreviewFieldsToAggregateDraft } = require("./AssignPreviewFieldsToAggregateDraft");
 export const { SanityCheckGenerator, SanityCheckGeneratorTest } = require("./SanityCheckGenerator");
 export const { AggregateDraftDialog } = require("./components");
 export const { getEsValue, getEsDraft, esConfigs, getAvailableServiceNames } = require("./mocks");
-export const { AddTraceToDraftOptionsGenerator, AddTraceToDraftOptionsGeneratorTest } = require("./AddTraceToDraftOptionsGenerator");
+export const { AddTraceToDraftOptionsGenerator } = require("./AddTraceToDraftOptionsGenerator");

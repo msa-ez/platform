@@ -110,6 +110,11 @@
                     <v-btn :disabled="getDisabledValidateBtn() || !isEditable" class="auto-modeling-btn" color="primary" @click="validateRequirements()">
                         {{ $t('ESDialoger.validateRequirements') }}
                     </v-btn>
+                    <v-btn 
+                        :disabled="getDisabledValidateBtn() || !isEditable" class="auto-modeling-btn" color="primary" @click="onShowBCGenerationOption()"
+                    >
+                        {{ $t('RequirementAnalysis.createBoundedContext') }}
+                    </v-btn>
                 </v-row>
                 
                 <!-- Processing Progress Bar -->
@@ -246,16 +251,39 @@
         AssignPreviewFieldsToAggregateDraft,
         AddTraceToDraftOptionsGenerator
     } from '../../modeling/generators/es-generators';
+    
+    // LangGraph 관리 클래스들 (Generator 인터페이스 제공, 내부에서 Proxy 사용)
+    const DraftGeneratorByFunctionsLangGraph = require('../../modeling/generators/es-generators/DraftGeneratorByFunctions/DraftGeneratorByFunctionsLangGraph.js');
+    const ExtractDDLFieldsGeneratorLangGraph = require('../../modeling/generators/es-generators/ExtractDDLFieldsGenerator/ExtractDDLFieldsGeneratorLangGraph.js');
+    const AddTraceToDraftOptionsGeneratorLangGraph = require('../../modeling/generators/es-generators/AddTraceToDraftOptionsGenerator/AddTraceToDraftOptionsGeneratorLangGraph.js');
+    const AssignDDLFieldsToAggregateDraftLangGraph = require('../../modeling/generators/es-generators/AssignDDLFieldsToAggregateDraft/AssignDDLFieldsToAggregateDraftLangGraph.js');
+    const AssignPreviewFieldsToAggregateDraftLangGraph = require('../../modeling/generators/es-generators/AssignPreviewFieldsToAggregateDraft/AssignPreviewFieldsToAggregateDraftLangGraph.js');
+    
+    const UserStoryGeneratorLangGraph = require('./UserStoryGeneratorLangGraph.js');
+    const RecursiveUserStoryGeneratorLangGraph = require('./RecursiveUserStoryGeneratorLangGraph.js');
+    
+    const RequirementsValidationGeneratorLangGraph = require('./RequirementsValidationGeneratorLangGraph.js');
+    const RecursiveRequirementsValidationGeneratorLangGraph = require('./RecursiveRequirementsValidationGeneratorLangGraph.js');
+    const RecursiveRequirementsSummarizerLangGraph = require('./RecursiveRequirementsSummarizerLangGraph.js');
+    
+    const DevideBoundedContextGeneratorLangGraph = require('./DevideBoundedContextGeneratorLangGraph.js');
+    const RequirementsMappingGeneratorLangGraph = require('./RequirementsMappingGeneratorLangGraph.js');
+    
+    const CommandReadModelExtractorLangGraph = require('./CommandReadModelExtractorLangGraph.js');
+    const RecursiveCommandReadModelExtractorLangGraph = require('./RecursiveCommandReadModelExtractorLangGraph.js');
+    const SiteMapGeneratorLangGraph = require('./SiteMapGeneratorLangGraph.js');
+    const RecursiveSiteMapGeneratorLangGraph = require('./RecursiveSiteMapGeneratorLangGraph.js');
 
     import {
         LocalStorageCleanUtil,
         DataValidationUtil,
         RefsTraceUtil,
-        TraceMarkdownUtil
+        TraceMarkdownUtil,
+        TextTraceUtil
     } from './utils'
     
     import DevideBoundedContextGenerator from './DevideBoundedContextGenerator.js'
-
+    
     //Requirements Summarizer
     import RecursiveRequirementsSummarizer from './RecursiveRequirementsSummarizer.js';
     import RequirementsMappingGenerator from './RequirementsMappingGenerator.js';
@@ -361,7 +389,7 @@ import { value } from 'jsonpath';
                 }
             }
 
-            const generatePreviewAggAttributesToDraftOptions = async (options, description, traceMap, allDdlFields, afterGenerateCallback) => {
+            const generatePreviewAggAttributesToDraftOptions = async (options, description, traceMap, allDdlFields, boundedContextName, afterGenerateCallback) => {
                 if(!__isValidDDLFields(allDdlFields)) 
                     throw new Error("Invalid allDdlFields: " + JSON.stringify({ allDdlFields }))
 
@@ -373,16 +401,19 @@ import { value } from 'jsonpath';
                         if (!option.structure || option.structure.length === 0) continue;
 
                         // structure에서 aggregateDrafts 구성
-                        const aggregateDrafts = option.structure.map(struct => ({
-                            name: struct.aggregate.name,
-                            alias: struct.aggregate.alias
-                        }));
+                        const aggregateDrafts = option.structure
+                            .filter(struct => struct && struct.aggregate)
+                            .map(struct => ({
+                                name: struct.aggregate.name,
+                                alias: struct.aggregate.alias
+                            }));
 
                         // 최적화: Aggregate가 1개만 있을 경우 생성기 호출 없이 직접 할당
                         if (aggregateDrafts.length === 1) {
                             // 직접 모든 DDL 필드를 해당 aggregate에 할당
                             const singleAggregate = aggregateDrafts[0];
                             option.structure.forEach(struct => {
+                                if (!struct || !struct.aggregate) return;
                                 if (struct.aggregate.name === singleAggregate.name) {
                                     this.$set(struct, 'previewAttributes', [...allDdlFields])
                                     console.log(`[*] Direct assignment - Added all DDL fields to single aggregate ${struct.aggregate.name}:`, struct.previewAttributes);
@@ -392,8 +423,15 @@ import { value } from 'jsonpath';
                             // workingMessages 업데이트도 동일하게 수행
                             if (this.workingMessages.AggregateDraftDialogDto && 
                                 this.workingMessages.AggregateDraftDialogDto.draftOptions) {
-                                
-                                const currentBoundedContext = this.generators.DraftGeneratorByFunctions.generator.client.input.boundedContext.name;
+                                let currentBoundedContext = boundedContextName;
+                                if (!currentBoundedContext) {
+                                    const gens = this.generators && this.generators.DraftGeneratorByFunctions;
+                                    const genInst = gens && gens.generator;
+                                    const client = genInst && genInst.client;
+                                    const input = client && client.input;
+                                    const bc = input && input.boundedContext;
+                                    if (bc && bc.name) currentBoundedContext = bc.name;
+                                }
                                 const draftOption = this.workingMessages.AggregateDraftDialogDto.draftOptions.find(
                                     opt => opt.boundedContext === currentBoundedContext
                                 );
@@ -401,6 +439,7 @@ import { value } from 'jsonpath';
                                 if (draftOption && draftOption.options && draftOption.options[optionIndex]) {
                                     if (draftOption.options[optionIndex].structure) {
                                         draftOption.options[optionIndex].structure.forEach(struct => {
+                                            if (!struct || !struct.aggregate) return;
                                             if (struct.aggregate.name === singleAggregate.name) {
                                                 this.$set(struct, 'previewAttributes', [...allDdlFields])
                                             }
@@ -409,54 +448,92 @@ import { value } from 'jsonpath';
                                 }
                             }
                         } else {
-                            // 기존 로직 - 여러 Aggregate가 있을 경우 AssignDDLFieldsToAggregateDraft 생성기 호출
+                            // 여러 Aggregate가 있을 경우 AssignDDLFieldsToAggregateDraft 생성기 호출
                             const generatorKey = `option ${optionIndex + 1}`;
+                            const useLangGraph = localStorage.getItem('useLangGraph') === 'true';
                             
                             try {
-                                const result = await new Promise((resolve, reject) => {
-                                    const generator = new AssignDDLFieldsToAggregateDraft({
-                                        onSend: () => {
-                                            this.workingMessages.AggregateDraftDialogDto.draftUIInfos = {
-                                                leftBoundedContextCount: 1,
-                                                directMessage: "Waiting for preview attributes generation...",
-                                                progress: null
+                                let result;
+
+                                if (useLangGraph) {
+                                    // ========== LangGraph Backend 사용 ==========
+                                    result = await new Promise((resolve, reject) => {
+                                        const generator = new AssignDDLFieldsToAggregateDraftLangGraph({
+                                            input: {
+                                                description: description || 'Bounded context description',
+                                                aggregateDrafts: aggregateDrafts,
+                                                generatorKey: generatorKey,
+                                                traceMap: traceMap,
+                                                ddlFields: allDdlFields.map(field => field.fieldName)
+                                            },
+                                            onUpdate: (updateData) => {
+                                                this.workingMessages.AggregateDraftDialogDto.draftUIInfos.directMessage = `Assigning DDL fields for ${generatorKey}...`;
+                                                this.workingMessages.AggregateDraftDialogDto.draftUIInfos.progress = updateData.progress;
+                                            },
+                                            onGenerationSucceeded: (result) => {
+                                                resolve(result);
+                                            },
+                                            onWaiting: (waitingJobCount) => {
+                                                console.log(`[DDLFields] Waiting: ${waitingJobCount} jobs ahead`);
+                                            },
+                                            onError: (error) => {
+                                                const errorMessage = "An error occurred while adding preview properties based on DDL to the aggregate.\nPlease try again in a moment.\nError message: " + error.errorMessage
+                                                console.error(errorMessage)
+                                                alert(errorMessage)
+                                                reject(new Error(errorMessage))
                                             }
-                                        },
-                                        onModelCreatedWithThinking: (returnObj) => {
-                                            this.workingMessages.AggregateDraftDialogDto.draftUIInfos.directMessage = returnObj.directMessage
-                                            this.workingMessages.AggregateDraftDialogDto.draftUIInfos.progress = returnObj.progress
-                                        },
-                                        onGenerationSucceeded: (returnObj) => {
-                                            try {
-                                                resolve(returnObj.modelValue.output);
-                                            } catch (error) {
-                                                console.error(`[*] Option ${optionIndex} field assignment processing error:`, error);
-                                                reject(error);
-                                            }
-                                        },
-                                        onError: (returnObj) => {
-                                            console.error(`[*] Option ${optionIndex} field assignment generation error:`, returnObj.errorMessage);
-                                            reject(new Error(returnObj.errorMessage || 'Field assignment generation failed'));
-                                        },
-                                        onRetry: (returnObj) => {
-                                            console.warn(`[*] Option ${optionIndex} field assignment retry:`, returnObj.errorMessage);
-                                            if (returnObj.isDied) {
-                                                reject(new Error(returnObj.errorMessage || 'Field assignment generation failed after retries'));
-                                            }
-                                        }
+                                        })
+                                        generator.generate()
                                     });
 
-                                    // 입력값 설정
-                                    generator.client.input = {
-                                        description: description || 'Bounded context description',
-                                        aggregateDrafts: aggregateDrafts,
-                                        allDdlFields: allDdlFields.map(field => field.fieldName),
-                                        generatorKey: generatorKey
-                                    };
+                                } else {
+                                    // ========== 기존 Frontend Generator 사용 ==========
+                                    result = await new Promise((resolve, reject) => {
+                                        const processErrorMessage = (returnObj) => {
+                                            const errorMessage = "An error occurred while adding preview properties based on DDL to the aggregate.\nPlease try again in a moment.\nError message: " + returnObj.errorMessage
+                                            console.error(errorMessage)
+                                            alert(errorMessage)
+                                            reject(new Error(errorMessage))
+                                        }
 
-                                    // 생성 실행
-                                    generator.generate();
-                                });
+                                        const generator = new AssignDDLFieldsToAggregateDraft({
+                                            onSend: () => {
+                                                this.workingMessages.AggregateDraftDialogDto.draftUIInfos = {
+                                                    leftBoundedContextCount: 1,
+                                                    directMessage: "Waiting for preview attributes generation...",
+                                                    progress: null
+                                                }
+                                            },
+                                            onModelCreatedWithThinking: (returnObj) => {
+                                                this.workingMessages.AggregateDraftDialogDto.draftUIInfos.directMessage = returnObj.directMessage
+                                                this.workingMessages.AggregateDraftDialogDto.draftUIInfos.progress = returnObj.progress
+                                            },
+                                            onGenerationSucceeded: (returnObj) => {
+                                                resolve(returnObj.modelValue.output);
+                                            },
+                                            onError: (returnObj) => {
+                                                processErrorMessage(returnObj)
+                                            },
+                                            onRetry: (returnObj) => {
+                                                console.warn(`[*] Option ${optionIndex} field assignment retry:`, returnObj.errorMessage);
+                                                if (returnObj.isDied) {
+                                                    processErrorMessage(returnObj)
+                                                }
+                                            }
+                                        });
+
+                                        // 입력값 설정
+                                        generator.client.input = {
+                                            description: description || 'Bounded context description',
+                                            aggregateDrafts: aggregateDrafts,
+                                            allDdlFields: allDdlFields.map(field => field.fieldName),
+                                            generatorKey: generatorKey
+                                        };
+
+                                        // 생성 실행
+                                        generator.generate();
+                                    });
+                                }
 
                                 // 결과를 해당 옵션의 structure에 previewAttributes로 추가
                                 if (result) {
@@ -487,8 +564,20 @@ import { value } from 'jsonpath';
                                 if (this.workingMessages.AggregateDraftDialogDto && 
                                     this.workingMessages.AggregateDraftDialogDto.draftOptions) {
                                     
-                                    // 현재 처리 중인 bounded context 찾기
-                                    const currentBoundedContext = this.generators.DraftGeneratorByFunctions.generator.client.input.boundedContext.name;
+                                    // 현재 처리 중인 bounded context 찾기 (null-guard 및 인자 우선)
+                                    let currentBoundedContext = boundedContextName;
+                                    if (!currentBoundedContext) {
+                                        const gens = this.generators && this.generators.DraftGeneratorByFunctions;
+                                        const genInst = gens && gens.generator;
+                                        const client = genInst && genInst.client;
+                                        const input = client && client.input;
+                                        const bc = input && input.boundedContext;
+                                        if (bc && bc.name) currentBoundedContext = bc.name;
+                                    }
+                                    if (!currentBoundedContext) {
+                                        // 안전하게 스킵
+                                        return;
+                                    }
                                     const draftOption = this.workingMessages.AggregateDraftDialogDto.draftOptions.find(
                                         opt => opt.boundedContext === currentBoundedContext
                                     );
@@ -520,112 +609,205 @@ import { value } from 'jsonpath';
                 }
                 else {
                     // 별도의 DDL 필드가 없을 경우에는 AssignPreviewFieldsToAggregateDraft를 이용해서 직접 속성을 생성
-                    for (let optionIndex = 0; optionIndex < options.length; optionIndex++) {
-                        const option = options[optionIndex];
-                        
-                        if (!option.structure || option.structure.length === 0) continue;
+                    // LangGraph 사용 여부 확인
+                    const useLangGraph = localStorage.getItem('useLangGraph') === 'true';
+                    
+                    if (useLangGraph) {
+                        // ========== LangGraph Backend 사용 ==========
+                        for (let optionIndex = 0; optionIndex < options.length; optionIndex++) {
+                            const option = options[optionIndex];
+                            
+                            if (!option.structure || option.structure.length === 0) continue;
 
-                        // structure에서 aggregateDrafts 구성
-                        const aggregateDrafts = option.structure.map(struct => ({
-                            name: struct.aggregate.name,
-                            alias: struct.aggregate.alias
-                        }));
-                        // 기존 로직 - 여러 Aggregate가 있을 경우 AssignDDLFieldsToAggregateDraft 생성기 호출
-                        const generatorKey = `option ${optionIndex + 1}`;
+                            // structure에서 aggregateDrafts 구성
+                            const aggregateDrafts = option.structure.map(struct => ({
+                                name: struct.aggregate.name,
+                                alias: struct.aggregate.alias
+                            }));
+                            const generatorKey = `option ${optionIndex + 1}`;
 
-                        try {
-
-                            const result = await new Promise((resolve, reject) => {
-                                const generator = new AssignPreviewFieldsToAggregateDraft({
-                                    onSend: () => {
-                                        this.workingMessages.AggregateDraftDialogDto.draftUIInfos = {
-                                            leftBoundedContextCount: 1,
-                                            directMessage: "Waiting for preview attributes generation...",
-                                            progress: null
+                            try {
+                                const result = await new Promise((resolve, reject) => {
+                                    const generator = new AssignPreviewFieldsToAggregateDraftLangGraph({
+                                        input: {
+                                            description: description || 'Bounded context description',
+                                            aggregateDrafts: aggregateDrafts,
+                                            generatorKey: generatorKey,
+                                            traceMap: traceMap
+                                        },
+                                        onUpdate: (updateData) => {
+                                            this.workingMessages.AggregateDraftDialogDto.draftUIInfos.directMessage = `Generating preview fields for ${generatorKey}...`;
+                                            this.workingMessages.AggregateDraftDialogDto.draftUIInfos.progress = updateData.progress;
+                                        },
+                                        onGenerationSucceeded: (result) => {
+                                            resolve(result);
+                                        },
+                                        onWaiting: (waitingJobCount) => {
+                                            console.log(`[PreviewFields] Waiting: ${waitingJobCount} jobs ahead`);
+                                        },
+                                        onError: (error) => {
+                                            reject(new Error(error.errorMessage || 'Preview fields generation failed'));
                                         }
-                                    },
-                                    onModelCreatedWithThinking: (returnObj) => {
-                                        this.workingMessages.AggregateDraftDialogDto.draftUIInfos.directMessage = returnObj.directMessage
-                                        this.workingMessages.AggregateDraftDialogDto.draftUIInfos.progress = returnObj.progress
-                                    },
-                                    onGenerationSucceeded: (returnObj) => {
-                                        try {
-                                            resolve(returnObj.modelValue.output);
-                                        } catch (error) {
-                                            console.error(`[*] Option ${optionIndex} field assignment processing error:`, error);
-                                            reject(error);
-                                        }
-                                    },
-                                    onError: (returnObj) => {
-                                        console.error(`[*] Option ${optionIndex} field assignment generation error:`, returnObj.errorMessage);
-                                        reject(new Error(returnObj.errorMessage || 'Field assignment generation failed'));
-                                    },
-                                    onRetry: (returnObj) => {
-                                        console.warn(`[*] Option ${optionIndex} field assignment retry:`, returnObj.errorMessage);
-                                        if (returnObj.isDied) {
-                                            reject(new Error(returnObj.errorMessage || 'Field assignment generation failed after retries'));
-                                        }
-                                    }
+                                    })
+                                    generator.generate()
                                 });
 
-                                // 입력값 설정
-                                generator.client.input = {
-                                    description: description || 'Bounded context description',
-                                    traceMap: traceMap,
-                                    aggregateDrafts: aggregateDrafts,
-                                    generatorKey: generatorKey
-                                };
+                                // 결과를 해당 옵션의 structure에 previewAttributes로 추가
+                                if (result) {
+                                    option.structure.forEach(struct => {
+                                        const assignment = result.find(
+                                            fa => fa.aggregateName === struct.aggregate.name
+                                        );
+                                        if (assignment) {
+                                            console.log(`[PreviewFields] 📝 Adding ${assignment.previewFields.length} fields to ${struct.aggregate.name}`);
+                                            this.$set(struct, 'previewAttributes', [...(assignment.previewFields || [])])
+                                            console.log(`[*] Added previewAttributes to ${struct.aggregate.name}:`, struct.previewAttributes);
+                                        } else {
+                                            console.warn(`[PreviewFields] ⚠️ No assignment found for ${struct.aggregate.name} in ${generatorKey}`);
+                                            this.$set(struct, 'previewAttributes', [])
+                                        }
+                                    });
+                                }
 
-                                // 생성 실행
-                                generator.generate();
-                            });
-
-                            // 결과를 해당 옵션의 structure에 previewAttributes로 추가
-                            if (result) {
-                                option.structure.forEach(struct => {
-                                    const assignment = result.find(
-                                        fa => fa.aggregateName === struct.aggregate.name
+                                // workingMessages의 draftOptions에서 해당하는 옵션 찾아서 업데이트
+                                if (this.workingMessages.AggregateDraftDialogDto && 
+                                    this.workingMessages.AggregateDraftDialogDto.draftOptions) {
+                                    
+                                    const draftOption = this.workingMessages.AggregateDraftDialogDto.draftOptions.find(
+                                        opt => opt.boundedContext === boundedContextName
                                     );
-                                    if (assignment) {
-                                        this.$set(struct, 'previewAttributes', [...(assignment.previewFields || [])])
-                                        console.log(`[*] Added previewAttributes to ${struct.aggregate.name}:`, struct.previewAttributes);
-                                    } else {
-                                        this.$set(struct, 'previewAttributes', [])
-                                    }
-                                });
-                            }
-
-                            // workingMessages의 draftOptions에서 해당하는 옵션 찾아서 업데이트
-                            if (this.workingMessages.AggregateDraftDialogDto && 
-                                this.workingMessages.AggregateDraftDialogDto.draftOptions) {
-                                
-                                // 현재 처리 중인 bounded context 찾기
-                                const currentBoundedContext = this.generators.DraftGeneratorByFunctions.generator.client.input.boundedContext.name;
-                                const draftOption = this.workingMessages.AggregateDraftDialogDto.draftOptions.find(
-                                    opt => opt.boundedContext === currentBoundedContext
-                                );
-                                
-                                if (draftOption && draftOption.options && draftOption.options[optionIndex]) {
-                                    // structure의 각 aggregate에 previewAttributes 추가
-                                    if (draftOption.options[optionIndex].structure) {
-                                        draftOption.options[optionIndex].structure.forEach(struct => {
-                                            const updatedStruct = option.structure.find(
-                                                s => s.aggregate.name === struct.aggregate.name
-                                            );
-                                            if (updatedStruct && updatedStruct.previewAttributes) {
-                                                this.$set(struct, 'previewAttributes', [...(updatedStruct.previewAttributes || [])])
-                                            }
-                                        });
+                                    
+                                    if (draftOption && draftOption.options && draftOption.options[optionIndex]) {
+                                        if (draftOption.options[optionIndex].structure) {
+                                            draftOption.options[optionIndex].structure.forEach(struct => {
+                                                const updatedStruct = option.structure.find(
+                                                    s => s.aggregate.name === struct.aggregate.name
+                                                );
+                                                if (updatedStruct && updatedStruct.previewAttributes) {
+                                                    this.$set(struct, 'previewAttributes', [...(updatedStruct.previewAttributes || [])])
+                                                }
+                                            });
+                                        }
                                     }
                                 }
-                            }
 
-                        } catch (error) {
-                            console.error(`[*] Failed to assign fields for option ${optionIndex}:`, error);
-                            // 실패한 경우 빈 previewAttributes 설정
-                            option.structure.forEach(struct => {
-                                this.$set(struct, 'previewAttributes', [])
-                            });
+                            } catch (error) {
+                                console.error(`[*] Failed to assign fields for option ${optionIndex}:`, error);
+                                alert(`An error occurred while adding the preview property to the aggregate.\nPlease try again in a moment.\nError: ${error.message}`);
+                                // 실패한 경우 빈 previewAttributes 설정
+                                option.structure.forEach(struct => {
+                                    this.$set(struct, 'previewAttributes', [])
+                                });
+                            }
+                        }
+                    } else {
+                        // ========== 기존 Frontend Generator 사용 ==========
+                        for (let optionIndex = 0; optionIndex < options.length; optionIndex++) {
+                            const option = options[optionIndex];
+                            
+                            if (!option.structure || option.structure.length === 0) continue;
+
+                            // structure에서 aggregateDrafts 구성
+                            const aggregateDrafts = option.structure.map(struct => ({
+                                name: struct.aggregate.name,
+                                alias: struct.aggregate.alias
+                            }));
+                            const generatorKey = `option ${optionIndex + 1}`;
+
+                            try {
+
+                                const result = await new Promise((resolve, reject) => {
+                                    const processErrorMessage = (returnObj) => {
+                                        const errorMessage = "An error occurred while adding the preview property to the aggregate.\nPlease try again in a moment.\nError message: " + returnObj.errorMessage
+                                        console.error(errorMessage)
+                                        alert(errorMessage)
+                                        reject(new Error(errorMessage))
+                                    }
+
+                                    const generator = new AssignPreviewFieldsToAggregateDraft({
+                                        onSend: () => {
+                                            this.workingMessages.AggregateDraftDialogDto.draftUIInfos = {
+                                                leftBoundedContextCount: 1,
+                                                directMessage: "Waiting for preview attributes generation...",
+                                                progress: null
+                                            }
+                                        },
+                                        onModelCreatedWithThinking: (returnObj) => {
+                                            this.workingMessages.AggregateDraftDialogDto.draftUIInfos.directMessage = returnObj.directMessage
+                                            this.workingMessages.AggregateDraftDialogDto.draftUIInfos.progress = returnObj.progress
+                                        },
+                                        onGenerationSucceeded: (returnObj) => {
+                                            resolve(returnObj.modelValue.output);
+                                        },
+                                        onError: (returnObj) => {
+                                            processErrorMessage(returnObj)
+                                        },
+                                        onRetry: (returnObj) => {
+                                            console.warn(`[*] Option ${optionIndex} field assignment retry:`, returnObj.errorMessage);
+                                            if (returnObj.isDied) {
+                                                processErrorMessage(returnObj)
+                                            }
+                                        }
+                                    });
+
+                                    // 입력값 설정
+                                    generator.client.input = {
+                                        description: description || 'Bounded context description',
+                                        traceMap: traceMap,
+                                        aggregateDrafts: aggregateDrafts,
+                                        generatorKey: generatorKey
+                                    };
+
+                                    // 생성 실행
+                                    generator.generate();
+                                });
+
+                                // 결과를 해당 옵션의 structure에 previewAttributes로 추가
+                                if (result) {
+                                    option.structure.forEach(struct => {
+                                        const assignment = result.find(
+                                            fa => fa.aggregateName === struct.aggregate.name
+                                        );
+                                        if (assignment) {
+                                            this.$set(struct, 'previewAttributes', [...(assignment.previewFields || [])])
+                                            console.log(`[*] Added previewAttributes to ${struct.aggregate.name}:`, struct.previewAttributes);
+                                        } else {
+                                            this.$set(struct, 'previewAttributes', [])
+                                        }
+                                    });
+                                }
+
+                                // workingMessages의 draftOptions에서 해당하는 옵션 찾아서 업데이트
+                                if (this.workingMessages.AggregateDraftDialogDto && 
+                                    this.workingMessages.AggregateDraftDialogDto.draftOptions) {
+                                    
+                                    // 현재 처리 중인 bounded context는 파라미터로 전달받음
+                                    const draftOption = this.workingMessages.AggregateDraftDialogDto.draftOptions.find(
+                                        opt => opt.boundedContext === boundedContextName
+                                    );
+                                    
+                                    if (draftOption && draftOption.options && draftOption.options[optionIndex]) {
+                                        // structure의 각 aggregate에 previewAttributes 추가
+                                        if (draftOption.options[optionIndex].structure) {
+                                            draftOption.options[optionIndex].structure.forEach(struct => {
+                                                const updatedStruct = option.structure.find(
+                                                    s => s.aggregate.name === struct.aggregate.name
+                                                );
+                                                if (updatedStruct && updatedStruct.previewAttributes) {
+                                                    this.$set(struct, 'previewAttributes', [...(updatedStruct.previewAttributes || [])])
+                                                }
+                                            });
+                                        }
+                                    }
+                                }
+
+                            } catch (error) {
+                                console.error(`[*] Failed to assign fields for option ${optionIndex}:`, error);
+                                // 실패한 경우 빈 previewAttributes 설정
+                                option.structure.forEach(struct => {
+                                    this.$set(struct, 'previewAttributes', [])
+                                });
+                            }
                         }
                     }
                 }
@@ -633,6 +815,11 @@ import { value } from 'jsonpath';
                 if(this.generators.DraftGeneratorByFunctions.inputs.length === 0) {
                     this.workingMessages.AggregateDraftDialogDto.draftUIInfos.leftBoundedContextCount = 0
                 }
+
+                // Preview Fields 생성 완료 후 preservedDraftOptions 업데이트
+                // 다음 BC 처리 시 previewAttributes가 보존되도록 함
+                this.generators.DraftGeneratorByFunctions.preservedDraftOptions = 
+                    this.workingMessages.AggregateDraftDialogDto.draftOptions.slice()
 
                 afterGenerateCallback()
             }
@@ -652,48 +839,87 @@ import { value } from 'jsonpath';
                 }))
                 if(!ddlRequirements.length) return []
                 
-                return new Promise((resolve, reject) => {
-                    if(!this.generators.ExtractDDLFieldsGenerator.generator) {
-                        this.generators.ExtractDDLFieldsGenerator.generator = new ExtractDDLFieldsGenerator({
-                            onSend: (input, stopCallback) => {
+                const useLangGraph = localStorage.getItem('useLangGraph') === 'true';
+                
+                if (useLangGraph) {
+                    // ========== LangGraph Backend 사용 ==========
+                    return new Promise((resolve, reject) => {
+                        const generator = new ExtractDDLFieldsGeneratorLangGraph({
+                            input: {
+                                ddlRequirements: ddlRequirements,
+                                boundedContextName: bcName
+                            },
+                            onModelCreatedWithThinking: (ret) => {
                                 this.workingMessages.AggregateDraftDialogDto.isShow = true
                                 this.workingMessages.AggregateDraftDialogDto.draftUIInfos = {
                                     leftBoundedContextCount: 1,
-                                    directMessage: "Waiting for DDL fields extraction...",
-                                    progress: null
+                                    directMessage: ret.directMessage,
+                                    progress: ret.progress
                                 }
-                                this.workingMessages.AggregateDraftDialogDto.actions.stop = stopCallback
                             },
-
-                            onModelCreatedWithThinking: (returnObj) => {
-                                this.workingMessages.AggregateDraftDialogDto.draftUIInfos.directMessage = returnObj.directMessage
-                                this.workingMessages.AggregateDraftDialogDto.draftUIInfos.progress = returnObj.progress
+                            onGenerationSucceeded: (returnObj) => {
+                                resolve(returnObj.modelValue.output)
+                            },
+                            onError: (error) => {
+                                const errorMessage = "An error occurred while extracting core fields from the DDL.\nPlease try again in a moment.\nError message: " + error.errorMessage
+                                console.error(errorMessage)
+                                alert(errorMessage)
+                                reject(new Error(errorMessage))
                             }
                         })
-                    }
-
-                    this.generators.ExtractDDLFieldsGenerator.generator.client.onGenerationSucceeded = (returnObj) => {
-                        resolve(returnObj.modelValue.output)
-                    }
-
-                    this.generators.ExtractDDLFieldsGenerator.generator.client.onError = (returnObj) => {
-                        console.error('ExtractDDLFieldsGenerator Error:', returnObj.errorMessage)
-                        reject(new Error(returnObj.errorMessage || 'Error occurred while extracting DDL fields'))
-                    }
-
-                    this.generators.ExtractDDLFieldsGenerator.generator.client.onRetry = (returnObj) => {
-                        console.warn('ExtractDDLFieldsGenerator Retry:', returnObj.errorMessage)
-                        if(returnObj.isDied) {
-                            reject(new Error(returnObj.errorMessage || 'Failed to extract DDL fields'))
+                        generator.generate()
+                    })
+                } else {
+                    // ========== 기존 Frontend Generator 사용 ==========
+                    return new Promise((resolve, reject) => {
+                        const processErrorMessage = (returnObj) => {
+                            const errorMessage = "An error occurred while extracting core fields from the DDL.\nPlease try again in a moment.\nError message: " + returnObj.errorMessage
+                            console.error(errorMessage)
+                            alert(errorMessage)
+                            reject(new Error(errorMessage))
                         }
-                    }
 
-                    this.generators.ExtractDDLFieldsGenerator.generator.client.input = {
-                        "ddlRequirements": ddlRequirements,
-                        "boundedContextName": bcName
-                    }
-                    this.generators.ExtractDDLFieldsGenerator.generator.generate()
-                })
+                        if(!this.generators.ExtractDDLFieldsGenerator.generator) {
+                            this.generators.ExtractDDLFieldsGenerator.generator = new ExtractDDLFieldsGenerator({
+                                onSend: (input, stopCallback) => {
+                                    this.workingMessages.AggregateDraftDialogDto.isShow = true
+                                    this.workingMessages.AggregateDraftDialogDto.draftUIInfos = {
+                                        leftBoundedContextCount: 1,
+                                        directMessage: "Waiting for DDL fields extraction...",
+                                        progress: null
+                                    }
+                                    this.workingMessages.AggregateDraftDialogDto.actions.stop = stopCallback
+                                },
+
+                                onModelCreatedWithThinking: (returnObj) => {
+                                    this.workingMessages.AggregateDraftDialogDto.draftUIInfos.directMessage = returnObj.directMessage
+                                    this.workingMessages.AggregateDraftDialogDto.draftUIInfos.progress = returnObj.progress
+                                }
+                            })
+                        }
+
+                        this.generators.ExtractDDLFieldsGenerator.generator.client.onGenerationSucceeded = (returnObj) => {
+                            resolve(returnObj.modelValue.output)
+                        }
+
+                        this.generators.ExtractDDLFieldsGenerator.generator.client.onError = (returnObj) => {
+                            processErrorMessage(returnObj)
+                        }
+
+                        this.generators.ExtractDDLFieldsGenerator.generator.client.onRetry = (returnObj) => {
+                            console.warn('ExtractDDLFieldsGenerator Retry:', returnObj.errorMessage)
+                            if(returnObj.isDied) {
+                                processErrorMessage(returnObj)
+                            }
+                        }
+
+                        this.generators.ExtractDDLFieldsGenerator.generator.client.input = {
+                            "ddlRequirements": ddlRequirements,
+                            "boundedContextName": bcName
+                        }
+                        this.generators.ExtractDDLFieldsGenerator.generator.generate()
+                    })
+                }
             }
 
 
@@ -782,7 +1008,7 @@ import { value } from 'jsonpath';
                     this.generators.DraftGeneratorByFunctions._makeDraftOptions(returnObj)
                 },
 
-                onGenerationSucceeded: (returnObj) => {
+                onGenerationSucceeded: async (returnObj) => {
                     clearThinkingUpdateInterval()
 
                     this.workingMessages.AggregateDraftDialogDto.draftUIInfos = {
@@ -791,43 +1017,89 @@ import { value } from 'jsonpath';
                         progress: 100
                     }
 
-                    AddTraceToDraftOptionsGenerator.addTraceToDraftOptions(
-                        returnObj.modelValue.output.options,
-                        returnObj.inputParams.boundedContext.name,
-                        returnObj.inputParams.boundedContext.description,
-                        returnObj.inputParams.boundedContext.requirements.traceMap,
-                        {
-                            onModelCreatedWithThinking: (returnObj) => {
-                                this.workingMessages.AggregateDraftDialogDto.draftUIInfos.directMessage = returnObj.directMessage
-                                this.workingMessages.AggregateDraftDialogDto.draftUIInfos.progress = returnObj.progress
-                            }
-                        }
-                    ).then(result => {
-                        console.log("[*] 생성된 추적성 정보 : ", result)
+                    try {
+                        const useLangGraph = localStorage.getItem('useLangGraph') === 'true';
+                        if (useLangGraph) {
+                            const traceGenerator = new AddTraceToDraftOptionsGeneratorLangGraph({
+                                input: {
+                                    generatedDraftOptions: returnObj.modelValue.output.options,
+                                    boundedContextName: returnObj.inputParams.boundedContext.name,
+                                    functionalRequirements: returnObj.inputParams.boundedContext.requirements && returnObj.inputParams.boundedContext.requirements.text,
+                                    traceMap: returnObj.inputParams.boundedContext.requirements && returnObj.inputParams.boundedContext.requirements.traceMap
+                                },
+                                onModelCreatedWithThinking: (ret) => {
+                                    this.workingMessages.AggregateDraftDialogDto.draftUIInfos.directMessage = ret.directMessage
+                                    this.workingMessages.AggregateDraftDialogDto.draftUIInfos.progress = ret.progress
+                                },
+                                onGenerationSucceeded: (result) => {
+                                    returnObj.modelValue.output.options = result.generatedDraftOptionsWithTrace
+                                    this.generators.DraftGeneratorByFunctions._makeDraftOptions(returnObj)
 
-                        returnObj.modelValue.output.options = result.generatedDraftOptionsWithTrace
-                        this.generators.DraftGeneratorByFunctions._makeDraftOptions(returnObj)
+                                    if(!returnObj.isFeedbackBased) {
+                                        this.generators.DraftGeneratorByFunctions.updateAccumulatedDrafts(returnObj.modelValue.output, returnObj.inputParams.boundedContext)
+                                    }
 
-                        if(!returnObj.isFeedbackBased) {
-                            this.generators.DraftGeneratorByFunctions.updateAccumulatedDrafts(returnObj.modelValue.output, returnObj.inputParams.boundedContext)
-                        }
-
-                        generatePreviewAggAttributesToDraftOptions(
-                            returnObj.modelValue.output.options, 
-                            returnObj.inputParams.boundedContext.description, 
-                            returnObj.inputParams.boundedContext.requirements.traceMap, 
-                            returnObj.inputParams.boundedContext.requirements.ddlFields, 
-                            () => {
-                                if(returnObj.isFeedbackBased) {
-                                    this.workingMessages.AggregateDraftDialogDto.draftUIInfos.leftBoundedContextCount = 0
-                                    this.$emit("update:draft", this.messages);
+                                    generatePreviewAggAttributesToDraftOptions(
+                                        returnObj.modelValue.output.options,
+                                        returnObj.inputParams.boundedContext.description,
+                                        returnObj.inputParams.boundedContext.requirements && returnObj.inputParams.boundedContext.requirements.traceMap,
+                                        returnObj.inputParams.boundedContext.requirements && returnObj.inputParams.boundedContext.requirements.ddlFields,
+                                        returnObj.inputParams.boundedContext.name,
+                                        () => {
+                                            if(returnObj.isFeedbackBased) {
+                                                this.workingMessages.AggregateDraftDialogDto.draftUIInfos.leftBoundedContextCount = 0
+                                                this.$emit("update:draft", this.messages);
+                                            }
+                                            else if(!this.generators.DraftGeneratorByFunctions.generateIfInputsExist()){
+                                                this.$emit("update:draft", this.messages);
+                                            }
+                                        }
+                                    )
+                                },
+                                onError: (error) => {
+                                    console.error('[ESDialoger] Traceability generation failed:', error)
                                 }
-                                else if(!this.generators.DraftGeneratorByFunctions.generateIfInputsExist()){
-                                    this.$emit("update:draft", this.messages);
+                            })
+                            traceGenerator.generate()
+                        } else {
+                            AddTraceToDraftOptionsGenerator.addTraceToDraftOptions(
+                                returnObj.modelValue.output.options,
+                                returnObj.inputParams.boundedContext.name,
+                                returnObj.inputParams.boundedContext.description,
+                                returnObj.inputParams.boundedContext.requirements.traceMap,
+                                {
+                                    onModelCreatedWithThinking: (ret) => {
+                                        this.workingMessages.AggregateDraftDialogDto.draftUIInfos.directMessage = ret.directMessage
+                                        this.workingMessages.AggregateDraftDialogDto.draftUIInfos.progress = ret.progress
+                                    }
                                 }
-                            }
-                        )
-                    })
+                            ).then(result => {
+                                returnObj.modelValue.output.options = result.generatedDraftOptionsWithTrace
+                                this.generators.DraftGeneratorByFunctions._makeDraftOptions(returnObj)
+                                if(!returnObj.isFeedbackBased) {
+                                    this.generators.DraftGeneratorByFunctions.updateAccumulatedDrafts(returnObj.modelValue.output, returnObj.inputParams.boundedContext)
+                                }
+                                generatePreviewAggAttributesToDraftOptions(
+                                    returnObj.modelValue.output.options, 
+                                    returnObj.inputParams.boundedContext.description, 
+                                    returnObj.inputParams.boundedContext.requirements.traceMap, 
+                                    returnObj.inputParams.boundedContext.requirements.ddlFields,
+                                    returnObj.inputParams.boundedContext.name,
+                                    () => {
+                                        if(returnObj.isFeedbackBased) {
+                                            this.workingMessages.AggregateDraftDialogDto.draftUIInfos.leftBoundedContextCount = 0
+                                            this.$emit("update:draft", this.messages);
+                                        }
+                                        else if(!this.generators.DraftGeneratorByFunctions.generateIfInputsExist()){
+                                            this.$emit("update:draft", this.messages);
+                                        }
+                                    }
+                                )
+                            })
+                        }
+                    } catch (error) {
+                        console.error('[ESDialoger] Traceability addition error:', error)
+                    }
                 },
 
                 onRetry: (returnObj) => {
@@ -907,18 +1179,93 @@ import { value } from 'jsonpath';
                         bc,
                         selectedStructureOption.relations,
                         selectedStructureOption.explanations,
-                        this.requirementsValidationResult.analysisResult.events
+                        this.requirementsValidationResult && this.requirementsValidationResult.analysisResult ? this.requirementsValidationResult.analysisResult.events : []
                     )
 
                     let requirements = getRequirements(bc)
-                    if(requirements.ddl)
-                        requirements.ddlFields = await callExtractDDLFieldsGenerator(bc.requirements, bc.name)
-                    else
+                    if(requirements.ddl && requirements.ddl.length > 0) {
+                        const ddlFieldsResult = await callExtractDDLFieldsGenerator(bc.requirements, bc.name);
+                        requirements.ddlFields = ddlFieldsResult;
+                    } else {
                         requirements.ddlFields = []
+                    }
                     requirements.description = bcDescriptionWithMappingIndex.markdown
-                    requirements.traceMap = bcDescriptionWithMappingIndex.traceMap
-                    requirements.commandNames = bc.commandNames || []
-                    requirements.readModelNames = bc.readModelNames || []
+                    
+                    // traceMap의 refs를 number-only 형식으로 변환
+                    const convertedTraceMap = {};
+                    for (const [key, value] of Object.entries(bcDescriptionWithMappingIndex.traceMap)) {
+                        if (!value.refs) {
+                            convertedTraceMap[key] = value;
+                            continue;
+                        }
+                        
+                        // 이미 올바른 형식인지 체크: [[[number, number], [number, number]]]
+                        try {
+                            const isValid = Array.isArray(value.refs) &&
+                                value.refs.length > 0 &&
+                                Array.isArray(value.refs[0]) &&
+                                value.refs[0].length === 2 &&
+                                Array.isArray(value.refs[0][0]) &&
+                                value.refs[0][0].length === 2 &&
+                                typeof value.refs[0][0][0] === 'number' &&
+                                typeof value.refs[0][0][1] === 'number' &&
+                                Array.isArray(value.refs[0][1]) &&
+                                value.refs[0][1].length === 2 &&
+                                typeof value.refs[0][1][0] === 'number' &&
+                                typeof value.refs[0][1][1] === 'number';
+                            
+                            if (isValid) {
+                                convertedTraceMap[key] = value;
+                                continue;
+                            }
+                        } catch (e) {
+                            // 형식 체크 실패, 변환 진행
+                        }
+                        
+                        // refs의 모든 number를 재귀적으로 수집
+                        const numbers = [];
+                        const collectNumbers = (arr) => {
+                            for (const item of arr) {
+                                if (typeof item === 'number') {
+                                    numbers.push(item);
+                                } else if (Array.isArray(item)) {
+                                    collectNumbers(item);
+                                }
+                            }
+                        };
+                        
+                        collectNumbers(value.refs);
+                        
+                        // number가 있으면 [[[start, col], [end, col]]] 형식으로 변환
+                        let numberOnlyRefs;
+                        if (numbers.length >= 4) {
+                            // 4개 이상: [line1, col1, line2, col2, ...] → [[line1, col1], [line2, col2]]
+                            numberOnlyRefs = [[[numbers[0], numbers[1]], [numbers[2], numbers[3]]]];
+                        } else if (numbers.length === 3) {
+                            // 3개: [line1, col1, line2] → [[line1, col1], [line2, 1]]
+                            numberOnlyRefs = [[[numbers[0], numbers[1]], [numbers[2], 1]]];
+                        } else if (numbers.length === 2) {
+                            // 2개: [line, col] 또는 [line1, line2] → [[line, col], [line, col]]
+                            numberOnlyRefs = [[[numbers[0], numbers[1]], [numbers[0], numbers[1]]]];
+                        } else if (numbers.length === 1) {
+                            // 1개: [line] → [[line, 1], [line, 999]]
+                            numberOnlyRefs = [[[numbers[0], 1], [numbers[0], 999]]];
+                        } else {
+                            // 없음: [[0, 1], [0, 999]]
+                            numberOnlyRefs = [[[0, 1], [0, 999]]];
+                        }
+                        
+                        convertedTraceMap[key] = {
+                            ...value,
+                            refs: numberOnlyRefs
+                        };
+                    }
+                    // MessageDataRestoreUtil expects a Map-like with entries(); use Map
+                    requirements.traceMap = new Map(Object.entries(convertedTraceMap))
+                    requirements.commandInfos = bc.commandInfos ? bc.commandInfos : []
+                    requirements.commandNames = bc.commandInfos ? bc.commandInfos.map(command => command.name) : []
+                    requirements.readModelInfos = bc.readModelInfos ? bc.readModelInfos : []
+                    requirements.readModelNames = bc.readModelInfos ? bc.readModelInfos.map(readModel => readModel.name) : []
 
                     passedGeneratorInputs.push({
                         boundedContext: {
@@ -970,13 +1317,34 @@ import { value } from 'jsonpath';
             this.generators.DraftGeneratorByFunctions.generateIfInputsExist = () => {
                 if(this.generators.DraftGeneratorByFunctions.inputs.length > 0) {
                     const input = this.generators.DraftGeneratorByFunctions.inputs.shift()
-                    this.generators.DraftGeneratorByFunctions.generator.client.input = {
-                        description: input.description,
-                        boundedContext: input.boundedContext,
-                        accumulatedDrafts: this.generators.DraftGeneratorByFunctions.accumulatedDrafts
+                    
+                    // LangGraph 사용 여부 확인
+                    const useLangGraph = localStorage.getItem('useLangGraph') === 'true';
+                    
+                    if (useLangGraph) {
+                        // LangGraph Generator 사용
+                        const langGraphGenerator = new DraftGeneratorByFunctionsLangGraph({
+                            input: {
+                                description: input.description,
+                                boundedContext: input.boundedContext,
+                                accumulatedDrafts: this.generators.DraftGeneratorByFunctions.accumulatedDrafts,
+                                analysisResult: null
+                            },
+                            onThink: this.generators.DraftGeneratorByFunctions.generator.client.onThink,
+                            onGenerationSucceeded: this.generators.DraftGeneratorByFunctions.generator.client.onGenerationSucceeded,
+                            onError: this.generators.DraftGeneratorByFunctions.generator.client.onRetry
+                        });
+                        langGraphGenerator.generate();
+                    } else {
+                        // 기존 Generator 사용
+                        this.generators.DraftGeneratorByFunctions.generator.client.input = {
+                            description: input.description,
+                            boundedContext: input.boundedContext,
+                            accumulatedDrafts: this.generators.DraftGeneratorByFunctions.accumulatedDrafts
+                        }
+                        this.generators.DraftGeneratorByFunctions.generator.generate()
                     }
-
-                    this.generators.DraftGeneratorByFunctions.generator.generate()
+                    
                     return true
                 }
                 return false
@@ -1156,7 +1524,7 @@ import { value } from 'jsonpath';
                 isCreatedModel: false,
                 autoModel: null,
                 state:{
-                    generator: "EventOnlyESGenerator", // EventOnlyESGenerator
+                    generator: "UserStoryGenerator",
                     isAIModelSelected: false,
                     firstMessageIsTyping: true,
                     secondMessageIsTyping: true,
@@ -1513,7 +1881,7 @@ import { value } from 'jsonpath';
                     return;
                 }
 
-                if(this.state.generator === "EventOnlyESGenerator"){
+                if(this.state.generator === "UserStoryGenerator"){
                     if(!this.projectInfo.userStory){
                         this.projectInfo['userStory'] = ''
                     }
@@ -1536,20 +1904,25 @@ import { value } from 'jsonpath';
                     model = model.modelValue.output
                 }
 
-                if(model && model.currentGeneratedLength){
-                    this.currentGeneratedLength = model.currentGeneratedLength;
+                if((model && model.modelValue && model.modelValue.output && model.modelValue.output.currentGeneratedLength) || (model && model.currentGeneratedLength)){
+                    this.currentGeneratedLength = model.currentGeneratedLength || model.modelValue.output.currentGeneratedLength;
                     if(this.state.generator === "RequirementsValidationGenerator" || 
-                        this.state.generator === "RecursiveRequirementsValidationGenerator"){
+                        this.state.generator === "RecursiveRequirementsValidationGenerator" ||
+                        this.state.generator === "RequirementsValidationGeneratorLangGraph" ||
+                        this.state.generator === "RecursiveRequirementsValidationGeneratorLangGraph"){
                         const currentMessage = this.messages.find(msg => msg.type === 'processAnalysis');
                         this.updateMessageState(currentMessage.uniqueId, {
                             currentGeneratedLength: this.currentGeneratedLength,
                         });
-                    }else if(this.state.generator === "DevideBoundedContextGenerator"){
+                    }else if(this.state.generator === "DevideBoundedContextGenerator" ||
+                        this.state.generator === "DevideBoundedContextGeneratorLangGraph"){
                         const currentMessage = this.messages.find(msg => msg.type === 'boundedContextResult');
                         this.updateMessageState(currentMessage.uniqueId, {
                             currentGeneratedLength: this.currentGeneratedLength,
                         });
-                    }else if(this.state.generator === "SiteMapGenerator"){
+                    }else if(this.state.generator === "SiteMapGenerator" ||
+                        this.state.generator === "SiteMapGeneratorLangGraph" ||
+                        this.state.generator === "RecursiveSiteMapGeneratorLangGraph"){
                         const currentMessage = this.messages.find(msg => msg.type === 'siteMapViewer');
                         this.updateMessageState(currentMessage.uniqueId, {
                             currentGeneratedLength: this.currentGeneratedLength,
@@ -1576,44 +1949,32 @@ import { value } from 'jsonpath';
                     return;
                 }
 
-                // Command/ReadModel 추출 완료 처리
-                if (me.state.generator === "CommandReadModelExtractor" || me.state.generator === "RecursiveCommandReadModelExtractor") {
-                    // 모든 청크가 완료되었을 때만 처리
-                    if (me.state.generator === "RecursiveCommandReadModelExtractor") {
-                        return;
-                    }
+                // if (me.state.generator === "DevideBoundedContextGeneratorLangGraph" || me.state.generator === "DevideBoundedContextGenerator") {
+                //     const bcResult = model.modelValue.output;
+                //     if (bcResult) {
+                //         me.resultDevideBoundedContext[me.selectedAspect] = {
+                //             thoughts: bcResult.thoughts,
+                //             boundedContexts: bcResult.boundedContexts,
+                //             relations: bcResult.relations,
+                //             explanations: bcResult.explanations
+                //         };
+                        
+                //         // 메시지 업데이트
+                //         const bcMessage = me.messages.find(msg => msg.type === 'boundedContextResult');
+                //         if (bcMessage) {
+                //             const updatedResult = JSON.parse(JSON.stringify(me.resultDevideBoundedContext));
+                            
+                //             me.updateMessageState(bcMessage.uniqueId, {
+                //                 result: updatedResult,
+                //                 selectedAspect: me.selectedAspect,
+                //                 isGeneratingBoundedContext: false
+                //             });
+                //         }
+                //     }
                     
-                    // 일반 CommandReadModelExtractor의 경우
-                    me.commandReadModelData = model.extractedData || model;
-                    me.isExtractingCommandReadModel = false;
-
-                    // 추출 완료 상태 업데이트 (100% 완료 표시)
-                    me.updateMessageState(me.messages.find(msg => msg.type === 'siteMapViewer').uniqueId, {
-                        commandReadModelData: me.commandReadModelData,
-                        processingRate: 100,
-                        currentProcessingStep: 'extractingCommandsAndReadModels'
-                    });
-                    
-                    try {
-                        me._mapCommandReadModelDataToBoundedContexts(me.commandReadModelData);
-                        const bcMsg = me.messages.find(msg => msg.type === 'boundedContextResult');
-                        if (bcMsg) {
-                            me.updateMessageState(bcMsg.uniqueId, {
-                                result: JSON.parse(JSON.stringify(me.resultDevideBoundedContext))
-                            });
-                        }
-                    } catch (e) {
-                        console.warn('Failed to map sitemap to bounded contexts:', e);
-                    }
-
-                    me.$emit("update:projectInfo", {commandReadModelData: me.commandReadModelData});
-
-                    // 추출 완료 후 자동으로 사이트맵 생성 진행
-                    setTimeout(() => {
-                        me.generateSiteMap();
-                    }, 500);
-                    return;
-                }
+                //     me.processingState.isGeneratingBoundedContext = false;
+                //     return;
+                // }
 
                 // Recursive SiteMap: 청크 단위 결과는 생성기 내부에서 누적 처리하며 진행상황/부분결과 업데이트
                 if (me.state.generator === "RecursiveSiteMapGenerator") {
@@ -1671,18 +2032,24 @@ import { value } from 'jsonpath';
                 }
 
                 // Recursive UserStory: 청크 단위 결과는 생성기 내부에서 누적 처리하며 진행상황/부분결과 업데이트
-                if (me.state.generator === "RecursiveUserStoryGenerator") {
-                    me.generator.handleGenerationFinished(model);
+                if (me.state.generator === "RecursiveUserStoryGenerator" || 
+                    me.state.generator === "RecursiveUserStoryGeneratorLangGraph" ||
+                    me.generatorName === "RecursiveUserStoryGeneratorLangGraph") {
+                    // handleGenerationFinished가 있는 경우에만 호출 (기존 방식)
+                    if (me.generator.handleGenerationFinished) {
+                        me.generator.handleGenerationFinished(model);
+                    }
 
                     try {
                         const total = me.generator.currentChunks.length || 1;
-                        const done = Math.min(me.generator.currentChunkIndex, total);
+                        const done = Math.min(me.generator.currentChunkIndex + 1, total);
                         
                         // 각 청크 완료마다 누적된 결과를 userStory로 emit
                         const accumulated = me.generator.accumulated;
                         if (accumulated && (accumulated.userStories || accumulated.actors || accumulated.businessRules)) {
                             const userStoryContent = me.convertUserStoriesToText(accumulated);
                             me.$emit('update:userStory', userStoryContent, false);
+                            console.log('[ESDialoger] Updated userStory content, stories:', accumulated.userStories.length);
                         }
 
                         // 현재 처리 상태 표시 (선언된 데이터 활용)
@@ -1701,6 +2068,7 @@ import { value } from 'jsonpath';
                 }
             },  
 
+            
             async onGenerationSucceeded(returnObj) {
                 var me = this;
                 me.done = true;
@@ -1713,11 +2081,14 @@ import { value } from 'jsonpath';
                 const model = returnObj.modelValue.output
 
                 if(me.state.generator === "RequirementsValidationGenerator" || 
-                    me.state.generator === "RecursiveRequirementsValidationGenerator") {
+                    me.state.generator === "RecursiveRequirementsValidationGenerator" ||
+                    me.state.generator === "RequirementsValidationGeneratorLangGraph" ||
+                    me.state.generator === "RecursiveRequirementsValidationGeneratorLangGraph") {
                     
                     const currentMessage = me.messages.find(msg => msg.type === 'processAnalysis');
                     
-                    if (me.state.generator === "RecursiveRequirementsValidationGenerator") {
+                    if (me.state.generator === "RecursiveRequirementsValidationGenerator" ||
+                        me.state.generator === "RecursiveRequirementsValidationGeneratorLangGraph") {
                         // 현재 청크의 인덱스가 마지막 청크의 인덱스보다 작은 경우
                         if (me.generator.currentChunkIndex < me.generator.currentChunks.length - 1) {
                             me.generator.handleGenerationFinished(model);
@@ -1760,11 +2131,16 @@ import { value } from 'jsonpath';
                     me.$emit("update:draft", me.messages);
                 }
 
-                if(me.state.generator === "RequirementsMappingGenerator"){
-                    console.log("currentChunk: ", me.userStoryChunksIndex+1, "/", me.userStoryChunks.length);
-                    console.log("Aspect: ", me.selectedAspect);
-                    console.log("BoundedContext: ", me.resultDevideBoundedContext[me.selectedAspect].boundedContexts[me.bcInAspectIndex]);
-                    console.log("Requirements: ", model.requirements);
+                if (me.state.generator === "CommandReadModelExtractor") {
+                    me._handleCommandReadModelExtractorResult(model.extractedData);
+                    return;
+                }
+
+                if(me.state.generator === "RequirementsMappingGenerator" || me.state.generator === "RequirementsMappingGeneratorLangGraph"){
+                    // 이미 매핑 완료 상태면 중복 콜백 무시
+                    if (!me.processingState.isStartMapping) {
+                        return;
+                    }
 
                     me.processingRate = Math.round((me.userStoryChunksIndex+1) / me.userStoryChunks.length * 100);
                     me.currentProcessingBoundedContext = me.resultDevideBoundedContext[me.selectedAspect].boundedContexts[me.bcInAspectIndex].alias;
@@ -1802,7 +2178,7 @@ import { value } from 'jsonpath';
                     me.mappingRequirements();
                 }
 
-                if(me.state.generator === "DevideBoundedContextGenerator"){
+                if(me.state.generator === "DevideBoundedContextGeneratorLangGraph" || me.state.generator === "DevideBoundedContextGenerator"){
                     me.devisionAspectIndex = 0;
                     me.currentGeneratedLength = 0;
                     me.processingState.isGeneratingBoundedContext = false;
@@ -1850,6 +2226,66 @@ import { value } from 'jsonpath';
                 }
             },
 
+            _handleCommandReadModelExtractorResult(extractedData){
+                this.commandReadModelData = extractedData;
+                this.isExtractingCommandReadModel = false;
+
+                const siteMapMsg = this.messages.find(msg => msg.type === 'siteMapViewer')
+                if(siteMapMsg){
+                    this.updateMessageState(siteMapMsg.uniqueId, {
+                        commandReadModelData: this.commandReadModelData,
+                        processingRate: 100,
+                        currentProcessingStep: 'extractingCommandsAndReadModels'
+                    });
+                }
+                
+                try {
+                    this._mapCommandReadModelDataToBoundedContexts(this.commandReadModelData);
+                    const bcMsg = this.messages.find(msg => msg.type === 'boundedContextResult');
+                    if (bcMsg) {
+                        this.updateMessageState(bcMsg.uniqueId, {
+                            result: JSON.parse(JSON.stringify(this.resultDevideBoundedContext))
+                        });
+                    }
+
+                } catch (e) {
+                    console.warn('Failed to map sitemap to bounded contexts:', e);
+                }
+
+                this.$emit("update:projectInfo", {commandReadModelData: this.commandReadModelData});
+                setTimeout(() => {
+                    this.generateSiteMap();
+                }, 500);
+            },
+
+            _mapCommandReadModelDataToBoundedContexts(commandReadModelData) {
+                if(!commandReadModelData || !commandReadModelData.boundedContexts || !Array.isArray(commandReadModelData.boundedContexts))
+                    throw new Error('Invalid commandReadModelData');
+                
+                const bcCommandInfos = {}
+                const bcReadModelInfos = {}
+                for(const bc of commandReadModelData.boundedContexts){
+                    bcCommandInfos[bc.name] = (bc.commands) ? bc.commands.map(command => ({
+                        name: command.name,
+                        refs: command.refs
+                    })) : [];
+                    bcReadModelInfos[bc.name] = (bc.readModels) ? bc.readModels.map(readModel => ({
+                        name: readModel.name,
+                        refs: readModel.refs
+                    })) : [];
+                }
+
+                const aspect = this.selectedAspect || Object.keys(this.resultDevideBoundedContext)[0];
+                if (!aspect || !this.resultDevideBoundedContext[aspect]) return;
+
+                const bcArray = this.resultDevideBoundedContext[aspect].boundedContexts || [];
+                for(const bc of bcArray){
+                    bc.commandInfos = bcCommandInfos[bc.name] || [];
+                    bc.readModelInfos = bcReadModelInfos[bc.name] || [];
+                }
+            },
+
+
             generateUserStory(){
                 if(!this.projectInfo.userStory){
                     this.projectInfo['userStory'] = ''
@@ -1864,33 +2300,41 @@ import { value } from 'jsonpath';
             async generate(){
                 let issuedTimeStamp = Date.now()
                 
-                // 요구사항 길이에 따라 적절한 generator 선택
                 const requirementsText = this.projectInfo.userStory || '';
                 const shouldUseRecursive = requirementsText && requirementsText.length > 24000;
                 
-                if (shouldUseRecursive) {
-                    this.state.generator = "RecursiveUserStoryGenerator";
-                    this.generatorName = "RecursiveUserStoryGenerator";
-                    this.generator = new RecursiveUserStoryGenerator(this);
-                    
-                    // recursive 처리 시작
-                    this.generator.generateRecursively(this.projectInfo.userStory).then(result => {
-                        console.log('Recursive user story generation completed:', result);
-                        // 최종 결과를 userStory로 설정
-                        if (result) {
-                            const userStoryContent = this.convertUserStoriesToText(result);
-                            this.$emit('update:userStory', userStoryContent, true);
-                        }
-                    }).catch(error => {
-                        console.error('Recursive generation failed:', error);
-                    });
+                // 로컬 스토리지에서 LangGraph 사용 여부 확인 (기본값: false)
+                const useLangGraph = localStorage.getItem('useLangGraph') === 'true';
+                
+                if (useLangGraph) {
+                    if (shouldUseRecursive) {
+                        this.generator = new RecursiveUserStoryGeneratorLangGraph.default(this);
+                        this.state.generator = "RecursiveUserStoryGeneratorLangGraph";
+                        this.generatorName = "RecursiveUserStoryGeneratorLangGraph";
+                    } else {
+                        this.generator = new UserStoryGeneratorLangGraph.default(this);
+                        this.state.generator = "UserStoryGeneratorLangGraph";
+                        this.generatorName = "UserStoryGeneratorLangGraph";
+                    }
                 } else {
-                    this.state.generator = "EventOnlyESGenerator";
-                    this.generatorName = "EventOnlyESGenerator";
-                    this.generator = new Generator(this);
-                    this.generator.generate();
+                    if (shouldUseRecursive) {
+                        this.generator = new RecursiveUserStoryGenerator(this);
+                        this.state.generator = "RecursiveUserStoryGenerator";
+                        this.generatorName = "RecursiveUserStoryGenerator";
+                    } else {
+                        this.generator = new Generator.default(this);
+                        this.state.generator = "UserStoryGenerator";
+                        this.generatorName = "UserStoryGenerator";
+                    }
                 }
-
+                
+                // updateProgress 콜백 정의 (진행률 표시)
+                this.updateProgress = (progress) => {
+                    console.log('[ESDialoger] updateProgress called:', progress);
+                    this.processingRate = progress;
+                    this.done = (progress >= 100);
+                };
+                
                 this.input.businessModel = this.cachedModels["BMGenerator"]
                 this.input.painpointAnalysis = this.cachedModels["CJMGenerator"]
                 this.input.title = this.projectInfo.prompt
@@ -1913,6 +2357,32 @@ import { value } from 'jsonpath';
                 this.state.startTemplateGenerate = true
                 this.done = false;
                 this.projectInfo.userStory = '';
+                
+                if (useLangGraph) {
+                    const generatePromise = shouldUseRecursive 
+                        ? this.generator.generateRecursively(requirementsText)
+                        : this.generator.generate(requirementsText);
+                    
+                    generatePromise.then(result => {
+                        // 최종 결과를 userStory로 설정
+                        if (result) {
+                            if (result.textResponse) {
+                                this.$emit('update:userStory', result.textResponse, true);
+                            } else {
+                                const userStoryContent = this.convertUserStoriesToText(result);
+                                this.$emit('update:userStory', userStoryContent, true);
+                            }
+                            this.done = true;
+                            this.processingRate = 0;
+                        }
+                    }).catch(error => {
+                        console.error('User story generation failed:', error);
+                        this.done = true;
+                    });
+                } else {
+                    // 프론트엔드 생성기 사용 (기존 로직)
+                    this.generator.generate();
+                }
             },
 
             // JSON 구조화된 유저스토리를 텍스트로 변환
@@ -2122,14 +2592,24 @@ import { value } from 'jsonpath';
             },
 
             async summarizeRequirements() {
-                this.generator = new RecursiveRequirementsSummarizer(this);
-                this.state.generator = "RecursiveRequirementsSummarizer";
-                this.generatorName = "RecursiveRequirementsSummarizer";
+                // 로컬 스토리지에서 LangGraph 사용 여부 확인 (기본값: false)
+                const useLangGraph = localStorage.getItem('useLangGraph') === 'true';
+                
+                if (useLangGraph) {
+                    this.generator = new RecursiveRequirementsSummarizerLangGraph(this);
+                    this.state.generator = "RecursiveRequirementsSummarizerLangGraph";
+                    this.generatorName = "RecursiveRequirementsSummarizerLangGraph";
+                } else {
+                    this.generator = new RecursiveRequirementsSummarizer(this);
+                    this.state.generator = "RecursiveRequirementsSummarizer";
+                    this.generatorName = "RecursiveRequirementsSummarizer";
+                }
 
                 this.processingState.isSummarizeStarted = true;
 
                 try {
                     const summarizedResult = await this.generator.summarizeRecursively(this.projectInfo.usedUserStory);
+                    
                     // 요약 결과 저장
                     this.userStoryChunks = this.generator.makeUserStoryChunks(this.projectInfo.usedUserStory + "\n" + this.projectInfo.usedInputDDL);
                     this.userStoryChunksIndex = 0;
@@ -2146,10 +2626,12 @@ import { value } from 'jsonpath';
 
                     // BC 생성이 대기 중이었다면 진행
                     if (this.pendingBCGeneration) {
+                        this.pendingBCGeneration = false;
                         this.generateDevideBoundedContext();
                     }
                 } catch (error) {
                     console.error('Summarization failed:', error);
+                    this.processingState.isSummarizeStarted = false;
                 }
             },
 
@@ -2157,9 +2639,18 @@ import { value } from 'jsonpath';
                 // 요약 > 생성된 bc의 requirements 매핑
                 this.processingState.isStartMapping = true;
 
-                this.generator = new RequirementsMappingGenerator(this);
-                this.state.generator = "RequirementsMappingGenerator";
-                this.generatorName = "RequirementsMappingGenerator";
+                // LangGraph 사용 여부 확인
+                const useLangGraph = localStorage.getItem('useLangGraph') === 'true';
+
+                if (useLangGraph) {
+                    this.generator = new RequirementsMappingGeneratorLangGraph(this);
+                    this.state.generator = "RequirementsMappingGeneratorLangGraph";
+                    this.generatorName = "RequirementsMappingGeneratorLangGraph";
+                } else {
+                    this.generator = new RequirementsMappingGenerator(this);
+                    this.state.generator = "RequirementsMappingGenerator";
+                    this.generatorName = "RequirementsMappingGenerator";
+                }
 
                 // 요약 결과가 없어도 원본 매핑 진행을 위해 원본 요구사항을 청크로 넣어줌
                 if(this.userStoryChunks.length == 0){
@@ -2179,9 +2670,9 @@ import { value } from 'jsonpath';
                 }
 
                 const isAnalysisResultExist = this.userStoryChunks.some(chunk => chunk.type === "analysisResult");
-                if(this.requirementsValidationResult.analysisResult && this.userStoryChunksIndex == 0 && !isAnalysisResultExist){
+                if(this.requirementsValidationResult && this.requirementsValidationResult.analysisResult && this.userStoryChunksIndex == 0 && !isAnalysisResultExist){
                     this.userStoryChunks.push({
-                        events: this.requirementsValidationResult.analysisResult.events,
+                        events: this.requirementsValidationResult && this.requirementsValidationResult.analysisResult ? this.requirementsValidationResult.analysisResult.events : [],
                         type: "analysisResult"
                     })
                 }
@@ -2191,7 +2682,7 @@ import { value } from 'jsonpath';
                 this.generator.generate();
             },
 
-            generateDevideBoundedContext(){
+            async generateDevideBoundedContext(){
                 if(!this.alertGenerateWarning("DevideBoundedContextGenerator")){
                     return;
                 }
@@ -2206,10 +2697,19 @@ import { value } from 'jsonpath';
                     return;
                 }
                 
-                this.generator = new DevideBoundedContextGenerator(this);
-                this.state.generator = "DevideBoundedContextGenerator";
-                this.generatorName = "DevideBoundedContextGenerator";
-
+                // 로컬 스토리지에서 LangGraph 사용 여부 확인 (기본값: false)
+                const useLangGraph = localStorage.getItem('useLangGraph') === 'true';
+                
+                if (useLangGraph) {
+                    this.generator = new DevideBoundedContextGeneratorLangGraph(this);
+                    this.state.generator = "DevideBoundedContextGeneratorLangGraph";
+                    this.generatorName = "DevideBoundedContextGeneratorLangGraph";
+                } else {
+                    this.generator = new DevideBoundedContextGenerator(this);
+                    this.state.generator = "DevideBoundedContextGenerator";
+                    this.generatorName = "DevideBoundedContextGenerator";
+                }
+                
                 this.devisionAspectIndex = 0;
                 this.input['devisionAspect'] = this.selectedAspect;
                 this.messages.push(this.generateMessage("boundedContextResult", {}))
@@ -2219,16 +2719,24 @@ import { value } from 'jsonpath';
                 this.input['requirements'] = {
                     userStory: this.projectInfo.usedUserStory,
                     summarizedResult: this.summarizedResult || {},
-                    analysisResult: this.requirementsValidationResult.analysisResult,
+                    analysisResult: this.requirementsValidationResult && this.requirementsValidationResult.analysisResult ? this.requirementsValidationResult.analysisResult : { actors: [], events: [] },
                     pbcInfo: this.pbcLists.map(pbc => ({
                         name: pbc.name,
                         description: pbc.description
                     }))
                 };
 
-                this.generator.generate();
                 this.processingState.isGeneratingBoundedContext = true;
                 this.currentGeneratedLength = 0;
+
+                try {
+                    console.log('[ESDialoger] BC 생성 시작...');
+                    await this.generator.generate();
+                    // onGenerationFinished에서 처리됨
+                } catch (error) {
+                    console.error('[ESDialoger] BC 생성 실패:', error);
+                    this.processingState.isGeneratingBoundedContext = false;
+                }
             },
 
             generateFrontEnd(){
@@ -2276,14 +2784,16 @@ import { value } from 'jsonpath';
 
                 let selectedStructureOption = this.resultDevideBoundedContext[this.boundedContextVersion.aspect]
                 
-                if(selectedStructureOption){
-                    this.collectedMockDatas.aggregateDraftScenarios.selectedStructureOption = structuredClone(selectedStructureOption)
-                }
-                if(this.resultDevideBoundedContext){
-                    this.collectedMockDatas.aggregateDraftScenarios.resultDevideBoundedContext = structuredClone(this.resultDevideBoundedContext)
-                }
-                if(this.boundedContextVersion){
-                    this.collectedMockDatas.aggregateDraftScenarios.boundedContextVersion = structuredClone(this.boundedContextVersion)
+                if(this.isTerminalEnabled) {
+                    if(selectedStructureOption){
+                        this.collectedMockDatas.aggregateDraftScenarios.selectedStructureOption = structuredClone(selectedStructureOption)
+                    }
+                    if(this.resultDevideBoundedContext){
+                        this.collectedMockDatas.aggregateDraftScenarios.resultDevideBoundedContext = structuredClone(this.resultDevideBoundedContext)
+                    }
+                    if(this.boundedContextVersion){
+                        this.collectedMockDatas.aggregateDraftScenarios.boundedContextVersion = structuredClone(this.boundedContextVersion)
+                    }
                 }
 
                 // 요약 결과가 없어도, 상세한 매핑을 위해 원본 매핑 진행
@@ -2323,7 +2833,7 @@ import { value } from 'jsonpath';
                 try {
 
                     if(this.isServerProject) this.state.associatedProject = this.modelIds.projectId
-                    this._makeCollectedMockDatas(draftOptions)
+                    if(this.isTerminalEnabled) this._makeCollectedMockDatas(draftOptions)
 
                     draftOptions = ESDialogerTraceUtil.extractTraceInfoFromDraftOptions(draftOptions, {
                         userStory: this.projectInfo.usedUserStory,
@@ -2410,7 +2920,8 @@ import { value } from 'jsonpath';
                 this.collectedMockDatas.aggregateDraftScenarios.requirementsValidationResult = structuredClone(this.requirementsValidationResult)
                 this.collectedMockDatas.aggregateDraftScenarios.commandReadModelData = structuredClone(this.commandReadModelData)
                 this.collectedMockDatas.aggregateDraftScenarios.siteMap = structuredClone(this.siteMap)
-                console.log("[*] 시나리오별 테스트를 위한 Mock 데이터 구축 완료", {collectedMockDatas: this.collectedMockDatas.aggregateDraftScenarios})
+                this.collectedMockDatas.aggregateDraftScenarios.selectedAspect = this.selectedAspect
+                console.log("[#] 시나리오별 테스트를 위한 Mock 데이터 구축 완료", {collectedMockDatas: this.collectedMockDatas.aggregateDraftScenarios})
             },
 
             
@@ -2502,8 +3013,8 @@ import { value } from 'jsonpath';
                         isStartMapping: this.processingState.isStartMapping,
                         isAnalizing: this.processingState.isAnalizing,
                         generateOption: {},
-                        recommendedBoundedContextsNumber: this.requirementsValidationResult.analysisResult.recommendedBoundedContextsNumber,
-                        reasonOfRecommendedBoundedContextsNumber: this.requirementsValidationResult.analysisResult.reasonOfRecommendedBoundedContextsNumber,
+                        recommendedBoundedContextsNumber: this.requirementsValidationResult && this.requirementsValidationResult.analysisResult ? this.requirementsValidationResult.analysisResult.recommendedBoundedContextsNumber : 2,
+                        reasonOfRecommendedBoundedContextsNumber: this.requirementsValidationResult && this.requirementsValidationResult.analysisResult ? this.requirementsValidationResult.analysisResult.reasonOfRecommendedBoundedContextsNumber : "",
                         timestamp: new Date()
                     };
                 } else if(type === "siteMapViewer") {
@@ -2551,6 +3062,8 @@ import { value } from 'jsonpath';
                 const usedUserStory = this.projectInfo.usedUserStory;
                 this.$emit("update:userStory", usedUserStory, true);
 
+                const useLangGraph = localStorage.getItem('useLangGraph') === 'true';
+
                 if(usedUserStory.length > 25000){
                     if(!this.alertGenerateWarning("RecursiveRequirementsValidationGenerator")){
                         return;
@@ -2564,27 +3077,65 @@ import { value } from 'jsonpath';
                 this.processingState.isAnalizing = true;
                 
                 if (usedUserStory.length > 25000) {
-                    this.generator = new RecursiveRequirementsValidationGenerator(this);
-                    this.state.generator = "RecursiveRequirementsValidationGenerator";
-                    this.generatorName = "RecursiveRequirementsValidationGenerator";
+                    if (useLangGraph) {
+                        this.generator = new RecursiveRequirementsValidationGeneratorLangGraph(this);
+                        this.state.generator = "RecursiveRequirementsValidationGeneratorLangGraph";
+                        this.generatorName = "RecursiveRequirementsValidationGeneratorLangGraph";
 
-                    this.messages.push(this.generateMessage("processAnalysis", {}));
-                    this.generator.validateRecursively(usedUserStory);
+                        this.messages.push(this.generateMessage("processAnalysis", {}));
+                        this.generator.validateRecursively(usedUserStory);
+                    } else {
+                        this.generator = new RecursiveRequirementsValidationGenerator(this);
+                        this.state.generator = "RecursiveRequirementsValidationGenerator";
+                        this.generatorName = "RecursiveRequirementsValidationGenerator";
+
+                        this.messages.push(this.generateMessage("processAnalysis", {}));
+                        this.generator.validateRecursively(usedUserStory);
+                    }
                 } else {
-                    this.generator = new RequirementsValidationGenerator(this);
-                    this.state.generator = "RequirementsValidationGenerator";
-                    this.generatorName = "RequirementsValidationGenerator";
+                    if (useLangGraph) {
+                        this.generator = new RequirementsValidationGeneratorLangGraph(this);
+                        this.state.generator = "RequirementsValidationGeneratorLangGraph";
+                        this.generatorName = "RequirementsValidationGeneratorLangGraph";
 
-                    this.input['requirements'] = {
-                        userStory: usedUserStory,
-                    };
+                        this.input['requirements'] = {
+                            userStory: usedUserStory,
+                        };
 
-                    this.messages.push(this.generateMessage("processAnalysis", {}));
-                    this.generator.generate();
+                        this.messages.push(this.generateMessage("processAnalysis", {}));
+                        this.generator.generate();
+                    } else {
+                        this.generator = new RequirementsValidationGenerator(this);
+                        this.state.generator = "RequirementsValidationGenerator";
+                        this.generatorName = "RequirementsValidationGenerator";
+
+                        this.input['requirements'] = {
+                            userStory: usedUserStory,
+                        };
+
+                        this.messages.push(this.generateMessage("processAnalysis", {}));
+                        this.generator.generate();
+                    }
                 }
             },
 
             onShowBCGenerationOption(){
+                if(!this.projectInfo || !this.projectInfo.userStory){
+                    alert("Can not found User Story. You need to input User Story to proceed.");
+                    return;
+                }
+
+                // 요구사항 검증 이후에 요구사항 입력창을 유저가 수정한 경우, 이후 로직이 망가질 수 있기 때문에 별도로 저장 후 사용
+                this.projectInfo.usedUserStory = this.projectInfo.userStory || ''
+                this.projectInfo.usedInputDDL = this.projectInfo.inputDDL || ''
+                this.$emit("update:projectInfo", {
+                    usedUserStory: this.projectInfo.usedUserStory,
+                    usedInputDDL: this.projectInfo.usedInputDDL
+                })
+                
+                const usedUserStory = this.projectInfo.usedUserStory;
+                this.$emit("update:userStory", usedUserStory, true);
+                
                 if(this.messages.every(message => message.type != "bcGenerationOption")){
                     this.messages.push(this.generateMessage("bcGenerationOption", {}))
                 }
@@ -2718,7 +3269,7 @@ import { value } from 'jsonpath';
 
                 // 각 단계별 경고 메시지
                 switch(generator) {
-                    case "EventOnlyESGenerator":
+                    case "UserStoryGenerator":
                         warningMessage = this.$t('ESDialoger.warnings.default');
                         break;
                     case "RequirementsValidationGenerator":
@@ -2752,7 +3303,7 @@ import { value } from 'jsonpath';
             hasMessagesToRemove(generator) {
                 // 각 단계별로 제거할 메시지 타입 정의
                 const messageTypesToRemove = {
-                    "EventOnlyESGenerator": [
+                    "UserStoryGenerator": [
                         "processAnalysis",
                         "bcGenerationOption",
                         "boundedContextResult",
@@ -2800,7 +3351,7 @@ import { value } from 'jsonpath';
 
             removeMessagesAfterCurrent(generator) {
                 const messageTypesToRemove = {
-                    "EventOnlyESGenerator": [
+                    "UserStoryGenerator": [
                         "processAnalysis",
                         "bcGenerationOption",
                         "boundedContextResult",
@@ -2950,8 +3501,24 @@ import { value } from 'jsonpath';
                 const requirementsText = this.projectInfo.usedUserStory || '';
                 const shouldUseRecursive = requirementsText && requirementsText.length > 24000;
 
-                this.generator = shouldUseRecursive ? new RecursiveCommandReadModelExtractor(this) : new CommandReadModelExtractor(this);
-                this.state.generator = shouldUseRecursive ? "RecursiveCommandReadModelExtractor" : "CommandReadModelExtractor";
+                // 로컬 스토리지에서 LangGraph 사용 여부 확인 (기본값: false)
+                const useLangGraph = localStorage.getItem('useLangGraph') === 'true';
+                
+                if (useLangGraph) {
+                    if (shouldUseRecursive) {
+                        this.generator = new RecursiveCommandReadModelExtractorLangGraph(this);
+                        this.state.generator = "RecursiveCommandReadModelExtractorLangGraph";
+                        this.generatorName = "RecursiveCommandReadModelExtractorLangGraph";
+                    } else {
+                        this.generator = new CommandReadModelExtractorLangGraph(this);
+                        this.state.generator = "CommandReadModelExtractorLangGraph";
+                        this.generatorName = "CommandReadModelExtractorLangGraph";
+                    }
+                } else {
+                    this.generator = shouldUseRecursive ? new RecursiveCommandReadModelExtractor(this) : new CommandReadModelExtractor(this);
+                    this.state.generator = shouldUseRecursive ? "RecursiveCommandReadModelExtractor" : "CommandReadModelExtractor";
+                    this.generatorName = shouldUseRecursive ? "RecursiveCommandReadModelExtractor" : "CommandReadModelExtractor";
+                }
 
                 this.input['requirements'] = this.projectInfo.usedUserStory;
                 this.input['resultDevideBoundedContext'] = JSON.parse(JSON.stringify(this.resultDevideBoundedContext[this.selectedAspect].boundedContexts.filter(bc => !bc.implementationStrategy.includes('PBC:')))).map(bc => {
@@ -2987,8 +3554,10 @@ import { value } from 'jsonpath';
                     totalChunks: 0
                 });
 
-                if (shouldUseRecursive) {
-                    this.generator.generateRecursively(this.projectInfo.usedUserStory).then(result => {
+                // LangGraph 사용 시
+                if (useLangGraph) {
+                    const boundedContexts = this.input['resultDevideBoundedContext'];
+                    this.generator.extractRecursively(this.projectInfo.usedUserStory, boundedContexts).then(result => {
                         this.commandReadModelData = result.extractedData;
                         this.isExtractingCommandReadModel = false;
                         
@@ -3006,8 +3575,30 @@ import { value } from 'jsonpath';
                     }).catch(error => {
                         console.error('Command/ReadModel extraction failed:', error);
                         this.isExtractingCommandReadModel = false;
-                        // 실패해도 사이트맵 생성 진행
-                        this.generateSiteMap();
+                        
+                        const siteMapViewerMessage = this.messages.find(msg => msg.type === 'siteMapViewer');
+                        if (siteMapViewerMessage) {
+                            this.updateMessageState(siteMapViewerMessage.uniqueId, {
+                                isGenerating: false,
+                                errorMessage: 'Command/ReadModel 추출 실패: ' + (error.message || error)
+                            });
+                        }
+                    });
+                } else if (shouldUseRecursive) {
+                    this.generator.generateRecursively(this.projectInfo.usedUserStory).then(result => {
+                        this._handleCommandReadModelExtractorResult(result.extractedData);
+                    }).catch(error => {
+                        console.error('Command/ReadModel extraction failed:', error);
+                        this.isExtractingCommandReadModel = false;
+                        
+                        // 에러 메시지 표시 (무한 루프 방지를 위해 generateSiteMap 호출 안함)
+                        const siteMapViewerMessage = this.messages.find(msg => msg.type === 'siteMapViewer');
+                        if (siteMapViewerMessage) {
+                            this.updateMessageState(siteMapViewerMessage.uniqueId, {
+                                isGenerating: false,
+                                errorMessage: 'Command/ReadModel 추출 실패: ' + (error.message || error)
+                            });
+                        }
                     });
                 } else {
                     this.generator.generate();
@@ -3024,8 +3615,24 @@ import { value } from 'jsonpath';
                 const requirementsText = this.projectInfo.usedUserStory || '';
                 const shouldUseRecursive = requirementsText && requirementsText.length > 24000;
 
-                this.generator = shouldUseRecursive ? new RecursiveSiteMapGenerator(this) : new SiteMapGenerator(this);
-                this.state.generator = shouldUseRecursive ? "RecursiveSiteMapGenerator" : "SiteMapGenerator";
+                // 로컬 스토리지에서 LangGraph 사용 여부 확인 (기본값: false)
+                const useLangGraph = localStorage.getItem('useLangGraph') === 'true';
+                
+                if (useLangGraph) {
+                    if (shouldUseRecursive) {
+                        this.generator = new RecursiveSiteMapGeneratorLangGraph(this);
+                        this.state.generator = "RecursiveSiteMapGeneratorLangGraph";
+                        this.generatorName = "RecursiveSiteMapGeneratorLangGraph";
+                    } else {
+                        this.generator = new SiteMapGeneratorLangGraph(this);
+                        this.state.generator = "SiteMapGeneratorLangGraph";
+                        this.generatorName = "SiteMapGeneratorLangGraph";
+                    }
+                } else {
+                    this.generator = shouldUseRecursive ? new RecursiveSiteMapGenerator(this) : new SiteMapGenerator(this);
+                    this.state.generator = shouldUseRecursive ? "RecursiveSiteMapGenerator" : "SiteMapGenerator";
+                    this.generatorName = shouldUseRecursive ? "RecursiveSiteMapGenerator" : "SiteMapGenerator";
+                }
 
                 this.input['requirements'] = this.projectInfo.usedUserStory;
                 this.input['resultDevideBoundedContext'] = JSON.parse(JSON.stringify(this.resultDevideBoundedContext[this.selectedAspect].boundedContexts.filter(bc => !bc.implementationStrategy.includes('PBC:')))).map(bc => {
@@ -3064,7 +3671,23 @@ import { value } from 'jsonpath';
                     totalChunks: 0
                 });
                 
-                if (shouldUseRecursive) {
+                if (useLangGraph) {
+                    const boundedContexts = this.input['resultDevideBoundedContext'];
+                    const existingNavigation = this.siteMap || [];
+                    this.generator.generateRecursively(
+                        this.projectInfo.usedUserStory,
+                        boundedContexts,
+                        this.commandReadModelData,
+                        existingNavigation
+                    ).then(result => {
+                        this.siteMap = result.siteMap.treeData || [];
+                        this.updateMessageState(this.messages.find(msg => msg.type === 'siteMapViewer').uniqueId, {
+                            siteMap: this.siteMap,
+                            isGenerating: false
+                        });
+                        this.$emit('update:draft', this.messages)
+                    });
+                } else if (shouldUseRecursive) {
                     this.generator.generateRecursively(this.projectInfo.usedUserStory).then(result => {
                         this.siteMap = result.treeData;
                         this.updateMessageState(this.messages.find(msg => msg.type === 'siteMapViewer').uniqueId, {
@@ -3081,30 +3704,6 @@ import { value } from 'jsonpath';
             // 사이트맵 루트 노드 안전하게 가져오기
             getSiteMapRoot(siteMapTree) {
                 return siteMapTree && Array.isArray(siteMapTree) && siteMapTree.length > 0 ? siteMapTree[0] : null;
-            },
-            
-            _mapCommandReadModelDataToBoundedContexts(commandReadModelData) {
-                if(!commandReadModelData || !commandReadModelData.boundedContexts || !Array.isArray(commandReadModelData.boundedContexts))
-                    throw new Error('Invalid commandReadModelData');
-                
-                const bcCommandNames = {}
-                const bcReadModelNames = {}
-                for(const bc of commandReadModelData.boundedContexts){
-                    const commandNames = (bc.commands) ? bc.commands.map(command => command.name) : [];
-                    bcCommandNames[bc.name] = commandNames;
-                    
-                    const readModelNames = (bc.readModels) ? bc.readModels.map(readModel => readModel.name) : [];
-                    bcReadModelNames[bc.name] = readModelNames;
-                }
-
-                const aspect = this.selectedAspect || Object.keys(this.resultDevideBoundedContext)[0];
-                if (!aspect || !this.resultDevideBoundedContext[aspect]) return;
-
-                const bcArray = this.resultDevideBoundedContext[aspect].boundedContexts || [];
-                for(const bc of bcArray){
-                    bc.commandNames = bcCommandNames[bc.name] || [];
-                    bc.readModelNames = bcReadModelNames[bc.name] || [];
-                }
             }
         }
     }

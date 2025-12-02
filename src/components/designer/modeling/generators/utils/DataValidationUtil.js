@@ -111,11 +111,11 @@ class DataValidationUtil {
      * };
      * DataValidationUtil.isValidData(data5, schema5); // false (explicitTrimField가 minLength 미만)
      */
-    static isValidData(data, dataSchema, path = 'root') {
+    static isValidData(data, dataSchema, path = 'root', slient = false) {
         try {
             return this._validateRecursively(data, dataSchema, path);
         } catch (error) {
-            console.error(`DataValidationUtil: ${error.message}`);
+            if(!slient) console.error(`DataValidationUtil: ${error.message}`);
             return false;
         }
     }

@@ -84,7 +84,6 @@
                         <ul>
                             <li>{{ sectionNumbers.aggregateDesign }}-1. {{ $t('DocumentTemplate.aggregateDesign.model') }}</li>
                             <li>{{ sectionNumbers.aggregateDesign }}-2. {{ $t('DocumentTemplate.aggregateDesign.analysis') }}</li>
-                            <li>{{ sectionNumbers.aggregateDesign }}-3. {{ $t('DocumentTemplate.aggregateDesign.designCriteria') }}</li>
                         </ul>
                     </li>
                 </template>
@@ -324,60 +323,6 @@
                             </tbody>
                         </v-simple-table>
                     </div>
-                </div>
-
-                <!-- 4-3. 설계 기준 -->
-                <div v-for="(option, optionIndex) in draft.options" :key="`criteria-${index}-${optionIndex}`">
-                    <template v-if="option.analysisResult && getDesignCriteriaCombined(option.analysisResult).length > 0">
-                        <div v-for="(chunk, chunkIndex) in splitTableRows(getDesignCriteriaCombined(option.analysisResult))" :key="`criteria-chunk-${chunkIndex}`" class="pdf-content-item">
-                            <h3 v-if="chunkIndex === 0">{{ sectionNumbers.aggregateDesign }}-3. {{ $t('DocumentTemplate.aggregateDesign.boundedContext') }}: {{ draft.boundedContextAlias }} - {{ $t('DocumentTemplate.aggregateDesign.designCriteria') }}</h3>
-                            <div v-if="chunk.some(i => i.type === 'rule')">
-                                <h4 class="section-title">{{ $t('DocumentTemplate.aggregateDesign.businessRules') }}</h4>
-                                <v-simple-table dense class="rules-table">
-                                    <thead>
-                                        <tr>
-                                            <th>{{ $t('DocumentTemplate.aggregateDesign.ruleName') }}</th>
-                                            <th>{{ $t('DocumentTemplate.aggregateDesign.description') }}</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr v-for="rule in chunk.filter(i => i.type === 'rule')" :key="rule.name">
-                                            <td class="font-weight-bold" style="width: 150px;">{{ rule.name }}</td>
-                                            <td>{{ rule.description }}</td>
-                                        </tr>
-                                    </tbody>
-                                </v-simple-table>
-                            </div>
-                            <div v-if="chunk.some(i => i.type !== 'rule')">
-                                <h4 class="section-title">{{ $t('DocumentTemplate.aggregateDesign.entityDefinitions') }}</h4>
-                                <div v-for="entityName in getEntitiesInChunk(chunk)" :key="entityName" class="entity-section">
-                                    <h5 class="entity-name">{{ entityName }}</h5>
-                                    <v-simple-table dense class="entity-table">
-                                        <thead>
-                                            <tr>
-                                                <th>{{ $t('DocumentTemplate.aggregateDesign.field') }}</th>
-                                                <th>{{ $t('DocumentTemplate.aggregateDesign.type') }}</th>
-                                                <th>{{ $t('DocumentTemplate.aggregateDesign.required') }}</th>
-                                                <th>{{ $t('DocumentTemplate.aggregateDesign.note') }}</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr v-for="prop in chunk.filter(i => i.type !== 'rule' && i.entityName === entityName)" :key="prop.name">
-                                                <td>{{ prop.name }}</td>
-                                                <td>{{ prop.type }}</td>
-                                                <td>{{ prop.required ? 'Y' : 'N' }}</td>
-                                                <td>
-                                                    <span v-if="prop.isPrimaryKey">{{ $t('DocumentTemplate.aggregateDesign.primaryKey') }}</span>
-                                                    <span v-if="prop.foreignEntity">{{ $t('DocumentTemplate.aggregateDesign.fk') }} ({{ prop.foreignEntity }})</span>
-                                                    <span v-if="prop.values">{{ prop.values.join(', ') }}</span>
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </v-simple-table>
-                                </div>
-                            </div>
-                        </div>
-                    </template>
                 </div>
             </div>
         </div>
@@ -1594,24 +1539,6 @@ export default {
             
             return combinedData;
         },
-        getDesignCriteriaCombined(analysisResult) {
-            const combined = [];
-            // 비즈니스 규칙
-            if (analysisResult.businessRules && Array.isArray(analysisResult.businessRules)) {
-                combined.push(...analysisResult.businessRules.map(rule => ({ ...rule, type: 'rule' })));
-            }
-            // 엔티티 정의
-            if (analysisResult.entities) {
-                Object.entries(analysisResult.entities).forEach(([entityName, entity]) => {
-                    if (entity.properties && Array.isArray(entity.properties)) {
-                        entity.properties.forEach(prop => {
-                            combined.push({ ...prop, type: prop.type || 'String', entityName });
-                        });
-                    }
-                });
-            }
-            return combined;
-        },
         getEntitiesInChunk(chunk) {
             // chunk 내에 등장하는 entityName의 유니크 리스트 반환
             return [...new Set(chunk.filter(i => i.type !== 'rule').map(i => i.entityName))];
@@ -2073,18 +2000,6 @@ img {
     background-color: #fafafa;
     width: 100px;
     font-weight: bold;
-}
-
-/* 설계 기준 스타일 */
-.design-criteria {
-    margin: 20px 0;
-    padding: 15px;
-    background-color: white;
-    flex: 1;
-}
-
-.criteria-section {
-    margin-bottom: 30px;
 }
 
 .criteria-section:last-child {

@@ -1,7 +1,6 @@
 const { COUNTRY_CODE_LANG_MAP, DEFAULT_LANG, REQUEST_ARG_KEYS } = require("./contants");
-const { ModelInfoHelper } = require("../helpers")
-const { HashUtil, RequestUtil, TokenUtil } = require("../utils")
-const { GeneratorLockKeyError, TokenNotInputedError, AiModelSettingError } = require("../../../errors")
+const { RequestUtil, TokenUtil, AICacheUtil } = require("../utils")
+const { GeneratorLockKeyError, TokenNotInputedError } = require("../../../errors")
 const store = require("../../../../../../../store").default;
 
 
@@ -63,7 +62,9 @@ class BaseAPIClient {
             stopSignaled: false,
             gptResponseId: null,
             openaiToken: null,
-            parsedTexts: {}
+            parsedTexts: {},
+            generatorName: g.generatorName || "unknown",
+            cacheTag: g.generatorName || "unknown"
         })
 
         if(options) {
@@ -161,8 +162,7 @@ class BaseAPIClient {
         
 
                 if(localStorage.getItem("useCache") === "true") {
-                    const hashKey = HashUtil.generateHashKey(JSON.stringify(g.messages));
-                    let existingResult = localStorage.getItem("cache-" + hashKey);
+                    let existingResult = await AICacheUtil.get(JSON.stringify(g.messages));
         
                     if(existingResult){
                         setTimeout(()=>{
@@ -399,8 +399,7 @@ class BaseAPIClient {
 
 
         if(localStorage.getItem("useCache") === "true"){
-            let hashKey = HashUtil.generateHashKey(JSON.stringify(g.messages))
-            localStorage.setItem("cache-" + hashKey, g.modelJson)
+            AICacheUtil.set(JSON.stringify(g.messages), g.modelJson, g.cacheTag)
         }
     }
 

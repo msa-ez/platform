@@ -2,6 +2,11 @@ import runRequirementsValidationGenerator from "./RequirementsValidationGenerato
 import runRecursiveRequirementsValidationGenerator from "./RecursiveRequirementsValidationGenerator/runRecursiveRequirementsValidationGenerator"
 import runDevideBoundedContextGenerator from "./DevideBoundedContextGenerator/runDevideBoundedContextGenerator"
 import runRequirementsMappingGenerator from "./RequirementsMappingGenerator/runRequirementsMappingGenerator"
+import runExtractDDLFieldsGenerator from "./ExtractDDLFieldsGenerator/runExtractDDLFieldsGenerator"
+import runAddTraceToDraftOptionsGenerator from "./AddTraceToDraftOptionsGenerator/runAddTraceToDraftOptionsGenerator"
+import runAssignPreviewFieldsToAggregateDraft from "./AssignPreviewFieldsToAggregateDraft/runAssignPreviewFieldsToAggregateDraft"
+import runCommandReadModelExtractor from "./CommandReadModelExtractor/runCommandReadModelExtractor"
+import runRecursiveCommandReadModelExtractor from "./RecursiveCommandReadModelExtractor/runRecursiveCommandReadModelExtractor"
 
 export const runGeneratorCommandRegistry = {
     RequirementsValidationGenerator: {
@@ -19,10 +24,35 @@ export const runGeneratorCommandRegistry = {
         description: "DevideBoundedContextGenerator 실행",
         usage: "run runGenerator DevideBoundedContextGenerator"
     },
+    CommandReadModelExtractor: {
+        handler: runCommandReadModelExtractor,
+        description: "CommandReadModelExtractor 실행",
+        usage: "run runGenerator CommandReadModelExtractor"
+    },
+    RecursiveCommandReadModelExtractor: {
+        handler: runRecursiveCommandReadModelExtractor,
+        description: "RecursiveCommandReadModelExtractor 실행",
+        usage: "run runGenerator RecursiveCommandReadModelExtractor"
+    },
     RequirementsMappingGenerator: {
         handler: runRequirementsMappingGenerator,
         description: "RequirementsMappingGenerator 실행",
         usage: "run runGenerator RequirementsMappingGenerator"
+    },
+    ExtractDDLFieldsGenerator: {
+        handler: runExtractDDLFieldsGenerator,
+        description: "ExtractDDLFieldsGenerator 실행",
+        usage: "run runGenerator ExtractDDLFieldsGenerator (DDLLineRefSplitter)"
+    },
+    AddTraceToDraftOptionsGenerator: {
+        handler: runAddTraceToDraftOptionsGenerator,
+        description: "AddTraceToDraftOptionsGenerator 실행",
+        usage: "run runGenerator AddTraceToDraftOptionsGenerator"
+    },
+    AssignPreviewFieldsToAggregateDraft: {
+        handler: runAssignPreviewFieldsToAggregateDraft,
+        description: "AssignPreviewFieldsToAggregateDraft 실행",
+        usage: "run runGenerator AssignPreviewFieldsToAggregateDraft"
     }
 }
 

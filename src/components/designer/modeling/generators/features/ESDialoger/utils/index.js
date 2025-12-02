@@ -1,2 +1,2 @@
-export const { ESDialogerTraceUtil, ESDialogerTraceUtilTest } = require("./ESDialogerTraceUtil");
+export const { ESDialogerTraceUtil } = require("./ESDialogerTraceUtil");
 export const MessageDataRestoreUtil = require("./MessageDataRestoreUtil");

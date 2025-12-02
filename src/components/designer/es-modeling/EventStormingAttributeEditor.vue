@@ -845,28 +845,15 @@
                 return duplicated;
             },
 
+
             openTraceInfoViewerForProperty(propertyValue) {
-                if(!propertyValue) {
-                    const msg = "Failed to open trace info viewer. You can remake the property or element to fix this. Reason: propertyValue is null.";
-                    console.error(msg);
-                    alert(msg);
-                    return;
-                }
-
                 try {
-                    if(propertyValue.refs) {
-                        TraceInfoViewerUtil.openTraceInfoViewerForProperty(this, propertyValue, this.elementId);
-                        return;
-                    }            
-
-                    const idValueObjectRefs = TraceInfoViewerUtil.getIdValueObjectRefsByElementId(
-                        this, propertyValue, this.elementId
-                    );
-                    if(!idValueObjectRefs) {
-                        throw new Error("Can not find idValueObjectRefs by propertyValue.");
+                    const originalRefs = TraceInfoViewerUtil.getOriginalRefsForProperty(this, propertyValue, this.elementId);
+                    if(!originalRefs) {
+                        throw new Error("Can not find originalRefs by propertyValue.");
                     }
 
-                    TraceInfoViewerUtil.showTraceInfoViewer(this, idValueObjectRefs);
+                    TraceInfoViewerUtil.showTraceInfoViewer(this, originalRefs);
                 }
                 catch(e) {
                     const msg = "Failed to open trace info viewer. You can remake the property or element to fix this. Reason: " + e.message;
@@ -877,15 +864,15 @@
             },
 
             isTraceInfoViewerUsable(propertyValue) {
-                if(!propertyValue) return false;
-                if(propertyValue.refs) {
-                    return TraceInfoViewerUtil.isTraceInfoViewerUsable(this) && propertyValue.refs && propertyValue.refs.length > 0;
+                try {
+                    const originalRefs = TraceInfoViewerUtil.getOriginalRefsForProperty(this, propertyValue, this.elementId);
+                    return originalRefs && originalRefs.length > 0;
                 }
-
-                const idValueObjectRefs = TraceInfoViewerUtil.getIdValueObjectRefsByElementId(
-                    this, propertyValue, this.elementId
-                );
-                return idValueObjectRefs && idValueObjectRefs.length > 0;
+                catch(e) {
+                    const msg = "Failed to check if trace info viewer is usable. You can remake the property or element to fix this. Reason: " + e.message;
+                    console.error(msg, e);
+                    return false;
+                }
             }
         },
     }

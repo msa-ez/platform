@@ -147,7 +147,7 @@
 <script>
     import draggable from 'vuedraggable'
     import UMLPropertyPanel from '../UMLPropertyPanel'
-    import { TraceInfoViewerUtil } from '../../modeling/generators/features/EventStormingModelCanvas'
+    import { TraceInfoViewerUtil, TraceInfoController } from '../../modeling/generators/features/EventStormingModelCanvas'
 
     export default {
         mixins: [UMLPropertyPanel],
@@ -235,9 +235,11 @@
                 })
             },
 
+            
             openTraceInfoViewerForEnum() {
                 try {
-                    TraceInfoViewerUtil.openTraceInfoViewerForEnum(this, this.value);
+                    const traceInfoController = new TraceInfoController(this.value, this)
+                    traceInfoController.showTraceInfoViewer()
                 }
                 catch(e) {
                     const msg = "Failed to open trace info viewer. You can remake the element to fix this. Reason: " + e.message;
@@ -249,7 +251,14 @@
 
             openTraceInfoViewerForItem(item) {
                 try {
-                    TraceInfoViewerUtil.openTraceInfoViewerForEnumItem(this, this.value, item);
+                    const originalRefs = TraceInfoViewerUtil.getOriginalRefsForEnumItem(this, this.value, item);
+                    if(!originalRefs) {
+                        const msg = "Failed to open trace info viewer. You can remake the property or element to fix this. Reason: Can not find originalRefs for EnumItem.";
+                        console.error(msg);
+                        alert(msg);
+                        return;
+                    }
+                    TraceInfoViewerUtil.showTraceInfoViewer(this, originalRefs);
                 }
                 catch(e) {
                     const msg = "Failed to open trace info viewer. You can remake the property or element to fix this. Reason: " + e.message;
@@ -260,11 +269,13 @@
             },
 
             isTraceInfoViewerUsableForEnum() {
-                return TraceInfoViewerUtil.isTraceInfoViewerUsable(this) && this.value && this.value.refs && this.value.refs.length > 0;
+                const traceInfoController = new TraceInfoController(this.value, this)
+                return traceInfoController.isRefsExist();
             },
 
             isTraceInfoViewerUsableForItem(item) {
-                return TraceInfoViewerUtil.isTraceInfoViewerUsable(this) && item && item.refs && item.refs.length > 0;
+                const originalRefs = TraceInfoViewerUtil.getOriginalRefsForEnumItem(this, this.value, item);
+                return originalRefs && originalRefs.length > 0;
             }
         },
     }

@@ -258,7 +258,7 @@
 
 <script>
     import RuleExampleDialog from "../RuleExampleDialog.vue";
-    import { TraceInfoViewerUtil } from "../../modeling/generators/features/EventStormingModelCanvas";
+    import { TraceInfoController } from "../../modeling/generators/features/EventStormingModelCanvas";
 
     export default {
         name: 'common-panel',
@@ -464,14 +464,8 @@
                 }
 
                 try {
-                    switch(this.value._type) {
-                        case "org.uengine.modeling.model.Aggregate":
-                            TraceInfoViewerUtil.openTraceInfoViewerForAggregate(this, this.value);
-                            break;
-                        default:
-                            TraceInfoViewerUtil.openTraceInfoViewerForElement(this, this.value);
-                            break;
-                    }
+                    const traceInfoController = new TraceInfoController(this.value, this)
+                    traceInfoController.showTraceInfoViewer()
                 }
                 catch(e) {
                     const msg = "Failed to open trace info viewer. You can remake the element to fix this. Reason: " + e.message;
@@ -482,7 +476,22 @@
             },
 
             isTraceInfoViewerUsable() {
-                return TraceInfoViewerUtil.isTraceInfoViewerUsable(this) && this.value && this.value.refs && this.value.refs.length > 0;
+                if(!this.value || !this.value._type) {
+                    return false;
+                }
+                if(this.value._type === "org.uengine.modeling.model.UI") {
+                    return false; // UI 엘리먼트는 미구현
+                }
+
+                try {
+                    const traceInfoController = new TraceInfoController(this.value, this)
+                    return traceInfoController.isRefsExist()
+                }
+                catch(e) {
+                    const msg = "Failed to check if trace info viewer is usable. You can remake the element to fix this. Reason: " + e.message;
+                    console.error(msg, e);
+                    return false;
+                }
             },
 
             openHistory() {

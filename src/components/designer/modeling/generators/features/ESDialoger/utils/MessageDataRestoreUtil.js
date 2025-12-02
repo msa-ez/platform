@@ -68,7 +68,31 @@ class MessageDataRestoreUtil {
         for(let structureItem of structure) {
             if(!structureItem.enumerations) structureItem.enumerations = []
             if(!structureItem.valueObjects) structureItem.valueObjects = []
-            if(!structureItem.previewAttributes) structureItem.previewAttributes = []
+            if(!structureItem.previewAttributes) {
+                structureItem.previewAttributes = []
+            } else {
+                // previewAttributes의 각 항목에 refs가 없으면 빈 배열로 추가
+                structureItem.previewAttributes = structureItem.previewAttributes.map(attr => {
+                    // 문자열인 경우 (구형 데이터 형식)
+                    if (typeof attr === 'string') {
+                        return {
+                            fieldName: attr,
+                            refs: []
+                        }
+                    }
+                    // 객체인 경우
+                    if (attr && typeof attr === 'object') {
+                        // fieldName만 있고 refs가 없는 경우
+                        if (attr.fieldName && !attr.refs) {
+                            return {
+                                fieldName: attr.fieldName,
+                                refs: []
+                            }
+                        }
+                    }
+                    return attr
+                })
+            }
         }
     }
 

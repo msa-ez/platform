@@ -17,19 +17,45 @@
                 <v-btn icon @click="close">
                     <v-icon>mdi-close</v-icon>
                 </v-btn>
-                <v-toolbar-title>PDF Preview</v-toolbar-title>
+                <v-toolbar-title>Document Preview</v-toolbar-title>
                 <v-spacer></v-spacer>
                 
-                <v-btn
-                    text
-                    @click="exportToPDF"
-                    :loading="isExporting"
-                    :disabled="isExporting"
-                    class="mx-1"
-                >
-                    <v-icon left>mdi-content-save</v-icon>
-                    SAVE
-                </v-btn>
+                <v-menu offset-y>
+                    <template v-slot:activator="{ on, attrs }">
+                        <v-btn
+                            text
+                            v-bind="attrs"
+                            v-on="on"
+                            :loading="isExporting"
+                            :disabled="isExporting"
+                            class="mx-1"
+                        >
+                            <v-icon left>mdi-download</v-icon>
+                            SAVE
+                            <v-icon right>mdi-chevron-down</v-icon>
+                        </v-btn>
+                    </template>
+                    <v-list>
+                        <v-list-item @click="exportToPDF">
+                            <v-list-item-icon>
+                                <v-icon>mdi-file-pdf-box</v-icon>
+                            </v-list-item-icon>
+                            <v-list-item-title>Export as PDF</v-list-item-title>
+                        </v-list-item>
+                        <v-list-item @click="exportToWord">
+                            <v-list-item-icon>
+                                <v-icon>mdi-file-word-box</v-icon>
+                            </v-list-item-icon>
+                            <v-list-item-title>Export as Word</v-list-item-title>
+                        </v-list-item>
+                        <v-list-item @click="exportToPPT">
+                            <v-list-item-icon>
+                                <v-icon>mdi-file-powerpoint-box</v-icon>
+                            </v-list-item-icon>
+                            <v-list-item-title>Export as PowerPoint</v-list-item-title>
+                        </v-list-item>
+                    </v-list>
+                </v-menu>
             </v-toolbar>
 
             <!-- 스크롤 가능한 컨텐츠 영역 -->
@@ -55,7 +81,7 @@
                         color="primary"
                         class="mb-3"
                     ></v-progress-circular>
-                    <div class="text-h6 white--text">PDF 생성 중...</div>
+                    <div class="text-h6 white--text">{{ exportStatus }}</div>
                 </v-card>
             </v-overlay>
         </v-card>
@@ -85,6 +111,8 @@ import DocumentTemplate from './DocumentTemplate.vue'
 import { jsPDF } from 'jspdf'
 import * as htmlToImage from 'html-to-image'
 import StorageBase from "../../CommonStorageBase";
+import { DataBasedWordExporter } from './utils/DataBasedWordExporter';
+import { DataBasedPPTExporter } from './utils/DataBasedPPTExporter';
 
 
 export default {
@@ -115,6 +143,7 @@ export default {
         return {
             dialog: false,
             isExporting: false,
+            exportStatus: '문서 생성 중...',
             snackbar: {
                 show: false,
                 text: '',
@@ -300,15 +329,99 @@ export default {
                 const timestamp = new Date().toISOString().split('T')[0];
                 const filename = `${this.projectInfo.projectName? this.projectInfo.projectName:'untitled'}-${timestamp}.pdf`;
                 pdf.save(filename);
+                
+                this.showSnackbar('PDF가 성공적으로 생성되었습니다.', 'success');
             } catch (error) {
-                this.snackbar = {
-                    show: true,
-                    text: "PDF generation failed: " + (error.message || 'Unknown error'),
-                    color: "error",
-                    timeout: 3000
-                };
+                this.showSnackbar("PDF 생성 실패: " + (error.message || 'Unknown error'), 'error');
             } finally {
                 this.isExporting = false;
+                this.exportStatus = '문서 생성 중...';
+            }
+        },
+
+        async exportToWord() {
+            if (this.isExporting) return;
+            this.isExporting = true;
+            this.exportStatus = 'Word 문서 생성 중...';
+            
+            try {
+                // 모든 요소가 렌더링될 때까지 대기
+                await this.$nextTick();
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // 데이터 기반 변환 방식 사용
+                const container = this.$refs.documentTemplate.$el;
+                const selectedSections = this.$refs.documentTemplate.selectedSections;
+                const exporter = new DataBasedWordExporter(
+                    this.projectInfo,
+                    this.draft,
+                    this.eventStormingModels,
+                    selectedSections,
+                    container // HTML 컨테이너 전달 (이미지 캡쳐용)
+                );
+                
+                const blob = await exporter.exportToWord();
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                
+                const timestamp = new Date().toISOString().split('T')[0];
+                link.download = `${this.projectInfo.projectName || 'untitled'}-${timestamp}.docx`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+                
+                this.showSnackbar('Word 문서가 성공적으로 생성되었습니다.', 'success');
+            } catch (error) {
+                console.error('Word export error:', error);
+                this.showSnackbar("Word 생성 실패: " + (error.message || 'Unknown error'), 'error');
+            } finally {
+                this.isExporting = false;
+                this.exportStatus = '문서 생성 중...';
+            }
+        },
+
+        async exportToPPT() {
+            if (this.isExporting) return;
+            this.isExporting = true;
+            this.exportStatus = 'PowerPoint 문서 생성 중...';
+            
+            try {
+                // 모든 요소가 렌더링될 때까지 대기
+                await this.$nextTick();
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // 데이터 기반 변환 방식 사용
+                const container = this.$refs.documentTemplate.$el;
+                const selectedSections = this.$refs.documentTemplate.selectedSections;
+                const exporter = new DataBasedPPTExporter(
+                    this.projectInfo,
+                    this.draft,
+                    this.eventStormingModels,
+                    selectedSections,
+                    container // HTML 컨테이너 전달 (이미지 캡쳐용)
+                );
+                
+                const blob = await exporter.exportToPPT();
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                
+                const timestamp = new Date().toISOString().split('T')[0];
+                link.download = `${this.projectInfo.projectName || 'untitled'}-${timestamp}.pptx`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+                
+                this.showSnackbar('PowerPoint 문서가 성공적으로 생성되었습니다.', 'success');
+            } catch (error) {
+                console.error('PPT export error:', error);
+                this.showSnackbar("PowerPoint 생성 실패: " + (error.message || 'Unknown error'), 'error');
+            } finally {
+                this.isExporting = false;
+                this.exportStatus = '문서 생성 중...';
             }
         }
     }

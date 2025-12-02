@@ -34,6 +34,66 @@
                             </v-row>
                         </td>
                     </tr>
+                    <!-- Advanced Settings Section -->
+                    <tr v-if="showAdvancedSettings">
+                        <td colspan="999" style="padding: 10px 0;">
+                            <v-card outlined class="pa-3">
+                                <v-row class="ma-0 pa-0">
+                                    <!-- API Information -->
+                                    <v-col cols="12" md="6">
+                                        <div class="mb-2" style="font-weight: 500;">API Information</div>
+                                        <v-card outlined class="pa-2">
+                                            <div v-if="apiInfo.path" class="mb-1">
+                                                <span style="font-weight: 500;">Path:</span> {{ apiInfo.path }}
+                                            </div>
+                                            <div v-if="apiInfo.method" class="mb-1">
+                                                <span style="font-weight: 500;">Method:</span> 
+                                                <v-chip x-small color="primary" class="ml-1">{{ apiInfo.method }}</v-chip>
+                                            </div>
+                                            <div v-if="apiInfo.requestBody" class="mb-1">
+                                                <span style="font-weight: 500;">Request Body:</span>
+                                                <v-card outlined class="pa-2 mt-1" style="max-height: 150px; overflow-y: auto;">
+                                                    <pre style="font-size: 11px; margin: 0; white-space: pre-wrap;">{{ apiInfo.requestBody }}</pre>
+                                                </v-card>
+                                            </div>
+                                            <div v-if="!hasApiInfo" class="text--secondary text-center pa-2">
+                                                No API information available
+                                            </div>
+                                        </v-card>
+                                    </v-col>
+                                    <!-- Validation Rules -->
+                                    <v-col cols="12" md="6">
+                                        <div class="mb-2" style="font-weight: 500;">Validation Rules</div>
+                                        <v-btn @click="openValidationDialog()" color="primary" text small>
+                                            <v-icon left small>mdi-shield-check</v-icon>
+                                            Configure Validation
+                                        </v-btn>
+                                        <div v-if="hasValidationRules" class="mt-2">
+                                            <v-chip small color="success" text-color="white" class="mr-1 mb-1">
+                                                {{ Object.keys(validationRules.given || {}).length }} Given rules
+                                            </v-chip>
+                                            <v-chip small color="info" text-color="white" class="mr-1 mb-1">
+                                                {{ Object.keys(validationRules.when || {}).length }} When rules
+                                            </v-chip>
+                                        </div>
+                                    </v-col>
+                                    <!-- Return Value -->
+                                    <v-col cols="12" md="6">
+                                        <div class="mb-2" style="font-weight: 500;">Return Value</div>
+                                        <v-btn @click="openReturnValueDialog()" color="primary" text small>
+                                            <v-icon left small>mdi-arrow-left-bold</v-icon>
+                                            Define Return Value
+                                        </v-btn>
+                                        <div v-if="hasReturnValue" class="mt-2">
+                                            <v-chip small color="purple" text-color="white">
+                                                Return value defined
+                                            </v-chip>
+                                        </div>
+                                    </v-col>
+                                </v-row>
+                            </v-card>
+                        </td>
+                    </tr>
                     <tr class="tr-divider" style="text-align: center; font-size: 18px; font-weight: 500;">
                         <td :colspan="givenAttLength">Given</td>
                         <td :colspan="whenAttLength">When</td>
@@ -167,8 +227,170 @@
                         <span class="ml-2" style="vertical-align: middle;">Add Row</span>
                     </v-card>
                 </v-row>
+                <v-row class="ma-0 pa-0">
+                    <v-card outlined class="ma-0 pa-0 mt-2 pt-1 pb-1"
+                        style="cursor: pointer; width: 98%; text-align: center;" @click="showAdvancedSettings = !showAdvancedSettings">
+                        <v-icon style="vertical-align: middle;">mdi-plus</v-icon>
+                        <span class="ml-2" style="vertical-align: middle;">Advanced Settings</span>
+                    </v-card>
+                </v-row>
             </v-card>
         </v-dialog>
+
+        <!-- Validation Rules Dialog -->
+        <v-dialog v-model="showValidationDialog" max-width="800px">
+            <v-card>
+                <v-card-title>
+                    <span class="headline">Validation Rules</span>
+                    <v-spacer></v-spacer>
+                    <v-icon @click="showValidationDialog = false">mdi-close</v-icon>
+                </v-card-title>
+                <v-card-text>
+                    <v-tabs v-model="validationTab">
+                        <v-tab>Given</v-tab>
+                        <v-tab>When</v-tab>
+                    </v-tabs>
+                    <v-tabs-items v-model="validationTab">
+                        <v-tab-item>
+                            <div class="pa-3">
+                                <div v-for="field in getGivenFields()" :key="field.name" class="mb-3">
+                                    <v-card outlined class="pa-3">
+                                        <div class="mb-2" style="font-weight: 500;">{{ field.name }} ({{ field.type }})</div>
+                                        <v-row>
+                                            <v-col cols="12" md="6">
+                                                <v-checkbox
+                                                    :value="!!validationRules.given[field.name]"
+                                                    :label="'Required'"
+                                                    @change="(val) => { if(!validationRules.given) validationRules.given = {}; validationRules.given[field.name] = val; updateValidationRules('given', validationRules.given); }"
+                                                    hide-details
+                                                ></v-checkbox>
+                                            </v-col>
+                                            <v-col cols="12" md="6">
+                                                <v-text-field
+                                                    :value="validationRules.given[field.name + '_min'] || ''"
+                                                    label="Min Length/Value"
+                                                    type="number"
+                                                    dense
+                                                    @input="(val) => { $set(validationRules.given, field.name + '_min', val); updateValidationRules('given', validationRules.given); }"
+                                                ></v-text-field>
+                                            </v-col>
+                                            <v-col cols="12" md="6">
+                                                <v-text-field
+                                                    :value="validationRules.given[field.name + '_max'] || ''"
+                                                    label="Max Length/Value"
+                                                    type="number"
+                                                    dense
+                                                    @input="(val) => { $set(validationRules.given, field.name + '_max', val); updateValidationRules('given', validationRules.given); }"
+                                                ></v-text-field>
+                                            </v-col>
+                                            <v-col cols="12" md="6">
+                                                <v-text-field
+                                                    :value="validationRules.given[field.name + '_pattern'] || ''"
+                                                    label="Pattern (Regex)"
+                                                    dense
+                                                    @input="(val) => { $set(validationRules.given, field.name + '_pattern', val); updateValidationRules('given', validationRules.given); }"
+                                                ></v-text-field>
+                                            </v-col>
+                                        </v-row>
+                                    </v-card>
+                                </div>
+                                <div v-if="getGivenFields().length === 0" class="text-center pa-4 text--secondary">
+                                    No fields available
+                                </div>
+                            </div>
+                        </v-tab-item>
+                        <v-tab-item>
+                            <div class="pa-3">
+                                <div v-for="field in getWhenFields()" :key="field.name" class="mb-3">
+                                    <v-card outlined class="pa-3">
+                                        <div class="mb-2" style="font-weight: 500;">{{ field.name }} ({{ field.type }})</div>
+                                        <v-row>
+                                            <v-col cols="12" md="6">
+                                                <v-checkbox
+                                                    :value="!!validationRules.when[field.name]"
+                                                    :label="'Required'"
+                                                    @change="(val) => { if(!validationRules.when) validationRules.when = {}; validationRules.when[field.name] = val; updateValidationRules('when', validationRules.when); }"
+                                                    hide-details
+                                                ></v-checkbox>
+                                            </v-col>
+                                            <v-col cols="12" md="6">
+                                                <v-text-field
+                                                    :value="validationRules.when[field.name + '_min'] || ''"
+                                                    label="Min Length/Value"
+                                                    type="number"
+                                                    dense
+                                                    @input="(val) => { $set(validationRules.when, field.name + '_min', val); updateValidationRules('when', validationRules.when); }"
+                                                ></v-text-field>
+                                            </v-col>
+                                            <v-col cols="12" md="6">
+                                                <v-text-field
+                                                    :value="validationRules.when[field.name + '_max'] || ''"
+                                                    label="Max Length/Value"
+                                                    type="number"
+                                                    dense
+                                                    @input="(val) => { $set(validationRules.when, field.name + '_max', val); updateValidationRules('when', validationRules.when); }"
+                                                ></v-text-field>
+                                            </v-col>
+                                            <v-col cols="12" md="6">
+                                                <v-text-field
+                                                    :value="validationRules.when[field.name + '_pattern'] || ''"
+                                                    label="Pattern (Regex)"
+                                                    dense
+                                                    @input="(val) => { $set(validationRules.when, field.name + '_pattern', val); updateValidationRules('when', validationRules.when); }"
+                                                ></v-text-field>
+                                            </v-col>
+                                        </v-row>
+                                    </v-card>
+                                </div>
+                                <div v-if="getWhenFields().length === 0" class="text-center pa-4 text--secondary">
+                                    No fields available
+                                </div>
+                            </div>
+                        </v-tab-item>
+                    </v-tabs-items>
+                </v-card-text>
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn text @click="showValidationDialog = false">Close</v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+
+                <!-- Return Value Dialog -->
+        <v-dialog v-model="showReturnValueDialog" max-width="900px">
+                    <v-card>
+                        <v-card-title>
+                            <span class="headline">Return Value Definition</span>
+                            <v-spacer></v-spacer>
+                            <v-icon @click="showReturnValueDialog = false">mdi-close</v-icon>
+                        </v-card-title>
+                        <v-card-text>
+                            <v-alert type="info" text class="mb-3">
+                                Define return value structure in JSON format. This is independent from GWT structure and can include any additional response data.
+                            </v-alert>
+                            <v-textarea
+                                v-model="returnValue.structure"
+                                label="Return Value Structure (JSON)"
+                                hint="Define the structure of the return value in JSON format"
+                                rows="8"
+                                class="mb-3"
+                                style="font-family: monospace;"
+                            ></v-textarea>
+                            <v-textarea
+                                v-model="returnValue.examples"
+                                label="Example Values (JSON)"
+                                hint="Provide example return values in JSON format"
+                                rows="5"
+                                style="font-family: monospace;"
+                            ></v-textarea>
+                        </v-card-text>
+                        <v-card-actions>
+                            <v-spacer></v-spacer>
+                            <v-btn text @click="showReturnValueDialog = false">Cancel</v-btn>
+                            <v-btn color="primary" @click="saveReturnValue()">Save</v-btn>
+                        </v-card-actions>
+                    </v-card>
+                </v-dialog>
     </div>
 </template>
 
@@ -239,14 +461,34 @@
                 selectedItemIndex: 0,
                 selectedGivenIndex: 0,
                 selectedEnumItems: [],
+                // Advanced Settings
+                showAdvancedSettings: false,
+                showValidationDialog: false,
+                showReturnValueDialog: false,
+                validationTab: 0,
+                validationRules: {
+                    given: {},
+                    when: {}
+                },
+                returnValue: {
+                    structure: "",
+                    examples: ""
+                },
+                apiInfo: {
+                    path: "",
+                    method: "",
+                    requestBody: ""
+                }
             }
         },
-        watch: {
+            watch: {
             "isOpenRules":function(newVal){
                 if(newVal == false){
                     this.$emit("save")
                     this.$emit("closeExampleDialog")
                     this.value.examples = this.rule.values
+                    // Save advanced settings
+                    this.saveAdvancedSettings()
                 }
             }
         },
@@ -263,6 +505,16 @@
                     null: 'null',
                     'N/A': 'N/A'
                 };
+            },
+            hasApiInfo() {
+                return this.apiInfo.path || this.apiInfo.method;
+            },
+            hasValidationRules() {
+                return (this.validationRules.given && Object.keys(this.validationRules.given).length > 0) ||
+                       (this.validationRules.when && Object.keys(this.validationRules.when).length > 0);
+            },
+            hasReturnValue() {
+                return this.returnValue.structure || this.returnValue.examples;
             }
         },
         methods: {
@@ -893,7 +1145,194 @@
                 me.givenAttLength = me.rule.givenItems[0].aggregateRoot.fieldDescriptors.length
                 me.whenAttLength = me.rule.whenItems[0].fieldDescriptors.length
 
+                // Load advanced settings if exists
+                me.loadAdvancedSettings()
+                
+                // Extract API info
+                me.extractApiInfo()
+
                 me.isOpenRules = true
+            },
+            loadAdvancedSettings(){
+                var me = this
+                if(me.value && me.value.advancedSettings){
+                    if(me.value.advancedSettings.validationRules){
+                        me.validationRules = JSON.parse(JSON.stringify(me.value.advancedSettings.validationRules))
+                    }
+                    if(me.value.advancedSettings.returnValue){
+                        me.returnValue = JSON.parse(JSON.stringify(me.value.advancedSettings.returnValue))
+                    }
+                    // Note: apiInfo is not loaded from saved settings, always extracted from Policy/Command fields
+                } else {
+                    // Initialize empty structures
+                    me.validationRules = {
+                        given: {},
+                        when: {}
+                    }
+                    me.returnValue = {
+                        structure: "",
+                        examples: ""
+                    }
+                }
+            },
+            extractApiInfo(){
+                var me = this
+                // Extract API info from Policy/Command fields
+                // Policy: receives events (whenItems are events), no direct API info
+                // Command: has controllerInfo or restRepositoryInfo
+                if(me.rule.whenItems && me.rule.whenItems.length > 0){
+                    var whenItem = me.rule.whenItems[0]
+                    var isPolicy = me.value && me.value._type && me.value._type.includes("Policy")
+                    
+                    if(isPolicy){
+                        // Policy: Extract from received event (whenItem is an Event)
+                        // Policy doesn't have direct API info, show event structure
+                        me.apiInfo.path = ""
+                        me.apiInfo.method = "EVENT"
+                        
+                        // Extract event structure from fieldDescriptors
+                        if(whenItem.fieldDescriptors && whenItem.fieldDescriptors.length > 0){
+                            var eventBody = {}
+                            whenItem.fieldDescriptors.forEach(function(field){
+                                eventBody[field.name] = field.className || "String"
+                            })
+                            me.apiInfo.requestBody = JSON.stringify(eventBody, null, 2)
+                        } else {
+                            me.apiInfo.requestBody = ""
+                        }
+                    } else {
+                        // Command: Extract from controllerInfo or restRepositoryInfo
+                        if(whenItem.controllerInfo){
+                            me.apiInfo.path = whenItem.controllerInfo.apiPath || ""
+                            me.apiInfo.method = whenItem.controllerInfo.method || ""
+                        } else if(whenItem.restRepositoryInfo){
+                            me.apiInfo.method = whenItem.restRepositoryInfo.method || ""
+                            me.apiInfo.path = whenItem.name ? whenItem.name.toLowerCase() : ""
+                        } else {
+                            me.apiInfo.path = ""
+                            me.apiInfo.method = ""
+                        }
+                        
+                        // Extract request body structure from fieldDescriptors
+                        if(whenItem.fieldDescriptors && whenItem.fieldDescriptors.length > 0){
+                            var requestBody = {}
+                            whenItem.fieldDescriptors.forEach(function(field){
+                                requestBody[field.name] = field.className || "String"
+                            })
+                            me.apiInfo.requestBody = JSON.stringify(requestBody, null, 2)
+                        } else {
+                            me.apiInfo.requestBody = ""
+                        }
+                    }
+                } else {
+                    // Reset if no when items
+                    me.apiInfo.path = ""
+                    me.apiInfo.method = ""
+                    me.apiInfo.requestBody = ""
+                }
+            },
+            getGivenFields(){
+                var me = this
+                var fields = []
+                if(me.rule.givenItems && me.rule.givenItems.length > 0){
+                    me.rule.givenItems[0].aggregateRoot.fieldDescriptors.forEach(function(field){
+                        fields.push({
+                            name: field.name,
+                            type: field.className || "String"
+                        })
+                    })
+                }
+                return fields
+            },
+            getWhenFields(){
+                var me = this
+                var fields = []
+                if(me.rule.whenItems && me.rule.whenItems.length > 0){
+                    var whenItem = me.rule.whenItems[0]
+                    // Policy: whenItem is an Event (received message)
+                    // Command: whenItem is the Command itself
+                    if(whenItem.fieldDescriptors && whenItem.fieldDescriptors.length > 0){
+                        whenItem.fieldDescriptors.forEach(function(field){
+                            fields.push({
+                                name: field.name,
+                                type: field.className || "String"
+                            })
+                        })
+                    }
+                }
+                return fields
+            },
+            openValidationDialog(){
+                this.showValidationDialog = true
+            },
+            updateValidationRules(type, rules){
+                // Ensure the type object exists
+                if(!this.validationRules[type]){
+                    this.$set(this.validationRules, type, {})
+                }
+                // Update the rules object
+                Object.keys(rules).forEach(key => {
+                    this.$set(this.validationRules[type], key, rules[key])
+                })
+                this.saveAdvancedSettings()
+            },
+            openReturnValueDialog(){
+                this.showReturnValueDialog = true
+            },
+            saveReturnValue(){
+                this.saveAdvancedSettings()
+                this.showReturnValueDialog = false
+            },
+            saveAdvancedSettings(){
+                var me = this
+                // Save to value.advancedSettings for mustache template access
+                // Structure: value.advancedSettings.{validationRules, returnValue, apiInfo}
+                if(!me.value.advancedSettings){
+                    me.$set(me.value, 'advancedSettings', {})
+                }
+                
+                // Validation Rules: { given: {fieldName: {required, min, max, pattern}}, when: {...} }
+                me.value.advancedSettings.validationRules = JSON.parse(JSON.stringify(me.validationRules))
+                
+                // Return Value: { structure: "JSON string", examples: "JSON string" }
+                me.value.advancedSettings.returnValue = JSON.parse(JSON.stringify(me.returnValue))
+                
+                // API Info: { path: "", method: "", requestBody: "JSON string" }
+                // Note: API info is read-only, always extracted from Policy/Command fields in extractApiInfo()
+                // We still save it for mustache template access, but it will be regenerated on load
+                me.value.advancedSettings.apiInfo = JSON.parse(JSON.stringify(me.apiInfo))
+                
+                // Mustache template access examples:
+                // {{advancedSettings.validationRules.given.fieldName}} - validation rule for given field
+                // {{advancedSettings.validationRules.when.fieldName}} - validation rule for when field
+                // {{advancedSettings.returnValue.structure}} - return value structure (JSON string)
+                // {{advancedSettings.returnValue.examples}} - return value examples (JSON string)
+                // {{advancedSettings.apiInfo.path}} - API path
+                // {{advancedSettings.apiInfo.method}} - HTTP method
+                // {{advancedSettings.apiInfo.requestBody}} - Request body (JSON string, extracted from fieldDescriptors)
+            },
+            formatRequestBody(requestBody){
+                if(!requestBody){
+                    return ''
+                }
+                // If it's already a string (JSON), try to parse and format
+                if(typeof requestBody === 'string'){
+                    try {
+                        var parsed = JSON.parse(requestBody)
+                        return JSON.stringify(parsed, null, 2)
+                    } catch(e){
+                        return requestBody
+                    }
+                }
+                // If it's an object, stringify it
+                if(typeof requestBody === 'object'){
+                    try {
+                        return JSON.stringify(requestBody, null, 2)
+                    } catch(e){
+                        return String(requestBody)
+                    }
+                }
+                return String(requestBody)
             },
         }
     }

@@ -24,14 +24,14 @@ class OpenAIClient extends BaseAPIClient {
 
     this.isStream = requestData.stream
     const completionsURL = await LitellmProxyUtil.getChatCompletionsURL()
-    const gwtToken = await FirebaseUtil.getCurrentUserGWTToken()
+    const jwt = await FirebaseUtil.getCurrentUserJWT()
     
     return {
       requestUrl: completionsURL,
       requestData: JSON.stringify(requestData),
       requestHeaders: {
         "content-type": "application/json",
-        "authorization": "Bearer " + gwtToken
+        "authorization": "Bearer " + jwt
       }
     }
   }

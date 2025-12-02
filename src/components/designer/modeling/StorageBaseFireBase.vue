@@ -236,6 +236,14 @@
                 snapshot.forEach(function (child) {
                     if(child.key != "count"){
                         var val = child.val()
+                        if (typeof val === 'string') {
+                            try {
+                                val = JSON.parse(val);
+                            } catch (e) {
+                                throw new Error("Failed to parse string value from Firebase:", val);
+                            }
+                        }
+
                         val.key = child.key
                         children.push(val);
                     }
@@ -247,6 +255,14 @@
                 snapshot.forEach(function (child) {
                     if(child.key != "count"){
                         var val = child.val()
+                        if (typeof val === 'string') {
+                            try {
+                                val = JSON.parse(val);
+                            } catch (e) {
+                                throw new Error("Failed to parse string value from Firebase:", val);
+                            }
+                        }
+                        
                         val.key = child.key
                         children.unshift(val);
                     }

@@ -346,7 +346,7 @@
     import draggable from 'vuedraggable'
     import UMLPropertyPanel from '../UMLPropertyPanel'
     import AttributeEditor from '../../es-modeling/EventStormingAttributeEditor'
-    import { TraceInfoViewerUtil } from '../../modeling/generators/features/EventStormingModelCanvas'
+    import { TraceInfoViewerUtil, TraceInfoController } from '../../modeling/generators/features/EventStormingModelCanvas'
 
     var jsondiffpatch = require('jsondiffpatch').create({
         objectHash: function (obj, index) {
@@ -749,52 +749,49 @@
 
             },
 
+            
             openTraceInfoViewer() {
-                if(!this.value || !this.value._type) {
-                    const msg = "Failed to open trace info viewer. You can remake the element to fix this. Reason: value or value._type is null.";
+                const originalRefs = this._getOriginalRefsByType();
+                if(!originalRefs) {
+                    const msg = "Failed to open trace info viewer. You can remake the element to fix this. Reason: Can not find originalRefs for ModelClass.";
                     console.error(msg);
                     alert(msg);
                     return;
                 }
 
-                try {
-                    switch(this.value._type) {
-                        case "org.uengine.uml.model.Class":
-                            TraceInfoViewerUtil.openTraceInfoViewerForModelClass(this, this.value);
-                            break;
-                        default:
-                            const idValueObjectRefs = TraceInfoViewerUtil.getIdValueObjectRefsByCanvas(
-                                this, this.value, this.canvas
-                            );
-                            if(idValueObjectRefs && idValueObjectRefs.length > 0) {
-                                TraceInfoViewerUtil.showTraceInfoViewer(this, idValueObjectRefs);
-                                return;
-                            }
-
-                            TraceInfoViewerUtil.openTraceInfoViewerForEntity(this, this.value);
-                            break;
-                    }
-                }
-                catch(e) {
-                    const msg = "Failed to open trace info viewer. You can remake the element to fix this. Reason: " + e.message;
-                    console.error(msg, e);
-                    alert(msg);
-                    return;
-                }
+                TraceInfoViewerUtil.showTraceInfoViewer(this, originalRefs);
+                return;
             },
 
             isTraceInfoViewerUsable() {
-                const idValueObjectRefs = TraceInfoViewerUtil.getIdValueObjectRefsByCanvas(
-                    this, this.value, this.canvas
-                );
-                if(!idValueObjectRefs) {
-                    return TraceInfoViewerUtil.isTraceInfoViewerUsable(this) && this.value && 
-                           this.value.refs && this.value.refs.length > 0;
-                }
-
-                return idValueObjectRefs && idValueObjectRefs.length > 0;
+                const originalRefs = this._getOriginalRefsByType();
+                return originalRefs && originalRefs.length > 0;
             },
 
+            _getOriginalRefsByType() {
+                if(!this.value || !this.value._type) {
+                    return null;
+                }
+
+                try {
+                    if(this.value._type !== "org.uengine.uml.model.Class") {
+                        const idValueObjectRefs = TraceInfoViewerUtil.getIdValueObjectRefsByCanvas(
+                            this, this.value, this.canvas
+                        );
+                        if(idValueObjectRefs && idValueObjectRefs.length > 0) {
+                            return idValueObjectRefs;
+                        }
+                    }
+
+                    const traceInfoController = new TraceInfoController(this.value, this)
+                    return traceInfoController.getOriginalRefs();
+                }
+                catch(e) {
+                    const msg = "Failed to get original refs by type. You can remake the element to fix this. Reason: " + e.message;
+                    console.error(msg, e);
+                    return null;
+                }
+            }
         },
     }
 </script>
