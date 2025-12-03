@@ -1900,6 +1900,10 @@ import { value } from 'jsonpath';
             },
 
             onModelCreated(model){
+                if(this.state.generator.includes("UserStory")){
+                    return;
+                }
+                
                 if(model && model.modelValue && model.modelValue.output) {
                     model = model.modelValue.output
                 }
@@ -2322,7 +2326,7 @@ import { value } from 'jsonpath';
                         this.state.generator = "RecursiveUserStoryGenerator";
                         this.generatorName = "RecursiveUserStoryGenerator";
                     } else {
-                        this.generator = new Generator.default(this);
+                        this.generator = new Generator(this);
                         this.state.generator = "UserStoryGenerator";
                         this.generatorName = "UserStoryGenerator";
                     }
