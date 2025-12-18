@@ -2,155 +2,13 @@ const { EventStormingCanvasTraceUtil, RefsTraceUtil } = require("../../utils");
 const changeCase = require('change-case');
 
 class TraceInfoViewerUtil {
-
-    /**
-     * Aggregate를 위한 TraceInfoViewer 열기 (structureRefs 사용)
-     */
-    static openTraceInfoViewerForAggregate(component, aggregateValue) {
+    static getOriginalRefsForProperty(component, propertyValue, elementId) {
+        if(!component || !propertyValue || !propertyValue.traceName || !elementId) return null;
         if (!this.isTraceInfoViewerUsable(component)) {
-            throw new Error('Can not use TraceInfoViewer. Component is not properly configured.');
-        }
-        if (!this._isValidAggregateTraceValue(aggregateValue)) {
-            throw new Error('Invalid Aggregate value. traceName and boundedContext.id are required.');
-        }
-        
-        const aggregateTraceName = aggregateValue.traceName;
-        
-        const boundedContextTraceName = EventStormingCanvasTraceUtil.getBoundedContextTraceNameById(
-            aggregateValue.boundedContext.id, component
-        );
-        if (!boundedContextTraceName) {
-            throw new Error('Can not find BoundedContext trace name. boundedContext.id is invalid.');
-        }
-
-        const traceInfo = EventStormingCanvasTraceUtil.getTraceInfo(component);
-        if (!this._isValidAggregateTraceInfo(traceInfo, boundedContextTraceName, aggregateTraceName)) {
-            throw new Error(`Invalid Aggregate trace info. Can not find trace info for ${boundedContextTraceName}.${aggregateTraceName}.`);
-        }
-        
-        const aggregateRefs = traceInfo.structureRefs[boundedContextTraceName].aggregates[aggregateTraceName];
-        
-        return this.showTraceInfoViewer(component, aggregateRefs);
-    }
-
-    /**
-     * 일반 Element를 위한 TraceInfoViewer 열기 (refs 속성을 가진 경우)
-     */
-    static openTraceInfoViewerForElement(component, elementValue) {
-        if (!this.isTraceInfoViewerUsable(component)) {
-            throw new Error('Can not use TraceInfoViewer. Component is not properly configured.');
-        }
-        if (!this._isValidElementTraceValue(elementValue)) {
-            throw new Error('Invalid Element value. boundedContext.id and refs are required.');
-        }
-
-        const boundedContextTraceName = EventStormingCanvasTraceUtil.getBoundedContextTraceNameById(
-            elementValue.boundedContext.id, component
-        );
-        if (!boundedContextTraceName) {
-            throw new Error('Can not find BoundedContext name. boundedContext.id is invalid.');
-        }
-
-        const traceInfo = EventStormingCanvasTraceUtil.getTraceInfo(component);
-        if (!this._isValidElementTraceInfo(traceInfo, boundedContextTraceName)) {
-            throw new Error(`Invalid Element trace info. Can not find traceMaps for ${boundedContextTraceName}.`);
-        }
-
-        let originalRefs = null;
-        if(elementValue._type === "org.uengine.modeling.model.Command") {
-            if(traceInfo.commandRefs && traceInfo.commandRefs[boundedContextTraceName] && traceInfo.commandRefs[boundedContextTraceName].commands && traceInfo.commandRefs[boundedContextTraceName].commands[elementValue.traceName]) {
-                originalRefs = traceInfo.commandRefs[boundedContextTraceName].commands[elementValue.traceName];
-            }
-        }
-        else if(elementValue._type === "org.uengine.modeling.model.View") {
-            if(traceInfo.commandRefs && traceInfo.commandRefs[boundedContextTraceName] && traceInfo.commandRefs[boundedContextTraceName].readModels && traceInfo.commandRefs[boundedContextTraceName].readModels[elementValue.traceName]) {
-                originalRefs = traceInfo.commandRefs[boundedContextTraceName].readModels[elementValue.traceName];
-            }
-        }
-
-        if(!originalRefs) {
-            const bcTraceMap = traceInfo.traceMaps[boundedContextTraceName];
-            originalRefs = RefsTraceUtil.convertToOriginalRefsUsingTraceMap(elementValue.refs, bcTraceMap);
-        }
-
-        return this.showTraceInfoViewer(component, originalRefs);
-    }
-
-    /**
-     * UML Model Class를 위한 TraceInfoViewer 열기 (structureRefs 사용)
-     */
-    static openTraceInfoViewerForModelClass(component, modelClassValue) {
-        if (!this.isTraceInfoViewerUsable(component)) {
-            throw new Error('Can not use TraceInfoViewer. Component is not properly configured.');
-        }
-        if (!this._isValidModelClassTraceValue(modelClassValue)) {
-            throw new Error('Invalid ModelClass value. id and traceName are required.');
-        }
-        
-        const modelClassTraceName = modelClassValue.traceName;
-        
-        const boundedContextTraceName = EventStormingCanvasTraceUtil.getBoundedContextTraceNameByEntityId(
-            modelClassValue.id, component
-        );
-        if (!boundedContextTraceName) {
-            throw new Error('Can not find BoundedContext name. modelClass.id is invalid.');
-        }
-
-        const traceInfo = EventStormingCanvasTraceUtil.getTraceInfo(component);
-        if (!this._isValidModelClassTraceInfo(traceInfo, boundedContextTraceName, modelClassTraceName)) {
-            throw new Error(`Invalid ModelClass trace info. Can not find trace info for ${boundedContextTraceName}.${modelClassTraceName}.`);
-        }
-        
-        const modelClassRefs = traceInfo.structureRefs[boundedContextTraceName].aggregates[modelClassTraceName];
-        
-        return this.showTraceInfoViewer(component, modelClassRefs);
-    }
-
-    /**
-     * Entity를 위한 TraceInfoViewer 열기 (entityId로 boundedContext 찾기)
-     */
-    static openTraceInfoViewerForEntity(component, entityValue) {
-        if (!this.isTraceInfoViewerUsable(component)) {
-            throw new Error('Can not use TraceInfoViewer. Component is not properly configured.');
-        }
-        if (!this._isValidEntityTraceValue(entityValue)) {
-            throw new Error('Invalid Entity value. id and refs are required.');
-        }
-
-        const boundedContextTraceName = EventStormingCanvasTraceUtil.getBoundedContextTraceNameByEntityId(
-            entityValue.id, component
-        );
-        if (!boundedContextTraceName) {
-            throw new Error('Can not find BoundedContext name. entity.id is invalid.');
-        }
-
-        const traceInfo = EventStormingCanvasTraceUtil.getTraceInfo(component);
-        if (!this._isValidEntityTraceInfo(traceInfo, boundedContextTraceName)) {
-            throw new Error(`Invalid Entity trace info. Can not find traceMaps for ${boundedContextTraceName}.`);
-        }
-
-        const bcTraceMap = traceInfo.traceMaps[boundedContextTraceName];
-        const originalRefs = RefsTraceUtil.convertToOriginalRefsUsingTraceMap(entityValue.refs, bcTraceMap);
-        
-        return this.showTraceInfoViewer(component, originalRefs);
-    }
-
-    /**
-     * Property를 위한 TraceInfoViewer 열기 (previewAttributes 우선, traceMaps 대체)
-     */
-    static openTraceInfoViewerForProperty(component, propertyValue, elementId) {
-        if (!this.isTraceInfoViewerUsable(component)) {
-            throw new Error('Can not use TraceInfoViewer. Component is not properly configured.');
-        }
-        if (!elementId) {
-            throw new Error('elementId is required.');
-        }
-        if (!this._isValidPropertyTraceValue(propertyValue)) {
-            throw new Error('Invalid Property value. refs and traceName are required.');
+            return null;
         }
 
         const propertyTraceName = propertyValue.traceName;
-        
         let aggregateTraceName = null;
         let boundedContextTraceName = null
         aggregateTraceName = EventStormingCanvasTraceUtil.getTraceNameByElementId(elementId, component);
@@ -160,8 +18,8 @@ class TraceInfoViewerUtil {
             );
         } else { // 애그리거트 내부 엔티티의 세부 속성인 경우
             const aggregate = this._getValidAggregateByAggregateEntityId(component, elementId)
-            if(!aggregate) {
-                throw new Error('Can not find valid Aggregate. elementId does not reference a valid aggregate entity.');
+            if(!aggregate || !aggregate.traceName || !aggregate.boundedContext || !aggregate.boundedContext.id) {
+                return null;
             }
 
             aggregateTraceName = aggregate.traceName;
@@ -169,107 +27,83 @@ class TraceInfoViewerUtil {
                 aggregate.boundedContext.id, component
             );
         }
-
-        if (!propertyTraceName || !aggregateTraceName || !boundedContextTraceName) {
-            throw new Error('Invalid Property trace info. propertyTraceName, aggregateTraceName, boundedContextTraceName are required.');
+        if (!aggregateTraceName || !boundedContextTraceName) {
+            return null;
         }
 
+        
         const traceInfo = EventStormingCanvasTraceUtil.getTraceInfo(component);
-        if (!this._isValidPropertyTraceInfo(traceInfo, boundedContextTraceName)) {
-            throw new Error(`Invalid Property trace info. Can not find traceMaps for ${boundedContextTraceName}.`);
+        if (this._isValidPropertyTraceInfo(traceInfo, boundedContextTraceName)) {
+            // TYPE 1: 추적성 정보에 참조 정보가 이미 존재함(프로젝트에서 필수 생성 속성으로 생성됨)
+            let refsToUse = this._getRefsInPreviewAttributes(traceInfo, propertyTraceName, aggregateTraceName, boundedContextTraceName);
+            if(refsToUse) {
+                return refsToUse;
+            }
+
+            // TYPE 2: 추적성 정보에 참조 정보가 없으며, 인덱스 맵핑 정보가 존재함(프로젝트를 기반으로 생성되었으나, 필수 생성 속성은 아님)
+            if(propertyValue.refs) {
+                const bcTraceMap = traceInfo.traceMaps[boundedContextTraceName];
+                refsToUse = RefsTraceUtil.convertToOriginalRefsUsingTraceMap(propertyValue.refs, bcTraceMap);
+                if(refsToUse) {
+                    return refsToUse;
+                }
+            }
         }
 
-        // previewAttributes에서 먼저 찾기
-        let refsToUse = this._getRefsInPreviewAttributes(traceInfo, propertyTraceName, aggregateTraceName, boundedContextTraceName);
-        
-        // 없으면 traceMaps 사용
-        if (!refsToUse) {
-            const bcTraceMap = traceInfo.traceMaps[boundedContextTraceName];
-            refsToUse = RefsTraceUtil.convertToOriginalRefsUsingTraceMap(propertyValue.refs, bcTraceMap);
+        // TYPE 3: 추적성 정보에 참조 정보가 없으며, 인덱스 맵핑 정보도 없음(A2A를 기반으로 생성되었거나 예외적인 상황)
+        if(propertyValue.refs) {
+            return propertyValue.refs;
         }
-        
-        return this.showTraceInfoViewer(component, refsToUse);
+
+        // TYPE 4: 추적성 정보에 참조 정보가 없으며, 인덱스 맵핑 정보도 없으며, IdValueObject refs 정보가 존재함(프로젝트를 기반으로 생성되었으나, ClassID를 위해서 자동으로 생성된 속성)
+        const idValueObjectRefs = TraceInfoViewerUtil.getIdValueObjectRefsByElementId(
+            component, propertyValue, elementId
+        );
+        if(idValueObjectRefs) {
+            return idValueObjectRefs;
+        }
+
+        return null;
     }
 
-    /**
-     * Enum을 위한 TraceInfoViewer 열기
-     */
-    static openTraceInfoViewerForEnum(component, enumValue) {
+    static getOriginalRefsForEnumItem(component, enumValue, item) {
+        if(!component || !enumValue || !enumValue.id || !item) return null;
         if (!this.isTraceInfoViewerUsable(component)) {
-            throw new Error('Can not use TraceInfoViewer. Component is not properly configured.');
-        }
-        if (!this._isValidEnumTraceValue(enumValue)) {
-            throw new Error('Invalid Enum value. id and refs are required.');
+            return null;
         }
 
         const boundedContextTraceName = EventStormingCanvasTraceUtil.getBoundedContextTraceNameByEntityId(
             enumValue.id, component
         );
         if (!boundedContextTraceName) {
-            throw new Error('Can not find BoundedContext name. enum.id is invalid.');
+            return null;
         }
 
         const traceInfo = EventStormingCanvasTraceUtil.getTraceInfo(component);
-        if (!this._isValidEnumTraceInfo(traceInfo, boundedContextTraceName)) {
-            throw new Error(`Invalid Enum trace info. Can not find traceMaps for ${boundedContextTraceName}.`);
+        if (!traceInfo) {
+            return null;
         }
 
-        if(this._isValidEnumTraceInfoStructureRefs(traceInfo, boundedContextTraceName, enumValue.traceName)) {
-            const enumRefs = traceInfo.structureRefs[boundedContextTraceName].enumerations[enumValue.traceName];
-            return this.showTraceInfoViewer(component, enumRefs);
+
+        // TYPE 1: 추적성 정보에 Enum Item 참조 정보가 이미 존재함(프로젝트 초안을 기반으로 생성됨)
+        if (item.refs && traceInfo.traceMaps && traceInfo.traceMaps[boundedContextTraceName]) {
+            return RefsTraceUtil.convertToOriginalRefsUsingTraceMap(item.refs, traceInfo.traceMaps[boundedContextTraceName]);
         }
 
-        const bcTraceMap = traceInfo.traceMaps[boundedContextTraceName];
-        const originalRefs = RefsTraceUtil.convertToOriginalRefsUsingTraceMap(enumValue.refs, bcTraceMap);
-        
-        return this.showTraceInfoViewer(component, originalRefs);
+        // TYPE 2: 추적성 정보에 Enum 참조 정보가 없으며, 인덱스 맵핑 정보도 없음(A2A를 기반으로 생성)
+        if(item.refs) {
+            return item.refs;
+        }
+
+        return null;
     }
 
-    /**
-     * Enum Item을 위한 TraceInfoViewer 열기
-     */
-    static openTraceInfoViewerForEnumItem(component, enumValue, item) {
-        if (!this.isTraceInfoViewerUsable(component)) {
-            throw new Error('Can not use TraceInfoViewer. Component is not properly configured.');
-        }
-        if (!this._isValidEnumTraceValue(enumValue)) {
-            throw new Error('Invalid Enum value. id and refs are required.');
-        }
-        if (!item.refs) {
-            throw new Error('Invalid EnumItem value. item.refs is required.');
-        }
-
-        const boundedContextTraceName = EventStormingCanvasTraceUtil.getBoundedContextTraceNameByEntityId(
-            enumValue.id, component
-        );
-        if (!boundedContextTraceName) {
-            throw new Error('Can not find BoundedContext name. enum.id is invalid.');
-        }
-
-        const traceInfo = EventStormingCanvasTraceUtil.getTraceInfo(component);
-        if (!this._isValidEnumTraceInfo(traceInfo, boundedContextTraceName)) {
-            throw new Error(`Invalid Enum trace info. Can not find traceMaps for ${boundedContextTraceName}.`);
-        }
-
-        const bcTraceMap = traceInfo.traceMaps[boundedContextTraceName];
-        const originalRefs = RefsTraceUtil.convertToOriginalRefsUsingTraceMap(item.refs, bcTraceMap);
-        
-        return this.showTraceInfoViewer(component, originalRefs);
-    }
-
-
-    /**
-     * TraceInfoViewer 사용 가능 여부 확인
-     */
     static isTraceInfoViewerUsable(component) {
         const canvas = EventStormingCanvasTraceUtil.getParentEventStormingCanvas(component)
         if(!canvas || !canvas.traceInfoViewerDto || !canvas.traceInfoViewerDto.isUsable) return false
         return true
     }
 
-    /**
-     * TraceInfoViewer에 refs를 표시하는 공통 로직
-     */
     static showTraceInfoViewer(component, refs) {
         if (!refs) {
             throw new Error('Can not show refs. refs is required.');
@@ -314,68 +148,7 @@ class TraceInfoViewerUtil {
 
     // === Private Helper Methods === //
 
-    static _isValidAggregateTraceValue(aggregateValue) {
-        return aggregateValue && aggregateValue.boundedContext && 
-               aggregateValue.boundedContext.id && aggregateValue.traceName;
-    }
-
-    static _isValidAggregateTraceInfo(traceInfo, boundedContextTraceName, aggregateTraceName) {
-        return traceInfo && traceInfo.structureRefs && 
-               traceInfo.structureRefs[boundedContextTraceName] && 
-               traceInfo.structureRefs[boundedContextTraceName].aggregates &&
-               traceInfo.structureRefs[boundedContextTraceName].aggregates[aggregateTraceName] &&
-               traceInfo.userInputs;
-    }
-
-    static _isValidElementTraceValue(elementValue) {
-        return elementValue && elementValue.boundedContext && 
-            elementValue.boundedContext.id && elementValue.refs;
-    }
-
-    static _isValidElementTraceInfo(traceInfo, boundedContextName) {
-        return traceInfo && traceInfo.traceMaps && traceInfo.traceMaps[boundedContextName];
-    }
-
-    static _isValidModelClassTraceValue(modelClassValue) {
-        return modelClassValue && modelClassValue.id && modelClassValue.traceName;
-    }
-
-    static _isValidModelClassTraceInfo(traceInfo, boundedContextName, modelClassTraceName) {
-        return traceInfo && traceInfo.structureRefs && 
-               traceInfo.structureRefs[boundedContextName] && 
-               traceInfo.structureRefs[boundedContextName].aggregates &&
-               traceInfo.structureRefs[boundedContextName].aggregates[modelClassTraceName] &&
-               traceInfo.userInputs;
-    }
-
-    static _isValidEnumTraceInfoStructureRefs(traceInfo, boundedContextName, enumTraceName) {
-        return traceInfo && traceInfo.structureRefs && 
-               traceInfo.structureRefs[boundedContextName] && 
-               traceInfo.structureRefs[boundedContextName].enumerations &&
-               traceInfo.structureRefs[boundedContextName].enumerations[enumTraceName]
-    }
-
-    static _isValidEntityTraceValue(entityValue) {
-        return entityValue && entityValue.id && entityValue.refs;
-    }
-
-    static _isValidEntityTraceInfo(traceInfo, boundedContextName) {
-        return traceInfo && traceInfo.traceMaps && traceInfo.traceMaps[boundedContextName];
-    }
-
-    static _isValidPropertyTraceValue(propertyValue) {
-        return propertyValue && propertyValue.refs && propertyValue.traceName;
-    }
-
     static _isValidPropertyTraceInfo(traceInfo, boundedContextName) {
-        return traceInfo && traceInfo.traceMaps && traceInfo.traceMaps[boundedContextName];
-    }
-
-    static _isValidEnumTraceValue(enumValue) {
-        return enumValue && enumValue.id && enumValue.refs;
-    }
-
-    static _isValidEnumTraceInfo(traceInfo, boundedContextName) {
         return traceInfo && traceInfo.traceMaps && traceInfo.traceMaps[boundedContextName];
     }
 

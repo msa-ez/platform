@@ -15,7 +15,8 @@ export const getCommandRegistry = {
         handler: (commandArgs, client) => {
             const status = {
                 value: client.value,
-                langgraphStudioInfos: client.value.langgraphStudioInfos
+                langgraphStudioInfos: client.value.langgraphStudioInfos,
+                generatorProgressDto: client.generatorProgressDto
             }
             console.log(`[#] 상태 >`)
             console.log(status)

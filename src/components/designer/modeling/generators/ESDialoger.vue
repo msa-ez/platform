@@ -1966,12 +1966,11 @@ import { value } from 'jsonpath';
                 if(this.state.generator.includes("UserStory")){
                     return;
                 }
-
                 if(model && model.modelValue && model.modelValue.output) {
                     model = model.modelValue.output
                 }
 
-                if(model && (model.currentGeneratedLength || model.modelValue.output.currentGeneratedLength)){
+                if((model && model.modelValue && model.modelValue.output && model.modelValue.output.currentGeneratedLength) || (model && model.currentGeneratedLength)){
                     this.currentGeneratedLength = model.currentGeneratedLength || model.modelValue.output.currentGeneratedLength;
                     if(this.state.generator === "RequirementsValidationGenerator" || 
                         this.state.generator === "RecursiveRequirementsValidationGenerator" ||

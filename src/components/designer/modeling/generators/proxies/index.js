@@ -1,1 +1,2 @@
-export const { EsValueLangGraphStudioProxy, EsValueLangGraphStudioProxyTest } = require("./EsValueLangGraphStudioProxy");
+export const { EsValueLangGraphStudioProxy } = require("./EsValueLangGraphStudioProxy");
+export const ProxyInputObjectConverter = require("./ProxyInputObjectConverter");

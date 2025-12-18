@@ -5,6 +5,7 @@ import runAICacheUtil from "./AICacheUtil/runAICacheUtil"
 import runTextChunker from "./TextChunker/runTextChunker"
 import runChunkIterator from "./ChunkIterator/runChunkIterator"
 import runESDialogerTraceUtil from "./ESDialogerTraceUtil/runESDialogerTraceUtil"
+import runLoggingUtil from "./runLoggingUtil"
 
 export const runUtilCommandRegistry = {
     FirebaseUtil: {
@@ -41,6 +42,11 @@ export const runUtilCommandRegistry = {
         handler: runESDialogerTraceUtil,
         description: "ESDialogerTraceUtil 실행",
         usage: "run runUtil ESDialogerTraceUtil"
+    },
+    LoggingUtil: {
+        handler: runLoggingUtil,
+        description: "LoggingUtil 실행",
+        usage: "run runUtil LoggingUtil"
     }
 }
 

@@ -47,9 +47,17 @@ export const getCommandRegistry = {
                     value: localStorage.getItem("job_namespace_suffix") || "",
                     description: "요청되는 Job에 suffix를 붙여서 고유한 테스트 환경을 만듬",
                 },
+                is_block_job_removing: {
+                    value: localStorage.getItem("is_block_job_removing") || "false",
+                    description: "Job 삭제 기능 블로킹 여부",
+                },
                 useCache: {
                     value: localStorage.getItem("useCache") || "false",
                     description: "AI 응답시 캐시 저장 및 사용 여부",
+                },
+                log_level: {
+                    value: localStorage.getItem("log_level") || "DEBUG",
+                    description: "로그 레벨 설정",
                 }
             }
 

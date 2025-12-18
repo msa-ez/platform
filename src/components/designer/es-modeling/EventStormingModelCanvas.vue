@@ -2156,7 +2156,8 @@
     } from "../modeling/generators/es-generators";
 
     import {
-        LocalStorageCleanUtil
+        LocalStorageCleanUtil,
+        LoggingUtil
     } from "../modeling/generators/utils"
 
     import GeneratorProgress from "./components/GeneratorProgress.vue"
@@ -2256,6 +2257,7 @@
                 // 스티커에 연결된 선 추적
                 // highlightingEnabled: false,
                 //monitoring
+                logger: null,
                 monitoringDialog: false,
                 monitoringTab: 0,
                 monitoringTabs: [
@@ -2860,6 +2862,7 @@
         },
         created: async function () {
             var me = this;
+            me.logger = LoggingUtil.makeFromNamespace("EventStormingModelCanvas")
 
             me.$app.try({
                 context: me,
@@ -3203,6 +3206,24 @@
                 setTimeout(async () => {
                     if(this.isModelDefinitionLoaded && this.initLoad) {
                         console.log("[*] 모델 정의 로드 완료", this.value)
+
+                        // A2A를 통한 Job 요청시에 생성되는 URL에 대한 별도 처리
+                        const jobId = this.$route.query.jobId
+                        if(jobId) {
+                            if(!this.value.langgraphStudioInfos) 
+                                this.$set(this.value, "langgraphStudioInfos", {})
+                            if(!this.value.langgraphStudioInfos.esGenerator)
+                                this.$set(
+                                    this.value.langgraphStudioInfos, "esGenerator", 
+                                    {jobId: jobId, isCompleted:false, traceInfo: null}
+                                )
+                            if(!this.value.langgraphStudioInfos.esGenerator.traceInfo) {
+                                const jobTraceInfo = await EsValueLangGraphStudioProxy.getTraceInfoFromJob(jobId)
+                                this.$set(
+                                    this.value.langgraphStudioInfos.esGenerator, "traceInfo", jobTraceInfo
+                                )
+                            }
+                        }
 
                         this._initializeTraceInfoViewerDto()
                         if(this.value.langgraphStudioInfos && this.value.langgraphStudioInfos.esGenerator &&
@@ -4651,9 +4672,7 @@
             },
 
             async generateAggregatesFromDraft(draftOptions) {
-                console.log("[*] 유저가 선택한 초안 옵션들을 이용해서 모델 생성 로직이 실행됨",
-                    {prevDraftOptions: JSON.parse(JSON.stringify(draftOptions))}
-                )
+                this.logger.debug("유저가 선택한 초안 옵션들을 이용해서 모델 생성 로직이 실행됨", {draftOptions: draftOptions})
 
                 let me = this
 
@@ -4678,7 +4697,9 @@
 
 
                 if(await EsValueLangGraphStudioProxy.healthCheckUsingConfig()) {
-                    const isAlreadyTried = this.value.langgraphStudioInfos && this.value.langgraphStudioInfos.esGenerator.isCompleted === false
+                    const isAlreadyTried = this.value.langgraphStudioInfos && 
+                                           this.value.langgraphStudioInfos.esGenerator && 
+                                           this.value.langgraphStudioInfos.esGenerator.isCompleted === false
                     if(isAlreadyTried) {
                         if(!confirm("There is an ongoing creation process. Would you like to stop it and start a new one?"))
                             return
@@ -4700,15 +4721,12 @@
                         delete this.selectedDraftOptions.traceInfo
                     }
 
-                    const jobId = this.uuid()
-                    await EsValueLangGraphStudioProxy.makeNewJob(
-                        jobId,
+                    const jobId = await EsValueLangGraphStudioProxy.makeNewJob(
                         this.selectedDraftOptions,
                         this.userInfo,
                         this.information,
                         preferedLanguage
                     )
-
                     
                     if(!this.value.langgraphStudioInfos) 
                         this.$set(this.value, "langgraphStudioInfos", {})
@@ -4724,6 +4742,7 @@
                                 this.$set(this.value, "siteMap", siteMapMessage.siteMap)
                             }
                         }
+                        
 
                         localStorage.removeItem("associatedProjectId")
                     }
