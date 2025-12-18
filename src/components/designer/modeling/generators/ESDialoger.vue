@@ -1515,6 +1515,9 @@ import { value } from 'jsonpath';
             me.setUIStyle(me.uiStyle);
             me.init();
 
+            // LangGraph 사용 여부 설정 (기본값: true)
+            localStorage.setItem('useLangGraph', 'true');
+
             me.$app.try({
                 context: me,
                 async action(me){
