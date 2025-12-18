@@ -1,5 +1,5 @@
 <template>
-    <div v-if="inference">
+    <div v-if="inference && !isStandardTransformed">
         <v-btn text color="primary" @click="isCotExpanded = !isCotExpanded">
             Chain Of Thoughts
             <v-icon right>{{ isCotExpanded ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
@@ -20,6 +20,11 @@ export default {
             type: String,
             required: false,
             default: ''
+        },
+        isStandardTransformed: {
+            type: Boolean,
+            required: false,
+            default: false
         }
     },
 

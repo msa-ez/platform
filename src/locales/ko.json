@@ -371,10 +371,14 @@
     "createEventStormingModelCanvas": "이벤트스토밍 모델 생성",
     "reconstructionDraft": "바운디드 컨텍스트 재구성 초안",
     "reconstructionAggregateDraft": "어그리거트 디자인 초안",
+    "standardTransformedAggregateDraft": "표준 변환된 어그리거트 초안",
     "reGenerate": "재생성",
     "requirementAnalysisResult": "요구사항 분석 결과",
     "feedbackPlaceholder": "예시) 사용자 애그리거트는 사용자관리 바운디드 컨텍스트를 참조하도록 수정해 줘",
-    "showDetailedAttributes": "상세 속성 보기"
+    "showDetailedAttributes": "상세 속성 보기",
+    "transformWithStandards": "표준변환",
+    "standardTransformedMappings": "표준 변환 결과",
+    "uploadMetadataToUseFeature": "이 기능을 사용하려면 메타데이터를 업로드해야 합니다"
   },
   "RequirementAnalysis": {
     "validateRequirements": "요구사항 검증 중...",
@@ -559,6 +563,7 @@
     "CoinsCoupons": "쿠폰등록 및 코인얻기",
     "inquiry": "제휴 및 설치형 문의( help@uengine.org )",
     "aiModelSetting": "AI 모델 설정",
+    "standardDocuments": "메타데이터 관리",
     "logout": "로그아웃",
     "LoginInformation1": "*Github 로그인을 권장하고 있습니다.",
     "LoginInformation2": "구글 로그인 시 일부 기능 사용에 제한이 있을 수 있습니다.",
@@ -782,5 +787,21 @@
     "nodeTitle": "제목",
     "url": "URL",
     "description": "설명"
+  },
+  "standardDocuments": {
+    "title": "메타데이터 관리",
+    "hint": "메타데이터를 업로드하세요.",
+    "selectFile": "메타데이터 선택",
+    "upload": "UPLOAD",
+    "uploadedFile": "업로드된 메타데이터",
+    "noFile": "업로드된 메타데이터가 없습니다.",
+    "close": "닫기",
+    "replaceConfirm": "기존 메타데이터 \"{name}\"가 대체됩니다. 계속하시겠습니까?",
+    "replaceSuccess": "메타데이터가 대체되었습니다.",
+    "uploadSuccess": "메타데이터가 업로드되었습니다.",
+    "uploadError": "메타데이터 업로드에 실패했습니다.",
+    "deleteConfirm": "\"{name}\" 파일을 삭제하시겠습니까?",
+    "deleteSuccess": "메타데이터가 삭제되었습니다.",
+    "deleteError": "메타데이터 삭제에 실패했습니다."
   }
 }

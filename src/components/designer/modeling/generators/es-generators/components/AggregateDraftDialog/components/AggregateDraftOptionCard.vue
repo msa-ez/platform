@@ -61,7 +61,7 @@
             </div>
 
             <div class="pl-4 pr-4 pb-4 mt-auto">
-                <div v-if="analysisData.length > 0" class="text-center">
+                <div v-if="analysisData.length > 0 && !isStandardTransformed" class="text-center">
                     <h4 @click="analysisExpanded = !analysisExpanded" style="cursor: pointer">
                         {{ $t('ModelDraftDialogForDistribution.pros') }} & {{ $t('ModelDraftDialogForDistribution.cons') }}
                         <v-icon small>
@@ -127,6 +127,11 @@
             },
 
             showDetailedAttributes: {
+                type: Boolean,
+                default: false,
+                required: false
+            },
+            isStandardTransformed: {
                 type: Boolean,
                 default: false,
                 required: false
@@ -211,7 +216,7 @@
                 let mermaidString = config + "graph TD\n";
 
                 const groups = {}; 
-                const relSet = new Set(); 
+                const relSet = new Set();
                 
                 const getValidAlias = (alias) => {
                     return alias.replace(/[^a-zA-Z0-9가-힣_]/g, '');
@@ -236,29 +241,59 @@
 
                 structure.forEach((item, aggIndex) => {
                     const aggAlias = item.aggregate.alias || item.aggregate.name || `Temp Aggregate Root ${aggIndex + 1}`;
+                    const aggName = item.aggregate.name || '';
                     const aggKey = getValidAlias(aggAlias);
                     
+                    // Aggregate Root의 표시명 (줄바꿈으로 구분)
+                    const displayName = aggName && aggAlias !== aggName
+                        ? aggAlias + '<br/>' + aggName  // 한글<br/>영문
+                        : aggAlias;
+                    
                     const fieldNames = (item.previewAttributes) ? item.previewAttributes.map(attr => attr.fieldName) : null;
-                    addClassToGroup(aggKey, aggKey, aggAlias, "Aggregate Root", this.__sanitizePreviewAttributes(fieldNames));
+                    // Mermaid에 displayName 사용 (label 파라미터로 전달)
+                    addClassToGroup(aggKey, aggKey, displayName, "Aggregate Root", this.__sanitizePreviewAttributes(fieldNames));
                     
                     if (item.enumerations) {
                         item.enumerations.forEach((enumeration, enumIndex) => {
-                            const enumKey = getValidAlias(enumeration.alias || enumeration.name || `Temp Enumeration ${aggIndex + 1}-${enumIndex + 1}`);
-                            addClassToGroup(aggKey, enumKey, enumeration.alias || enumeration.name, "Enumeration");   
+                            const enumAlias = enumeration.alias || enumeration.name || `Temp Enumeration ${aggIndex + 1}-${enumIndex + 1}`;
+                            const enumName = enumeration.name || '';
+                            const enumKey = getValidAlias(enumAlias);
+                            
+                            // Enumeration 표시명 (한글<br/>영문)
+                            const enumDisplayName = enumName && enumAlias !== enumName
+                                ? enumAlias + '<br/>' + enumName
+                                : enumAlias;
+                            
+                            addClassToGroup(aggKey, enumKey, enumDisplayName, "Enumeration");   
                             relSet.add(`    ${aggKey} --> ${enumKey}`);
                         });
                     }
                     
                     if (item.valueObjects) {
                         item.valueObjects.forEach((vo, voIndex) => {
-                            const voKey = getValidAlias(vo.alias || vo.name || `Temp Value Object ${aggIndex + 1}-${voIndex + 1}`);
-                            addClassToGroup(aggKey, voKey, vo.alias || vo.name, "Value Object");
+                            const voAlias = vo.alias || vo.name || `Temp Value Object ${aggIndex + 1}-${voIndex + 1}`;
+                            const voName = vo.name || '';
+                            const voKey = getValidAlias(voAlias);
+                            
+                            // ValueObject 표시명 (한글<br/>영문)
+                            const voDisplayName = voName && voAlias !== voName
+                                ? voAlias + '<br/>' + voName
+                                : voAlias;
+                            
+                            addClassToGroup(aggKey, voKey, voDisplayName, "Value Object");
                             relSet.add(`    ${aggKey} --> ${voKey}`);
                             
                             if (vo.referencedAggregate) {
                                 const refAggAlias = vo.referencedAggregate.alias || vo.referencedAggregate.name || `Temp Referenced Aggregate Root ${aggIndex + 1}-${voIndex + 1}`;
+                                const refAggName = vo.referencedAggregate.name || '';
                                 const refAggKey = getValidAlias(refAggAlias);
-                                addClassToGroup(refAggKey, refAggKey, refAggAlias, "Aggregate Root");
+                                
+                                // Referenced Aggregate 표시명 (한글<br/>영문)
+                                const refAggDisplayName = refAggName && refAggAlias !== refAggName
+                                    ? refAggAlias + '<br/>' + refAggName
+                                    : refAggAlias;
+                                
+                                addClassToGroup(refAggKey, refAggKey, refAggDisplayName, "Aggregate Root");
                                 
                                 if (aggKey !== refAggKey)
                                     relSet.add(`    ${voKey} --> ${refAggKey}`);
@@ -271,7 +306,8 @@
                 Object.values(groups).forEach(group => {
                     mermaidString += `subgraph ${group.id} \n`;
                     Object.values(group.classes).forEach(cls => {
-                        let nodeContent = `[-${cls.role}-<br/>${cls.id}`;
+                        // label 사용 (displayName: "한글(영문)" 형식 포함)
+                        let nodeContent = `[-${cls.role}-<br/>${cls.label}`;
                         
                         // Aggregate Root이고 fieldNames가 있는 경우 속성 목록 추가
                         if (cls.role === "Aggregate Root" && group.fieldNames && group.fieldNames.length > 0 && this.showDetailedAttributes) {               
@@ -288,7 +324,6 @@
                     });
                     mermaidString += `end\n`;
                 });
-                
                 
                 relSet.forEach(rel => {
                     mermaidString += rel + "\n";
@@ -351,7 +386,7 @@
                                         fieldName: { type: 'string', required: true, minLength: 1 },
                                         refs: {
                                             type: 'array',
-                                            required: true,
+                                            required: false,  // optional로 변경 (없으면 빈 배열로 보정)
                                             items: {
                                                 type: 'array',
                                                 items: {

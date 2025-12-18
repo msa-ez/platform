@@ -293,12 +293,16 @@ class ESDialogerTraceUtil {
 
                     if(userTextLines.length <= startLineIndex || userTextLines.length <= endLineIndex) {
                         isValid = false;
+                        removedCount++;
+                        errorMessages.push(`Invalid ref removed: ${JSON.stringify(refArray)} - line out of range (total_lines=${userTextLines.length}, start_line=${startLineIndex + 1}, end_line=${endLineIndex + 1})`);
                     }
 
                     if(isValid) {
                         const startLineContent = userTextLines[startLineIndex]
                         if(startLineContent.length <= startColumnIndex) {
                             isValid = false;
+                            removedCount++;
+                            errorMessages.push(`Invalid ref removed: ${JSON.stringify(refArray)} - start_col ${startColumnIndex + 1} > line_length ${startLineContent.length} (line ${startLineIndex + 1}: "${startLineContent.substring(0, 50)}...")`);
                         }
                     }
 
@@ -306,14 +310,13 @@ class ESDialogerTraceUtil {
                         const endLineContent = userTextLines[endLineIndex]
                         if(endLineContent.length <= endColumnIndex) {
                             isValid = false;
+                            removedCount++;
+                            errorMessages.push(`Invalid ref removed: ${JSON.stringify(refArray)} - end_col ${endColumnIndex + 1} > line_length ${endLineContent.length} (line ${endLineIndex + 1}: "${endLineContent.substring(0, 50)}...")`);
                         }
                     }
 
                     if(isValid) {
                         validRefs.push(refArray);
-                    } else {
-                        removedCount++;
-                        errorMessages.push(`Invalid ref removed: ${JSON.stringify(refArray)}`);
                     }
 
                 } catch(e) {

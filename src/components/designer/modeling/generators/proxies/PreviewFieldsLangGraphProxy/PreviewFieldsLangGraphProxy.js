@@ -27,8 +27,8 @@ class PreviewFieldsLangGraphProxy {
      * @param {string} generatorKey - 생성기 키 (예: "option 1")
      * @param {object} traceMap - 추적성 맵
      */
-    static async makeNewJob(jobId, description, aggregateDrafts, generatorKey, traceMap) {
-        console.log(`✅ Preview Fields Job created: ${jobId}`);
+    static async makeNewJob(jobId, description, aggregateDrafts, generatorKey, traceMap, originalRequirements = null) {
+        // console.log(`✅ Preview Fields Job created: ${jobId}`);
         
         const storage = new Vue(StorageBase);
 
@@ -39,6 +39,11 @@ class PreviewFieldsLangGraphProxy {
             "generatorKey": generatorKey,
             "traceMap": traceMap
         };
+        
+        // originalRequirements가 제공되면 추가
+        if (originalRequirements) {
+            inputs["originalRequirements"] = originalRequirements;
+        }
 
         await storage.setObject(this._getJobPath(jobId), {
             "state": {
@@ -103,12 +108,12 @@ class PreviewFieldsLangGraphProxy {
         
         const parseState = async () => {
             if (callbackInvoked) {
-                console.log(`[PreviewFieldsProxy] ⚠️ Callback already invoked, skipping duplicate call`);
+                // console.log(`[PreviewFieldsProxy] ⚠️ Callback already invoked, skipping duplicate call`);
                 return;
             }
             
             if (jobState.isCompleted) {
-                console.log(`[PreviewFieldsProxy] 🎬 First callback invocation, locking further calls`);
+                // console.log(`[PreviewFieldsProxy] 🎬 First callback invocation, locking further calls`);
                 callbackInvoked = true;
             }
             
@@ -153,7 +158,7 @@ class PreviewFieldsLangGraphProxy {
         storage.watch(`${this._getJobPath(jobId)}/state/outputs/isCompleted`, async (isCompleted) => {
             if (isCompleted === true) {
                 jobState.isCompleted = true;
-                console.log(`[PreviewFieldsProxy] ⏰ isCompleted triggered, calling parseState once`);
+                // console.log(`[PreviewFieldsProxy] ⏰ isCompleted triggered, calling parseState once`);
                 await parseState();
             }
         });
@@ -201,7 +206,7 @@ class PreviewFieldsLangGraphProxy {
     static _watchFieldAssignments(storage, jobId, jobState, parseState) {
         storage.watch(`${this._getJobPath(jobId)}/state/outputs/aggregateFieldAssignments`, async (assignments) => {
             if (assignments) {
-                console.log(`[PreviewFieldsProxy] 📝 Field assignments updated:`, assignments);
+                // console.log(`[PreviewFieldsProxy] 📝 Field assignments updated:`, assignments);
                 jobState.aggregateFieldAssignments = this._restoreArrayFromFirebase(assignments);
                 await parseState();
             }
@@ -224,7 +229,7 @@ class PreviewFieldsLangGraphProxy {
      * Job 상태 파싱 및 콜백 호출
      */
     static async _parseAndNotifyJobState(jobState, callbacks) {
-        console.log(`[PreviewFieldsProxy] 🔔 Notifying state:`, jobState);
+        // console.log(`[PreviewFieldsProxy] 🔔 Notifying state:`, jobState);
         
         // Update 콜백 (진행 중)
         if (callbacks.onUpdate && jobState.progress < 100) {
@@ -236,7 +241,7 @@ class PreviewFieldsLangGraphProxy {
         
         // Complete 콜백 (완료 시)
         if (callbacks.onComplete && jobState.isCompleted) {
-            console.log(`[PreviewFieldsProxy] ✅ Calling onComplete callback`);
+            // console.log(`[PreviewFieldsProxy] ✅ Calling onComplete callback`);
             await callbacks.onComplete({
                 aggregateFieldAssignments: jobState.aggregateFieldAssignments,
                 inference: jobState.inference,

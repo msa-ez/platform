@@ -14,17 +14,17 @@ class AssignDDLFieldsToAggregateDraftLangGraph {
         const aggregateDrafts = this.client.input['aggregateDrafts'];
         const generatorKey = this.client.input['generatorKey'];
         const traceMap = this.client.input['traceMap'];
-        const ddlFields = this.client.input['ddlFields'];
+        const allDdlFields = this.client.input['allDdlFields'] || [];
 
         const jobId = DDLFieldsLangGraphProxy.generateJobId();
 
         try {
-            // Job 생성
+            // Job 생성 (allDdlFields 전체 전달 - refs 포함, 기존 프론트엔드 방식과 동일)
             await DDLFieldsLangGraphProxy.makeNewJob(
                 jobId,
                 description || 'Bounded context description',
                 aggregateDrafts,
-                ddlFields,
+                allDdlFields,  // refs 포함을 위해 전체 객체 배열 전달
                 generatorKey
             );
 

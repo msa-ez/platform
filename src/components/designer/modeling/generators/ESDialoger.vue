@@ -146,9 +146,11 @@
                 @setGenerateOption="setGenerateOption"
                 @updateSelectedAspect="updateSelectedAspect"
                 @updateSelectedOptionItem="updateSelectedOptionItem"
+                @updateDraftOptions="updateDraftOptions"
                 @updateDevideBoundedContext="updateDevideBoundedContext"
                 @update:siteMap="updateSiteMap"
                 @generate:siteMap="generateSiteMap"
+                @transformWithStandards="transformWithStandards"
             ></ESDialogerMessages>
         </div>
         <div
@@ -258,6 +260,7 @@
     const AddTraceToDraftOptionsGeneratorLangGraph = require('../../modeling/generators/es-generators/AddTraceToDraftOptionsGenerator/AddTraceToDraftOptionsGeneratorLangGraph.js');
     const AssignDDLFieldsToAggregateDraftLangGraph = require('../../modeling/generators/es-generators/AssignDDLFieldsToAggregateDraft/AssignDDLFieldsToAggregateDraftLangGraph.js');
     const AssignPreviewFieldsToAggregateDraftLangGraph = require('../../modeling/generators/es-generators/AssignPreviewFieldsToAggregateDraft/AssignPreviewFieldsToAggregateDraftLangGraph.js');
+    const StandardTransformerLangGraph = require('../../modeling/generators/es-generators/StandardTransformer/StandardTransformerLangGraph.js');
     
     const UserStoryGeneratorLangGraph = require('./UserStoryGeneratorLangGraph.js');
     const RecursiveUserStoryGeneratorLangGraph = require('./RecursiveUserStoryGeneratorLangGraph.js');
@@ -392,6 +395,17 @@ import { value } from 'jsonpath';
             const generatePreviewAggAttributesToDraftOptions = async (options, description, traceMap, allDdlFields, boundedContextName, afterGenerateCallback) => {
                 if(!__isValidDDLFields(allDdlFields)) 
                     throw new Error("Invalid allDdlFields: " + JSON.stringify({ allDdlFields }))
+                
+                // traceMap이 Map 객체인 경우 일반 객체로 변환 (Firebase 직렬화를 위해)
+                let normalizedTraceMap = traceMap;
+                if (traceMap instanceof Map) {
+                    normalizedTraceMap = {};
+                    for (const [key, value] of traceMap.entries()) {
+                        normalizedTraceMap[key] = value;
+                    }
+                } else if (!traceMap || typeof traceMap !== 'object') {
+                    normalizedTraceMap = {};
+                }
 
                 // 각 옵션을 순차적으로 처리
                 if (allDdlFields.length > 0) {
@@ -463,8 +477,8 @@ import { value } from 'jsonpath';
                                                 description: description || 'Bounded context description',
                                                 aggregateDrafts: aggregateDrafts,
                                                 generatorKey: generatorKey,
-                                                traceMap: traceMap,
-                                                ddlFields: allDdlFields.map(field => field.fieldName)
+                                                traceMap: normalizedTraceMap,
+                                                allDdlFields: allDdlFields  // refs 포함을 위해 전체 객체 배열 전달
                                             },
                                             onUpdate: (updateData) => {
                                                 this.workingMessages.AggregateDraftDialogDto.draftUIInfos.directMessage = `Assigning DDL fields for ${generatorKey}...`;
@@ -535,7 +549,7 @@ import { value } from 'jsonpath';
                                     });
                                 }
 
-                                // 결과를 해당 옵션의 structure에 previewAttributes로 추가
+                                // 결과를 해당 옵션의 structure에 previewAttributes와 ddlFields로 추가
                                 if (result) {
                                     option.structure.forEach(struct => {
                                         const assignment = result.find(
@@ -543,19 +557,29 @@ import { value } from 'jsonpath';
                                         );
                                         if (assignment) {
                                             const previewAttributes = []
+                                            const ddlFields = []
                                             for(const ddlField of assignment.ddl_fields) {
                                                 const ddlFieldRef = allDdlFields.find(field => field.fieldName === ddlField)
                                                 if(ddlFieldRef) {
+                                                    // previewAttributes에 추가
                                                     previewAttributes.push({
                                                         fieldName: ddlFieldRef.fieldName,
-                                                        refs: ddlFieldRef.refs
+                                                        refs: ddlFieldRef.refs || []
+                                                    })
+                                                    // ddlFields에도 추가 (refs 포함)
+                                                    ddlFields.push({
+                                                        fieldName: ddlFieldRef.fieldName,
+                                                        fieldAlias: '',
+                                                        refs: ddlFieldRef.refs || []
                                                     })
                                                 }
                                             }
                                             this.$set(struct, 'previewAttributes', [...(previewAttributes || [])])
-                                            console.log(`[*] Added previewAttributes to ${struct.aggregate.name}:`, struct.previewAttributes);
+                                            this.$set(struct, 'ddlFields', [...(ddlFields || [])])
+                                            console.log(`[*] Added previewAttributes and ddlFields to ${struct.aggregate.name}:`, struct.previewAttributes, struct.ddlFields);
                                         } else {
                                             this.$set(struct, 'previewAttributes', [])
+                                            this.$set(struct, 'ddlFields', [])
                                         }
                                     });
                                 }
@@ -627,13 +651,20 @@ import { value } from 'jsonpath';
                             const generatorKey = `option ${optionIndex + 1}`;
 
                             try {
+                                // 원본 요구사항 구성 (userStory + ddl) - convertToOriginalRefsUsingTraceMap에서 클램핑에 사용
+                                const originalRequirements = [
+                                    this.projectInfo.usedUserStory || '',
+                                    this.projectInfo.usedInputDDL || ''
+                                ].filter(Boolean).join('\n');
+                                
                                 const result = await new Promise((resolve, reject) => {
                                     const generator = new AssignPreviewFieldsToAggregateDraftLangGraph({
                                         input: {
                                             description: description || 'Bounded context description',
                                             aggregateDrafts: aggregateDrafts,
                                             generatorKey: generatorKey,
-                                            traceMap: traceMap
+                                            traceMap: normalizedTraceMap,
+                                            originalRequirements: originalRequirements // 원본 요구사항 전달
                                         },
                                         onUpdate: (updateData) => {
                                             this.workingMessages.AggregateDraftDialogDto.draftUIInfos.directMessage = `Generating preview fields for ${generatorKey}...`;
@@ -643,7 +674,7 @@ import { value } from 'jsonpath';
                                             resolve(result);
                                         },
                                         onWaiting: (waitingJobCount) => {
-                                            console.log(`[PreviewFields] Waiting: ${waitingJobCount} jobs ahead`);
+                                            // console.log(`[PreviewFields] Waiting: ${waitingJobCount} jobs ahead`);
                                         },
                                         onError: (error) => {
                                             reject(new Error(error.errorMessage || 'Preview fields generation failed'));
@@ -659,9 +690,9 @@ import { value } from 'jsonpath';
                                             fa => fa.aggregateName === struct.aggregate.name
                                         );
                                         if (assignment) {
-                                            console.log(`[PreviewFields] 📝 Adding ${assignment.previewFields.length} fields to ${struct.aggregate.name}`);
+                                            // console.log(`[PreviewFields] 📝 Adding ${assignment.previewFields.length} fields to ${struct.aggregate.name}`);
                                             this.$set(struct, 'previewAttributes', [...(assignment.previewFields || [])])
-                                            console.log(`[*] Added previewAttributes to ${struct.aggregate.name}:`, struct.previewAttributes);
+                                            // console.log(`[*] Added previewAttributes to ${struct.aggregate.name}:`, struct.previewAttributes);
                                         } else {
                                             console.warn(`[PreviewFields] ⚠️ No assignment found for ${struct.aggregate.name} in ${generatorKey}`);
                                             this.$set(struct, 'previewAttributes', [])
@@ -753,7 +784,7 @@ import { value } from 'jsonpath';
                                     // 입력값 설정
                                     generator.client.input = {
                                         description: description || 'Bounded context description',
-                                        traceMap: traceMap,
+                                        traceMap: normalizedTraceMap,
                                         aggregateDrafts: aggregateDrafts,
                                         generatorKey: generatorKey
                                     };
@@ -1024,7 +1055,7 @@ import { value } from 'jsonpath';
                                 input: {
                                     generatedDraftOptions: returnObj.modelValue.output.options,
                                     boundedContextName: returnObj.inputParams.boundedContext.name,
-                                    functionalRequirements: returnObj.inputParams.boundedContext.requirements && returnObj.inputParams.boundedContext.requirements.text,
+                                    functionalRequirements: returnObj.inputParams.boundedContext.description,
                                     traceMap: returnObj.inputParams.boundedContext.requirements && returnObj.inputParams.boundedContext.requirements.traceMap
                                 },
                                 onModelCreatedWithThinking: (ret) => {
@@ -1033,12 +1064,22 @@ import { value } from 'jsonpath';
                                 },
                                 onGenerationSucceeded: (result) => {
                                     returnObj.modelValue.output.options = result.generatedDraftOptionsWithTrace
+                                    
+                                    // AI 추천 옵션 마킹 (인라인 구현)
+                                    if (returnObj.modelValue.output && returnObj.modelValue.output.options) {
+                                        const defaultIdx = returnObj.modelValue.output.defaultOptionIndex || 0;
+                                        for (let i = 0; i < returnObj.modelValue.output.options.length; i++) {
+                                            returnObj.modelValue.output.options[i].isAIRecommended = (i === defaultIdx);
+                                        }
+                                    }
+                                    
                                     this.generators.DraftGeneratorByFunctions._makeDraftOptions(returnObj)
 
                                     if(!returnObj.isFeedbackBased) {
                                         this.generators.DraftGeneratorByFunctions.updateAccumulatedDrafts(returnObj.modelValue.output, returnObj.inputParams.boundedContext)
                                     }
 
+                                    // Preview attributes 생성 (표준 변환은 별도 커맨드로 실행)
                                     generatePreviewAggAttributesToDraftOptions(
                                         returnObj.modelValue.output.options,
                                         returnObj.inputParams.boundedContext.description,
@@ -1260,8 +1301,9 @@ import { value } from 'jsonpath';
                             refs: numberOnlyRefs
                         };
                     }
-                    // MessageDataRestoreUtil expects a Map-like with entries(); use Map
-                    requirements.traceMap = new Map(Object.entries(convertedTraceMap))
+                    // Firebase 직렬화를 위해 일반 객체로 저장 (Map 객체는 Firebase에서 직렬화되지 않음)
+                    // 프론트엔드에서 사용할 때는 Map으로 변환하거나, 일반 객체로 사용
+                    requirements.traceMap = convertedTraceMap
                     requirements.commandInfos = bc.commandInfos ? bc.commandInfos : []
                     requirements.commandNames = bc.commandInfos ? bc.commandInfos.map(command => command.name) : []
                     requirements.readModelInfos = bc.readModelInfos ? bc.readModelInfos : []
@@ -1685,12 +1727,18 @@ import { value } from 'jsonpath';
                         
                         switch (msg.type) {
                             case 'aggregateDraftDialogDto':
+                            case 'standardTransformedDraftDialogDto':
                                 await addPropertyWithDelay(newMessage, 'type', msg.type);
                                 await addPropertyWithDelay(newMessage, 'uniqueId', msg.uniqueId);
                                 await addPropertyWithDelay(newMessage, 'isShow', msg.isShow);
                                 await addPropertyWithDelay(newMessage, 'isGeneratorButtonEnabled', msg.isGeneratorButtonEnabled);
                                 await addPropertyWithDelay(newMessage, 'boundedContextVersion', msg.boundedContextVersion);
                                 await addPropertyWithDelay(newMessage, 'isEditable', msg.isEditable);
+                                
+                                // messageUniqueId가 있으면 추가 (표준 변환 메시지의 경우)
+                                if (msg.messageUniqueId) {
+                                    await addPropertyWithDelay(newMessage, 'messageUniqueId', msg.messageUniqueId);
+                                }
                                 
                                 // draftUIInfos 점진적 추가
                                 newMessage.draftUIInfos = {};
@@ -1708,8 +1756,23 @@ import { value } from 'jsonpath';
                                     }
                                     newMessage.draftOptions.push(newOption);
                                 }
-                                this.workingMessages.AggregateDraftDialog = newMessage;
-                                this.workingMessages['AggregateDraftDialogDto'] = newMessage;
+                                
+                                // selectedOptionItem 처리
+                                if (msg.selectedOptionItem) {
+                                    newMessage.selectedOptionItem = msg.selectedOptionItem;
+                                }
+                                
+                                // transformationMappings 처리 (표준 변환 메시지의 경우)
+                                if (msg.type === 'standardTransformedDraftDialogDto' && msg.transformationMappings) {
+                                    newMessage.transformationMappings = msg.transformationMappings;
+                                }
+                                
+                                if (msg.type === 'aggregateDraftDialogDto') {
+                                    this.workingMessages.AggregateDraftDialog = newMessage;
+                                    this.workingMessages['AggregateDraftDialogDto'] = newMessage;
+                                } else if (msg.type === 'standardTransformedDraftDialogDto') {
+                                    this.workingMessages['StandardTransformedDraftDialogDto'] = newMessage;
+                                }
                                 break;
 
                             case 'boundedContextResult':
@@ -1900,6 +1963,10 @@ import { value } from 'jsonpath';
             },
 
             onModelCreated(model){
+                if(this.state.generator.includes("UserStory")){
+                    return;
+                }
+
                 if(model && model.modelValue && model.modelValue.output) {
                     model = model.modelValue.output
                 }
@@ -2322,7 +2389,7 @@ import { value } from 'jsonpath';
                         this.state.generator = "RecursiveUserStoryGenerator";
                         this.generatorName = "RecursiveUserStoryGenerator";
                     } else {
-                        this.generator = new Generator.default(this);
+                        this.generator = new Generator(this);
                         this.state.generator = "UserStoryGenerator";
                         this.generatorName = "UserStoryGenerator";
                     }
@@ -3250,11 +3317,684 @@ import { value } from 'jsonpath';
                 me.isPBCLoding = false;
             },
 
-            updateSelectedOptionItem(selectedOptionItem) {
-                let aggMessage = this.messages.find(message => message.type === 'aggregateDraftDialogDto')
-                if(aggMessage){
-                    aggMessage['selectedOptionItem'] = selectedOptionItem
+            updateSelectedOptionItem(selectedOptionItem, messageUniqueId) {
+                // messageUniqueId가 있으면 해당 메시지 찾기, 없으면 기존 로직 (하위 호환성)
+                let targetMessage = null;
+                
+                if (messageUniqueId) {
+                    // uniqueId로 정확한 메시지 찾기 (원본 또는 변환 메시지 구분)
+                    targetMessage = this.messages.find(msg => msg.uniqueId === messageUniqueId);
+                } else {
+                    // 기존 로직: aggregateDraftDialogDto만 찾기
+                    targetMessage = this.messages.find(message => message.type === 'aggregateDraftDialogDto');
                 }
+                
+                if (targetMessage) {
+                    // Deep copy로 Vue 반응성 참조 공유 방지
+                    this.$set(targetMessage, 'selectedOptionItem', JSON.parse(JSON.stringify(selectedOptionItem)));
+                    this.$emit("update:draft", this.messages);
+                } else {
+                    console.warn('[ESDialoger] ⚠️ targetMessage를 찾을 수 없음!');
+                }
+            },
+            
+            updateDraftOptions(draftOptions, messageUniqueId) {
+                // messageUniqueId가 있으면 해당 메시지 찾기
+                let targetMessage = null;
+                
+                if (messageUniqueId) {
+                    targetMessage = this.messages.find(msg => msg.uniqueId === messageUniqueId);
+                } else {
+                    // 기존 로직: aggregateDraftDialogDto만 찾기
+                    targetMessage = this.messages.find(message => message.type === 'aggregateDraftDialogDto');
+                }
+                
+                if (targetMessage) {
+                    // Deep copy로 Vue 반응성 참조 공유 방지
+                    this.$set(targetMessage, 'draftOptions', JSON.parse(JSON.stringify(draftOptions)));
+                    this.$emit("update:draft", this.messages);
+                } else {
+                    console.warn('[ESDialoger] ⚠️ updateDraftOptions: targetMessage를 찾을 수 없음!');
+                }
+            },
+            
+            transformWithStandards(boundedContextInfo, draftOptions, messageUniqueId) {
+                // 기존 표준 변환 메시지 제거 (표준 변환은 가장 마지막 단계)
+                if(!this.alertGenerateWarning("StandardTransformation")){
+                    return;
+                }
+                
+                // Aggregate 초안이 있는 상태에서 표준 변환 실행
+                const aggMessage = this.messages.find(msg => msg.uniqueId === messageUniqueId);
+                if (!aggMessage || !aggMessage.draftOptions) {
+                    console.error('[ESDialoger] Aggregate draft not found for transformation');
+                    return;
+                }
+
+                // 변환 요청 시작 시점의 타임스탬프 생성 (디렉토리명으로 사용)
+                const transformationSessionId = `transformation-${Date.now()}`;
+
+                // 전체 draftOptions를 BC별로 순차 처리
+                const allDraftOptions = aggMessage.draftOptions || [];
+                const bcQueue = [];
+                
+                // 각 BC별로 변환 작업 큐 생성
+                const selectedOptionItemSnapshot = JSON.parse(JSON.stringify(aggMessage.selectedOptionItem || {}));
+                
+                allDraftOptions.forEach(function(bcDraftOption) {
+                    if (!bcDraftOption || !bcDraftOption.boundedContext) {
+                        return;
+                    }
+                    
+                    const boundedContext = bcDraftOption.boundedContext;
+                    const allOptions = bcDraftOption.options || [];
+                    
+                    let optionsToTransform = [];
+                    if (selectedOptionItemSnapshot[boundedContext]) {
+                        optionsToTransform = [JSON.parse(JSON.stringify(selectedOptionItemSnapshot[boundedContext]))];
+                    } else if (allOptions.length > 0) {
+                        const defaultIndex = bcDraftOption.defaultOptionIndex != null 
+                            ? bcDraftOption.defaultOptionIndex 
+                            : 0;
+                        if (allOptions[defaultIndex]) {
+                            optionsToTransform = [JSON.parse(JSON.stringify(allOptions[defaultIndex]))];
+                        }
+                    }
+                    
+                    if (optionsToTransform.length === 0) {
+                        return;
+                    }
+
+                    
+                    // Bounded Context 정보 찾기 (여러 소스에서 시도)
+                    let boundedContextData = null;
+                    
+                    // 1. generators.inputs에서 찾기
+                    if (this.generators && 
+                        this.generators.DraftGeneratorByFunctions && 
+                        this.generators.DraftGeneratorByFunctions.inputs) {
+                        const foundInput = this.generators.DraftGeneratorByFunctions.inputs.find(
+                            function(input) {
+                                return input && 
+                                       input.boundedContext && 
+                                       input.boundedContext.name === boundedContext;
+                            }
+                        );
+                        if (foundInput && foundInput.boundedContext) {
+                            boundedContextData = foundInput.boundedContext;
+                        }
+                    }
+                    
+                    // 2. initialInputs에서 찾기
+                    if (!boundedContextData && 
+                        this.generators && 
+                        this.generators.DraftGeneratorByFunctions && 
+                        this.generators.DraftGeneratorByFunctions.initialInputs) {
+                        const foundInput = this.generators.DraftGeneratorByFunctions.initialInputs.find(
+                            function(input) {
+                                return input && 
+                                       input.boundedContext && 
+                                       input.boundedContext.name === boundedContext;
+                            }
+                        );
+                        if (foundInput && foundInput.boundedContext) {
+                            boundedContextData = foundInput.boundedContext;
+                        }
+                    }
+                    
+                    // 3. draftOptions에서 직접 추출 (최소한의 정보)
+                    if (!boundedContextData) {
+                        boundedContextData = {
+                            name: boundedContext,
+                            alias: bcDraftOption.boundedContextAlias || boundedContext,
+                            description: bcDraftOption.description || ''
+                        };
+                    }
+                    
+                    bcQueue.push({
+                        bcDraftOption: bcDraftOption,
+                        boundedContext: boundedContext,
+                        optionsToTransform: optionsToTransform,
+                        boundedContextData: boundedContextData
+                    });
+                }.bind(this));
+                
+                if (bcQueue.length === 0) {
+                    console.error('[ESDialoger] No bounded contexts found for transformation');
+                    return;
+                }
+                
+                // 변환 중 상태 표시
+                if (aggMessage.draftUIInfos) {
+                    this.$set(aggMessage.draftUIInfos, 'directMessage', `표준 변환 중... (0/${bcQueue.length})`);
+                    this.$set(aggMessage.draftUIInfos, 'progress', 0);
+                    this.$set(aggMessage, 'isTransforming', true);
+                }
+                
+                // BC별로 순차 처리
+                let processedCount = 0;
+                let isProcessing = false; // 중복 처리 방지 플래그
+                const transformedResults = []; // 변환된 결과를 모아둘 배열
+                const self = this; // this 컨텍스트 보존
+                
+                // 빈 표준 변환 메시지를 미리 생성하여 추가 (업데이트용)
+                // Vue 반응성 참조 공유 방지를 위해 모든 객체를 deep copy
+                const transformedMessageId = self.uuid();  // 고유 ID 생성
+                const transformedMessage = {
+                    uniqueId: transformedMessageId,
+                    type: 'standardTransformedDraftDialogDto',
+                    isShow: true,
+                    isGeneratorButtonEnabled: false,
+                    // boundedContextVersion도 deep copy (객체일 경우 참조 공유 방지)
+                    boundedContextVersion: aggMessage.boundedContextVersion ? 
+                        JSON.parse(JSON.stringify(aggMessage.boundedContextVersion)) : 
+                        aggMessage.boundedContextVersion,
+                    isEditable: true,
+                    draftUIInfos: {
+                        leftBoundedContextCount: bcQueue.length,  // ProgressInfo 표시 조건
+                        directMessage: `표준 변환 중... (0/${bcQueue.length})`,
+                        progress: 0,
+                        isTransforming: true
+                    },
+                    draftOptions: [],
+                    selectedOptionItem: {},  // 완전히 새로운 빈 객체
+                    messageUniqueId: transformedMessageId,  // ← 자기 자신의 ID 사용! (원본과 분리)
+                    originalMessageUniqueId: aggMessage.uniqueId,  // 참조용으로만 원본 ID 저장
+                    transformationMappings: {},  // BC별 변환 매핑 정보 저장
+                    timestamp: new Date()
+                };
+                
+                // 원본 aggMessage의 selectedOptionItem 변경 감지 (디버깅용)
+                const originalSelectedItemSnapshot = JSON.stringify(aggMessage.selectedOptionItem || {});
+                const checkOriginalUnchanged = function() {
+                    const currentSnapshot = JSON.stringify(aggMessage.selectedOptionItem || {});
+                    if (currentSnapshot !== originalSelectedItemSnapshot) {
+                        console.error('[ESDialoger] ❌ 원본 aggMessage.selectedOptionItem이 변경되었습니다!', {
+                            before: originalSelectedItemSnapshot.substring(0, 200),
+                            after: currentSnapshot.substring(0, 200),
+                            aggMessageId: aggMessage.uniqueId
+                        });
+                    }
+                };
+                
+                // 원본 aggregateDraftDialogDto 메시지 다음에 추가
+                const aggMessageIndex = this.messages.findIndex(
+                    msg => msg.type === 'aggregateDraftDialogDto' && msg.uniqueId === aggMessage.uniqueId
+                );
+                
+                if (aggMessageIndex !== -1) {
+                    this.messages.splice(aggMessageIndex + 1, 0, transformedMessage);
+                } else {
+                    this.messages.push(transformedMessage);
+                }
+                
+                // UI 즉시 업데이트
+                this.$forceUpdate();
+                
+                const processNextBC = function() {
+                    // 중복 실행 방지
+                    if (isProcessing) {
+                        return;
+                    }
+                    
+                    if (processedCount >= bcQueue.length) {
+                        // transformedResults에 결과가 있는지 확인
+                        const actualResultCount = transformedResults.length;
+                        console.log(`[ESDialoger] 🎉 표준 변환 완료: ${actualResultCount}개 BC 처리됨`);
+                        
+                        // ============================================================
+                        // 모든 BC 처리 완료 후 Enum/VO 재처리 (다른 BC 참조 문제 해결)
+                        // ============================================================
+                        // 1. 모든 BC에서 aggregate 이름 매핑 수집 (original -> transformed)
+                        // 원본 BC 데이터에서 aggregate 이름 추출
+                        const aggregateNameMapping = {};  // original_name -> transformed_name
+                        
+                        bcQueue.forEach(function(bcItem) {
+                            const originalOptions = bcItem.optionsToTransform || [];
+                            originalOptions.forEach(function(option) {
+                                const structure = option.structure || [];
+                                structure.forEach(function(item) {
+                                    const aggregate = item.aggregate || {};
+                                    const originalName = aggregate.name || '';
+                                    if (originalName) {
+                                        // 변환된 결과에서 해당 aggregate 찾기
+                                        transformedResults.forEach(function(bcResult) {
+                                            if (bcResult.boundedContext === bcItem.boundedContext) {
+                                                const transformedOptions = bcResult.transformedOptions || [];
+                                                transformedOptions.forEach(function(transOption) {
+                                                    const transStructure = transOption.structure || [];
+                                                    transStructure.forEach(function(transItem) {
+                                                        const transAggregate = transItem.aggregate || {};
+                                                        const transAggAlias = transAggregate.alias || '';
+                                                        // alias로 매칭
+                                                        if (transAggAlias === aggregate.alias) {
+                                                            const transformedName = transAggregate.name || '';
+                                                            if (transformedName && transformedName !== originalName) {
+                                                                aggregateNameMapping[originalName] = transformedName;
+                                                            }
+                                                        }
+                                                    });
+                                                });
+                                            }
+                                        });
+                                    }
+                                });
+                            });
+                        });
+                        
+                        // 2. 각 BC의 Enum/VO를 전체 매핑으로 다시 처리
+                        const reprocessedResults = transformedResults.map(function(bcResult) {
+                            const reprocessedOptions = (bcResult.transformedOptions || []).map(function(option) {
+                                const structure = option.structure || [];
+                                const reprocessedStructure = structure.map(function(item) {
+                                    const enumerations = (item.enumerations || []).map(function(enumItem) {
+                                        const enumName = enumItem.name || '';
+                                        // 전역 매핑에서 참조하는 aggregate 찾기
+                                        for (const originalAggName in aggregateNameMapping) {
+                                            const transformedAggName = aggregateNameMapping[originalAggName];
+                                            // Enum 이름이 원본 aggregate 이름으로 시작하는지 확인
+                                            if (enumName && originalAggName && enumName.startsWith(originalAggName)) {
+                                                // aggregate 이름을 포함하는 경우 prefix 적용
+                                                const suffix = enumName.substring(originalAggName.length);
+                                                const suffixSnake = suffix.replace(/([A-Z])/g, '_$1').toLowerCase().replace(/^_/, '');
+                                                const newEnumName = suffixSnake ? transformedAggName + '_' + suffixSnake : transformedAggName + '_enum';
+                                                // 변환이 필요한 경우에만 적용 (이미 올바르게 변환된 경우는 제외)
+                                                if (enumName !== newEnumName) {
+                                                    enumItem.name = newEnumName;
+                                                }
+                                                break;
+                                            }
+                                        }
+                                        return enumItem;
+                                    });
+                                    
+                                    const valueObjects = (item.valueObjects || []).map(function(voItem) {
+                                        const voName = voItem.name || '';
+                                        // 전역 매핑에서 참조하는 aggregate 찾기
+                                        for (const originalAggName in aggregateNameMapping) {
+                                            const transformedAggName = aggregateNameMapping[originalAggName];
+                                            // VO 이름이 원본 aggregate 이름으로 시작하는지 확인
+                                            if (voName && originalAggName && voName.startsWith(originalAggName)) {
+                                                // aggregate 이름을 포함하는 경우 prefix 적용
+                                                const suffix = voName.substring(originalAggName.length);
+                                                const suffixSnake = suffix.replace(/([A-Z])/g, '_$1').toLowerCase().replace(/^_/, '');
+                                                const newVoName = suffixSnake ? transformedAggName + '_' + suffixSnake : transformedAggName + '_vo';
+                                                // 변환이 필요한 경우에만 적용 (이미 올바르게 변환된 경우는 제외)
+                                                if (voName !== newVoName) {
+                                                    voItem.name = newVoName;
+                                                }
+                                                break;
+                                            }
+                                        }
+                                        return voItem;
+                                    });
+                                    
+                                    return {
+                                        ...item,
+                                        enumerations: enumerations,
+                                        valueObjects: valueObjects
+                                    };
+                                });
+                                
+                                return {
+                                    ...option,
+                                    structure: reprocessedStructure
+                                };
+                            });
+                            
+                            return {
+                                ...bcResult,
+                                transformedOptions: reprocessedOptions
+                            };
+                        });
+                        
+                        // 재처리된 결과 사용
+                        const finalResults = reprocessedResults;
+                        
+                        // selectedOptionItem 자동 설정: 각 BC의 첫 번째(유일한) 옵션 선택
+                        // Deep copy로 Vue 반응성 변질 방지
+                        const autoSelectedOptionItem = {};
+                        finalResults.forEach(function(bcResult) {
+                            if (bcResult.transformedOptions && bcResult.transformedOptions.length > 0) {
+                                autoSelectedOptionItem[bcResult.boundedContext] = JSON.parse(JSON.stringify(bcResult.transformedOptions[0]));
+                            }
+                        });
+                        
+                        // 메시지 업데이트 (추가가 아님!)
+                        self.$set(transformedMessage, 'draftUIInfos', {
+                            leftBoundedContextCount: 0,  // 완료되었으므로 0
+                            directMessage: '표준 변환 완료',
+                            progress: 100,
+                            isTransforming: false
+                        });
+                        // draftOptions도 deep copy로 보호
+                        self.$set(transformedMessage, 'draftOptions', finalResults.map(function(bcResult) {
+                            return {
+                                boundedContext: bcResult.boundedContext,
+                                boundedContextAlias: bcResult.boundedContextAlias,
+                                description: bcResult.description,
+                                inference: bcResult.inference || '',
+                                conclusions: bcResult.conclusions || '',
+                                options: JSON.parse(JSON.stringify(bcResult.transformedOptions)),  // deep copy
+                                defaultOptionIndex: 0
+                            };
+                        }));
+                        self.$set(transformedMessage, 'selectedOptionItem', autoSelectedOptionItem);
+                        
+                        // UI 강제 업데이트
+                        self.$forceUpdate();
+                        self.$emit("update:draft", self.messages);
+                        
+                        // 원본 변경 체크 (최종)
+                        checkOriginalUnchanged();
+                        return;
+                    }
+                    
+                    isProcessing = true; // 처리 중 플래그 설정
+                    const currentBC = bcQueue[processedCount];
+                    const bcIndex = processedCount + 1;
+                    
+                    // 진행 상태 업데이트
+                    if (aggMessage.draftUIInfos) {
+                        self.$set(aggMessage.draftUIInfos, 'directMessage', `표준 변환 중... (${bcIndex}/${bcQueue.length}) - ${currentBC.boundedContext} [표준 매핑 컨텍스트 생성 중]`);
+                        self.$set(aggMessage.draftUIInfos, 'progress', Math.floor((processedCount / bcQueue.length) * 100));
+                    }
+                    self.$forceUpdate();
+                    
+                    // 타임아웃 설정 (60초 이내 응답 없으면 다음 BC로 진행)
+                    let timeoutId = null;
+                    let isTimedOut = false; // 타임아웃 발생 여부
+                    let isProcessed = false; // 이미 처리되었는지 (중복 처리 방지)
+                    
+                    // 표준 변환 실행
+                    const standardTransformer = new StandardTransformerLangGraph({
+                        input: {
+                            draftOptions: currentBC.optionsToTransform,
+                            boundedContext: currentBC.boundedContextData,
+                            transformationSessionId: transformationSessionId,  // 변환 세션 ID 전달
+                            userId: self.userInfo && self.userInfo.uid ? self.userInfo.uid : null  // 사용자 ID 전달
+                        },
+                        onModelCreatedWithThinking: (ret) => {
+                            // 백엔드에서 보내는 상세 정보 활용
+                            const retBC = ret.currentBC || currentBC.boundedContext;
+                            const retAgg = ret.currentAgg || '';
+                            const retPropertyType = ret.currentPropertyType || '';
+                            const retChunkInfo = ret.chunkInfo || '';
+                            const retStatus = ret.status || 'processing';
+                            const retError = ret.error || '';
+                            
+                            // transformationLog에서 단계 정보 추출 (백엔드에서 이미 상세 메시지 제공)
+                            const transformationLog = ret.transformationLog || ret.transformation_log || ret.directMessage || '';
+                            
+                            // 상세 정보 기반 메시지 구성
+                            let finalMessage = '';
+                            if (retBC && retAgg) {
+                                const propertyLabel = {
+                                    'aggregate': 'Aggregate',
+                                    'enum': 'Enum',
+                                    'vo': 'ValueObject',
+                                    'field': 'Field'
+                                }[retPropertyType] || retPropertyType || '';
+                                
+                                let detailParts = [];
+                                if (retBC) detailParts.push(`BC: ${retBC}`);
+                                if (retAgg) detailParts.push(`Agg: ${retAgg}`);
+                                if (propertyLabel) detailParts.push(propertyLabel);
+                                if (retChunkInfo) detailParts.push(retChunkInfo);
+                                
+                                const detailText = detailParts.length > 0 ? detailParts.join(' > ') : '';
+                                
+                                if (retStatus === 'error') {
+                                    finalMessage = `❌ 오류: ${detailText}${retError ? ` (${retError})` : ''}`;
+                                } else if (retStatus === 'completed') {
+                                    finalMessage = `✅ 완료: ${detailText}`;
+                                } else {
+                                    finalMessage = `🔄 처리 중: ${detailText}`;
+                                }
+                                
+                                // BC 진행 상황 추가
+                                finalMessage = `표준 변환 중... (${bcIndex}/${bcQueue.length}) - ${finalMessage}`;
+                            } else {
+                                // 상세 정보가 없으면 기존 방식 사용
+                                let stageName = '';
+                                if (transformationLog.includes('표준 매핑 컨텍스트 생성 중')) {
+                                    stageName = '[표준 매핑 컨텍스트 생성 중]';
+                                } else if (transformationLog.includes('선처리 매핑 적용 중') || transformationLog.includes('선처리 매핑')) {
+                                    stageName = '[선처리 매핑 중]';
+                                } else if (transformationLog.includes('유사도 검색 중') || transformationLog.includes('검색')) {
+                                    stageName = '[유사도 검색 중]';
+                                } else if (transformationLog.includes('LLM 변환 중') || transformationLog.includes('LLM')) {
+                                    stageName = '[LLM 변환 중]';
+                                } else if (transformationLog.includes('후처리')) {
+                                    stageName = '[후처리 중]';
+                                } else if (transformationLog.includes('선처리') || transformationLog.includes('매핑')) {
+                                    stageName = '[선처리 매핑 중]';
+                                } else if (transformationLog.includes('검색') || transformationLog.includes('RAG')) {
+                                    stageName = '[유사도 검색 중]';
+                                } else if (transformationLog.includes('LLM') || transformationLog.includes('변환')) {
+                                    stageName = '[LLM 변환 중]';
+                                }
+                                
+                                finalMessage = `표준 변환 중... (${bcIndex}/${bcQueue.length}) - ${currentBC.boundedContext} ${stageName}`;
+                            }
+                            const baseProgress = Math.floor((processedCount / bcQueue.length) * 100);
+                            const stepProgress = Math.floor((ret.progress || 0) / bcQueue.length);
+                            
+                            // aggMessage 업데이트
+                            if (aggMessage.draftUIInfos) {
+                                self.$set(aggMessage.draftUIInfos, 'directMessage', finalMessage);
+                                self.$set(aggMessage.draftUIInfos, 'progress', baseProgress + stepProgress);
+                            }
+                            
+                            // transformedMessage도 업데이트 (진행 상황 표시)
+                            if (transformedMessage && transformedMessage.draftUIInfos) {
+                                const leftCount = bcQueue.length - processedCount;
+                                self.$set(transformedMessage, 'draftUIInfos', {
+                                    leftBoundedContextCount: leftCount > 0 ? leftCount : 1,
+                                    directMessage: finalMessage,
+                                    progress: baseProgress + stepProgress,
+                                    isTransforming: true
+                                });
+                            }
+                            
+                            self.$forceUpdate();
+                        },
+                        onGenerationSucceeded: (transformationResult) => {
+                            // 타임아웃 취소 (타임아웃 후 데이터가 도착해도 처리함!)
+                            if (timeoutId) clearTimeout(timeoutId);
+                            
+                            // 타임아웃 후 도착한 데이터도 처리 (중복 방지 제거)
+                            // 타임아웃이 발생했어도 데이터가 도착하면 처리하도록 수정
+                            if (isProcessed && !isTimedOut) {
+                                return;
+                            }
+                            
+                            isProcessed = true;
+                            // 변환된 결과를 배열에 저장 (기존 초안은 덮어쓰지 않음)
+                            // transformedOptions가 여러 위치에 있을 수 있으므로 모두 확인
+                            let transformedOptions = null;
+                            
+                            if (transformationResult) {
+                                // 1. 직접 transformedOptions 확인
+                                if (transformationResult.transformedOptions) {
+                                    transformedOptions = transformationResult.transformedOptions;
+                                }
+                                // 2. modelValue.output.options 확인
+                                else if (transformationResult.modelValue && 
+                                         transformationResult.modelValue.output && 
+                                         transformationResult.modelValue.output.options) {
+                                    transformedOptions = transformationResult.modelValue.output.options;
+                                }
+                                // 3. modelValue.output 확인
+                                else if (transformationResult.modelValue && 
+                                         transformationResult.modelValue.output && 
+                                         Array.isArray(transformationResult.modelValue.output)) {
+                                    transformedOptions = transformationResult.modelValue.output;
+                                }
+                            }
+                            
+                            if (transformedOptions && Array.isArray(transformedOptions) && transformedOptions.length > 0) {
+                                // 변환된 옵션을 AggregateDraftDialog가 기대하는 형식으로 변환
+                                // Deep copy로 Vue 반응성 변질 방지
+                                const formattedOptions = transformedOptions.map(function(opt) {
+                                    return {
+                                        structure: JSON.parse(JSON.stringify(opt.structure || [])),
+                                        pros: JSON.parse(JSON.stringify(opt.pros || {})),
+                                        cons: JSON.parse(JSON.stringify(opt.cons || {})),
+                                        description: opt.description || ''
+                                    };
+                                });
+                                
+                                // 변환 매핑 정보 수집
+                                const originalOption = currentBC.optionsToTransform[0];
+                                const transformedOption = formattedOptions[0];
+                                const mappings = self._collectTransformationMappings(
+                                    originalOption,
+                                    transformedOption,
+                                    currentBC.boundedContext
+                                );
+                                
+                                // transformationMappings 업데이트
+                                if (!transformedMessage.transformationMappings) {
+                                    transformedMessage.transformationMappings = {};
+                                }
+                                transformedMessage.transformationMappings[currentBC.boundedContext] = mappings;
+                                
+                                transformedResults.push({
+                                    boundedContext: currentBC.boundedContext,
+                                    boundedContextAlias: currentBC.bcDraftOption.boundedContextAlias || currentBC.boundedContext,
+                                    description: currentBC.bcDraftOption.description || '',
+                                    inference: currentBC.bcDraftOption.inference || '', // 원본에서 inference 복사
+                                    conclusions: currentBC.bcDraftOption.conclusions || '', // 원본에서 conclusions 복사
+                                    transformedOptions: formattedOptions  // 포맷팅된 옵션 배열 (deep copy됨)
+                                });
+                                
+                                // 메시지 업데이트 (중간 진행 상황 반영)
+                                // autoSelectedOptionItem도 deep copy로 보호
+                                const autoSelectedOptionItem = {};
+                                transformedResults.forEach(function(bcResult) {
+                                    if (bcResult.transformedOptions && bcResult.transformedOptions.length > 0) {
+                                        autoSelectedOptionItem[bcResult.boundedContext] = JSON.parse(JSON.stringify(bcResult.transformedOptions[0]));
+                                    }
+                                });
+                                
+                                // draftUIInfos 전체 객체 교체 (Vue 반응성 보장)
+                                const newProgress = Math.floor(((processedCount + 1) / bcQueue.length) * 100);
+                                const leftCount = bcQueue.length - (processedCount + 1);
+                                let newMessage = '';
+                                
+                                if (leftCount > 0) {
+                                    // 아직 처리할 BC가 남아있음
+                                    const nextBC = bcQueue[processedCount + 1];
+                                    newMessage = `표준 변환 중... (${processedCount + 1}/${bcQueue.length}) - 다음: ${nextBC.boundedContext}`;
+                                } else {
+                                    // 모든 BC 처리 완료, 후처리 단계
+                                    newMessage = `표준 변환 중... (${processedCount + 1}/${bcQueue.length}) - [후처리 중]`;
+                                }
+                                
+                                self.$set(transformedMessage, 'draftUIInfos', {
+                                    leftBoundedContextCount: leftCount > 0 ? leftCount : 1,  // 0이면 표시 안되므로 최소 1
+                                    directMessage: newMessage,
+                                    progress: newProgress,
+                                    isTransforming: true
+                                });
+                                
+                                // draftOptions도 deep copy로 보호
+                                self.$set(transformedMessage, 'draftOptions', transformedResults.map(function(bcResult) {
+                                    return {
+                                        boundedContext: bcResult.boundedContext,
+                                        boundedContextAlias: bcResult.boundedContextAlias,
+                                        description: bcResult.description,
+                                        inference: bcResult.inference || '',
+                                        conclusions: bcResult.conclusions || '',
+                                        options: JSON.parse(JSON.stringify(bcResult.transformedOptions)),  // deep copy
+                                        defaultOptionIndex: 0
+                                    };
+                                }));
+                                
+                                self.$set(transformedMessage, 'selectedOptionItem', autoSelectedOptionItem);
+                                // transformationMappings도 업데이트
+                                if (transformedMessage.transformationMappings) {
+                                    self.$set(transformedMessage, 'transformationMappings', JSON.parse(JSON.stringify(transformedMessage.transformationMappings)));
+                                }
+                                
+                                // UI 강제 업데이트
+                                self.$forceUpdate();
+                                
+                                // 원본 변경 체크
+                                checkOriginalUnchanged();
+                            }
+                            
+                            // 다음 BC 처리 (비동기로 처리하여 UI 업데이트 시간 확보)
+                            processedCount++;
+                            isProcessing = false;
+                            setTimeout(processNextBC, 100);
+                        },
+                        onError: (error) => {
+                            // 타임아웃 취소
+                            if (timeoutId) clearTimeout(timeoutId);
+                            
+                            // 타임아웃 후 도착한 에러도 처리 (중복 방지 제거)
+                            if (isProcessed && !isTimedOut) {
+                                return;
+                            }
+                            isProcessed = true;
+                            
+                            console.error(`[ESDialoger] ❌ 표준 변환 실패: ${currentBC.boundedContext}`, error);
+                            
+                            // 에러 발생 시에도 원본 옵션을 transformedResults에 추가 (0개 BC 처리됨 방지)
+                            transformedResults.push({
+                                boundedContext: currentBC.boundedContext,
+                                boundedContextAlias: currentBC.bcDraftOption.boundedContextAlias || currentBC.boundedContext,
+                                description: currentBC.bcDraftOption.description || '',
+                                inference: currentBC.bcDraftOption.inference || '',
+                                conclusions: currentBC.bcDraftOption.conclusions || '',
+                                transformedOptions: currentBC.optionsToTransform,  // 원본 옵션 사용
+                                error: error.errorMessage || '표준 변환 실패'
+                            });
+                            
+                            // 실패해도 다음 BC 계속 처리
+                            processedCount++;
+                            isProcessing = false;
+                            setTimeout(processNextBC, 100);
+                        }
+                    });
+                    
+                    // 타임아웃 설정 (10분 이내 응답 없으면 다음 BC로 진행)
+                    timeoutId = setTimeout(() => {
+                        if (isProcessed) return; // 이미 처리되었으면 무시
+                        isTimedOut = true; // 타임아웃 플래그 설정 (isProcessed는 설정하지 않음!)
+                        
+                        console.warn(`[ESDialoger] ⚠️  표준 변환 타임아웃: ${currentBC.boundedContext}`);
+                        
+                        // 타임아웃 발생 시에도 원본 옵션을 transformedResults에 추가 (0개 BC 처리됨 방지)
+                        transformedResults.push({
+                            boundedContext: currentBC.boundedContext,
+                            boundedContextAlias: currentBC.bcDraftOption.boundedContextAlias || currentBC.boundedContext,
+                            description: currentBC.bcDraftOption.description || '',
+                            inference: currentBC.bcDraftOption.inference || '',
+                            conclusions: currentBC.bcDraftOption.conclusions || '',
+                            transformedOptions: currentBC.optionsToTransform,  // 원본 옵션 사용
+                            error: '타임아웃'
+                        });
+                        
+                        // UI 업데이트: 타임아웃 상태 표시
+                        if (aggMessage.draftUIInfos) {
+                            self.$set(aggMessage.draftUIInfos, 'directMessage', `표준 변환 중... (${bcIndex}/${bcQueue.length}) - ${currentBC.boundedContext} (타임아웃)`);
+                        }
+                        self.$forceUpdate();
+                        
+                        processedCount++;
+                        isProcessing = false;
+                        setTimeout(processNextBC, 100);
+                        // 타임아웃 후에도 데이터가 도착할 수 있으므로 isProcessed는 설정하지 않음
+                    }, 600000); // 10분 타임아웃 (600초)
+                    
+                    standardTransformer.generate();
+                };
+                
+                // 첫 번째 BC부터 시작
+                processNextBC();
             },
 
             alertGenerateWarning(generator) {
@@ -3285,6 +4025,9 @@ import { value } from 'jsonpath';
                     case "CreateAggregateActionsByFunctions":
                         warningMessage = this.$t('ESDialoger.warnings.default');
                         break;
+                    case "StandardTransformation":
+                        warningMessage = this.$t('ESDialoger.warnings.default');
+                        break;
                     case "siteMapViewer":
                         warningMessage = this.$t('ESDialoger.warnings.siteMap');
                         break;
@@ -3307,39 +4050,50 @@ import { value } from 'jsonpath';
                         "processAnalysis",
                         "bcGenerationOption",
                         "boundedContextResult",
-                        "aggregateDraftDialogDto"
+                        "aggregateDraftDialogDto",
+                        "standardTransformedDraftDialogDto"
                     ],
                     "RequirementsValidationGenerator": [
                         "processAnalysis",
                         "bcGenerationOption",
                         "boundedContextResult",
                         "aggregateDraftDialogDto",
-                        "siteMapViewer"
+                        "siteMapViewer",
+                        "standardTransformedDraftDialogDto"
                     ],
                     "RecursiveRequirementsValidationGenerator": [
                         "processAnalysis",
                         "bcGenerationOption",
                         "boundedContextResult",
                         "aggregateDraftDialogDto",
-                        "siteMapViewer"
+                        "siteMapViewer",
+                        "standardTransformedDraftDialogDto"
                     ],
                     "bcGenerationOption": [
                         "boundedContextResult",
-                        "aggregateDraftDialogDto"
+                        "aggregateDraftDialogDto",
+                        "standardTransformedDraftDialogDto"
                     ],
                     "DevideBoundedContextGenerator": [
                         "boundedContextResult",
                         "siteMapViewer",
-                        "aggregateDraftDialogDto"
+                        "aggregateDraftDialogDto",
+                        "standardTransformedDraftDialogDto"
                     ],
                     "CreateAggregateActionsByFunctions": [
-                        "aggregateDraftDialogDto"
+                        "aggregateDraftDialogDto",
+                        "standardTransformedDraftDialogDto"
+                    ],
+                    "StandardTransformation": [
+                        "standardTransformedDraftDialogDto"
                     ],
                     "siteMapViewer": [
-                        "siteMapViewer"
+                        "siteMapViewer",
+                        "standardTransformedDraftDialogDto"
                     ],
                     "RecursiveSiteMapGenerator": [
-                        "siteMapViewer"
+                        "siteMapViewer",
+                        "standardTransformedDraftDialogDto"
                     ]
                 };
 
@@ -3355,39 +4109,50 @@ import { value } from 'jsonpath';
                         "processAnalysis",
                         "bcGenerationOption",
                         "boundedContextResult",
-                        "aggregateDraftDialogDto"
+                        "aggregateDraftDialogDto",
+                        "standardTransformedDraftDialogDto"
                     ],
                     "RequirementsValidationGenerator": [
                         "processAnalysis",
                         "bcGenerationOption",
                         "boundedContextResult",
                         "aggregateDraftDialogDto",
-                        "siteMapViewer"
+                        "siteMapViewer",
+                        "standardTransformedDraftDialogDto"
                     ],
                     "RecursiveRequirementsValidationGenerator": [
                         "processAnalysis",
                         "bcGenerationOption",
                         "boundedContextResult",
                         "aggregateDraftDialogDto",
-                        "siteMapViewer"
+                        "siteMapViewer",
+                        "standardTransformedDraftDialogDto"
                     ],
                     "bcGenerationOption": [
                         "boundedContextResult",
-                        "aggregateDraftDialogDto"
+                        "aggregateDraftDialogDto",
+                        "standardTransformedDraftDialogDto"
                     ],
                     "DevideBoundedContextGenerator": [
                         "boundedContextResult",
                         "siteMapViewer",
-                        "aggregateDraftDialogDto"
+                        "aggregateDraftDialogDto",
+                        "standardTransformedDraftDialogDto"
                     ],
                     "CreateAggregateActionsByFunctions": [
-                        "aggregateDraftDialogDto"
+                        "aggregateDraftDialogDto",
+                        "standardTransformedDraftDialogDto"
+                    ],
+                    "StandardTransformation": [
+                        "standardTransformedDraftDialogDto"
                     ],
                     "siteMapViewer": [
-                        "siteMapViewer"
+                        "siteMapViewer",
+                        "standardTransformedDraftDialogDto"
                     ],
                     "RecursiveSiteMapGenerator": [
-                        "siteMapViewer"
+                        "siteMapViewer",
+                        "standardTransformedDraftDialogDto"
                     ]
                 };
 
@@ -3704,6 +4469,147 @@ import { value } from 'jsonpath';
             // 사이트맵 루트 노드 안전하게 가져오기
             getSiteMapRoot(siteMapTree) {
                 return siteMapTree && Array.isArray(siteMapTree) && siteMapTree.length > 0 ? siteMapTree[0] : null;
+            },
+            
+            // 변환 매핑 정보 수집
+            _collectTransformationMappings(originalOption, transformedOption, boundedContext) {
+                const mappings = {
+                    aggregates: [],
+                    enumerations: [],
+                    valueObjects: [],
+                    fields: []
+                };
+                
+                if (!originalOption || !originalOption.structure || !transformedOption || !transformedOption.structure) {
+                    return mappings;
+                }
+                
+                const originalStructure = originalOption.structure || [];
+                const transformedStructure = transformedOption.structure || [];
+                
+                // Aggregate 매핑
+                originalStructure.forEach(function(originalItem, index) {
+                    const transformedItem = transformedStructure[index];
+                    if (!originalItem.aggregate || !transformedItem || !transformedItem.aggregate) {
+                        return;
+                    }
+                    
+                    const originalAggName = originalItem.aggregate.name || '';
+                    const transformedAggName = transformedItem.aggregate.name || '';
+                    
+                    // 전환 여부와 관계없이 모든 aggregate 추가 (전환되지 않았으면 transformed는 원본과 동일)
+                    if (originalAggName) {
+                        mappings.aggregates.push({
+                            original: originalAggName,
+                            transformed: (transformedAggName && transformedAggName !== originalAggName) ? transformedAggName : null,
+                            alias: originalItem.aggregate.alias || ''
+                        });
+                    }
+                    
+                    // Enumeration 매핑 (전환되지 않은 것도 포함)
+                    const originalEnums = originalItem.enumerations || [];
+                    const transformedEnums = transformedItem.enumerations || [];
+                    originalEnums.forEach(function(originalEnum, enumIndex) {
+                        if (originalEnum && originalEnum.name) {
+                            const originalEnumName = originalEnum.name || '';
+                            const transformedEnum = transformedEnums[enumIndex];
+                            const transformedEnumName = (transformedEnum && transformedEnum.name) ? transformedEnum.name : '';
+                            // 전환 여부와 관계없이 모든 enumeration 추가
+                            mappings.enumerations.push({
+                                original: originalEnumName,
+                                transformed: (transformedEnumName && transformedEnumName !== originalEnumName) ? transformedEnumName : null,
+                                aggregate: originalAggName
+                            });
+                        }
+                    });
+                    
+                    // ValueObject 매핑 (전환되지 않은 것도 포함)
+                    const originalVOs = originalItem.valueObjects || [];
+                    const transformedVOs = transformedItem.valueObjects || [];
+                    originalVOs.forEach(function(originalVO, voIndex) {
+                        if (originalVO && originalVO.name) {
+                            const originalVOName = originalVO.name || '';
+                            const transformedVO = transformedVOs[voIndex];
+                            const transformedVOName = (transformedVO && transformedVO.name) ? transformedVO.name : '';
+                            // 전환 여부와 관계없이 모든 valueObject 추가
+                            mappings.valueObjects.push({
+                                original: originalVOName,
+                                transformed: (transformedVOName && transformedVOName !== originalVOName) ? transformedVOName : null,
+                                aggregate: originalAggName
+                            });
+                        }
+                    });
+                    
+                    // Preview Attributes (Fields) 매핑
+                    const originalPreviewAttrs = originalItem.previewAttributes || [];
+                    const transformedPreviewAttrs = transformedItem.previewAttributes || [];
+                    originalPreviewAttrs.forEach(function(originalAttr, attrIndex) {
+                        if (!originalAttr || !originalAttr.fieldName) return;
+                        
+                        // 매칭 전략: 1) fieldAlias로 매칭, 2) 인덱스로 매칭 (fallback)
+                        let transformedAttr = null;
+                        
+                        // 1. fieldAlias로 매칭 시도
+                        if (originalAttr.fieldAlias) {
+                            transformedAttr = transformedPreviewAttrs.find(function(attr) {
+                                return attr && attr.fieldAlias === originalAttr.fieldAlias;
+                            });
+                        }
+                        
+                        // 2. fieldAlias 매칭 실패 시 인덱스로 매칭 (fallback)
+                        if (!transformedAttr && attrIndex < transformedPreviewAttrs.length) {
+                            transformedAttr = transformedPreviewAttrs[attrIndex];
+                        }
+                        
+                        if (originalAttr.fieldName) {
+                            const originalFieldName = originalAttr.fieldName || '';
+                            const transformedFieldName = (transformedAttr && transformedAttr.fieldName) ? transformedAttr.fieldName : '';
+                            // 전환 여부와 관계없이 모든 field 추가
+                            mappings.fields.push({
+                                original: originalFieldName,
+                                transformed: (transformedFieldName && transformedFieldName !== originalFieldName) ? transformedFieldName : null,
+                                aggregate: originalAggName,
+                                alias: originalAttr.fieldAlias || ''
+                            });
+                        }
+                    });
+                    
+                    // DDL Fields 매핑
+                    const originalDdlFields = originalItem.ddlFields || [];
+                    const transformedDdlFields = transformedItem.ddlFields || [];
+                    originalDdlFields.forEach(function(originalField, fieldIndex) {
+                        if (!originalField || !originalField.fieldName) return;
+                        
+                        // 매칭 전략: 1) fieldAlias로 매칭, 2) 인덱스로 매칭 (fallback)
+                        let transformedField = null;
+                        
+                        // 1. fieldAlias로 매칭 시도
+                        if (originalField.fieldAlias) {
+                            transformedField = transformedDdlFields.find(function(field) {
+                                return field && field.fieldAlias === originalField.fieldAlias;
+                            });
+                        }
+                        
+                        // 2. fieldAlias 매칭 실패 시 인덱스로 매칭 (fallback)
+                        if (!transformedField && fieldIndex < transformedDdlFields.length) {
+                            transformedField = transformedDdlFields[fieldIndex];
+                        }
+                        
+                        if (originalField.fieldName) {
+                            const originalFieldName = originalField.fieldName || '';
+                            const transformedFieldName = (transformedField && transformedField.fieldName) ? transformedField.fieldName : '';
+                            // 전환 여부와 관계없이 모든 field 추가
+                            mappings.fields.push({
+                                original: originalFieldName,
+                                transformed: (transformedFieldName && transformedFieldName !== originalFieldName) ? transformedFieldName : null,
+                                aggregate: originalAggName,
+                                alias: originalField.fieldAlias || ''
+                            });
+                        }
+                    });
+                });
+                
+                return mappings;
             }
         }
     }

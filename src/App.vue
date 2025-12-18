@@ -681,6 +681,21 @@
             </v-card>
         </v-dialog>
 
+        <!-- 표준 문서 관리 다이얼로그 -->
+        <v-dialog
+                v-model="showStandardDocumentsDialog"
+                max-width="800px"
+                persistent
+                @click:outside="closeStandardDocumentsDialog"
+        >
+            <v-card style="width:100%;">
+                <StandardDocumentsManagement 
+                  @onClose="closeStandardDocumentsDialog"
+                >
+                </StandardDocumentsManagement>
+            </v-card>
+        </v-dialog>
+
         <!-- Snackbar insert info -->
         <v-snackbar
                 v-model="snackbar"
@@ -772,6 +787,7 @@
     const fs = require('fs');
     import Draggable from 'vue-draggable';
     import AIModelSetting from './components/designer/modeling/generators/features/ESDialoger/components/AIModelSetting/AIModelSetting.vue';
+    import StandardDocumentsManagement from './components/designer/modeling/generators/features/ESDialoger/components/StandardDocumentsManagement/StandardDocumentsManagement.vue';
     import { mapState, mapMutations } from 'vuex';
 
     export default {
@@ -867,6 +883,7 @@
                 {key: 'getCoin', display: `loginList.CoinsCoupons`},
                 {key: 'payQuestion', display: `loginList.inquiry`},
                 {key: 'aiModelSetting', display: "loginList.aiModelSetting"},
+                {key: 'standardDocuments', display: "loginList.standardDocuments"},
                 {key: 'logout', display: `loginList.logout`}
             ],
             loginText: 'Login',
@@ -987,7 +1004,8 @@
             offsetX: 0,
             offsetY: 0,
             makingDialog: null,
-            showAiModelSettingDialog: false
+            showAiModelSettingDialog: false,
+            showStandardDocumentsDialog: false
         }),
         components: {
             SubscriptionItemTemplate,
@@ -1002,6 +1020,7 @@
             VueContext,
             LogoView,
             AIModelSetting,
+            StandardDocumentsManagement,
         },
         // beforeMount(){
         // },
@@ -1993,6 +2012,8 @@
                         alert("'help@uengine.org' 으로 메일 문의 바랍니다. ") 
                     } else if (key == 'aiModelSetting') {
                         me.openAiModelSettingDialog()
+                    } else if (key == 'standardDocuments') {
+                        me.openStandardDocumentsDialog()
                     } else {
                         console.log("app")
                         if (me.isLogin) {
@@ -2237,6 +2258,12 @@
             closeAiModelSettingDialog() {
                 this.showAiModelSettingDialog = false;
                 this.setAiSettingsRequired(false);
+            },
+            openStandardDocumentsDialog() {
+                this.showStandardDocumentsDialog = true;
+            },
+            closeStandardDocumentsDialog() {
+                this.showStandardDocumentsDialog = false;
             }
         }
     }

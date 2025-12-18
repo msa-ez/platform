@@ -1,6 +1,6 @@
 <template>
     <div>
-        <v-card v-if="activeTab !== null" class="ma-4 pa-4" outlined>
+        <v-card v-if="activeTab !== null && !isStandardTransformed && !isTransforming" class="ma-4 pa-4" outlined>
             <v-textarea v-model="localFeedback" label="Feedback" rows="3"></v-textarea>
             <v-row class="pa-0 ma-0">
                 <v-spacer></v-spacer>
@@ -47,6 +47,16 @@ export default {
         feedback: {
             type: String,
             required: true
+        },
+        isStandardTransformed: {
+            type: Boolean,
+            default: () => false,
+            required: false
+        },
+        isTransforming: {
+            type: Boolean,
+            default: () => false,
+            required: false
         }
     },
     data() {

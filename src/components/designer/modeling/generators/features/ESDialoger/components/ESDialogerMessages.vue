@@ -11,7 +11,7 @@
         <!-- <template v-else> -->
         <template>
             <template v-for="(message, index) in renderedMessages">
-                <!-- Aggregate Draft Dialog Messages -->
+                <!-- Aggregate Draft Dialog Messages (Original) -->
                 <template v-if="message.type === 'aggregateDraftDialogDto'">
                     <!-- Multiple Aggregate Draft Dialog Messages in Tabs -->
                     <v-card v-if="hasMultipleAggregateDraftMessages && index === aggregateDraftMessages[0].index" 
@@ -45,6 +45,9 @@
                                     @generateFromDraft="generateFromDraft"
                                     @feedbackFromDraft="feedbackFromDraft"
                                     @updateSelectedOptionItem="updateSelectedOptionItem"
+                                    @updateDraftOptions="updateDraftOptions"
+                                    @transformWithStandards="transformWithStandards"
+                                    :isTransforming="msg.isTransforming || false"
                                 ></AggregateDraftDialog>
                             </v-tab-item>
                         </v-tabs-items>
@@ -70,6 +73,36 @@
                             @generateFromDraft="generateFromDraft"
                             @feedbackFromDraft="feedbackFromDraft"
                             @updateSelectedOptionItem="updateSelectedOptionItem"
+                            @updateDraftOptions="updateDraftOptions"
+                            @transformWithStandards="transformWithStandards"
+                            :isTransforming="message.isTransforming || false"
+                        ></AggregateDraftDialog>
+                    </v-card>
+                </template>
+
+                <!-- Standard Transformed Draft Dialog Messages -->
+                <template v-else-if="message.type === 'standardTransformedDraftDialogDto'">
+                    <v-card :key="message.uniqueId"
+                           class="auto-modeling-user-story-card" 
+                           style="margin-top: 30px !important; border: 2px solid #4CAF50;"
+                           :class="{'hidden': shouldHideMessage(message)}">
+                        <AggregateDraftDialog
+                            :draftOptions="message.draftOptions"
+                            :draftUIInfos="message.draftUIInfos"
+                            :isGeneratorButtonEnabled="true"
+                            :uiType="'ESDialoger'"
+                            :messageUniqueId="message.uniqueId"
+                            :isEditable="isEditable"
+                            :boundedContextVersion="message.boundedContextVersion"
+                            :isStandardTransformed="true"
+                            :transformationMappings="message.transformationMappings || {}"
+                            @onClose="message.actions ? message.actions.stop() : null"
+                            @onRetry="message.actions ? message.actions.retry() : null"
+                            @generateFromDraft="generateFromDraft"
+                            @feedbackFromDraft="feedbackFromDraft"
+                            @updateSelectedOptionItem="updateSelectedOptionItem"
+                            @updateDraftOptions="updateDraftOptions"
+                            :isTransforming="false"
                         ></AggregateDraftDialog>
                     </v-card>
                 </template>
@@ -257,7 +290,10 @@ export default {
                 .filter(msg => msg.type === 'aggregateDraftDialogDto');
         },
         nonAggregateMessages() {
-            return this.renderedMessages.filter(msg => msg.type !== 'aggregateDraftDialogDto');
+            return this.renderedMessages.filter(msg => 
+                msg.type !== 'aggregateDraftDialogDto' && 
+                msg.type !== 'standardTransformedDraftDialogDto'
+            );
         },
         hasAggregateDraftMessages() {
             return this.aggregateDraftMessages.length > 0;
@@ -339,6 +375,9 @@ export default {
         feedbackFromDraft(boundedContextInfo, feedback, draftOptions, messageUniqueId) {
             this.$emit('feedbackFromAggregateDrafts', boundedContextInfo, feedback, draftOptions, messageUniqueId)
         },
+        transformWithStandards(boundedContextInfo, draftOptions, messageUniqueId) {
+            this.$emit('transformWithStandards', boundedContextInfo, draftOptions, messageUniqueId);
+        },
 
         deepCopy(obj) {
             return JSON.parse(JSON.stringify(obj));
@@ -353,8 +392,14 @@ export default {
             this.$emit('updateSelectedAspect', aspect)
         },
 
-        updateSelectedOptionItem(selectedOptionItem) {
-            this.$emit('updateSelectedOptionItem', selectedOptionItem)
+        updateSelectedOptionItem(selectedOptionItem, messageUniqueId) {
+            // messageUniqueId 파라미터를 부모로 전달 (중요!)
+            this.$emit('updateSelectedOptionItem', selectedOptionItem, messageUniqueId)
+        },
+
+        updateDraftOptions(draftOptions, messageUniqueId) {
+            // messageUniqueId 파라미터를 부모로 전달
+            this.$emit('updateDraftOptions', draftOptions, messageUniqueId)
         },
 
         shouldHideMessage(message) {
@@ -382,6 +427,7 @@ export default {
 
             switch (message.type) {
                 case 'aggregateDraftDialogDto':
+                case 'standardTransformedDraftDialogDto':
                     const isDraftOptionsValid = message.draftOptions && 
                         Array.isArray(message.draftOptions) && 
                         message.draftOptions.length > 0 &&
@@ -393,7 +439,6 @@ export default {
                         });
 
                     const isDraftUIInfosValid = message.draftUIInfos && 
-                        Object.prototype.hasOwnProperty.call(message.draftUIInfos, 'leftBoundedContextCount') &&
                         Object.prototype.hasOwnProperty.call(message.draftUIInfos, 'directMessage') &&
                         Object.prototype.hasOwnProperty.call(message.draftUIInfos, 'progress');
 

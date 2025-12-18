@@ -140,6 +140,14 @@ class RequirementsMappingGenerator extends FormattedJSONAIGenerator {
                 <rule id="5">**Precision:** Point to exact line numbers and phrases for accurate traceability</rule>
             </section>
 
+            <section id="accuracy_requirements">
+                <title>Precision and Accuracy Standards</title>
+                <rule id="1">**Exact Segments:** Be precise in identifying the exact text segments that justify each requirement mapping</rule>
+                <rule id="2">**Avoid Vagueness:** Avoid generic or vague references that don't clearly support the bounded context</rule>
+                <rule id="3">**Verification:** Ensure that the referenced text actually justifies the requirement's relevance to the bounded context</rule>
+                <rule id="4">**Comprehensive Mapping:** If multiple sections contribute to a single requirement, include all relevant references</rule>
+            </section>
+
             <section id="decision_strategy">
                 <title>Decision Strategy</title>
                 <rule id="1">**Context Awareness:** Consider the Bounded Context's implementation strategy and importance</rule>
