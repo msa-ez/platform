@@ -3653,15 +3653,6 @@ import { value } from 'jsonpath';
                         // 재처리된 결과 사용
                         const finalResults = reprocessedResults;
                         
-                        // selectedOptionItem 자동 설정: 각 BC의 첫 번째(유일한) 옵션 선택
-                        // Deep copy로 Vue 반응성 변질 방지
-                        const autoSelectedOptionItem = {};
-                        finalResults.forEach(function(bcResult) {
-                            if (bcResult.transformedOptions && bcResult.transformedOptions.length > 0) {
-                                autoSelectedOptionItem[bcResult.boundedContext] = JSON.parse(JSON.stringify(bcResult.transformedOptions[0]));
-                            }
-                        });
-                        
                         // 메시지 업데이트 (추가가 아님!)
                         self.$set(transformedMessage, 'draftUIInfos', {
                             leftBoundedContextCount: 0,  // 완료되었으므로 0
@@ -3669,8 +3660,16 @@ import { value } from 'jsonpath';
                             progress: 100,
                             isTransforming: false
                         });
+                        
+                        // 원본 AggregateDraftDto 메시지의 isTransforming도 false로 설정
+                        if (aggMessage) {
+                            self.$set(aggMessage, 'isTransforming', false);
+                            if (aggMessage.draftUIInfos) {
+                                self.$set(aggMessage.draftUIInfos, 'isTransforming', false);
+                            }
+                        }
                         // draftOptions도 deep copy로 보호
-                        self.$set(transformedMessage, 'draftOptions', finalResults.map(function(bcResult) {
+                        const draftOptions = finalResults.map(function(bcResult) {
                             return {
                                 boundedContext: bcResult.boundedContext,
                                 boundedContextAlias: bcResult.boundedContextAlias,
@@ -3680,7 +3679,44 @@ import { value } from 'jsonpath';
                                 options: JSON.parse(JSON.stringify(bcResult.transformedOptions)),  // deep copy
                                 defaultOptionIndex: 0
                             };
-                        }));
+                        });
+                        self.$set(transformedMessage, 'draftOptions', draftOptions);
+                        
+                        // selectedOptionItem 자동 설정: options[defaultIndex]에 boundedContext 정보를 추가하여 원본과 동일한 구조 유지
+                        const autoSelectedOptionItem = {};
+                        draftOptions.forEach(function(draftOption) {
+                            if (draftOption.options && draftOption.options.length > 0) {
+                                const defaultIndex = draftOption.defaultOptionIndex != null ? draftOption.defaultOptionIndex : 0;
+                                const selectedOption = JSON.parse(JSON.stringify(draftOption.options[defaultIndex]));
+                                
+                                // boundedContext 정보를 객체 형태로 추가 (원본 구조와 동일하게)
+                                selectedOption.boundedContext = {
+                                    aggregates: draftOption.options[defaultIndex].structure ? 
+                                        draftOption.options[defaultIndex].structure.map(s => ({
+                                            alias: (s.aggregate && s.aggregate.alias) || '',
+                                            name: (s.aggregate && s.aggregate.name) || ''
+                                        })) : [],
+                                    alias: draftOption.boundedContextAlias || draftOption.boundedContext,
+                                    description: draftOption.description || '',
+                                    displayName: draftOption.boundedContextAlias || draftOption.boundedContext,
+                                    name: draftOption.boundedContext,
+                                    requirements: {
+                                        ddl: '',
+                                        description: draftOption.description || '',
+                                        event: draftOption.description || '',
+                                        eventNames: '',
+                                        traceMap: {},
+                                        userStory: ''
+                                    }
+                                };
+                                
+                                // inference와 conclusions도 최상위에 추가
+                                selectedOption.inference = draftOption.inference || '';
+                                selectedOption.conclusions = draftOption.conclusions || '';
+                                
+                                autoSelectedOptionItem[draftOption.boundedContext] = selectedOption;
+                            }
+                        });
                         self.$set(transformedMessage, 'selectedOptionItem', autoSelectedOptionItem);
                         
                         // UI 강제 업데이트
@@ -3871,15 +3907,6 @@ import { value } from 'jsonpath';
                                     transformedOptions: formattedOptions  // 포맷팅된 옵션 배열 (deep copy됨)
                                 });
                                 
-                                // 메시지 업데이트 (중간 진행 상황 반영)
-                                // autoSelectedOptionItem도 deep copy로 보호
-                                const autoSelectedOptionItem = {};
-                                transformedResults.forEach(function(bcResult) {
-                                    if (bcResult.transformedOptions && bcResult.transformedOptions.length > 0) {
-                                        autoSelectedOptionItem[bcResult.boundedContext] = JSON.parse(JSON.stringify(bcResult.transformedOptions[0]));
-                                    }
-                                });
-                                
                                 // draftUIInfos 전체 객체 교체 (Vue 반응성 보장)
                                 const newProgress = Math.floor(((processedCount + 1) / bcQueue.length) * 100);
                                 const leftCount = bcQueue.length - (processedCount + 1);
@@ -3894,15 +3921,18 @@ import { value } from 'jsonpath';
                                     newMessage = `표준 변환 중... (${processedCount + 1}/${bcQueue.length}) - [후처리 중]`;
                                 }
                                 
+                                // 모든 BC 처리가 완료되었는지 확인 (leftCount === 0이면 완료)
+                                const isAllCompleted = leftCount === 0;
+                                
                                 self.$set(transformedMessage, 'draftUIInfos', {
                                     leftBoundedContextCount: leftCount > 0 ? leftCount : 1,  // 0이면 표시 안되므로 최소 1
                                     directMessage: newMessage,
                                     progress: newProgress,
-                                    isTransforming: true
+                                    isTransforming: !isAllCompleted  // 모든 BC 처리 완료 시 false
                                 });
                                 
                                 // draftOptions도 deep copy로 보호
-                                self.$set(transformedMessage, 'draftOptions', transformedResults.map(function(bcResult) {
+                                const draftOptions = transformedResults.map(function(bcResult) {
                                     return {
                                         boundedContext: bcResult.boundedContext,
                                         boundedContextAlias: bcResult.boundedContextAlias,
@@ -3912,9 +3942,47 @@ import { value } from 'jsonpath';
                                         options: JSON.parse(JSON.stringify(bcResult.transformedOptions)),  // deep copy
                                         defaultOptionIndex: 0
                                     };
-                                }));
+                                });
+                                self.$set(transformedMessage, 'draftOptions', draftOptions);
                                 
-                                self.$set(transformedMessage, 'selectedOptionItem', autoSelectedOptionItem);
+                                // selectedOptionItem 업데이트: options[defaultIndex]에 boundedContext 정보를 추가하여 원본과 동일한 구조 유지
+                                // 기존 selectedOptionItem을 유지하면서 새로 추가/업데이트만 수행
+                                const currentSelectedOptionItem = transformedMessage.selectedOptionItem || {};
+                                const updatedSelectedOptionItem = JSON.parse(JSON.stringify(currentSelectedOptionItem));
+                                draftOptions.forEach(function(draftOption) {
+                                    if (draftOption.options && draftOption.options.length > 0) {
+                                        const defaultIndex = draftOption.defaultOptionIndex != null ? draftOption.defaultOptionIndex : 0;
+                                        const selectedOption = JSON.parse(JSON.stringify(draftOption.options[defaultIndex]));
+                                        
+                                        // boundedContext 정보를 객체 형태로 추가 (원본 구조와 동일하게)
+                                        selectedOption.boundedContext = {
+                                            aggregates: draftOption.options[defaultIndex].structure ? 
+                                                draftOption.options[defaultIndex].structure.map(s => ({
+                                                    alias: (s.aggregate && s.aggregate.alias) || '',
+                                                    name: (s.aggregate && s.aggregate.name) || ''
+                                                })) : [],
+                                            alias: draftOption.boundedContextAlias || draftOption.boundedContext,
+                                            description: draftOption.description || '',
+                                            displayName: draftOption.boundedContextAlias || draftOption.boundedContext,
+                                            name: draftOption.boundedContext,
+                                            requirements: {
+                                                ddl: '',
+                                                description: draftOption.description || '',
+                                                event: draftOption.description || '',
+                                                eventNames: '',
+                                                traceMap: {},
+                                                userStory: ''
+                                            }
+                                        };
+                                        
+                                        // inference와 conclusions도 최상위에 추가
+                                        selectedOption.inference = draftOption.inference || '';
+                                        selectedOption.conclusions = draftOption.conclusions || '';
+                                        
+                                        updatedSelectedOptionItem[draftOption.boundedContext] = selectedOption;
+                                    }
+                                });
+                                self.$set(transformedMessage, 'selectedOptionItem', updatedSelectedOptionItem);
                                 // transformationMappings도 업데이트
                                 if (transformedMessage.transformationMappings) {
                                     self.$set(transformedMessage, 'transformationMappings', JSON.parse(JSON.stringify(transformedMessage.transformationMappings)));

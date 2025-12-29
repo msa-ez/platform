@@ -315,14 +315,14 @@
                                                     :items="[
                                                         { text: 'Given', value: 'given' },
                                                         { text: 'When', value: 'when' },
-                                                        { text: 'Custom', value: 'custom' }
+                                                        // { text: 'Custom', value: 'custom' }
                                                     ]"
                                                     label="Source"
                                                     dense
                                                     @change="onDataCheckSourceChange(check, index)"
                                                 ></v-select>
                                             </v-col>
-                                            <v-col cols="12" md="4" v-if="check.sourceType === 'custom'">
+                                            <!-- <v-col cols="12" md="4" v-if="check.sourceType === 'custom'">
                                                 <v-text-field
                                                     v-model="check.field"
                                                     label="Field Path"
@@ -330,8 +330,8 @@
                                                     dense
                                                     @input="saveAdvancedSettings()"
                                                 ></v-text-field>
-                                            </v-col>
-                                            <v-col cols="12" md="4" v-else>
+                                            </v-col> -->
+                                            <v-col cols="12" md="4">
                                                 <v-select
                                                     v-model="check.field"
                                                     :items="getAvailableFields(check.sourceType)"

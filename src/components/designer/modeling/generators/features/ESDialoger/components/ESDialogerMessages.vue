@@ -102,7 +102,7 @@
                             @feedbackFromDraft="feedbackFromDraft"
                             @updateSelectedOptionItem="updateSelectedOptionItem"
                             @updateDraftOptions="updateDraftOptions"
-                            :isTransforming="false"
+                            :isTransforming="message.draftUIInfos && message.draftUIInfos.isTransforming || false"
                         ></AggregateDraftDialog>
                     </v-card>
                 </template>

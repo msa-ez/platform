@@ -95,12 +95,12 @@
                                                         dense
                                                         hide-details
                                                         autofocus
-                                                        @blur="saveEditValue(activeContext.boundedContext, group.aggregate.original, item, itemIndex)"
-                                                        @keyup.enter="saveEditValue(activeContext.boundedContext, group.aggregate.original, item, itemIndex)"
+                                                        @blur="saveEditValue(activeContext.boundedContext, group.aggregate.original, group.aggregate.alias, item, itemIndex)"
+                                                        @keyup.enter="saveEditValue(activeContext.boundedContext, group.aggregate.original, group.aggregate.alias, item, itemIndex)"
                                                         @keyup.esc="cancelEdit(item)"
                                                         class="mr-2"
                                                     ></v-text-field>
-                                                    <v-btn icon x-small @click="saveEditValue(activeContext.boundedContext, group.aggregate.original, item, itemIndex)">
+                                                    <v-btn icon x-small @click="saveEditValue(activeContext.boundedContext, group.aggregate.original, group.aggregate.alias, item, itemIndex)">
                                                         <v-icon small>check</v-icon>
                                                     </v-btn>
                                                     <v-btn icon x-small @click="cancelEdit(item)">
@@ -570,7 +570,36 @@
                         if(this.selectedCardIndex[option.boundedContext] >= option.options.length)
                             this.selectedCardIndex[option.boundedContext] = option.options.length - 1
 
-                        this.selectedOptionItem[option.boundedContext] = option.options[this.selectedCardIndex[option.boundedContext]]  
+                        const selectedOption = JSON.parse(JSON.stringify(option.options[this.selectedCardIndex[option.boundedContext]]));
+                        
+                        // 표준 변환된 경우: boundedContext 정보를 객체 형태로 추가 (원본 구조와 동일하게)
+                        if (this.isStandardTransformed) {
+                            selectedOption.boundedContext = {
+                                aggregates: selectedOption.structure ? 
+                                    selectedOption.structure.map(s => ({
+                                        alias: (s.aggregate && s.aggregate.alias) || '',
+                                        name: (s.aggregate && s.aggregate.name) || ''
+                                    })) : [],
+                                alias: option.boundedContextAlias || option.boundedContext,
+                                description: option.description || '',
+                                displayName: option.boundedContextAlias || option.boundedContext,
+                                name: option.boundedContext,
+                                requirements: {
+                                    ddl: '',
+                                    description: option.description || '',
+                                    event: option.description || '',
+                                    eventNames: '',
+                                    traceMap: {},
+                                    userStory: ''
+                                }
+                            };
+                            
+                            // inference와 conclusions도 최상위에 추가
+                            selectedOption.inference = option.inference || '';
+                            selectedOption.conclusions = option.conclusions || '';
+                        }
+                        
+                        this.selectedOptionItem[option.boundedContext] = selectedOption;
                     })
 
                     // console.log("[~] updateSelectionByDraftOptions", structuredClone(this.selectedCardIndex), structuredClone(this.selectedOptionItem))
@@ -629,7 +658,7 @@
                 }
             },
             
-            saveEditValue(boundedContext, aggregateOriginal, item, itemIndex) {
+            saveEditValue(boundedContext, aggregateOriginal, aggregateAlias, item, itemIndex) {
                 if (!item || !item.editKey) {
                     return;
                 }
@@ -642,11 +671,11 @@
                 if (newValue.trim()) {
                     // alias 전달 (Field의 경우 fieldAlias 사용)
                     const itemAlias = item.alias || item.fieldAlias || '';
-                    this.updateTransformedValue(boundedContext, aggregateOriginal, item.type, item.original, newValue, itemAlias);
+                    this.updateTransformedValue(boundedContext, aggregateOriginal, aggregateAlias, item.type, item.original, newValue, itemAlias);
                 }
             },
             
-            updateTransformedValue(boundedContext, aggregateOriginal, itemType, itemOriginal, newValue, itemAlias = '') {
+            updateTransformedValue(boundedContext, aggregateOriginal, aggregateAlias, itemType, itemOriginal, newValue, itemAlias = '') {
                 if (!newValue || !newValue.trim()) {
                     return; // 빈 값은 무시
                 }
@@ -731,9 +760,30 @@
                         return;
                     }
                     
-                    const structureItem = option.structure.find(item => 
-                        item.aggregate && item.aggregate.name === aggregateOriginal
-                    );
+                    // alias로 먼저 찾기 (가장 확실함 - 변환 전후 동일)
+                    let structureItem = null;
+                    if (aggregateAlias) {
+                        structureItem = option.structure.find(item => 
+                            item.aggregate && item.aggregate.alias === aggregateAlias
+                        );
+                    }
+                    
+                    // alias로 못 찾으면 transformationMappings에서 변환된 이름으로 찾기
+                    if (!structureItem) {
+                        const aggMapping = mappings.aggregates.find(m => m.original === aggregateOriginal);
+                        if (aggMapping && aggMapping.transformed) {
+                            structureItem = option.structure.find(item => 
+                                item.aggregate && item.aggregate.name === aggMapping.transformed
+                            );
+                        }
+                    }
+                    
+                    // 그래도 못 찾으면 aggregateOriginal로 찾기 (변환되지 않은 경우)
+                    if (!structureItem) {
+                        structureItem = option.structure.find(item => 
+                            item.aggregate && item.aggregate.name === aggregateOriginal
+                        );
+                    }
                     
                     if (!structureItem) {
                         return;
@@ -859,15 +909,54 @@
                 // selectedOptionItem도 업데이트 (모든 타입에 대해)
                 const selectedOption = this.selectedOptionItem[boundedContext];
                 if (selectedOption && selectedOption.structure) {
-                    const structureItem = selectedOption.structure.find(item => 
-                        item.aggregate && item.aggregate.name === aggregateOriginal
-                    );
+                    // alias로 먼저 찾기 (가장 확실함 - 변환 전후 동일)
+                    let structureItem = null;
+                    let aggMapping = null;
+                    
+                    if (aggregateAlias) {
+                        structureItem = selectedOption.structure.find(item => 
+                            item.aggregate && item.aggregate.alias === aggregateAlias
+                        );
+                    }
+                    
+                    // alias로 못 찾으면 transformationMappings에서 변환된 이름으로 찾기
+                    if (!structureItem) {
+                        aggMapping = mappings.aggregates.find(m => m.original === aggregateOriginal);
+                        if (aggMapping && aggMapping.transformed) {
+                            structureItem = selectedOption.structure.find(item => 
+                                item.aggregate && item.aggregate.name === aggMapping.transformed
+                            );
+                        }
+                    } else {
+                        // 이미 찾았으면 매핑 정보도 가져오기
+                        aggMapping = mappings.aggregates.find(m => m.original === aggregateOriginal);
+                    }
+                    
+                    // 그래도 못 찾으면 aggregateOriginal로 찾기 (변환되지 않은 경우)
+                    if (!structureItem) {
+                        structureItem = selectedOption.structure.find(item => 
+                            item.aggregate && item.aggregate.name === aggregateOriginal
+                        );
+                        if (!aggMapping) {
+                            aggMapping = mappings.aggregates.find(m => m.original === aggregateOriginal);
+                        }
+                    }
                     
                     if (structureItem) {
                         // draftOptions에서 업데이트한 것과 동일한 로직으로 selectedOptionItem도 업데이트
                         if (itemType === 'Aggregate') {
                             if (structureItem.aggregate) {
                                 this.$set(structureItem.aggregate, 'name', trimmedValue);
+                                
+                                // selectedOptionItem.boundedContext.aggregates 배열도 업데이트
+                                if (selectedOption.boundedContext && selectedOption.boundedContext.aggregates) {
+                                    const aggInBoundedContext = selectedOption.boundedContext.aggregates.find(agg => 
+                                        agg.name === aggregateOriginal || agg.name === (aggMapping && aggMapping.transformed)
+                                    );
+                                    if (aggInBoundedContext) {
+                                        this.$set(aggInBoundedContext, 'name', trimmedValue);
+                                    }
+                                }
                             }
                         } else if (itemType === 'Enumeration') {
                             let enumItem = null;

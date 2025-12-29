@@ -17,7 +17,7 @@
 
         <v-row class="ma-0 pa-4">
             <v-spacer></v-spacer>
-            <v-tooltip bottom :disabled="!isTransformButtonDisabled || hasStandardDocument">
+            <v-tooltip bottom :disabled="!isTransformButtonDisabled || hasStandardDocument || isTransforming">
                 <template v-slot:activator="{ on, attrs }">
                     <span v-bind="attrs" v-on="on">
                         <v-btn 
@@ -92,6 +92,11 @@ export default {
             required: false
         },
         isStandardTransformed: {
+            type: Boolean,
+            default: () => false,
+            required: false
+        },
+        isTransforming: {
             type: Boolean,
             default: () => false,
             required: false
