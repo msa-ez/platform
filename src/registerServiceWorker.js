@@ -60,7 +60,11 @@ async function silentCacheClear() {
   }
 }
 
-if (process.env.NODE_ENV === 'production') {
+// 설치형(onprem/bpm) 환경에서는 Service Worker 비활성화
+// window.MODE는 index.html에서 설정되므로, 설정되지 않은 경우도 고려
+const isOnpremMode = window.MODE === 'onprem' || window.MODE === 'bpm'
+
+if (process.env.NODE_ENV === 'production' && !isOnpremMode) {
   // 서버와 클라이언트 빌드 버전 비교
   const serverBuildVersion = getServerBuildVersion()
   const clientBuildVersion = CLIENT_BUILD_VERSION
