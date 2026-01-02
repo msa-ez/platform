@@ -1,6 +1,5 @@
 const Vue = require('vue').default || require('vue');
 const StorageBase = require('../../../../../CommonStorageBase.vue').default;
-const firebase = require('firebase');
 
 /**
  * DDL Fields Assignment Generator용 LangGraph Backend Proxy
@@ -47,7 +46,7 @@ class DDLFieldsLangGraphProxy {
         });
 
         await storage.setObject(this._getRequestJobPath(jobId), {
-            "createdAt": firebase.database.ServerValue.TIMESTAMP
+            "createdAt": storage.getServerTimestamp()
         });
 
         return jobId;

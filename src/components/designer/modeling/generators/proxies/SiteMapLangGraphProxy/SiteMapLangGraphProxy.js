@@ -1,6 +1,5 @@
 const Vue = require('vue').default || require('vue');
 const StorageBase = require('../../../../../CommonStorageBase.vue').default;
-const firebase = require('firebase');
 
 /**
  * SiteMap 생성 LangGraph Proxy
@@ -87,7 +86,7 @@ class SiteMapLangGraphProxy {
         
         const requestedJob = {
             jobId: this.jobId,
-            createdAt: firebase.database.ServerValue.TIMESTAMP
+            createdAt: storage.getServerTimestamp()
         };
         
         await storage.setObject(this._getRequestJobPath(this.jobId), requestedJob);

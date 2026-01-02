@@ -156,6 +156,9 @@
             _getRef(auth){
                 return this.db._getRef(auth)
             },
+            _getServerTimestamp(){
+                return this.db._getServerTimestamp()
+            },
             //minio Only
             _getURL(path, tenant) {
                 var server = this.getServer(path);

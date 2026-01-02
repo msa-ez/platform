@@ -279,6 +279,9 @@
                     return false
                 }
             },
+            _getServerTimestamp() {
+                return firebase.database.ServerValue.TIMESTAMP;
+            },
         }
     };
 </script>

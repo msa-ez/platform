@@ -118,8 +118,14 @@
             _isConnection(path, callback) {
                 throw new Error("must be implemented")
             },
+            _getServerTimestamp() {
+                throw new Error("must be implemented")
+            },
             isConnection(path, callback) {
                 return this._isConnection(path, callback);
+            },
+            getServerTimestamp() {
+                return this._getServerTimestamp();
             },
             watch(path, callback) {
                 return this._watch(path, callback)

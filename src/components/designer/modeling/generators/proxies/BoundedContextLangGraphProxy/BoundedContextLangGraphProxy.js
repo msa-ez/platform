@@ -1,6 +1,5 @@
 const Vue = require('vue').default || require('vue');
 const StorageBase = require('../../../../../CommonStorageBase.vue').default;
-const firebase = require('firebase');
 
 /**
  * BoundedContextLangGraphProxy
@@ -57,7 +56,7 @@ class BoundedContextLangGraphProxy {
         });
 
         await storage.setObject(this._getRequestJobPath(jobId), {
-            "createdAt": firebase.database.ServerValue.TIMESTAMP
+            "createdAt": storage.getServerTimestamp()
         });
 
         console.log(`✅ BoundedContext Job created: ${jobId}`);

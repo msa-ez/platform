@@ -1,6 +1,5 @@
 const Vue = require('vue').default || require('vue');
 const StorageBase = require('../../../../../CommonStorageBase.vue').default;
-const firebase = require('firebase');
 
 /**
  * Preview Fields Generator용 LangGraph Backend Proxy
@@ -52,7 +51,7 @@ class PreviewFieldsLangGraphProxy {
         });
 
         await storage.setObject(this._getRequestJobPath(jobId), {
-            "createdAt": firebase.database.ServerValue.TIMESTAMP
+            "createdAt": storage.getServerTimestamp()
         });
 
         return jobId;

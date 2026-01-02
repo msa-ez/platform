@@ -1,6 +1,5 @@
 const Vue = require('vue').default || require('vue');
 const StorageBase = require('../../../../CommonStorageBase.vue').default;
-const firebase = require('firebase');
 const LoggingUtil = require('../utils/LoggingUtil');
 const logger = LoggingUtil.makeFromNamespace("LangGraphProxyBase");
 
@@ -27,6 +26,9 @@ class LangGraphProxyBase {
         return new Vue(StorageBase);
     }
 
+    static getServerTimestamp() {
+        return this.STORAGE.getServerTimestamp();
+    }
 
     static _getJobPath(jobId) {
         return `db://${this.ROOT_PATH_JOBS}/${this.NAMESPACE}/${jobId}`;
@@ -56,7 +58,7 @@ class LangGraphProxyBase {
         await this.STORAGE.setObject(this._getJobPath(jobId), jobState);
 
         await this.STORAGE.setObject(this._getRequestJobPath(jobId), {
-            "createdAt": firebase.database.ServerValue.TIMESTAMP
+            "createdAt": this.getServerTimestamp()
         });
 
         return jobId;

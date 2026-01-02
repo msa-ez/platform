@@ -1,6 +1,5 @@
 const Vue = require('vue').default || require('vue');
 const StorageBase = require('../../../../../CommonStorageBase.vue').default;
-const firebase = require('firebase');
 
 /**
  * Command/ReadModel 추출 LangGraph Proxy
@@ -85,7 +84,7 @@ class CommandReadModelLangGraphProxy {
         
         const requestedJob = {
             jobId: this.jobId,
-            createdAt: firebase.database.ServerValue.TIMESTAMP
+            createdAt: storage.getServerTimestamp()
         };
         
         const requestJobPath = this._getRequestJobPath(this.jobId);

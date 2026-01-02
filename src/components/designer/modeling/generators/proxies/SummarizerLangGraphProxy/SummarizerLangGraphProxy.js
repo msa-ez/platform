@@ -1,6 +1,5 @@
 const Vue = require('vue').default || require('vue');
 const StorageBase = require('../../../../../CommonStorageBase.vue').default;
-const firebase = require('firebase');
 
 /**
  * SummarizerLangGraphProxy
@@ -45,7 +44,7 @@ class SummarizerLangGraphProxy {
         });
 
         await storage.setObject(this._getRequestJobPath(jobId), {
-            "createdAt": firebase.database.ServerValue.TIMESTAMP
+            "createdAt": storage.getServerTimestamp()
         });
 
         console.log(`✅ Summarizer Job created: ${jobId}`);

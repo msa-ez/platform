@@ -290,6 +290,9 @@
                     return false
                 }
             },
+            _getServerTimestamp() {
+                return Date.now();
+            },
 
 
         }

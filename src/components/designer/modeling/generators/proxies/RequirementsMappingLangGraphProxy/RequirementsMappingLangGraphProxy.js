@@ -1,6 +1,5 @@
 const Vue = require('vue').default || require('vue');
 const StorageBase = require('../../../../../CommonStorageBase.vue').default;
-const firebase = require('firebase');
 
 /**
  * RequirementsMappingLangGraphProxy
@@ -45,7 +44,7 @@ class RequirementsMappingLangGraphProxy {
         });
 
         await storage.setObject(this._getRequestJobPath(jobId), {
-            "createdAt": firebase.database.ServerValue.TIMESTAMP
+            "createdAt": storage.getServerTimestamp()
         });
 
         return jobId;
