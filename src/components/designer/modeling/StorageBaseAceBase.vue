@@ -195,14 +195,10 @@
                 me._watch(reference, function (snapshot){
                     if (snapshot) {
                         console.log(snapshot.ref.path)
-                        if( Object.keys(snapshot.context()).length == 0){
-                            var snapshotObj = snapshot.val()
-                            var restoredValue = me._restoreDataFromStorage(snapshotObj.value)
-                            callback(restoredValue)
-                        } else {
-                            var restoredValue = me._restoreDataFromStorage(snapshot.val())
-                            callback(restoredValue)
-                        }
+                        // snapshot.val()은 이미 값을 반환하므로 직접 사용
+                        var value = snapshot.val()
+                        var restoredValue = me._restoreDataFromStorage(value)
+                        callback(restoredValue)
                     }else{
                         callback(null)
                     }
