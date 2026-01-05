@@ -5,7 +5,7 @@ networks:
     external: false
 services:
   msaez:
-    image: ghcr.io/msa-ez/platform:v1.0.18 # MSAez Docker Image
+    image: ghcr.io/msa-ez/platform:v1.0.23 # MSAez Docker Image
     networks:
       - msaez
     ports:
@@ -33,8 +33,8 @@ services:
       DB_NAME: mydb
       DB_PORT: 5757
       DB_HTTPS: "false"
-      CLIENT_ID: 689a0fc9-a7af-4e67-8096-ad2d2b05db66 # Client ID
-      CLIENT_SECRET: gto_uwrnodpkfxajmppgmcyislv7vdcsk53lxyaifkmoxczqncqzyi6q # Client Secret
+      CLIENT_ID: 40850ead-6f98-4dc5-aece-8beef3f2aca9 # Client ID
+      CLIENT_SECRET: gto_y3bwml4oj4hxtpjgb3szbfxpo5ewgdc2eisdy5pqm5i4kr2snxpa # Client Secret
       PROVIDER: gitea
       GIT: "gitea:3000" # Gitlab URL
       PROTOCOL: http

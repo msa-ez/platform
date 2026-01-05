@@ -87,7 +87,47 @@
                 var reference = window.$acebase.ref(path);
                 var snapshots = await me._get(reference)
 
-                return snapshots ? snapshots.val() : null
+                if (!snapshots) return null;
+                
+                var data = snapshots.val();
+                // Firebase와 동일하게 마커 복원 처리
+                return me._restoreDataFromStorage(data);
+            },
+            
+            /**
+             * Storage에서 가져온 데이터를 원본 형태로 복원 (Firebase 호환)
+             * @param {*} data Storage에서 가져온 데이터
+             * @returns {*} 복원된 데이터
+             */
+            _restoreDataFromStorage(data) {
+                if (data === null || data === undefined) {
+                    return data;
+                }
+                
+                const processValue = (value) => {
+                    if (value === "@") {
+                        return null;  // 빈 문자열 → null
+                    } else if (Array.isArray(value) && value.length === 1 && value[0] === "@") {
+                        return [];  // 마커 → 빈 배열
+                    } else if (typeof value === 'object' && value !== null && !Array.isArray(value) && 
+                               Object.keys(value).length === 1 && value["@"] === true) {
+                        return {};  // 마커 객체 → 빈 객체
+                    } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+                        // 객체인 경우 재귀적으로 처리
+                        const result = {};
+                        for (const [k, v] of Object.entries(value)) {
+                            result[k] = processValue(v);
+                        }
+                        return result;
+                    } else if (Array.isArray(value)) {
+                        // 배열인 경우 각 요소를 재귀적으로 처리
+                        return value.map(item => processValue(item));
+                    } else {
+                        return value;
+                    }
+                };
+                
+                return processValue(data);
             },
             async list(path, metadata){
                 var me = this
@@ -157,9 +197,11 @@
                         console.log(snapshot.ref.path)
                         if( Object.keys(snapshot.context()).length == 0){
                             var snapshotObj = snapshot.val()
-                            callback(snapshotObj.value)
+                            var restoredValue = me._restoreDataFromStorage(snapshotObj.value)
+                            callback(restoredValue)
                         } else {
-                            callback(snapshot.val())
+                            var restoredValue = me._restoreDataFromStorage(snapshot.val())
+                            callback(restoredValue)
                         }
                     }else{
                         callback(null)
