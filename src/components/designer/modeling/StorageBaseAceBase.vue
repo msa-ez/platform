@@ -191,40 +191,13 @@
             watch(path, callback){
                 var me = this
                 var reference = window.$acebase.ref(path)
-                
-                // 초기값이 전달되었는지 추적
-                var initialValueReceived = false
-                var initialValueTimeout = setTimeout(function() {
-                    // 500ms 내에 초기값이 오지 않으면 직접 가져오기 (안전장치)
-                    if (!initialValueReceived) {
-                        console.log('AceBase watch: initial value not received, fetching directly for:', path)
-                        me.get(path).then(function(initialValue) {
-                            if (initialValue !== null && initialValue !== undefined) {
-                                callback(initialValue)
-                            }
-                        }).catch(function(err) {
-                            console.log('Error getting initial value for watch:', err)
-                        })
-                    }
-                }, 500)
 
-                // 변경사항 감시 (Firebase와 동일하게 snapshot.exists() 확인)
                 me._watch(reference, function (snapshot){
-                    if (snapshot) {
-                        initialValueReceived = true
-                        clearTimeout(initialValueTimeout)
-                        console.log('AceBase watch triggered:', snapshot.ref.path)
-                        // snapshot.exists() 확인 (Firebase와 동일)
-                        if (snapshot.exists && snapshot.exists()) {
-                            var value = snapshot.val()
-                            var restoredValue = me._restoreDataFromStorage(value)
-                            callback(restoredValue)
-                        } else {
-                            callback(null)
-                        }
+                    if (snapshot && snapshot.exists()) {
+                        var value = snapshot.val()
+                        var restoredValue = me._restoreDataFromStorage(value)
+                        callback(restoredValue)
                     }else{
-                        initialValueReceived = true
-                        clearTimeout(initialValueTimeout)
                         callback(null)
                     }
                 })
