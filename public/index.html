@@ -297,6 +297,13 @@
         window.$acebase.ready(() => {
           console.log("Connected successfully");
         });
+        // WebSocket 재연결 시 구독 복구를 위한 이벤트 리스너
+        window.$acebase.on('connect', () => {
+          console.log("[AceBase] Reconnected, subscriptions should be restored automatically");
+        });
+        window.$acebase.on('disconnect', () => {
+          console.warn("[AceBase] Disconnected, subscriptions will be canceled");
+        });
       } else {
         var head = document.getElementsByTagName("head")[0];
         var app = document.createElement("script");

@@ -6,6 +6,27 @@
     export default {
         name: "storage-base-acebase",
         mixins: [StorageBaseAceBase_],
+        data() {
+            return {
+                _watchCallbacks: {} // path -> {reference, callback} 매핑을 저장하여 재연결 시 복구
+            }
+        },
+        created() {
+            var me = this
+            // WebSocket 재연결 시 모든 watch 구독 복구
+            if (window.$acebase) {
+                window.$acebase.on('connect', () => {
+                    console.log('[StorageBaseAceBase] Reconnected, restoring watch subscriptions');
+                    // 재연결 시 모든 watch 구독 복구
+                    Object.keys(me._watchCallbacks).forEach(path => {
+                        var watchInfo = me._watchCallbacks[path];
+                        if (watchInfo && watchInfo.reference && watchInfo.callback) {
+                            me._watch(watchInfo.reference, watchInfo.callback);
+                        }
+                    });
+                });
+            }
+        },
         methods:{
             async put(path, string, isString){
                 var me = this
@@ -208,7 +229,7 @@
 
                 // Firebase와 동일하게 동작: on('value')가 초기값과 변경사항을 모두 제공
                 // AceBase의 on('value')는 초기값도 즉시 제공하므로 별도 get() 호출 불필요
-                me._watch(reference, function (snapshot){
+                var watchCallback = function (snapshot){
                     if (snapshot && snapshot.exists()) {
                         var value = snapshot.val();
                         // jobs 경로는 LangGraph Proxy에서 복원하므로 여기서는 복원하지 않음
@@ -222,7 +243,15 @@
                     } else {
                         callback(null)
                     }
-                })
+                };
+                
+                // watch 정보를 저장하여 재연결 시 복구할 수 있도록 함
+                me._watchCallbacks[path] = {
+                    reference: reference,
+                    callback: watchCallback
+                };
+                
+                me._watch(reference, watchCallback)
             },
             watch_added(path, metadata, callback){
                 var me = this
@@ -290,7 +319,9 @@
             },
             watch_off(path){
                 var me = this
-                var reference = window.$acebase.ref(path);
+                var watchInfo = me._watchCallbacks[path];
+                var reference = watchInfo ? watchInfo.reference : window.$acebase.ref(path);
+                delete me._watchCallbacks[path]; // watch 정보 정리
                 return this._watch_off(reference)
             },
             delete(path){
