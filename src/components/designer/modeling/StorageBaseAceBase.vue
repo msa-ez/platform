@@ -8,25 +8,109 @@
         mixins: [StorageBaseAceBase_],
         data() {
             return {
-                _watchCallbacks: {} // path -> {reference, callback} 매핑을 저장하여 재연결 시 복구
+                _watchCallbacks: {}, // path -> {reference, handler, userCallback} 매핑을 저장하여 재연결 시 복구
+                _watchAddedCallbacks: {}, // path -> {reference, handler, userCallback, metadata} 매핑을 저장하여 재연결 시 복구
+                _watchAddedSeenKeys: {} // path -> {key: true} 매핑을 저장하여 중복 방지
             }
         },
         created() {
             var me = this
-            // WebSocket 재연결 시 모든 watch 구독 복구
-            if (window.$acebase) {
-                window.$acebase.on('connect', () => {
-                    console.log('[StorageBaseAceBase] Reconnected, restoring watch subscriptions');
-                    // 재연결 시 모든 watch 구독 복구
-                    if (me._watchCallbacks && typeof me._watchCallbacks === 'object') {
-                        Object.keys(me._watchCallbacks).forEach(path => {
-                            var watchInfo = me._watchCallbacks[path];
-                            if (watchInfo && watchInfo.reference && watchInfo.callback) {
-                                me._watch(watchInfo.reference, watchInfo.callback);
-                            }
+            // WebSocket 재연결 시 모든 watch 구독 복구 + resync (전역 훅은 한 번만 등록)
+            if (window.$acebase && !window.__acebaseWatchReconnectHooked) {
+                window.__acebaseWatchReconnectHooked = true;
+                
+                window.$acebase.on('connect', function() {
+                    console.log('[StorageBaseAceBase] connected/reconnected -> resubscribe + resync');
+                    
+                    // 모든 StorageBaseAceBase 인스턴스의 watch 복구
+                    if (window.__acebaseWatchInstances) {
+                        window.__acebaseWatchInstances.forEach(function(instance) {
+                            if (!instance || !instance._watchCallbacks) return;
+                            
+                            // watch(value) 복구
+                            Object.keys(instance._watchCallbacks || {}).forEach(async function(path) {
+                                var w = instance._watchCallbacks[path];
+                                if (!w) return;
+                                
+                                // 재구독 (중복 방지: 기존 핸들러 off 후 on)
+                                try {
+                                    w.reference.off('value', w.handler);
+                                } catch(e) {
+                                    try {
+                                        w.reference.off('value');
+                                    } catch(_) {}
+                                }
+                                w.reference.on('value', w.handler);
+                                
+                                // 누락 보정: 현재값 강제 동기화
+                                try {
+                                    var v = await instance.get(path);
+                                    w.userCallback(v !== null && v !== undefined ? v : null);
+                                } catch(e) {
+                                    // get 실패는 무시
+                                }
+                            });
+                            
+                            // watch_added(child_added) 복구
+                            Object.keys(instance._watchAddedCallbacks || {}).forEach(async function(path) {
+                                var w = instance._watchAddedCallbacks[path];
+                                if (!w) return;
+                                
+                                // 재구독 (중복 방지: 기존 핸들러 off 후 on)
+                                try {
+                                    w.reference.off('child_added', w.handler);
+                                } catch(e) {
+                                    try {
+                                        w.reference.off('child_added');
+                                    } catch(_) {}
+                                }
+                                
+                                // seenKeys 리셋 (재연결 시 서버 상태를 기준으로 재동기화)
+                                if (!instance._watchAddedSeenKeys) {
+                                    instance._watchAddedSeenKeys = {};
+                                }
+                                instance._watchAddedSeenKeys[path] = {};
+                                
+                                // 먼저 구독 등록 (레이스 컨디션 방지)
+                                w.reference.on('child_added', w.handler);
+                                
+                                // 누락 보정: list()로 전체 데이터 다시 로드 (dedup 포함)
+                                try {
+                                    var items = await instance.list(path, w.metadata);
+                                    if (Array.isArray(items)) {
+                                        items.forEach(function(item) {
+                                            if (item && item.key) {
+                                                // dedup: 이미 본 key는 스킵 (child_added에서 이미 처리했을 수 있음)
+                                                if (instance._watchAddedSeenKeys[path][item.key]) return;
+                                                instance._watchAddedSeenKeys[path][item.key] = true;
+                                                w.userCallback(item);
+                                            }
+                                        });
+                                    }
+                                } catch(e) {
+                                    // list 실패는 무시
+                                }
+                            });
                         });
                     }
                 });
+            }
+            
+            // 인스턴스를 전역 배열에 등록 (중복 방지)
+            if (!window.__acebaseWatchInstances) {
+                window.__acebaseWatchInstances = [];
+            }
+            if (!window.__acebaseWatchInstances.includes(this)) {
+                window.__acebaseWatchInstances.push(this);
+            }
+        },
+        beforeDestroy() {
+            // 인스턴스 제거 시 전역 배열에서도 제거
+            if (window.__acebaseWatchInstances) {
+                var index = window.__acebaseWatchInstances.indexOf(this);
+                if (index > -1) {
+                    window.__acebaseWatchInstances.splice(index, 1);
+                }
             }
         },
         methods:{
@@ -225,38 +309,56 @@
                 }
                 // ".", "#", "$", "[", or "]"
             },
-            watch(path, callback){
+            watch(path, userCallback){
                 var me = this
                 var reference = window.$acebase.ref(path)
+                var isJobsPath = path.startsWith('jobs/') || path.includes('/jobs/');
 
-                // Firebase와 동일하게 동작: on('value')가 초기값과 변경사항을 모두 제공
-                // AceBase의 on('value')는 초기값도 즉시 제공하므로 별도 get() 호출 불필요
-                var watchCallback = function (snapshot){
-                    if (snapshot && snapshot.exists()) {
-                        var value = snapshot.val();
-                        // jobs 경로는 LangGraph Proxy에서 복원하므로 여기서는 복원하지 않음
-                        // (Firebase와 동일한 동작: StorageBaseFireBase.watch()도 복원하지 않음)
-                        if (path.startsWith('jobs/') || path.includes('/jobs/')) {
-                            callback(value)
-                        } else {
-                            var restoredValue = me._restoreDataFromStorage(value)
-                            callback(restoredValue)
-                        }
+                // 기존 구독 있으면 먼저 정리
+                if (me._watchCallbacks && me._watchCallbacks[path]) {
+                    try {
+                        me._watchCallbacks[path].reference.off('value', me._watchCallbacks[path].handler);
+                    } catch(e) {
+                        try {
+                            me._watchCallbacks[path].reference.off('value');
+                        } catch(_) {}
+                    }
+                    delete me._watchCallbacks[path];
+                }
+
+                // exists() 쓰지 말고 value로 판단
+                var handler = function (snapshot){
+                    var value = snapshot && typeof snapshot.val === 'function' ? snapshot.val() : null;
+                    if (value === null || value === undefined) {
+                        return userCallback(null);
+                    }
+                    if (isJobsPath) {
+                        return userCallback(value);
                     } else {
-                        callback(null)
+                        var restoredValue = me._restoreDataFromStorage(value);
+                        return userCallback(restoredValue);
                     }
                 };
-                
-                // watch 정보를 저장하여 재연결 시 복구할 수 있도록 함
+
+                // watch 정보를 저장 (userCallback 포함)
                 if (!me._watchCallbacks) {
                     me._watchCallbacks = {};
                 }
                 me._watchCallbacks[path] = {
                     reference: reference,
-                    callback: watchCallback
+                    handler: handler,
+                    userCallback: userCallback
                 };
-                
-                me._watch(reference, watchCallback)
+
+                // 구독 등록
+                reference.on('value', handler);
+
+                // 최초 1회 정합성 보장(get)
+                me.get(path).then(function(v) {
+                    userCallback(v !== null && v !== undefined ? v : null);
+                }).catch(function() {
+                    userCallback(null);
+                });
             },
             watch_added(path, metadata, callback){
                 var me = this
@@ -294,42 +396,136 @@
                         }
                     }
 
-                    me._watch_added( reference, function (snapshot) {
+                    // 기존 구독 있으면 먼저 정리
+                    if (me._watchAddedCallbacks && me._watchAddedCallbacks[path]) {
+                        try {
+                            me._watchAddedCallbacks[path].reference.off('child_added', me._watchAddedCallbacks[path].handler);
+                        } catch(e) {
+                            try {
+                                me._watchAddedCallbacks[path].reference.off('child_added');
+                            } catch(_) {}
+                        }
+                        delete me._watchAddedCallbacks[path];
+                    }
+                    
+                    // seen keys 초기화
+                    if (!me._watchAddedSeenKeys) {
+                        me._watchAddedSeenKeys = {};
+                    }
+                    if (!me._watchAddedSeenKeys[path]) {
+                        me._watchAddedSeenKeys[path] = {};
+                    }
+
+                    var handler = function (snapshot) {
                         if (snapshot && snapshot.exists()) {
-                            var queue = snapshot.val()
+                            var key = snapshot.key;
+                            if (!key) {
+                                callback(null);
+                                return;
+                            }
+                            
+                            // dedup: 이미 본 key는 스킵
+                            if (me._watchAddedSeenKeys[path][key]) {
+                                return;
+                            }
+                            me._watchAddedSeenKeys[path][key] = true;
+                            
+                            var queue = snapshot.val();
 
                             if (typeof queue == 'boolean') {
                                 var obj = {
-                                    key: queue.key,
+                                    key: key,
                                     value: queue
                                 }
                                 callback(obj)
                             } else if(typeof queue == 'string'){
                                 var obj = {
-                                    key: snapshot.key,
+                                    key: key,
                                     value: queue
                                 }
                                 callback(obj)
                             } else {
-                                queue.key = snapshot.key
+                                queue.key = key
                                 callback(queue)
                             }
                         } else {
                             callback(null)
                         }
-                    })
+                    };
+
+                    // watch_added 정보를 저장 (userCallback 포함)
+                    if (!me._watchAddedCallbacks) {
+                        me._watchAddedCallbacks = {};
+                    }
+                    me._watchAddedCallbacks[path] = {
+                        reference: reference,
+                        handler: handler,
+                        userCallback: callback,
+                        metadata: metadata
+                    };
+
+                    // 1) 먼저 child_added 구독 등록 (레이스 컨디션 방지)
+                    reference.on('child_added', handler);
+                    
+                    // 2) 그 다음 list로 초기 데이터 로드 (dedup으로 중복 제거)
+                    me.list(path, metadata).then(function(items) {
+                        if (Array.isArray(items)) {
+                            items.forEach(function(item) {
+                                if (item && item.key) {
+                                    // dedup: 이미 본 key는 스킵 (child_added에서 이미 처리했을 수 있음)
+                                    if (me._watchAddedSeenKeys[path][item.key]) return;
+                                    me._watchAddedSeenKeys[path][item.key] = true;
+                                    callback(item);
+                                }
+                            });
+                        }
+                    }).catch(function() {
+                        // list 실패는 무시
+                    });
                 }catch (e) {
                     console.log(e)
                 }
             },
             watch_off(path){
                 var me = this
-                var watchInfo = me._watchCallbacks && me._watchCallbacks[path];
-                var reference = watchInfo ? watchInfo.reference : window.$acebase.ref(path);
-                if (me._watchCallbacks) {
-                    delete me._watchCallbacks[path]; // watch 정보 정리
+                var w = me._watchCallbacks && me._watchCallbacks[path];
+                if (w) {
+                    try {
+                        w.reference.off('value', w.handler);
+                    } catch(e) {
+                        try {
+                            w.reference.off('value');
+                        } catch(_) {}
+                    }
+                    delete me._watchCallbacks[path];
                 }
-                return this._watch_off(reference)
+                
+                // watch_added도 해제
+                var wAdded = me._watchAddedCallbacks && me._watchAddedCallbacks[path];
+                if (wAdded) {
+                    try {
+                        wAdded.reference.off('child_added', wAdded.handler);
+                    } catch(e) {
+                        try {
+                            wAdded.reference.off('child_added');
+                        } catch(_) {}
+                    }
+                    delete me._watchAddedCallbacks[path];
+                    // seen keys도 정리
+                    if (me._watchAddedSeenKeys && me._watchAddedSeenKeys[path]) {
+                        delete me._watchAddedSeenKeys[path];
+                    }
+                }
+                
+                // 없으면 그냥 off 시도
+                if (!w && !wAdded) {
+                    try {
+                        var ref = window.$acebase.ref(path);
+                        ref.off('value');
+                        ref.off('child_added');
+                    } catch(e) {}
+                }
+                return true;
             },
             delete(path){
                 var me = this
