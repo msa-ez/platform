@@ -206,37 +206,21 @@
                 var me = this
                 var reference = window.$acebase.ref(path)
 
-                // Firebase와 동일하게 동작: 초기값을 즉시 가져오고, 이후 변경사항은 감시
-                // AceBase의 on('value')는 WebSocket을 통해 이벤트를 받기 때문에 초기값이 지연될 수 있으므로
-                // 초기값을 먼저 가져오는 것을 보장
-                me.get(path).then(function(initialValue) {
-                    if (initialValue !== null && initialValue !== undefined) {
-                        callback(initialValue)
+                // Firebase와 동일하게 동작: on('value')가 초기값과 변경사항을 모두 제공
+                // AceBase의 on('value')는 초기값도 즉시 제공하므로 별도 get() 호출 불필요
+                me._watch(reference, function (snapshot){
+                    if (snapshot && snapshot.exists()) {
+                        var value = snapshot.val();
+                        // jobs 경로는 LangGraph Proxy에서 복원하므로 여기서는 복원하지 않음
+                        // (Firebase와 동일한 동작: StorageBaseFireBase.watch()도 복원하지 않음)
+                        if (path.startsWith('jobs/') || path.includes('/jobs/')) {
+                            callback(value)
+                        } else {
+                            var restoredValue = me._restoreDataFromStorage(value)
+                            callback(restoredValue)
+                        }
                     } else {
                         callback(null)
-                    }
-                }).catch(function(err) {
-                    // 초기값 가져오기 실패 시 null 전달
-                    callback(null)
-                })
-
-                // 이후 변경사항 감시 (Firebase와 동일하게 동작)
-                me._watch(reference, function (snapshot){
-                    // AceBase snapshot의 exists 판정이 환경에 따라 애매하므로 val()로 판단
-                    var value = snapshot && typeof snapshot.val === 'function' ? snapshot.val() : null;
-                    
-                    if (value === null || value === undefined) {
-                        callback(null);
-                        return;
-                    }
-                    
-                    // jobs 경로는 LangGraph Proxy에서 복원하므로 여기서는 복원하지 않음
-                    // (Firebase와 동일한 동작: StorageBaseFireBase.watch()도 복원하지 않음)
-                    if (path.startsWith('jobs/') || path.includes('/jobs/')) {
-                        callback(value)
-                    } else {
-                        var restoredValue = me._restoreDataFromStorage(value)
-                        callback(restoredValue)
                     }
                 })
             },
