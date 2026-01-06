@@ -18,12 +18,14 @@
                 window.$acebase.on('connect', () => {
                     console.log('[StorageBaseAceBase] Reconnected, restoring watch subscriptions');
                     // 재연결 시 모든 watch 구독 복구
-                    Object.keys(me._watchCallbacks).forEach(path => {
-                        var watchInfo = me._watchCallbacks[path];
-                        if (watchInfo && watchInfo.reference && watchInfo.callback) {
-                            me._watch(watchInfo.reference, watchInfo.callback);
-                        }
-                    });
+                    if (me._watchCallbacks && typeof me._watchCallbacks === 'object') {
+                        Object.keys(me._watchCallbacks).forEach(path => {
+                            var watchInfo = me._watchCallbacks[path];
+                            if (watchInfo && watchInfo.reference && watchInfo.callback) {
+                                me._watch(watchInfo.reference, watchInfo.callback);
+                            }
+                        });
+                    }
                 });
             }
         },
@@ -246,6 +248,9 @@
                 };
                 
                 // watch 정보를 저장하여 재연결 시 복구할 수 있도록 함
+                if (!me._watchCallbacks) {
+                    me._watchCallbacks = {};
+                }
                 me._watchCallbacks[path] = {
                     reference: reference,
                     callback: watchCallback
@@ -319,9 +324,11 @@
             },
             watch_off(path){
                 var me = this
-                var watchInfo = me._watchCallbacks[path];
+                var watchInfo = me._watchCallbacks && me._watchCallbacks[path];
                 var reference = watchInfo ? watchInfo.reference : window.$acebase.ref(path);
-                delete me._watchCallbacks[path]; // watch 정보 정리
+                if (me._watchCallbacks) {
+                    delete me._watchCallbacks[path]; // watch 정보 정리
+                }
                 return this._watch_off(reference)
             },
             delete(path){

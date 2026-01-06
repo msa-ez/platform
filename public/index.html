@@ -293,16 +293,26 @@
           port: window.DB_PORT,
           dbname: window.DB_NAME,
           https: window.DB_HTTPS,
+          // 네트워크 모니터링 활성화: 연결 상태를 주기적으로 확인하여 끊김을 조기에 감지
+          network: {
+            monitor: true,
+            interval: 30, // 30초마다 연결 상태 확인
+            realtime: true,
+            transports: ['websocket', 'polling'] // websocket 실패 시 polling으로 폴백
+          }
         });
         window.$acebase.ready(() => {
           console.log("Connected successfully");
         });
         // WebSocket 재연결 시 구독 복구를 위한 이벤트 리스너
         window.$acebase.on('connect', () => {
-          console.log("[AceBase] Reconnected, subscriptions should be restored automatically");
+          console.log("[AceBase] Connected");
         });
-        window.$acebase.on('disconnect', () => {
-          console.warn("[AceBase] Disconnected, subscriptions will be canceled");
+        window.$acebase.on('disconnect', (reason) => {
+          console.warn("[AceBase] Disconnected, reason:", reason);
+        });
+        window.$acebase.on('connect_error', (error) => {
+          console.error("[AceBase] Connection error:", error);
         });
       } else {
         var head = document.getElementsByTagName("head")[0];
