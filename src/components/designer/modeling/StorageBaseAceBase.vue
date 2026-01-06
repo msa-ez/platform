@@ -104,27 +104,36 @@
                     return data;
                 }
                 
+                // 🔥 루트 레벨 마커만 처리 (중첩 객체/배열에서는 마커 판별 안 함)
+                if (data === "@") {
+                    return null;  // 빈 문자열 → null
+                }
+                if (Array.isArray(data) && data.length === 1 && data[0] === "@") {
+                    return [];  // 마커 → 빈 배열
+                }
+                if (
+                    typeof data === 'object' &&
+                    data !== null &&
+                    !Array.isArray(data) &&
+                    Object.keys(data).length === 1 &&
+                    data["@"] === true
+                ) {
+                    return {};  // 마커 객체 → 빈 객체
+                }
+                
+                // 중첩된 객체/배열은 마커 판별 없이 재귀적으로 처리
                 const processValue = (value) => {
-                    if (value === "@") {
-                        return null;  // 빈 문자열 → null
-                    } else if (Array.isArray(value) && value.length === 1 && value[0] === "@") {
-                        return [];  // 마커 → 빈 배열
-                    } else if (typeof value === 'object' && value !== null && !Array.isArray(value) && 
-                               Object.keys(value).length === 1 && value["@"] === true) {
-                        return {};  // 마커 객체 → 빈 객체
-                    } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-                        // 객체인 경우 재귀적으로 처리
+                    if (Array.isArray(value)) {
+                        return value.map(item => processValue(item));
+                    }
+                    if (typeof value === 'object' && value !== null) {
                         const result = {};
                         for (const [k, v] of Object.entries(value)) {
                             result[k] = processValue(v);
                         }
                         return result;
-                    } else if (Array.isArray(value)) {
-                        // 배열인 경우 각 요소를 재귀적으로 처리
-                        return value.map(item => processValue(item));
-                    } else {
-                        return value;
                     }
+                    return value;
                 };
                 
                 return processValue(data);
@@ -192,19 +201,29 @@
                 var me = this
                 var reference = window.$acebase.ref(path)
 
-                // 초기값 먼저 가져오기 (Firebase와 동일하게 동작)
+                // Firebase와 동일하게 동작: 초기값을 즉시 가져오고, 이후 변경사항은 감시
+                // AceBase의 on('value')는 WebSocket을 통해 이벤트를 받기 때문에 초기값이 지연될 수 있으므로
+                // 초기값을 먼저 가져오는 것을 보장
                 me.get(path).then(function(initialValue) {
                     if (initialValue !== null && initialValue !== undefined) {
                         callback(initialValue)
+                    } else {
+                        callback(null)
                     }
                 }).catch(function(err) {
-                    // 초기값 가져오기 실패해도 watch는 계속 진행
+                    // 초기값 가져오기 실패 시 null 전달
+                    callback(null)
                 })
 
-                // 이후 변경사항 감시
+                // 이후 변경사항 감시 (Firebase와 동일하게 동작)
                 me._watch(reference, function (snapshot){
                     if (snapshot && snapshot.exists()) {
                         var value = snapshot.val()
+                        // 디버깅: RAW와 RESTORED 비교
+                        if (window.DEBUG_ACEBASE) {
+                            console.log('[AceBase Watch RAW]', path, value)
+                            console.log('[AceBase Watch RESTORED]', path, me._restoreDataFromStorage(value))
+                        }
                         var restoredValue = me._restoreDataFromStorage(value)
                         callback(restoredValue)
                     }else{
