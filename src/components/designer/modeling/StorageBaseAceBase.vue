@@ -350,14 +350,23 @@
                     userCallback: userCallback
                 };
 
-                // 구독 등록
-                reference.on('value', handler);
-
-                // 최초 1회 정합성 보장(get)
+                // AceBase의 on('value')는 초기값을 즉시 제공하지 않을 수 있으므로,
+                // 먼저 get()으로 초기값을 확실히 가져온 후 구독을 등록
+                // (Firebase는 on('value')가 초기값을 제공하지만, AceBase는 그렇지 않을 수 있음)
                 me.get(path).then(function(v) {
-                    userCallback(v !== null && v !== undefined ? v : null);
-                }).catch(function() {
+                    // 초기값 먼저 전달
+                    if (v !== null && v !== undefined) {
+                        userCallback(v);
+                    } else {
+                        userCallback(null);
+                    }
+                    // 그 다음 구독 등록 (이후 변경사항 감지)
+                    reference.on('value', handler);
+                }).catch(function(err) {
+                    // get 실패 시에도 구독은 등록 (나중에 데이터가 생길 수 있음)
+                    // permission 에러는 무시
                     userCallback(null);
+                    reference.on('value', handler);
                 });
             },
             watch_added(path, metadata, callback){
