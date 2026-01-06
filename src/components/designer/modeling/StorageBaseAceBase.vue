@@ -222,18 +222,21 @@
 
                 // 이후 변경사항 감시 (Firebase와 동일하게 동작)
                 me._watch(reference, function (snapshot){
-                    if (snapshot && snapshot.exists()) {
-                        var value = snapshot.val()
-                        // jobs 경로는 LangGraph Proxy에서 복원하므로 여기서는 복원하지 않음
-                        // (Firebase와 동일한 동작: StorageBaseFireBase.watch()도 복원하지 않음)
-                        if (path.startsWith('jobs/') || path.includes('/jobs/')) {
-                            callback(value)
-                        } else {
-                            var restoredValue = me._restoreDataFromStorage(value)
-                            callback(restoredValue)
-                        }
-                    }else{
-                        callback(null)
+                    // AceBase snapshot의 exists 판정이 환경에 따라 애매하므로 val()로 판단
+                    var value = snapshot && typeof snapshot.val === 'function' ? snapshot.val() : null;
+                    
+                    if (value === null || value === undefined) {
+                        callback(null);
+                        return;
+                    }
+                    
+                    // jobs 경로는 LangGraph Proxy에서 복원하므로 여기서는 복원하지 않음
+                    // (Firebase와 동일한 동작: StorageBaseFireBase.watch()도 복원하지 않음)
+                    if (path.startsWith('jobs/') || path.includes('/jobs/')) {
+                        callback(value)
+                    } else {
+                        var restoredValue = me._restoreDataFromStorage(value)
+                        callback(restoredValue)
                     }
                 })
             },
