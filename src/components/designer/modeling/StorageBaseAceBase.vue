@@ -90,6 +90,11 @@
                 if (!snapshots) return null;
                 
                 var data = snapshots.val();
+                // jobs 경로는 LangGraph Proxy에서 복원하므로 여기서는 복원하지 않음
+                // (Firebase와 동일한 동작: StorageBaseFireBase.watch()도 복원하지 않음)
+                if (path.startsWith('jobs/') || path.includes('/jobs/')) {
+                    return data;
+                }
                 // Firebase와 동일하게 마커 복원 처리
                 return me._restoreDataFromStorage(data);
             },
@@ -219,13 +224,14 @@
                 me._watch(reference, function (snapshot){
                     if (snapshot && snapshot.exists()) {
                         var value = snapshot.val()
-                        // 디버깅: RAW와 RESTORED 비교
-                        if (window.DEBUG_ACEBASE) {
-                            console.log('[AceBase Watch RAW]', path, value)
-                            console.log('[AceBase Watch RESTORED]', path, me._restoreDataFromStorage(value))
+                        // jobs 경로는 LangGraph Proxy에서 복원하므로 여기서는 복원하지 않음
+                        // (Firebase와 동일한 동작: StorageBaseFireBase.watch()도 복원하지 않음)
+                        if (path.startsWith('jobs/') || path.includes('/jobs/')) {
+                            callback(value)
+                        } else {
+                            var restoredValue = me._restoreDataFromStorage(value)
+                            callback(restoredValue)
                         }
-                        var restoredValue = me._restoreDataFromStorage(value)
-                        callback(restoredValue)
                     }else{
                         callback(null)
                     }
