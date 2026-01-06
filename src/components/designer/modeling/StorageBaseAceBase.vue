@@ -192,6 +192,16 @@
                 var me = this
                 var reference = window.$acebase.ref(path)
 
+                // 초기값 먼저 가져오기 (Firebase와 동일하게 동작)
+                me.get(path).then(function(initialValue) {
+                    if (initialValue !== null && initialValue !== undefined) {
+                        callback(initialValue)
+                    }
+                }).catch(function(err) {
+                    // 초기값 가져오기 실패해도 watch는 계속 진행
+                })
+
+                // 이후 변경사항 감시
                 me._watch(reference, function (snapshot){
                     if (snapshot && snapshot.exists()) {
                         var value = snapshot.val()
