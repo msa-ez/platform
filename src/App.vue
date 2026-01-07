@@ -690,6 +690,7 @@
         >
             <v-card style="width:100%;">
                 <StandardDocumentsManagement 
+                  :userInfo="userInfo"
                   @onClose="closeStandardDocumentsDialog"
                 >
                 </StandardDocumentsManagement>

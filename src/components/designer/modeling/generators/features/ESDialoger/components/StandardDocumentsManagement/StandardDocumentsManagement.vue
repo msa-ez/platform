@@ -123,6 +123,12 @@ import firebase from 'firebase';
 export default {
     name: "standard-documents-management",
     mixins: [StorageBase],
+    props: {
+        userInfo: {
+            type: Object,
+            default: () => ({})
+        }
+    },
     data() {
         return {
             selectedFiles: [],
@@ -145,14 +151,27 @@ export default {
     methods: {
         async loadDocument() {
             try {
-                const storage = StorageBaseUtil.getStorage('firebase');
-                const userInfo = await storage.getCurrentUser();
-                if (!userInfo || !userInfo.uid) {
+                // AceBase 환경: props의 userInfo 또는 localStorage에서 user_id 가져오기
+                let userId = null;
+                if (this.isAceBaseMode) {
+                    userId = (this.userInfo && this.userInfo.uid) 
+                        ? this.userInfo.uid 
+                        : localStorage.getItem('uid');
+                } else {
+                    // Firebase 환경: Firebase Storage에서 가져오기
+                    const storage = StorageBaseUtil.getStorage('firebase');
+                    const userInfo = await storage.getCurrentUser();
+                    if (!userInfo || !userInfo.uid) {
+                        console.warn('User not logged in');
+                        return;
+                    }
+                    userId = userInfo.uid;
+                }
+                
+                if (!userId) {
                     console.warn('User not logged in');
                     return;
                 }
-
-                const userId = userInfo.uid;
 
                 // AceBase 로컬 환경: 백엔드 API에서 파일 목록 조회
                 if (this.isAceBaseMode) {
@@ -207,9 +226,28 @@ export default {
                 return;
             }
 
-            const storage = StorageBaseUtil.getStorage('firebase');
-            const userInfo = await storage.getCurrentUser();
-            if (!userInfo || !userInfo.uid) {
+            // AceBase 환경: props의 userInfo 또는 localStorage에서 user_id 가져오기
+            let userId = null;
+            if (this.isAceBaseMode) {
+                userId = (this.userInfo && this.userInfo.uid) 
+                    ? this.userInfo.uid 
+                    : localStorage.getItem('uid');
+            } else {
+                // Firebase 환경: Firebase Storage에서 가져오기
+                const storage = StorageBaseUtil.getStorage('firebase');
+                const userInfo = await storage.getCurrentUser();
+                if (!userInfo || !userInfo.uid) {
+                    this.snackbar = {
+                        show: true,
+                        text: '로그인이 필요합니다.',
+                        color: 'error'
+                    };
+                    return;
+                }
+                userId = userInfo.uid;
+            }
+            
+            if (!userId) {
                 this.snackbar = {
                     show: true,
                     text: '로그인이 필요합니다.',
@@ -221,7 +259,6 @@ export default {
             this.uploading = true;
             
             try {
-                const userId = userInfo.uid;
 
                 // AceBase 로컬 환경: 백엔드 API로 업로드
                 if (this.isAceBaseMode) {
@@ -349,9 +386,29 @@ export default {
             this.deleting = true;
             
             try {
-                const storage = StorageBaseUtil.getStorage('firebase');
-                const userInfo = await storage.getCurrentUser();
-                if (!userInfo || !userInfo.uid) {
+                // AceBase 환경: props의 userInfo 또는 localStorage에서 user_id 가져오기
+                let userId = null;
+                if (this.isAceBaseMode) {
+                    userId = (this.userInfo && this.userInfo.uid) 
+                        ? this.userInfo.uid 
+                        : localStorage.getItem('uid');
+                } else {
+                    // Firebase 환경: Firebase Storage에서 가져오기
+                    const storage = StorageBaseUtil.getStorage('firebase');
+                    const userInfo = await storage.getCurrentUser();
+                    if (!userInfo || !userInfo.uid) {
+                        this.snackbar = {
+                            show: true,
+                            text: '로그인이 필요합니다.',
+                            color: 'error'
+                        };
+                        this.deleting = false;
+                        return;
+                    }
+                    userId = userInfo.uid;
+                }
+                
+                if (!userId) {
                     this.snackbar = {
                         show: true,
                         text: '로그인이 필요합니다.',
@@ -360,8 +417,6 @@ export default {
                     this.deleting = false;
                     return;
                 }
-
-                const userId = userInfo.uid;
 
                 // AceBase 로컬 환경: 백엔드 API로 삭제
                 if (this.isAceBaseMode) {
