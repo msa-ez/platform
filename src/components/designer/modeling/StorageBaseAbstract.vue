@@ -421,13 +421,14 @@
                     this.userInfo.authorized = localStorage.getItem('authorized')
                     this.accessToken = localStorage.getItem('accessToken')
                 } else if (user) {
-                    this.userInfo.name = user.name
-                    this.userInfo.profile = user.profile
-                    this.userInfo.email = user.email
-                    this.userInfo.uid = user.uid
-                    this.userInfo.providerUid = user.providerUid
+                    // ★ user 객체의 값이 없으면 localStorage에서 읽어옴 (Gitea 등 provider별 필드 차이 대응)
+                    this.userInfo.name = user.name || localStorage.getItem('userName')
+                    this.userInfo.profile = user.profile || localStorage.getItem('picture')
+                    this.userInfo.email = user.email || localStorage.getItem('email')
+                    this.userInfo.uid = user.uid || localStorage.getItem('uid')
+                    this.userInfo.providerUid = user.providerUid || localStorage.getItem('providerUid')
                     this.userInfo.authorized = localStorage.getItem('authorized')
-                    this.accessToken = user.accessToken
+                    this.accessToken = user.accessToken || localStorage.getItem('accessToken')
                 } else {
                     this.userInfo.name = localStorage.getItem('userName')
                     this.userInfo.profile = localStorage.getItem('picture')

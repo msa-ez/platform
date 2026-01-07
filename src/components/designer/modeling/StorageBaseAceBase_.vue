@@ -69,14 +69,29 @@
                             //         resolve(obj)
                             window.$acebase.auth.signInWithToken(window.localStorage.getItem("accessToken"))
                                 .then(result => {
+                                    // ★ Gitea 지원: localStorage에서 providerUid와 picture 읽기 (provider별 필드 차이 대응)
+                                    var providerUid = result.user.settings && result.user.settings.github_id 
+                                        || result.user.settings && result.user.settings.gitea_sub
+                                        || localStorage.getItem('providerUid');
+                                    
+                                    var profile = result.user.picture 
+                                        || (result.user.settings && result.user.settings.github_avatar_url)
+                                        || (result.user.settings && result.user.settings.gitea_avatar_url)
+                                        || localStorage.getItem('picture');
+                                    
+                                    // picture가 객체인 경우 url 추출
+                                    if (profile && typeof profile === 'object' && profile.url) {
+                                        profile = profile.url;
+                                    }
+                                    
                                     var obj = {
                                         name: result.user.username ? result.user.username : result.user.displayName,
-                                        email: result.user.email ? result.user.email : result.user.settings.github_login,
+                                        email: result.user.email ? result.user.email : (result.user.settings && result.user.settings.github_login) || localStorage.getItem('email'),
                                         uid: result.user.uid,
-                                        profile: result.user.picture ? result.user.picture : result.user.settings.github_avatar_url,
+                                        profile: profile,
                                         authorized: null,
                                         accessToken: result.accessToken,
-                                        providerUid: result.user.settings.github_id
+                                        providerUid: providerUid
                                     }
                                     resolve(obj)
                                 })
