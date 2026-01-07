@@ -88,35 +88,101 @@
                 } else if (result.provider.name == 'gitea') {
                     git = new Git(new Gitea())
                     console.log(result)
-                    window.localStorage.setItem("gitAuthor", result.user.email);
-                    window.localStorage.setItem("gitUserName", result.user.settings.gitea_preferred_username);
-                    window.localStorage.setItem("gitEmail", result.user.email);
-                    window.localStorage.setItem(
-                        "gitToken",
-                        result.provider.access_token
-                    );
                     
-                    window.localStorage.setItem("author", result.user.email)
-                    window.localStorage.setItem("userName", result.user.settings.gitea_preferred_username)
-                    window.localStorage.setItem("email", result.user.email)
-                    window.localStorage.setItem("picture", result.user.picture)
+                    // ★ 안전하게 필드 추출 (존재하지 않을 수 있음)
+                    var userName = result.user.settings?.gitea_preferred_username 
+                        || result.user.displayName 
+                        || result.user.username 
+                        || 'gitea_user';
+                    var userEmail = result.user.email || '';
+                    var userProfile = result.user.picture || '';
+                    var providerUid = result.user.settings?.gitea_sub || result.user.uid;
+                    
+                    // 기본 정보 저장
+                    window.localStorage.setItem("gitAuthor", userEmail);
+                    window.localStorage.setItem("gitUserName", userName);
+                    window.localStorage.setItem("gitEmail", userEmail);
+                    window.localStorage.setItem("gitToken", result.provider.access_token);
+                    window.localStorage.setItem("gitAccessToken", result.provider.access_token); // ★ 추가
+                    
+                    window.localStorage.setItem("author", userEmail)
+                    window.localStorage.setItem("userName", userName)
+                    window.localStorage.setItem("email", userEmail)
+                    window.localStorage.setItem("picture", userProfile)
                     window.localStorage.setItem("accessToken", result.accessToken)
                     window.localStorage.setItem("uid", result.user.uid)
-                    if (result.user.email && result.user.email.includes('@uengine.org')) {
+                    window.localStorage.setItem("providerUid", providerUid) // ★ 추가
+                    window.localStorage.setItem("loginType", "gitea") // ★ 추가
+                    window.localStorage.setItem("gitOrgName", userName) // ★ 추가
+                    
+                    if (userEmail && userEmail.includes('@uengine.org')) {
                         window.localStorage.setItem("authorized", 'admin');
                     } else {
                         window.localStorage.setItem("authorized", 'student');
                     }
-                    me.writeUserData(result.user.uid, result.user.displayName, result.user.email, result.user.picture)
-                    // let origin = window.GITLAB ? window.GITLAB : window.location.hostname.replace("www.", "");
-                    var getUsers = await git.getUserInfo()
-                    .then(function (res) {
-                        console.log(res)
+                    
+                    // ★ git.getUserInfo() 호출하여 최신 정보로 업데이트 (Firebase GitHub 패턴과 동일)
+                    try {
+                        var getUsers = await git.getUserInfo()
+                        .then(function (res) {
+                            console.log('Gitea getUserInfo response:', res)
+                            
+                            // Gitea API 응답 구조에 맞게 필드 추출
+                            // Gitea API: { id, login/username, email, avatar_url, full_name, ... }
+                            // ★ Gitea는 username 필드를 사용할 수 있음 (GitInfo.vue 참고)
+                            var apiData = res.data || res;
+                            
+                            // username 또는 login 필드 확인 (Gitea는 username, GitHub는 login)
+                            if (apiData.username || apiData.login) {
+                                userName = apiData.username || apiData.login;
+                                window.localStorage.setItem("gitUserName", userName);
+                                window.localStorage.setItem("userName", userName);
+                                window.localStorage.setItem("gitOrgName", userName);
+                            }
+                            if (apiData.email) {
+                                userEmail = apiData.email;
+                                window.localStorage.setItem("email", userEmail);
+                                window.localStorage.setItem("author", userEmail);
+                                window.localStorage.setItem("gitEmail", userEmail);
+                            }
+                            if (apiData.avatar_url) {
+                                userProfile = apiData.avatar_url;
+                                window.localStorage.setItem("picture", userProfile);
+                            }
+                            if (apiData.id) {
+                                providerUid = apiData.id.toString();
+                                window.localStorage.setItem("providerUid", providerUid);
+                            }
+                            
+                            // ★ provider 인자 전달 (Firebase와 동일)
+                            me.writeUserData(result.user.uid, userName, userEmail, userProfile, 'gitea')
+                            
+                            me.$EventBus.$emit('login', result.accessToken)
+                            me.$emit('login')
+                            me.$emit('isGitLogin') // ★ 추가 (Firebase와 동일)
+                            me.$emit('close')
+                            window.location.replace(window.location.origin)
+                        })
+                        .catch(e => {
+                            console.log('Gitea getUserInfo error:', e)
+                            // ★ 에러 발생 시에도 기본 정보로 writeUserData 호출
+                            me.writeUserData(result.user.uid, userName, userEmail, userProfile, 'gitea')
+                            me.$EventBus.$emit('login', result.accessToken)
+                            me.$emit('login')
+                            me.$emit('isGitLogin')
+                            me.$emit('close')
+                            window.location.replace(window.location.origin)
+                        });
+                    } catch (e) {
+                        console.log('Gitea login error:', e)
+                        // 최종 안전장치: 에러 발생 시에도 기본 정보 저장
+                        me.writeUserData(result.user.uid, userName, userEmail, userProfile, 'gitea')
                         me.$EventBus.$emit('login', result.accessToken)
+                        me.$emit('login')
+                        me.$emit('isGitLogin')
                         me.$emit('close')
                         window.location.replace(window.location.origin)
-                    })
-                    .catch(e => console.log(e));
+                    }
                 }
             })
         },
