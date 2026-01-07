@@ -24,19 +24,20 @@
                 <!-- 파일 업로드 -->
                 <div class="mb-4">
                     <v-file-input
-                        v-model="selectedFile"
+                        v-model="selectedFiles"
                         :label="$t('standardDocuments.selectFile') || '메타데이터 선택'"
                         accept=".xlsx,.xls,.pptx,.ppt"
                         show-size
                         outlined
                         dense
                         prepend-icon="mdi-file-document"
+                        multiple
                         @change="handleFileSelection"
                     ></v-file-input>
                     
                     <v-btn
                         color="primary"
-                        :disabled="!selectedFile || uploading"
+                        :disabled="!selectedFiles || selectedFiles.length === 0 || uploading"
                         :loading="uploading"
                         @click="uploadDocument"
                         class="mt-2"
@@ -47,24 +48,28 @@
                 </div>
 
                 <!-- 업로드된 문서 -->
-                <div v-if="currentDocument" class="mt-4">
+                <div v-if="uploadedDocuments && uploadedDocuments.length > 0" class="mt-4">
                     <h4 class="mb-2">{{ $t('standardDocuments.uploadedFile') || '업로드된 메타데이터' }}</h4>
                     <v-list dense>
-                        <v-list-item class="px-0">
+                        <v-list-item 
+                            v-for="(doc, index) in uploadedDocuments" 
+                            :key="index"
+                            class="px-0"
+                        >
                             <v-list-item-icon>
-                                <v-icon>{{ getFileIcon(currentDocument.name) }}</v-icon>
+                                <v-icon>{{ getFileIcon(doc.name) }}</v-icon>
                             </v-list-item-icon>
                             <v-list-item-content>
-                                <v-list-item-title>{{ currentDocument.name }}</v-list-item-title>
-                                <v-list-item-subtitle v-if="currentDocument.size">
-                                    {{ formatFileSize(currentDocument.size) }} • {{ formatDate(currentDocument.uploadedAt) }}
+                                <v-list-item-title>{{ doc.name }}</v-list-item-title>
+                                <v-list-item-subtitle v-if="doc.size">
+                                    {{ formatFileSize(doc.size) }} • {{ formatDate(doc.uploadedAt) }}
                                 </v-list-item-subtitle>
                             </v-list-item-content>
                             <v-list-item-action>
                                 <v-btn
                                     icon
                                     small
-                                    @click="deleteDocument"
+                                    @click="deleteDocument(doc)"
                                     :loading="deleting"
                                 >
                                     <v-icon color="error">mdi-delete</v-icon>
@@ -120,18 +125,21 @@ export default {
     mixins: [StorageBase],
     data() {
         return {
-            selectedFile: null,
-            currentDocument: null,
+            selectedFiles: [],
+            uploadedDocuments: [],
             uploading: false,
             deleting: false,
             snackbar: {
                 show: false,
                 text: '',
                 color: 'info'
-            }
+            },
+            isAceBaseMode: false  // AceBase 로컬 환경 여부
         }
     },
     async created() {
+        // AceBase 환경 감지
+        this.isAceBaseMode = this.$isElectron || window.MODE == 'onprem' || window.MODE == "bpm";
         await this.loadDocument();
     },
     methods: {
@@ -146,35 +154,56 @@ export default {
 
                 const userId = userInfo.uid;
 
-                // Firebase Storage에서 파일 목록 조회
+                // AceBase 로컬 환경: 백엔드 API에서 파일 목록 조회
+                if (this.isAceBaseMode) {
+                    try {
+                        const backendUrl = process.env.VUE_APP_BACKEND_URL || 'http://localhost:2024';
+                        const response = await this.$http.get(`${backendUrl}/api/standard-documents/list`, {
+                            params: { userId: userId }
+                        });
+                        
+                        if (response.data && response.data.files) {
+                            this.uploadedDocuments = response.data.files.map(file => ({
+                                name: file.name,
+                                size: file.size,
+                                uploadedAt: file.uploadedAt,
+                                path: file.path
+                            }));
+                        }
+                    } catch (error) {
+                        console.error('Failed to load documents from backend:', error);
+                    }
+                    return;
+                }
+
+                // Firebase 환경: Firebase Storage에서 파일 목록 조회
                 const files = await this.listStorageFiles(`standard-documents/${userId}/`);
 
                 if (files && files.length > 0) {
-                    // 첫 번째 파일 정보 가져오기
-                    const file = files[0];
-                    const metadata = await this.getFileMetadata(`standard-documents/${userId}/${file.name}`);
-                    
-                    // 원본 파일명을 메타데이터에서 가져오기
-                    const originalFileName = (metadata.customMetadata && metadata.customMetadata.originalFileName) || file.name;
-                    
-                    this.currentDocument = {
-                        name: originalFileName,
-                        size: metadata.size || 0,
-                        uploadedAt: metadata.timeCreated || new Date().toISOString(),
-                        path: `standard-documents/${userId}/${file.name}`
-                    };
+                    this.uploadedDocuments = [];
+                    for (const file of files) {
+                        const metadata = await this.getFileMetadata(`standard-documents/${userId}/${file.name}`);
+                        const originalFileName = (metadata.customMetadata && metadata.customMetadata.originalFileName) || file.name;
+                        
+                        this.uploadedDocuments.push({
+                            name: originalFileName,
+                            size: metadata.size || 0,
+                            uploadedAt: metadata.timeCreated || new Date().toISOString(),
+                            path: `standard-documents/${userId}/${file.name}`
+                        });
+                    }
                 }
             } catch (error) {
                 console.error('Failed to load document:', error);
             }
         },
 
-        handleFileSelection(file) {
-            this.selectedFile = file;
+        handleFileSelection(files) {
+            this.selectedFiles = files;
         },
 
         async uploadDocument() {
-            if (!this.selectedFile) {
+            if (!this.selectedFiles || this.selectedFiles.length === 0) {
                 return;
             }
 
@@ -189,87 +218,110 @@ export default {
                 return;
             }
 
-            // 기존 파일이 있는지 확인
-            const hasExistingFile = this.currentDocument !== null;
-            if (hasExistingFile) {
-                const replaceConfirmText = this.$t('standardDocuments.replaceConfirm', { name: this.currentDocument.name }) || 
-                    `기존 메타데이터 "${this.currentDocument.name}"가 대체됩니다. 계속하시겠습니까?`;
-                const confirmed = confirm(replaceConfirmText);
-                if (!confirmed) {
-                    return;
-                }
-            }
-
             this.uploading = true;
             
             try {
                 const userId = userInfo.uid;
-                const fileExt = this.selectedFile.name.split('.').pop().toLowerCase();
-                const fileName = `standard-document.${fileExt}`;
-                const storagePath = `standard-documents/${userId}/${fileName}`;
 
-                // Firebase Storage에 파일 업로드
-                const contentType = this.getContentType(fileExt);
-                
-                // Firebase Storage에 직접 업로드 (File 객체 직접 사용)
-                const storageRef = firebase.storage().ref(storagePath);
-                
-                const uploadTask = storageRef.put(this.selectedFile, {
-                    contentType: contentType,
-                    customMetadata: {
-                        uploadedBy: userId,
-                        uploadedAt: new Date().toISOString(),
-                        originalFileName: this.selectedFile.name
+                // AceBase 로컬 환경: 백엔드 API로 업로드
+                if (this.isAceBaseMode) {
+                    const backendUrl = process.env.VUE_APP_BACKEND_URL || 'http://localhost:2024';
+                    const formData = new FormData();
+                    
+                    // 여러 파일 추가
+                    for (const file of this.selectedFiles) {
+                        formData.append('files', file);
                     }
-                });
-
-                // 업로드 진행률 추적
-                uploadTask.on('state_changed',
-                    (snapshot) => {
-                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                        console.log('Upload progress:', progress + '%');
-                    },
-                    (error) => {
-                        console.error('Upload error:', error);
+                    formData.append('userId', userId);
+                    
+                    const response = await this.$http.post(`${backendUrl}/api/standard-documents/upload`, formData, {
+                        headers: {
+                            'Content-Type': 'multipart/form-data'
+                        }
+                    });
+                    
+                    if (response.data.success) {
                         this.snackbar = {
                             show: true,
-                            text: this.$t('standardDocuments.uploadError') || '메타데이터 업로드에 실패했습니다.',
-                            color: 'error'
-                        };
-                        this.uploading = false;
-                    },
-                    async () => {
-                        // 업로드 완료
-                        const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
-                        const metadata = await uploadTask.snapshot.ref.getMetadata();
-                        
-                        // 원본 파일명을 메타데이터에서 가져오기
-                        const originalFileName = (metadata.customMetadata && metadata.customMetadata.originalFileName) || fileName;
-                        
-                        this.currentDocument = {
-                            name: originalFileName,
-                            size: metadata.size || this.selectedFile.size,
-                            uploadedAt: metadata.timeCreated || new Date().toISOString(),
-                            path: storagePath,
-                            downloadURL: downloadURL
-                        };
-                        
-                        this.selectedFile = null;
-                        
-                        this.snackbar = {
-                            show: true,
-                            text: hasExistingFile 
-                                ? (this.$t('standardDocuments.replaceSuccess') || '메타데이터가 대체되었습니다.')
-                                : (this.$t('standardDocuments.uploadSuccess') || '메타데이터가 업로드되었습니다.'),
+                            text: response.data.message || '메타데이터가 업로드되었습니다.',
                             color: 'success'
                         };
-
-                        this.uploading = false;
-
-                        // 백엔드에 인덱싱 요청 (선택사항)
-                        // await this.$http.post('/api/standard-documents/index', { userId, filePath: storagePath });
+                        
+                        // 파일 목록 새로고침
+                        await this.loadDocument();
+                        this.selectedFiles = [];
+                    } else {
+                        this.snackbar = {
+                            show: true,
+                            text: response.data.error || '메타데이터 업로드에 실패했습니다.',
+                            color: 'error'
+                        };
                     }
-                );
+                    
+                    this.uploading = false;
+                    return;
+                }
+
+                // Firebase 환경: Firebase Storage에 업로드
+                const filesToUpload = [...this.selectedFiles];
+                let successCount = 0;
+                
+                for (const file of filesToUpload) {
+                    try {
+                        const fileExt = file.name.split('.').pop().toLowerCase();
+                        const fileName = `standard-document-${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+                        const storagePath = `standard-documents/${userId}/${fileName}`;
+                        const contentType = this.getContentType(fileExt);
+                        
+                        const storageRef = firebase.storage().ref(storagePath);
+                        
+                        await new Promise((resolve, reject) => {
+                            const uploadTask = storageRef.put(file, {
+                                contentType: contentType,
+                                customMetadata: {
+                                    uploadedBy: userId,
+                                    uploadedAt: new Date().toISOString(),
+                                    originalFileName: file.name
+                                }
+                            });
+                            
+                            uploadTask.on('state_changed',
+                                (snapshot) => {
+                                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                                    console.log(`Upload progress for ${file.name}: ${progress}%`);
+                                },
+                                (error) => {
+                                    console.error(`Upload error for ${file.name}:`, error);
+                                    reject(error);
+                                },
+                                async () => {
+                                    const metadata = await uploadTask.snapshot.ref.getMetadata();
+                                    const originalFileName = (metadata.customMetadata && metadata.customMetadata.originalFileName) || fileName;
+                                    
+                                    this.uploadedDocuments.push({
+                                        name: originalFileName,
+                                        size: metadata.size || file.size,
+                                        uploadedAt: metadata.timeCreated || new Date().toISOString(),
+                                        path: storagePath
+                                    });
+                                    
+                                    successCount++;
+                                    resolve();
+                                }
+                            );
+                        });
+                    } catch (error) {
+                        console.error(`Failed to upload ${file.name}:`, error);
+                    }
+                }
+                
+                this.selectedFiles = [];
+                
+                this.snackbar = {
+                    show: true,
+                    text: `${successCount}개 파일이 업로드되었습니다.`,
+                    color: 'success'
+                };
                 
             } catch (error) {
                 console.error('Failed to upload document:', error);
@@ -278,17 +330,18 @@ export default {
                     text: this.$t('standardDocuments.uploadError') || '메타데이터 업로드에 실패했습니다.',
                     color: 'error'
                 };
+            } finally {
                 this.uploading = false;
             }
         },
 
-        async deleteDocument() {
-            if (!this.currentDocument) {
+        async deleteDocument(doc) {
+            if (!doc) {
                 return;
             }
 
-            const deleteConfirmText = this.$t('standardDocuments.deleteConfirm', { name: this.currentDocument.name }) || 
-                `"${this.currentDocument.name}" 파일을 삭제하시겠습니까?`;
+            const deleteConfirmText = this.$t('standardDocuments.deleteConfirm', { name: doc.name }) || 
+                `"${doc.name}" 파일을 삭제하시겠습니까?`;
             if (!confirm(deleteConfirmText)) {
                 return;
             }
@@ -296,10 +349,56 @@ export default {
             this.deleting = true;
             
             try {
-                const storageRef = firebase.storage().ref(this.currentDocument.path);
+                const storage = StorageBaseUtil.getStorage('firebase');
+                const userInfo = await storage.getCurrentUser();
+                if (!userInfo || !userInfo.uid) {
+                    this.snackbar = {
+                        show: true,
+                        text: '로그인이 필요합니다.',
+                        color: 'error'
+                    };
+                    this.deleting = false;
+                    return;
+                }
+
+                const userId = userInfo.uid;
+
+                // AceBase 로컬 환경: 백엔드 API로 삭제
+                if (this.isAceBaseMode) {
+                    const backendUrl = process.env.VUE_APP_BACKEND_URL || 'http://localhost:2024';
+                    const response = await this.$http.delete(`${backendUrl}/api/standard-documents/delete`, {
+                        params: {
+                            userId: userId,
+                            filename: doc.name
+                        }
+                    });
+                    
+                    if (response.data.success) {
+                        // 파일 목록에서 제거
+                        this.uploadedDocuments = this.uploadedDocuments.filter(d => d.name !== doc.name);
+                        
+                        this.snackbar = {
+                            show: true,
+                            text: response.data.message || '메타데이터가 삭제되었습니다.',
+                            color: 'success'
+                        };
+                    } else {
+                        this.snackbar = {
+                            show: true,
+                            text: response.data.error || '메타데이터 삭제에 실패했습니다.',
+                            color: 'error'
+                        };
+                    }
+                    this.deleting = false;
+                    return;
+                }
+
+                // Firebase 환경: Firebase Storage에서 삭제
+                const storageRef = firebase.storage().ref(doc.path);
                 await storageRef.delete();
                 
-                this.currentDocument = null;
+                // 파일 목록에서 제거
+                this.uploadedDocuments = this.uploadedDocuments.filter(d => d.name !== doc.name);
                 
                 this.snackbar = {
                     show: true,
