@@ -90,13 +90,13 @@
                     console.log(result)
                     
                     // ★ 안전하게 필드 추출 (존재하지 않을 수 있음)
-                    var userName = result.user.settings?.gitea_preferred_username 
+                    var userName = (result.user.settings && result.user.settings.gitea_preferred_username)
                         || result.user.displayName 
                         || result.user.username 
                         || 'gitea_user';
                     var userEmail = result.user.email || '';
                     var userProfile = result.user.picture || '';
-                    var providerUid = result.user.settings?.gitea_sub || result.user.uid;
+                    var providerUid = (result.user.settings && result.user.settings.gitea_sub) || result.user.uid;
                     
                     // 기본 정보 저장
                     window.localStorage.setItem("gitAuthor", userEmail);
