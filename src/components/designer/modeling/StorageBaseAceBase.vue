@@ -45,46 +45,19 @@
                                     } catch(_) {}
                                 }
                                 
-                                // delivered 플래그 리셋 (재연결 시 다시 grace period 적용)
-                                w.delivered = false;
-                                
                                 // 1) 먼저 구독 등록 (레이스 방지)
                                 w.reference.on('value', w.handler);
                                 
-                                // 2) 누락 보정: 현재값 강제 동기화 (null이면 grace period 후 확정)
+                                // 2) 누락 보정: 현재값 강제 동기화 (재연결이므로 grace period 없이 바로 전달)
                                 try {
                                     var v = await instance.get(path);
                                     if (v !== null && v !== undefined) {
-                                        // 값이 있으면 즉시 전달
-                                        if (!w.delivered) {
-                                            w.delivered = true;
-                                            if (w.timer) {
-                                                clearTimeout(w.timer);
-                                                w.timer = null;
-                                            }
-                                            w.userCallback(v);
-                                        }
-                                    } else {
-                                        // null이면 500ms 동안 기다렸다가 값이 안 오면 null 확정
-                                        if (!w.delivered) {
-                                            w.timer = setTimeout(function() {
-                                                if (!w.delivered) {
-                                                    w.delivered = true;
-                                                    w.userCallback(null);
-                                                }
-                                            }, 500);
-                                        }
+                                        // 값이 있으면 즉시 전달 (실시간 업데이트)
+                                        w.userCallback(v);
                                     }
+                                    // null이면 전달하지 않음 (이미 구독 중이므로 값이 생기면 handler가 처리)
                                 } catch(e) {
-                                    // get 실패 시에도 grace period 후 null 확정
-                                    if (!w.delivered) {
-                                        w.timer = setTimeout(function() {
-                                            if (!w.delivered) {
-                                                w.delivered = true;
-                                                w.userCallback(null);
-                                            }
-                                        }, 500);
-                                    }
+                                    // get 실패는 무시 (구독은 계속 작동)
                                 }
                             });
                             
@@ -366,14 +339,14 @@
                     delete me._watchCallbacks[path];
                 }
 
-                // grace period 동안 null을 확정하지 않기 위한 플래그
-                var delivered = false;
+                // grace period 동안 null을 확정하지 않기 위한 플래그 (초기값 중복 방지용)
+                var initialDelivered = false;
                 var timer = null;
 
-                // 값 전달 함수 (중복 방지)
-                var emit = function(v) {
-                    if (delivered) return;
-                    delivered = true;
+                // 초기값 전달 함수 (초기값만 중복 방지)
+                var emitInitial = function(v) {
+                    if (initialDelivered) return;
+                    initialDelivered = true;
                     if (timer) {
                         clearTimeout(timer);
                         timer = null;
@@ -382,18 +355,23 @@
                 };
 
                 // exists() 쓰지 말고 value로 판단
+                // on('value') 핸들러 - 실시간 업데이트는 계속 전달해야 함
                 var handler = function (snapshot){
                     var value = snapshot && typeof snapshot.val === 'function' ? snapshot.val() : null;
                     if (value === null || value === undefined) {
                         // on('value')에서 null이 와도 즉시 확정하지 않음 (grace period 후 확정)
                         return;
                     }
-                    // 값이 있으면 즉시 전달 (null보다 우선)
-                    if (isJobsPath) {
-                        emit(value);
+                    
+                    // 값이 있으면 전달
+                    var finalValue = isJobsPath ? value : me._restoreDataFromStorage(value);
+                    
+                    if (!initialDelivered) {
+                        // 초기값이 아직 안 왔으면 이게 초기값
+                        emitInitial(finalValue);
                     } else {
-                        var restoredValue = me._restoreDataFromStorage(value);
-                        emit(restoredValue);
+                        // 이미 초기값이 전달됐으면, 이건 실시간 업데이트 → 직접 콜백 호출
+                        userCallback(finalValue);
                     }
                 };
 
@@ -406,7 +384,7 @@
                     handler: handler,
                     userCallback: userCallback,
                     timer: null,
-                    delivered: false
+                    initialDelivered: false
                 };
 
                 // 1) 먼저 구독을 등록 (레이스 방지: 데이터 생성 이벤트를 놓치지 않음)
@@ -416,13 +394,13 @@
                 me.get(path).then(function(v) {
                     if (v !== null && v !== undefined) {
                         // 값이 있으면 즉시 전달
-                        emit(v);
+                        emitInitial(v);
                     } else {
                         // null이면 500ms 동안 기다렸다가 값이 안 오면 null 확정
                         // (이 사이 on('value')로 값이 오면 그게 우선됨)
                         timer = setTimeout(function() {
-                            if (!delivered) {
-                                emit(null);
+                            if (!initialDelivered) {
+                                emitInitial(null);
                             }
                         }, 500);
                         me._watchCallbacks[path].timer = timer;
@@ -430,8 +408,8 @@
                 }).catch(function(err) {
                     // get 실패 시에도 grace period 후 null 확정
                     timer = setTimeout(function() {
-                        if (!delivered) {
-                            emit(null);
+                        if (!initialDelivered) {
+                            emitInitial(null);
                         }
                     }, 500);
                     me._watchCallbacks[path].timer = timer;
