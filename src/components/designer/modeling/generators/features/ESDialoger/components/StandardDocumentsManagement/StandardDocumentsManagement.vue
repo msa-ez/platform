@@ -272,7 +272,7 @@ export default {
 
                 // AceBase 로컬 환경: 백엔드 API로 업로드
                 if (this.isAceBaseMode) {
-                    const backendUrl = process.env.VUE_APP_BACKEND_URL || 'http://localhost:2024';
+                    const backendUrl = process.env.VUE_APP_BACKEND_URL || 'http://localhost:2025';
                     const formData = new FormData();
                     
                     // 여러 파일 추가
@@ -430,7 +430,7 @@ export default {
 
                 // AceBase 로컬 환경: 백엔드 API로 삭제
                 if (this.isAceBaseMode) {
-                    const backendUrl = process.env.VUE_APP_BACKEND_URL || 'http://localhost:2024';
+                    const backendUrl = process.env.VUE_APP_BACKEND_URL || 'http://localhost:2025';
                     const response = await this.$http.delete(`${backendUrl}/api/standard-documents/delete`, {
                         params: {
                             userId: userId,
