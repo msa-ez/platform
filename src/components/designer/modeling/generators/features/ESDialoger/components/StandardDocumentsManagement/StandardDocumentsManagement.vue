@@ -148,6 +148,10 @@ export default {
         this.isAceBaseMode = this.$isElectron || window.MODE == 'onprem' || window.MODE == "bpm";
         await this.loadDocument();
     },
+    async mounted() {
+        // 다이얼로그가 다시 열릴 때마다 목록 새로고침 (컴포넌트 재사용 시)
+        await this.loadDocument();
+    },
     methods: {
         async loadDocument() {
             try {
@@ -181,16 +185,22 @@ export default {
                             params: { userId: userId }
                         });
                         
-                        if (response.data && response.data.files) {
+                        // 응답 데이터 처리: files가 배열인 경우에만 처리
+                        if (response.data && Array.isArray(response.data.files)) {
                             this.uploadedDocuments = response.data.files.map(file => ({
-                                name: file.name,
-                                size: file.size,
-                                uploadedAt: file.uploadedAt,
-                                path: file.path
+                                name: file.name || 'Unknown',
+                                size: file.size || 0,
+                                uploadedAt: file.uploadedAt || new Date().toISOString(),
+                                path: file.path || ''
                             }));
+                        } else {
+                            // files가 없거나 배열이 아닌 경우 빈 배열로 초기화
+                            this.uploadedDocuments = [];
                         }
                     } catch (error) {
                         console.error('Failed to load documents from backend:', error);
+                        // 에러 발생 시에도 빈 배열로 초기화하여 이전 목록이 남지 않도록 함
+                        this.uploadedDocuments = [];
                     }
                     return;
                 }

@@ -1788,6 +1788,7 @@
                             }
                         })
 
+                        // 모든 저장 작업을 순차적으로 완료한 후 redirect
                         let valueUrl = await me.putString(`storage://definitions/${settingProjectId}/versionLists/${projectVersion}/versionValue`, JSON.stringify(me.value));
                         let imagURL = await me.putString(`storage://definitions/${settingProjectId}/versionLists/${projectVersion}/image`, img);
 
@@ -1827,16 +1828,21 @@
                             await me.putString(`storage://definitions/${settingProjectId}/information/image`, img);
                         }
                         if ( me.isQueueModel ) {
-                            me.pushObject(`db://definitions/${settingProjectId}/snapshotLists`, snapshotObj)
+                            await me.pushObject(`db://definitions/${settingProjectId}/snapshotLists`, snapshotObj)
                         }
 
                         me.onCreateGitTagName(me.storageCondition);
                         await me.putObject(`db://definitions/${settingProjectId}/information`, informationObj)
-                        me.putObject(`db://userLists/${me.userInfo.uid}`, userInfoObj)
+                        await me.putObject(`db://userLists/${me.userInfo.uid}`, userInfoObj)
 
 
                         /* 백업용 사용자의 local에서 마지막 모델링 정보 */
-                        me.putObject(`db://definitions/${settingProjectId}/versionLists/${projectVersion}`, versionInfoObj)
+                        await me.putObject(`db://definitions/${settingProjectId}/versionLists/${projectVersion}`, versionInfoObj)
+                        
+                        // 모든 저장 작업 완료 후 약간의 지연을 두어 DB 동기화 보장 (AceBase 환경에서 중요)
+                        if (me.$isElectron || window.MODE == 'onprem' || window.MODE == "bpm") {
+                            await new Promise(resolve => setTimeout(resolve, 200));
+                        }
                         // me.putObject(`db://definitions/${settingProjectId}/versionLists/${projectVersion}/versionValue`, versionValueObj)
 
                         // remove Local Memory.

@@ -119,14 +119,52 @@ export default {
     methods: {
         async checkStandardDocument() {
             try {
-                const storage = StorageBaseUtil.getStorage('firebase');
-                const userInfo = await storage.getCurrentUser();
-                if (!userInfo || !userInfo.uid) {
+                // AceBase 환경 확인
+                const isAceBaseMode = this.$isElectron || window.MODE == 'onprem' || window.MODE == "bpm";
+                
+                let userId = null;
+                if (isAceBaseMode) {
+                    // AceBase 환경: localStorage에서 user_id 가져오기
+                    userId = this.userInfo && this.userInfo.uid 
+                        ? this.userInfo.uid 
+                        : localStorage.getItem('uid');
+                } else {
+                    // Firebase 환경: Firebase Storage에서 가져오기
+                    const storage = StorageBaseUtil.getStorage('firebase');
+                    const userInfo = await storage.getCurrentUser();
+                    if (!userInfo || !userInfo.uid) {
+                        this.hasStandardDocument = false;
+                        return;
+                    }
+                    userId = userInfo.uid;
+                }
+
+                if (!userId) {
                     this.hasStandardDocument = false;
                     return;
                 }
 
-                const userId = userInfo.uid;
+                // AceBase 로컬 환경: 백엔드 API에서 파일 목록 조회
+                if (isAceBaseMode) {
+                    try {
+                        const backendUrl = process.env.VUE_APP_BACKEND_URL || 'http://localhost:2024';
+                        const response = await this.$http.get(`${backendUrl}/api/standard-documents/list`, {
+                            params: { userId: userId }
+                        });
+                        
+                        if (response.data && response.data.files && response.data.files.length > 0) {
+                            this.hasStandardDocument = true;
+                        } else {
+                            this.hasStandardDocument = false;
+                        }
+                    } catch (error) {
+                        console.error('Failed to load documents from backend:', error);
+                        this.hasStandardDocument = false;
+                    }
+                    return;
+                }
+
+                // Firebase 환경: Firebase Storage에서 파일 목록 조회
                 const files = await this.listStorageFiles(`standard-documents/${userId}/`);
                 this.hasStandardDocument = files && files.length > 0;
             } catch (error) {
