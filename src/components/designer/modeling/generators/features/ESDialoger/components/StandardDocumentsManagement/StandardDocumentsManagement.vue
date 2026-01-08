@@ -180,7 +180,7 @@ export default {
                 // AceBase 로컬 환경: 백엔드 API에서 파일 목록 조회
                 if (this.isAceBaseMode) {
                     try {
-                        const backendUrl = process.env.VUE_APP_BACKEND_URL || 'http://localhost:2024';
+                        const backendUrl = process.env.VUE_APP_BACKEND_URL || 'http://localhost:2025';
                         const response = await this.$http.get(`${backendUrl}/api/standard-documents/list`, {
                             params: { userId: userId }
                         });

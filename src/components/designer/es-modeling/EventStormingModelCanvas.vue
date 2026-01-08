@@ -4752,6 +4752,12 @@
                     } else {
                         await this._saveModelForcely()
                     }
+                    
+                    // Job 감시 시작 (checkReconnectToExistingRun이 자동으로 감지하도록 대기)
+                    // 저장 후 약간의 지연을 두어 DB 동기화 시간 확보
+                    setTimeout(async () => {
+                        await checkReconnectToExistingRun()
+                    }, 500)
                     return
                 }
 

@@ -10,13 +10,20 @@ class EsValueLangGraphStudioProxy extends LangGraphProxyBase {
     static async healthCheckUsingConfig() {
         if(this.JOB_NAMESPACE_SUFFIX) return true;
 
+        // AceBase 환경에서는 항상 backend 사용 (config 없어도 작동)
+        const isAceBaseMode = window.$isElectron || window.MODE == 'onprem' || window.MODE == "bpm";
+        if(isAceBaseMode) {
+            return true;
+        }
+
         try {
             const config = await this.STORAGE.getObject(this.PATH_CONFIG);
-            if(config.is_use_backend) return true;
+            if(config && config.is_use_backend) return true;
         } catch (error) {
             console.error('서버 상태 확인 오류:', error);
             return false;
         }
+        return false;
     }
 
     
