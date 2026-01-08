@@ -135,17 +135,26 @@
                     }
 
                     var reference = window.$acebase.ref(path)
-                    var snapshots = await me._put(reference,parseString)
+                    var result = await me._put(reference, parseString)
 
-                    return snapshots ? snapshots : false
+                    // Firebase 호환: 저장 성공 시 경로를 반환 (Firebase는 getDownloadURL() 반환)
+                    // AceBase에서는 경로 자체를 URL처럼 반환하여 호환성 유지
+                    if (result) {
+                        // storage:// 경로는 그대로 반환 (Firebase의 getDownloadURL()과 유사하게)
+                        return `storage://${path}`;
+                    }
+                    return false;
                 } catch (e) {
                     //putString
                     var reference = window.$acebase.ref(path)
-                    var snapshots = await me._put(reference,string)
+                    var result = await me._put(reference, string)
 
-                    return snapshots ? snapshots : false
+                    // Firebase 호환: 저장 성공 시 경로를 반환
+                    if (result) {
+                        return `storage://${path}`;
+                    }
+                    return false;
                 }
-                return await this._put(reference)
             },
             async set(path,string,isString){
                 var me = this
