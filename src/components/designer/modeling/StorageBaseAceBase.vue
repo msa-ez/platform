@@ -135,25 +135,15 @@
                     }
 
                     var reference = window.$acebase.ref(path)
-                    var result = await me._put(reference, parseString)
+                    var snapshots = await me._put(reference,parseString)
 
-                    // Firebase 호환: 저장 성공 시 경로를 반환 (Firebase는 getDownloadURL() 반환)
-                    // AceBase에서는 경로 자체를 URL처럼 반환하여 호환성 유지
-                    if (result) {
-                        // storage:// 경로는 그대로 반환 (Firebase의 getDownloadURL()과 유사하게)
-                        return `storage://${path}`;
-                    }
-                    return false;
+                    return snapshots ? snapshots : false
                 } catch (e) {
                     //putString
                     var reference = window.$acebase.ref(path)
-                    var result = await me._put(reference, string)
+                    var snapshots = await me._put(reference,string)
 
-                    // Firebase 호환: 저장 성공 시 경로를 반환
-                    if (result) {
-                        return `storage://${path}`;
-                    }
-                    return false;
+                    return snapshots ? snapshots : false
                 }
             },
             async set(path,string,isString){
@@ -213,16 +203,7 @@
                 var reference = window.$acebase.ref(path);
                 var snapshots = await me._get(reference)
 
-                if (!snapshots) return null;
-                
-                var data = snapshots.val();
-                // jobs 경로는 LangGraph Proxy에서 복원하므로 여기서는 복원하지 않음
-                // (Firebase와 동일한 동작: StorageBaseFireBase.watch()도 복원하지 않음)
-                if (path.startsWith('jobs/') || path.includes('/jobs/')) {
-                    return data;
-                }
-                // Firebase와 동일하게 마커 복원 처리
-                return me._restoreDataFromStorage(data);
+                return snapshots ? snapshots.val() : null
             },
             
             /**

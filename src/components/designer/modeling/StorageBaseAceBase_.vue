@@ -169,9 +169,7 @@
             _put(reference, value) {
                 return new Promise(function (resolve, reject) {
                     try {
-                        // update는 부분 업데이트(merge)용이라 배열/루트 객체를 통째로 덮어쓰기에는 부적합
-                        // set으로 통째로 덮어쓰기 (가장 안전)
-                        reference.set(value, (error) => {
+                        reference.update(value, (error) => {
                             if (error) {
                                 resolve(false)
                             } else {
