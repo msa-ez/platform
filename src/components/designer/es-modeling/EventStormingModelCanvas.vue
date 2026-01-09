@@ -3202,7 +3202,136 @@
                 }
             }
 
-            await this.checkReconnectToExistingRun()            
+            const checkReconnectToExistingRun = async () => {
+                setTimeout(async () => {
+                    if(this.isModelDefinitionLoaded && this.initLoad) {
+                        console.log("[*] 모델 정의 로드 완료", this.value)
+
+                        // A2A를 통한 Job 요청시에 생성되는 URL에 대한 별도 처리
+                        const jobId = this.$route.query.jobId
+                        if(jobId) {
+                            if(!this.value.langgraphStudioInfos) 
+                                this.$set(this.value, "langgraphStudioInfos", {})
+                            if(!this.value.langgraphStudioInfos.esGenerator)
+                                this.$set(
+                                    this.value.langgraphStudioInfos, "esGenerator", 
+                                    {jobId: jobId, isCompleted:false, traceInfo: null}
+                                )
+                            if(!this.value.langgraphStudioInfos.esGenerator.traceInfo) {
+                                const jobTraceInfo = await EsValueLangGraphStudioProxy.getTraceInfoFromJob(jobId)
+                                this.$set(
+                                    this.value.langgraphStudioInfos.esGenerator, "traceInfo", jobTraceInfo
+                                )
+                            }
+                        }
+
+                        this._initializeTraceInfoViewerDto()
+                        if(this.value.langgraphStudioInfos && this.value.langgraphStudioInfos.esGenerator &&
+                           this.value.langgraphStudioInfos.esGenerator.isCompleted === false &&
+                           this.value.langgraphStudioInfos.esGenerator.jobId
+                        ) {
+                            if(await EsValueLangGraphStudioProxy.healthCheckUsingConfig()) {
+                                const stopEventStormingGeneration = async () => {
+                                    recorrect_boundedContexts()
+                                    this.generatorProgressDto.generateDone = true
+                                    this.value.langgraphStudioInfos.esGenerator.isCompleted = true
+                                    
+                                    await this._sanpshotModelForcely()
+                                    await EsValueLangGraphStudioProxy.removeJob(this.value.langgraphStudioInfos.esGenerator.jobId)
+                                    
+                                    this.$router.go(0)
+                                }
+
+                                this.generatorProgressDto = {
+                                    generateDone: false,
+                                    displayMessage: `Requesting event storming creation...`,
+                                    thinkMessage: "",
+                                    progress: null,
+                                    globalProgress: 0,
+                                    actions: {
+                                        stopGeneration: stopEventStormingGeneration
+                                    }
+                                }
+
+                                EsValueLangGraphStudioProxy.watchJob(
+                                    this.value.langgraphStudioInfos.esGenerator.jobId,
+                                    async (esValue, logs, totalPercentage) => { // onUpdate
+                                        this.generatorProgressDto = {
+                                            generateDone: false,
+                                            displayMessage: logs.length > 0 ? logs.slice(-1)[0].message : "Requesting event storming creation...",
+                                            thinkMessage: logs.map(log => `[${log.created_at}][${log.level}] ${log.message}`).join("\n"),
+                                            progress: null,
+                                            globalProgress: totalPercentage,
+                                            actions: {
+                                                stopGeneration: stopEventStormingGeneration
+                                            }
+                                        }
+
+                                        update_value_particaly(esValue)
+                                    },
+                                    async (esValue, logs, totalPercentage, isFailed) => { // onComplete
+                                        this.generatorProgressDto.generateDone = true
+
+                                        update_value_particaly(esValue)
+                                        recorrect_boundedContexts()
+
+                                        const filteredPBCs = JSON.parse(localStorage.getItem("filteredPBCs"))
+                                        const filteredFrontEndResults = JSON.parse(localStorage.getItem("filteredFrontEndResults"))
+
+                                        // PBC와 Frontend 생성 (위치 계산을 위해 순차적 실행)
+                                        let pbcElements = {}
+                                        
+                                        // PBC 생성
+                                        if(filteredPBCs && Object.keys(filteredPBCs).length > 0) {
+                                            pbcElements = this.generatePBCbyDraftOptions(filteredPBCs)
+                                        }
+                                        
+                                        // Frontend 생성 (PBC 위치를 고려하여)
+                                        if(filteredFrontEndResults && Object.keys(filteredFrontEndResults).length > 0) {
+                                            this.generateFrontEnd(filteredFrontEndResults, pbcElements)
+                                        }
+                                        
+                                        this.value.langgraphStudioInfos.esGenerator.isCompleted = true
+                                        this.value.langgraphStudioInfos.esGenerator.logs = logs
+                                        await this._sanpshotModelForcely()
+                                        if(!isFailed)
+                                            await EsValueLangGraphStudioProxy.removeJob(this.value.langgraphStudioInfos.esGenerator.jobId)
+                                    },
+                                    async (waitingJobCount) => { // onWaiting
+                                        this.generatorProgressDto = {
+                                            generateDone: false,
+                                            displayMessage: `The task will begin after completing the ${waitingJobCount} pending jobs...`,
+                                            thinkMessage: "",
+                                            progress: null,
+                                            globalProgress: 0,
+                                            actions: {
+                                                stopGeneration: stopEventStormingGeneration
+                                            }
+                                        }
+                                    },
+                                    async (errorMsg) => { // onFailed
+                                        alert(`Failed to create event storming. Please try again later.: ${errorMsg}`)
+
+                                        recorrect_boundedContexts()
+                                        this.generatorProgressDto.generateDone = true
+                                        this.value.langgraphStudioInfos.esGenerator.isCompleted = true
+
+                                        await this._sanpshotModelForcely()
+                                    }
+                                )
+                                return
+                            }
+                        } else {
+                            this.forceRefreshCanvas()
+                        }
+                    }
+                    else {
+                        console.log("[*] 모델 정의 로드 대기 중")
+                        await checkReconnectToExistingRun()
+                    }
+                }, 500)
+            }
+            await checkReconnectToExistingRun()         
         },
         mounted: function () {
             var me = this;
@@ -3389,202 +3518,6 @@
             //     // 연결선 하이라이팅 상태를 localStorage에 저장
             //     localStorage.setItem('highlightingEnabled', this.highlightingEnabled);
             // },
-            async checkReconnectToExistingRun() {
-                const recorrect_boundedContexts = () => {
-                    const boundedContexts = Object.values(this.value.elements).filter(element => element._type === "org.uengine.modeling.model.BoundedContext")
-
-                    for(const boundedContext of boundedContexts){
-                        this.moveElementAction(boundedContext, {
-                            width: 560,
-                            height: 590,
-                            x: 650,
-                            y: 450
-                        }, {
-                            width: boundedContext.elementView.width,
-                            height: boundedContext.elementView.height,
-                            x: boundedContext.elementView.x,
-                            y: boundedContext.elementView.y
-                        })
-                    }
-                }
-
-                const update_value_particaly = (esValue) => {
-                    this.changedByMe = true
-
-                    for(const element of Object.values(esValue.elements)){
-                        if(!this.value.elements[element.id] || JSON.stringify(this.value.elements[element.id]) !== JSON.stringify(element)){
-                            this.$set(this.value.elements, element.id, structuredClone(element))
-                        }
-                    }
-
-                    for(const relation of Object.values(esValue.relations)){
-                        if(!this.value.relations[relation.id] || JSON.stringify(this.value.relations[relation.id]) !== JSON.stringify(relation)){
-                            this.$set(this.value.relations, relation.id, structuredClone(relation))
-                        }
-                    }
-                }
-
-                return new Promise((resolve) => {
-                    setTimeout(async () => {
-                        if(this.isModelDefinitionLoaded && this.initLoad) {
-                            console.log("[*] 모델 정의 로드 완료", this.value)
-
-                            // A2A를 통한 Job 요청시에 생성되는 URL에 대한 별도 처리
-                            const jobId = this.$route.query.jobId
-                            if(jobId) {
-                                if(!this.value.langgraphStudioInfos) 
-                                    this.$set(this.value, "langgraphStudioInfos", {})
-                                if(!this.value.langgraphStudioInfos.esGenerator)
-                                    this.$set(
-                                        this.value.langgraphStudioInfos, "esGenerator", 
-                                        {jobId: jobId, isCompleted:false, traceInfo: null}
-                                    )
-                                if(!this.value.langgraphStudioInfos.esGenerator.traceInfo) {
-                                    const jobTraceInfo = await EsValueLangGraphStudioProxy.getTraceInfoFromJob(jobId)
-                                    this.$set(
-                                        this.value.langgraphStudioInfos.esGenerator, "traceInfo", jobTraceInfo
-                                    )
-                                }
-                            }
-
-                            this._initializeTraceInfoViewerDto()
-                            if(this.value.langgraphStudioInfos && this.value.langgraphStudioInfos.esGenerator &&
-                               this.value.langgraphStudioInfos.esGenerator.isCompleted === false &&
-                               this.value.langgraphStudioInfos.esGenerator.jobId
-                            ) {
-                                if(await EsValueLangGraphStudioProxy.healthCheckUsingConfig()) {
-                                    const stopEventStormingGeneration = async () => {
-                                        recorrect_boundedContexts()
-                                        this.generatorProgressDto.generateDone = true
-                                        this.value.langgraphStudioInfos.esGenerator.isCompleted = true
-                                        
-                                        await this._sanpshotModelForcely()
-                                        await EsValueLangGraphStudioProxy.removeJob(this.value.langgraphStudioInfos.esGenerator.jobId)
-                                        
-                                        this.$router.go(0)
-                                    }
-
-                                    this.generatorProgressDto = {
-                                        generateDone: false,
-                                        displayMessage: `Requesting event storming creation...`,
-                                        thinkMessage: "",
-                                        progress: null,
-                                        globalProgress: 0,
-                                        actions: {
-                                            stopGeneration: stopEventStormingGeneration
-                                        }
-                                    }
-
-                                    EsValueLangGraphStudioProxy.watchJob(
-                                        this.value.langgraphStudioInfos.esGenerator.jobId,
-                                        async (esValue, logs, totalPercentage) => { // onUpdate
-                                            this.generatorProgressDto = {
-                                                generateDone: false,
-                                                displayMessage: logs.length > 0 ? logs.slice(-1)[0].message : "Requesting event storming creation...",
-                                                thinkMessage: logs.map(log => `[${log.created_at}][${log.level}] ${log.message}`).join("\n"),
-                                                progress: null,
-                                                globalProgress: totalPercentage,
-                                                actions: {
-                                                    stopGeneration: stopEventStormingGeneration
-                                                }
-                                            }
-
-                                            update_value_particaly(esValue)
-                                        },
-                                        async (esValue, logs, totalPercentage, isFailed) => { // onComplete
-                                            this.generatorProgressDto.generateDone = true
-
-                                            update_value_particaly(esValue)
-                                            recorrect_boundedContexts()
-
-                                            const filteredPBCs = JSON.parse(localStorage.getItem("filteredPBCs"))
-                                            const filteredFrontEndResults = JSON.parse(localStorage.getItem("filteredFrontEndResults"))
-                                            
-                                            // selectedDraftOptions 복원 (CreateAggregateActionsByFunctions를 위해 필요)
-                                            const savedSelectedDraftOptions = localStorage.getItem("selectedDraftOptions")
-                                            if(savedSelectedDraftOptions) {
-                                                this.selectedDraftOptions = JSON.parse(savedSelectedDraftOptions)
-                                            }
-
-                                            // PBC와 Frontend 생성 (위치 계산을 위해 순차적 실행)
-                                            let pbcElements = {}
-                                            
-                                            // PBC 생성
-                                            if(filteredPBCs && Object.keys(filteredPBCs).length > 0) {
-                                                pbcElements = this.generatePBCbyDraftOptions(filteredPBCs)
-                                            }
-                                            
-                                            // Frontend 생성 (PBC 위치를 고려하여)
-                                            if(filteredFrontEndResults && Object.keys(filteredFrontEndResults).length > 0) {
-                                                this.generateFrontEnd(filteredFrontEndResults, pbcElements)
-                                            }
-                                            
-                                            // CreateAggregateActionsByFunctions 호출 (로컬 생성 경로와 동일하게)
-                                            if(this.selectedDraftOptions && Object.keys(this.selectedDraftOptions).length > 0) {
-                                                this._removeInvalidReferencedAggregateProperties(this.selectedDraftOptions)
-                                                this._createBoundedContextsIfNotExists(this.selectedDraftOptions)
-                                                
-                                                this.generatorProgressDto.totalGlobalProgressCount = this._getTotalGlobalProgressCount(this.selectedDraftOptions)
-                                                this.generatorProgressDto.currentGlobalProgressCount = 0
-                                                this.generatorProgressDto.thinkMessage = ""
-                                                this.generatorProgressDto.previousThinkingMessage = ""
-                                                this.collectedMockDatas.aggregateDraftScenarios.draft = structuredClone(this.selectedDraftOptions)
-                                                this.collectedLogDatas.aggregateDraftScenarios.startTime = new Date().getTime()
-                                                
-                                                LocalStorageCleanUtil.clean()
-                                                
-                                                this.generators.CreateAggregateActionsByFunctions.generator.initInputs(
-                                                    this.selectedDraftOptions,
-                                                    this.value,
-                                                    this.userInfo,
-                                                    this.information
-                                                )
-                                                this.generators.CreateAggregateActionsByFunctions.generator.generateIfInputsExist()
-                                            }
-                                            
-                                            this.value.langgraphStudioInfos.esGenerator.isCompleted = true
-                                            this.value.langgraphStudioInfos.esGenerator.logs = logs
-                                            await this._sanpshotModelForcely()
-                                            if(!isFailed)
-                                                await EsValueLangGraphStudioProxy.removeJob(this.value.langgraphStudioInfos.esGenerator.jobId)
-                                        },
-                                        async (waitingJobCount) => { // onWaiting
-                                            this.generatorProgressDto = {
-                                                generateDone: false,
-                                                displayMessage: `The task will begin after completing the ${waitingJobCount} pending jobs...`,
-                                                thinkMessage: "",
-                                                progress: null,
-                                                globalProgress: 0,
-                                                actions: {
-                                                    stopGeneration: stopEventStormingGeneration
-                                                }
-                                            }
-                                        },
-                                        async (errorMsg) => { // onFailed
-                                            alert(`Failed to create event storming. Please try again later.: ${errorMsg}`)
-
-                                            recorrect_boundedContexts()
-                                            this.generatorProgressDto.generateDone = true
-                                            this.value.langgraphStudioInfos.esGenerator.isCompleted = true
-
-                                            await this._sanpshotModelForcely()
-                                        }
-                                    )
-                                    resolve()
-                                    return
-                                }
-                            } else {
-                                this.forceRefreshCanvas()
-                            }
-                        }
-                        else {
-                            console.log("[*] 모델 정의 로드 대기 중")
-                            await this.checkReconnectToExistingRun()
-                        }
-                        resolve()
-                    }, 500)
-                })
-            },
             toggleVisibility() {
                 this.processMode = !this.processMode;
                 localStorage.setItem('processMode', this.processMode); // processMode 값을 localStorage에 저장
@@ -4761,8 +4694,6 @@
                 this.selectedDraftOptions = boundedContexts
                 localStorage.setItem("filteredPBCs", JSON.stringify(pbc))
                 localStorage.setItem("filteredFrontEndResults", JSON.stringify(filteredFrontEndResults))
-                localStorage.setItem("selectedDraftOptions", JSON.stringify(boundedContexts))
-
 
                 if(await EsValueLangGraphStudioProxy.healthCheckUsingConfig()) {
                     const isAlreadyTried = this.value.langgraphStudioInfos && 
@@ -4824,7 +4755,7 @@
                     // Job 감시 시작 (checkReconnectToExistingRun이 자동으로 감지하도록 대기)
                     // 저장 후 약간의 지연을 두어 DB 동기화 시간 확보
                     setTimeout(async () => {
-                        await this.checkReconnectToExistingRun()
+                        await checkReconnectToExistingRun()
                     }, 500)
                     return
                 }
