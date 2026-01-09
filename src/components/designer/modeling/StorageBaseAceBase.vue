@@ -531,6 +531,20 @@
                     console.log(e)
                 }
             },
+            watch_changed(path, callback) {
+                var me = this
+                var reference = window.$acebase.ref(path);
+                
+                // child_changed 이벤트 리스너 등록
+                reference.on('child_changed', function(snapshot) {
+                    if (snapshot && snapshot.exists && snapshot.exists()) {
+                        var value = snapshot.val();
+                        var key = snapshot.key;
+                        // Firebase와 동일한 시그니처: callback(value, key)
+                        callback(value, key);
+                    }
+                });
+            },
             watch_off(path){
                 var me = this
                 var w = me._watchCallbacks && me._watchCallbacks[path];
