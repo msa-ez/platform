@@ -179,11 +179,60 @@ Navigate to the Acebase admin portal: localhost:5757
 
 # Install MSAez on Docker Compose with Gitea
 
+## 사전 요구사항
+
+### 1. Docker 설치 확인
+
+MSAEz는 Docker와 Docker Compose를 사용합니다. 먼저 Docker가 설치되어 있는지 확인하세요.
+
+**Docker 설치 확인:**
+```sh
+docker --version
+docker compose version
+```
+
+**Docker가 설치되어 있지 않은 경우:**
+- **macOS**: [Docker Desktop for Mac](https://www.docker.com/products/docker-desktop/) 다운로드 및 설치
+- **Windows**: [Docker Desktop for Windows](https://www.docker.com/products/docker-desktop/) 다운로드 및 설치
+- **Linux**: [Docker Engine 설치 가이드](https://docs.docker.com/engine/install/) 참고
+
+**Docker 설치 후 확인:**
+```sh
+docker ps
+```
+
+정상적으로 설치되었다면 빈 목록이 표시됩니다.
+
+### 2. 필요한 포트 확인
+
+다음 포트들이 사용 가능한지 확인하세요:
+- **8080**: MSAez 플랫폼 (Frontend)
+- **5757**: AceBase 데이터베이스
+- **3000**: Gitea (Git 서버)
+- **2025**: Backend Generators (Flask 서버)
+- **5000**: Backend ES Generators (LangGraph 서버)
+
+포트가 이미 사용 중인 경우, `docker-compose.yml`에서 포트를 변경할 수 있습니다.
+
+## set env.txt
+
+VUE_APP_MODE=dev
+VUE_APP_DB_HOST=localhost
+VUE_APP_DB_PORT=5757
+VUE_APP_DB_NAME=mydb
+VUE_APP_GIT=github
+
+
 ## Initialize MSAez
 
 ```sh
 docker compose up -d
 ```
+
+이 명령어는 다음 서비스들을 시작합니다:
+- **msaez**: MSAez 플랫폼 (Frontend)
+- **acebase**: AceBase 데이터베이스
+- **gitea**: Gitea Git 서버
 
 ## Setting Gitea
 
@@ -261,8 +310,8 @@ acebase:
     DB_NAME: mydb
     DB_PORT: 5757
     DB_HTTPS: "false"
-    CLIENT_ID: 689a0fc9-a7af-4e67-8096-ad2d2b05db66 # OAuth Client ID
-    CLIENT_SECRET: gto_uwrnodpkfxajmppgmcyislv7vdcsk53lxyaifkmoxczqncqzyi6q # OAuth Client Secret
+    CLIENT_ID: your-gitea-oauth-client-id # Gitea에서 발급받은 OAuth Client ID
+    CLIENT_SECRET: your-gitea-oauth-client-secret # Gitea에서 발급받은 OAuth Client Secret
     PROVIDER: gitea
     GIT: "gitea:3000" # Git URL
     PROTOCOL: http
@@ -286,6 +335,160 @@ docker compose up -d
 ### 8. Connect MSAez
 
 > http://localhost:8080
+
+## Backend 생성기 설정
+
+MSAEz의 AI 기능을 사용하려면 Backend 생성기들을 별도로 실행해야 합니다.
+
+### 1. Backend Generators (Project Generator) 설정
+
+**위치**: `platform/backend-generators/`
+
+**설정 파일 생성:**
+```sh
+cd platform/backend-generators
+```
+
+`.env` 파일을 생성하고 다음 내용을 추가:
+
+```bash
+OPENAI_API_KEY=
+FIREBASE_SERVICE_ACCOUNT_PATH=./firebase-credentials.json
+FIREBASE_DATABASE_URL=https://eventstorming-tool-db.firebaseio.com
+FIREBASE_STORAGE_BUCKET=gs://eventstorming-tool-db.appspot.com
+DEFAULT_LLM_MODEL=gpt-4o-mini
+DEFAULT_LLM_TEMPERATURE=0.7
+ENVIRONMENT=development
+DEBUG=true
+NAMESPACE=eventstorming_generator
+POD_ID=local-dev
+IS_LOCAL_RUN=true
+
+# 로그 레벨 (DEBUG, INFO, WARNING, ERROR)
+LOG_LEVEL=INFO
+
+# Storage 사용 타입
+STORAGE_TYPE=acebase
+
+# Firebase 관련 설정 제거하고 대신 추가
+ACEBASE_HOST=127.0.0.1
+ACEBASE_PORT=5757
+ACEBASE_DB_NAME=mydb
+ACEBASE_HTTPS=false
+ACEBASE_USERNAME=admin  # AceBase 기본 관리자 계정
+ACEBASE_PASSWORD=75sdDSFg37w5  # AceBase 기본 비밀번호 (프로덕션 환경에서는 변경 권장)
+
+```
+
+**설치 및 실행:**
+```sh
+# 가상환경 생성 및 활성화
+python3 -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+
+# 의존성 설치
+pip install -e .
+
+# 서버 실행
+./start.sh
+```
+
+**확인:**
+- Health Check: http://localhost:2025/ok
+- 서버가 정상적으로 실행되면 "🚀 Project Generator 서버를 시작합니다..." 메시지가 표시됩니다.
+
+### 2. Backend ES Generators (Event Storming Generator) 설정
+
+**위치**: `platform/backend-es-generators/`
+
+**설정 파일 생성:**
+```sh
+cd platform/backend-es-generators
+```
+
+`.env` 파일을 생성하고 다음 내용을 추가:
+
+```bash
+AI_MODEL=google_genai:gemini-flash-latest:thinking
+AI_MODEL_MAX_INPUT_LIMIT=983040
+AI_MODEL_MAX_BATCH_SIZE=15
+
+AI_MODEL_LIGHT=google_genai:gemini-flash-latest:thinking
+AI_MODEL_LIGHT_MAX_INPUT_LIMIT=983040
+AI_MODEL_LIGHT_MAX_BATCH_SIZE=30
+
+GOOGLE_API_KEY=
+OPENAI_API_KEY=
+
+LANGSMITH_TRACING=true
+LANGSMITH_PROJECT=msaez-automate-eventstorming-generator
+LANGSMITH_API_KEY=xxx
+
+FIREBASE_SERVICE_ACCOUNT_PATH=./.auth/serviceAccountKey.json
+FIREBASE_DATABASE_URL=
+
+NAMESPACE=eventstorming_generator_local
+POD_ID=local_pod
+IS_LOCAL_RUN=true
+USE_GENERATOR_CACHE=true
+
+AUTO_SCALE_MIN_REPLICAS=1
+AUTO_SCALE_MAX_REPLICAS=3
+AUTO_SCALE_TARGET_JOBS_PER_POD=1
+
+MSAEZ_URL=https://www.msaez.io
+
+# Storage 사용 타입
+DB_TYPE=acebase
+
+# Firebase 관련 설정 제거하고 대신 추가
+ACEBASE_HOST=127.0.0.1
+ACEBASE_PORT=5757
+ACEBASE_DB_NAME=mydb
+ACEBASE_HTTPS=false
+ACEBASE_USERNAME=admin  # AceBase 기본 관리자 계정
+ACEBASE_PASSWORD=75sdDSFg37w5  # AceBase 기본 비밀번호 (프로덕션 환경에서는 변경 권장)
+```
+
+**설치 및 실행:**
+```sh
+# 의존성 설치
+uv run pip install -e .
+uv pip install -U "langgraph-cli[inmem]"
+# grpcio 버전 호환성 문제 해결
+uv pip install "grpcio>=1.75.1"
+
+# LangGraph 서버 실행 (개발 모드)
+uv run langgraph dev
+
+# 또는 Job 처리 모드로 실행
+uv run python ./src/eventstorming_generator/main.py
+```
+
+**확인:**
+- LangGraph 서버: http://localhost:5000
+- 서버가 정상적으로 실행되면 LangGraph Studio가 시작됩니다.
+
+### 3. 중요 사항
+
+1. **AceBase 먼저 실행**: Backend 생성기들을 실행하기 전에 AceBase가 실행되어 있어야 합니다.
+   ```sh
+   docker compose up -d acebase
+   ```
+
+2. **포트 충돌 확인**: 
+   - Backend Generators: 2025
+   - Backend ES Generators: 5000
+   - 이미 사용 중인 포트가 있다면 `.env` 파일에서 변경하세요.
+
+3. **OpenAI API Key**: 
+   - OpenAI API Key는 반드시 설정해야 합니다.
+   - API Key는 [OpenAI Platform](https://platform.openai.com/api-keys)에서 발급받을 수 있습니다.
+
+4. **Storage Type 일치**: 
+   - Frontend와 Backend의 Storage Type이 일치해야 합니다.
+   - AceBase를 사용하는 경우: `STORAGE_TYPE=acebase` (backend-generators), `DB_TYPE=acebase` (backend-es-generators)
+   - Firebase를 사용하는 경우: `STORAGE_TYPE=firebase` (backend-generators), `DB_TYPE=firebase` (backend-es-generators)
 
 ---
 

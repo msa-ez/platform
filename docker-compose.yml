@@ -5,7 +5,7 @@ networks:
     external: false
 services:
   msaez:
-    image: ghcr.io/msa-ez/platform:v1.0.23 # MSAez Docker Image
+    image: ghcr.io/msa-ez/platform:v1.0.29 # MSAez Docker Image
     networks:
       - msaez
     ports:
