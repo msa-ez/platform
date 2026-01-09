@@ -216,11 +216,13 @@ docker ps
 
 ## set env.txt
 
+```bash
 VUE_APP_MODE=dev
 VUE_APP_DB_HOST=localhost
 VUE_APP_DB_PORT=5757
 VUE_APP_DB_NAME=mydb
 VUE_APP_GIT=github
+```
 
 
 ## Initialize MSAez
