@@ -1521,12 +1521,20 @@ import { value } from 'jsonpath';
             me.$app.try({
                 context: me,
                 async action(me){
-                    if (localStorage.getItem("gitAccessToken")) {
-                        me.gitAccessToken = localStorage.getItem("gitAccessToken");
-                        me.githubHeaders = {
-                            Authorization: "token " + me.gitAccessToken,
-                            Accept: "application/vnd.github+json",
-                        };
+                    // Gitea를 사용하는 경우 헤더 없이 요청 (빈 객체 사용)
+                    if (window.PROVIDER === 'gitea') {
+                        me.githubHeaders = {};
+                    } else {
+                        // GitHub를 사용하는 경우
+                        if (localStorage.getItem("gitAccessToken")) {
+                            me.gitAccessToken = localStorage.getItem("gitAccessToken");
+                            me.githubHeaders = {
+                                Authorization: "token " + me.gitAccessToken,
+                                Accept: "application/vnd.github+json",
+                            };
+                        } else {
+                            me.githubHeaders = {};
+                        }
                     }
                 }
             })
@@ -3242,8 +3250,10 @@ import { value } from 'jsonpath';
 
                     var count = 1;
                     this.allRepoList = [];
+                    // githubHeaders가 없으면 빈 객체 사용 (public repo 접근 가능)
+                    const headers = this.githubHeaders || {};
                     while(count != 'stop'){
-                        var repoList = await axios.get(`https://api.github.com/orgs/msa-ez/repos?sort=updated&page=${count}&per_page=100`, { headers: this.githubHeaders})
+                        var repoList = await axios.get(`https://api.github.com/orgs/msa-ez/repos?sort=updated&page=${count}&per_page=100`, { headers: headers})
                         if(repoList && repoList.data && repoList.data.length > 0) {
                             this.allRepoList = this.allRepoList.concat(repoList.data);
                             count++;
@@ -3282,16 +3292,19 @@ import { value } from 'jsonpath';
                     return;
                 }
 
+                // githubHeaders가 없으면 빈 객체 사용 (public repo 접근 가능)
+                const headers = me.githubHeaders || {};
+                
                 for (let idx = 0; idx < me.allRepoList.length; idx++) {
                     const pbcInfo = me.allRepoList[idx];
                     if (pbcInfo.name.includes("pbc-") && !pbcInfo.name.includes("_pbc")) {
                         try {
-                            var info = await axios.get(`https://api.github.com/repos/msa-ez/${pbcInfo.name}/contents/.template/metadata.yml`, { headers: me.githubHeaders });
-                            var mainTrees = await axios.get(`https://api.github.com/repos/msa-ez/${pbcInfo.name}/git/trees/main`, { headers: me.githubHeaders })
+                            var info = await axios.get(`https://api.github.com/repos/msa-ez/${pbcInfo.name}/contents/.template/metadata.yml`, { headers: headers });
+                            var mainTrees = await axios.get(`https://api.github.com/repos/msa-ez/${pbcInfo.name}/git/trees/main`, { headers: headers })
                             if (info && info.data.content) {
                                 const modelTree = mainTrees.data.tree.find(tree => tree.path === 'model.json');
                                 const openApiTree = mainTrees.data.tree.find(tree => tree.path === 'openapi.yaml');
-                                const instruction = await axios.get(`https://api.github.com/repos/msa-ez/${pbcInfo.name}/contents/.template/instruction.md`, { headers: me.githubHeaders });
+                                const instruction = await axios.get(`https://api.github.com/repos/msa-ez/${pbcInfo.name}/contents/.template/instruction.md`, { headers: headers });
                             
                                 let obj = YAML.load(decodeURIComponent(escape(atob(info.data.content))));
 

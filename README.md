@@ -344,14 +344,7 @@ MSAEz의 AI 기능을 사용하려면 Backend 생성기들을 별도로 실행�
 
 ### 1. Backend Generators (Project Generator) 설정
 
-**위치**: `platform/backend-generators/`
-
-**설정 파일 생성:**
-```sh
-cd platform/backend-generators
-```
-
-`.env` 파일을 생성하고 다음 내용을 추가:
+`.env` 루트 경로에 파일을 생성하고 다음 내용을 추가:
 
 ```bash
 OPENAI_API_KEY=
@@ -401,14 +394,7 @@ pip install -e .
 
 ### 2. Backend ES Generators (Event Storming Generator) 설정
 
-**위치**: `platform/backend-es-generators/`
-
-**설정 파일 생성:**
-```sh
-cd platform/backend-es-generators
-```
-
-`.env` 파일을 생성하고 다음 내용을 추가:
+`.env` 루트 경로에파일을 생성하고 다음 내용을 추가:
 
 ```bash
 AI_MODEL=google_genai:gemini-flash-latest:thinking
@@ -459,9 +445,6 @@ uv run pip install -e .
 uv pip install -U "langgraph-cli[inmem]"
 # grpcio 버전 호환성 문제 해결
 uv pip install "grpcio>=1.75.1"
-
-# LangGraph 서버 실행 (개발 모드)
-uv run langgraph dev
 
 # 또는 Job 처리 모드로 실행
 uv run python ./src/eventstorming_generator/main.py
