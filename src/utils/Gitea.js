@@ -32,9 +32,9 @@ class Gitea extends Git {
     }
 
     getHeader() {
-        // 환경변수에서 Gitea Personal Access Token 우선 사용
+        // window.GITEA_TOKEN (env.txt에서 읽어온 값) 우선 사용
         // 없으면 localStorage의 gitToken 사용
-        const envToken = process.env.VUE_APP_GITEA_TOKEN;
+        const envToken = window.GITEA_TOKEN;
         const gitToken = envToken || localStorage.getItem('gitToken');
         
         if (!gitToken) {

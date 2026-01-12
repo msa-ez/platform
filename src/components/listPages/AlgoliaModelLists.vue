@@ -9,9 +9,9 @@
                         >
                             <v-icon>mdi-home</v-icon>
                         </v-tab>
-                        <v-icon @click="searchOpen = !searchOpen" class="main-nav-tab pl-1 pr-1">
+                        <!-- <v-icon @click="searchOpen = !searchOpen" class="main-nav-tab pl-1 pr-1">
                             mdi-magnify
-                        </v-icon>
+                        </v-icon> -->
                         <v-tab
                             v-for="navTab in navigationTabs"
                             :key="navTab.key"

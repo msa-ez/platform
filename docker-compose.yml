@@ -18,7 +18,7 @@ services:
       VUE_APP_DB_HTTPS: "false" # MODE onprem or dev
       VUE_APP_GIT: gitea # Git Provider (Gitea or Gitlab or Github)
       VUE_APP_GIT_URL: http://localhost:3000 # Git Provider URL
-      VUE_APP_GITEA_TOKEN: "" # Gitea Personal Access Token (optional, if not set, will use localStorage gitToken)
+      VUE_APP_GITEA_TOKEN: "b1b75cd28593e93d38d73d0fa6eaf943e4aa4510" # Gitea Personal Access Token (optional, if not set, will use localStorage gitToken)
   # acebase:
   #   image: ghcr.io/msa-ez/acebase:v1.0.18 # Acebase Docker Image
   #   # image: sanghoon01/acebase:v1.1 # Acebase Docker Image

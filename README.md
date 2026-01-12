@@ -495,6 +495,8 @@ Gitea API를 사용하기 위해 Personal Access Token이 필요합니다. OAuth
 
 1. **Setting Gitea Personal Access Token in docker-compose.yml**
 
+Docker 컨테이너 시작 시 `run.sh`가 환경변수를 `env.txt` 파일로 생성하므로, docker-compose.yml에 `VUE_APP_GITEA_TOKEN`을 설정하면 자동으로 적용됩니다.
+
 ```yml
 # ./docker-compose.yml
 msaez:
@@ -514,6 +516,12 @@ msaez:
     VUE_APP_GITEA_TOKEN: "your-gitea-personal-access-token" # Gitea에서 생성한 Personal Access Token
 ```
 
+**동작 방식:**
+1. Docker 컨테이너 시작 시 `run.sh`가 `env > /opt/www/static/env.txt` 실행
+2. docker-compose.yml의 `VUE_APP_GITEA_TOKEN`이 `env.txt`에 포함됨
+3. 브라우저가 `/static/env.txt`를 읽어 `window.GITEA_TOKEN` 설정
+4. `Gitea.js`가 `window.GITEA_TOKEN`을 우선 사용
+
 **또는 .env 파일 사용 (권장):**
 
 ```bash
@@ -529,6 +537,8 @@ msaez:
 ```
 
 > ⚠️ **보안 주의사항**: `.env` 파일을 `.gitignore`에 추가하여 Git에 커밋되지 않도록 하세요.
+
+> 💡 **참고**: `VUE_APP_GITEA_TOKEN`이 설정되지 않으면 `localStorage`의 `gitToken`을 사용합니다. UI에서 직접 토큰을 입력할 수도 있습니다 (Settings 메뉴).
 
 2. **Setting Acebase OAuth2 Client ID & Client Secret (설치형 AceBase 사용 시)**
 
@@ -589,14 +599,15 @@ docker compose up -d
 
 > http://localhost:8080
 
-**참고: Gitea Personal Access Token 설정 방법**
+**Gitea Personal Access Token 설정**
 
-Gitea Personal Access Token은 다음 두 가지 방법으로 설정할 수 있습니다:
+Gitea Personal Access Token은 docker-compose.yml에 환경변수로 설정합니다:
 
-1. **환경변수로 설정 (docker-compose.yml)**: 위의 "Setting Docker Compose Options" 섹션 참고
-2. **UI에서 직접 입력**: MSAez 웹 인터페이스의 Settings 메뉴에서 "Access Token" 필드에 입력 후 저장
+- docker-compose.yml에 `VUE_APP_GITEA_TOKEN` 설정
+- 컨테이너 재시작 시 자동으로 `env.txt`에 포함되어 모든 사용자에게 적용
+- 위의 "Setting Docker Compose Options" 섹션 참고
 
-> 💡 **팁**: 환경변수로 설정하면 모든 사용자에게 자동으로 적용되며, UI에서 입력하면 개별 사용자별로 설정됩니다. 환경변수가 우선적으로 사용됩니다.
+> 💡 **참고**: `VUE_APP_GITEA_TOKEN`이 설정되지 않으면 `localStorage`의 `gitToken`을 사용합니다.
 
 ## Backend 생성기 설정
 
