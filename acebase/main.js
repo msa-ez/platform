@@ -183,6 +183,12 @@ function init() {
     .subscribe(async (snapshot, context) => {
       var uid = snapshot.ref.vars.uid;
       var userItem = snapshot.val();
+      
+      // userItem이 null이면 처리하지 않음
+      if (!userItem) {
+        return;
+      }
+      
       var userEmail = userItem.email;
 
       try {
@@ -348,12 +354,22 @@ function init() {
         //             updateCountDefinition.update(count);
         //         });
         //     });
-        db.ref(`userLists/everyone/share_es/${projectId}`)
-          .remove()
-          .then(function () {});
-        db.ref(`userLists/everyone/share_first/${projectId}`)
-          .remove()
-          .then(function () {});
+        
+        // projectId가 유효한지 확인 (와일드카드가 아닌지)
+        if (projectId && projectId !== "$projectId" && !projectId.startsWith("$")) {
+          db.ref(`userLists/everyone/share_es/${projectId}`)
+            .remove()
+            .then(function () {})
+            .catch(function (err) {
+              console.log(`Error removing share_es/${projectId}:`, err.message);
+            });
+          db.ref(`userLists/everyone/share_first/${projectId}`)
+            .remove()
+            .then(function () {})
+            .catch(function (err) {
+              console.log(`Error removing share_first/${projectId}:`, err.message);
+            });
+        }
         return;
       }
     } catch (e) {

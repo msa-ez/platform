@@ -181,7 +181,69 @@ Navigate to the Acebase admin portal: localhost:5757
 
 ## 사전 요구사항
 
-### 1. Docker 설치 확인
+### 1. Node.js 설치 확인
+
+AceBase를 실행하기 위해 Node.js 14가 필요합니다.
+
+**Node.js 설치 확인:**
+```sh
+node --version
+npm --version
+```
+
+**Node.js가 설치되어 있지 않은 경우:**
+- **nvm 사용 (권장)**: 
+  ```sh
+  # nvm 설치 후
+  nvm install 14
+  nvm use 14
+  ```
+- **직접 설치**: [Node.js 공식 사이트](https://nodejs.org/)에서 Node.js 14 LTS 버전 다운로드 및 설치
+
+**Node.js 버전 확인:**
+```sh
+node --version  # v14.x.x 이상이어야 함
+npm --version   # npm은 Node.js와 함께 설치됨
+```
+
+### 2. Python 설치 확인
+
+Backend 생성기들을 실행하기 위해 Python 3가 필요합니다.
+
+**Python 설치 확인:**
+```sh
+python3 --version
+# 또는
+python --version
+```
+
+**Python이 설치되어 있지 않은 경우:**
+- **macOS**: 
+  ```sh
+  # Homebrew 사용
+  brew install python3
+  ```
+- **Windows**: [Python 공식 사이트](https://www.python.org/downloads/)에서 Python 3.12 이상 다운로드 및 설치
+- **Linux**: 
+  ```sh
+  sudo apt-get update
+  sudo apt-get install python3 python3-pip python3-venv
+  ```
+
+**Python 버전 확인:**
+```sh
+python3 --version  # Python 3.12 이상 권장
+```
+
+**uv 설치 (Backend ES Generators용, 선택적):**
+```sh
+# uv는 Python 패키지 관리 도구
+curl -LsSf https://astral.sh/uv/install.sh | sh
+# 또는
+pip install uv
+```
+
+### 3. Docker 설치 확인
 
 MSAEz는 Docker와 Docker Compose를 사용합니다. 먼저 Docker가 설치되어 있는지 확인하세요.
 
@@ -203,7 +265,7 @@ docker ps
 
 정상적으로 설치되었다면 빈 목록이 표시됩니다.
 
-### 2. 필요한 포트 확인
+### 4. 필요한 포트 확인
 
 다음 포트들이 사용 가능한지 확인하세요:
 - **8080**: MSAez 플랫폼 (Frontend)
@@ -225,7 +287,125 @@ VUE_APP_GIT=github
 ```
 
 
+## AceBase 설치 방법 선택
+
+AceBase는 두 가지 방법으로 설치할 수 있습니다:
+
+### 방법 1: Docker 사용 (개발 환경용)
+
+Docker를 사용하면 간편하게 실행할 수 있지만, **컨테이너를 재시작하면 데이터가 소멸됩니다.**
+
+**주의사항:**
+- Docker 컨테이너 내부에 데이터가 저장되므로, 컨테이너를 삭제하면 데이터가 소멸합니다.
+- 개발/테스트 환경에서만 사용하세요.
+
+### 방법 2: 설치형 AceBase (프로덕션 권장)
+
+프로덕션 환경에서는 Docker 없이 직접 설치하는 것을 권장합니다. 이 방법은 데이터 영속성이 보장되고 더 안정적입니다.
+
+**설치 방법:**
+```sh
+# 1. AceBase 디렉토리로 이동
+cd acebase
+
+# 2. 의존성 설치
+npm install
+
+# 3. 환경 변수 설정
+export CLIENT_ID=your-gitea-oauth-client-id
+export CLIENT_SECRET=your-gitea-oauth-client-secret
+export CLIENT_ID=40850ead-6f98-4dc5-aece-8beef3f2aca9
+export CLIENT_SECRET=gto_y3bwml4oj4hxtpjgb3szbfxpo5ewgdc2eisdy5pqm5i4kr2snxpa
+export PROVIDER=gitea
+export GIT=gitea:3000
+export PROTOCOL=http
+export DB_HOST=0.0.0.0
+export DB_NAME=mydb
+export DB_PORT=5757
+export DB_HTTPS=false
+
+# 4. AceBase 실행
+node main.js
+```
+
+**데이터 저장 위치:**
+- 데이터는 `./acebase/mydb.acebase/` 디렉토리에 저장됩니다.
+- 이 디렉토리를 백업하면 모든 데이터를 보존할 수 있습니다.
+
+**설치형 AceBase 사용 시 docker-compose.yml 수정:**
+```yml
+# acebase 서비스를 주석 처리하거나 제거
+# acebase:
+#   image: ghcr.io/msa-ez/acebase:v1.0.18
+#   container_name: acebase
+#   networks:
+#     - msaez
+#   ports:
+#     - 5757:5757
+#   volumes:
+#     - ./acebase/mydb.acebase:/acebase
+#   environment:
+#     ...
+
+# msaez와 gitea 서비스는 그대로 유지
+msaez:
+  environment:
+    VUE_APP_DB_HOST: 127.0.0.1  # 설치형 AceBase는 localhost에서 실행
+    VUE_APP_DB_PORT: 5757
+    # ...
+gitea:
+  # Gitea는 볼륨 마운트로 데이터가 유지되므로 그대로 사용 가능
+  volumes:
+    - ./gitea:/data
+  # ...
+```
+
 ## Initialize MSAez
+
+### 설치형 AceBase 사용 시 (권장)
+
+**1. docker-compose.yml 수정:**
+```yml
+# acebase 서비스를 주석 처리
+# acebase:
+#   image: ghcr.io/msa-ez/acebase:v1.0.18
+#   container_name: acebase
+#   ...
+
+# msaez와 gitea는 그대로 유지
+msaez:
+  # ...
+gitea:
+  # ...
+```
+
+**2. AceBase 실행:**
+```sh
+cd acebase
+npm install
+export CLIENT_ID=your-gitea-oauth-client-id
+export CLIENT_SECRET=your-gitea-oauth-client-secret
+export PROVIDER=gitea
+export GIT=gitea:3000
+export PROTOCOL=http
+export DB_HOST=0.0.0.0
+export DB_NAME=mydb
+export DB_PORT=5757
+export DB_HTTPS=false
+node main.js
+```
+
+**3. MSAez와 Gitea 실행:**
+```sh
+# 다른 터미널에서 실행
+docker compose up -d msaez gitea
+```
+
+**데이터 영속성:**
+- **Gitea**: `./gitea:/data` 볼륨 마운트로 호스트에 저장되므로, Docker로 올려도 repo와 계정 정보가 소멸되지 않습니다.
+- **AceBase**: 설치형으로 실행하면 `./acebase/mydb.acebase/` 디렉토리에 직접 저장되어 영속성이 보장됩니다.
+
+### Docker Compose 사용 시 (개발 환경용)
 
 ```sh
 docker compose up -d
@@ -233,8 +413,12 @@ docker compose up -d
 
 이 명령어는 다음 서비스들을 시작합니다:
 - **msaez**: MSAez 플랫폼 (Frontend)
-- **acebase**: AceBase 데이터베이스
-- **gitea**: Gitea Git 서버
+- **acebase**: AceBase 데이터베이스 (Docker - 데이터 영속성 없음)
+- **gitea**: Gitea Git 서버 (볼륨 마운트로 데이터 영속성 보장)
+
+**데이터 영속성:**
+- **Gitea**: `./gitea:/data` 볼륨 마운트로 호스트에 저장되므로, repo와 계정 정보가 소멸되지 않습니다.
+- **AceBase**: ⚠️ Docker로 실행한 AceBase는 컨테이너 재시작 시 데이터가 소멸됩니다. 프로덕션 환경에서는 설치형 AceBase를 사용하세요.
 
 ## Setting Gitea
 
@@ -394,7 +578,7 @@ pip install -e .
 
 ### 2. Backend ES Generators (Event Storming Generator) 설정
 
-`.env` 루트 경로에파일을 생성하고 다음 내용을 추가:
+`.env` 루트 경로에 파일을 생성하고 다음 내용을 추가:
 
 ```bash
 AI_MODEL=google_genai:gemini-flash-latest:thinking
@@ -457,9 +641,35 @@ uv run python ./src/eventstorming_generator/main.py
 ### 3. 중요 사항
 
 1. **AceBase 먼저 실행**: Backend 생성기들을 실행하기 전에 AceBase가 실행되어 있어야 합니다.
+   
+   **Docker 사용 시:**
    ```sh
    docker compose up -d acebase
    ```
+   
+   **설치형 AceBase 사용 시:**
+   ```sh
+   cd acebase
+   npm install
+   export CLIENT_ID=your-gitea-oauth-client-id
+   export CLIENT_SECRET=your-gitea-oauth-client-secret
+   export PROVIDER=gitea
+   export GIT=gitea:3000
+   export PROTOCOL=http
+   node main.js
+   ```
+
+2. **데이터 영속성 보장**:
+   
+   **설치형 AceBase 사용 시 (권장)**:
+   - 데이터는 `./acebase/mydb.acebase/` 디렉토리에 직접 저장됩니다.
+   - 컨테이너 재시작과 무관하게 데이터가 유지됩니다.
+   - 프로덕션 환경에서는 설치형 AceBase 사용을 강력히 권장합니다.
+   - 데이터 백업: `./acebase/mydb.acebase/` 디렉토리를 정기적으로 백업하세요.
+   
+   **Docker 사용 시 (개발 환경용)**:
+   - ⚠️ **주의**: Docker 컨테이너 내부에 데이터가 저장되므로, 컨테이너를 재시작하거나 삭제하면 데이터가 소멸됩니다.
+   - 개발/테스트 환경에서만 사용하세요.
 
 2. **포트 충돌 확인**: 
    - Backend Generators: 2025

@@ -16,10 +16,6 @@ class Github extends Git {
         return `https://gitpod.io/#https://github.com/${org}/${repo}${releaseTagPath}`
     }
     getHeader() {
-        // Gitea를 사용하는 경우 헤더 없이 요청 (public repo 접근 가능)
-        if (window.PROVIDER === 'gitea') {
-            return {}
-        }
         return {
             Authorization: 'token ' + localStorage.getItem('gitToken'),
             Accept: 'application/vnd.github+json'

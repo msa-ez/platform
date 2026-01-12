@@ -91,10 +91,24 @@ class Gitea extends Git {
     }
 
     async getTemplateURL(repo) {
+        const baseUrl = this.getBaseUrl();
+        // 조직명 우선, 없으면 사용자명 사용 (Gitea API에서 가져올 수도 있음)
+        const orgName = localStorage.getItem("gitOrgName") || localStorage.getItem("gitUserName");
+        if (orgName) {
+            return `${baseUrl}/${orgName}/${repo}`;
+        }
+        // 기본값은 GitHub (하위 호환성)
         return `https://github.com/msa-ez/${repo}`;
     }
 
     async getToppingURL(repo) {
+        const baseUrl = this.getBaseUrl();
+        // 조직명 우선, 없으면 사용자명 사용
+        const orgName = localStorage.getItem("gitOrgName") || localStorage.getItem("gitUserName");
+        if (orgName) {
+            return `${baseUrl}/${orgName}/topping-${repo}`;
+        }
+        // 기본값은 GitHub (하위 호환성)
         return `https://github.com/msa-ez/topping-${repo}`;
     }
 
