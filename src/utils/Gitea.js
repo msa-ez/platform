@@ -32,11 +32,25 @@ class Gitea extends Git {
     }
 
     getHeader() {
-        // if(!localStorage.getItem('giteaToken')) {
-        //     localStorage.setItem('giteaToken', '');
-        // }
+        // 환경변수에서 Gitea Personal Access Token 우선 사용
+        // 없으면 localStorage의 gitToken 사용
+        const envToken = process.env.VUE_APP_GITEA_TOKEN;
+        const gitToken = envToken || localStorage.getItem('gitToken');
+        
+        if (!gitToken) {
+            return {};
+        }
+        
+        // JWT 토큰(OAuth)인 경우 Gitea API에서 직접 사용할 수 없음
+        // JWT는 점(.) 3개로 구분된 구조: header.payload.signature
+        const isJWT = gitToken.includes('.') && gitToken.split('.').length === 3;
+        if (isJWT) {
+            // JWT 토큰인 경우 빈 객체 반환 (Gitea API에서 사용 불가)
+            return {};
+        }
+        
         return {
-            Authorization: 'token ' + localStorage.getItem('gitToken')
+            Authorization: 'token ' + gitToken
         };
     }
 

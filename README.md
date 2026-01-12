@@ -312,10 +312,9 @@ cd acebase
 npm install
 
 # 3. 환경 변수 설정
+# Gitea Cliend_id, Client_secret은 gitea configuration step에서 발급받을 수 있습니다.
 export CLIENT_ID=your-gitea-oauth-client-id
 export CLIENT_SECRET=your-gitea-oauth-client-secret
-export CLIENT_ID=40850ead-6f98-4dc5-aece-8beef3f2aca9
-export CLIENT_SECRET=gto_y3bwml4oj4hxtpjgb3szbfxpo5ewgdc2eisdy5pqm5i4kr2snxpa
 export PROVIDER=gitea
 export GIT=gitea:3000
 export PROTOCOL=http
@@ -474,16 +473,84 @@ OFFLINE_MODE = true
    > ![alt text](https://github.com/user-attachments/assets/5b6c5038-1f29-4bcc-b70f-ed7fe004ee97)
 8. Click **Save**
 
-### 4. Setting Docker Compose Options
+### 4. Generate Gitea Personal Access Token
 
-1.  Setting Acebase OAuth2 Client ID & Client Secret
+Gitea API를 사용하기 위해 Personal Access Token이 필요합니다. OAuth 토큰은 Gitea API에서 직접 사용할 수 없으므로 Personal Access Token을 생성해야 합니다.
+
+1. Login to Gitea (http://localhost:3000)
+2. Click **Profile Icon** (top right)
+3. Click **Settings**
+4. Click **Applications** → **Generate New Token**
+5. **Token Name**: 원하는 이름 입력 (예: msaez-api-token)
+6. **Select Scopes**: 필요한 권한 선택
+   - `read:repository` - 저장소 읽기
+   - `write:repository` - 저장소 쓰기
+   - `read:user` - 사용자 정보 읽기
+   - `read:org` - 조직 정보 읽기 (조직 사용 시)
+7. Click **Generate Token**
+8. **생성된 토큰을 복사하여 저장하세요.** (토큰은 한 번만 표시됩니다)
+   > ⚠️ **주의**: 토큰을 잃어버리면 다시 생성해야 합니다.
+
+### 5. Setting Docker Compose Options
+
+1. **Setting Gitea Personal Access Token in docker-compose.yml**
 
 ```yml
-# ./docker-compose.yaml
----
+# ./docker-compose.yml
+msaez:
+  image: ghcr.io/msa-ez/platform:v1.0.29
+  networks:
+    - msaez
+  ports:
+    - 8080:8080
+  environment:
+    VUE_APP_DB_HOST: 127.0.0.1
+    VUE_APP_DB_PORT: 5757
+    VUE_APP_DB_NAME: mydb
+    VUE_APP_MODE: onprem
+    VUE_APP_DB_HTTPS: "false"
+    VUE_APP_GIT: gitea
+    VUE_APP_GIT_URL: http://localhost:3000
+    VUE_APP_GITEA_TOKEN: "your-gitea-personal-access-token" # Gitea에서 생성한 Personal Access Token
+```
+
+**또는 .env 파일 사용 (권장):**
+
+```bash
+# .env 파일 생성
+VUE_APP_GITEA_TOKEN=your-gitea-personal-access-token
+```
+
+```yml
+# docker-compose.yml
+msaez:
+  environment:
+    VUE_APP_GITEA_TOKEN: ${VUE_APP_GITEA_TOKEN}  # .env 파일에서 읽어옴
+```
+
+> ⚠️ **보안 주의사항**: `.env` 파일을 `.gitignore`에 추가하여 Git에 커밋되지 않도록 하세요.
+
+2. **Setting Acebase OAuth2 Client ID & Client Secret (설치형 AceBase 사용 시)**
+
+```sh
+# AceBase 실행 시 환경변수로 설정
+export CLIENT_ID=your-gitea-oauth-client-id
+export CLIENT_SECRET=your-gitea-oauth-client-secret
+export PROVIDER=gitea
+export GIT=gitea:3000
+export PROTOCOL=http
+export DB_HOST=0.0.0.0
+export DB_NAME=mydb
+export DB_PORT=5757
+export DB_HTTPS=false
+```
+
+**Docker로 AceBase 사용 시:**
+
+```yml
+# ./docker-compose.yml
 acebase:
-  image: ghcr.io/msa-ez/acebase:v1.0.18 # Acebase Docker Image
-  # image: sanghoon01/acebase:v1.1 # Acebase Docker Image
+  image: ghcr.io/msa-ez/acebase:v1.0.18
   container_name: acebase
   networks:
     - msaez
@@ -492,14 +559,14 @@ acebase:
   volumes:
     - ./acebase/mydb.acebase:/acebase
   environment:
-    DB_HOST: "0.0.0.0" # DB Host Name
+    DB_HOST: "0.0.0.0"
     DB_NAME: mydb
     DB_PORT: 5757
     DB_HTTPS: "false"
-    CLIENT_ID: your-gitea-oauth-client-id # Gitea에서 발급받은 OAuth Client ID
-    CLIENT_SECRET: your-gitea-oauth-client-secret # Gitea에서 발급받은 OAuth Client Secret
+    CLIENT_ID: your-gitea-oauth-client-id
+    CLIENT_SECRET: your-gitea-oauth-client-secret
     PROVIDER: gitea
-    GIT: "gitea:3000" # Git URL
+    GIT: "gitea:3000"
     PROTOCOL: http
 ```
 
@@ -521,6 +588,15 @@ docker compose up -d
 ### 8. Connect MSAez
 
 > http://localhost:8080
+
+**참고: Gitea Personal Access Token 설정 방법**
+
+Gitea Personal Access Token은 다음 두 가지 방법으로 설정할 수 있습니다:
+
+1. **환경변수로 설정 (docker-compose.yml)**: 위의 "Setting Docker Compose Options" 섹션 참고
+2. **UI에서 직접 입력**: MSAez 웹 인터페이스의 Settings 메뉴에서 "Access Token" 필드에 입력 후 저장
+
+> 💡 **팁**: 환경변수로 설정하면 모든 사용자에게 자동으로 적용되며, UI에서 입력하면 개별 사용자별로 설정됩니다. 환경변수가 우선적으로 사용됩니다.
 
 ## Backend 생성기 설정
 
