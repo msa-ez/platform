@@ -3235,9 +3235,6 @@ import { value } from 'jsonpath';
 
             async loadAllRepoList(){
                 try {
-                    // pbc 비활성화
-                    return false;
-                    
                     const cachedData = localStorage.getItem('repoListCache');
                     const cacheTimestamp = localStorage.getItem('repoListCacheTimestamp');
                     const CACHE_DURATION = 1000 * 60 * 60;
@@ -3283,10 +3280,6 @@ import { value } from 'jsonpath';
 
             async loadPBCInfo(){
                 var me = this;
-
-                // pbc 비활성화
-                return false;
-                
                 me.pbcLists = [];
 
                 const cachedPBCData = localStorage.getItem('pbcListCache');

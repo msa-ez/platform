@@ -9,9 +9,9 @@
                         >
                             <v-icon>mdi-home</v-icon>
                         </v-tab>
-                        <!-- <v-icon @click="searchOpen = !searchOpen" class="main-nav-tab pl-1 pr-1">
+                        <v-icon @click="searchOpen = !searchOpen" class="main-nav-tab pl-1 pr-1">
                             mdi-magnify
-                        </v-icon> -->
+                        </v-icon>
                         <v-tab
                             v-for="navTab in navigationTabs"
                             :key="navTab.key"
@@ -387,7 +387,7 @@
                                         </v-list-item>
                                     </v-list>
                                 </v-menu>
-                                <!-- <v-text-field
+                                <v-text-field
                                         v-model="searchObj.name"
                                         outlined
                                         class="gs-main-search"
@@ -395,7 +395,7 @@
                                         autofocus
                                         hide-details
                                         dense
-                                ></v-text-field> -->
+                                ></v-text-field>
                             </v-row>
                         </div>
                     </v-alert>
