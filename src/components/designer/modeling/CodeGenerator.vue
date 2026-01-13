@@ -8042,7 +8042,7 @@ jobs:
                     //////////////////////////////////////////////// TEMPLATE START ////////////////////////////////////////////////
                     // setting Template
                     if(basePlatforms == "Custom Template"){
-                        basePlatforms = "template-spring-boot"
+                        basePlatforms = "template-posco"
                     }
                     // setting of Base Template
                     if((localStorage.getItem("loginType") && localStorage.getItem("loginType") == "github") || me.gitAccessToken){
