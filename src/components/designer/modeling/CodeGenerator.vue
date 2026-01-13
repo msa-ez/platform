@@ -1667,7 +1667,7 @@
                 isComputeTreeListSwitch: false,
                 debuggerPoint: [],
                 // Template
-                defaultTemplate: 'template-spring-boot',
+                defaultTemplate: 'template-posco',
                 tempToppingPlatforms: [] ,
                 tempConfiguration: null,
                 menuOpen:{
@@ -2628,7 +2628,7 @@
                 canvas: me.canvas,
                 projectName: this.projectName,
                 gitURLforModel: this.gitURLforModel,
-                defaultTemplate: 'template-spring-boot'
+                defaultTemplate: 'template-posco'
             });
 
             // K8s Topping은 기본세팅

@@ -202,7 +202,7 @@ npm --version
 
 **Node.js 버전 확인:**
 ```sh
-node --version  # v14.x.x 이상이어야 함
+node --version  # v14.x.x 버전
 npm --version   # npm은 Node.js와 함께 설치됨
 ```
 
@@ -271,37 +271,174 @@ docker ps
 - **8080**: MSAez 플랫폼 (Frontend)
 - **5757**: AceBase 데이터베이스
 - **3000**: Gitea (Git 서버)
-- **2025**: Backend Generators (Flask 서버)
-- **5000**: Backend ES Generators (LangGraph 서버)
+- **2025**: Backend Generators (Flask 서버, LangGraph 워크플로우)
+- **5000**: Backend ES Generators (FastAPI 서버, LangGraph 워크플로우)
 
 포트가 이미 사용 중인 경우, `docker-compose.yml`에서 포트를 변경할 수 있습니다.
 
-## set env.txt
+## Setting Gitea
 
-```bash
-VUE_APP_MODE=dev
-VUE_APP_DB_HOST=localhost
-VUE_APP_DB_PORT=5757
-VUE_APP_DB_NAME=mydb
-VUE_APP_GIT=github
+이 단계에서는 Gitea Git 서버를 초기화하고 OAuth 설정을 완료합니다. MSAez와 AceBase가 Gitea와 연동되도록 설정합니다.
+
+### 1. Gitea 초기화 및 실행
+
+먼저 Gitea를 실행하고 초기 설정을 완료합니다.
+
+**Gitea 실행:**
+```sh
+# docker-compose.yml이 있는 디렉토리에서 실행
+docker compose up -d gitea
 ```
 
+**초기 설정:**
+1. 브라우저에서 http://127.0.0.1:3000/ 접속
+2. Gitea 초기 설정 화면에서 다음 정보 입력:
+   - **Database Type**: SQLite3 (기본값)
+   - **Site Title**: 원하는 제목 입력
+   - **Repository Root Path**: `/data/git/repositories` (기본값)
+   - **Git LFS Root Path**: `/data/git/lfs` (기본값)
+   - **Run As Username**: `git` (기본값)
+   - **SSH Server Domain**: `gitea` (또는 `localhost`)
+   - **SSH Port**: `22`
+   - **HTTP Port**: `3000`
+   - **Gitea Base URL**: `http://gitea:3000/` (중요!)
+3. **Administrator Account Setting** 섹션에서 관리자 계정 생성:
+   - **Username**: 원하는 관리자 사용자명
+   - **Password**: 관리자 비밀번호
+   - **Confirm Password**: 비밀번호 확인
+   - **Email**: 관리자 이메일 주소
+4. **Install Gitea** 버튼 클릭
+
+![alt text](https://github.com/user-attachments/assets/46aae576-9418-4765-924f-6e37ef5e0881)
+
+### 2. Gitea 설정 파일 수정
+
+Gitea가 Docker로 실행 중인 경우, 설정 파일을 직접 수정해야 합니다.
+
+**설정 파일 위치:**
+- Docker로 실행한 경우: `./gitea/gitea/conf/app.ini`
+
+**수정 방법:**
+```sh
+# 설정 파일 편집
+vi ./gitea/gitea/conf/app.ini
+# 또는
+nano ./gitea/gitea/conf/app.ini
+```
+
+**추가/수정할 내용:**
+```ini
+# ./gitea/gitea/conf/app.ini
+
+[cors]
+ENABLED = true
+ALLOW_DOMAIN = *
+
+[server]
+APP_DATA_PATH = /data/gitea
+DOMAIN = gitea
+SSH_DOMAIN = gitea
+HTTP_PORT = 3000
+# ROOT_URL을 http://gitea:3000/로 변경
+ROOT_URL = http://gitea:3000/
+DISABLE_SSH = false
+SSH_PORT = 22
+SSH_LISTEN_PORT = 22
+LFS_START_SERVER = true
+LFS_JWT_SECRET = UPSh8CoIsH5nBiwg2kHeBWsKiIt97afTRSg0Jm2eeyA
+OFFLINE_MODE = true
+```
+
+**설정 적용:**
+```sh
+# Gitea 컨테이너 재시작
+docker compose restart gitea
+```
+
+### 3. OAuth2 Application 생성
+
+AceBase가 Gitea와 OAuth 인증을 하기 위해 OAuth2 Application을 생성합니다.
+
+**단계:**
+1. Gitea에 관리자 계정으로 로그인 (http://localhost:3000)
+2. 우측 상단 **프로필 아이콘** 클릭
+3. **Settings** 클릭
+4. 좌측 메뉴에서 **Applications** 클릭
+5. **Manage OAuth2 Applications** 섹션에서:
+   - **Application Name**: 원하는 이름 입력 (예: `acebase`)
+   - **Redirect URIs**: 다음 URI 입력 (새 줄로 구분)
+     ```
+     http://localhost:5757/oauth2/mydb/signin
+     http://127.0.0.1:5757/oauth2/mydb/signin
+     ```
+6. **Create Application** 버튼 클릭
+7. 생성된 **Client ID**와 **Client Secret**을 복사하여 저장하세요.
+   > ⚠️ **중요**: Client Secret은 한 번만 표시되므로 반드시 저장하세요.
+   > ![alt text](https://github.com/user-attachments/assets/5b6c5038-1f29-4bcc-b70f-ed7fe004ee97)
+8. **Save** 버튼 클릭
+
+### 4. Gitea Personal Access Token 생성
+
+MSAEz가 Gitea API를 사용하기 위해 Personal Access Token이 필요합니다. OAuth 토큰은 Gitea API에서 직접 사용할 수 없으므로 Personal Access Token을 생성해야 합니다.
+
+**단계:**
+1. Gitea에 로그인 (http://localhost:3000)
+2. 우측 상단 **프로필 아이콘** 클릭
+3. **Settings** 클릭
+4. 좌측 메뉴에서 **Applications** → **Generate New Token** 클릭
+5. **Token Name**: 원하는 이름 입력 (예: `msaez-api-token`)
+6. **Select Scopes**: 필요한 권한 선택
+   - `read:repository` - 저장소 읽기
+   - `write:repository` - 저장소 쓰기
+   - `read:user` - 사용자 정보 읽기
+   - `read:org` - 조직 정보 읽기 (조직 사용 시)
+7. **Generate Token** 버튼 클릭
+8. **생성된 토큰을 복사하여 저장하세요.** (토큰은 한 번만 표시됩니다)
+   > ⚠️ **주의**: 토큰을 잃어버리면 다시 생성해야 합니다.
+
+### 5. Hosts 파일 추가
+
+Gitea 도메인을 로컬에서 인식하도록 hosts 파일을 수정합니다.
+
+**macOS / Linux:**
+```sh
+sudo vi /etc/hosts
+# 또는
+sudo nano /etc/hosts
+```
+
+**Windows:**
+```
+C:\Windows\System32\drivers\etc\hosts 파일을 관리자 권한으로 열기
+```
+
+**추가할 내용:**
+```text
+127.0.0.1 gitea
+```
+
+**확인:**
+```sh
+ping gitea
+# 127.0.0.1로 응답하는지 확인
+```
 
 ## AceBase 설치 방법 선택
 
-AceBase는 두 가지 방법으로 설치할 수 있습니다:
+이 단계에서는 AceBase 데이터베이스를 설치하고 실행합니다. 두 가지 방법 중 하나를 선택하세요.
 
-### 방법 1: Docker 사용 (개발 환경용)
+> 💡 **권장**: 프로덕션 환경에서는 **설치형 AceBase**를 사용하세요. 데이터 영속성이 보장되고 더 안정적입니다.
 
-Docker를 사용하면 간편하게 실행할 수 있지만, **컨테이너를 재시작하면 데이터가 소멸됩니다.**
+> ⚠️ **주의**: AceBase를 실행하기 전에 위의 "Setting Gitea" 섹션에서 OAuth2 Application을 생성하고 Client ID와 Secret을 발급받아야 합니다.
 
-**주의사항:**
-- Docker 컨테이너 내부에 데이터가 저장되므로, 컨테이너를 삭제하면 데이터가 소멸합니다.
-- 개발/테스트 환경에서만 사용하세요.
-
-### 방법 2: 설치형 AceBase (프로덕션 권장)
+### 방법 1: 설치형 AceBase (프로덕션 권장) ⭐
 
 프로덕션 환경에서는 Docker 없이 직접 설치하는 것을 권장합니다. 이 방법은 데이터 영속성이 보장되고 더 안정적입니다.
+
+**장점:**
+- 데이터가 호스트에 직접 저장되어 영속성 보장
+- 컨테이너 재시작과 무관하게 데이터 유지
+- 프로덕션 환경에 적합
 
 **설치 방법:**
 ```sh
@@ -312,7 +449,7 @@ cd acebase
 npm install
 
 # 3. 환경 변수 설정
-# Gitea Cliend_id, Client_secret은 gitea configuration step에서 발급받을 수 있습니다.
+# 위의 "Setting Gitea" 섹션의 "OAuth2 Application 생성" 단계에서 발급받은 Client ID와 Secret 사용
 export CLIENT_ID=your-gitea-oauth-client-id
 export CLIENT_SECRET=your-gitea-oauth-client-secret
 export PROVIDER=gitea
@@ -322,6 +459,7 @@ export DB_HOST=0.0.0.0
 export DB_NAME=mydb
 export DB_PORT=5757
 export DB_HTTPS=false
+export ADMIN_PASSWORD=your-admin-password  # 선택적: 기본값은 75sdDSFg37w5 (프로덕션 환경에서는 반드시 변경 권장)
 
 # 4. AceBase 실행
 node main.js
@@ -331,234 +469,27 @@ node main.js
 - 데이터는 `./acebase/mydb.acebase/` 디렉토리에 저장됩니다.
 - 이 디렉토리를 백업하면 모든 데이터를 보존할 수 있습니다.
 
-**설치형 AceBase 사용 시 docker-compose.yml 수정:**
+**확인:**
+- AceBase가 정상적으로 실행되면 터미널에 "SERVER ready" 메시지가 표시됩니다.
+- 브라우저에서 http://localhost:5757/webmanager/ 접속하여 관리자 포털 확인 가능
+  - DB Name: `mydb`
+  - User: `admin`
+  - Password: `75sdDSFg37w5`
+
+### 방법 2: Docker 사용 (개발 환경용)
+
+Docker를 사용하면 간편하게 실행할 수 있지만, **컨테이너를 재시작하면 데이터가 소멸됩니다.**
+
+**장점:**
+- 간편한 설치 및 실행
+- 개발/테스트 환경에 적합
+
+**단점:**
+- ⚠️ 컨테이너 재시작 시 데이터 소멸
+- 프로덕션 환경에는 부적합
+
+**docker-compose.yml 설정:**
 ```yml
-# acebase 서비스를 주석 처리하거나 제거
-# acebase:
-#   image: ghcr.io/msa-ez/acebase:v1.0.18
-#   container_name: acebase
-#   networks:
-#     - msaez
-#   ports:
-#     - 5757:5757
-#   volumes:
-#     - ./acebase/mydb.acebase:/acebase
-#   environment:
-#     ...
-
-# msaez와 gitea 서비스는 그대로 유지
-msaez:
-  environment:
-    VUE_APP_DB_HOST: 127.0.0.1  # 설치형 AceBase는 localhost에서 실행
-    VUE_APP_DB_PORT: 5757
-    # ...
-gitea:
-  # Gitea는 볼륨 마운트로 데이터가 유지되므로 그대로 사용 가능
-  volumes:
-    - ./gitea:/data
-  # ...
-```
-
-## Initialize MSAez
-
-### 설치형 AceBase 사용 시 (권장)
-
-**1. docker-compose.yml 수정:**
-```yml
-# acebase 서비스를 주석 처리
-# acebase:
-#   image: ghcr.io/msa-ez/acebase:v1.0.18
-#   container_name: acebase
-#   ...
-
-# msaez와 gitea는 그대로 유지
-msaez:
-  # ...
-gitea:
-  # ...
-```
-
-**2. AceBase 실행:**
-```sh
-cd acebase
-npm install
-export CLIENT_ID=your-gitea-oauth-client-id
-export CLIENT_SECRET=your-gitea-oauth-client-secret
-export PROVIDER=gitea
-export GIT=gitea:3000
-export PROTOCOL=http
-export DB_HOST=0.0.0.0
-export DB_NAME=mydb
-export DB_PORT=5757
-export DB_HTTPS=false
-node main.js
-```
-
-**3. MSAez와 Gitea 실행:**
-```sh
-# 다른 터미널에서 실행
-docker compose up -d msaez gitea
-```
-
-**데이터 영속성:**
-- **Gitea**: `./gitea:/data` 볼륨 마운트로 호스트에 저장되므로, Docker로 올려도 repo와 계정 정보가 소멸되지 않습니다.
-- **AceBase**: 설치형으로 실행하면 `./acebase/mydb.acebase/` 디렉토리에 직접 저장되어 영속성이 보장됩니다.
-
-### Docker Compose 사용 시 (개발 환경용)
-
-```sh
-docker compose up -d
-```
-
-이 명령어는 다음 서비스들을 시작합니다:
-- **msaez**: MSAez 플랫폼 (Frontend)
-- **acebase**: AceBase 데이터베이스 (Docker - 데이터 영속성 없음)
-- **gitea**: Gitea Git 서버 (볼륨 마운트로 데이터 영속성 보장)
-
-**데이터 영속성:**
-- **Gitea**: `./gitea:/data` 볼륨 마운트로 호스트에 저장되므로, repo와 계정 정보가 소멸되지 않습니다.
-- **AceBase**: ⚠️ Docker로 실행한 AceBase는 컨테이너 재시작 시 데이터가 소멸됩니다. 프로덕션 환경에서는 설치형 AceBase를 사용하세요.
-
-## Setting Gitea
-
-### 1. Initialize Gitea
-
-1. Access To http://127.0.0.1:3000/
-2. Set Gitea Initial Configuration
-3. **Administrator Account Setting**
-4. Install Gitea
-
-![alt text](https://github.com/user-attachments/assets/46aae576-9418-4765-924f-6e37ef5e0881)
-
-### 2. Setting Gitea Configuration
-
-1. Edit Gitea Configuration File
-
-```ini
-# ./gitea/gitea/conf/app.ini
-
-# Add Cors Configuration
-...
-[cors]
-ENABLED = true
-ALLOW_DOMAIN = *
-
-[server]
-APP_DATA_PATH = /data/gitea
-DOMAIN = gitea
-SSH_DOMAIN = gitea
-HTTP_PORT = 3000
-# Edit ROOT_URL http://127.0.0.1:3000/ - >http://gitea:3000/
-ROOT_URL = http://gitea:3000/
-DISABLE_SSH = false
-SSH_PORT = 22
-SSH_LISTEN_PORT = 22
-LFS_START_SERVER = true
-LFS_JWT_SECRET = UPSh8CoIsH5nBiwg2kHeBWsKiIt97afTRSg0Jm2eeyA
-OFFLINE_MODE = true
-...
-```
-
-### 3. Setting OAuth2 Application with Gitea
-
-1. Login to Gitea (Administrator)
-2. Click **Profile Icon** (top right)
-3. Click **Settings**
-4. Click **Applications**
-5. Input **Manage OAuth2 Applications**
-   - Application Name : **any name** ex) acebase
-   - Redirect URIs. Please use a new line for every URI.: **http://localhost:5757/oauth2/mydb/signin**
-6. Click **Create Application**
-7. **Client ID & Client Secret** issued after the registration of Application is necessary for MSAez Install, so save them.
-   > ![alt text](https://github.com/user-attachments/assets/5b6c5038-1f29-4bcc-b70f-ed7fe004ee97)
-8. Click **Save**
-
-### 4. Generate Gitea Personal Access Token
-
-Gitea API를 사용하기 위해 Personal Access Token이 필요합니다. OAuth 토큰은 Gitea API에서 직접 사용할 수 없으므로 Personal Access Token을 생성해야 합니다.
-
-1. Login to Gitea (http://localhost:3000)
-2. Click **Profile Icon** (top right)
-3. Click **Settings**
-4. Click **Applications** → **Generate New Token**
-5. **Token Name**: 원하는 이름 입력 (예: msaez-api-token)
-6. **Select Scopes**: 필요한 권한 선택
-   - `read:repository` - 저장소 읽기
-   - `write:repository` - 저장소 쓰기
-   - `read:user` - 사용자 정보 읽기
-   - `read:org` - 조직 정보 읽기 (조직 사용 시)
-7. Click **Generate Token**
-8. **생성된 토큰을 복사하여 저장하세요.** (토큰은 한 번만 표시됩니다)
-   > ⚠️ **주의**: 토큰을 잃어버리면 다시 생성해야 합니다.
-
-### 5. Setting Docker Compose Options
-
-1. **Setting Gitea Personal Access Token in docker-compose.yml**
-
-Docker 컨테이너 시작 시 `run.sh`가 환경변수를 `env.txt` 파일로 생성하므로, docker-compose.yml에 `VUE_APP_GITEA_TOKEN`을 설정하면 자동으로 적용됩니다.
-
-```yml
-# ./docker-compose.yml
-msaez:
-  image: ghcr.io/msa-ez/platform:v1.0.29
-  networks:
-    - msaez
-  ports:
-    - 8080:8080
-  environment:
-    VUE_APP_DB_HOST: 127.0.0.1
-    VUE_APP_DB_PORT: 5757
-    VUE_APP_DB_NAME: mydb
-    VUE_APP_MODE: onprem
-    VUE_APP_DB_HTTPS: "false"
-    VUE_APP_GIT: gitea
-    VUE_APP_GIT_URL: http://localhost:3000
-    VUE_APP_GITEA_TOKEN: "your-gitea-personal-access-token" # Gitea에서 생성한 Personal Access Token
-```
-
-**동작 방식:**
-1. Docker 컨테이너 시작 시 `run.sh`가 `env > /opt/www/static/env.txt` 실행
-2. docker-compose.yml의 `VUE_APP_GITEA_TOKEN`이 `env.txt`에 포함됨
-3. 브라우저가 `/static/env.txt`를 읽어 `window.GITEA_TOKEN` 설정
-4. `Gitea.js`가 `window.GITEA_TOKEN`을 우선 사용
-
-**또는 .env 파일 사용 (권장):**
-
-```bash
-# .env 파일 생성
-VUE_APP_GITEA_TOKEN=your-gitea-personal-access-token
-```
-
-```yml
-# docker-compose.yml
-msaez:
-  environment:
-    VUE_APP_GITEA_TOKEN: ${VUE_APP_GITEA_TOKEN}  # .env 파일에서 읽어옴
-```
-
-> ⚠️ **보안 주의사항**: `.env` 파일을 `.gitignore`에 추가하여 Git에 커밋되지 않도록 하세요.
-
-> 💡 **참고**: `VUE_APP_GITEA_TOKEN`이 설정되지 않으면 `localStorage`의 `gitToken`을 사용합니다. UI에서 직접 토큰을 입력할 수도 있습니다 (Settings 메뉴).
-
-2. **Setting Acebase OAuth2 Client ID & Client Secret (설치형 AceBase 사용 시)**
-
-```sh
-# AceBase 실행 시 환경변수로 설정
-export CLIENT_ID=your-gitea-oauth-client-id
-export CLIENT_SECRET=your-gitea-oauth-client-secret
-export PROVIDER=gitea
-export GIT=gitea:3000
-export PROTOCOL=http
-export DB_HOST=0.0.0.0
-export DB_NAME=mydb
-export DB_PORT=5757
-export DB_HTTPS=false
-```
-
-**Docker로 AceBase 사용 시:**
-
-```yml
-# ./docker-compose.yml
 acebase:
   image: ghcr.io/msa-ez/acebase:v1.0.18
   container_name: acebase
@@ -573,47 +504,243 @@ acebase:
     DB_NAME: mydb
     DB_PORT: 5757
     DB_HTTPS: "false"
-    CLIENT_ID: your-gitea-oauth-client-id
-    CLIENT_SECRET: your-gitea-oauth-client-secret
+    CLIENT_ID: your-gitea-oauth-client-id  # 위의 "Setting Gitea" 섹션에서 발급받은 값
+    CLIENT_SECRET: your-gitea-oauth-client-secret  # 위의 "Setting Gitea" 섹션에서 발급받은 값
     PROVIDER: gitea
     GIT: "gitea:3000"
     PROTOCOL: http
 ```
 
-### 6. Add Hosts File
-
-```text
-# /etc/hosts
-
-127.0.0.1 gitea
+**실행:**
+```sh
+docker compose up -d acebase
 ```
 
-### 7. Restart Docker Compose
+## Initialize MSAez
+
+이 단계에서는 docker-compose.yml을 설정하고 MSAez 플랫폼을 실행합니다.
+
+### docker-compose.yml 설정
+
+프로젝트 루트 디렉토리에 `docker-compose.yml` 파일을 생성하거나 수정합니다.
+
+**전체 예시 (설치형 AceBase 사용 시):**
+```yml
+version: "3"
+
+networks:
+  msaez:
+    external: false
+
+services:
+  msaez:
+    image: ghcr.io/msa-ez/platform:v1.0.29
+    networks:
+      - msaez
+    ports:
+      - 8080:8080
+    environment:
+      VUE_APP_DB_HOST: 127.0.0.1  # 설치형 AceBase는 localhost에서 실행
+      VUE_APP_DB_PORT: 5757
+      VUE_APP_DB_NAME: mydb
+      VUE_APP_MODE: onprem
+      VUE_APP_DB_HTTPS: "false"
+      VUE_APP_GIT: gitea
+      VUE_APP_GIT_URL: http://localhost:3000
+      VUE_APP_GITEA_TOKEN: "your-gitea-personal-access-token"  # 위의 "Setting Gitea" 섹션에서 생성한 Personal Access Token
+
+  # 설치형 AceBase를 사용하므로 주석 처리
+  # acebase:
+  #   image: ghcr.io/msa-ez/acebase:v1.0.18
+  #   container_name: acebase
+  #   networks:
+  #     - msaez
+  #   ports:
+  #     - 5757:5757
+  #   volumes:
+  #     - ./acebase/mydb.acebase:/acebase
+  #   environment:
+  #     DB_HOST: "0.0.0.0"
+  #     DB_NAME: mydb
+  #     DB_PORT: 5757
+  #     DB_HTTPS: "false"
+  #     CLIENT_ID: your-gitea-oauth-client-id
+  #     CLIENT_SECRET: your-gitea-oauth-client-secret
+  #     PROVIDER: gitea
+  #     GIT: "gitea:3000"
+  #     PROTOCOL: http
+
+  gitea:
+    image: gitea/gitea:1.22.3
+    container_name: gitea
+    networks:
+      - msaez
+    environment:
+      - USER_UID=1000
+      - USER_GID=1000
+    restart: always
+    volumes:
+      - ./gitea:/data
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - "3000:3000"
+      - "222:22"
+```
+
+**Docker로 AceBase 사용 시:**
+```yml
+version: "3"
+
+networks:
+  msaez:
+    external: false
+
+services:
+  msaez:
+    image: ghcr.io/msa-ez/platform:v1.0.29
+    networks:
+      - msaez
+    ports:
+      - 8080:8080
+    environment:
+      VUE_APP_DB_HOST: acebase  # Docker 네트워크 내에서 acebase 서비스명 사용
+      VUE_APP_DB_PORT: 5757
+      VUE_APP_DB_NAME: mydb
+      VUE_APP_MODE: onprem
+      VUE_APP_DB_HTTPS: "false"
+      VUE_APP_GIT: gitea
+      VUE_APP_GIT_URL: http://localhost:3000
+      VUE_APP_GITEA_TOKEN: "your-gitea-personal-access-token"
+
+  acebase:
+    image: ghcr.io/msa-ez/acebase:v1.0.18
+    container_name: acebase
+    networks:
+      - msaez
+    ports:
+      - 5757:5757
+    volumes:
+      - ./acebase/mydb.acebase:/acebase
+    environment:
+      DB_HOST: "0.0.0.0"
+      DB_NAME: mydb
+      DB_PORT: 5757
+      DB_HTTPS: "false"
+      CLIENT_ID: your-gitea-oauth-client-id  # 위의 "Setting Gitea" 섹션에서 발급받은 값
+      CLIENT_SECRET: your-gitea-oauth-client-secret  # 위의 "Setting Gitea" 섹션에서 발급받은 값
+      PROVIDER: gitea
+      GIT: "gitea:3000"
+      PROTOCOL: http
+
+  gitea:
+    image: gitea/gitea:1.22.3
+    container_name: gitea
+    networks:
+      - msaez
+    environment:
+      - USER_UID=1000
+      - USER_GID=1000
+    restart: always
+    volumes:
+      - ./gitea:/data
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - "3000:3000"
+      - "222:22"
+```
+
+> 💡 **.env 파일 사용 (권장)**: 민감한 정보는 `.env` 파일에 저장하고 docker-compose.yml에서 참조하세요.
+> 
+> ```bash
+> # .env 파일 생성
+> VUE_APP_GITEA_TOKEN=your-gitea-personal-access-token
+> CLIENT_ID=your-gitea-oauth-client-id
+> CLIENT_SECRET=your-gitea-oauth-client-secret
+> ```
+> 
+> ```yml
+> # docker-compose.yml
+> environment:
+>   VUE_APP_GITEA_TOKEN: ${VUE_APP_GITEA_TOKEN}
+>   CLIENT_ID: ${CLIENT_ID}
+>   CLIENT_SECRET: ${CLIENT_SECRET}
+> ```
+> 
+> ⚠️ **보안 주의사항**: `.env` 파일을 `.gitignore`에 추가하여 Git에 커밋되지 않도록 하세요.
+
+### 서비스 실행
+
+**설치형 AceBase 사용 시:**
+```sh
+# 1. AceBase 실행 (별도 터미널)
+cd acebase
+npm install
+export CLIENT_ID=your-gitea-oauth-client-id
+export CLIENT_SECRET=your-gitea-oauth-client-secret
+export PROVIDER=gitea
+export GIT=gitea:3000
+export PROTOCOL=http
+export DB_HOST=0.0.0.0
+export DB_NAME=mydb
+export DB_PORT=5757
+export DB_HTTPS=false
+export ADMIN_PASSWORD=your-admin-password  # 선택적: 기본값은 75sdDSFg37w5 (프로덕션 환경에서는 반드시 변경 권장)
+node main.js
+```
 
 ```sh
-docker compose down
+# 2. MSAez와 Gitea 실행 (다른 터미널)
+docker compose up -d msaez gitea
+```
+
+**Docker로 AceBase 사용 시:**
+```sh
 docker compose up -d
 ```
 
-### 8. Connect MSAez
+**확인:**
+```sh
+# 실행 중인 컨테이너 확인
+docker compose ps
 
+# 로그 확인
+docker compose logs -f msaez
+docker compose logs -f gitea
+# 또는 (Docker AceBase 사용 시)
+docker compose logs -f acebase
+```
+
+**데이터 영속성:**
+- **Gitea**: `./gitea:/data` 볼륨 마운트로 호스트에 저장되므로, Docker로 올려도 repo와 계정 정보가 소멸되지 않습니다.
+- **AceBase (설치형)**: `./acebase/mydb.acebase/` 디렉토리에 직접 저장되어 영속성이 보장됩니다.
+- **AceBase (Docker)**: ⚠️ 컨테이너 재시작 시 데이터가 소멸될 수 있습니다. 프로덕션 환경에서는 설치형 AceBase를 사용하세요.
+
+## Connect MSAez
+
+모든 서비스가 실행되면 MSAez 플랫폼에 접속할 수 있습니다.
+
+**접속:**
 > http://localhost:8080
 
-**Gitea Personal Access Token 설정**
+**확인 사항:**
+- MSAez 웹 인터페이스가 정상적으로 로드되는지 확인
+- Gitea 로그인 기능이 정상적으로 동작하는지 확인
+- AceBase 연결 상태 확인 (브라우저 개발자 도구 콘솔에서 확인)
 
-Gitea Personal Access Token은 docker-compose.yml에 환경변수로 설정합니다:
-
-- docker-compose.yml에 `VUE_APP_GITEA_TOKEN` 설정
-- 컨테이너 재시작 시 자동으로 `env.txt`에 포함되어 모든 사용자에게 적용
-- 위의 "Setting Docker Compose Options" 섹션 참고
-
-> 💡 **참고**: `VUE_APP_GITEA_TOKEN`이 설정되지 않으면 `localStorage`의 `gitToken`을 사용합니다.
+**문제 해결:**
+- 서비스가 실행되지 않는 경우: `docker compose ps`로 상태 확인
+- 포트 충돌: `docker compose logs`로 에러 로그 확인
+- Gitea 연결 문제: hosts 파일 설정 확인 (`127.0.0.1 gitea`)
 
 ## Backend 생성기 설정
 
 MSAEz의 AI 기능을 사용하려면 Backend 생성기들을 별도로 실행해야 합니다.
 
 ### 1. Backend Generators (Project Generator) 설정
+
+https://github.com/uengineYSW/msaez-automate-project-generator (Code download)
 
 `.env` 루트 경로에 파일을 생성하고 다음 내용을 추가:
 
@@ -665,6 +792,8 @@ pip install -e .
 
 ### 2. Backend ES Generators (Event Storming Generator) 설정
 
+https://github.com/ShinSeongJin2/msaez-automate-eventstorming-generator (Code download)
+
 `.env` 루트 경로에 파일을 생성하고 다음 내용을 추가:
 
 ```bash
@@ -686,7 +815,7 @@ LANGSMITH_API_KEY=xxx
 FIREBASE_SERVICE_ACCOUNT_PATH=./.auth/serviceAccountKey.json
 FIREBASE_DATABASE_URL=
 
-NAMESPACE=eventstorming_generator_local
+NAMESPACE=eventstorming_generator
 POD_ID=local_pod
 IS_LOCAL_RUN=true
 USE_GENERATOR_CACHE=true
@@ -717,7 +846,7 @@ uv pip install -U "langgraph-cli[inmem]"
 # grpcio 버전 호환성 문제 해결
 uv pip install "grpcio>=1.75.1"
 
-# 또는 Job 처리 모드로 실행
+# 서버 실행
 uv run python ./src/eventstorming_generator/main.py
 ```
 
@@ -729,12 +858,7 @@ uv run python ./src/eventstorming_generator/main.py
 
 1. **AceBase 먼저 실행**: Backend 생성기들을 실행하기 전에 AceBase가 실행되어 있어야 합니다.
    
-   **Docker 사용 시:**
-   ```sh
-   docker compose up -d acebase
-   ```
-   
-   **설치형 AceBase 사용 시:**
+   **설치형 AceBase 사용 시 (권장):**
    ```sh
    cd acebase
    npm install
@@ -743,7 +867,17 @@ uv run python ./src/eventstorming_generator/main.py
    export PROVIDER=gitea
    export GIT=gitea:3000
    export PROTOCOL=http
+   export DB_HOST=0.0.0.0
+   export DB_NAME=mydb
+   export DB_PORT=5757
+   export DB_HTTPS=false
+   export ADMIN_PASSWORD=your-admin-password  # 선택적: 기본값은 75sdDSFg37w5 (프로덕션 환경에서는 반드시 변경 권장)
    node main.js
+   ```
+   
+   **Docker 사용 시:**
+   ```sh
+   docker compose up -d acebase
    ```
 
 2. **데이터 영속성 보장**:
@@ -758,16 +892,16 @@ uv run python ./src/eventstorming_generator/main.py
    - ⚠️ **주의**: Docker 컨테이너 내부에 데이터가 저장되므로, 컨테이너를 재시작하거나 삭제하면 데이터가 소멸됩니다.
    - 개발/테스트 환경에서만 사용하세요.
 
-2. **포트 충돌 확인**: 
+3. **포트 충돌 확인**: 
    - Backend Generators: 2025
    - Backend ES Generators: 5000
    - 이미 사용 중인 포트가 있다면 `.env` 파일에서 변경하세요.
 
-3. **OpenAI API Key**: 
+4. **OpenAI API Key**: 
    - OpenAI API Key는 반드시 설정해야 합니다.
    - API Key는 [OpenAI Platform](https://platform.openai.com/api-keys)에서 발급받을 수 있습니다.
 
-4. **Storage Type 일치**: 
+5. **Storage Type 일치**: 
    - Frontend와 Backend의 Storage Type이 일치해야 합니다.
    - AceBase를 사용하는 경우: `STORAGE_TYPE=acebase` (backend-generators), `DB_TYPE=acebase` (backend-es-generators)
    - Firebase를 사용하는 경우: `STORAGE_TYPE=firebase` (backend-generators), `DB_TYPE=firebase` (backend-es-generators)

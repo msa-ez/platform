@@ -3,6 +3,21 @@ const { AceBaseClient } = require("acebase-client");
 const express = require("express");
 const app = express();
 const _ = require("lodash");
+
+// 웹소켓 재연결 시도 중 발생하는 일시적인 에러 로그 필터링
+// 클라이언트가 자동으로 재연결을 시도하며, 성공 시 정상 동작합니다.
+const originalError = console.error;
+console.error = function (...args) {
+  const message = args.join(" ");
+  // "Websocket connection error" 메시지는 재연결 시도 중 정상적인 동작이므로 필터링
+  if (message.includes("Websocket connection error") || message.includes("websocket error")) {
+    // 로그를 완전히 숨기거나, 필요시 debug 레벨로 변경 가능
+    // originalError.apply(console, ["[DEBUG]", ...args]);
+    return;
+  }
+  originalError.apply(console, args);
+};
+
 const host = process.env.DB_HOST ? process.env.DB_HOST : "localhost";
 const client_id = process.env.CLIENT_ID ? process.env.CLIENT_ID : null;
 const client_secret = process.env.CLIENT_SECRET
@@ -14,6 +29,7 @@ const https = process.env.DB_HTTPS ? process.env.DB_HTTPS : false; // DB PORT
 // const provider = process.env.PROVIDER ? process.env.PROVIDER : "gitea"; // DB PORT
 const protocol = process.env.PROTOCOL ? process.env.PROTOCOL : "http"; // DB PORT
 const git = process.env.GIT ? process.env.GIT : "localhost:3000"; // DB PORT
+const adminPassword = process.env.ADMIN_PASSWORD ? process.env.ADMIN_PASSWORD : "75sdDSFg37w5"; // Admin Password (환경변수로 설정 가능)
 const server = new AceBaseServer(dbname, {
   host: "0.0.0.0",
   port: 5757,
@@ -24,7 +40,7 @@ const server = new AceBaseServer(dbname, {
     enabled: true,
     allowUserSignup: true,
     defaultAccessRule: "auth",
-    defaultAdminPassword: "75sdDSFg37w5", // Admin Password
+    defaultAdminPassword: adminPassword, // Admin Password
   },
 });
 
@@ -81,7 +97,7 @@ function init() {
     https: JSON.parse(https),
   });
   // const db = new AceBaseClient({ host: 'acebase.kuberez.io', port: 443, dbname: 'mydb', https: true });
-  db.auth.signIn("admin", "75sdDSFg37w5").then((result) => {
+  db.auth.signIn("admin", adminPassword).then((result) => {
     console.log(
       `Signed in as ${result.user.username}, got access token ${result.accessToken}`
     );
