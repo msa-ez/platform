@@ -696,7 +696,7 @@
                                                                         direction="top"
                                                                 >
                                                                     <template v-slot:activator="{ on, attrs}" >
-                                                                        <v-chip
+                                                                        <!-- <v-chip
                                                                                 v-if="!item.isPBCCode"
                                                                                 @mouseenter="showFullNameforSelectedTemplateKey = item.key"
                                                                                 @mouseleave="showFullNameforSelectedTemplateKey = null"
@@ -704,10 +704,10 @@
                                                                                 v-bind="attrs"
                                                                                 v-on="on"
                                                                                 style="position:absolute; left:190px; top:7px;"
-                                                                        >
+                                                                        > -->
                                                                             <!-- {{item.preferredPlatform ? item.preferredPlatform:'selected'}} -->
-                                                                            {{item.preferredPlatform ? (showFullNameforSelectedTemplateKey == item.key ? getPreferredPlatformName(item.preferredPlatform, true):getPreferredPlatformName(item.preferredPlatform, false)):'selected'}}
-                                                                        </v-chip>
+                                                                            <!-- {{item.preferredPlatform ? (showFullNameforSelectedTemplateKey == item.key ? getPreferredPlatformName(item.preferredPlatform, true):getPreferredPlatformName(item.preferredPlatform, false)):'selected'}}
+                                                                        </v-chip> -->
                                                                     </template>
 
                                                                     <v-tabs style="max-height:450px; overflow-x:scroll;">
