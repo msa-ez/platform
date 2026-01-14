@@ -183,200 +183,82 @@ MSAez Git url: https://github.com/msa-ez/platform.git
 
 ## 사전 요구사항
 
-### 1. Git 설치 확인
+### 1. Git 설치
 
-소스코드를 다운로드하기 위해 Git이 필요합니다.
-
-**Git 설치 확인:**
+**macOS:**
 ```sh
-git --version
-```
-
-**Git이 설치되어 있지 않은 경우:**
-- **macOS**: 
-  ```sh
-  # Homebrew 사용
-  brew install git
-  # 또는 Xcode Command Line Tools 설치
-  xcode-select --install
-  ```
-- **Windows**: [Git for Windows](https://git-scm.com/download/win) 다운로드 및 설치
-- **Linux**: 
-  ```sh
-  # Ubuntu/Debian
-  sudo apt-get update
-  sudo apt-get install git -y
-  
-  # CentOS/RHEL/Rocky Linux (yum 사용)
-  sudo yum install git -y
-  
-  # CentOS/RHEL/Rocky Linux (dnf 사용, yum보다 최신)
-  sudo dnf install git -y
-  ```
-
-**Git 설치 후 확인:**
-```sh
-git --version  # git version 2.x.x 이상
-```
-
-**Git 기본 설정 (최초 설치 시):**
-```sh
-git config --global user.name "Your Name"
-git config --global user.email "your.email@example.com"
-```
-
-### 2. Node.js 설치 확인
-
-AceBase를 실행하기 위해 Node.js 14가 필요합니다.
-
-**Node.js 설치 확인:**
-```sh
-node --version
-npm --version
-```
-
-**Node.js가 설치되어 있지 않은 경우:**
-- **nvm 사용 (권장)**: 
-  ```sh
-  # 1. nvm 설치 (curl 또는 wget 필요)
-  # macOS/Linux
-  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
-  # 또는
-  wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
-  
-  # 2. 터미널 재시작 또는 다음 명령어 실행
-  export NVM_DIR="$HOME/.nvm"
-  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-  
-  # 3. Node.js 14 설치 및 사용
-  nvm install 14
-  nvm use 14
-  nvm alias default 14  # 기본 버전 설정
-  ```
-- **직접 설치**: [Node.js 공식 사이트](https://nodejs.org/)에서 Node.js 14 LTS 버전 다운로드 및 설치
-
-**Node.js 버전 확인:**
-```sh
-node --version  # v14.x.x 버전
-npm --version   # npm은 Node.js와 함께 설치됨
-```
-
-### 3. Python 설치 확인
-
-Backend 생성기들을 실행하기 위해 Python 3가 필요합니다.
-
-**Python 설치 확인:**
-```sh
-python3 --version
+brew install git
 # 또는
-python --version
+xcode-select --install
 ```
 
-**Python이 설치되어 있지 않은 경우:**
-- **macOS**: 
-  ```sh
-  # Homebrew 사용
-  brew install python3
-  ```
-- **Windows**: [Python 공식 사이트](https://www.python.org/downloads/)에서 Python 3.12 이상 다운로드 및 설치
-- **Linux**: 
-  ```sh
-  # Ubuntu/Debian
-  sudo apt-get update
-  sudo apt-get install python3 python3-pip python3-venv -y
-  
-  # CentOS/RHEL/Rocky Linux (yum 사용)
-  sudo yum install python3 python3-pip -y
-  
-  # CentOS/RHEL/Rocky Linux (dnf 사용, yum보다 최신)
-  sudo dnf install python3 python3-pip -y
-  ```
+**Windows:** [Git for Windows](https://git-scm.com/download/win) 다운로드 및 설치
 
-**Python 버전 확인:**
+**Linux:**
 ```sh
-python3 --version  # Python 3.12 이상 권장
-```
+# Ubuntu/Debian
+sudo apt-get update && sudo apt-get install git -y
 
-**uv 설치 (Backend ES Generators용, 선택적):**
-```sh
-# uv는 Python 패키지 관리 도구
-curl -LsSf https://astral.sh/uv/install.sh | sh
+# CentOS/RHEL/Rocky Linux
+sudo yum install git -y
 # 또는
-pip install uv
+sudo dnf install git -y
 ```
 
-### 4. Docker 설치 확인
+### 2. Node.js 설치 (Node.js 14 필요)
 
-MSAEz는 Docker와 Docker Compose를 사용합니다. 먼저 Docker가 설치되어 있는지 확인하세요.
-
-**Docker 설치 확인:**
+**nvm 사용 (권장):**
 ```sh
-docker --version
-docker compose version
+# nvm 설치
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+# 터미널 재시작 후
+nvm install 14
+nvm use 14
 ```
 
-**Docker가 설치되어 있지 않은 경우:**
-- **macOS**: [Docker Desktop for Mac](https://www.docker.com/products/docker-desktop/) 다운로드 및 설치
-- **Windows**: [Docker Desktop for Windows](https://www.docker.com/products/docker-desktop/) 다운로드 및 설치
-- **Linux**: 
-  ```sh
-  # Ubuntu/Debian
-  # 1. 기존 Docker 제거 (있는 경우)
-  sudo apt-get remove docker docker-engine docker.io containerd runc
-  
-  # 2. 필수 패키지 설치
-  sudo apt-get update
-  sudo apt-get install ca-certificates curl gnupg lsb-release
-  
-  # 3. Docker 공식 GPG 키 추가
-  sudo mkdir -p /etc/apt/keyrings
-  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-  
-  # 4. Docker 저장소 추가
-  echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-  
-  # 5. Docker 설치
-  sudo apt-get update
-  sudo apt-get install docker-ce docker-ce-cli containerd.io docker-compose-plugin
-  
-  # 6. Docker 서비스 시작 및 자동 시작 설정
-  sudo systemctl start docker
-  sudo systemctl enable docker
-  
-  # 7. 사용자를 docker 그룹에 추가 (sudo 없이 docker 명령어 사용)
-  sudo usermod -aG docker $USER
-  # 그룹 변경 적용을 위해 로그아웃 후 재로그인 필요
-  
-  # CentOS/RHEL/Rocky Linux
-  # 1. 기존 Docker 제거 (있는 경우)
-  sudo yum remove docker docker-client docker-client-latest docker-common docker-latest docker-latest-logrotate docker-logrotate docker-engine
-  
-  # 2. 필수 패키지 설치
-  sudo yum install -y yum-utils
-  
-  # 3. Docker 저장소 추가
-  sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
-  
-  # 4. Docker 설치
-  sudo yum install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
-  
-  # 5. Docker 서비스 시작 및 자동 시작 설정
-  sudo systemctl start docker
-  sudo systemctl enable docker
-  
-  # 6. 사용자를 docker 그룹에 추가 (sudo 없이 docker 명령어 사용)
-  sudo usermod -aG docker $USER
-  # 그룹 변경 적용을 위해 로그아웃 후 재로그인 필요
-  ```
-  
-  > 💡 **참고**: Linux에서 Docker 설치 후 `sudo` 없이 사용하려면 사용자를 `docker` 그룹에 추가하고 재로그인해야 합니다.
+**직접 설치:** [Node.js 공식 사이트](https://nodejs.org/)에서 Node.js 14 LTS 다운로드
 
-**Docker 설치 후 확인:**
+### 3. Python 설치 (Python 3.12+ 필요)
+
+**macOS:**
 ```sh
-docker ps
+brew install python3
 ```
 
-정상적으로 설치되었다면 빈 목록이 표시됩니다.
+**Windows:** [Python 공식 사이트](https://www.python.org/downloads/)에서 Python 3.12+ 다운로드
+
+**Linux:**
+```sh
+# Ubuntu/Debian
+sudo apt-get update && sudo apt-get install python3 python3-pip -y
+
+# CentOS/RHEL/Rocky Linux
+sudo yum install python3 python3-pip -y
+# 또는
+sudo dnf install python3 python3-pip -y
+```
+
+### 4. Docker 설치
+
+**macOS/Windows:** [Docker Desktop](https://www.docker.com/products/docker-desktop/) 다운로드 및 설치
+
+**Linux:**
+```sh
+# Ubuntu/Debian
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
+sudo systemctl start docker
+sudo systemctl enable docker
+sudo usermod -aG docker $USER
+
+# CentOS/RHEL/Rocky Linux
+sudo yum install -y yum-utils
+sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+sudo yum install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+sudo systemctl start docker
+sudo systemctl enable docker
+sudo usermod -aG docker $USER
+```
 
 ### 5. 필요한 포트 확인
 
