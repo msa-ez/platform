@@ -19,26 +19,27 @@ services:
       VUE_APP_GIT: gitea # Git Provider (Gitea or Gitlab or Github)
       VUE_APP_GIT_URL: http://localhost:3000 # Git Provider URL
       VUE_APP_GITEA_TOKEN: "b1b75cd28593e93d38d73d0fa6eaf943e4aa4510" # Gitea Personal Access Token (optional, if not set, will use localStorage gitToken)
-  acebase:
-    image: ghcr.io/msa-ez/acebase:v1.0.18 # Acebase Docker Image
-    # image: sanghoon01/acebase:v1.1 # Acebase Docker Image
-    container_name: acebase
-    networks:
-      - msaez
-    ports:
-      - 5757:5757
-    volumes:
-      - ./acebase/mydb.acebase:/acebase
-    environment:
-      DB_HOST: "0.0.0.0" # DB Host Name
-      DB_NAME: mydb
-      DB_PORT: 5757
-      DB_HTTPS: "false"
-      CLIENT_ID: 40850ead-6f98-4dc5-aece-8beef3f2aca9 # Client ID
-      CLIENT_SECRET: gto_y3bwml4oj4hxtpjgb3szbfxpo5ewgdc2eisdy5pqm5i4kr2snxpa # Client Secret
-      PROVIDER: gitea
-      GIT: "gitea:3000" # Gitlab URL
-      PROTOCOL: http
+      VUE_APP_BACKEND_URL: http://localhost:2025
+  # acebase:
+  #   image: ghcr.io/msa-ez/acebase:v1.0.18 # Acebase Docker Image
+  #   # image: sanghoon01/acebase:v1.1 # Acebase Docker Image
+  #   container_name: acebase
+  #   networks:
+  #     - msaez
+  #   ports:
+  #     - 5757:5757
+  #   volumes:
+  #     - ./acebase/mydb.acebase:/acebase
+  #   environment:
+  #     DB_HOST: "0.0.0.0" # DB Host Name
+  #     DB_NAME: mydb
+  #     DB_PORT: 5757
+  #     DB_HTTPS: "false"
+  #     CLIENT_ID: 40850ead-6f98-4dc5-aece-8beef3f2aca9 # Client ID
+  #     CLIENT_SECRET: gto_y3bwml4oj4hxtpjgb3szbfxpo5ewgdc2eisdy5pqm5i4kr2snxpa # Client Secret
+  #     PROVIDER: gitea
+  #     GIT: "gitea:3000" # Gitlab URL
+  #     PROTOCOL: http
   gitea:
     image: gitea/gitea:1.22.3
     container_name: gitea
