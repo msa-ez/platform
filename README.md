@@ -179,93 +179,88 @@ Navigate to the Acebase admin portal: localhost:5757
 
 # Install MSAez on Docker Compose with Gitea
 
+MSAez Git url: https://github.com/msa-ez/platform.git
+
 ## 사전 요구사항
 
-### 1. Node.js 설치 확인
+### 1. Git 설치
 
-AceBase를 실행하기 위해 Node.js 14가 필요합니다.
-
-**Node.js 설치 확인:**
+**macOS:**
 ```sh
-node --version
-npm --version
-```
-
-**Node.js가 설치되어 있지 않은 경우:**
-- **nvm 사용 (권장)**: 
-  ```sh
-  # nvm 설치 후
-  nvm install 14
-  nvm use 14
-  ```
-- **직접 설치**: [Node.js 공식 사이트](https://nodejs.org/)에서 Node.js 14 LTS 버전 다운로드 및 설치
-
-**Node.js 버전 확인:**
-```sh
-node --version  # v14.x.x 버전
-npm --version   # npm은 Node.js와 함께 설치됨
-```
-
-### 2. Python 설치 확인
-
-Backend 생성기들을 실행하기 위해 Python 3가 필요합니다.
-
-**Python 설치 확인:**
-```sh
-python3 --version
+brew install git
 # 또는
-python --version
+xcode-select --install
 ```
 
-**Python이 설치되어 있지 않은 경우:**
-- **macOS**: 
-  ```sh
-  # Homebrew 사용
-  brew install python3
-  ```
-- **Windows**: [Python 공식 사이트](https://www.python.org/downloads/)에서 Python 3.12 이상 다운로드 및 설치
-- **Linux**: 
-  ```sh
-  sudo apt-get update
-  sudo apt-get install python3 python3-pip python3-venv
-  ```
+**Windows:** [Git for Windows](https://git-scm.com/download/win) 다운로드 및 설치
 
-**Python 버전 확인:**
+**Linux:**
 ```sh
-python3 --version  # Python 3.12 이상 권장
-```
+# Ubuntu/Debian
+sudo apt-get update && sudo apt-get install git -y
 
-**uv 설치 (Backend ES Generators용, 선택적):**
-```sh
-# uv는 Python 패키지 관리 도구
-curl -LsSf https://astral.sh/uv/install.sh | sh
+# CentOS/RHEL/Rocky Linux
+sudo yum install git -y
 # 또는
-pip install uv
+sudo dnf install git -y
 ```
 
-### 3. Docker 설치 확인
+### 2. Node.js 설치 (Node.js 14 필요)
 
-MSAEz는 Docker와 Docker Compose를 사용합니다. 먼저 Docker가 설치되어 있는지 확인하세요.
-
-**Docker 설치 확인:**
+**nvm 사용 (권장):**
 ```sh
-docker --version
-docker compose version
+# nvm 설치
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+# 터미널 재시작 후
+nvm install 14
+nvm use 14
 ```
 
-**Docker가 설치되어 있지 않은 경우:**
-- **macOS**: [Docker Desktop for Mac](https://www.docker.com/products/docker-desktop/) 다운로드 및 설치
-- **Windows**: [Docker Desktop for Windows](https://www.docker.com/products/docker-desktop/) 다운로드 및 설치
-- **Linux**: [Docker Engine 설치 가이드](https://docs.docker.com/engine/install/) 참고
+**직접 설치:** [Node.js 공식 사이트](https://nodejs.org/)에서 Node.js 14 LTS 다운로드
 
-**Docker 설치 후 확인:**
+### 3. Python 설치 (Python 3.12+ 필요)
+
+**macOS:**
 ```sh
-docker ps
+brew install python3
 ```
 
-정상적으로 설치되었다면 빈 목록이 표시됩니다.
+**Windows:** [Python 공식 사이트](https://www.python.org/downloads/)에서 Python 3.12+ 다운로드
 
-### 4. 필요한 포트 확인
+**Linux:**
+```sh
+# Ubuntu/Debian
+sudo apt-get update && sudo apt-get install python3 python3-pip -y
+
+# CentOS/RHEL/Rocky Linux
+sudo yum install python3 python3-pip -y
+# 또는
+sudo dnf install python3 python3-pip -y
+```
+
+### 4. Docker 설치
+
+**macOS/Windows:** [Docker Desktop](https://www.docker.com/products/docker-desktop/) 다운로드 및 설치
+
+**Linux:**
+```sh
+# Ubuntu/Debian
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
+sudo systemctl start docker
+sudo systemctl enable docker
+sudo usermod -aG docker $USER
+
+# CentOS/RHEL/Rocky Linux
+sudo yum install -y yum-utils
+sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+sudo yum install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+sudo systemctl start docker
+sudo systemctl enable docker
+sudo usermod -aG docker $USER
+```
+
+### 5. 필요한 포트 확인
 
 다음 포트들이 사용 가능한지 확인하세요:
 - **8080**: MSAez 플랫폼 (Frontend)
@@ -275,6 +270,40 @@ docker ps
 - **5000**: Backend ES Generators (FastAPI 서버, LangGraph 워크플로우)
 
 포트가 이미 사용 중인 경우, `docker-compose.yml`에서 포트를 변경할 수 있습니다.
+
+## 소스코드 다운로드
+
+VM에 설치하기 전에 필요한 소스코드를 다운로드해야 합니다.
+
+### 1. MSAez 플랫폼 소스코드
+
+```sh
+# MSAez 플랫폼 저장소 클론
+git clone https://github.com/msa-ez/platform.git
+cd platform
+```
+
+### 2. Backend Generators 소스코드 (선택적)
+
+Backend Generators를 사용하려면 별도로 다운로드해야 합니다.
+
+```sh
+# Backend Generators 저장소 클론
+git clone https://github.com/uengineYSW/msaez-automate-project-generator.git
+cd msaez-automate-project-generator
+```
+
+> 💡 **참고**: 특정 버전을 사용하려면 태그를 확인하고 체크아웃하세요.
+
+### 3. Backend ES Generators 소스코드 (선택적)
+
+Backend ES Generators를 사용하려면 별도로 다운로드해야 합니다.
+
+```sh
+# Backend ES Generators 저장소 클론
+git clone https://github.com/ShinSeongJin2/msaez-automate-eventstorming-generator.git
+cd msaez-automate-eventstorming-generator
+```
 
 ## Setting Gitea
 
@@ -291,17 +320,23 @@ docker compose up -d gitea
 ```
 
 **초기 설정:**
-1. 브라우저에서 http://127.0.0.1:3000/ 접속
+1. 브라우저에서 Gitea 접속
+   - **로컬 개발 환경**: `http://127.0.0.1:3000/` 또는 `http://localhost:3000/`
+   - **VM/프로덕션 환경**: 설정한 도메인 또는 IP (예: `http://192.168.1.100:3000/` 또는 `https://gitea.example.com`)
 2. Gitea 초기 설정 화면에서 다음 정보 입력:
    - **Database Type**: SQLite3 (기본값)
    - **Site Title**: 원하는 제목 입력
    - **Repository Root Path**: `/data/git/repositories` (기본값)
    - **Git LFS Root Path**: `/data/git/lfs` (기본값)
    - **Run As Username**: `git` (기본값)
-   - **SSH Server Domain**: `gitea` (또는 `localhost`)
+   - **SSH Server Domain**: 
+     - **로컬 개발 환경**: `gitea` 또는 `localhost`
+     - **VM/프로덕션 환경**: Gitea 도메인 또는 IP (예: `gitea.example.com` 또는 `192.168.1.100`)
    - **SSH Port**: `22`
    - **HTTP Port**: `3000`
-   - **Gitea Base URL**: `http://gitea:3000/` (중요!)
+   - **Gitea Base URL**: 
+     - **로컬 개발 환경**: `http://gitea:3000/` (Docker 네트워크 내부용)
+     - **VM/프로덕션 환경**: 실제 접근 가능한 URL (예: `http://192.168.1.100:3000/` 또는 `https://gitea.example.com/`)
 3. **Administrator Account Setting** 섹션에서 관리자 계정 생성:
    - **Username**: 원하는 관리자 사용자명
    - **Password**: 관리자 비밀번호
@@ -313,10 +348,10 @@ docker compose up -d gitea
 
 ### 2. Gitea 설정 파일 수정
 
-Gitea가 Docker로 실행 중인 경우, 설정 파일을 직접 수정해야 합니다.
+app.ini 파일에서 ROOT_URL 수정이 필요합니다.
 
 **설정 파일 위치:**
-- Docker로 실행한 경우: `./gitea/gitea/conf/app.ini`
+- `./gitea/gitea/conf/app.ini`
 
 **수정 방법:**
 ```sh
@@ -336,11 +371,16 @@ ALLOW_DOMAIN = *
 
 [server]
 APP_DATA_PATH = /data/gitea
-DOMAIN = gitea
-SSH_DOMAIN = gitea
+# DOMAIN: Gitea 도메인
+# 로컬 개발 환경: gitea (Docker 네트워크 내부)
+# VM/프로덕션 환경: 실제 도메인 또는 IP (예: gitea.example.com 또는 192.168.1.100)
+DOMAIN = gitea  # VM 환경에서는 실제 도메인 또는 IP로 변경
+SSH_DOMAIN = gitea  # VM 환경에서는 실제 도메인 또는 IP로 변경
 HTTP_PORT = 3000
-# ROOT_URL을 http://gitea:3000/로 변경
-ROOT_URL = http://gitea:3000/
+# ROOT_URL: Gitea 접근 가능한 전체 URL
+# 로컬 개발 환경: http://gitea:3000/ (Docker 네트워크 내부용)
+# VM/프로덕션 환경: http://<VM_IP>:3000/ 또는 https://gitea.example.com/
+ROOT_URL = http://gitea:3000/  # VM 환경에서는 실제 접근 가능한 URL로 변경
 DISABLE_SSH = false
 SSH_PORT = 22
 SSH_LISTEN_PORT = 22
@@ -348,6 +388,13 @@ LFS_START_SERVER = true
 LFS_JWT_SECRET = UPSh8CoIsH5nBiwg2kHeBWsKiIt97afTRSg0Jm2eeyA
 OFFLINE_MODE = true
 ```
+
+> 💡 **VM/프로덕션 환경 예시:**
+> ```ini
+> DOMAIN = 192.168.1.100  # 또는 gitea.example.com
+> SSH_DOMAIN = 192.168.1.100  # 또는 gitea.example.com
+> ROOT_URL = http://192.168.1.100:3000/  # 또는 https://gitea.example.com/
+> ```
 
 **설정 적용:**
 ```sh
@@ -360,17 +407,28 @@ docker compose restart gitea
 AceBase가 Gitea와 OAuth 인증을 하기 위해 OAuth2 Application을 생성합니다.
 
 **단계:**
-1. Gitea에 관리자 계정으로 로그인 (http://localhost:3000)
+1. Gitea에 관리자 계정으로 로그인
+   - **로컬 개발 환경**: `http://localhost:3000`
+   - **VM/프로덕션 환경**: 설정한 도메인 또는 IP (예: `http://192.168.1.100:3000` 또는 `https://gitea.example.com`)
 2. 우측 상단 **프로필 아이콘** 클릭
 3. **Settings** 클릭
 4. 좌측 메뉴에서 **Applications** 클릭
 5. **Manage OAuth2 Applications** 섹션에서:
    - **Application Name**: 원하는 이름 입력 (예: `acebase`)
    - **Redirect URIs**: 다음 URI 입력 (새 줄로 구분)
-     ```
-     http://localhost:5757/oauth2/mydb/signin
-     http://127.0.0.1:5757/oauth2/mydb/signin
-     ```
+     - **로컬 개발 환경**:
+       ```
+       http://localhost:5757/oauth2/mydb/signin
+       http://127.0.0.1:5757/oauth2/mydb/signin
+       ```
+     - **VM/프로덕션 환경**: AceBase 접근 가능한 URL 사용
+       ```
+       http://192.168.1.100:5757/oauth2/mydb/signin
+       ```
+       또는 도메인 사용 시:
+       ```
+       https://acebase.example.com/oauth2/mydb/signin
+       ```
 6. **Create Application** 버튼 클릭
 7. 생성된 **Client ID**와 **Client Secret**을 복사하여 저장하세요.
    > ⚠️ **중요**: Client Secret은 한 번만 표시되므로 반드시 저장하세요.
@@ -382,7 +440,9 @@ AceBase가 Gitea와 OAuth 인증을 하기 위해 OAuth2 Application을 생성�
 MSAEz가 Gitea API를 사용하기 위해 Personal Access Token이 필요합니다. OAuth 토큰은 Gitea API에서 직접 사용할 수 없으므로 Personal Access Token을 생성해야 합니다.
 
 **단계:**
-1. Gitea에 로그인 (http://localhost:3000)
+1. Gitea에 로그인
+   - **로컬 개발 환경**: `http://localhost:3000`
+   - **VM/프로덕션 환경**: 설정한 도메인 또는 IP (예: `http://192.168.1.100:3000` 또는 `https://gitea.example.com`)
 2. 우측 상단 **프로필 아이콘** 클릭
 3. **Settings** 클릭
 4. 좌측 메뉴에서 **Applications** → **Generate New Token** 클릭
@@ -396,7 +456,9 @@ MSAEz가 Gitea API를 사용하기 위해 Personal Access Token이 필요합니�
 8. **생성된 토큰을 복사하여 저장하세요.** (토큰은 한 번만 표시됩니다)
    > ⚠️ **주의**: 토큰을 잃어버리면 다시 생성해야 합니다.
 
-### 5. Hosts 파일 추가
+### 5. Hosts 파일 추가 (로컬 개발 환경만 필요)
+
+> ⚠️ **참고**: 이 단계는 **로컬 개발 환경**에서만 필요합니다. VM/프로덕션 환경에서는 DNS 설정이나 실제 도메인을 사용하므로 hosts 파일 수정이 필요하지 않을 수 있습니다.
 
 Gitea 도메인을 로컬에서 인식하도록 hosts 파일을 수정합니다.
 
@@ -414,6 +476,7 @@ C:\Windows\System32\drivers\etc\hosts 파일을 관리자 권한으로 열기
 
 **추가할 내용:**
 ```text
+# 로컬 개발 환경
 127.0.0.1 gitea
 ```
 
@@ -423,9 +486,14 @@ ping gitea
 # 127.0.0.1로 응답하는지 확인
 ```
 
+> 💡 **VM/프로덕션 환경**: 
+> - DNS 서버에 Gitea 도메인을 등록하거나
+> - 실제 IP 주소를 직접 사용하거나
+> - 역방향 프록시(Nginx 등)를 통해 도메인을 설정하세요.
+
 ## AceBase 설치 방법 선택
 
-이 단계에서는 AceBase 데이터베이스를 설치하고 실행합니다. 두 가지 방법 중 하나를 선택하세요.
+이 단계에서는 AceBase 데이터베이스를 설치하고 실행합니다. 설치형 혹은 docker compose를 사용합니다.
 
 > 💡 **권장**: 프로덕션 환경에서는 **설치형 AceBase**를 사용하세요. 데이터 영속성이 보장되고 더 안정적입니다.
 
@@ -434,11 +502,6 @@ ping gitea
 ### 방법 1: 설치형 AceBase (프로덕션 권장) ⭐
 
 프로덕션 환경에서는 Docker 없이 직접 설치하는 것을 권장합니다. 이 방법은 데이터 영속성이 보장되고 더 안정적입니다.
-
-**장점:**
-- 데이터가 호스트에 직접 저장되어 영속성 보장
-- 컨테이너 재시작과 무관하게 데이터 유지
-- 프로덕션 환경에 적합
 
 **설치 방법:**
 ```sh
@@ -453,12 +516,15 @@ npm install
 export CLIENT_ID=your-gitea-oauth-client-id
 export CLIENT_SECRET=your-gitea-oauth-client-secret
 export PROVIDER=gitea
-export GIT=gitea:3000
-export PROTOCOL=http
+# GIT: Gitea 호스트 및 포트
+# 로컬 개발 환경: gitea:3000 (Docker 네트워크 내부) 또는 localhost:3000
+# VM/프로덕션 환경: <VM_IP>:3000 또는 gitea.example.com:3000
+export GIT=gitea:3000  # VM 환경에서는 실제 Gitea 접근 주소로 변경
+export PROTOCOL=http  # HTTPS 사용 시 https로 변경
 export DB_HOST=0.0.0.0
 export DB_NAME=mydb
 export DB_PORT=5757
-export DB_HTTPS=false
+export DB_HTTPS=false  # HTTPS 사용 시 true로 변경
 export ADMIN_PASSWORD=your-admin-password  # 선택적: 기본값은 75sdDSFg37w5 (프로덕션 환경에서는 반드시 변경 권장)
 
 # 4. AceBase 실행
@@ -471,10 +537,12 @@ node main.js
 
 **확인:**
 - AceBase가 정상적으로 실행되면 터미널에 "SERVER ready" 메시지가 표시됩니다.
-- 브라우저에서 http://localhost:5757/webmanager/ 접속하여 관리자 포털 확인 가능
+- 브라우저에서 AceBase 관리자 포털 접속
+  - **로컬 개발 환경**: `http://localhost:5757/webmanager/`
+  - **VM/프로덕션 환경**: `http://<VM_IP>:5757/webmanager/` 또는 `https://acebase.example.com/webmanager/`
   - DB Name: `mydb`
   - User: `admin`
-  - Password: `75sdDSFg37w5`
+  - Password: `75sdDSFg37w5` (또는 `ADMIN_PASSWORD` 환경변수로 설정한 값)
 
 ### 방법 2: Docker 사용 (개발 환경용)
 
@@ -507,8 +575,11 @@ acebase:
     CLIENT_ID: your-gitea-oauth-client-id  # 위의 "Setting Gitea" 섹션에서 발급받은 값
     CLIENT_SECRET: your-gitea-oauth-client-secret  # 위의 "Setting Gitea" 섹션에서 발급받은 값
     PROVIDER: gitea
-    GIT: "gitea:3000"
-    PROTOCOL: http
+    # GIT: Gitea 호스트 및 포트
+    # 로컬 개발 환경: gitea:3000 (Docker 네트워크 내부)
+    # VM/프로덕션 환경: <VM_IP>:3000 또는 gitea.example.com:3000 (외부 접근이 필요한 경우)
+    GIT: "gitea:3000"  # VM 환경에서 외부 접근이 필요한 경우 실제 Gitea 주소로 변경
+    PROTOCOL: http  # HTTPS 사용 시 https로 변경
 ```
 
 **실행:**
@@ -540,13 +611,18 @@ services:
     ports:
       - 8080:8080
     environment:
-      VUE_APP_DB_HOST: 127.0.0.1  # 설치형 AceBase는 localhost에서 실행
+      # 로컬 개발 환경: 127.0.0.1 또는 localhost
+      # VM/프로덕션 환경: AceBase 접근 가능한 IP 또는 도메인
+      VUE_APP_DB_HOST: 127.0.0.1  # 설치형 AceBase는 localhost에서 실행 (VM 환경에서는 VM IP로 변경)
       VUE_APP_DB_PORT: 5757
       VUE_APP_DB_NAME: mydb
       VUE_APP_MODE: onprem
-      VUE_APP_DB_HTTPS: "false"
+      VUE_APP_DB_HTTPS: "false"  # HTTPS 사용 시 "true"로 변경
       VUE_APP_GIT: gitea
-      VUE_APP_GIT_URL: http://localhost:3000
+      # 로컬 개발 환경: http://localhost:3000
+      # VM/프로덕션 환경: http://<VM_IP>:3000 또는 https://gitea.example.com
+      VUE_APP_GIT_URL: http://localhost:3000  # VM 환경에서는 실제 Gitea URL로 변경
+      VUE_APP_BACKEND_URL: http://localhost:2025  # VM 환경에서는 실제 Backend URL로 변경
       VUE_APP_GITEA_TOKEN: "your-gitea-personal-access-token"  # 위의 "Setting Gitea" 섹션에서 생성한 Personal Access Token
 
   # 설치형 AceBase를 사용하므로 주석 처리
@@ -565,10 +641,12 @@ services:
   #     DB_PORT: 5757
   #     DB_HTTPS: "false"
   #     CLIENT_ID: your-gitea-oauth-client-id
-  #     CLIENT_SECRET: your-gitea-oauth-client-secret
-  #     PROVIDER: gitea
-  #     GIT: "gitea:3000"
-  #     PROTOCOL: http
+    #     CLIENT_SECRET: your-gitea-oauth-client-secret
+    #     PROVIDER: gitea
+    #     # 로컬 개발 환경: gitea:3000 (Docker 네트워크 내부)
+    #     # VM/프로덕션 환경: <VM_IP>:3000 또는 gitea.example.com:3000
+    #     GIT: "gitea:3000"  # VM 환경에서 외부 접근이 필요한 경우 실제 Gitea 주소로 변경
+    #     PROTOCOL: http
 
   gitea:
     image: gitea/gitea:1.22.3
@@ -608,9 +686,12 @@ services:
       VUE_APP_DB_PORT: 5757
       VUE_APP_DB_NAME: mydb
       VUE_APP_MODE: onprem
-      VUE_APP_DB_HTTPS: "false"
+      VUE_APP_DB_HTTPS: "false"  # HTTPS 사용 시 "true"로 변경
       VUE_APP_GIT: gitea
-      VUE_APP_GIT_URL: http://localhost:3000
+      # 로컬 개발 환경: http://localhost:3000
+      # VM/프로덕션 환경: http://<VM_IP>:3000 또는 https://gitea.example.com
+      VUE_APP_GIT_URL: http://localhost:3000  # VM 환경에서는 실제 Gitea URL로 변경
+      VUE_APP_BACKEND_URL: http://localhost:2025  # VM 환경에서는 실제 Backend URL로 변경
       VUE_APP_GITEA_TOKEN: "your-gitea-personal-access-token"
 
   acebase:
@@ -630,8 +711,10 @@ services:
       CLIENT_ID: your-gitea-oauth-client-id  # 위의 "Setting Gitea" 섹션에서 발급받은 값
       CLIENT_SECRET: your-gitea-oauth-client-secret  # 위의 "Setting Gitea" 섹션에서 발급받은 값
       PROVIDER: gitea
-      GIT: "gitea:3000"
-      PROTOCOL: http
+      # 로컬 개발 환경: gitea:3000 (Docker 네트워크 내부)
+      # VM/프로덕션 환경: <VM_IP>:3000 또는 gitea.example.com:3000
+      GIT: "gitea:3000"  # VM 환경에서 외부 접근이 필요한 경우 실제 Gitea 주소로 변경
+      PROTOCOL: http  # HTTPS 사용 시 https로 변경
 
   gitea:
     image: gitea/gitea:1.22.3
@@ -672,31 +755,17 @@ services:
 
 ### 서비스 실행
 
+> 💡 **참고**: AceBase는 위의 "AceBase 설치 방법 선택" 섹션에서 이미 설정 및 실행되었습니다. 이 섹션에서는 MSAez와 Gitea만 실행합니다.
+
 **설치형 AceBase 사용 시:**
 ```sh
-# 1. AceBase 실행 (별도 터미널)
-cd acebase
-npm install
-export CLIENT_ID=your-gitea-oauth-client-id
-export CLIENT_SECRET=your-gitea-oauth-client-secret
-export PROVIDER=gitea
-export GIT=gitea:3000
-export PROTOCOL=http
-export DB_HOST=0.0.0.0
-export DB_NAME=mydb
-export DB_PORT=5757
-export DB_HTTPS=false
-export ADMIN_PASSWORD=your-admin-password  # 선택적: 기본값은 75sdDSFg37w5 (프로덕션 환경에서는 반드시 변경 권장)
-node main.js
-```
-
-```sh
-# 2. MSAez와 Gitea 실행 (다른 터미널)
+# MSAez와 Gitea 실행
 docker compose up -d msaez gitea
 ```
 
 **Docker로 AceBase 사용 시:**
 ```sh
+# 모든 서비스 실행 (MSAEz, AceBase, Gitea)
 docker compose up -d
 ```
 
@@ -722,7 +791,8 @@ docker compose logs -f acebase
 모든 서비스가 실행되면 MSAez 플랫폼에 접속할 수 있습니다.
 
 **접속:**
-> http://localhost:8080
+- **로컬 개발 환경**: `http://localhost:8080`
+- **VM/프로덕션 환경**: `http://<VM_IP>:8080` 또는 `https://msaez.example.com`
 
 **확인 사항:**
 - MSAez 웹 인터페이스가 정상적으로 로드되는지 확인
@@ -740,7 +810,21 @@ MSAEz의 AI 기능을 사용하려면 Backend 생성기들을 별도로 실행�
 
 ### 1. Backend Generators (Project Generator) 설정
 
-https://github.com/uengineYSW/msaez-automate-project-generator (Code download)
+**소스코드 다운로드:**
+
+```sh
+# Backend Generators 저장소 클론 (아직 다운로드하지 않은 경우)
+git clone https://github.com/uengineYSW/msaez-automate-project-generator.git
+cd msaez-automate-project-generator
+```
+
+> 💡 **참고**: 특정 버전을 사용하려면 태그를 확인하고 체크아웃하세요.
+> ```sh
+> git tag  # 사용 가능한 태그 목록 확인
+> git checkout <tag-name>  # 원하는 버전으로 체크아웃
+> ```
+
+**환경 설정:**
 
 `.env` 루트 경로에 파일을 생성하고 다음 내용을 추가:
 
@@ -764,12 +848,20 @@ LOG_LEVEL=INFO
 STORAGE_TYPE=acebase
 
 # Firebase 관련 설정 제거하고 대신 추가
-ACEBASE_HOST=127.0.0.1
+# 로컬 개발 환경: 127.0.0.1 또는 localhost
+# VM/프로덕션 환경: AceBase 접근 가능한 IP 또는 도메인
+ACEBASE_HOST=127.0.0.1  # VM 환경에서는 VM IP 또는 도메인으로 변경
 ACEBASE_PORT=5757
 ACEBASE_DB_NAME=mydb
-ACEBASE_HTTPS=false
+ACEBASE_HTTPS=false  # HTTPS 사용 시 true로 변경
 ACEBASE_USERNAME=admin  # AceBase 기본 관리자 계정
-ACEBASE_PASSWORD=75sdDSFg37w5  # AceBase 기본 비밀번호 (프로덕션 환경에서는 변경 권장)
+ACEBASE_PASSWORD=75sdDSFg37w5  # AceBase 기본 비밀번호 (프로덕션 환경에서는 변경 권장, AceBase의 ADMIN_PASSWORD와 일치해야 함)
+
+# Flask 서버 호스트 설정 (선택적)
+# 로컬 개발 환경: localhost (기본값)
+# VM/프로덕션 환경: VM IP 또는 도메인 (외부 접근이 필요한 경우)
+FLASK_HOST=localhost  # VM 환경에서 외부 접근이 필요한 경우 VM IP로 변경
+FLASK_PORT=2025  # Flask 서버 포트 (기본값: 2025)
 
 ```
 
@@ -787,12 +879,28 @@ pip install -e .
 ```
 
 **확인:**
-- Health Check: http://localhost:2025/ok
+- Health Check: 
+  - **로컬 개발 환경**: `http://localhost:2025/ok`
+  - **VM/프로덕션 환경**: `http://<VM_IP>:2025/ok` 또는 `https://backend-generators.example.com/ok`
 - 서버가 정상적으로 실행되면 "🚀 Project Generator 서버를 시작합니다..." 메시지가 표시됩니다.
 
 ### 2. Backend ES Generators (Event Storming Generator) 설정
 
-https://github.com/ShinSeongJin2/msaez-automate-eventstorming-generator (Code download)
+**소스코드 다운로드:**
+
+```sh
+# Backend ES Generators 저장소 클론 (아직 다운로드하지 않은 경우)
+git clone https://github.com/ShinSeongJin2/msaez-automate-eventstorming-generator.git
+cd msaez-automate-eventstorming-generator
+```
+
+> 💡 **참고**: 특정 버전을 사용하려면 태그를 확인하고 체크아웃하세요.
+> ```sh
+> git tag  # 사용 가능한 태그 목록 확인
+> git checkout <tag-name>  # 원하는 버전으로 체크아웃
+> ```
+
+**환경 설정:**
 
 `.env` 루트 경로에 파일을 생성하고 다음 내용을 추가:
 
@@ -808,7 +916,7 @@ AI_MODEL_LIGHT_MAX_BATCH_SIZE=30
 GOOGLE_API_KEY=
 OPENAI_API_KEY=
 
-LANGSMITH_TRACING=true
+LANGSMITH_TRACING=false
 LANGSMITH_PROJECT=msaez-automate-eventstorming-generator
 LANGSMITH_API_KEY=xxx
 
@@ -830,12 +938,21 @@ MSAEZ_URL=https://www.msaez.io
 DB_TYPE=acebase
 
 # Firebase 관련 설정 제거하고 대신 추가
-ACEBASE_HOST=127.0.0.1
+# 로컬 개발 환경: 127.0.0.1 또는 localhost
+# VM/프로덕션 환경: AceBase 접근 가능한 IP 또는 도메인
+ACEBASE_HOST=127.0.0.1  # VM 환경에서는 VM IP 또는 도메인으로 변경
 ACEBASE_PORT=5757
 ACEBASE_DB_NAME=mydb
-ACEBASE_HTTPS=false
+ACEBASE_HTTPS=false  # HTTPS 사용 시 true로 변경
 ACEBASE_USERNAME=admin  # AceBase 기본 관리자 계정
-ACEBASE_PASSWORD=75sdDSFg37w5  # AceBase 기본 비밀번호 (프로덕션 환경에서는 변경 권장)
+ACEBASE_PASSWORD=75sdDSFg37w5  # AceBase 기본 비밀번호 (프로덕션 환경에서는 변경 권장, AceBase의 ADMIN_PASSWORD와 일치해야 함)
+
+# A2A 서버 호스트 및 URL 설정 (선택적)
+# 로컬 개발 환경: localhost (기본값)
+# VM/프로덕션 환경: VM IP 또는 도메인 (외부 접근이 필요한 경우)
+A2A_HOST=localhost  # VM 환경에서 외부 접근이 필요한 경우 VM IP로 변경
+A2A_PORT=5000  # A2A 서버 포트 (기본값: 5000)
+A2A_EXTERNAL_URL=http://localhost:5000  # VM 환경에서는 실제 접근 가능한 URL로 변경 (예: http://192.168.1.100:5000)
 ```
 
 **설치 및 실행:**
@@ -851,7 +968,9 @@ uv run python ./src/eventstorming_generator/main.py
 ```
 
 **확인:**
-- LangGraph 서버: http://localhost:5000
+- LangGraph 서버: 
+  - **로컬 개발 환경**: `http://localhost:5000`
+  - **VM/프로덕션 환경**: `http://<VM_IP>:5000` 또는 `https://backend-es-generators.example.com`
 - 서버가 정상적으로 실행되면 LangGraph Studio가 시작됩니다.
 
 ### 3. 중요 사항
@@ -865,12 +984,14 @@ uv run python ./src/eventstorming_generator/main.py
    export CLIENT_ID=your-gitea-oauth-client-id
    export CLIENT_SECRET=your-gitea-oauth-client-secret
    export PROVIDER=gitea
-   export GIT=gitea:3000
-   export PROTOCOL=http
+   # 로컬 개발 환경: gitea:3000 (Docker 네트워크 내부) 또는 localhost:3000
+   # VM/프로덕션 환경: <VM_IP>:3000 또는 gitea.example.com:3000
+   export GIT=gitea:3000  # VM 환경에서는 실제 Gitea 접근 주소로 변경
+   export PROTOCOL=http  # HTTPS 사용 시 https로 변경
    export DB_HOST=0.0.0.0
    export DB_NAME=mydb
    export DB_PORT=5757
-   export DB_HTTPS=false
+   export DB_HTTPS=false  # HTTPS 사용 시 true로 변경
    export ADMIN_PASSWORD=your-admin-password  # 선택적: 기본값은 75sdDSFg37w5 (프로덕션 환경에서는 반드시 변경 권장)
    node main.js
    ```

@@ -227,6 +227,10 @@
               let value = line.split("=")[1];
               window.GIT_URL = value;
             }
+            if (line && line.indexOf("VUE_APP_BACKEND_URL=") == 0) {
+              let value = line.split("=")[1];
+              window.BACKEND_URL = value.replace(/(?:\\[rn]|[\r\n]+)+/g, "");
+            }
             if (line && line.indexOf("VUE_APP_GITEA_TOKEN=") == 0) {
               let value = line.split("=")[1];
               window.GITEA_TOKEN = value.replace(/(?:\\[rn]|[\r\n]+)+/g, "");
