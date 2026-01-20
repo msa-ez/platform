@@ -412,6 +412,9 @@ class Gitea extends Git {
     }
 
     async getCommit(org, repo, branch) {
+        if(repo==='template-spring-boot'){
+            return false;
+        }
         const res = await this.client.get(`/api/v1/repos/${this.getOrg()}/${repo}/branches/${branch}`, { headers: this.getHeader() });
         return res.data.commit.id;
     }
