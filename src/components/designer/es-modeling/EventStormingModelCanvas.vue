@@ -2443,7 +2443,7 @@
                 openCode: [],
                 // openCodeWeb: [],
                 // openCodeMerge: [],
-                defaultTemplate: "https://github.com/msa-ez/template-spring-boot",
+                defaultTemplate: "https://github.com/msa-ez/template-poscodx",
                 changedHashList: [],
 
                 checkName: true,

@@ -9,9 +9,9 @@
                         >
                             <v-icon>mdi-home</v-icon>
                         </v-tab>
-                        <v-icon @click="searchOpen = !searchOpen" class="main-nav-tab pl-1 pr-1">
+                        <!-- <v-icon @click="searchOpen = !searchOpen" class="main-nav-tab pl-1 pr-1">
                             mdi-magnify
-                        </v-icon>
+                        </v-icon> -->
                         <v-tab
                             v-for="navTab in navigationTabs"
                             :key="navTab.key"
@@ -387,7 +387,7 @@
                                         </v-list-item>
                                     </v-list>
                                 </v-menu>
-                                <v-text-field
+                                <!-- <v-text-field
                                         v-model="searchObj.name"
                                         outlined
                                         class="gs-main-search"
@@ -395,7 +395,7 @@
                                         autofocus
                                         hide-details
                                         dense
-                                ></v-text-field>
+                                ></v-text-field> -->
                             </v-row>
                         </div>
                     </v-alert>
@@ -956,12 +956,12 @@
                         dialogType: 'partnership',
                         dialog: false,
                     },
-                    {
-                        title: 'mainNav.learn',
-                        icon: 'mdi-school',
-                        dialogType: 'learn',
-                        dialog: false,
-                    }
+                    // {
+                    //     title: 'mainNav.learn',
+                    //     icon: 'mdi-school',
+                    //     dialogType: 'learn',
+                    //     dialog: false,
+                    // }
                 ],
                 navigationTabs: [
                     //제품소개
@@ -979,12 +979,12 @@
                         icon: 'mdi-plus-circle'
                     },
                     //학습하기
-                    { 
-                        key: 'learn', 
-                        label: 'mainNav.learn', 
-                        action: this.nationLearnNavDialog,
-                        icon: 'mdi-school'
-                    },
+                    // { 
+                    //     key: 'learn', 
+                    //     label: 'mainNav.learn', 
+                    //     action: this.nationLearnNavDialog,
+                    //     icon: 'mdi-school'
+                    // },
                     //사용기업
                     // { key: 'company', label: 'mainNav.company', action: () => this.wikiOpen('company') },
                     //가격정책

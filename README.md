@@ -220,6 +220,14 @@ nvm use 14
 
 ### 3. Python 설치 (Python 3.12+ 필요)
 
+> ⚠️ **중요**: Backend Generators는 Python 3.12 이상이 필요합니다. Python 3.9나 3.10은 사용할 수 없습니다.
+
+**Python 버전 확인:**
+```sh
+python3 --version
+# Python 3.12 이상이어야 합니다
+```
+
 **macOS:**
 ```sh
 brew install python3
@@ -228,15 +236,56 @@ brew install python3
 **Windows:** [Python 공식 사이트](https://www.python.org/downloads/)에서 Python 3.12+ 다운로드
 
 **Linux:**
-```sh
-# Ubuntu/Debian
-sudo apt-get update && sudo apt-get install python3 python3-pip -y
 
-# CentOS/RHEL/Rocky Linux
-sudo yum install python3 python3-pip -y
-# 또는
-sudo dnf install python3 python3-pip -y
+**Ubuntu/Debian:**
+```sh
+sudo apt-get update && sudo apt-get install python3.12 python3.12-venv python3.12-pip -y
+# 또는 최신 버전 설치
+sudo apt-get install software-properties-common -y
+sudo add-apt-repository ppa:deadsnakes/ppa -y
+sudo apt-get update
+sudo apt-get install python3.12 python3.12-venv python3.12-pip -y
 ```
+
+**CentOS/RHEL/Rocky Linux 9:**
+```sh
+# 기본 Python 3.9가 설치되어 있지만, Python 3.12가 필요합니다
+# Python 3.12 설치 (EPEL 또는 소스에서 빌드)
+
+# 방법 1: EPEL 저장소에서 설치 시도
+sudo dnf install epel-release -y
+sudo dnf install python3.12 python3.12-pip -y
+
+# 방법 2: 소스에서 빌드 (방법 1이 실패하는 경우)
+sudo dnf groupinstall "Development Tools" -y
+sudo dnf install openssl-devel bzip2-devel libffi-devel zlib-devel readline-devel sqlite-devel -y
+cd /tmp
+wget https://www.python.org/ftp/python/3.12.7/Python-3.12.7.tgz
+tar xzf Python-3.12.7.tgz
+cd Python-3.12.7
+./configure --enable-optimizations
+make altinstall
+# Python 3.12는 python3.12 명령어로 실행됩니다
+
+# 방법 3: pyenv 사용 (권장)
+# pyenv 설치
+curl https://pyenv.run | bash
+echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.bashrc
+echo 'command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.bashrc
+echo 'eval "$(pyenv init -)"' >> ~/.bashrc
+source ~/.bashrc
+
+# Python 3.12 설치
+pyenv install 3.12.7
+pyenv global 3.12.7
+python --version  # Python 3.12.7 확인
+```
+
+> 💡 **참고**: Rocky Linux 9에서 Python 3.12를 설치한 후, 가상환경 생성 시 `python3.12` 명령어를 사용하세요:
+> ```sh
+> python3.12 -m venv venv
+> source venv/bin/activate
+> ```
 
 ### 4. Docker 설치
 
@@ -309,12 +358,17 @@ cd msaez-automate-eventstorming-generator
 
 이 단계에서는 Gitea Git 서버를 초기화하고 OAuth 설정을 완료합니다. MSAez와 AceBase가 Gitea와 연동되도록 설정합니다.
 
+> 📁 **작업 디렉토리**: `platform/` (MSAEz 저장소를 클론한 디렉토리)
+
 ### 1. Gitea 초기화 및 실행
 
 먼저 Gitea를 실행하고 초기 설정을 완료합니다.
 
 **Gitea 실행:**
 ```sh
+# platform 디렉토리로 이동
+cd platform  # 또는 MSAez 저장소를 클론한 디렉토리
+
 # docker-compose.yml이 있는 디렉토리에서 실행
 docker compose up -d gitea
 ```
@@ -348,23 +402,37 @@ docker compose up -d gitea
 
 ### 2. Gitea 설정 파일 수정
 
-app.ini 파일에서 ROOT_URL 수정이 필요합니다.
+app.ini 파일에서 ROOT_URL 및 CORS 설정이 필요합니다.
+
+> ⚠️ **CORS 설정 필수**: VM 환경에서는 프론트엔드(8080 포트)에서 Gitea API(3000 포트)로 요청할 때 CORS 오류가 발생할 수 있습니다. 이를 방지하기 위해 CORS 설정을 추가해야 합니다.
 
 **설정 파일 위치:**
 - `./gitea/gitea/conf/app.ini`
 
 **수정 방법:**
+
+파일 권한 문제가 있을 수 있으므로 `sudo`를 사용하여 편집하세요:
+
 ```sh
-# 설정 파일 편집
-vi ./gitea/gitea/conf/app.ini
+# 방법 1: sudo로 편집
+sudo vi ./gitea/gitea/conf/app.ini
 # 또는
-nano ./gitea/gitea/conf/app.ini
+sudo nano ./gitea/gitea/conf/app.ini
+
+# 방법 2: sudo로 자동 추가 (CLI)
+sudo sh -c 'cat >> ./gitea/gitea/conf/app.ini << '\''EOF'\''
+
+[cors]
+ENABLED = true
+ALLOW_DOMAIN = *
+EOF'
 ```
 
 **추가/수정할 내용:**
 ```ini
 # ./gitea/gitea/conf/app.ini
 
+# CORS 설정 (VM 환경에서 필수)
 [cors]
 ENABLED = true
 ALLOW_DOMAIN = *
@@ -398,9 +466,14 @@ OFFLINE_MODE = true
 
 **설정 적용:**
 ```sh
-# Gitea 컨테이너 재시작
-docker compose restart gitea
+# Gitea 컨테이너 재시작 (변경사항 적용)
+sudo docker compose restart gitea
+
+# 재시작 후 로그 확인
+sudo docker compose logs -f gitea
 ```
+
+> 💡 **CORS 설정 확인**: 브라우저 개발자 도구에서 CORS 오류가 발생하지 않는지 확인하세요. 여전히 오류가 발생하면 Gitea 컨테이너가 완전히 재시작될 때까지 몇 초 기다린 후 브라우저를 새로고침하세요.
 
 ### 3. OAuth2 Application 생성
 
@@ -456,7 +529,24 @@ MSAEz가 Gitea API를 사용하기 위해 Personal Access Token이 필요합니�
 8. **생성된 토큰을 복사하여 저장하세요.** (토큰은 한 번만 표시됩니다)
    > ⚠️ **주의**: 토큰을 잃어버리면 다시 생성해야 합니다.
 
-### 5. Hosts 파일 추가 (로컬 개발 환경만 필요)
+### 5. GitHub 저장소 마이그레이션 (선택사항)
+
+기존 GitHub 저장소를 Gitea로 마이그레이션할 수 있습니다.
+
+**단계:**
+1. Gitea에 로그인
+2. 우측 상단의 **+** (새 저장소) 아이콘 클릭
+3. 상단의 **"Migrate repository"** 클릭
+4. **"GitHub"** 클릭
+5. **"URL로 부터 마이그레이션 / 클론"** 필드에 GitHub 저장소 URL 입력
+   ```
+   https://github.com/seongwonyang/template-poscodx.git
+   ```
+6. **"저장소 마이그레이션"** 버튼 클릭
+
+마이그레이션이 완료되면 저장소의 코드, 커밋 히스토리, 브랜치, 태그가 Gitea로 복사됩니다.
+
+### 6. Hosts 파일 추가 (로컬 개발 환경만 필요)
 
 > ⚠️ **참고**: 이 단계는 **로컬 개발 환경**에서만 필요합니다. VM/프로덕션 환경에서는 DNS 설정이나 실제 도메인을 사용하므로 hosts 파일 수정이 필요하지 않을 수 있습니다.
 
@@ -503,10 +593,12 @@ ping gitea
 
 프로덕션 환경에서는 Docker 없이 직접 설치하는 것을 권장합니다. 이 방법은 데이터 영속성이 보장되고 더 안정적입니다.
 
+> 📁 **작업 디렉토리**: `platform/acebase/` (MSAEz 저장소의 acebase 디렉토리)
+
 **설치 방법:**
 ```sh
-# 1. AceBase 디렉토리로 이동
-cd acebase
+# 1. platform 디렉토리로 이동 후 acebase 디렉토리로 이동
+cd platform/acebase
 
 # 2. 의존성 설치
 npm install
@@ -519,13 +611,17 @@ export PROVIDER=gitea
 # GIT: Gitea 호스트 및 포트
 # 로컬 개발 환경: gitea:3000 (Docker 네트워크 내부) 또는 localhost:3000
 # VM/프로덕션 환경: <VM_IP>:3000 또는 gitea.example.com:3000
-export GIT=gitea:3000  # VM 환경에서는 실제 Gitea 접근 주소로 변경
+export GIT=gitea:3000  # VM 환경에서는 실제 Gitea 접근 주소로 변경 (예: export GIT=34.64.202.245:3000)
 export PROTOCOL=http  # HTTPS 사용 시 https로 변경
 export DB_HOST=0.0.0.0
 export DB_NAME=mydb
 export DB_PORT=5757
 export DB_HTTPS=false  # HTTPS 사용 시 true로 변경
 export ADMIN_PASSWORD=your-admin-password  # 선택적: 기본값은 75sdDSFg37w5 (프로덕션 환경에서는 반드시 변경 권장)
+
+# 💡 VM 환경에서 CLI로 GIT 환경 변수 설정:
+# export VM_IP=34.64.202.245
+# export GIT=${VM_IP}:3000
 
 # 4. AceBase 실행
 node main.js
@@ -548,6 +644,8 @@ node main.js
 
 Docker를 사용하면 간편하게 실행할 수 있지만, **컨테이너를 재시작하면 데이터가 소멸됩니다.**
 
+> 📁 **작업 디렉토리**: `platform/` (docker-compose.yml이 있는 디렉토리)
+
 **장점:**
 - 간편한 설치 및 실행
 - 개발/테스트 환경에 적합
@@ -557,6 +655,8 @@ Docker를 사용하면 간편하게 실행할 수 있지만, **컨테이너를 �
 - 프로덕션 환경에는 부적합
 
 **docker-compose.yml 설정:**
+
+**로컬 개발 환경:**
 ```yml
 acebase:
   image: ghcr.io/msa-ez/acebase:v1.0.18
@@ -572,15 +672,47 @@ acebase:
     DB_NAME: mydb
     DB_PORT: 5757
     DB_HTTPS: "false"
-    CLIENT_ID: your-gitea-oauth-client-id  # 위의 "Setting Gitea" 섹션에서 발급받은 값
-    CLIENT_SECRET: your-gitea-oauth-client-secret  # 위의 "Setting Gitea" 섹션에서 발급받은 값
+    CLIENT_ID: your-gitea-oauth-client-id
+    CLIENT_SECRET: your-gitea-oauth-client-secret
     PROVIDER: gitea
-    # GIT: Gitea 호스트 및 포트
-    # 로컬 개발 환경: gitea:3000 (Docker 네트워크 내부)
-    # VM/프로덕션 환경: <VM_IP>:3000 또는 gitea.example.com:3000 (외부 접근이 필요한 경우)
-    GIT: "gitea:3000"  # VM 환경에서 외부 접근이 필요한 경우 실제 Gitea 주소로 변경
-    PROTOCOL: http  # HTTPS 사용 시 https로 변경
+    GIT: "gitea:3000"  # Docker 네트워크 내부
+    PROTOCOL: http
 ```
+
+**VM/프로덕션 환경 (외부 접근이 필요한 경우):**
+```yml
+acebase:
+  image: ghcr.io/msa-ez/acebase:v1.0.18
+  container_name: acebase
+  networks:
+    - msaez
+  ports:
+    - 5757:5757
+  volumes:
+    - ./acebase/mydb.acebase:/acebase
+  environment:
+    DB_HOST: "0.0.0.0"
+    DB_NAME: mydb
+    DB_PORT: 5757
+    DB_HTTPS: "false"
+    CLIENT_ID: your-gitea-oauth-client-id
+    CLIENT_SECRET: your-gitea-oauth-client-secret
+    PROVIDER: gitea
+    GIT: "34.64.202.245:3000"  # VM IP로 변경 (예시)
+    PROTOCOL: http
+```
+
+> 💡 **VM 환경에서 CLI로 자동 변경:**
+> ```sh
+> # VM IP를 환경 변수로 설정
+> export VM_IP=34.64.202.245
+> 
+> # docker-compose.yml의 GIT 환경 변수 변경
+> sed -i "s|GIT: \"gitea:3000\"|GIT: \"${VM_IP}:3000\"|g" docker-compose.yml
+> 
+> # 변경 사항 확인
+> grep "GIT:" docker-compose.yml
+> ```
 
 **실행:**
 ```sh
@@ -591,11 +723,40 @@ docker compose up -d acebase
 
 이 단계에서는 docker-compose.yml을 설정하고 MSAez 플랫폼을 실행합니다.
 
+> 📁 **작업 디렉토리**: `platform/` (MSAEz 저장소를 클론한 디렉토리, docker-compose.yml이 있는 위치)
+
 ### docker-compose.yml 설정
 
 프로젝트 루트 디렉토리에 `docker-compose.yml` 파일을 생성하거나 수정합니다.
 
+> 💡 **VM 환경 설정**: VM에 설치하는 경우, 아래의 환경 변수들을 VM IP 또는 도메인으로 변경해야 합니다.
+> 
+> **CLI로 자동 변경 (권장):**
+> ```sh
+> # VM IP를 환경 변수로 설정 (예: 34.64.202.245)
+> export VM_IP=34.64.202.245
+> 
+> # docker-compose.yml 파일 수정
+> sed -i "s|VUE_APP_DB_HOST: 127.0.0.1|VUE_APP_DB_HOST: ${VM_IP}|g" docker-compose.yml
+> sed -i "s|VUE_APP_GIT_URL: http://localhost:3000|VUE_APP_GIT_URL: http://${VM_IP}:3000|g" docker-compose.yml
+> sed -i "s|VUE_APP_BACKEND_URL: http://localhost:2025|VUE_APP_BACKEND_URL: http://${VM_IP}:2025|g" docker-compose.yml
+> 
+> # 변경 사항 확인
+> grep -E "VUE_APP_DB_HOST|VUE_APP_GIT_URL|VUE_APP_BACKEND_URL" docker-compose.yml
+> ```
+> 
+> **또는 수동으로 편집:**
+> ```sh
+> # nano 편집기 사용 (권장)
+> nano docker-compose.yml
+> 
+> # 또는 vi 편집기 사용
+> vi docker-compose.yml
+> ```
+
 **전체 예시 (설치형 AceBase 사용 시):**
+
+**로컬 개발 환경:**
 ```yml
 version: "3"
 
@@ -611,18 +772,42 @@ services:
     ports:
       - 8080:8080
     environment:
-      # 로컬 개발 환경: 127.0.0.1 또는 localhost
-      # VM/프로덕션 환경: AceBase 접근 가능한 IP 또는 도메인
-      VUE_APP_DB_HOST: 127.0.0.1  # 설치형 AceBase는 localhost에서 실행 (VM 환경에서는 VM IP로 변경)
+      VUE_APP_DB_HOST: 127.0.0.1  # 로컬 개발 환경
       VUE_APP_DB_PORT: 5757
       VUE_APP_DB_NAME: mydb
       VUE_APP_MODE: onprem
-      VUE_APP_DB_HTTPS: "false"  # HTTPS 사용 시 "true"로 변경
+      VUE_APP_DB_HTTPS: "false"
       VUE_APP_GIT: gitea
-      # 로컬 개발 환경: http://localhost:3000
-      # VM/프로덕션 환경: http://<VM_IP>:3000 또는 https://gitea.example.com
-      VUE_APP_GIT_URL: http://localhost:3000  # VM 환경에서는 실제 Gitea URL로 변경
-      VUE_APP_BACKEND_URL: http://localhost:2025  # VM 환경에서는 실제 Backend URL로 변경
+      VUE_APP_GIT_URL: http://localhost:3000  # 로컬 개발 환경
+      VUE_APP_BACKEND_URL: http://localhost:2025  # 로컬 개발 환경
+      VUE_APP_GITEA_TOKEN: "your-gitea-personal-access-token"
+```
+
+**VM/프로덕션 환경:**
+```yml
+version: "3"
+
+networks:
+  msaez:
+    external: false
+
+services:
+  msaez:
+    image: ghcr.io/msa-ez/platform:v1.0.29
+    networks:
+      - msaez
+    ports:
+      - 8080:8080
+    environment:
+      # VM/프로덕션 환경: VM IP 또는 도메인으로 변경
+      VUE_APP_DB_HOST: 34.64.202.245  # VM IP로 변경 (예시)
+      VUE_APP_DB_PORT: 5757
+      VUE_APP_DB_NAME: mydb
+      VUE_APP_MODE: onprem
+      VUE_APP_DB_HTTPS: "false"
+      VUE_APP_GIT: gitea
+      VUE_APP_GIT_URL: http://34.64.202.245:3000  # VM IP로 변경 (예시)
+      VUE_APP_BACKEND_URL: http://34.64.202.245:2025  # VM IP로 변경 (예시)
       VUE_APP_GITEA_TOKEN: "your-gitea-personal-access-token"  # 위의 "Setting Gitea" 섹션에서 생성한 Personal Access Token
 
   # 설치형 AceBase를 사용하므로 주석 처리
@@ -667,6 +852,8 @@ services:
 ```
 
 **Docker로 AceBase 사용 시:**
+
+**로컬 개발 환경:**
 ```yml
 version: "3"
 
@@ -686,12 +873,38 @@ services:
       VUE_APP_DB_PORT: 5757
       VUE_APP_DB_NAME: mydb
       VUE_APP_MODE: onprem
-      VUE_APP_DB_HTTPS: "false"  # HTTPS 사용 시 "true"로 변경
+      VUE_APP_DB_HTTPS: "false"
       VUE_APP_GIT: gitea
-      # 로컬 개발 환경: http://localhost:3000
-      # VM/프로덕션 환경: http://<VM_IP>:3000 또는 https://gitea.example.com
-      VUE_APP_GIT_URL: http://localhost:3000  # VM 환경에서는 실제 Gitea URL로 변경
-      VUE_APP_BACKEND_URL: http://localhost:2025  # VM 환경에서는 실제 Backend URL로 변경
+      VUE_APP_GIT_URL: http://localhost:3000  # 로컬 개발 환경
+      VUE_APP_BACKEND_URL: http://localhost:2025  # 로컬 개발 환경
+      VUE_APP_GITEA_TOKEN: "your-gitea-personal-access-token"
+```
+
+**VM/프로덕션 환경:**
+```yml
+version: "3"
+
+networks:
+  msaez:
+    external: false
+
+services:
+  msaez:
+    image: ghcr.io/msa-ez/platform:v1.0.29
+    networks:
+      - msaez
+    ports:
+      - 8080:8080
+    environment:
+      # VM 환경에서는 브라우저가 VM IP로 접속하므로 VM IP 사용
+      VUE_APP_DB_HOST: 34.64.202.245  # VM IP로 변경 (예시)
+      VUE_APP_DB_PORT: 5757
+      VUE_APP_DB_NAME: mydb
+      VUE_APP_MODE: onprem
+      VUE_APP_DB_HTTPS: "false"
+      VUE_APP_GIT: gitea
+      VUE_APP_GIT_URL: http://34.64.202.245:3000  # VM IP로 변경 (예시)
+      VUE_APP_BACKEND_URL: http://34.64.202.245:2025  # VM IP로 변경 (예시)
       VUE_APP_GITEA_TOKEN: "your-gitea-personal-access-token"
 
   acebase:
@@ -757,14 +970,27 @@ services:
 
 > 💡 **참고**: AceBase는 위의 "AceBase 설치 방법 선택" 섹션에서 이미 설정 및 실행되었습니다. 이 섹션에서는 MSAez와 Gitea만 실행합니다.
 
+> ⚠️ **VM 환경 주의사항**: VM에 설치하는 경우, 위의 "docker-compose.yml 설정" 섹션에서 VM IP로 환경 변수를 변경한 후 서비스를 실행하세요.
+
+> 📁 **작업 디렉토리**: `platform/` (docker-compose.yml이 있는 디렉토리)
+
 **설치형 AceBase 사용 시:**
 ```sh
+# platform 디렉토리로 이동
+cd platform
+
+# VM 환경인 경우, 먼저 docker-compose.yml의 환경 변수를 VM IP로 변경
+# (위의 "docker-compose.yml 설정" 섹션 참조)
+
 # MSAez와 Gitea 실행
 docker compose up -d msaez gitea
 ```
 
 **Docker로 AceBase 사용 시:**
 ```sh
+# VM 환경인 경우, 먼저 docker-compose.yml의 환경 변수를 VM IP로 변경
+# (위의 "docker-compose.yml 설정" 섹션 참조)
+
 # 모든 서비스 실행 (MSAEz, AceBase, Gitea)
 docker compose up -d
 ```
@@ -803,12 +1029,23 @@ docker compose logs -f acebase
 - 서비스가 실행되지 않는 경우: `docker compose ps`로 상태 확인
 - 포트 충돌: `docker compose logs`로 에러 로그 확인
 - Gitea 연결 문제: hosts 파일 설정 확인 (`127.0.0.1 gitea`)
+- **VM 환경에서 WebSocket 연결 오류**: `docker-compose.yml`의 `VUE_APP_DB_HOST`, `VUE_APP_GIT_URL`, `VUE_APP_BACKEND_URL`이 VM IP로 설정되어 있는지 확인하고, 컨테이너를 재시작하세요:
+  ```sh
+  # 환경 변수 변경 후 컨테이너 재시작
+  docker compose restart msaez
+  
+  # 또는 전체 재시작
+  docker compose down
+  docker compose up -d
+  ```
 
 ## Backend 생성기 설정
 
 MSAEz의 AI 기능을 사용하려면 Backend 생성기들을 별도로 실행해야 합니다.
 
 ### 1. Backend Generators (Project Generator) 설정
+
+> 📁 **작업 디렉토리**: `msaez-automate-project-generator/` (별도로 클론한 디렉토리)
 
 **소스코드 다운로드:**
 
@@ -829,7 +1066,9 @@ cd msaez-automate-project-generator
 `.env` 루트 경로에 파일을 생성하고 다음 내용을 추가:
 
 ```bash
-OPENAI_API_KEY=
+# ⚠️ 필수: OpenAI API Key
+# OpenAI Platform (https://platform.openai.com/api-keys)에서 발급받을 수 있습니다.
+OPENAI_API_KEY=your-openai-api-key-here
 FIREBASE_SERVICE_ACCOUNT_PATH=./firebase-credentials.json
 FIREBASE_DATABASE_URL=https://eventstorming-tool-db.firebaseio.com
 FIREBASE_STORAGE_BUCKET=gs://eventstorming-tool-db.appspot.com
@@ -859,17 +1098,28 @@ ACEBASE_PASSWORD=75sdDSFg37w5  # AceBase 기본 비밀번호 (프로덕션 환�
 
 # Flask 서버 호스트 설정 (선택적)
 # 로컬 개발 환경: localhost (기본값)
-# VM/프로덕션 환경: VM IP 또는 도메인 (외부 접근이 필요한 경우)
-FLASK_HOST=localhost  # VM 환경에서 외부 접근이 필요한 경우 VM IP로 변경
+# VM/프로덕션 환경: 0.0.0.0 (모든 네트워크 인터페이스에서 접근 가능하도록 바인딩)
+# ⚠️ 주의: VM의 외부 IP로 바인딩하면 "cannot assign requested address" 오류가 발생합니다.
+#          서버는 0.0.0.0으로 바인딩하고, 외부 접근은 방화벽 규칙으로 허용하세요.
+FLASK_HOST=localhost  # VM 환경에서는 0.0.0.0으로 변경 (외부 접근 시)
 FLASK_PORT=2025  # Flask 서버 포트 (기본값: 2025)
 
 ```
 
 **설치 및 실행:**
 ```sh
+# Python 버전 확인 (3.12 이상이어야 함)
+python3 --version
+
 # 가상환경 생성 및 활성화
 python3 -m venv venv
+# 또는 Python 3.12가 별도로 설치된 경우:
+# python3.12 -m venv venv
+
 source venv/bin/activate  # Windows: venv\Scripts\activate
+
+# pip 및 setuptools 업그레이드 (필요한 경우)
+pip install --upgrade pip setuptools wheel
 
 # 의존성 설치
 pip install -e .
@@ -878,6 +1128,10 @@ pip install -e .
 ./start.sh
 ```
 
+> ⚠️ **Python 버전 오류 해결**: 
+> - `ERROR: Package requires a different Python: 3.9.25 not in '>=3.12'` 오류가 발생하면 Python 3.12 이상을 설치해야 합니다.
+> - 위의 "Python 설치" 섹션을 참조하여 Python 3.12를 설치하세요.
+
 **확인:**
 - Health Check: 
   - **로컬 개발 환경**: `http://localhost:2025/ok`
@@ -885,6 +1139,8 @@ pip install -e .
 - 서버가 정상적으로 실행되면 "🚀 Project Generator 서버를 시작합니다..." 메시지가 표시됩니다.
 
 ### 2. Backend ES Generators (Event Storming Generator) 설정
+
+> 📁 **작업 디렉토리**: `msaez-automate-eventstorming-generator/` (별도로 클론한 디렉토리)
 
 **소스코드 다운로드:**
 
@@ -913,7 +1169,11 @@ AI_MODEL_LIGHT=google_genai:gemini-flash-latest:thinking
 AI_MODEL_LIGHT_MAX_INPUT_LIMIT=983040
 AI_MODEL_LIGHT_MAX_BATCH_SIZE=30
 
-GOOGLE_API_KEY=
+# ⚠️ 필수: Google AI API Key (Gemini 모델 사용)
+# Google AI Studio (https://aistudio.google.com/apikey)에서 발급받을 수 있습니다.
+GOOGLE_API_KEY=your-google-api-key-here
+
+# 선택적: OpenAI API Key (OpenAI 모델 사용 시)
 OPENAI_API_KEY=
 
 LANGSMITH_TRACING=false
@@ -949,10 +1209,15 @@ ACEBASE_PASSWORD=75sdDSFg37w5  # AceBase 기본 비밀번호 (프로덕션 환�
 
 # A2A 서버 호스트 및 URL 설정 (선택적)
 # 로컬 개발 환경: localhost (기본값)
-# VM/프로덕션 환경: VM IP 또는 도메인 (외부 접근이 필요한 경우)
-A2A_HOST=localhost  # VM 환경에서 외부 접근이 필요한 경우 VM IP로 변경
+# VM/프로덕션 환경: 0.0.0.0 (모든 네트워크 인터페이스에서 접근 가능하도록 바인딩)
+# ⚠️ 주의: VM의 외부 IP로 바인딩하면 "cannot assign requested address" 오류가 발생합니다.
+#          서버는 0.0.0.0으로 바인딩하고, 외부 접근은 방화벽 규칙으로 허용하세요.
+A2A_HOST=localhost  # VM 환경에서는 0.0.0.0으로 변경 (외부 접근 시)
 A2A_PORT=5000  # A2A 서버 포트 (기본값: 5000)
-A2A_EXTERNAL_URL=http://localhost:5000  # VM 환경에서는 실제 접근 가능한 URL로 변경 (예: http://192.168.1.100:5000)
+# A2A_EXTERNAL_URL: AgentCard 생성에 사용되는 외부 접근 URL
+# 로컬 개발 환경: http://localhost:5000
+# VM/프로덕션 환경: 실제 외부 접근 가능한 URL (예: http://192.168.1.100:5000 또는 http://34.64.202.245:5000)
+A2A_EXTERNAL_URL=http://localhost:5000  # VM 환경에서는 실제 접근 가능한 URL로 변경
 ```
 
 **설치 및 실행:**
@@ -1018,9 +1283,11 @@ uv run python ./src/eventstorming_generator/main.py
    - Backend ES Generators: 5000
    - 이미 사용 중인 포트가 있다면 `.env` 파일에서 변경하세요.
 
-4. **OpenAI API Key**: 
-   - OpenAI API Key는 반드시 설정해야 합니다.
-   - API Key는 [OpenAI Platform](https://platform.openai.com/api-keys)에서 발급받을 수 있습니다.
+4. **API Keys**: 
+   - **Backend Generators**: OpenAI API Key가 필요합니다.
+     - API Key는 [OpenAI Platform](https://platform.openai.com/api-keys)에서 발급받을 수 있습니다.
+   - **Backend ES Generators**: Google AI API Key가 필요합니다 (Gemini 모델 사용).
+     - API Key는 [Google AI Studio](https://aistudio.google.com/apikey)에서 발급받을 수 있습니다.
 
 5. **Storage Type 일치**: 
    - Frontend와 Backend의 Storage Type이 일치해야 합니다.
