@@ -8693,7 +8693,11 @@ jobs:
                                         // xhttp.open("GET", me.gitCodeUrl[element], true);
                                         if(me.templateFrameWorkList[platformFullName] && me.templateFrameWorkList[platformFullName][elementPath] && me.templateFrameWorkList[platformFullName][elementPath].requestUrl){
                                             xhttp.open("GET", me.templateFrameWorkList[platformFullName][elementPath].requestUrl, true);
-                                            xhttp.setRequestHeader('Authorization', 'token ' + me.gitAccessToken);
+                                            // Gitea 로그인인 경우 window.GITEA_TOKEN 우선 사용
+                                            const token = (localStorage.getItem("loginType") === 'gitea' && window.GITEA_TOKEN) ? window.GITEA_TOKEN : me.gitAccessToken;
+                                            if(token){
+                                                xhttp.setRequestHeader('Authorization', 'token ' + token);
+                                            }
                                             xhttp.send();
                                             xHttpSendCnt ++;
                                         }
