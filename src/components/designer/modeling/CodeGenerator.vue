@@ -8287,7 +8287,8 @@ jobs:
                 var me = this
                 return new Promise(async function (resolve, reject) {
                     try {
-                        var preferredPlatforms = platforms.preferredPlatforms
+                        // var preferredPlatforms = platforms.preferredPlatforms
+                        var preferredPlatforms = ["template-poscodx"];
                         let basePlatform = platforms.basePlatform
                         let basePlatformConf = platforms.basePlatformConf
                         let toppingPlatforms = platforms.toppingPlatforms
