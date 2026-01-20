@@ -696,7 +696,7 @@
                                                                         direction="top"
                                                                 >
                                                                     <template v-slot:activator="{ on, attrs}" >
-                                                                        <!-- <v-chip
+                                                                        <v-chip
                                                                                 v-if="!item.isPBCCode"
                                                                                 @mouseenter="showFullNameforSelectedTemplateKey = item.key"
                                                                                 @mouseleave="showFullNameforSelectedTemplateKey = null"
@@ -704,10 +704,10 @@
                                                                                 v-bind="attrs"
                                                                                 v-on="on"
                                                                                 style="position:absolute; left:190px; top:7px;"
-                                                                        > -->
+                                                                        >
                                                                             <!-- {{item.preferredPlatform ? item.preferredPlatform:'selected'}} -->
                                                                             {{item.preferredPlatform ? (showFullNameforSelectedTemplateKey == item.key ? getPreferredPlatformName(item.preferredPlatform, true):getPreferredPlatformName(item.preferredPlatform, false)):'selected'}}
-                                                                        <!-- </v-chip> -->
+                                                                        </v-chip>
                                                                     </template>
 
                                                                     <v-tabs style="max-height:450px; overflow-x:scroll;">
@@ -1667,7 +1667,7 @@
                 isComputeTreeListSwitch: false,
                 debuggerPoint: [],
                 // Template
-                defaultTemplate: 'template-poscodx',
+                defaultTemplate: 'template-spring-boot',
                 tempToppingPlatforms: [] ,
                 tempConfiguration: null,
                 menuOpen:{
@@ -2628,7 +2628,7 @@
                 canvas: me.canvas,
                 projectName: this.projectName,
                 gitURLforModel: this.gitURLforModel,
-                defaultTemplate: 'template-poscodx'
+                defaultTemplate: 'template-spring-boot'
             });
 
             // K8s Topping은 기본세팅
@@ -8042,7 +8042,7 @@ jobs:
                     //////////////////////////////////////////////// TEMPLATE START ////////////////////////////////////////////////
                     // setting Template
                     if(basePlatforms == "Custom Template"){
-                        basePlatforms = "template-poscodx"
+                        basePlatforms = "template-spring-boot"
                     }
                     // setting of Base Template
                     if((localStorage.getItem("loginType") && localStorage.getItem("loginType") == "github") || me.gitAccessToken){
@@ -8070,8 +8070,7 @@ jobs:
                     // setting of Custom Template
                     if(preferredPlatforms.length > 0){
                         for(let idx in preferredPlatforms) {
-                            // let preferredPlatform = preferredPlatforms[idx];
-                            let preferredPlatform = "template-poscodx";
+                            let preferredPlatform = preferredPlatforms[idx];
                             if(preferredPlatform == "Custom Template"){
                                 preferredPlatform = "spring-boot"
                             }
@@ -8287,8 +8286,7 @@ jobs:
                 var me = this
                 return new Promise(async function (resolve, reject) {
                     try {
-                        // var preferredPlatforms = platforms.preferredPlatforms
-                        var preferredPlatforms = ["template-poscodx"];
+                        var preferredPlatforms = platforms.preferredPlatforms
                         let basePlatform = platforms.basePlatform
                         let basePlatformConf = platforms.basePlatformConf
                         let toppingPlatforms = platforms.toppingPlatforms

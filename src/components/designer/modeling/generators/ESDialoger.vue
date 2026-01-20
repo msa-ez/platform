@@ -3235,7 +3235,6 @@ import { value } from 'jsonpath';
 
             async loadAllRepoList(){
                 try {
-                    return false;
                     const cachedData = localStorage.getItem('repoListCache');
                     const cacheTimestamp = localStorage.getItem('repoListCacheTimestamp');
                     const CACHE_DURATION = 1000 * 60 * 60;
@@ -3280,7 +3279,6 @@ import { value } from 'jsonpath';
             },
 
             async loadPBCInfo(){
-                return false;
                 var me = this;
                 me.pbcLists = [];
 

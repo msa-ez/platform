@@ -534,7 +534,8 @@ MSAEz가 Gitea API를 사용하기 위해 Personal Access Token이 필요합니�
 기존 GitHub 저장소를 Gitea로 마이그레이션할 수 있습니다.
 
 **단계:**
-1. Gitea에 로그인
+0. 계정 등록을 통해 사용자 명을 반드시 "posco"로 지정하여 template-poscodx template를 관리할 용도의 계정을 추가 (이메일과 비밀번호는 자유롭게 설정)
+1. 사용자 명을 "posco"로 등록했던 계정으로 Gitea에 로그인
 2. 우측 상단의 **+** (새 저장소) 아이콘 클릭
 3. 상단의 **"Migrate repository"** 클릭
 4. **"GitHub"** 클릭
@@ -730,29 +731,36 @@ docker compose up -d acebase
 프로젝트 루트 디렉토리에 `docker-compose.yml` 파일을 생성하거나 수정합니다.
 
 > 💡 **VM 환경 설정**: VM에 설치하는 경우, 아래의 환경 변수들을 VM IP 또는 도메인으로 변경해야 합니다.
-> 
-> **CLI로 자동 변경 (권장):**
-> ```sh
-> # VM IP를 환경 변수로 설정 (예: 34.64.202.245)
-> export VM_IP=34.64.202.245
-> 
-> # docker-compose.yml 파일 수정
-> sed -i "s|VUE_APP_DB_HOST: 127.0.0.1|VUE_APP_DB_HOST: ${VM_IP}|g" docker-compose.yml
-> sed -i "s|VUE_APP_GIT_URL: http://localhost:3000|VUE_APP_GIT_URL: http://${VM_IP}:3000|g" docker-compose.yml
-> sed -i "s|VUE_APP_BACKEND_URL: http://localhost:2025|VUE_APP_BACKEND_URL: http://${VM_IP}:2025|g" docker-compose.yml
-> 
-> # 변경 사항 확인
-> grep -E "VUE_APP_DB_HOST|VUE_APP_GIT_URL|VUE_APP_BACKEND_URL" docker-compose.yml
-> ```
-> 
-> **또는 수동으로 편집:**
-> ```sh
-> # nano 편집기 사용 (권장)
-> nano docker-compose.yml
-> 
-> # 또는 vi 편집기 사용
-> vi docker-compose.yml
-> ```
+
+**파일 편집 방법:**
+
+```sh
+# vi 편집기 사용
+vi docker-compose.yml
+
+# 또는 nano 편집기 사용 (더 쉬움)
+nano docker-compose.yml
+```
+
+> 💡 **vi 편집기 사용법**:
+> - 파일 열기: `vi docker-compose.yml`
+> - 편집 모드 진입: `i` 키 누르기 (INSERT 모드)
+> - 수정 완료: `ESC` 키 누르기
+> - 저장 및 종료: `:wq` 입력 후 `Enter`
+> - 저장 없이 종료: `:q!` 입력 후 `Enter`
+> - 검색: `/검색어` 입력 후 `Enter`, 다음 결과: `n`, 이전 결과: `N`
+> - 특정 줄로 이동: `:줄번호` 입력 후 `Enter` (예: `:20`)
+
+**VM 환경에서 수정할 내용:**
+
+`docker-compose.yml` 파일에서 다음 환경 변수들을 VM IP로 변경하세요:
+- `VUE_APP_DB_HOST`: `127.0.0.1` → `34.64.202.245` (VM IP)
+- `VUE_APP_GIT_URL`: `http://localhost:3000` → `http://34.64.202.245:3000`
+- `VUE_APP_BACKEND_URL`: `http://localhost:2025` → `http://34.64.202.245:2025`
+- `VUE_APP_GITEA_TOKEN`: Gitea Personal Access Token으로 변경
+- Backend Generators의 `OPENAI_API_KEY`: 실제 OpenAI API 키로 변경
+- Backend ES Generators의 `GOOGLE_API_KEY`: 실제 Google AI API 키로 변경
+- Backend ES Generators의 `A2A_EXTERNAL_URL`: `http://34.64.202.245:5000` (VM IP)
 
 **전체 예시 (설치형 AceBase 사용 시):**
 
@@ -1039,260 +1047,202 @@ docker compose logs -f acebase
   docker compose up -d
   ```
 
-## Backend 생성기 설정
+## Backend 생성기 설정 (Docker Compose)
 
-MSAEz의 AI 기능을 사용하려면 Backend 생성기들을 별도로 실행해야 합니다.
+MSAEz의 AI 기능을 사용하려면 Backend 생성기들을 실행해야 합니다.
+
+> 📁 **작업 디렉토리**: `platform/` (docker-compose.yml이 있는 디렉토리)
 
 ### 1. Backend Generators (Project Generator) 설정
 
-> 📁 **작업 디렉토리**: `msaez-automate-project-generator/` (별도로 클론한 디렉토리)
+**docker-compose.yml 파일 수정:**
 
-**소스코드 다운로드:**
+`docker-compose.yml` 파일을 편집하여 `backend-generators` 서비스 섹션의 환경 변수를 설정하세요.
+
+**파일 편집 방법:**
 
 ```sh
-# Backend Generators 저장소 클론 (아직 다운로드하지 않은 경우)
-git clone https://github.com/uengineYSW/msaez-automate-project-generator.git
-cd msaez-automate-project-generator
+# vi 편집기 사용
+vi docker-compose.yml
+
+# 또는 nano 편집기 사용 (더 쉬움)
+nano docker-compose.yml
 ```
 
-> 💡 **참고**: 특정 버전을 사용하려면 태그를 확인하고 체크아웃하세요.
-> ```sh
-> git tag  # 사용 가능한 태그 목록 확인
-> git checkout <tag-name>  # 원하는 버전으로 체크아웃
-> ```
+> 💡 **vi 편집기 사용법**:
+> - 파일 열기: `vi docker-compose.yml`
+> - 편집 모드 진입: `i` 키 누르기 (INSERT 모드)
+> - 수정 완료: `ESC` 키 누르기
+> - 저장 및 종료: `:wq` 입력 후 `Enter`
+> - 저장 없이 종료: `:q!` 입력 후 `Enter`
+> - 검색: `/검색어` 입력 후 `Enter`, 다음 결과: `n`, 이전 결과: `N`
 
-**환경 설정:**
+**수정할 내용:**
 
-`.env` 루트 경로에 파일을 생성하고 다음 내용을 추가:
+`backend-generators` 서비스의 `environment` 섹션에서 다음 값들을 수정하세요:
 
-```bash
-# ⚠️ 필수: OpenAI API Key
-# OpenAI Platform (https://platform.openai.com/api-keys)에서 발급받을 수 있습니다.
-OPENAI_API_KEY=your-openai-api-key-here
-FIREBASE_SERVICE_ACCOUNT_PATH=./firebase-credentials.json
-FIREBASE_DATABASE_URL=https://eventstorming-tool-db.firebaseio.com
-FIREBASE_STORAGE_BUCKET=gs://eventstorming-tool-db.appspot.com
-DEFAULT_LLM_MODEL=gpt-4o-mini
-DEFAULT_LLM_TEMPERATURE=0.7
-ENVIRONMENT=development
-DEBUG=true
-NAMESPACE=eventstorming_generator
-POD_ID=local-dev
-IS_LOCAL_RUN=true
-
-# 로그 레벨 (DEBUG, INFO, WARNING, ERROR)
-LOG_LEVEL=INFO
-
-# Storage 사용 타입
-STORAGE_TYPE=acebase
-
-# Firebase 관련 설정 제거하고 대신 추가
-# 로컬 개발 환경: 127.0.0.1 또는 localhost
-# VM/프로덕션 환경: AceBase 접근 가능한 IP 또는 도메인
-ACEBASE_HOST=127.0.0.1  # VM 환경에서는 VM IP 또는 도메인으로 변경
-ACEBASE_PORT=5757
-ACEBASE_DB_NAME=mydb
-ACEBASE_HTTPS=false  # HTTPS 사용 시 true로 변경
-ACEBASE_USERNAME=admin  # AceBase 기본 관리자 계정
-ACEBASE_PASSWORD=75sdDSFg37w5  # AceBase 기본 비밀번호 (프로덕션 환경에서는 변경 권장, AceBase의 ADMIN_PASSWORD와 일치해야 함)
-
-# Flask 서버 호스트 설정 (선택적)
-# 로컬 개발 환경: localhost (기본값)
-# VM/프로덕션 환경: 0.0.0.0 (모든 네트워크 인터페이스에서 접근 가능하도록 바인딩)
-# ⚠️ 주의: VM의 외부 IP로 바인딩하면 "cannot assign requested address" 오류가 발생합니다.
-#          서버는 0.0.0.0으로 바인딩하고, 외부 접근은 방화벽 규칙으로 허용하세요.
-FLASK_HOST=localhost  # VM 환경에서는 0.0.0.0으로 변경 (외부 접근 시)
-FLASK_PORT=2025  # Flask 서버 포트 (기본값: 2025)
-
+```yaml
+backend-generators:
+  image: ghcr.io/uengineYSW/msaez-automate-project-generator:v1.0.0
+  environment:
+    # ⚠️ 필수: OpenAI API Key
+    OPENAI_API_KEY: "your-openai-api-key-here"  # 실제 API 키로 변경
+    
+    # AceBase 설정 (Docker 네트워크 내부에서는 서비스명 사용)
+    ACEBASE_HOST: acebase  # Docker 네트워크 내부에서는 서비스명 사용
+    ACEBASE_PORT: 5757
+    ACEBASE_DB_NAME: mydb
+    ACEBASE_HTTPS: "false"
+    ACEBASE_USERNAME: admin
+    ACEBASE_PASSWORD: 75sdDSFg37w5  # AceBase ADMIN_PASSWORD와 일치해야 함
+    
+    # Flask 서버 설정
+    FLASK_HOST: 0.0.0.0  # 모든 인터페이스에서 접근 가능
+    FLASK_PORT: 2025
+    
+    # 기타 설정
+    STORAGE_TYPE: acebase
+    ENVIRONMENT: production
+    IS_LOCAL_RUN: "false"
+    NAMESPACE: eventstorming_generator
+    POD_ID: docker-pod
 ```
 
-**설치 및 실행:**
+> 💡 **API Key 발급**: OpenAI API Key는 [OpenAI Platform](https://platform.openai.com/api-keys)에서 발급받을 수 있습니다.
+
+**서비스 실행:**
 ```sh
-# Python 버전 확인 (3.12 이상이어야 함)
-python3 --version
+# platform 디렉토리로 이동
+cd platform
 
-# 가상환경 생성 및 활성화
-python3 -m venv venv
-# 또는 Python 3.12가 별도로 설치된 경우:
-# python3.12 -m venv venv
+# Backend Generators 실행
+docker compose up -d backend-generators
 
-source venv/bin/activate  # Windows: venv\Scripts\activate
-
-# pip 및 setuptools 업그레이드 (필요한 경우)
-pip install --upgrade pip setuptools wheel
-
-# 의존성 설치
-pip install -e .
-
-# 서버 실행
-./start.sh
+# 로그 확인
+docker compose logs -f backend-generators
 ```
-
-> ⚠️ **Python 버전 오류 해결**: 
-> - `ERROR: Package requires a different Python: 3.9.25 not in '>=3.12'` 오류가 발생하면 Python 3.12 이상을 설치해야 합니다.
-> - 위의 "Python 설치" 섹션을 참조하여 Python 3.12를 설치하세요.
 
 **확인:**
 - Health Check: 
   - **로컬 개발 환경**: `http://localhost:2025/ok`
-  - **VM/프로덕션 환경**: `http://<VM_IP>:2025/ok` 또는 `https://backend-generators.example.com/ok`
-- 서버가 정상적으로 실행되면 "🚀 Project Generator 서버를 시작합니다..." 메시지가 표시됩니다.
+  - **VM/프로덕션 환경**: `http://<VM_IP>:2025/ok`
 
 ### 2. Backend ES Generators (Event Storming Generator) 설정
 
-> 📁 **작업 디렉토리**: `msaez-automate-eventstorming-generator/` (별도로 클론한 디렉토리)
+**docker-compose.yml 파일 수정:**
 
-**소스코드 다운로드:**
+`docker-compose.yml` 파일을 편집하여 `backend-es-generators` 서비스 섹션의 환경 변수를 설정하세요.
+
+**파일 편집 방법:**
 
 ```sh
-# Backend ES Generators 저장소 클론 (아직 다운로드하지 않은 경우)
-git clone https://github.com/ShinSeongJin2/msaez-automate-eventstorming-generator.git
-cd msaez-automate-eventstorming-generator
+# vi 편집기 사용
+vi docker-compose.yml
+
+# 또는 nano 편집기 사용 (더 쉬움)
+nano docker-compose.yml
 ```
 
-> 💡 **참고**: 특정 버전을 사용하려면 태그를 확인하고 체크아웃하세요.
-> ```sh
-> git tag  # 사용 가능한 태그 목록 확인
-> git checkout <tag-name>  # 원하는 버전으로 체크아웃
-> ```
+> 💡 **vi 편집기 사용법**:
+> - 파일 열기: `vi docker-compose.yml`
+> - 편집 모드 진입: `i` 키 누르기 (INSERT 모드)
+> - 수정 완료: `ESC` 키 누르기
+> - 저장 및 종료: `:wq` 입력 후 `Enter`
+> - 저장 없이 종료: `:q!` 입력 후 `Enter`
+> - 검색: `/검색어` 입력 후 `Enter`, 다음 결과: `n`, 이전 결과: `N`
 
-**환경 설정:**
+**수정할 내용:**
 
-`.env` 루트 경로에 파일을 생성하고 다음 내용을 추가:
+`backend-es-generators` 서비스의 `environment` 섹션에서 다음 값들을 수정하세요:
 
-```bash
-AI_MODEL=google_genai:gemini-flash-latest:thinking
-AI_MODEL_MAX_INPUT_LIMIT=983040
-AI_MODEL_MAX_BATCH_SIZE=15
-
-AI_MODEL_LIGHT=google_genai:gemini-flash-latest:thinking
-AI_MODEL_LIGHT_MAX_INPUT_LIMIT=983040
-AI_MODEL_LIGHT_MAX_BATCH_SIZE=30
-
-# ⚠️ 필수: Google AI API Key (Gemini 모델 사용)
-# Google AI Studio (https://aistudio.google.com/apikey)에서 발급받을 수 있습니다.
-GOOGLE_API_KEY=your-google-api-key-here
-
-# 선택적: OpenAI API Key (OpenAI 모델 사용 시)
-OPENAI_API_KEY=
-
-LANGSMITH_TRACING=false
-LANGSMITH_PROJECT=msaez-automate-eventstorming-generator
-LANGSMITH_API_KEY=xxx
-
-FIREBASE_SERVICE_ACCOUNT_PATH=./.auth/serviceAccountKey.json
-FIREBASE_DATABASE_URL=
-
-NAMESPACE=eventstorming_generator
-POD_ID=local_pod
-IS_LOCAL_RUN=true
-USE_GENERATOR_CACHE=true
-
-AUTO_SCALE_MIN_REPLICAS=1
-AUTO_SCALE_MAX_REPLICAS=3
-AUTO_SCALE_TARGET_JOBS_PER_POD=1
-
-MSAEZ_URL=https://www.msaez.io
-
-# Storage 사용 타입
-DB_TYPE=acebase
-
-# Firebase 관련 설정 제거하고 대신 추가
-# 로컬 개발 환경: 127.0.0.1 또는 localhost
-# VM/프로덕션 환경: AceBase 접근 가능한 IP 또는 도메인
-ACEBASE_HOST=127.0.0.1  # VM 환경에서는 VM IP 또는 도메인으로 변경
-ACEBASE_PORT=5757
-ACEBASE_DB_NAME=mydb
-ACEBASE_HTTPS=false  # HTTPS 사용 시 true로 변경
-ACEBASE_USERNAME=admin  # AceBase 기본 관리자 계정
-ACEBASE_PASSWORD=75sdDSFg37w5  # AceBase 기본 비밀번호 (프로덕션 환경에서는 변경 권장, AceBase의 ADMIN_PASSWORD와 일치해야 함)
-
-# A2A 서버 호스트 및 URL 설정 (선택적)
-# 로컬 개발 환경: localhost (기본값)
-# VM/프로덕션 환경: 0.0.0.0 (모든 네트워크 인터페이스에서 접근 가능하도록 바인딩)
-# ⚠️ 주의: VM의 외부 IP로 바인딩하면 "cannot assign requested address" 오류가 발생합니다.
-#          서버는 0.0.0.0으로 바인딩하고, 외부 접근은 방화벽 규칙으로 허용하세요.
-A2A_HOST=localhost  # VM 환경에서는 0.0.0.0으로 변경 (외부 접근 시)
-A2A_PORT=5000  # A2A 서버 포트 (기본값: 5000)
-# A2A_EXTERNAL_URL: AgentCard 생성에 사용되는 외부 접근 URL
-# 로컬 개발 환경: http://localhost:5000
-# VM/프로덕션 환경: 실제 외부 접근 가능한 URL (예: http://192.168.1.100:5000 또는 http://34.64.202.245:5000)
-A2A_EXTERNAL_URL=http://localhost:5000  # VM 환경에서는 실제 접근 가능한 URL로 변경
+```yaml
+backend-es-generators:
+  image: ghcr.io/ShinSeongJin2/msaez-automate-eventstorming-generator:v1.0.0
+  environment:
+    # ⚠️ 필수: Google AI API Key (Gemini 모델 사용)
+    GOOGLE_API_KEY: "your-google-api-key-here"  # 실제 API 키로 변경
+    
+    # AI 모델 설정
+    AI_MODEL: google_genai:gemini-flash-latest:thinking
+    AI_MODEL_MAX_INPUT_LIMIT: 983040
+    AI_MODEL_MAX_BATCH_SIZE: 15
+    AI_MODEL_LIGHT: google_genai:gemini-flash-latest:thinking
+    AI_MODEL_LIGHT_MAX_INPUT_LIMIT: 983040
+    AI_MODEL_LIGHT_MAX_BATCH_SIZE: 30
+    
+    # AceBase 설정 (Docker 네트워크 내부에서는 서비스명 사용)
+    ACEBASE_HOST: acebase  # Docker 네트워크 내부에서는 서비스명 사용
+    ACEBASE_PORT: 5757
+    ACEBASE_DB_NAME: mydb
+    ACEBASE_HTTPS: "false"
+    ACEBASE_USERNAME: admin
+    ACEBASE_PASSWORD: 75sdDSFg37w5  # AceBase ADMIN_PASSWORD와 일치해야 함
+    
+    # A2A 서버 설정
+    A2A_HOST: 0.0.0.0  # 모든 인터페이스에서 접근 가능
+    A2A_PORT: 5000
+    A2A_EXTERNAL_URL: http://34.64.202.245:5000  # VM 환경에서는 실제 VM IP로 변경
+    
+    # 기타 설정
+    DB_TYPE: acebase
+    NAMESPACE: eventstorming_generator
+    POD_ID: docker-pod
+    IS_LOCAL_RUN: "false"
+    USE_GENERATOR_CACHE: "true"
 ```
 
-**설치 및 실행:**
+> 💡 **API Key 발급**: Google AI API Key는 [Google AI Studio](https://aistudio.google.com/apikey)에서 발급받을 수 있습니다.
+
+**서비스 실행:**
 ```sh
-# 의존성 설치
-uv run pip install -e .
-uv pip install -U "langgraph-cli[inmem]"
-# grpcio 버전 호환성 문제 해결
-uv pip install "grpcio>=1.75.1"
+# platform 디렉토리로 이동
+cd platform
 
-# 서버 실행
-uv run python ./src/eventstorming_generator/main.py
+# Backend ES Generators 실행
+docker compose up -d backend-es-generators
+
+# 로그 확인
+docker compose logs -f backend-es-generators
 ```
 
 **확인:**
 - LangGraph 서버: 
   - **로컬 개발 환경**: `http://localhost:5000`
-  - **VM/프로덕션 환경**: `http://<VM_IP>:5000` 또는 `https://backend-es-generators.example.com`
-- 서버가 정상적으로 실행되면 LangGraph Studio가 시작됩니다.
+  - **VM/프로덕션 환경**: `http://<VM_IP>:5000`
 
 ### 3. 중요 사항
 
-1. **AceBase 먼저 실행**: Backend 생성기들을 실행하기 전에 AceBase가 실행되어 있어야 합니다.
-   
-   **설치형 AceBase 사용 시 (권장):**
-   ```sh
-   cd acebase
-   npm install
-   export CLIENT_ID=your-gitea-oauth-client-id
-   export CLIENT_SECRET=your-gitea-oauth-client-secret
-   export PROVIDER=gitea
-   # 로컬 개발 환경: gitea:3000 (Docker 네트워크 내부) 또는 localhost:3000
-   # VM/프로덕션 환경: <VM_IP>:3000 또는 gitea.example.com:3000
-   export GIT=gitea:3000  # VM 환경에서는 실제 Gitea 접근 주소로 변경
-   export PROTOCOL=http  # HTTPS 사용 시 https로 변경
-   export DB_HOST=0.0.0.0
-   export DB_NAME=mydb
-   export DB_PORT=5757
-   export DB_HTTPS=false  # HTTPS 사용 시 true로 변경
-   export ADMIN_PASSWORD=your-admin-password  # 선택적: 기본값은 75sdDSFg37w5 (프로덕션 환경에서는 반드시 변경 권장)
-   node main.js
-   ```
-   
-   **Docker 사용 시:**
+1. **AceBase 먼저 실행**: Backend 생성기들은 AceBase에 의존하므로, AceBase가 먼저 실행되어 있어야 합니다.
    ```sh
    docker compose up -d acebase
+   # AceBase가 준비될 때까지 대기 후
+   docker compose up -d backend-generators backend-es-generators
    ```
 
-2. **데이터 영속성 보장**:
+2. **VM 환경 설정**: 
+   - `A2A_EXTERNAL_URL`을 실제 VM IP로 변경해야 합니다 (예: `http://34.64.202.245:5000`).
+   - 방화벽 규칙에서 포트 2025, 5000이 열려있는지 확인하세요.
+
+3. **모든 서비스 한 번에 실행**:
+   ```sh
+   docker compose up -d
+   ```
+
+4. **서비스 상태 확인**:
+   ```sh
+   docker compose ps
+   docker compose logs -f
+   ```
+
+5. **환경 변수 변경 후 재시작**:
+   ```sh
+   # docker-compose.yml 수정 후 컨테이너 재시작
+   docker compose restart backend-generators backend-es-generators
    
-   **설치형 AceBase 사용 시 (권장)**:
-   - 데이터는 `./acebase/mydb.acebase/` 디렉토리에 직접 저장됩니다.
-   - 컨테이너 재시작과 무관하게 데이터가 유지됩니다.
-   - 프로덕션 환경에서는 설치형 AceBase 사용을 강력히 권장합니다.
-   - 데이터 백업: `./acebase/mydb.acebase/` 디렉토리를 정기적으로 백업하세요.
-   
-   **Docker 사용 시 (개발 환경용)**:
-   - ⚠️ **주의**: Docker 컨테이너 내부에 데이터가 저장되므로, 컨테이너를 재시작하거나 삭제하면 데이터가 소멸됩니다.
-   - 개발/테스트 환경에서만 사용하세요.
-
-3. **포트 충돌 확인**: 
-   - Backend Generators: 2025
-   - Backend ES Generators: 5000
-   - 이미 사용 중인 포트가 있다면 `.env` 파일에서 변경하세요.
-
-4. **API Keys**: 
-   - **Backend Generators**: OpenAI API Key가 필요합니다.
-     - API Key는 [OpenAI Platform](https://platform.openai.com/api-keys)에서 발급받을 수 있습니다.
-   - **Backend ES Generators**: Google AI API Key가 필요합니다 (Gemini 모델 사용).
-     - API Key는 [Google AI Studio](https://aistudio.google.com/apikey)에서 발급받을 수 있습니다.
-
-5. **Storage Type 일치**: 
-   - Frontend와 Backend의 Storage Type이 일치해야 합니다.
-   - AceBase를 사용하는 경우: `STORAGE_TYPE=acebase` (backend-generators), `DB_TYPE=acebase` (backend-es-generators)
-   - Firebase를 사용하는 경우: `STORAGE_TYPE=firebase` (backend-generators), `DB_TYPE=firebase` (backend-es-generators)
+   # 또는 전체 재시작
+   docker compose down
+   docker compose up -d
+   ```
 
 ---
 
