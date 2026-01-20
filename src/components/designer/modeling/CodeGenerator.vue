@@ -8070,7 +8070,8 @@ jobs:
                     // setting of Custom Template
                     if(preferredPlatforms.length > 0){
                         for(let idx in preferredPlatforms) {
-                            let preferredPlatform = preferredPlatforms[idx];
+                            // let preferredPlatform = preferredPlatforms[idx];
+                            let preferredPlatform = "template-poscodx";
                             if(preferredPlatform == "Custom Template"){
                                 preferredPlatform = "spring-boot"
                             }
