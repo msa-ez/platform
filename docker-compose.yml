@@ -10,16 +10,18 @@ services:
       - msaez
     ports:
       - 8080:8080
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
-      VUE_APP_DB_HOST: 127.0.0.1 # DB Host Name (VM IP)
+      VUE_APP_DB_HOST: 127.0.0.1 # DB Host Name (VM 환경: VM IP로 변경 필요, 브라우저가 접근하는 주소와 동일하게 설정)
       VUE_APP_DB_PORT: 5757 # DB Port
       VUE_APP_DB_NAME: mydb # DB NAME
       VUE_APP_MODE: onprem # MODE onprem or dev
       VUE_APP_DB_HTTPS: "false" # MODE onprem or dev
       VUE_APP_GIT: gitea # Git Provider (Gitea or Gitlab or Github)
-      VUE_APP_GIT_URL: http://localhost:3000 # Git Provider URL (VM IP)
+      VUE_APP_GIT_URL: http://localhost:3000 # Git Provider URL (VM 환경: VM IP로 변경 필요, 예: http://34.64.202.245:3000)
       VUE_APP_GITEA_TOKEN: "b1b75cd28593e93d38d73d0fa6eaf943e4aa4510" # Gitea Personal Access Token (optional, if not set, will use localStorage gitToken)
-      VUE_APP_BACKEND_URL: http://localhost:2025 # Backend URL (VM IP)
+      VUE_APP_BACKEND_URL: http://localhost:2025 # Backend URL (VM 환경: VM IP로 변경 필요, 예: http://34.64.202.245:2025)
   backend-generators:
     image: ghcr.io/uengineYSW/msaez-automate-project-generator:v1.0.0  # Backend Generators Docker Image (태그는 실제 버전으로 변경)
     container_name: backend-generators
@@ -27,11 +29,13 @@ services:
       - msaez
     ports:
       - "2025:2025"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       # OpenAI API Key (필수)
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-your-openai-api-key-here}
+      OPENAI_API_KEY: your-openai-api-key-here
       # AceBase 설정
-      ACEBASE_HOST: acebase  # Docker 네트워크 내부에서는 서비스명 사용
+      ACEBASE_HOST: host.docker.internal  # 호스트의 AceBase 접근 (extra_hosts 필요, VM 환경: VM IP로 변경 가능)
       ACEBASE_PORT: 5757
       ACEBASE_DB_NAME: mydb
       ACEBASE_HTTPS: "false"
@@ -43,11 +47,9 @@ services:
       # 기타 설정
       STORAGE_TYPE: acebase
       ENVIRONMENT: production
-      IS_LOCAL_RUN: "false"
+      IS_LOCAL_RUN: "true"  # Docker Compose 환경에서는 Kubernetes autoscaler 비활성화
       NAMESPACE: eventstorming_generator
       POD_ID: docker-pod
-    depends_on:
-      - acebase
     restart: unless-stopped
   backend-es-generators:
     image: ghcr.io/ShinSeongJin2/msaez-automate-eventstorming-generator:v1.0.0  # Backend ES Generators Docker Image (태그는 실제 버전으로 변경)
@@ -56,9 +58,11 @@ services:
       - msaez
     ports:
       - "5000:5000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       # Google AI API Key (필수, Gemini 모델 사용)
-      GOOGLE_API_KEY: ${GOOGLE_API_KEY:-your-google-api-key-here}
+      GOOGLE_API_KEY: your-google-api-key-here
       # AI 모델 설정
       AI_MODEL: google_genai:gemini-flash-latest:thinking
       AI_MODEL_MAX_INPUT_LIMIT: 983040
@@ -67,7 +71,7 @@ services:
       AI_MODEL_LIGHT_MAX_INPUT_LIMIT: 983040
       AI_MODEL_LIGHT_MAX_BATCH_SIZE: 30
       # AceBase 설정
-      ACEBASE_HOST: acebase  # Docker 네트워크 내부에서는 서비스명 사용
+      ACEBASE_HOST: host.docker.internal  # 호스트의 AceBase 접근 (extra_hosts 필요, VM 환경: VM IP로 변경 가능)
       ACEBASE_PORT: 5757
       ACEBASE_DB_NAME: mydb
       ACEBASE_HTTPS: "false"
@@ -76,15 +80,13 @@ services:
       # A2A 서버 설정
       A2A_HOST: 0.0.0.0  # 모든 인터페이스에서 접근 가능
       A2A_PORT: 5000
-      A2A_EXTERNAL_URL: http://localhost:5000  # VM IP로 변경 필요
+      A2A_EXTERNAL_URL: http://localhost:5000  # A2A 서버 외부 URL (VM 환경: VM IP로 변경 필요, 예: http://34.64.202.245:5000)
       # 기타 설정
       DB_TYPE: acebase
       NAMESPACE: eventstorming_generator
       POD_ID: docker-pod
-      IS_LOCAL_RUN: "false"
+      IS_LOCAL_RUN: "true"  # Docker Compose 환경에서는 Kubernetes autoscaler 비활성화
       USE_GENERATOR_CACHE: "true"
-    depends_on:
-      - acebase
     restart: unless-stopped
   # acebase:
   #   image: ghcr.io/msa-ez/acebase:v1.0.18 # Acebase Docker Image

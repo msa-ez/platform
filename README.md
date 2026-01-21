@@ -220,7 +220,9 @@ nvm use 14
 
 ### 3. Python 설치 (Python 3.12+ 필요)
 
-> ⚠️ **중요**: Backend Generators는 Python 3.12 이상이 필요합니다. Python 3.9나 3.10은 사용할 수 없습니다.
+> ⚠️ **중요**: 
+> - **Docker 컨테이너로 백엔드 실행 시**: Python 설치가 **불필요**합니다. 이 섹션을 **스킵**하세요.
+> - **로컬에서 백엔드 직접 실행 시**: Backend Generators는 Python 3.12 이상이 필요합니다. Python 3.9나 3.10은 사용할 수 없습니다.
 
 **Python 버전 확인:**
 ```sh
@@ -320,38 +322,22 @@ sudo usermod -aG docker $USER
 
 포트가 이미 사용 중인 경우, `docker-compose.yml`에서 포트를 변경할 수 있습니다.
 
+> 💡 **참고**: Docker 컨테이너로 백엔드를 실행하는 경우, Python 설치나 백엔드 소스코드 다운로드가 불필요합니다.
+
 ## 소스코드 다운로드
 
 VM에 설치하기 전에 필요한 소스코드를 다운로드해야 합니다.
 
-### 1. MSAez 플랫폼 소스코드
+> 💡 **Docker 컨테이너로 백엔드 실행 시 (권장)**: 
+> - MSAez 플랫폼 소스코드만 다운로드하면 됩니다.
+> - Backend Generators와 Backend ES Generators 소스코드 다운로드는 **불필요**합니다. Docker 이미지가 자동으로 다운로드됩니다.
+
+### MSAez 플랫폼 소스코드
 
 ```sh
 # MSAez 플랫폼 저장소 클론
 git clone https://github.com/msa-ez/platform.git
 cd platform
-```
-
-### 2. Backend Generators 소스코드 (선택적)
-
-Backend Generators를 사용하려면 별도로 다운로드해야 합니다.
-
-```sh
-# Backend Generators 저장소 클론
-git clone https://github.com/uengineYSW/msaez-automate-project-generator.git
-cd msaez-automate-project-generator
-```
-
-> 💡 **참고**: 특정 버전을 사용하려면 태그를 확인하고 체크아웃하세요.
-
-### 3. Backend ES Generators 소스코드 (선택적)
-
-Backend ES Generators를 사용하려면 별도로 다운로드해야 합니다.
-
-```sh
-# Backend ES Generators 저장소 클론
-git clone https://github.com/ShinSeongJin2/msaez-automate-eventstorming-generator.git
-cd msaez-automate-eventstorming-generator
 ```
 
 ## Setting Gitea
@@ -753,14 +739,70 @@ nano docker-compose.yml
 
 **VM 환경에서 수정할 내용:**
 
-`docker-compose.yml` 파일에서 다음 환경 변수들을 VM IP로 변경하세요:
-- `VUE_APP_DB_HOST`: `127.0.0.1` → `34.64.202.245` (VM IP)
-- `VUE_APP_GIT_URL`: `http://localhost:3000` → `http://34.64.202.245:3000`
-- `VUE_APP_BACKEND_URL`: `http://localhost:2025` → `http://34.64.202.245:2025`
-- `VUE_APP_GITEA_TOKEN`: Gitea Personal Access Token으로 변경
-- Backend Generators의 `OPENAI_API_KEY`: 실제 OpenAI API 키로 변경
-- Backend ES Generators의 `GOOGLE_API_KEY`: 실제 Google AI API 키로 변경
-- Backend ES Generators의 `A2A_EXTERNAL_URL`: `http://34.64.202.245:5000` (VM IP)
+`docker-compose.yml` 파일은 기본적으로 로컬 환경(`localhost`)을 기준으로 설정되어 있습니다. **VM 환경**에서 사용하는 경우 다음 환경 변수들을 VM IP로 변경하세요:
+
+#### 1. `msaez` 서비스 (약 7-24줄)
+
+```yaml
+msaez:
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
+  environment:
+    # ⚠️ VM 환경: 127.0.0.1 → VM IP로 변경 (브라우저가 접근하는 주소와 동일하게 설정)
+    VUE_APP_DB_HOST: 34.64.202.245  # 예시: VM IP
+    # ⚠️ VM 환경: localhost → VM IP로 변경
+    VUE_APP_GIT_URL: http://34.64.202.245:3000  # 예시: VM IP
+    # ⚠️ VM 환경: localhost → VM IP로 변경
+    VUE_APP_BACKEND_URL: http://34.64.202.245:2025  # 예시: VM IP
+    VUE_APP_GITEA_TOKEN: "your-gitea-token"  # ⚠️ 수정: Gitea Personal Access Token으로 변경
+```
+
+> 💡 **WebSocket 연결 안정성**: `VUE_APP_DB_HOST`를 VM IP로 설정하면 브라우저와 컨테이너가 동일한 주소로 AceBase에 접근하여 WebSocket 연결이 더 안정적입니다.
+
+#### 2. `backend-generators` 서비스 (약 25-52줄)
+
+```yaml
+backend-generators:
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
+  environment:
+    OPENAI_API_KEY: "your-openai-api-key"  # ⚠️ 수정: 실제 OpenAI API 키로 변경
+    # AceBase 설정
+    ACEBASE_HOST: host.docker.internal  # 기본값 (로컬/VM 모두 작동)
+    # ⚠️ VM 환경: host.docker.internal이 작동하지 않는 경우 VM IP로 변경 가능
+    # ACEBASE_HOST: 34.64.202.245  # VM IP
+    # 나머지 설정은 기본값 유지 (수정 불필요)
+```
+
+> 💡 **AceBase 접근 방법**: 
+> - `host.docker.internal`은 로컬/VM 환경 모두에서 작동합니다 (기본값 사용 권장).
+> - 만약 `host.docker.internal`이 작동하지 않으면 VM IP를 직접 사용하세요.
+
+#### 3. `backend-es-generators` 서비스 (약 54-90줄)
+
+```yaml
+backend-es-generators:
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
+  environment:
+    GOOGLE_API_KEY: "your-google-api-key"  # ⚠️ 수정: 실제 Google AI API 키로 변경
+    # AceBase 설정
+    ACEBASE_HOST: host.docker.internal  # 기본값 (로컬/VM 모두 작동)
+    # ⚠️ VM 환경: host.docker.internal이 작동하지 않는 경우 VM IP로 변경 가능
+    # ACEBASE_HOST: 34.64.202.245  # VM IP
+    # ⚠️ VM 환경: localhost → VM IP로 변경
+    A2A_EXTERNAL_URL: http://34.64.202.245:5000  # 예시: VM IP
+    # 나머지 설정은 기본값 유지 (수정 불필요)
+```
+
+> 💡 **AceBase 접근 방법**: 
+> - `host.docker.internal`은 로컬/VM 환경 모두에서 작동합니다 (기본값 사용 권장).
+> - 만약 `host.docker.internal`이 작동하지 않으면 VM IP를 직접 사용하세요.
+
+> 💡 **vi에서 특정 서비스로 빠르게 이동하는 방법**:
+> - `/backend-generators` 입력 후 `Enter` → backend-generators 서비스로 이동
+> - `/backend-es-generators` 입력 후 `Enter` → backend-es-generators 서비스로 이동
+> - `/msaez:` 입력 후 `Enter` → msaez 서비스로 이동
 
 **전체 예시 (설치형 AceBase 사용 시):**
 
@@ -1033,23 +1075,64 @@ docker compose logs -f acebase
 - Gitea 로그인 기능이 정상적으로 동작하는지 확인
 - AceBase 연결 상태 확인 (브라우저 개발자 도구 콘솔에서 확인)
 
+### VM 방화벽 설정
+
+VM 환경에서 외부에서 접근하려면 방화벽 규칙을 설정해야 합니다.
+
+**필요한 포트:**
+- **8080**: MSAez Frontend
+- **3000**: Gitea
+- **5757**: AceBase (설치형 사용 시)
+- **2025**: Backend Generators (문서 업로드 등)
+- **5000**: Backend ES Generators (Event Storming Generator)
+
+**방화벽 규칙 설정:**
+
+사용하는 클라우드 플랫폼 또는 VM 환경에 따라 다음 포트들에 대한 인바운드 트래픽을 허용하는 방화벽 규칙을 생성하세요:
+
+- **TCP 8080**: MSAez Frontend 접근용
+- **TCP 3000**: Gitea 접근용
+- **TCP 5757**: AceBase 접근용 (설치형 사용 시)
+- **TCP 2025**: Backend Generators 접근용
+- **TCP 5000**: Backend ES Generators 접근용
+
+> ⚠️ **중요**: 
+> - 보안을 위해 가능한 한 특정 IP 범위나 신뢰할 수 있는 소스에서만 접근을 허용하는 것을 권장합니다.
+> - VM이 여러 네트워크를 사용하는 경우, 각 네트워크에 대해 방화벽 규칙을 설정해야 할 수 있습니다.
+> - 클라우드 플랫폼별 방화벽 설정 방법은 해당 플랫폼의 문서를 참조하세요.
+>   - **GCP**: Cloud Console의 VPC 방화벽 규칙 또는 `gcloud compute firewall-rules` 명령어 사용
+>   - **AWS**: Security Groups 설정
+>   - **Azure**: Network Security Groups 설정
+>   - **기타**: 해당 플랫폼의 방화벽/보안 그룹 설정 사용
+
 **문제 해결:**
 - 서비스가 실행되지 않는 경우: `docker compose ps`로 상태 확인
 - 포트 충돌: `docker compose logs`로 에러 로그 확인
 - Gitea 연결 문제: hosts 파일 설정 확인 (`127.0.0.1 gitea`)
-- **VM 환경에서 WebSocket 연결 오류**: `docker-compose.yml`의 `VUE_APP_DB_HOST`, `VUE_APP_GIT_URL`, `VUE_APP_BACKEND_URL`이 VM IP로 설정되어 있는지 확인하고, 컨테이너를 재시작하세요:
+- **VM 환경에서 WebSocket 연결 오류 (timeout)**: 
+  - `docker-compose.yml`의 `VUE_APP_DB_HOST`가 VM IP로 설정되어 있는지 확인 (브라우저가 접근하는 주소와 동일해야 함)
+  - `msaez` 서비스에 `extra_hosts`가 추가되어 있는지 확인
+  - `backend-generators`와 `backend-es-generators`의 `ACEBASE_HOST`가 `host.docker.internal` 또는 VM IP로 설정되어 있는지 확인
+  - `extra_hosts`가 추가되어 있는지 확인
+  - 컨테이너를 재시작하세요:
   ```sh
   # 환경 변수 변경 후 컨테이너 재시작
-  docker compose restart msaez
+  docker compose restart msaez backend-generators backend-es-generators
   
   # 또는 전체 재시작
   docker compose down
   docker compose up -d
   ```
+- **AceBase 연결 timeout 오류**: 
+  - `host.docker.internal`이 작동하는지 확인: `docker compose exec backend-es-generators sh -c "getent hosts host.docker.internal"`
+  - 작동하지 않으면 `ACEBASE_HOST`를 VM IP로 직접 설정
+  - AceBase가 `0.0.0.0:5757`에 바인딩되어 있는지 확인: `netstat -tulnp | grep 5757`
 
 ## Backend 생성기 설정 (Docker Compose)
 
 MSAEz의 AI 기능을 사용하려면 Backend 생성기들을 실행해야 합니다.
+
+> 💡 **Docker 컨테이너 사용**: 이 섹션에서는 Docker 이미지를 사용하여 백엔드를 실행합니다. Python 설치나 소스코드 다운로드가 **불필요**합니다.
 
 > 📁 **작업 디렉토리**: `platform/` (docker-compose.yml이 있는 디렉토리)
 
@@ -1088,8 +1171,10 @@ backend-generators:
     # ⚠️ 필수: OpenAI API Key
     OPENAI_API_KEY: "your-openai-api-key-here"  # 실제 API 키로 변경
     
-    # AceBase 설정 (Docker 네트워크 내부에서는 서비스명 사용)
-    ACEBASE_HOST: acebase  # Docker 네트워크 내부에서는 서비스명 사용
+    # AceBase 설정
+    # 로컬 개발 환경 (Docker Compose로 AceBase 실행): acebase
+    # VM 환경 (로컬에서 직접 실행 중인 AceBase): VM IP (예: 34.64.202.245)
+    ACEBASE_HOST: acebase  # ⚠️ VM 환경: acebase → VM IP로 변경
     ACEBASE_PORT: 5757
     ACEBASE_DB_NAME: mydb
     ACEBASE_HTTPS: "false"
@@ -1103,10 +1188,18 @@ backend-generators:
     # 기타 설정
     STORAGE_TYPE: acebase
     ENVIRONMENT: production
-    IS_LOCAL_RUN: "false"
+    IS_LOCAL_RUN: "true"  # ⚠️ Docker Compose 환경: "true"로 설정하여 Kubernetes autoscaler 비활성화
     NAMESPACE: eventstorming_generator
     POD_ID: docker-pod
+  # ⚠️ VM 환경 (acebase 서비스가 주석 처리된 경우): depends_on 제거 또는 주석 처리
+  # depends_on:
+  #   - acebase
 ```
+
+**수정 요약:**
+- ✅ **수정 필요**: `OPENAI_API_KEY` (약 32줄), `ACEBASE_HOST` (약 34줄) - VM 환경에서만
+- ✅ **VM 환경 추가 수정**: `depends_on: - acebase` 제거 또는 주석 처리 (약 49-50줄)
+- ❌ **수정 불필요**: 나머지 모든 환경 변수
 
 > 💡 **API Key 발급**: OpenAI API Key는 [OpenAI Platform](https://platform.openai.com/api-keys)에서 발급받을 수 있습니다.
 
@@ -1170,8 +1263,10 @@ backend-es-generators:
     AI_MODEL_LIGHT_MAX_INPUT_LIMIT: 983040
     AI_MODEL_LIGHT_MAX_BATCH_SIZE: 30
     
-    # AceBase 설정 (Docker 네트워크 내부에서는 서비스명 사용)
-    ACEBASE_HOST: acebase  # Docker 네트워크 내부에서는 서비스명 사용
+    # AceBase 설정
+    # 로컬 개발 환경 (Docker Compose로 AceBase 실행): acebase
+    # VM 환경 (로컬에서 직접 실행 중인 AceBase): VM IP (예: 34.64.202.245)
+    ACEBASE_HOST: acebase  # ⚠️ VM 환경: acebase → VM IP로 변경
     ACEBASE_PORT: 5757
     ACEBASE_DB_NAME: mydb
     ACEBASE_HTTPS: "false"
@@ -1187,8 +1282,11 @@ backend-es-generators:
     DB_TYPE: acebase
     NAMESPACE: eventstorming_generator
     POD_ID: docker-pod
-    IS_LOCAL_RUN: "false"
+    IS_LOCAL_RUN: "true"  # ⚠️ Docker Compose 환경: "true"로 설정하여 Kubernetes autoscaler 비활성화
     USE_GENERATOR_CACHE: "true"
+  # ⚠️ VM 환경 (acebase 서비스가 주석 처리된 경우): depends_on 제거 또는 주석 처리
+  # depends_on:
+  #   - acebase
 ```
 
 > 💡 **API Key 발급**: Google AI API Key는 [Google AI Studio](https://aistudio.google.com/apikey)에서 발급받을 수 있습니다.
@@ -1221,7 +1319,10 @@ docker compose logs -f backend-es-generators
 
 2. **VM 환경 설정**: 
    - `A2A_EXTERNAL_URL`을 실제 VM IP로 변경해야 합니다 (예: `http://34.64.202.245:5000`).
-   - 방화벽 규칙에서 포트 2025, 5000이 열려있는지 확인하세요.
+   - `ACEBASE_HOST`를 VM IP로 변경해야 합니다 (로컬에서 직접 실행 중인 AceBase 접근 시).
+   - `IS_LOCAL_RUN`을 `"true"`로 설정해야 합니다 (Docker Compose 환경에서는 Kubernetes autoscaler 비활성화).
+   - `depends_on: - acebase`를 제거하거나 주석 처리해야 합니다 (acebase 서비스가 주석 처리되어 있는 경우).
+   - **방화벽 규칙 설정이 필요합니다** (위의 "VM 방화벽 설정" 섹션 참조).
 
 3. **모든 서비스 한 번에 실행**:
    ```sh
