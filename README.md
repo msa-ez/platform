@@ -526,7 +526,7 @@ MSAEz가 Gitea API를 사용하기 위해 Personal Access Token이 필요합니�
 2. 우측 상단의 **+** (새 저장소) 아이콘 클릭
 3. 상단의 **"Migrate repository"** 클릭
 4. **"GitHub"** 클릭
-5. **"URL로 부터 마이그레이션 / 클론"** 필드에 GitHub 저장소 URL 입력
+5. **"URL로 부터 마이그레이션 / 클론"** 필드에 GitHub 저장소 URL 입력 (저장소 이름 변경 X)
    ```
    https://github.com/seongwonyang/template-poscodx.git
    ```
