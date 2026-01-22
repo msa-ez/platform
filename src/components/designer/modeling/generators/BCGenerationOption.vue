@@ -104,12 +104,12 @@
                         ></v-switch>
                     </v-col>
 
-                    <v-col class="pa-4 pt-0" cols="12">
+                    <!-- <v-col class="pa-4 pt-0" cols="12">
                         <v-switch
                             v-model="localOptions.isGenerateFrontEnd"
                             :label="$t('BCGenerationOption.generateFrontEnd')"
                         ></v-switch>
-                    </v-col>
+                    </v-col> -->
 
                     <v-col class="pa-4 pt-0" cols="12">
                         <v-textarea
@@ -167,7 +167,7 @@ export default {
                 additionalOptions: '',
                 aspectDetails: {},
                 isProtocolMode: true,
-                isGenerateFrontEnd: true
+                isGenerateFrontEnd: false
             },
             availableAspects: [
                 this.$t('DevideBoundedContextDialog.domainAspect'),
