@@ -804,9 +804,13 @@ backend-es-generators:
 > - `/backend-es-generators` 입력 후 `Enter` → backend-es-generators 서비스로 이동
 > - `/msaez:` 입력 후 `Enter` → msaez 서비스로 이동
 
-**전체 예시 (설치형 AceBase 사용 시):**
+**docker-compose.yml 전체 예시:**
 
-**로컬 개발 환경:**
+아래는 기본 `docker-compose.yml` 파일의 전체 내용입니다. 환경에 따라 **두 가지 차이점**만 수정하면 됩니다:
+
+1. **IP 설정**: 로컬 환경(`localhost`, `127.0.0.1`) vs VM 환경(VM IP)
+2. **AceBase 서비스**: 설치형 AceBase 사용 시 주석 처리 vs Docker로 AceBase 사용 시 활성화
+
 ```yml
 version: "3"
 
@@ -821,46 +825,86 @@ services:
       - msaez
     ports:
       - 8080:8080
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
-      VUE_APP_DB_HOST: 127.0.0.1  # 로컬 개발 환경
+      # ⚠️ 로컬: 127.0.0.1 | VM: VM IP (예: 34.64.202.245)
+      VUE_APP_DB_HOST: 127.0.0.1
       VUE_APP_DB_PORT: 5757
       VUE_APP_DB_NAME: mydb
       VUE_APP_MODE: onprem
       VUE_APP_DB_HTTPS: "false"
       VUE_APP_GIT: gitea
-      VUE_APP_GIT_URL: http://localhost:3000  # 로컬 개발 환경
-      VUE_APP_BACKEND_URL: http://localhost:2025  # 로컬 개발 환경
+      # ⚠️ 로컬: localhost | VM: VM IP (예: http://34.64.202.245:3000)
+      VUE_APP_GIT_URL: http://localhost:3000
+      # ⚠️ 로컬: localhost | VM: VM IP (예: http://34.64.202.245:2025)
+      VUE_APP_BACKEND_URL: http://localhost:2025
       VUE_APP_GITEA_TOKEN: "your-gitea-personal-access-token"
-```
-
-**VM/프로덕션 환경:**
-```yml
-version: "3"
-
-networks:
-  msaez:
-    external: false
-
-services:
-  msaez:
-    image: ghcr.io/msa-ez/platform:v1.0.29
+  
+  backend-generators:
+    image: ghcr.io/uengineYSW/msaez-automate-project-generator:v1.0.0
+    container_name: backend-generators
     networks:
       - msaez
     ports:
-      - 8080:8080
+      - "2025:2025"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
-      # VM/프로덕션 환경: VM IP 또는 도메인으로 변경
-      VUE_APP_DB_HOST: 34.64.202.245  # VM IP로 변경 (예시)
-      VUE_APP_DB_PORT: 5757
-      VUE_APP_DB_NAME: mydb
-      VUE_APP_MODE: onprem
-      VUE_APP_DB_HTTPS: "false"
-      VUE_APP_GIT: gitea
-      VUE_APP_GIT_URL: http://34.64.202.245:3000  # VM IP로 변경 (예시)
-      VUE_APP_BACKEND_URL: http://34.64.202.245:2025  # VM IP로 변경 (예시)
-      VUE_APP_GITEA_TOKEN: "your-gitea-personal-access-token"  # 위의 "Setting Gitea" 섹션에서 생성한 Personal Access Token
-
-  # 설치형 AceBase를 사용하므로 주석 처리
+      OPENAI_API_KEY: your-openai-api-key-here
+      # ⚠️ 설치형 AceBase: host.docker.internal | Docker AceBase: acebase
+      ACEBASE_HOST: host.docker.internal
+      ACEBASE_PORT: 5757
+      ACEBASE_DB_NAME: mydb
+      ACEBASE_HTTPS: "false"
+      ACEBASE_USERNAME: admin
+      ACEBASE_PASSWORD: 75sdDSFg37w5
+      FLASK_HOST: 0.0.0.0
+      FLASK_PORT: 2025
+      STORAGE_TYPE: acebase
+      ENVIRONMENT: production
+      IS_LOCAL_RUN: "true"
+      NAMESPACE: eventstorming_generator
+      POD_ID: docker-pod
+    restart: unless-stopped
+  
+  backend-es-generators:
+    image: ghcr.io/ShinSeongJin2/msaez-automate-eventstorming-generator:v1.0.0
+    container_name: backend-es-generators
+    networks:
+      - msaez
+    ports:
+      - "5000:5000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      GOOGLE_API_KEY: your-google-api-key-here
+      AI_MODEL: google_genai:gemini-flash-latest:thinking
+      AI_MODEL_MAX_INPUT_LIMIT: 983040
+      AI_MODEL_MAX_BATCH_SIZE: 15
+      AI_MODEL_LIGHT: google_genai:gemini-flash-latest:thinking
+      AI_MODEL_LIGHT_MAX_INPUT_LIMIT: 983040
+      AI_MODEL_LIGHT_MAX_BATCH_SIZE: 30
+      # ⚠️ 설치형 AceBase: host.docker.internal | Docker AceBase: acebase
+      ACEBASE_HOST: host.docker.internal
+      ACEBASE_PORT: 5757
+      ACEBASE_DB_NAME: mydb
+      ACEBASE_HTTPS: "false"
+      ACEBASE_USERNAME: admin
+      ACEBASE_PASSWORD: 75sdDSFg37w5
+      A2A_HOST: 0.0.0.0
+      A2A_PORT: 5000
+      # ⚠️ 로컬: localhost | VM: VM IP (예: http://34.64.202.245:5000)
+      A2A_EXTERNAL_URL: http://localhost:5000
+      DB_TYPE: acebase
+      NAMESPACE: eventstorming_generator
+      POD_ID: docker-pod
+      IS_LOCAL_RUN: "true"
+      USE_GENERATOR_CACHE: "true"
+    restart: unless-stopped
+  
+  # ⚠️ 설치형 AceBase 사용 시: 주석 처리 유지
+  # ⚠️ Docker로 AceBase 사용 시: 아래 주석 해제
   # acebase:
   #   image: ghcr.io/msa-ez/acebase:v1.0.18
   #   container_name: acebase
@@ -876,12 +920,10 @@ services:
   #     DB_PORT: 5757
   #     DB_HTTPS: "false"
   #     CLIENT_ID: your-gitea-oauth-client-id
-    #     CLIENT_SECRET: your-gitea-oauth-client-secret
-    #     PROVIDER: gitea
-    #     # 로컬 개발 환경: gitea:3000 (Docker 네트워크 내부)
-    #     # VM/프로덕션 환경: <VM_IP>:3000 또는 gitea.example.com:3000
-    #     GIT: "gitea:3000"  # VM 환경에서 외부 접근이 필요한 경우 실제 Gitea 주소로 변경
-    #     PROTOCOL: http
+  #     CLIENT_SECRET: your-gitea-oauth-client-secret
+  #     PROVIDER: gitea
+  #     GIT: "gitea:3000"
+  #     PROTOCOL: http
 
   gitea:
     image: gitea/gitea:1.22.3
@@ -901,101 +943,14 @@ services:
       - "222:22"
 ```
 
-**Docker로 AceBase 사용 시:**
+**수정 요약:**
 
-**로컬 개발 환경:**
-```yml
-version: "3"
-
-networks:
-  msaez:
-    external: false
-
-services:
-  msaez:
-    image: ghcr.io/msa-ez/platform:v1.0.29
-    networks:
-      - msaez
-    ports:
-      - 8080:8080
-    environment:
-      VUE_APP_DB_HOST: acebase  # Docker 네트워크 내에서 acebase 서비스명 사용
-      VUE_APP_DB_PORT: 5757
-      VUE_APP_DB_NAME: mydb
-      VUE_APP_MODE: onprem
-      VUE_APP_DB_HTTPS: "false"
-      VUE_APP_GIT: gitea
-      VUE_APP_GIT_URL: http://localhost:3000  # 로컬 개발 환경
-      VUE_APP_BACKEND_URL: http://localhost:2025  # 로컬 개발 환경
-      VUE_APP_GITEA_TOKEN: "your-gitea-personal-access-token"
-```
-
-**VM/프로덕션 환경:**
-```yml
-version: "3"
-
-networks:
-  msaez:
-    external: false
-
-services:
-  msaez:
-    image: ghcr.io/msa-ez/platform:v1.0.29
-    networks:
-      - msaez
-    ports:
-      - 8080:8080
-    environment:
-      # VM 환경에서는 브라우저가 VM IP로 접속하므로 VM IP 사용
-      VUE_APP_DB_HOST: 34.64.202.245  # VM IP로 변경 (예시)
-      VUE_APP_DB_PORT: 5757
-      VUE_APP_DB_NAME: mydb
-      VUE_APP_MODE: onprem
-      VUE_APP_DB_HTTPS: "false"
-      VUE_APP_GIT: gitea
-      VUE_APP_GIT_URL: http://34.64.202.245:3000  # VM IP로 변경 (예시)
-      VUE_APP_BACKEND_URL: http://34.64.202.245:2025  # VM IP로 변경 (예시)
-      VUE_APP_GITEA_TOKEN: "your-gitea-personal-access-token"
-
-  acebase:
-    image: ghcr.io/msa-ez/acebase:v1.0.18
-    container_name: acebase
-    networks:
-      - msaez
-    ports:
-      - 5757:5757
-    volumes:
-      - ./acebase/mydb.acebase:/acebase
-    environment:
-      DB_HOST: "0.0.0.0"
-      DB_NAME: mydb
-      DB_PORT: 5757
-      DB_HTTPS: "false"
-      CLIENT_ID: your-gitea-oauth-client-id  # 위의 "Setting Gitea" 섹션에서 발급받은 값
-      CLIENT_SECRET: your-gitea-oauth-client-secret  # 위의 "Setting Gitea" 섹션에서 발급받은 값
-      PROVIDER: gitea
-      # 로컬 개발 환경: gitea:3000 (Docker 네트워크 내부)
-      # VM/프로덕션 환경: <VM_IP>:3000 또는 gitea.example.com:3000
-      GIT: "gitea:3000"  # VM 환경에서 외부 접근이 필요한 경우 실제 Gitea 주소로 변경
-      PROTOCOL: http  # HTTPS 사용 시 https로 변경
-
-  gitea:
-    image: gitea/gitea:1.22.3
-    container_name: gitea
-    networks:
-      - msaez
-    environment:
-      - USER_UID=1000
-      - USER_GID=1000
-    restart: always
-    volumes:
-      - ./gitea:/data
-      - /etc/timezone:/etc/timezone:ro
-      - /etc/localtime:/etc/localtime:ro
-    ports:
-      - "3000:3000"
-      - "222:22"
-```
+| 환경 | 수정 항목 | 값 |
+|------|----------|-----|
+| **로컬 + 설치형 AceBase** | 수정 불필요 | 기본값 그대로 사용 |
+| **VM + 설치형 AceBase** | `VUE_APP_DB_HOST`, `VUE_APP_GIT_URL`, `VUE_APP_BACKEND_URL`, `A2A_EXTERNAL_URL` | VM IP로 변경 |
+| **로컬 + Docker AceBase** | `ACEBASE_HOST` (backend 서비스들), `VUE_APP_DB_HOST`, `acebase` 서비스 주석 해제 | `acebase`로 변경 |
+| **VM + Docker AceBase** | 위의 모든 항목 | VM IP + `acebase` 서비스 활성화 |
 
 > 💡 **.env 파일 사용 (권장)**: 민감한 정보는 `.env` 파일에 저장하고 docker-compose.yml에서 참조하세요.
 > 
