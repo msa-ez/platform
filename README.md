@@ -520,12 +520,13 @@ MSAEz가 Gitea API를 사용하기 위해 Personal Access Token이 필요합니�
 기존 GitHub 저장소를 Gitea로 마이그레이션할 수 있습니다.
 
 **단계:**
+
 0. 계정 등록을 통해 사용자 명을 반드시 "posco"로 지정하여 template-poscodx template를 관리할 용도의 계정을 추가 (이메일과 비밀번호는 자유롭게 설정)
 1. 사용자 명을 "posco"로 등록했던 계정으로 Gitea에 로그인
 2. 우측 상단의 **+** (새 저장소) 아이콘 클릭
 3. 상단의 **"Migrate repository"** 클릭
 4. **"GitHub"** 클릭
-5. **"URL로 부터 마이그레이션 / 클론"** 필드에 GitHub 저장소 URL 입력
+5. **"URL로 부터 마이그레이션 / 클론"** 필드에 GitHub 저장소 URL 입력 (저장소 이름 변경 X)
    ```
    https://github.com/seongwonyang/template-poscodx.git
    ```
