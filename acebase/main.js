@@ -88,13 +88,47 @@ server.configAuthProvider("gitea", {
   protocol: protocol,
 });
 
+// 서버 초기화 완료 플래그
+let serverInitialized = false;
+
 server.on("ready", () => {
-  console.log("SERVER ready");
-  // 데이터베이스가 완전히 준비될 때까지 대기 후 init() 실행
-  setTimeout(() => {
-    init();
-  }, 2000); // 2초 대기하여 데이터베이스 초기 로드 완료 대기
+  console.log("SERVER ready - waiting for database to be fully initialized...");
+  init();
 });
+
+// 데이터베이스가 실제로 준비되었는지 확인하는 함수
+async function waitForDatabaseReady(db) {
+  const maxAttempts = 60; // 최대 60번 시도 (약 60초)
+  const delayMs = 1000; // 1초마다 시도
+  
+  for (let i = 0; i < maxAttempts; i++) {
+    try {
+      // 루트 경로를 읽어서 데이터베이스가 실제로 준비되었는지 확인
+      // lock 오류가 발생하지 않으면 준비된 것으로 간주
+      await db.ref("/").get();
+      console.log(`Database is ready (attempt ${i + 1}/${maxAttempts})`);
+      return true;
+    } catch (error) {
+      // lock 오류가 발생하면 아직 준비되지 않은 것
+      if (error.message && error.message.includes("lock") && error.message.includes("expired")) {
+        console.log(`Database still initializing (lock expired)... (attempt ${i + 1}/${maxAttempts})`);
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+        continue;
+      }
+      // lock 오류가 아니면 준비된 것으로 간주 (데이터가 없어서 null이 반환되는 경우 등)
+      if (!error.message || !error.message.includes("lock")) {
+        console.log(`Database is ready (no lock error) (attempt ${i + 1}/${maxAttempts})`);
+        return true;
+      }
+      // 다른 lock 오류는 재시도
+      console.log(`Database check failed, retrying... (attempt ${i + 1}/${maxAttempts})`);
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+    }
+  }
+  
+  console.log("Database ready check timeout - proceeding anyway");
+  return false;
+}
 
 function init() {
   db = new AceBaseClient({
@@ -103,30 +137,42 @@ function init() {
     dbname: dbname,
     https: JSON.parse(https),
   });
-  // const db = new AceBaseClient({ host: 'acebase.kuberez.io', port: 443, dbname: 'mydb', https: true });
   
   // 인증 및 연결 준비 대기
-  db.auth.signIn("admin", adminPassword).then((result) => {
+  db.auth.signIn("admin", adminPassword).then(async (result) => {
     console.log(
       `Signed in as ${result.user.username}, got access token ${result.accessToken}`
     );
     
-    // 데이터베이스가 완전히 준비된 후에 리스너 등록
-    db.ready(() => {
-      console.log("Connected successfully - Database is ready, initializing listeners...");
-      // 추가 대기 후 리스너 등록 (데이터베이스 인덱스 로드 완료 대기)
-      setTimeout(() => {
-        initializeListeners(db);
-      }, 1000); // 1초 추가 대기
+    // 데이터베이스가 완전히 준비될 때까지 대기
+    db.ready(async () => {
+      console.log("Connected successfully - Waiting for database to be fully ready...");
+      
+      // 실제로 데이터베이스가 준비되었는지 확인
+      await waitForDatabaseReady(db);
+      
+      console.log("Database is fully ready - initializing listeners...");
+      initializeListeners(db);
+      
+      // 서버 초기화 완료 표시
+      serverInitialized = true;
+      console.log("Server initialization complete - ready to accept requests");
     });
-  }).catch((error) => {
+  }).catch(async (error) => {
     console.error("Authentication failed:", error);
     // 인증 실패해도 리스너는 등록 (인증이 선택적일 수 있음)
-    db.ready(() => {
-      console.log("Connected successfully (without auth) - Database is ready, initializing listeners...");
-      setTimeout(() => {
-        initializeListeners(db);
-      }, 1000);
+    db.ready(async () => {
+      console.log("Connected successfully (without auth) - Waiting for database to be fully ready...");
+      
+      // 실제로 데이터베이스가 준비되었는지 확인
+      await waitForDatabaseReady(db);
+      
+      console.log("Database is fully ready - initializing listeners...");
+      initializeListeners(db);
+      
+      // 서버 초기화 완료 표시
+      serverInitialized = true;
+      console.log("Server initialization complete - ready to accept requests");
     });
   });
 }
