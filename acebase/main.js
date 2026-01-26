@@ -97,32 +97,49 @@ server.on("ready", () => {
 });
 
 // 데이터베이스가 실제로 준비되었는지 확인하는 함수
+// lock 오류가 발생하지 않을 때까지 기다림
 async function waitForDatabaseReady(db) {
-  const maxAttempts = 60; // 최대 60번 시도 (약 60초)
+  const maxAttempts = 120; // 최대 120번 시도 (약 2분)
   const delayMs = 1000; // 1초마다 시도
+  let consecutiveSuccess = 0; // 연속 성공 횟수
+  const requiredSuccess = 3; // 3번 연속 성공해야 준비된 것으로 간주
+  
+  console.log("Waiting for database to be fully ready (checking for lock errors)...");
   
   for (let i = 0; i < maxAttempts; i++) {
     try {
       // 루트 경로를 읽어서 데이터베이스가 실제로 준비되었는지 확인
       // lock 오류가 발생하지 않으면 준비된 것으로 간주
       await db.ref("/").get();
-      console.log(`Database is ready (attempt ${i + 1}/${maxAttempts})`);
-      return true;
+      consecutiveSuccess++;
+      
+      if (consecutiveSuccess >= requiredSuccess) {
+        console.log(`Database is ready (${consecutiveSuccess} consecutive successful reads)`);
+        return true;
+      }
+      
+      // 아직 충분한 연속 성공이 없으면 계속 확인
+      if (i % 10 === 0) {
+        console.log(`Database check in progress... (${consecutiveSuccess}/${requiredSuccess} consecutive successes, attempt ${i + 1}/${maxAttempts})`);
+      }
+      await new Promise(resolve => setTimeout(resolve, delayMs));
     } catch (error) {
-      // lock 오류가 발생하면 아직 준비되지 않은 것
-      if (error.message && error.message.includes("lock") && error.message.includes("expired")) {
-        console.log(`Database still initializing (lock expired)... (attempt ${i + 1}/${maxAttempts})`);
+      // lock 오류가 발생하면 연속 성공 카운터 리셋
+      if (error.message && error.message.includes("lock")) {
+        if (consecutiveSuccess > 0) {
+          console.log(`Lock error detected, resetting success counter (was ${consecutiveSuccess})`);
+        }
+        consecutiveSuccess = 0;
+        console.log(`Database still initializing (lock error)... (attempt ${i + 1}/${maxAttempts})`);
         await new Promise(resolve => setTimeout(resolve, delayMs));
         continue;
       }
-      // lock 오류가 아니면 준비된 것으로 간주 (데이터가 없어서 null이 반환되는 경우 등)
-      if (!error.message || !error.message.includes("lock")) {
-        console.log(`Database is ready (no lock error) (attempt ${i + 1}/${maxAttempts})`);
+      // lock 오류가 아니면 성공으로 간주
+      consecutiveSuccess++;
+      if (consecutiveSuccess >= requiredSuccess) {
+        console.log(`Database is ready (${consecutiveSuccess} consecutive successful reads)`);
         return true;
       }
-      // 다른 lock 오류는 재시도
-      console.log(`Database check failed, retrying... (attempt ${i + 1}/${maxAttempts})`);
-      await new Promise(resolve => setTimeout(resolve, delayMs));
     }
   }
   
