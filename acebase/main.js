@@ -92,60 +92,9 @@ server.configAuthProvider("gitea", {
 let serverInitialized = false;
 
 server.on("ready", () => {
-  console.log("SERVER ready - waiting for database to be fully initialized...");
+  console.log("SERVER ready - initializing database connection...");
   init();
 });
-
-// 데이터베이스가 실제로 준비되었는지 확인하는 함수
-// lock 오류가 발생하지 않을 때까지 기다림
-async function waitForDatabaseReady(db) {
-  const maxAttempts = 120; // 최대 120번 시도 (약 2분)
-  const delayMs = 1000; // 1초마다 시도
-  let consecutiveSuccess = 0; // 연속 성공 횟수
-  const requiredSuccess = 3; // 3번 연속 성공해야 준비된 것으로 간주
-  
-  console.log("Waiting for database to be fully ready (checking for lock errors)...");
-  
-  for (let i = 0; i < maxAttempts; i++) {
-    try {
-      // 루트 경로를 읽어서 데이터베이스가 실제로 준비되었는지 확인
-      // lock 오류가 발생하지 않으면 준비된 것으로 간주
-      await db.ref("/").get();
-      consecutiveSuccess++;
-      
-      if (consecutiveSuccess >= requiredSuccess) {
-        console.log(`Database is ready (${consecutiveSuccess} consecutive successful reads)`);
-        return true;
-      }
-      
-      // 아직 충분한 연속 성공이 없으면 계속 확인
-      if (i % 10 === 0) {
-        console.log(`Database check in progress... (${consecutiveSuccess}/${requiredSuccess} consecutive successes, attempt ${i + 1}/${maxAttempts})`);
-      }
-      await new Promise(resolve => setTimeout(resolve, delayMs));
-    } catch (error) {
-      // lock 오류가 발생하면 연속 성공 카운터 리셋
-      if (error.message && error.message.includes("lock")) {
-        if (consecutiveSuccess > 0) {
-          console.log(`Lock error detected, resetting success counter (was ${consecutiveSuccess})`);
-        }
-        consecutiveSuccess = 0;
-        console.log(`Database still initializing (lock error)... (attempt ${i + 1}/${maxAttempts})`);
-        await new Promise(resolve => setTimeout(resolve, delayMs));
-        continue;
-      }
-      // lock 오류가 아니면 성공으로 간주
-      consecutiveSuccess++;
-      if (consecutiveSuccess >= requiredSuccess) {
-        console.log(`Database is ready (${consecutiveSuccess} consecutive successful reads)`);
-        return true;
-      }
-    }
-  }
-  
-  console.log("Database ready check timeout - proceeding anyway");
-  return false;
-}
 
 function init() {
   db = new AceBaseClient({
@@ -161,14 +110,15 @@ function init() {
       `Signed in as ${result.user.username}, got access token ${result.accessToken}`
     );
     
-    // 데이터베이스가 완전히 준비될 때까지 대기
+    // 데이터베이스 연결 준비 대기
     db.ready(async () => {
-      console.log("Connected successfully - Waiting for database to be fully ready...");
+      console.log("Database client connected successfully");
       
-      // 실제로 데이터베이스가 준비되었는지 확인
-      await waitForDatabaseReady(db);
+      // 서버가 완전히 준비될 때까지 짧은 대기 (서버 내부 초기화 완료 대기)
+      // AceBase 서버는 ready 이벤트 후에도 내부적으로 데이터 로드를 완료할 시간이 필요할 수 있음
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
-      console.log("Database is fully ready - initializing listeners...");
+      console.log("Initializing listeners...");
       initializeListeners(db);
       
       // 서버 초기화 완료 표시
@@ -179,12 +129,12 @@ function init() {
     console.error("Authentication failed:", error);
     // 인증 실패해도 리스너는 등록 (인증이 선택적일 수 있음)
     db.ready(async () => {
-      console.log("Connected successfully (without auth) - Waiting for database to be fully ready...");
+      console.log("Database client connected successfully (without auth)");
       
-      // 실제로 데이터베이스가 준비되었는지 확인
-      await waitForDatabaseReady(db);
+      // 서버가 완전히 준비될 때까지 짧은 대기
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
-      console.log("Database is fully ready - initializing listeners...");
+      console.log("Initializing listeners...");
       initializeListeners(db);
       
       // 서버 초기화 완료 표시
@@ -198,16 +148,18 @@ function initializeListeners(db) {
   console.log("Starting to register database listeners...");
   
   // 초기화 완료 플래그 (기존 데이터 읽기 방지)
+  // 리스너는 변경사항만 감지하므로 초기 데이터 로드가 발생하지 않음
   let initializationComplete = false;
   
-  // 초기화 완료 후 리스너 활성화 (5초 후)
+  // 초기화 완료 후 리스너 활성화 (서버가 완전히 준비된 후)
   setTimeout(() => {
     initializationComplete = true;
     console.log("Initialization complete - listeners are now active");
-  }, 5000);
+  }, 3000);
 
-  const getCountDefinition = db.ref("userLists/everyone/share").once("value");
-  const updateCountDefinition = db.ref("userLists/everyone/share/count");
+  // getCountDefinition은 사용되지 않으므로 제거 (초기 데이터 로드 방지)
+  // const getCountDefinition = db.ref("userLists/everyone/share").once("value");
+  // const updateCountDefinition = db.ref("userLists/everyone/share/count");
   
   // on("value") 대신 on("mutated") 사용 - 새로운 변경사항만 감지 (초기 데이터 로드 방지)
   const inputInformation = db
@@ -468,21 +420,24 @@ function initializeListeners(db) {
       }
       
       console.log(userUid, projectId);
-      db.ref(`definitions/${projectId}/information/permissions`).once(
-        "value",
-        (permissionsSnapshots) => {
-          if (permissionsSnapshots.exists()) {
-            var userList = permissionsSnapshots.val();
-            Object.keys(userList).forEach((uid) => {
-              if (userList[uid] && uid !== "everyone") {
-                db.ref(`userLists/${uid}/share/${projectId}`).update({
-                  state: "deleted",
-                });
-              }
-            });
+      // 초기화 완료 후에만 데이터 읽기 (초기 데이터 로드 방지)
+      if (initializationComplete) {
+        db.ref(`definitions/${projectId}/information/permissions`).once(
+          "value",
+          (permissionsSnapshots) => {
+            if (permissionsSnapshots.exists()) {
+              var userList = permissionsSnapshots.val();
+              Object.keys(userList).forEach((uid) => {
+                if (userList[uid] && uid !== "everyone") {
+                  db.ref(`userLists/${uid}/share/${projectId}`).update({
+                    state: "deleted",
+                  });
+                }
+              });
+            }
           }
-        }
-      );
+        );
+      }
       
       // public delete
       db.ref(`userLists/everyone/share_es/${projectId}`)
@@ -739,7 +694,7 @@ function initializeListeners(db) {
 // }
 
 app.get("/api/definitions/:definition", async function (req, res, next) {
-  if (!db) {
+  if (!db || !serverInitialized) {
     res.status(503).json({ error: "Database not ready" });
     return;
   }
