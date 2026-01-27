@@ -200,8 +200,9 @@ xcode-select --install
 sudo apt-get update && sudo apt-get install git -y
 
 # CentOS/RHEL/Rocky Linux
+# RedHat 8.10: yum 또는 dnf 사용 가능
 sudo yum install git -y
-# 또는
+# 또는 (RHEL 8+)
 sudo dnf install git -y
 ```
 
@@ -249,12 +250,44 @@ sudo apt-get update
 sudo apt-get install python3.12 python3.12-venv python3.12-pip -y
 ```
 
-**CentOS/RHEL/Rocky Linux 9:**
+**CentOS/RHEL/Rocky Linux:**
+
+**RedHat 8.10 / CentOS 8:**
+```sh
+# 기본 Python 3.6 또는 3.8이 설치되어 있지만, Python 3.12가 필요합니다
+# Python 3.12 설치 (EPEL 저장소에는 Python 3.12가 없으므로 소스 빌드 또는 pyenv 사용)
+
+# 방법 1: 소스에서 빌드
+sudo yum groupinstall "Development Tools" -y
+sudo yum install openssl-devel bzip2-devel libffi-devel zlib-devel readline-devel sqlite-devel -y
+cd /tmp
+wget https://www.python.org/ftp/python/3.12.7/Python-3.12.7.tgz
+tar xzf Python-3.12.7.tgz
+cd Python-3.12.7
+./configure --enable-optimizations
+make altinstall
+# Python 3.12는 python3.12 명령어로 실행됩니다
+
+# 방법 2: pyenv 사용 (권장)
+# pyenv 설치
+curl https://pyenv.run | bash
+echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.bashrc
+echo 'command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.bashrc
+echo 'eval "$(pyenv init -)"' >> ~/.bashrc
+source ~/.bashrc
+
+# Python 3.12 설치
+pyenv install 3.12.7
+pyenv global 3.12.7
+python --version  # Python 3.12.7 확인
+```
+
+**Rocky Linux 9 / RHEL 9:**
 ```sh
 # 기본 Python 3.9가 설치되어 있지만, Python 3.12가 필요합니다
 # Python 3.12 설치 (EPEL 또는 소스에서 빌드)
 
-# 방법 1: EPEL 저장소에서 설치 시도
+# 방법 1: EPEL 저장소에서 설치 시도 (Rocky Linux 9에서만 가능할 수 있음)
 sudo dnf install epel-release -y
 sudo dnf install python3.12 python3.12-pip -y
 
@@ -283,7 +316,7 @@ pyenv global 3.12.7
 python --version  # Python 3.12.7 확인
 ```
 
-> 💡 **참고**: Rocky Linux 9에서 Python 3.12를 설치한 후, 가상환경 생성 시 `python3.12` 명령어를 사용하세요:
+> 💡 **참고**: Python 3.12를 설치한 후, 가상환경 생성 시 `python3.12` 명령어를 사용하세요:
 > ```sh
 > python3.12 -m venv venv
 > source venv/bin/activate
@@ -303,12 +336,21 @@ sudo systemctl enable docker
 sudo usermod -aG docker $USER
 
 # CentOS/RHEL/Rocky Linux
+# RedHat 8.10: yum 사용 (RHEL 8은 dnf도 사용 가능하지만 yum으로도 작동)
 sudo yum install -y yum-utils
 sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
 sudo yum install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
 sudo systemctl start docker
 sudo systemctl enable docker
 sudo usermod -aG docker $USER
+
+# 또는 dnf 사용 (RHEL 8+)
+# sudo dnf install -y yum-utils
+# sudo dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+# sudo dnf install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+# sudo systemctl start docker
+# sudo systemctl enable docker
+# sudo usermod -aG docker $USER
 ```
 
 ### 5. 필요한 포트 확인
