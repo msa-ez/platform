@@ -105,58 +105,35 @@
                 })
             },
             _list(reference) {
-                return new Promise(async function (resolve, reject) {
+                return new Promise(function (resolve, reject) {
                     try{
-                        // Firebase와 동일하게 shallow read를 위해 reflect('children') 사용
-                        // 이렇게 하면 키만 가져오고 전체 데이터를 재귀적으로 가져오지 않음
                         const path = reference.path;
-                        if (path && (path.includes('userLists') || path.includes('definitions'))) {
-                            // 목록 조회의 경우 키만 먼저 가져오기
-                            try {
-                                const children = await reference.db.api.reflect(path, 'children', { limit: 1000 });
-                                if (children && children.list && children.list.length > 0) {
-                                    // 각 키에 대해 information 필드만 가져와서 객체로 구성
-                                    const resultObj = {};
-                                    const promises = children.list.map(async (child) => {
-                                        const childRef = reference.child(child.key);
-                                        return new Promise((resolveChild) => {
-                                            // information 필드만 가져오기
-                                            childRef.child('information').get((infoSnapshot) => {
-                                                if (infoSnapshot && infoSnapshot.exists()) {
-                                                    resultObj[child.key] = { information: infoSnapshot.val() };
-                                                    resolveChild(true);
-                                                } else {
-                                                    // information이 없으면 전체를 가져오되, 이것은 예외 케이스
-                                                    childRef.get((fullSnapshot) => {
-                                                        if (fullSnapshot && fullSnapshot.exists()) {
-                                                            resultObj[child.key] = fullSnapshot.val();
-                                                            resolveChild(true);
-                                                        } else {
-                                                            resolveChild(false);
-                                                        }
-                                                    });
-                                                }
-                                            });
-                                        });
-                                    });
-                                    
-                                    await Promise.all(promises);
-                                    
-                                    // snapshot 형태로 반환 (val() 메서드가 resultObj를 반환하도록)
-                                    resolve({
-                                        val: () => resultObj,
-                                        exists: () => Object.keys(resultObj).length > 0
-                                    });
-                                    return;
+
+                        // ✅ 목록 화면에서 필요한 필드만 가져오도록 최적화
+                        // - definitions 루트는 매우 큰 객체들을 자식으로 갖기 때문에 통째로 읽으면 "Reading node" 폭발이 발생함
+                        // - 목록에서는 definitions/{id}/information 만 필요하므로 include로 제한
+                        // - include wildcard 지원 여부에 따라 동작이 달라질 수 있어 fallback 제공
+                        const isDefinitionsRoot = path === 'definitions' || path === '/definitions';
+                        if (isDefinitionsRoot) {
+                            // 서버가 wildcard include를 지원한다면 payload/IO 모두 크게 감소
+                            reference.get({ include: ['*/information'] }, (snapshot) => {
+                                if (snapshot) {
+                                    resolve(snapshot);
+                                } else {
+                                    resolve(null);
                                 }
-                            } catch (reflectError) {
-                                console.log('AceBase reflect failed, falling back to get:', reflectError);
-                                // reflect 실패 시 기존 방식으로 폴백
-                            }
+                            });
+                            return;
                         }
-                        
-                        // 기존 방식 (deep read) - reflect가 실패하거나 다른 경로인 경우
-                        reference.get(snapshot => {
+
+                        // userLists는 크기가 상대적으로 작지만, 안전하게 중첩 객체 로딩을 줄임
+                        // child_objects=false는 "재귀 금지"의 완전한 보장은 아니지만 payload 감소에 도움됨
+                        const options = {};
+                        if (path && path.includes('userLists')) {
+                            options.child_objects = false;
+                        }
+
+                        reference.get(options, snapshot => {
                             if (snapshot) {
                                 resolve(snapshot)
                             } else {

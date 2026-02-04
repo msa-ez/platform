@@ -1731,7 +1731,9 @@
                                 } else if(obj.id == 'public' && obj.show){
                                     if(window.MODE == 'bpm' || window.MODE == 'onprem') {
                                         // let result = {}
-                                        let data = await this.getObject("db://definitions")
+                                        // AceBase 최적화: definitions 전체를 getObject로 읽으면 (상세/draft 포함) Reading node 폭발 발생
+                                        // list를 사용하면 AceBase 쪽에서 definitions 목록을 information 위주로 제한할 수 있음
+                                        let data = await this.list("db://definitions")
                                         result = await this.setListByAcebase(data)
                                         await Promise.all([result])
                                         result.lists.map((x,idx) =>{
