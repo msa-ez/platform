@@ -30,6 +30,10 @@ const https = process.env.DB_HTTPS ? process.env.DB_HTTPS : false; // DB PORT
 const protocol = process.env.PROTOCOL ? process.env.PROTOCOL : "http"; // DB PORT
 const git = process.env.GIT ? process.env.GIT : "localhost:3000"; // DB PORT
 const adminPassword = process.env.ADMIN_PASSWORD ? process.env.ADMIN_PASSWORD : "75sdDSFg37w5"; // Admin Password (환경변수로 설정 가능)
+
+// 전역 db 변수 (app.get에서 사용)
+let db = null;
+
 const server = new AceBaseServer(dbname, {
   host: "0.0.0.0",
   port: 5757,
@@ -84,37 +88,93 @@ server.configAuthProvider("gitea", {
   protocol: protocol,
 });
 
+// 서버 초기화 완료 플래그
+let serverInitialized = false;
+
 server.on("ready", () => {
-  console.log("SERVER ready");
+  console.log("SERVER ready - initializing database connection...");
   init();
 });
 
 function init() {
-  const db = new AceBaseClient({
+  db = new AceBaseClient({
     host: host,
     port: dbport,
     dbname: dbname,
     https: JSON.parse(https),
   });
-  // const db = new AceBaseClient({ host: 'acebase.kuberez.io', port: 443, dbname: 'mydb', https: true });
-  db.auth.signIn("admin", adminPassword).then((result) => {
+  
+  // 인증 및 연결 준비 대기
+  db.auth.signIn("admin", adminPassword).then(async (result) => {
     console.log(
       `Signed in as ${result.user.username}, got access token ${result.accessToken}`
     );
+    
+    // 데이터베이스 연결 준비 대기
+    db.ready(async () => {
+      console.log("Database client connected successfully");
+      
+      // 서버가 완전히 준비될 때까지 짧은 대기 (서버 내부 초기화 완료 대기)
+      // AceBase 서버는 ready 이벤트 후에도 내부적으로 데이터 로드를 완료할 시간이 필요할 수 있음
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      console.log("Initializing listeners...");
+      initializeListeners(db);
+      
+      // 서버 초기화 완료 표시
+      serverInitialized = true;
+      console.log("Server initialization complete - ready to accept requests");
+    });
+  }).catch(async (error) => {
+    console.error("Authentication failed:", error);
+    // 인증 실패해도 리스너는 등록 (인증이 선택적일 수 있음)
+    db.ready(async () => {
+      console.log("Database client connected successfully (without auth)");
+      
+      // 서버가 완전히 준비될 때까지 짧은 대기
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      console.log("Initializing listeners...");
+      initializeListeners(db);
+      
+      // 서버 초기화 완료 표시
+      serverInitialized = true;
+      console.log("Server initialization complete - ready to accept requests");
+    });
   });
+}
 
-  db.ready(() => {
-    console.log("Connected successfully");
-  });
+function initializeListeners(db) {
+  console.log("Starting to register database listeners...");
+  
+  // 초기화 완료 플래그 (기존 데이터 읽기 방지)
+  // 리스너는 변경사항만 감지하므로 초기 데이터 로드가 발생하지 않음
+  let initializationComplete = false;
+  let initializationStartTime = Date.now();
+  const INITIALIZATION_DURATION = 10000; // 10초 동안 초기화 모드 유지 (기존 데이터 로드 완료 대기)
+  
+  // 초기화 완료 후 리스너 활성화 (서버가 완전히 준비된 후)
+  // AceBase 서버가 내부적으로 인덱싱 및 데이터 로드를 완료할 시간 확보
+  setTimeout(() => {
+    initializationComplete = true;
+    const elapsed = ((Date.now() - initializationStartTime) / 1000).toFixed(1);
+    console.log(`Initialization complete (${elapsed}s) - listeners are now active`);
+  }, INITIALIZATION_DURATION);
 
-  const getCountDefinition = db.ref("userLists/everyone/share").once("value");
-  const updateCountDefinition = db.ref("userLists/everyone/share/count");
+  // getCountDefinition은 사용되지 않으므로 제거 (초기 데이터 로드 방지)
+  // const getCountDefinition = db.ref("userLists/everyone/share").once("value");
+  // const updateCountDefinition = db.ref("userLists/everyone/share/count");
+  
+  // on("value") 대신 on("mutated") 사용 - 새로운 변경사항만 감지 (초기 데이터 로드 방지)
   const inputInformation = db
     .ref("/definitions/$projectId/information")
-    .on("value");
-  // const changedInformation = db.ref('/definitions/$projectId/information').on('mutate');
+    .on("mutated");
 
   inputInformation.subscribe((snapshot) => {
+    // 초기화 중에는 기존 데이터 처리 스킵
+    if (!initializationComplete) {
+      return;
+    }
     try {
       console.log("update Information!!");
       const vars = snapshot.ref.vars;
@@ -194,16 +254,24 @@ function init() {
     } catch (e) {}
   });
   // exports.onRegisterUser
-  db.ref("__auth__/accounts/$uid")
-    .on("value")
-    .subscribe(async (snapshot, context) => {
-      var uid = snapshot.ref.vars.uid;
-      var userItem = snapshot.val();
-      
-      // userItem이 null이면 처리하지 않음
-      if (!userItem) {
-        return;
-      }
+  // on("value") 대신 on("child_added") 사용 - 새로운 계정만 감지 (초기 데이터 로드 방지)
+  // child_added 리스너는 초기화 완료 후에만 등록하여 기존 데이터 로드 방지
+  setTimeout(() => {
+    db.ref("__auth__/accounts/$uid")
+      .on("child_added")
+      .subscribe(async (snapshot, context) => {
+        var uid = snapshot.ref.vars.uid;
+        var userItem = snapshot.val();
+        
+        // userItem이 null이면 처리하지 않음
+        if (!userItem) {
+          return;
+        }
+        
+        // 초기화 완료 후에만 처리 (추가 안전장치)
+        if (!initializationComplete) {
+          return;
+        }
       
       var userEmail = userItem.email;
 
@@ -219,10 +287,16 @@ function init() {
         return false;
       }
     });
+  }, INITIALIZATION_DURATION);
 
   // information이 업데이트 알림.
   db.ref("/definitions/$projectId/information").on("mutated", (snap) => {
     try {
+      // 초기화 중에는 기존 데이터 처리 스킵
+      if (!initializationComplete) {
+        return;
+      }
+      
       var projectId = snap.ref.vars.projectId;
       const beforeInformation = snap.val();
       const afterInformation = snap.val();
@@ -331,16 +405,30 @@ function init() {
     }
   });
 
+  // on("value") 대신 on("child_removed") 사용 - 삭제 이벤트만 감지 (초기 데이터 로드 방지)
   const deleteDefinition = db
     .ref("/userLists/$uid/mine/$projectId")
-    .on("value");
+    .on("child_removed");
   deleteDefinition.subscribe((snapshot) => {
     try {
-      if (snapshot.val() == null) {
-        const vars = snapshot.ref.vars;
-        var userUid = vars.uid;
-        var projectId = vars.projectId;
-        console.log(userUid, projectId);
+      // 초기화 중에는 기존 데이터 처리 스킵
+      if (!initializationComplete) {
+        return;
+      }
+      
+      // child_removed 이벤트: 삭제된 항목의 데이터가 snapshot에 포함됨
+      const vars = snapshot.ref.vars;
+      var userUid = vars.uid;
+      var projectId = vars.projectId;
+      
+      // projectId가 유효한지 확인 (와일드카드가 아닌지)
+      if (!projectId || projectId === "$projectId" || projectId.startsWith("$")) {
+        return;
+      }
+      
+      console.log(userUid, projectId);
+      // 초기화 완료 후에만 데이터 읽기 (초기 데이터 로드 방지)
+      if (initializationComplete) {
         db.ref(`definitions/${projectId}/information/permissions`).once(
           "value",
           (permissionsSnapshots) => {
@@ -356,38 +444,21 @@ function init() {
             }
           }
         );
-        //public delete
-        // db.ref(`userLists/everyone/share/${projectId}`)
-        //     .remove()
-        //     .then(function () {
-        //         getCountDefinition.then(function (snapshot) {
-        //             var value = snapshot.val();
-        //             var array = Object.keys(value);
-        //             var count = array.length;
-        //             if (array.indexOf("count") != -1) {
-        //                 count = count - 1;
-        //             }
-        //             updateCountDefinition.update(count);
-        //         });
-        //     });
-        
-        // projectId가 유효한지 확인 (와일드카드가 아닌지)
-        if (projectId && projectId !== "$projectId" && !projectId.startsWith("$")) {
-          db.ref(`userLists/everyone/share_es/${projectId}`)
-            .remove()
-            .then(function () {})
-            .catch(function (err) {
-              console.log(`Error removing share_es/${projectId}:`, err.message);
-            });
-          db.ref(`userLists/everyone/share_first/${projectId}`)
-            .remove()
-            .then(function () {})
-            .catch(function (err) {
-              console.log(`Error removing share_first/${projectId}:`, err.message);
-            });
-        }
-        return;
       }
+      
+      // public delete
+      db.ref(`userLists/everyone/share_es/${projectId}`)
+        .remove()
+        .then(function () {})
+        .catch(function (err) {
+          console.log(`Error removing share_es/${projectId}:`, err.message);
+        });
+      db.ref(`userLists/everyone/share_first/${projectId}`)
+        .remove()
+        .then(function () {})
+        .catch(function (err) {
+          console.log(`Error removing share_first/${projectId}:`, err.message);
+        });
     } catch (e) {
       console.log("/userLists/$uid/mine/$projectId");
       console.log(e);
@@ -431,22 +502,42 @@ function init() {
   //     console.log(snapshot)
   // })
   db.ref("/userLists/$authorId/mine").on("child_removed", (snapshot) => {
-    // console.log("remove!!!!!!!!!!!")
+    // 초기화 중에는 기존 데이터 처리 스킵
+    if (!initializationComplete) {
+      return;
+    }
     const vars = snapshot.val();
     console.log(vars.projectId);
     db.ref(`/definitions/${vars.projectId}`).remove();
   });
 
-  db.ref("/userLists/$authorId/mine").on("child_added", (snapshot) => {
-    // console.log("remove!!!!!!!!!!!")
-    const vars = snapshot.val();
-    console.log(vars.projectId);
-    db.ref(`/definitions/${vars.projectId}/information`).update(vars);
-  });
+  // child_added 리스너는 초기화 완료 후에만 등록하여 기존 데이터 로드 방지
+  // 초기화 완료 후 리스너 등록 (지연 등록)
+  setTimeout(() => {
+    db.ref("/userLists/$authorId/mine").on("child_added", (snapshot) => {
+      // 초기화 완료 후에만 처리 (추가 안전장치)
+      if (!initializationComplete) {
+        return;
+      }
+      const vars = snapshot.val();
+      if (!vars || !vars.projectId) {
+        return;
+      }
+      console.log(vars.projectId);
+      db.ref(`/definitions/${vars.projectId}/information`).update(vars);
+    });
+  }, INITIALIZATION_DURATION);
+  
   // input Mine Lists when make Modeling
-  db.ref("/definitions/{projectId}/information").on(
-    "child_added",
-    (snapshot, context) => {
+  // child_added 리스너는 초기화 완료 후에만 등록하여 기존 데이터 로드 방지
+  setTimeout(() => {
+    db.ref("/definitions/{projectId}/information").on(
+      "child_added",
+      (snapshot, context) => {
+        // 초기화 완료 후에만 처리 (추가 안전장치)
+        if (!initializationComplete) {
+          return;
+        }
       console.log("***********");
       console.log(snapshot);
       console.log(context);
@@ -482,8 +573,11 @@ function init() {
 
       return;
     }
-  );
-
+    );
+  }, INITIALIZATION_DURATION);
+  
+  console.log("All database listeners registered successfully (child_added listeners will be active after initialization)");
+  
   // db.ref('/definitions/$projectId/versionLists/$version').on('child_added', (snapshot, context) => {
   //     console.log(snapshot)
   //     console.log(context)
@@ -618,18 +712,58 @@ function init() {
 // }
 
 app.get("/api/definitions/:definition", async function (req, res, next) {
-  const snapshot = await db.ref(`definitions/${req.params.definition}`).get();
-  if (snapshot.exists()) {
-    const tmp = snapshot.val();
-    const lastVersion = tmp.information.lastVersionName;
-    console.log(tmp.versionLists[lastVersion].versionValue);
-    const lastValue = JSON.parse(tmp.versionLists[lastVersion].versionValue);
-    console.log(lastVersion);
+  if (!db || !serverInitialized) {
+    res.status(503).json({ error: "Database not ready" });
+    return;
+  }
+  
+  // 초기화 중에는 요청을 대기 (최대 15초)
+  const maxWaitTime = 15000;
+  const startTime = Date.now();
+  while (!serverInitialized && (Date.now() - startTime) < maxWaitTime) {
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+  
+  if (!serverInitialized) {
+    res.status(503).json({ error: "Database initialization timeout" });
+    return;
+  }
+  
+  try {
+    // 전체 definition을 읽지 말고, 필요한 경로만 읽기 (성능 최적화 및 lock 타임아웃 방지)
+    // information과 versionLists만 읽으면 됨
+    const definitionPath = `definitions/${req.params.definition}`;
+    
+    // information만 먼저 읽기
+    const infoSnapshot = await db.ref(`${definitionPath}/information`).get();
+    if (!infoSnapshot.exists()) {
+      res.status(404).json({ error: "Definition not found" });
+      return;
+    }
+    
+    const information = infoSnapshot.val();
+    const lastVersion = information.lastVersionName;
+    
+    if (!lastVersion) {
+      res.status(404).json({ error: "Last version not found" });
+      return;
+    }
+    
+    // versionLists의 특정 버전만 읽기 (전체 versionLists를 읽지 않음)
+    const versionSnapshot = await db.ref(`${definitionPath}/versionLists/${lastVersion}/versionValue`).get();
+    if (!versionSnapshot.exists()) {
+      res.status(404).json({ error: "Version value not found" });
+      return;
+    }
+    
+    const versionValue = versionSnapshot.val();
+    const lastValue = JSON.parse(versionValue.value);
+    
     const result = await bpmParser(req.params.definition, lastValue);
     res.status(200).json(result);
-    console.log(JSON.stringify(result));
-  } else {
-    res.status(500);
+  } catch (error) {
+    console.error("Error in /api/definitions/:definition:", error);
+    res.status(500).json({ error: error.message || "Internal server error" });
   }
 });
 
