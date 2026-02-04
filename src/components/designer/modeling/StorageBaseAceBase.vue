@@ -294,9 +294,21 @@
                 if( snapshots && metadata ){
                     return me.forwardChildren(snapshots)
                 }else{
-                    return Array.isArray(snapshots) && snapshots.length > 0
-                        ? me.forwardChildren(snapshots)
-                        : (Object.keys(snapshots).length > 0 ? snapshots.val() : null )
+                    // snapshot 객체인 경우 (reflect로 최적화된 경우)
+                    if (snapshots && typeof snapshots.val === 'function') {
+                        const val = snapshots.val();
+                        return val && Object.keys(val).length > 0 ? val : null;
+                    }
+                    // 배열인 경우
+                    if (Array.isArray(snapshots) && snapshots.length > 0) {
+                        return me.forwardChildren(snapshots);
+                    }
+                    // 기존 방식 (snapshot 객체)
+                    if (snapshots && snapshots.val) {
+                        const val = snapshots.val();
+                        return val && Object.keys(val).length > 0 ? val : null;
+                    }
+                    return null;
                 }
             },
             isValidatePath(path){

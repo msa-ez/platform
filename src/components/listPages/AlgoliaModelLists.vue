@@ -979,12 +979,12 @@
                         icon: 'mdi-plus-circle'
                     },
                     //학습하기
-                    { 
-                        key: 'learn', 
-                        label: 'mainNav.learn', 
-                        action: this.nationLearnNavDialog,
-                        icon: 'mdi-school'
-                    },
+                    // { 
+                    //     key: 'learn', 
+                    //     label: 'mainNav.learn', 
+                    //     action: this.nationLearnNavDialog,
+                    //     icon: 'mdi-school'
+                    // },
                     //사용기업
                     // { key: 'company', label: 'mainNav.company', action: () => this.wikiOpen('company') },
                     //가격정책
