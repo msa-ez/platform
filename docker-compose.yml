@@ -61,7 +61,6 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     environment:
-      # Google AI API Key (필수, Gemini 모델 사용)
       GOOGLE_API_KEY: your-google-api-key-here
       OPENAI_API_KEY: your-open-api-key-here
       # AI 모델 설정
