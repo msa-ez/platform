@@ -65,11 +65,11 @@ services:
       GOOGLE_API_KEY: your-google-api-key-here
       OPENAI_API_KEY: your-open-api-key-here
       # AI 모델 설정
-      AI_MODEL: google_genai:gemini-flash-latest:thinking
-      AI_MODEL_MAX_INPUT_LIMIT: 983040
+      AI_MODEL: openai:gpt-4.1-2025-04-14
+      AI_MODEL_MAX_INPUT_LIMIT: 523788
       AI_MODEL_MAX_BATCH_SIZE: 15
-      AI_MODEL_LIGHT: google_genai:gemini-flash-latest:thinking
-      AI_MODEL_LIGHT_MAX_INPUT_LIMIT: 983040
+      AI_MODEL_LIGHT: openai:gpt-4.1-mini-2025-04-14
+      AI_MODEL_LIGHT_MAX_INPUT_LIMIT: 523788
       AI_MODEL_LIGHT_MAX_BATCH_SIZE: 30
       # AceBase 설정
       ACEBASE_HOST: host.docker.internal  # 호스트의 AceBase 접근 (extra_hosts 필요, VM 환경: VM IP로 변경 가능)
