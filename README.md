@@ -1030,8 +1030,8 @@ cd platform
 # VM 환경인 경우, 먼저 docker-compose.yml의 환경 변수를 VM IP로 변경
 # (위의 "docker-compose.yml 설정" 섹션 참조)
 
-# MSAez와 Gitea 실행
-docker compose up -d msaez gitea
+# MSAez와 Gitea, Backend Generator, Backend ES Generator 모두 실행
+docker compose up -d
 ```
 
 **Docker로 AceBase 사용 시:**
