@@ -23,7 +23,7 @@ services:
       VUE_APP_GITEA_TOKEN: "b1b75cd28593e93d38d73d0fa6eaf943e4aa4510" # Gitea Personal Access Token (optional, if not set, will use localStorage gitToken)
       VUE_APP_BACKEND_URL: http://localhost:2025 # Backend URL (VM 환경: VM IP로 변경 필요, 예: http://34.64.202.245:2025)
   backend-generators:
-    image: ghcr.io/uengineysw/msaez-automate-project-generator:v1.0.0  # Backend Generators Docker Image (태그는 실제 버전으로 변경)
+    image: ghcr.io/msa-ez/msaez-automate-project-generator:v1.0.0  # Backend Generators Docker Image (태그는 실제 버전으로 변경)
     container_name: backend-generators
     networks:
       - msaez
@@ -52,7 +52,7 @@ services:
       POD_ID: docker-pod
     restart: unless-stopped
   backend-es-generators:
-    image: ghcr.io/shinseongjin2/msaez-automate-eventstorming-generator:v1.0.0  # Backend ES Generators Docker Image (태그는 실제 버전으로 변경)
+    image: ghcr.io/msa-ez/msaez-automate-eventstorming-generator:v1.0.0  # Backend ES Generators Docker Image (태그는 실제 버전으로 변경)
     container_name: backend-es-generators
     networks:
       - msaez

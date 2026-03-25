@@ -885,7 +885,7 @@ services:
       VUE_APP_GITEA_TOKEN: "your-gitea-personal-access-token"
   
   backend-generators:
-    image: ghcr.io/uengineysw/msaez-automate-project-generator:v1.0.0
+    image: ghcr.io/msa-ez/msaez-automate-project-generator:v1.0.0
     container_name: backend-generators
     networks:
       - msaez
@@ -912,7 +912,7 @@ services:
     restart: unless-stopped
   
   backend-es-generators:
-    image: ghcr.io/shinseongjin2/msaez-automate-eventstorming-generator:v1.0.0
+    image: ghcr.io/msa-ez/msaez-automate-eventstorming-generator:v1.0.0
     container_name: backend-es-generators
     networks:
       - msaez
@@ -1165,7 +1165,7 @@ nano docker-compose.yml
 
 ```yaml
 backend-generators:
-  image: ghcr.io/uengineYSW/msaez-automate-project-generator:v1.0.0
+  image: ghcr.io/msa-ez/msaez-automate-project-generator:v1.0.0
   environment:
     # ⚠️ 필수: OpenAI API Key
     OPENAI_API_KEY: "your-openai-api-key-here"  # 실제 API 키로 변경
@@ -1249,7 +1249,7 @@ nano docker-compose.yml
 
 ```yaml
 backend-es-generators:
-  image: ghcr.io/ShinSeongJin2/msaez-automate-eventstorming-generator:v1.0.0
+  image: ghcr.io/msa-ez/msaez-automate-eventstorming-generator:v1.0.0
   environment:
     # ⚠️ 필수: Google AI API Key (Gemini 모델 사용)
     GOOGLE_API_KEY: "your-google-api-key-here"  # 실제 API 키로 변경
