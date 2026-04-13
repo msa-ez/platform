@@ -32,8 +32,28 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     environment:
-      # OpenAI API Key (필수)
-      OPENAI_API_KEY: your-openai-api-key-here
+      # ──────────────────────────────────────────────────────────────
+      # LLM API Key 설정 (OpenAI SDK 표준 환경변수로 통일)
+      # ──────────────────────────────────────────────────────────────
+      # [기본: OpenAI 직접 호출]
+      #   - OPENAI_API_KEY 만 설정하면 api.openai.com으로 호출됩니다.
+      #   - OPENAI_BASE_URL 은 비워두거나 미설정.
+      #
+      # [P-GPT(POSCO 사내 LLM 게이트웨이) 사용 시]
+      #   - OPENAI_BASE_URL 에 P-GPT 엔드포인트를 지정하면
+      #     Chat/Responses/Models 호출이 P-GPT로 라우팅됩니다. (OpenAI 호환)
+      #   - OPENAI_API_KEY 에 P-GPT에서 발급받은 API Key를 입력합니다.
+      #   - P-GPT는 임베딩(Embedding)을 지원하지 않으므로,
+      #     OPENAI_EMBEDDING_API_KEY 에 "실제 OpenAI API Key"를 반드시 별도 설정해야 합니다.
+      #     (project backend에서 표준 변환 시 임베딩을 사용)
+      #   - P-GPT 엔드포인트:
+      #       개발계: http://taigpt.posco.net/gpgpta01-gpt/v1
+      #       운영계: http://aigpt.posco.net/gpgpta01-gpt/v1
+      # ──────────────────────────────────────────────────────────────
+      OPENAI_API_KEY: your-openai-api-key-here              # OpenAI 직접 사용 시: OpenAI Key / P-GPT 사용 시: P-GPT Key
+      # OPENAI_BASE_URL: http://aigpt.posco.net/gpgpta01-gpt/v1   # P-GPT 사용 시 주석 해제
+      OPENAI_EMBEDDING_API_KEY: your-openai-api-key-here    # 임베딩용 실제 OpenAI Key (P-GPT 사용 시 필수)
+      # OPENAI_EMBEDDING_BASE_URL: https://...              # (선택) 별도 임베딩 엔드포인트 사용 시
       # AceBase 설정
       ACEBASE_HOST: host.docker.internal  # 호스트의 AceBase 접근 (extra_hosts 필요, VM 환경: VM IP로 변경 가능)
       ACEBASE_PORT: 5757
@@ -61,9 +81,27 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     environment:
+      # ──────────────────────────────────────────────────────────────
+      # LLM API Key 설정 (OpenAI SDK 표준 환경변수로 통일)
+      # ──────────────────────────────────────────────────────────────
+      # [기본: OpenAI / Google AI 직접 호출]
+      #   - OPENAI_API_KEY, GOOGLE_API_KEY 중 사용하는 모델에 맞춰 설정.
+      #   - OPENAI_BASE_URL 은 비워두거나 미설정.
+      #
+      # [P-GPT(POSCO 사내 LLM 게이트웨이) 사용 시]
+      #   - OPENAI_BASE_URL 에 P-GPT 엔드포인트를 지정하면
+      #     Chat/Responses/Models 호출이 P-GPT로 라우팅됩니다. (OpenAI 호환)
+      #   - OPENAI_API_KEY 에 P-GPT에서 발급받은 API Key를 입력합니다.
+      #   - P-GPT 엔드포인트:
+      #       개발계: http://taigpt.posco.net/gpgpta01-gpt/v1
+      #       운영계: http://aigpt.posco.net/gpgpta01-gpt/v1
+      #   - AI_MODEL / AI_MODEL_LIGHT 는 P-GPT에서 제공하는 모델명으로 변경 필요
+      #     (예: openai:gpt-4o, openai:gpt-4o-mini → /v1/models 로 확인)
+      # ──────────────────────────────────────────────────────────────
       GOOGLE_API_KEY: your-google-api-key-here
-      OPENAI_API_KEY: your-open-api-key-here
-      # AI 모델 설정
+      OPENAI_API_KEY: your-open-api-key-here                # OpenAI 직접 사용 시: OpenAI Key / P-GPT 사용 시: P-GPT Key
+      # OPENAI_BASE_URL: http://aigpt.posco.net/gpgpta01-gpt/v1   # P-GPT 사용 시 주석 해제
+      # AI 모델 설정 (P-GPT 사용 시 P-GPT가 제공하는 모델명으로 변경)
       AI_MODEL: openai:gpt-4.1-2025-04-14
       AI_MODEL_MAX_INPUT_LIMIT: 523788
       AI_MODEL_MAX_BATCH_SIZE: 15
