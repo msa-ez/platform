@@ -337,7 +337,7 @@ class Gitea extends Git {
     
                                     let gitSha = await me.client.get(ele.url, { headers: me.getHeader() });
                                     if (!gitTemplateContents[elePath]) gitTemplateContents[elePath] = null;
-                                    gitTemplateContents[elePath] = atob(gitSha.data.content);
+                                    gitTemplateContents[elePath] = decodeURIComponent(escape(atob(gitSha.data.content)));
                                 }
                             } catch (e) {
                                 console.log(`Error] Set ToppingLists: ${e}`);
@@ -376,7 +376,7 @@ class Gitea extends Git {
     
                                     let gitSha = await me.client.get(ele.url, { headers: me.getHeader() });
                                     if (!gitTemplateContents[ele.path]) gitTemplateContents[ele.path] = null;
-                                    gitTemplateContents[ele.path] = atob(gitSha.data.content);
+                                    gitTemplateContents[ele.path] = decodeURIComponent(escape(atob(gitSha.data.content)));
                                 }
                             } catch (e) {
                                 console.log(`Error] Set GitLists: ${e}`);
