@@ -213,12 +213,12 @@
                             <v-btn v-on="on" class="code-preview-btn"
                                     icon fab
                                     :disabled="!hasAggregateElements"
-                                    @click="exportAggregatesJson()"
+                                    @click="exportAggregatesWord()"
                             >
                                 <v-icon size="22">mdi-file-export</v-icon>
                             </v-btn>
                         </template>
-                        <span>Export Aggregates JSON</span>
+                        <span>Export Aggregates Word</span>
                     </v-tooltip>
 
                     <v-tooltip bottom v-if="editableTemplate">
@@ -1503,6 +1503,7 @@
     import GitActionDialog from './GitActionDialog'
 
     import json2yaml from 'json2yaml'
+    import { Document, Packer, Paragraph, HeadingLevel, TextRun, Table, TableRow, TableCell, WidthType } from 'docx';
 
     const axios = require('axios');
     const prettier = require("prettier");
@@ -4239,7 +4240,7 @@ jobs:
 
                 return code;
             },
-            exportAggregatesJson(){
+            exportAggregatesWord(){
                 const me = this;
 
                 if(!me.value || !me.value.elements){
@@ -4270,27 +4271,142 @@ jobs:
                 const filteredProjectName = me.core && me.core.filterProjectName
                     ? me.core.filterProjectName(me.projectName)
                     : (me.projectName || 'eventstorming');
-                const fileName = `${filteredProjectName || 'eventstorming'}-aggregates.json`;
+                const fileName = `${filteredProjectName || 'eventstorming'}-aggregates.docx`;
 
                 try{
-                    const jsonString = JSON.stringify(aggregates, null, 2);
-                    const blob = new Blob([jsonString], { type: 'application/json;charset=utf-8' });
-                    saveAs(blob, fileName);
-                    me._showGitSnackBar({
-                        text: 'Aggregates JSON exported.',
-                        color: 'success',
-                        icon: 'check_circle',
-                        title: 'Success',
+                    const doc = new Document({
+                        sections: [{
+                            properties: {},
+                            children: me._buildAggregatesDocxChildren(aggregates, filteredProjectName),
+                        }],
+                    });
+
+                    Packer.toBlob(doc).then(blob => {
+                        saveAs(blob, fileName);
+                        me._showGitSnackBar({
+                            text: 'Aggregates Word exported.',
+                            color: 'success',
+                            icon: 'check_circle',
+                            title: 'Success',
+                        });
+                    }).catch(error => {
+                        console.error('Export aggregates Word error: ', error);
+                        me._showGitSnackBar({
+                            text: 'Failed to export aggregates Word.',
+                            color: 'error',
+                            icon: 'alert',
+                            title: 'Error',
+                        });
                     });
                 }catch(error){
-                    console.error('Export aggregates JSON error: ', error);
+                    console.error('Export aggregates Word error: ', error);
                     me._showGitSnackBar({
-                        text: 'Failed to export aggregates JSON.',
+                        text: 'Failed to export aggregates Word.',
                         color: 'error',
                         icon: 'alert',
                         title: 'Error',
                     });
                 }
+            },
+            _buildAggregatesDocxChildren(aggregates, projectName){
+                const children = [];
+                const title = `${projectName || 'Eventstorming'} - Aggregates`;
+
+                children.push(new Paragraph({
+                    text: title,
+                    heading: HeadingLevel.TITLE,
+                }));
+
+                aggregates.forEach((agg, idx) => {
+                    children.push(new Paragraph({
+                        text: `${idx + 1}. ${agg.name || agg.displayName || 'Aggregate'}`,
+                        heading: HeadingLevel.HEADING_1,
+                    }));
+
+                    const metaRows = [
+                        ['id', agg.id],
+                        ['name', agg.name],
+                        ['displayName', agg.displayName],
+                        ['namePlural', agg.namePlural],
+                        ['namePascalCase', agg.namePascalCase],
+                        ['nameCamelCase', agg.nameCamelCase],
+                        ['boundedContextId', agg.boundedContextId],
+                        ['boundedContextName', agg.boundedContextName],
+                    ].filter(([, v]) => v !== undefined && v !== null && v !== '');
+
+                    if(metaRows.length){
+                        children.push(this._buildDocxKeyValueTable(metaRows));
+                        children.push(new Paragraph({ text: '' }));
+                    }
+
+                    const rootFields = agg.aggregateRoot && agg.aggregateRoot.fieldDescriptors;
+                    if(Array.isArray(rootFields) && rootFields.length){
+                        children.push(new Paragraph({
+                            text: 'Aggregate Root - Field Descriptors',
+                            heading: HeadingLevel.HEADING_2,
+                        }));
+                        children.push(this._buildDocxFieldsTable(rootFields));
+                        children.push(new Paragraph({ text: '' }));
+                    }
+
+                    const rootEntities = agg.aggregateRoot && agg.aggregateRoot.entities;
+                    if(Array.isArray(rootEntities) && rootEntities.length){
+                        children.push(new Paragraph({
+                            text: 'Entities',
+                            heading: HeadingLevel.HEADING_2,
+                        }));
+                        rootEntities.forEach(entity => {
+                            children.push(new Paragraph({
+                                text: entity.name || entity.displayName || 'Entity',
+                                heading: HeadingLevel.HEADING_3,
+                            }));
+                            if(Array.isArray(entity.fieldDescriptors) && entity.fieldDescriptors.length){
+                                children.push(this._buildDocxFieldsTable(entity.fieldDescriptors));
+                                children.push(new Paragraph({ text: '' }));
+                            }
+                        });
+                    }
+                });
+
+                return children;
+            },
+            _buildDocxKeyValueTable(rows){
+                return new Table({
+                    width: { size: 100, type: WidthType.PERCENTAGE },
+                    rows: rows.map(([k, v]) => new TableRow({
+                        children: [
+                            new TableCell({
+                                width: { size: 30, type: WidthType.PERCENTAGE },
+                                children: [new Paragraph({ children: [new TextRun({ text: String(k), bold: true })] })],
+                            }),
+                            new TableCell({
+                                width: { size: 70, type: WidthType.PERCENTAGE },
+                                children: [new Paragraph({ text: String(v) })],
+                            }),
+                        ],
+                    })),
+                });
+            },
+            _buildDocxFieldsTable(fields){
+                const columns = ['name', 'className', 'isKey', 'isNullable', 'isUnique', 'defaultValue', 'description'];
+                const headerRow = new TableRow({
+                    children: columns.map(col => new TableCell({
+                        children: [new Paragraph({ children: [new TextRun({ text: col, bold: true })] })],
+                    })),
+                });
+                const bodyRows = fields.map(field => new TableRow({
+                    children: columns.map(col => {
+                        const raw = field[col];
+                        const text = (raw === undefined || raw === null) ? '' : String(raw);
+                        return new TableCell({
+                            children: [new Paragraph({ text })],
+                        });
+                    }),
+                }));
+                return new Table({
+                    width: { size: 100, type: WidthType.PERCENTAGE },
+                    rows: [headerRow, ...bodyRows],
+                });
             },
             _buildAggregatePayload(aggregate){
                 if(!aggregate){
