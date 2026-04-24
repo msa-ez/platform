@@ -53,6 +53,7 @@ services:
       OPENAI_API_KEY: your-openai-api-key-here              # OpenAI 직접 사용 시: OpenAI Key / P-GPT 사용 시: P-GPT Key
       # OPENAI_BASE_URL: http://aigpt.posco.net/gpgpta01-gpt/v1   # P-GPT 사용 시 주석 해제
       OPENAI_EMBEDDING_API_KEY: your-openai-api-key-here    # 임베딩용 실제 OpenAI Key (P-GPT 사용 시 필수)
+      DEFAULT_LLM_MODEL: gpt-4o
       # OPENAI_EMBEDDING_BASE_URL: https://...              # (선택) 별도 임베딩 엔드포인트 사용 시
       # AceBase 설정
       ACEBASE_HOST: host.docker.internal  # 호스트의 AceBase 접근 (extra_hosts 필요, VM 환경: VM IP로 변경 가능)
