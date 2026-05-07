@@ -238,7 +238,6 @@ export default {
                 const pdfPromises = Array.from(pdfItems).map(async (container, index) => {
                     // 이미지가 완전히 로드될 때까지 대기
                     const images = container.getElementsByTagName('img');
-                    const svgs = container.getElementsByTagName('svg');
                     const loadPromises = [
                         ...Array.from(images).map(img => new Promise(resolve => {
                             if (img.complete) resolve();
@@ -247,7 +246,22 @@ export default {
                                 img.onerror = resolve;
                             }
                         })),
-                        ...Array.from(svgs).map(svg => new Promise(resolve => setTimeout(resolve, 100)))
+                        // mermaid 같은 비동기 렌더 다이어그램이 실제로 그려질 때까지 대기.
+                        // 기존 100ms 고정 대기는 mermaid 렌더 완료 전에 캡처가 시작되어
+                        // 빈/깨진 PNG 가 만들어지고 jsPDF.addImage 가 null 참조로 실패하던 원인.
+                        new Promise(resolve => {
+                            const start = Date.now();
+                            const check = () => {
+                                const mermaids = container.querySelectorAll('.mermaid');
+                                const ready = mermaids.length === 0 || Array.from(mermaids).every(d => {
+                                    const svg = d.querySelector('svg');
+                                    return svg && svg.getBoundingClientRect().width > 0;
+                                });
+                                if (ready || Date.now() - start > 5000) resolve();
+                                else setTimeout(check, 100);
+                            };
+                            check();
+                        })
                     ];
                     await Promise.all(loadPromises);
 
