@@ -16,6 +16,54 @@ export class DataBasedDocumentExporterBase {
         this.imageCache = {}; // 캡쳐된 이미지 캐시
     }
 
+    async wait(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    async waitForImageReady(img, timeoutMs = 8000) {
+        if (!img) return;
+        if (img.complete && img.naturalWidth > 0) return;
+
+        await new Promise(resolve => {
+            let resolved = false;
+            const done = () => {
+                if (resolved) return;
+                resolved = true;
+                img.removeEventListener('load', onLoadOrError);
+                img.removeEventListener('error', onLoadOrError);
+                clearTimeout(timer);
+                resolve();
+            };
+            const onLoadOrError = () => done();
+            const timer = setTimeout(done, timeoutMs);
+            img.addEventListener('load', onLoadOrError, { once: true });
+            img.addEventListener('error', onLoadOrError, { once: true });
+        });
+    }
+
+    async waitForContainerReady(timeoutMs = 12000) {
+        if (!this.container) return;
+
+        const start = Date.now();
+        while (Date.now() - start < timeoutMs) {
+            const images = Array.from(this.container.querySelectorAll('img'));
+            await Promise.all(images.map(img => this.waitForImageReady(img, 1500)));
+
+            const hasUnreadyImage = images.some(img => !img.complete || img.naturalWidth === 0);
+            const svgs = Array.from(this.container.querySelectorAll('.mermaid svg, .mermaid-container svg, svg'));
+            const hasUnreadySvg = svgs.some(svg => {
+                const rect = svg.getBoundingClientRect();
+                return rect.width === 0 || rect.height === 0;
+            });
+
+            if (!hasUnreadyImage && !hasUnreadySvg) {
+                return;
+            }
+
+            await this.wait(250);
+        }
+    }
+
     /**
      * 섹션 번호 계산
      */
@@ -229,7 +277,7 @@ export class DataBasedDocumentExporterBase {
         if (!this.container) return null;
         
         try {
-            await new Promise(resolve => setTimeout(resolve, 800));
+            await this.waitForContainerReady();
             
             let mermaidElements = this.container.querySelectorAll(componentName);
             let svg = null;
@@ -321,7 +369,7 @@ export class DataBasedDocumentExporterBase {
         if (!this.container) return null;
         
         try {
-            await new Promise(resolve => setTimeout(resolve, 800));
+            await this.waitForContainerReady();
             
             // Word와 동일하게 .matrix-container 선택자 사용
             let matrixElement = this.container.querySelector('.matrix-container');
@@ -382,7 +430,7 @@ export class DataBasedDocumentExporterBase {
         if (!this.container) return null;
         
         try {
-            await new Promise(resolve => setTimeout(resolve, 800));
+            await this.waitForContainerReady();
             
             let mermaidElements = this.container.querySelectorAll('vue-mermaid-string');
             let svg = null;
