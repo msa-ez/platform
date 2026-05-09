@@ -48,7 +48,7 @@
                             </v-list-item-icon>
                             <v-list-item-title>Export as Word</v-list-item-title>
                         </v-list-item>
-                        <v-list-item @click="exportToPPT">
+                        <v-list-item v-if="showPptExport" @click="exportToPPT">
                             <v-list-item-icon>
                                 <v-icon>mdi-file-powerpoint-box</v-icon>
                             </v-list-item-icon>
@@ -150,7 +150,8 @@ export default {
                 color: 'success',
                 timeout: 3000
             },
-            eventStormingModels: {}
+            eventStormingModels: {},
+            showPptExport: false
         }
     },
     mounted(){
@@ -227,6 +228,52 @@ export default {
                 text,
                 color,
                 timeout: 3000
+            }
+        },
+
+        waitForImageElement(img, timeoutMs = 8000) {
+            return new Promise(resolve => {
+                if (!img) return resolve();
+                if (img.complete && img.naturalWidth > 0) return resolve();
+
+                let resolved = false;
+                const done = () => {
+                    if (resolved) return;
+                    resolved = true;
+                    img.removeEventListener('load', onLoadOrError);
+                    img.removeEventListener('error', onLoadOrError);
+                    clearTimeout(timer);
+                    resolve();
+                };
+                const onLoadOrError = () => done();
+
+                const timer = setTimeout(done, timeoutMs);
+                img.addEventListener('load', onLoadOrError, { once: true });
+                img.addEventListener('error', onLoadOrError, { once: true });
+            });
+        },
+
+        async waitForPreviewReady(timeoutMs = 12000) {
+            await this.$nextTick();
+            const container = this.$refs.documentTemplate && this.$refs.documentTemplate.$el;
+            if (!container) return;
+
+            const start = Date.now();
+            while (Date.now() - start < timeoutMs) {
+                const images = Array.from(container.querySelectorAll('img'));
+                await Promise.all(images.map(img => this.waitForImageElement(img, 1500)));
+
+                const hasUnreadyImage = images.some(img => !img.complete || img.naturalWidth === 0);
+                const mermaidSvgs = Array.from(container.querySelectorAll('.mermaid svg, .mermaid-container svg'));
+                const matrixElement = container.querySelector('.matrix-container');
+                const mermaidReady = mermaidSvgs.every(svg => svg.getBoundingClientRect().width > 0 && svg.getBoundingClientRect().height > 0);
+                const matrixReady = !matrixElement || matrixElement.getBoundingClientRect().width > 0;
+
+                if (!hasUnreadyImage && mermaidReady && matrixReady) {
+                    return;
+                }
+
+                await new Promise(resolve => setTimeout(resolve, 250));
             }
         },
 
@@ -345,9 +392,7 @@ export default {
             this.exportStatus = 'Word 문서 생성 중...';
             
             try {
-                // 모든 요소가 렌더링될 때까지 대기
-                await this.$nextTick();
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                await this.waitForPreviewReady();
                 
                 // 데이터 기반 변환 방식 사용
                 const container = this.$refs.documentTemplate.$el;
@@ -388,9 +433,7 @@ export default {
             this.exportStatus = 'PowerPoint 문서 생성 중...';
             
             try {
-                // 모든 요소가 렌더링될 때까지 대기
-                await this.$nextTick();
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                await this.waitForPreviewReady();
                 
                 // 데이터 기반 변환 방식 사용
                 const container = this.$refs.documentTemplate.$el;
