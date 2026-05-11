@@ -5688,7 +5688,7 @@ jobs:
                                 let preferredTemplate = preferredTemplateLists[index];
                                 preferredTemplate = preferredTemplate.trim()
                                 if(preferredTemplate == 'Custom Template'){
-                                    preferredTemplate = "https://github.com/msa-ez/template-spring-boot"
+                                    preferredTemplate = await me.gitAPI.getTemplateURL('template-posco')
                                 }
                                 if(preferredTemplate && !preferredTemplate.includes("http")){
                                     preferredTemplate = "https://github.com/msa-ez/template-" + preferredTemplate
@@ -6592,6 +6592,14 @@ jobs:
                     //me.codeStatus = true;
 
                     // Root Folder Setting preferredPlatform
+                    var defaultBcTemplateUrl = 'https://github.com/msa-ez/template-posco'
+                    if (window.PROVIDER === 'gitea') {
+                        var giteaBase = (window.GIT_URL || 'http://localhost:3000').replace(/\/$/, '')
+                        var giteaOrg = localStorage.getItem('gitOrgName') || localStorage.getItem('gitUserName')
+                        if (giteaOrg) {
+                            defaultBcTemplateUrl = giteaBase + '/' + giteaOrg + '/template-posco'
+                        }
+                    }
                     treeLists.forEach(function (treeList ,index){
                         let bcId = treeList.bcId && me.value.elements[treeList.bcId] ? me.value.elements[treeList.bcId] : treeList.bcId
                         var bcObj = bcId ? JSON.parse(JSON.stringify(bcId)) : null
@@ -6611,7 +6619,7 @@ jobs:
                             treeList.preferredPlatform = treeList.template
                         } else if(bcObj){
                             // template (main)
-                            bcObj.preferredPlatform = bcObj.preferredPlatform && bcObj.preferredPlatform.includes("http") ? bcObj.preferredPlatform : 'https://github.com/msa-ez/template-spring-boot'
+                            bcObj.preferredPlatform = bcObj.preferredPlatform && bcObj.preferredPlatform.includes("http") ? bcObj.preferredPlatform : defaultBcTemplateUrl
                             treeList.preferredPlatform = bcObj.preferredPlatform
                         }
                     })
@@ -8072,7 +8080,7 @@ jobs:
                         for(let idx in preferredPlatforms) {
                             let preferredPlatform = preferredPlatforms[idx];
                             if(preferredPlatform == "Custom Template"){
-                                preferredPlatform = "spring-boot"
+                                preferredPlatform = "posco"
                             }
                             if((localStorage.getItem("loginType") && localStorage.getItem("loginType") == "github") || me.gitAccessToken) {
                                 if(!preferredPlatform.includes("http")){
