@@ -113,6 +113,7 @@ import * as htmlToImage from 'html-to-image'
 import StorageBase from "../../CommonStorageBase";
 import { DataBasedWordExporter } from './utils/DataBasedWordExporter';
 import { DataBasedPPTExporter } from './utils/DataBasedPPTExporter';
+import { normalizeDefinitionInformation } from './utils/resolveEventStormingModelTitle';
 
 
 export default {
@@ -182,8 +183,8 @@ export default {
                         modelData.models = JSON.parse(snapshots[0].snapshot);
                     }
                     
-                    if(information){
-                        modelData.information = information;
+                    if (information) {
+                        modelData.information = normalizeDefinitionInformation(information) || information;
                     }
 
                     this.$set(this.eventStormingModels, modelId, modelData);

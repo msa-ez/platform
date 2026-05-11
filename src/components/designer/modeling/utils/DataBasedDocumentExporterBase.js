@@ -4,6 +4,7 @@
  */
 
 import * as htmlToImage from 'html-to-image';
+import { resolveEventStormingModelTitle } from './resolveEventStormingModelTitle';
 
 export class DataBasedDocumentExporterBase {
     constructor(projectInfo, draft, eventStormingModels, selectedSections, container = null) {
@@ -220,8 +221,9 @@ export class DataBasedDocumentExporterBase {
                     };
                 });
 
+            const projectFallback = this.projectInfo && (this.projectInfo.prompt || this.projectInfo.projectName);
             return {
-                modelName: model.information.projectName,
+                modelName: resolveEventStormingModelTitle(model.information, model.models, projectFallback),
                 BoundedContexts: boundedContexts
             };
         }).filter(Boolean);

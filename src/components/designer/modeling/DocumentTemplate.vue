@@ -588,6 +588,7 @@ import VueMermaidString from 'vue-mermaid-string';
 import BoundedContextMatrix from '@/components/designer/modeling/generators/BoundedContextMatrix.vue';
 import BpmnUengineViewer from '@/components/designer/bpmnModeling/bpmn/BpmnUengineViewer.vue';
 import EventStormingModelCanvas from '@/components/designer/es-modeling/EventStormingModelCanvas.vue';
+import { resolveEventStormingModelTitle } from '@/components/designer/modeling/utils/resolveEventStormingModelTitle';
 
 export default {
     name: 'DocumentTemplate',
@@ -972,8 +973,9 @@ export default {
                     });
 
                 // 6. 결과 반환
+                const projectFallback = this.projectInfo && (this.projectInfo.prompt || this.projectInfo.projectName);
                 return {
-                    modelName: model.information.projectName,
+                    modelName: resolveEventStormingModelTitle(model.information, model.models, projectFallback),
                     BoundedContexts: boundedContexts
                 };
             }).filter(Boolean); // null 값 제거
