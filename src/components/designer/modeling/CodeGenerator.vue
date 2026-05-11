@@ -2016,6 +2016,10 @@
                 return false;
             },
             basePlatform(){
+                if (window.PROVIDER === 'gitea') {
+                    const url = this.getGiteaTemplatePoscoBaseUrl()
+                    if (url) return url
+                }
                 if(this.value && this.value.basePlatform){
                     return this.value.basePlatform
                 }
@@ -4007,16 +4011,45 @@ jobs:
                 var me = this
                 me.originMustacheTemplate[0].code = code
             },
+            /** 내부망 Gitea: 저장소는 template-posco만 사용 */
+            getGiteaTemplatePoscoBaseUrl() {
+                if (window.PROVIDER !== 'gitea') return null
+                const baseUrl = (window.GIT_URL || 'http://localhost:3000').replace(/\/$/, '')
+                const orgName = localStorage.getItem('gitOrgName') || localStorage.getItem('gitUserName')
+                if (orgName) return `${baseUrl}/${orgName}/template-posco`
+                return 'template-posco'
+            },
+            applyGiteaTemplatePoscoOnly(modelValue) {
+                var me = this
+                if (window.PROVIDER !== 'gitea' || !modelValue) return
+                const fixed = me.getGiteaTemplatePoscoBaseUrl()
+                if (!fixed) return
+                me.$set(modelValue, 'basePlatform', fixed)
+                if (!modelValue.elements) return
+                Object.values(modelValue.elements).forEach(function (el) {
+                    if (el && el._type && el._type.includes('BoundedContext')) {
+                        me.$set(el, 'preferredPlatform', fixed)
+                    }
+                })
+            },
             settingPlatform(division, platform, elementId){
                 var me = this
                 me.$emit('changedByMe', true)
                 if(division == 'BASE'){
-                    me.value.basePlatform = platform
+                    if (window.PROVIDER === 'gitea') {
+                        me.$set(me.value, 'basePlatform', me.getGiteaTemplatePoscoBaseUrl())
+                    } else {
+                        me.value.basePlatform = platform
+                    }
                 } else if( division == 'TOPPING'){
                     me.value.toppingPlatforms = platform
                 } else if( division == 'TEMPLATE'){
                     if(me.value && me.value.elements[elementId]){
-                        me.value.elements[elementId].preferredPlatform = platform;
+                        if (window.PROVIDER === 'gitea') {
+                            me.$set(me.value.elements[elementId], 'preferredPlatform', me.getGiteaTemplatePoscoBaseUrl())
+                        } else {
+                            me.value.elements[elementId].preferredPlatform = platform;
+                        }
                     }
                 }
             },
@@ -6289,7 +6322,13 @@ jobs:
                         async action(me){
                             // if( me.templateFrameWorkList[gitRepoUrl] && Object.keys(me.templateFrameWorkList[gitRepoUrl]).length > 0 ){
                             // }
-                            let templateUrl = gitRepoUrl ? gitRepoUrl : me.basePlatform
+                            // BC preferredPlatform(spring-boot 등) URL은 무시하고 베이스 템플릿만 로드 (Gitea template-posco 고정)
+                            let templateUrl = me.basePlatform
+                            if (!String(templateUrl || '').includes('http')) {
+                                if (!String(templateUrl || '').includes('template-'))
+                                    templateUrl = 'template-' + templateUrl
+                                templateUrl = await me.gitAPI.getTemplateURL(templateUrl)
+                            }
                             if(!me.$manifestsPerTemplate[templateUrl]){
                             me.$manifestsPerTemplate[templateUrl] = [];
                             }
@@ -7995,6 +8034,10 @@ jobs:
 
                 return new Promise( async(resolve, reject) => {
                     let value = values  ? values : me.value
+                    if (window.PROVIDER === 'gitea') {
+                        me.applyGiteaTemplatePoscoOnly(me.value)
+                        me.applyGiteaTemplatePoscoOnly(value)
+                    }
                     let originValue = JSON.parse(JSON.stringify(value));
 
                     // add pbc Element.
