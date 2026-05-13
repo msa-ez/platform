@@ -70,7 +70,7 @@
                         </template>
                         <span>{{ $t('CodeGenerator.fileExplorer') }}</span>
                     </v-tooltip>
-                    <div>
+                    <div v-if="false">
                         <v-menu
                             v-model="gitMenu"
                             :close-on-click="false"
