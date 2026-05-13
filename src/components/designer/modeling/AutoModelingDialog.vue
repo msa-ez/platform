@@ -703,7 +703,7 @@
             }
 
             me.watch(`db://definitions/${me.projectInfo.projectId}/information`, function (projectInfo) {
-                if (projectInfo.permissions) {
+                if (projectInfo && projectInfo.permissions) {
                     me.invitationLists = projectInfo.permissions
                     me.participantLists = projectInfo.permissions
                     me.requestCount = Object.keys(projectInfo.permissions).filter(key => key != 'evenyone' && projectInfo.permissions[key].request).length

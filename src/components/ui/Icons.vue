@@ -78,12 +78,19 @@ export default {
             }
         },
         async calculateHash(content) {
-            const encoder = new TextEncoder();
-            const data = encoder.encode(content);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-            return hashHex;
+            if (typeof crypto !== 'undefined' && crypto.subtle && typeof crypto.subtle.digest === 'function') {
+                const encoder = new TextEncoder();
+                const data = encoder.encode(content);
+                const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+                const hashArray = Array.from(new Uint8Array(hashBuffer));
+                return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            }
+            // crypto.subtle is unavailable in insecure (http) contexts — fall back to a simple djb2 hash
+            let h = 5381;
+            for (let i = 0; i < content.length; i++) {
+                h = ((h << 5) + h + content.charCodeAt(i)) | 0;
+            }
+            return (h >>> 0).toString(16);
         },
         shouldAddFill(svg) {
             return !svg.match(/fill="currentColor"/) && 

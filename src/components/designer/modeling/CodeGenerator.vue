@@ -4011,13 +4011,11 @@ jobs:
                 var me = this
                 me.originMustacheTemplate[0].code = code
             },
-            /** 내부망 Gitea: 저장소는 template-posco만 사용 */
+            /** 내부망 Gitea: 저장소는 posco/template-posco 고정 사용 */
             getGiteaTemplatePoscoBaseUrl() {
                 if (window.PROVIDER !== 'gitea') return null
                 const baseUrl = (window.GIT_URL || 'http://localhost:3000').replace(/\/$/, '')
-                const orgName = localStorage.getItem('gitOrgName') || localStorage.getItem('gitUserName')
-                if (orgName) return `${baseUrl}/${orgName}/template-posco`
-                return 'template-posco'
+                return `${baseUrl}/posco/template-posco`
             },
             applyGiteaTemplatePoscoOnly(modelValue) {
                 var me = this
@@ -6655,10 +6653,7 @@ jobs:
                     var defaultBcTemplateUrl = 'https://github.com/msa-ez/template-posco'
                     if (window.PROVIDER === 'gitea') {
                         var giteaBase = (window.GIT_URL || 'http://localhost:3000').replace(/\/$/, '')
-                        var giteaOrg = localStorage.getItem('gitOrgName') || localStorage.getItem('gitUserName')
-                        if (giteaOrg) {
-                            defaultBcTemplateUrl = giteaBase + '/' + giteaOrg + '/template-posco'
-                        }
+                        defaultBcTemplateUrl = giteaBase + '/posco/template-posco'
                     }
                     treeLists.forEach(function (treeList ,index){
                         let bcId = treeList.bcId && me.value.elements[treeList.bcId] ? me.value.elements[treeList.bcId] : treeList.bcId
