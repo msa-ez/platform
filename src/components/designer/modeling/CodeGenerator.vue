@@ -1668,7 +1668,7 @@
                 isComputeTreeListSwitch: false,
                 debuggerPoint: [],
                 // Template
-                defaultTemplate: 'template-poscodx',
+                defaultTemplate: 'template-posco',
                 tempToppingPlatforms: [] ,
                 tempConfiguration: null,
                 menuOpen:{
@@ -2629,7 +2629,7 @@
                 canvas: me.canvas,
                 projectName: this.projectName,
                 gitURLforModel: this.gitURLforModel,
-                defaultTemplate: 'template-poscodx'
+                defaultTemplate: 'template-posco'
             });
 
             // K8s Topping은 기본세팅
@@ -8063,7 +8063,7 @@ jobs:
                     //////////////////////////////////////////////// TEMPLATE START ////////////////////////////////////////////////
                     // setting Template
                     if(basePlatforms == "Custom Template"){
-                        basePlatforms = "template-poscodx"
+                        basePlatforms = "template-posco"
                     }
                     // setting of Base Template
                     if((localStorage.getItem("loginType") && localStorage.getItem("loginType") == "github") || me.gitAccessToken){
@@ -8092,7 +8092,7 @@ jobs:
                     if(preferredPlatforms.length > 0){
                         for(let idx in preferredPlatforms) {
                             // let preferredPlatform = preferredPlatforms[idx];
-                            let preferredPlatform = "template-poscodx";
+                            let preferredPlatform = "template-posco";
                             if(preferredPlatform == "Custom Template"){
                                 preferredPlatform = "spring-boot"
                             }
@@ -8309,7 +8309,7 @@ jobs:
                 return new Promise(async function (resolve, reject) {
                     try {
                         // var preferredPlatforms = platforms.preferredPlatforms
-                        var preferredPlatforms = ["template-poscodx"];
+                        var preferredPlatforms = ["template-posco"];
                         let basePlatform = platforms.basePlatform
                         let basePlatformConf = platforms.basePlatformConf
                         let toppingPlatforms = platforms.toppingPlatforms
