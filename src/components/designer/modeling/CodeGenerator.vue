@@ -213,12 +213,12 @@
                             <v-btn v-on="on" class="code-preview-btn"
                                     icon fab
                                     :disabled="!hasAggregateElements"
-                                    @click="exportAggregatesJson()"
+                                    @click="exportAggregatesWord()"
                             >
                                 <v-icon size="22">mdi-file-export</v-icon>
                             </v-btn>
                         </template>
-                        <span>Export Aggregates JSON</span>
+                        <span>Export Aggregates Word</span>
                     </v-tooltip>
 
                     <v-tooltip bottom v-if="editableTemplate">
@@ -1503,6 +1503,7 @@
     import GitActionDialog from './GitActionDialog'
 
     import json2yaml from 'json2yaml'
+    import { Document, Packer, Paragraph, TextRun } from 'docx';
 
     const axios = require('axios');
     const prettier = require("prettier");
@@ -4272,7 +4273,7 @@ jobs:
 
                 return code;
             },
-            exportAggregatesJson(){
+            exportAggregatesWord(){
                 const me = this;
 
                 if(!me.value || !me.value.elements){
@@ -4303,22 +4304,42 @@ jobs:
                 const filteredProjectName = me.core && me.core.filterProjectName
                     ? me.core.filterProjectName(me.projectName)
                     : (me.projectName || 'eventstorming');
-                const fileName = `${filteredProjectName || 'eventstorming'}-aggregates.json`;
+                const fileName = `${filteredProjectName || 'eventstorming'}-aggregates.docx`;
 
                 try{
                     const jsonString = JSON.stringify(aggregates, null, 2);
-                    const blob = new Blob([jsonString], { type: 'application/json;charset=utf-8' });
-                    saveAs(blob, fileName);
-                    me._showGitSnackBar({
-                        text: 'Aggregates JSON exported.',
-                        color: 'success',
-                        icon: 'check_circle',
-                        title: 'Success',
+                    const paragraphs = jsonString.split('\n').map(line => new Paragraph({
+                        children: [new TextRun({ text: line, font: 'Courier New' })],
+                    }));
+
+                    const doc = new Document({
+                        sections: [{
+                            properties: {},
+                            children: paragraphs,
+                        }],
+                    });
+
+                    Packer.toBlob(doc).then(blob => {
+                        saveAs(blob, fileName);
+                        me._showGitSnackBar({
+                            text: 'Aggregates Word exported.',
+                            color: 'success',
+                            icon: 'check_circle',
+                            title: 'Success',
+                        });
+                    }).catch(error => {
+                        console.error('Export aggregates Word error: ', error);
+                        me._showGitSnackBar({
+                            text: 'Failed to export aggregates Word.',
+                            color: 'error',
+                            icon: 'alert',
+                            title: 'Error',
+                        });
                     });
                 }catch(error){
-                    console.error('Export aggregates JSON error: ', error);
+                    console.error('Export aggregates Word error: ', error);
                     me._showGitSnackBar({
-                        text: 'Failed to export aggregates JSON.',
+                        text: 'Failed to export aggregates Word.',
                         color: 'error',
                         icon: 'alert',
                         title: 'Error',
