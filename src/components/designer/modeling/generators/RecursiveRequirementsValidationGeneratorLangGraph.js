@@ -336,6 +336,18 @@ class RecursiveRequirementsValidationGeneratorLangGraph {
 
     /**
      * 결과 누적
+     *
+     * ⚠️ 청크 1+ 분기는 immutable-style 로 새 최상위 참조를 만든다.
+     *    과거에는 `accumulatedResults.content.elements = {...}`, `events.push(...)` 처럼
+     *    in-place 변경만 해서 `accumulatedResults` 의 참조가 그대로였음. 그 결과 ESDialoger 의
+     *    `updateMessageState({content: accumulatedResults})` 가 같은 참조를 다시 박았고,
+     *    `RequirementAnalysis` 의 `analysisResult` 프롭 참조도 안 바뀌어 와처가 안 깨어남.
+     *    → 청크 0 만 그려지고 중간 청크가 화면에 반영 안 됐던 원인. 마지막 청크에서만
+     *    `processingRate=0` 등 다른 프롭 변화로 우연히 리렌더 트리거.
+     *
+     *    매번 fresh 최상위 + content/analysisResult 도 fresh 객체 + events/actors 도 fresh 배열을
+     *    만들어 Vue 프롭 비교에서 항상 "바뀐 것"으로 인식되게 한다.
+     *
      * @param {Object} result - 백엔드 content 객체 또는 _formatResult로 변환된 model
      */
     _accumulateResults(result) {
@@ -348,46 +360,53 @@ class RecursiveRequirementsValidationGeneratorLangGraph {
         if (result.analysisResult) {
             // 첫 번째 청크인 경우
             if (this.currentChunkIndex === 0) {
-                this.accumulatedResults = result;
-                this.accumulatedResults.currentGeneratedLength = this._getGeneratedLength(this.accumulatedResults.analysisResult);
+                this.accumulatedResults = {
+                    ...result,
+                    currentGeneratedLength: this._getGeneratedLength(result.analysisResult)
+                };
                 return;
             }
 
-            // 두 번째 이후 청크인 경우
-            // Elements 병합
-            this.accumulatedResults.content.elements = {
-                ...this.accumulatedResults.content.elements,
-                ...result.content.elements
+            // 두 번째 이후 청크: 새 참조로 재구성
+            const prev = this.accumulatedResults;
+            const prevAnalysis = prev.analysisResult || { events: [], actors: [] };
+            const incoming = result.analysisResult || { events: [], actors: [] };
+
+            const mergedEvents = [...(prevAnalysis.events || [])];
+            if (incoming.events && incoming.events.length > 0) {
+                const existing = new Set(mergedEvents.map(e => e.name));
+                for (const e of incoming.events) {
+                    if (!existing.has(e.name)) mergedEvents.push(e);
+                }
+            }
+
+            const mergedActors = [...(prevAnalysis.actors || [])];
+            if (incoming.actors && incoming.actors.length > 0) {
+                const existing = new Set(mergedActors.map(a => a.name));
+                for (const a of incoming.actors) {
+                    if (!existing.has(a.name)) mergedActors.push(a);
+                }
+            }
+
+            const mergedAnalysis = {
+                ...prevAnalysis,
+                events: mergedEvents,
+                actors: mergedActors,
+                recommendedBoundedContextsNumber:
+                    incoming.recommendedBoundedContextsNumber || prevAnalysis.recommendedBoundedContextsNumber,
+                reasonOfRecommendedBoundedContextsNumber:
+                    incoming.reasonOfRecommendedBoundedContextsNumber || prevAnalysis.reasonOfRecommendedBoundedContextsNumber
             };
 
-            // Relations 병합
-            this.accumulatedResults.content.relations = {
-                ...this.accumulatedResults.content.relations,
-                ...result.content.relations
+            this.accumulatedResults = {
+                ...prev,
+                content: {
+                    elements: { ...(prev.content && prev.content.elements), ...(result.content && result.content.elements) },
+                    relations: { ...(prev.content && prev.content.relations), ...(result.content && result.content.relations) }
+                },
+                analysisResult: mergedAnalysis,
+                currentGeneratedLength: this._getGeneratedLength(mergedAnalysis)
             };
-
-            // Events 병합 (중복 제거)
-            if (result.analysisResult.events && result.analysisResult.events.length > 0) {
-                const existingEventNames = new Set(this.accumulatedResults.analysisResult.events.map(e => e.name));
-                const newEvents = result.analysisResult.events.filter(e => !existingEventNames.has(e.name));
-                this.accumulatedResults.analysisResult.events.push(...newEvents);
-            }
-
-            // Actors 병합 (중복 제거)
-            if (result.analysisResult.actors && result.analysisResult.actors.length > 0) {
-                const existingActorNames = new Set(this.accumulatedResults.analysisResult.actors.map(a => a.name));
-                const newActors = result.analysisResult.actors.filter(a => !existingActorNames.has(a.name));
-                this.accumulatedResults.analysisResult.actors.push(...newActors);
-            }
-
-            // Bounded Context 정보 업데이트
-            if (result.analysisResult.recommendedBoundedContextsNumber) {
-                this.accumulatedResults.analysisResult.recommendedBoundedContextsNumber = result.analysisResult.recommendedBoundedContextsNumber;
-            }
-            if (result.analysisResult.reasonOfRecommendedBoundedContextsNumber) {
-                this.accumulatedResults.analysisResult.reasonOfRecommendedBoundedContextsNumber = result.analysisResult.reasonOfRecommendedBoundedContextsNumber;
-            }
-            this.accumulatedResults.currentGeneratedLength = this._getGeneratedLength(this.accumulatedResults.analysisResult);
             return;
         }
 
@@ -399,46 +418,50 @@ class RecursiveRequirementsValidationGeneratorLangGraph {
 
         // 첫 번째 청크인 경우
         if (this.currentChunkIndex === 0) {
-            const formattedResult = this._formatResult(result);
-            this.accumulatedResults = formattedResult;
-            this.accumulatedResults.currentGeneratedLength = this._getGeneratedLength(this.accumulatedResults.analysisResult);
+            const formatted = this._formatResult(result);
+            this.accumulatedResults = {
+                ...formatted,
+                currentGeneratedLength: this._getGeneratedLength(formatted.analysisResult)
+            };
             return;
         }
 
-        // 두 번째 이후 청크인 경우
-        // 새로운 요소를 기존 요소와 병합
-        const newElements = this._createIncrementalElements(result);
-        
-        // Elements 병합
-        this.accumulatedResults.content.elements = {
-            ...this.accumulatedResults.content.elements,
-            ...newElements.elements
+        // 두 번째 이후 청크: 새 참조로 재구성
+        const prev = this.accumulatedResults;
+        const prevAnalysis = prev.analysisResult || { events: [], actors: [] };
+        const incrementalElements = this._createIncrementalElements(result);
+
+        const mergedEvents = [...(prevAnalysis.events || [])];
+        const existingEventNames = new Set(mergedEvents.map(e => e.name));
+        for (const e of result.events) {
+            if (!existingEventNames.has(e.name)) mergedEvents.push(e);
+        }
+
+        const mergedActors = [...(prevAnalysis.actors || [])];
+        const existingActorNames = new Set(mergedActors.map(a => a.name));
+        for (const a of result.actors) {
+            if (!existingActorNames.has(a.name)) mergedActors.push(a);
+        }
+
+        const mergedAnalysis = {
+            ...prevAnalysis,
+            events: mergedEvents,
+            actors: mergedActors,
+            recommendedBoundedContextsNumber:
+                result.recommendedBoundedContextsNumber || prevAnalysis.recommendedBoundedContextsNumber,
+            reasonOfRecommendedBoundedContextsNumber:
+                result.reasonOfRecommendedBoundedContextsNumber || prevAnalysis.reasonOfRecommendedBoundedContextsNumber
         };
 
-        // Relations 병합
-        this.accumulatedResults.content.relations = {
-            ...this.accumulatedResults.content.relations,
-            ...newElements.relations
+        this.accumulatedResults = {
+            ...prev,
+            content: {
+                elements: { ...(prev.content && prev.content.elements), ...incrementalElements.elements },
+                relations: { ...(prev.content && prev.content.relations), ...incrementalElements.relations }
+            },
+            analysisResult: mergedAnalysis,
+            currentGeneratedLength: this._getGeneratedLength(mergedAnalysis)
         };
-
-        // Events 병합 (중복 제거)
-        const existingEventNames = new Set(this.accumulatedResults.analysisResult.events.map(e => e.name));
-        const newEvents = result.events.filter(e => !existingEventNames.has(e.name));
-        this.accumulatedResults.analysisResult.events.push(...newEvents);
-
-        // Actors 병합 (중복 제거)
-        const existingActorNames = new Set(this.accumulatedResults.analysisResult.actors.map(a => a.name));
-        const newActors = result.actors.filter(a => !existingActorNames.has(a.name));
-        this.accumulatedResults.analysisResult.actors.push(...newActors);
-
-        // Bounded Context 정보 업데이트
-        if (result.recommendedBoundedContextsNumber) {
-            this.accumulatedResults.analysisResult.recommendedBoundedContextsNumber = result.recommendedBoundedContextsNumber;
-        }
-        if (result.reasonOfRecommendedBoundedContextsNumber) {
-            this.accumulatedResults.analysisResult.reasonOfRecommendedBoundedContextsNumber = result.reasonOfRecommendedBoundedContextsNumber;
-        }
-        this.accumulatedResults.currentGeneratedLength = this._getGeneratedLength(this.accumulatedResults.analysisResult);
     }
 
     /**
