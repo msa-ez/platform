@@ -158,10 +158,19 @@ class SummarizerLangGraphProxy {
         });
 
         // 완료 상태 감시
+        // ⚠️ 반드시 parseState 를 직접 호출해야 함.
+        // 백엔드(main.process_summarizer_job)는 이벤트 순서 보장을 위해
+        //   1) set_data(outputs without isCompleted)  ← summarizedRequirements 등 본문 도착
+        //   2) sleep 0.1s
+        //   3) update_data({isCompleted: True})        ← isCompleted 만 따로 도착
+        // 순으로 쓴다. 따라서 _watchSummaries 의 parseState 가 호출되는 시점엔
+        // jobState.isCompleted 가 아직 false → onUpdate 분기만 타고 끝남.
+        // isCompleted watcher 가 parseState 를 안 부르면 onComplete 가 영영 fire 안 돼서
+        // 재귀 드라이버의 청크 Promise 가 hang → 프론트가 "진행중" 으로 영구 정지됨.
         storage.watch(`${this._getJobPath(jobId)}/state/outputs/isCompleted`, async (isCompleted) => {
             if (isCompleted) {
                 jobState.isCompleted = isCompleted;
-                // parseState는 _watchSummaries에서 호출됨
+                await parseState();
             }
         });
         
