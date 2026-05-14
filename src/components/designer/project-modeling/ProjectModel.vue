@@ -531,17 +531,28 @@
 
                 let validate = await me.validateStorageCondition(me.storageCondition, 'save');
                 if(validate) {
-                    me.information.projectId = me.storageCondition.projectId.replaceAll(' ', '-').trim();
+                    let providerUid = me.userInfo.providerUid || localStorage.getItem('providerUid')
+                    if(!providerUid){
+                        me.storageCondition.loading = false
+                        alert('User identity not loaded yet. Please re-login and try again.')
+                        return
+                    }
+                    let rawId = me.storageCondition.projectId.replaceAll(' ', '-').trim()
+                    let type = me.information.type || 'project'
+                    let fullProjectId = rawId.startsWith(`${providerUid}_${type}_`)
+                        ? rawId
+                        : `${providerUid}_${type}_${rawId}`
+                    me.information.projectId = fullProjectId;
                     me.information.projectName = me.storageCondition.projectName;
                     me.information.prompt = me.information.prompt ? me.information.prompt : me.information.projectName;
                     me.information.prompt = me.information.prompt ? me.information.prompt : me.information.projectId
 
                     try {
-                        await me.putObject(`db://definitions/${me.information.projectId}/information`, me.information);
-                        await me.putObject(`db://definitions/${me.information.projectId}/draft`, me.draft);
+                        await me.putObject(`db://definitions/${fullProjectId}/information`, me.information);
+                        await me.putObject(`db://definitions/${fullProjectId}/draft`, me.draft);
 
                         me.isServer = true;
-                        if( me.information.projectId != me.projectId ) me.$router.push({path: `/${me.information.type}/${me.information.projectId}`});
+                        if( fullProjectId != me.projectId ) me.$router.push({path: `/${providerUid}/${type}/${rawId}`});
                         me.forceUpdateKey()
                         me.closeStorageDialog()
                     } catch (error) {
@@ -626,13 +637,24 @@
             loadLocalProject() {
                 var me = this
 
+                // information.projectId가 AutoModelingDialog 자식들의 자동저장 경로
+                // (updateUserStory / updateInputDDL / updateProjectInfo)로 그대로 흘러 들어가므로
+                // 여기서 prefix를 미리 박아둬야 db://definitions/<bareUuid>/... 누락 노드가 안 생김.
+                // me.projectId 자체는 라우트 원본값을 유지(loadProject finally의 draft 읽기 path가
+                // 이미 ${providerUid}_project_${me.projectId} 로 prefix를 한 번 더 붙이기 때문).
+                let providerUid = me.userInfo.providerUid || localStorage.getItem('providerUid')
+                let fullProjectId = me.projectId
+                if(providerUid && fullProjectId && !fullProjectId.startsWith(`${providerUid}_project_`)) {
+                    fullProjectId = `${providerUid}_project_${fullProjectId}`
+                }
+
                 me.information = {
                     author: me.userInfo.uid,
                     authorEmail: me.userInfo.email,
                     comment: "",
                     createdTimeStamp: Date.now(),
                     lastModifiedTimeStamp: Date.now(),
-                    projectId: me.projectId,
+                    projectId: fullProjectId,
                     projectName: "",
                     type: 'project',
                     eventStorming: null,
