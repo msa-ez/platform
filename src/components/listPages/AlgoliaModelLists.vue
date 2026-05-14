@@ -1730,10 +1730,12 @@
                                     me.share = result.lists.filter(item => item.type)
                                 } else if(obj.id == 'public' && obj.show){
                                     if(window.MODE == 'bpm' || window.MODE == 'onprem') {
-                                        // let result = {}
-                                        // AceBase 최적화: definitions 전체를 getObject로 읽으면 (상세/draft 포함) Reading node 폭발 발생
-                                        // list를 사용하면 AceBase 쪽에서 definitions 목록을 information 위주로 제한할 수 있음
-                                        let data = await this.list("db://definitions")
+                                        // permissions.everyone이 설정된 항목만 트리거가 채워주는 인덱스에서 읽음
+                                        // (이전엔 db://definitions 전체를 무필터로 읽어 비공개 항목까지 Public에 노출됐음)
+                                        let publicPath = me.searchObj && me.searchObj.type && me.searchObj.type != 'all'
+                                            ? `db://userLists/everyone/share_${me.searchObj.type}`
+                                            : `db://userLists/everyone/share_first`
+                                        let data = await this.list(publicPath)
                                         result = await this.setListByAcebase(data)
                                         await Promise.all([result])
                                         result.lists.map((x,idx) =>{

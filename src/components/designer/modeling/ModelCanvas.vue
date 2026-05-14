@@ -1599,8 +1599,9 @@
                 if(action == 'fork') convertProjectId = item.projectId ? item.projectId : me.dbuid();                
                 convertProjectId = convertProjectId.replaceAll(' ','-');
                 if(action == 'save' || action == 'fork'){
-                    if(me.userInfo.providerUid && (action == 'fork' || action == 'save')){
-                        convertProjectId = `${me.userInfo.providerUid}_${me.canvasType}_${convertProjectId}`
+                    let providerUidForValidate = me.userInfo.providerUid || localStorage.getItem('providerUid')
+                    if(providerUidForValidate){
+                        convertProjectId = `${providerUidForValidate}_${me.canvasType}_${convertProjectId}`
                     }
                 }
                
@@ -1751,9 +1752,15 @@
                         let associatedProject = me.storageCondition.associatedProject
                         me.projectName = me.storageCondition.projectName
 
-                        if(me.userInfo.providerUid){
-                            settingProjectId = `${me.userInfo.providerUid}_${me.canvasType}_${settingProjectId}`
+                        // userInfo가 hydrate 되기 전 race를 막기 위해 localStorage fallback 사용
+                        let providerUid = me.userInfo.providerUid || localStorage.getItem('providerUid')
+                        if(!providerUid){
+                            me.$EventBus.$emit('progressValue', false);
+                            if(me.storageCondition) me.storageCondition.loading = false
+                            alert('User identity not loaded yet. Please re-login and try again.')
+                            return
                         }
+                        settingProjectId = `${providerUid}_${me.canvasType}_${settingProjectId}`
  
                         if(me.value.scm.org && me.value.scm.repo){
                             me.value.scm.tag = me.storageCondition.version;
@@ -1869,13 +1876,13 @@
                         if (me.isClazzModeling) {
                             me.updateClassModelingId(settingProjectId);
                         } else {
-                            let path = me.userInfo.providerUid ? `/${me.userInfo.providerUid}/${location}/${me.storageCondition.projectId.replaceAll(' ','-').trim()}` : `/${location}/${me.storageCondition.projectId.replaceAll(' ','-').trim()}`
+                            let path = `/${providerUid}/${location}/${me.storageCondition.projectId.replaceAll(' ','-').trim()}`
                             me.$router.push({path: path});
 
                             setTimeout(() => {
                                 me.$emit('forceUpdateKey');
                             }, 500);
-                        
+
                             // me.$emit('forceUpdateKey');
                         }
 
@@ -1933,10 +1940,15 @@
                             var originProjectId =  me.projectId
                             var settingProjectId = me.storageCondition.projectId.replaceAll(' ','-').trim();
                             if( !me.storageCondition.projectId ) me.storageCondition.projectId = me.dbuid();
-                        
-                            if(me.userInfo.providerUid){
-                                settingProjectId = `${me.userInfo.providerUid}_${me.canvasType}_${settingProjectId}`
+
+                            // userInfo가 hydrate 되기 전 race를 막기 위해 localStorage fallback 사용
+                            var providerUid = me.userInfo.providerUid || localStorage.getItem('providerUid')
+                            if(!providerUid){
+                                me.$EventBus.$emit('progressValue', false);
+                                alert('User identity not loaded yet. Please re-login and try again.')
+                                return
                             }
+                            settingProjectId = `${providerUid}_${me.canvasType}_${settingProjectId}`
 
                             var projectVersion = me.storageCondition.version.replaceAll('.','-').trim();
                             var copyValue = JSON.parse(JSON.stringify(me.value));
@@ -2024,7 +2036,7 @@
                                             location = me.canvasType
                                         }
 
-                                        let path = me.userInfo.providerUid ? `/${me.userInfo.providerUid}/${location}/${me.storageCondition.projectId.replaceAll(' ','-').trim()}` : `/${location}/${me.storageCondition.projectId.replaceAll(' ','-').trim()}`
+                                        let path = `/${providerUid}/${location}/${me.storageCondition.projectId.replaceAll(' ','-').trim()}`
                                         me.$router.push({path: path});
                                         setTimeout(() => {
                                             me.$emit('forceUpdateKey');
