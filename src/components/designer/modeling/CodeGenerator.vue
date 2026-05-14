@@ -1611,6 +1611,9 @@
                 rootModelBoundedContexts: null,
 
                 showLoginCard: false,
+                // 코드 생성 중 401이 연달아 나도 alert는 1회만 띄움.
+                // (Vue 2는 _ prefix 데이터를 인스턴스에 프록시하지 않으니 일반 이름 사용)
+                reloginNotified: false,
                 selectedFile: null,
                 selectedFileList: [],
                 codeContent: '',
@@ -1861,6 +1864,10 @@
             }
         },
         watch: {
+            showLoginCard(val) {
+                // 로그인 카드 닫히면 (재로그인 완료/취소 모두) 다음 401 다시 알릴 수 있도록 reset.
+                if (!val) this.reloginNotified = false
+            },
             "editTemplateTabNumber":_.debounce(function (val) {
                 this.editModeResultViewerRenderKey++;
             }, 500),
@@ -2661,15 +2668,22 @@
         },
         beforeDestroy: function () {
             window.removeEventListener("message", this.messageProcessing);
+            if (this.on401Handler) {
+                window.removeEventListener('gitea-401', this.on401Handler);
+                this.on401Handler = null;
+            }
             this.closeCodeViewer()
             if (this.searchContentTimeout) {
                 clearTimeout(this.searchContentTimeout);
             }
             this.isSearching = false;
         },
-        mounted: async function () { 
+        mounted: async function () {
 
             var me = this
+            // Gitea axios interceptor가 dispatch하는 401 이벤트를 받아 단일 alert 발화.
+            me.on401Handler = () => me.alertReLogin()
+            window.addEventListener('gitea-401', me.on401Handler)
 
 //             const apiUrl = 'https://api.tavily.com/search';
 //             const query = `test.java 파일을 mvn test 진행중에 
@@ -3341,6 +3355,9 @@ jobs:
                 }
             },
             alertReLogin(){
+                // 코드 생성 중 다수 blob/tree 호출이 동시에 401 떨어질 수 있어서 1회만 발화.
+                if (this.reloginNotified) return
+                this.reloginNotified = true
                 alert(this.$t('alertMessage.sessionExpired'));
                 this.showLoginCard = true
             },
