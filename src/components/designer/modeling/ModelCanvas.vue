@@ -1877,7 +1877,11 @@
                             me.updateClassModelingId(settingProjectId);
                         } else {
                             let path = `/${providerUid}/${location}/${me.storageCondition.projectId.replaceAll(' ','-').trim()}`
-                            me.$router.push({path: path});
+                            if (me.$route.path !== path) {
+                                me.$router.push({path: path}).catch((err) => {
+                                    if (err && err.name !== 'NavigationDuplicated') throw err
+                                })
+                            }
 
                             setTimeout(() => {
                                 me.$emit('forceUpdateKey');
@@ -2037,7 +2041,11 @@
                                         }
 
                                         let path = `/${providerUid}/${location}/${me.storageCondition.projectId.replaceAll(' ','-').trim()}`
-                                        me.$router.push({path: path});
+                                        if (me.$route.path !== path) {
+                                            me.$router.push({path: path}).catch((err) => {
+                                                if (err && err.name !== 'NavigationDuplicated') throw err
+                                            })
+                                        }
                                         setTimeout(() => {
                                             me.$emit('forceUpdateKey');
                                         }, 500);

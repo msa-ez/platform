@@ -721,10 +721,13 @@
 
             "projectInfo.prompt": _.debounce(function() {
                 localStorage.setItem('noLoginPrompt', this.projectInfo.prompt);
-                
+
                 // textarea 높이 조정
                 this.$nextTick(() => {
-                    const textarea = this.$refs.textarea.$el.querySelector('textarea');
+                    // chat UI가 닫혀 있거나 다이얼로그가 destroy 중이면 $refs.textarea가 비어있을 수 있음
+                    const ref = this.$refs.textarea
+                    if (!ref || !ref.$el) return
+                    const textarea = ref.$el.querySelector('textarea');
                     if (textarea) {
                         textarea.style.height = 'auto';
                         textarea.style.height = textarea.scrollHeight + 'px';
@@ -942,7 +945,12 @@
                     me.isServer = true;
 
                     let path = `/${providerUid}/${me.storageCondition.type}/${originSetProjectId}`
-                    me.$router.push({path: path});
+                    // 이미 같은 경로면 vue-router 3가 NavigationDuplicated를 throw — 무시.
+                    if (me.$route.path !== path) {
+                        me.$router.push({path: path}).catch((err) => {
+                            if (err && err.name !== 'NavigationDuplicated') throw err
+                        })
+                    }
 
                     setTimeout(function () {
                         me.$emit('forceUpdateKey')
