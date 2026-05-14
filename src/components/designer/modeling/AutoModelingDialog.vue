@@ -917,9 +917,14 @@
                 if(validate) {
                     var settingProjectId = me.storageCondition.projectId.replaceAll(' ', '-').trim();
                     let originSetProjectId = JSON.parse(JSON.stringify(settingProjectId))
-                    if(me.userInfo.providerUid){
-                        settingProjectId = `${me.userInfo.providerUid}_${me.storageCondition.type}_${settingProjectId}`
+                    // userInfo가 hydrate 되기 전 race를 막기 위해 localStorage fallback 사용
+                    let providerUid = me.userInfo.providerUid || localStorage.getItem('providerUid')
+                    if(!providerUid){
+                        me.storageCondition.loading = false
+                        alert('User identity not loaded yet. Please re-login and try again.')
+                        return
                     }
+                    settingProjectId = `${providerUid}_${me.storageCondition.type}_${settingProjectId}`
 
                     me.projectInfo.author = me.userInfo.uid
                     me.projectInfo.authorEmail = me.userInfo.email
@@ -936,7 +941,7 @@
                     me.autoSavedDraft = structuredClone(me.draft)
                     me.isServer = true;
 
-                    let path = `/${me.userInfo.providerUid}/${me.storageCondition.type}/${originSetProjectId}`
+                    let path = `/${providerUid}/${me.storageCondition.type}/${originSetProjectId}`
                     me.$router.push({path: path});
 
                     setTimeout(function () {

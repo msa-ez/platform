@@ -1730,8 +1730,12 @@
                                     me.share = result.lists.filter(item => item.type)
                                 } else if(obj.id == 'public' && obj.show){
                                     if(window.MODE == 'bpm' || window.MODE == 'onprem') {
-                                        // let result = {}
-                                        let data = await this.getObject("db://definitions")
+                                        // permissions.everyone이 설정된 항목만 트리거가 채워주는 인덱스에서 읽음
+                                        // (이전엔 db://definitions 전체를 무필터로 읽어 비공개 항목까지 Public에 노출됐음)
+                                        let publicPath = me.searchObj && me.searchObj.type && me.searchObj.type != 'all'
+                                            ? `db://userLists/everyone/share_${me.searchObj.type}`
+                                            : `db://userLists/everyone/share_first`
+                                        let data = await this.list(publicPath)
                                         result = await this.setListByAcebase(data)
                                         await Promise.all([result])
                                         result.lists.map((x,idx) =>{
