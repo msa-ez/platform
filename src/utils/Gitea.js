@@ -7,6 +7,21 @@ class Gitea extends Git {
         this.client = axios.create({
             baseURL: this.getBaseUrl()
         });
+        // 401 시 window 이벤트만 띄움 — 실제 alert는 CodeGenerator 쪽에서 single-flight로 처리.
+        // (코드 생성은 blob/tree를 수십~수백 번 호출하므로 매번 alert 띄우면 폭주함)
+        this.client.interceptors.response.use(
+            (response) => response,
+            (error) => {
+                if (error && error.response && error.response.status === 401 && typeof window !== 'undefined') {
+                    try {
+                        window.dispatchEvent(new CustomEvent('gitea-401'));
+                    } catch (e) {
+                        // CustomEvent 미지원 환경 대비 — 무시
+                    }
+                }
+                return Promise.reject(error);
+            }
+        );
     }
 
     gitRepoUrl(org, repo, tag) {
