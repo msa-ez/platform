@@ -374,7 +374,12 @@
         },
         methods: {
             close(){
-                this.$router.push('/')
+                // 이미 '/'에서 close가 호출되면 NavigationDuplicated가 throw — 무시.
+                if (this.$route.path !== '/') {
+                    this.$router.push('/').catch((err) => {
+                        if (err && err.name !== 'NavigationDuplicated') throw err
+                    })
+                }
             },
             saveStorageDialog(){
                 if(this.storageCondition.type == 'project'){

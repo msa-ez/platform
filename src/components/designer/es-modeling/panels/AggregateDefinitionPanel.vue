@@ -371,28 +371,42 @@
             getTranslate(newVal){
                 try{
                     return new Promise(async function (resolve) {
+                        // detect/translate가 실패(403/네트워크/키 누락)하면 callback에 err가 들어옴.
+                        // 기존엔 err 분기에서 resolve가 안 불려 Promise가 영구 pending → 호출자(await) hang.
+                        // 실패는 fallback(원본 텍스트 pascalCase)으로 처리하고 항상 resolve.
+                        const fallback = {
+                            usedTranslate: false,
+                            translateText: changeCase.pascalCase(newVal)
+                        }
                         googleTranslate.detectLanguage(newVal, function (err, detection) {
-                            if(detection){
-                                if (detection.language != 'en') {
-                                    googleTranslate.translate(newVal, 'en', function (err, translation) {
-                                        var obj={
-                                            'usedTranslate' : true,
-                                            'translateText' : changeCase.pascalCase(translation.translatedText)
-                                        }
-                                        resolve(obj)
-                                    });
-                                } else if (detection.language == 'en') {
-                                    var obj={
-                                        'usedTranslate' : true,
-                                        'translateText' : changeCase.pascalCase(newVal)
+                            if (err || !detection) {
+                                resolve(fallback)
+                                return
+                            }
+                            if (detection.language != 'en') {
+                                googleTranslate.translate(newVal, 'en', function (err, translation) {
+                                    if (err || !translation || !translation.translatedText) {
+                                        resolve(fallback)
+                                        return
                                     }
-                                    resolve(obj)
-                                }
+                                    resolve({
+                                        usedTranslate: true,
+                                        translateText: changeCase.pascalCase(translation.translatedText)
+                                    })
+                                });
+                            } else {
+                                resolve({
+                                    usedTranslate: true,
+                                    translateText: changeCase.pascalCase(newVal)
+                                })
                             }
                         });
                     })
                 }catch (e) {
-                    return undefined;
+                    return Promise.resolve({
+                        usedTranslate: false,
+                        translateText: changeCase.pascalCase(newVal)
+                    });
                 }
             },
             onReceived(content){
