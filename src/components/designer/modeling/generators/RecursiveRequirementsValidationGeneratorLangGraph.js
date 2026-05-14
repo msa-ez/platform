@@ -5,6 +5,7 @@
  * 재귀적 청크 처리 (요구사항 길 때)
  */
 const RequirementsValidatorLangGraphProxy = require('./proxies/RequirementsValidatorLangGraphProxy/RequirementsValidatorLangGraphProxy');
+const RequirementsFlowStitcherLangGraphProxy = require('./proxies/RequirementsFlowStitcherLangGraphProxy/RequirementsFlowStitcherLangGraphProxy');
 const TextChunker = require('./TextChunker');
 
 class RecursiveRequirementsValidationGeneratorLangGraph {
@@ -63,6 +64,8 @@ class RecursiveRequirementsValidationGeneratorLangGraph {
         // 청크로 분할
         this.currentChunks = this.textChunker.splitIntoChunksByLine(requirementsText);
         this.currentChunkIndex = 0;
+        // 모든 청크 처리 후 stitcher 에 넘길 글로벌 컨텍스트
+        this.originalRequirementsText = requirementsText;
         this.accumulatedResults = {
             type: "ANALYSIS_RESULT",
             projectName: "Requirements Analysis",
@@ -150,12 +153,114 @@ class RecursiveRequirementsValidationGeneratorLangGraph {
             }
         } else {
             // 모든 청크 처리 완료
-            console.log(`[RecursiveRequirementsValidationGeneratorLangGraph] ✅ 완료 - 총 ${this.accumulatedResults.analysisResult.events.length}개 이벤트, ${this.accumulatedResults.analysisResult.actors.length}개 액터`);
-            
+            console.log(`[RecursiveRequirementsValidationGeneratorLangGraph] ✅ 청크 처리 완료 - 총 ${this.accumulatedResults.analysisResult.events.length}개 이벤트, ${this.accumulatedResults.analysisResult.actors.length}개 액터`);
+
+            // 청크가 1개뿐이면 stitching 안 함 (이미 글로벌 컨텍스트로 LLM 이 봤음)
+            if (this.currentChunks.length <= 1) {
+                if (this.resolveCurrentProcess) {
+                    this.resolveCurrentProcess(this.accumulatedResults);
+                }
+                return;
+            }
+
+            // 청크가 여러 개였으면 nextEvents 흐름 보강을 위해 stitcher 호출.
+            try {
+                await this._runFlowStitching();
+            } catch (e) {
+                console.error('[RecursiveRequirementsValidationGeneratorLangGraph] Flow stitching failed, returning unstitched results:', e);
+            }
+
             if (this.resolveCurrentProcess) {
                 this.resolveCurrentProcess(this.accumulatedResults);
             }
         }
+    }
+
+    /**
+     * 청크 처리 후 nextEvents/level 보강.
+     * EventFlowStitcher 백엔드 잡을 한 번 호출하고, 결과로 누적 events 의
+     * nextEvents/level 만 덮어씀. 시각화에 필요한 다른 필드는 그대로 둠.
+     *
+     * 실패해도 throw 하지 않고 원본 결과 유지 — 흐름이 빈 채로라도 사용자가 결과는 봐야 함.
+     */
+    async _runFlowStitching() {
+        const events = (this.accumulatedResults.analysisResult && this.accumulatedResults.analysisResult.events) || [];
+        const actors = (this.accumulatedResults.analysisResult && this.accumulatedResults.analysisResult.actors) || [];
+
+        if (!events.length) {
+            console.log('[RecursiveRequirementsValidationGeneratorLangGraph] No events to stitch');
+            return;
+        }
+
+        const jobId = RequirementsFlowStitcherLangGraphProxy.generateJobId();
+        console.log(`[RecursiveRequirementsValidationGeneratorLangGraph] 🧵 Flow stitching 시작 (${events.length}개 events, ${actors.length}개 actors): ${jobId}`);
+
+        await RequirementsFlowStitcherLangGraphProxy.makeNewJob(
+            jobId,
+            events,
+            actors,
+            this.originalRequirementsText || ''
+        );
+
+        const stitchedEvents = await new Promise((resolve, reject) => {
+            let settled = false;
+            // 안전망: stitcher 가 timeout(180s) 안에 끝나야 하지만, 통신 실패 가능성 대비 추가 타임아웃.
+            const timeoutId = setTimeout(() => {
+                if (settled) return;
+                settled = true;
+                reject(new Error('Flow stitching timed out (240s)'));
+            }, 240000);
+
+            RequirementsFlowStitcherLangGraphProxy.watchJob(
+                jobId,
+                async (eventsResult /*, error */) => {
+                    if (settled) return;
+                    settled = true;
+                    clearTimeout(timeoutId);
+                    resolve(eventsResult || []);
+                },
+                async (errMsg) => {
+                    if (settled) return;
+                    settled = true;
+                    clearTimeout(timeoutId);
+                    reject(new Error(errMsg || 'Flow stitching failed'));
+                }
+            );
+        });
+
+        if (!Array.isArray(stitchedEvents) || stitchedEvents.length === 0) {
+            console.warn('[RecursiveRequirementsValidationGeneratorLangGraph] Stitching returned empty result, keeping original events');
+            return;
+        }
+
+        // stitched 결과를 name 기준으로 인덱싱한 뒤 누적 events 에 nextEvents/level 만 머지.
+        // visual 위치 정보(content.elements) 는 그대로 유지.
+        const byName = new Map();
+        for (const e of stitchedEvents) {
+            if (e && e.name) byName.set(e.name, e);
+        }
+
+        const mergedEvents = events.map(orig => {
+            const upd = byName.get(orig.name);
+            if (!upd) return orig;
+            return {
+                ...orig,
+                nextEvents: Array.isArray(upd.nextEvents) ? upd.nextEvents : (orig.nextEvents || []),
+                level: typeof upd.level === 'number' ? upd.level : orig.level
+            };
+        });
+
+        // accumulatedResults 도 새 참조로 교체 (Vue 반응성 보장 — 이전 패치와 같은 이유).
+        this.accumulatedResults = {
+            ...this.accumulatedResults,
+            analysisResult: {
+                ...this.accumulatedResults.analysisResult,
+                events: mergedEvents
+            }
+        };
+
+        const withFlow = mergedEvents.filter(e => Array.isArray(e.nextEvents) && e.nextEvents.length > 0).length;
+        console.log(`[RecursiveRequirementsValidationGeneratorLangGraph] 🧵 Flow stitching 완료: ${withFlow}/${mergedEvents.length}개 이벤트가 nextEvents 보유`);
     }
 
     /**
