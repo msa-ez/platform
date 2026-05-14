@@ -140,12 +140,21 @@ class SummarizerLangGraphProxy {
         storage.watch(`${this._getJobPath(jobId)}/state/outputs/isFailed`, async (isFailed) => {
             if (isFailed === null || isFailed === undefined) return;
             if (!isFailed) return;
-            
+
             jobState.isFailed = isFailed;
-            await parseState();
-            
+            // ⚠️ parseState 내부에서 onUpdate 가 null 인 경우(재귀 iter 2+) 호출 시 TypeError 가 났는데,
+            // 그 throw 가 아래의 onFailed 호출까지 막아 청크 Promise 가 영구 hang 됐었음.
+            // onFailed 는 무조건 실행되어야 함.
+            try {
+                await parseState();
+            } catch (e) {
+                console.warn('[SummarizerLangGraphProxy] parseState threw during isFailed handling:', e);
+            }
+
             const errorMsg = jobState.error || "Unknown error occurred";
-            await onFailed(errorMsg);
+            if (typeof onFailed === 'function') {
+                await onFailed(errorMsg);
+            }
         });
 
         // 완료 상태 감시
@@ -226,19 +235,28 @@ class SummarizerLangGraphProxy {
 
         if (state.isCompleted) {
             console.log('[SummarizerLangGraphProxy] _parseAndNotifyJobState onComplete 호출:', state.summarizedRequirements.length);
-            await callbacks.onComplete(
-                state.summarizedRequirements,
-                state.logs,
-                state.progress,
-                state.isFailed
-            );
+            if (typeof callbacks.onComplete === 'function') {
+                await callbacks.onComplete(
+                    state.summarizedRequirements,
+                    state.logs,
+                    state.progress,
+                    state.isFailed
+                );
+            }
+        } else if (state.isFailed) {
+            // isFailed=true && isCompleted=false 인 상태로 호출돼도 onUpdate 를 부르지 않는다.
+            // 실제 실패 통지는 _watchJobStatus 의 isFailed watcher 가 onFailed 로 처리함.
+            // (재귀 드라이버는 iter 2+ 청크에서 onUpdate=null 을 넘기므로 여기서 부르면 TypeError 남.)
+            console.log('[SummarizerLangGraphProxy] _parseAndNotifyJobState isFailed 분기 — onUpdate 스킵');
         } else {
             console.log('[SummarizerLangGraphProxy] _parseAndNotifyJobState onUpdate 호출:', state.summarizedRequirements.length);
-            await callbacks.onUpdate(
-                state.summarizedRequirements,
-                state.logs,
-                state.progress
-            );
+            if (typeof callbacks.onUpdate === 'function') {
+                await callbacks.onUpdate(
+                    state.summarizedRequirements,
+                    state.logs,
+                    state.progress
+                );
+            }
         }
     }
 

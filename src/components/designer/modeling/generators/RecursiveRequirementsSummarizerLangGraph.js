@@ -15,14 +15,19 @@ class RecursiveRequirementsSummarizerLangGraph extends RequirementsSummarizer {
             spareSize: 2000
         });
         this.maxIterations = 3;
-        
+        // 청크 병렬 처리 동시성. P-GPT 게이트웨이 부하 고려해 3 으로 시작.
+        // 너무 키우면 429/연결 거부, 너무 낮으면 직렬과 다를 게 없음.
+        this.chunkConcurrency = 3;
+        // 이번 iteration 에서 텍스트가 거의 안 줄었으면(95% 이상 잔존) 더 돌려도 의미 없으니 중단.
+        this.noProgressRatio = 0.95;
+
         // 상태 관리
         this.currentChunks = [];
         this.summarizedChunks = [];
         this.currentChunkIndex = 0;
         this.iterations = 0;
         this.originalRequirements = '';
-        
+
         // Job 관리
         this.jobId = null;
         this.currentJobPromise = null;
@@ -58,12 +63,12 @@ class RecursiveRequirementsSummarizerLangGraph extends RequirementsSummarizer {
 
         this.originalRequirements = text;
         this.iterations = 0;
-        
+
         while (this._getCurrentTextLength(structuredResult) > this.textChunker.chunkSize && this.iterations < this.maxIterations) {
             this.iterations++;
             const currentLength = this._getCurrentTextLength(structuredResult);
             console.log(`[SummarizerLangGraph] Iteration ${this.iterations} - Before: ${currentLength} 자`);
-            
+
             if (this.iterations === 1) {
                 // 첫 번째 요약: 원본을 청크로 나눠서 Backend 처리
                 structuredResult = await this._processFirstIteration(structuredResult);
@@ -71,18 +76,24 @@ class RecursiveRequirementsSummarizerLangGraph extends RequirementsSummarizer {
                 // 후속 요약: 구조화된 데이터를 다시 청킹
                 structuredResult = await this._processSubsequentIteration(structuredResult);
             }
-            
+
             const newLength = this._getCurrentTextLength(structuredResult);
             console.log(`[SummarizerLangGraph] Iteration ${this.iterations} - After: ${newLength} 자`);
-        }
-        
-        // 최종 요약이 필요한 경우
-        if (this.iterations === 0 || this._getCurrentTextLength(structuredResult) > this.textChunker.chunkSize) {
-            if (this.iterations === 0) {
-                structuredResult = await this._processFirstIteration(structuredResult);
-            } else {
-                structuredResult = await this._processFinalSummary(structuredResult);
+
+            // no-progress 가드: 이번 패스에서 거의 안 줄었으면 더 돌려도 LLM 이 컨솔리데이션 못 한다는 신호.
+            // 이전엔 maxIterations + 추가 final pass 까지 4번 헛돌고 끝났음. 일찍 손 털기.
+            if (newLength >= currentLength * this.noProgressRatio) {
+                console.warn(`[SummarizerLangGraph] no-progress 감지 (${currentLength} → ${newLength}, ${((newLength/currentLength)*100).toFixed(1)}%). 추가 iteration 중단.`);
+                break;
             }
+        }
+
+        // 입력이 처음부터 chunkSize 이하인 경우에만 한 번 요약 패스. (텍스트는 그대로 두고 끝낼 수도 있지만,
+        // 호출자는 라인 추적이 포함된 structuredResult 를 기대하므로 1회 요약 패스를 돌려준다.)
+        // ⚠️ 과거에는 iteration 이 maxIterations 까지 갔는데도 길이가 안 줄면 여기서 한 번 더 final pass 를
+        // 돌렸는데, 이미 비수렴이라는 신호인 상태에서 4번째 패스는 시간만 더 잡아먹고 효과 없었음. 제거.
+        if (this.iterations === 0) {
+            structuredResult = await this._processFirstIteration(structuredResult);
         }
         
         // Refs 정리 및 반환
@@ -98,89 +109,110 @@ class RecursiveRequirementsSummarizerLangGraph extends RequirementsSummarizer {
     }
 
     /**
+     * 단일 청크에 대한 Backend Job 생성 + 완료 대기.
+     * 호출자는 chunkIndex/총개수만 넘기면 됨. 순서는 _processChunksParallel 가 인덱스로 보존.
+     *
+     * @param {Object} chunk - { numberedText: string, ... }
+     * @param {number} chunkIndex - 0-based
+     * @param {number} totalChunks
+     * @param {number} iteration - prompt 메타 전송용
+     * @param {boolean} verbose - 진행률/대기 로그 출력 여부 (iter 1 만 true 권장)
+     * @returns {Promise<{summarizedRequirements: Array}>}
+     */
+    async _runChunkJob(chunk, chunkIndex, totalChunks, iteration, verbose) {
+        const jobId = this._generateJobId();
+        // 마지막으로 만든 jobId 도 보존 (stop() 등 외부 참조용)
+        this.jobId = jobId;
+
+        await SummarizerLangGraphProxy.makeNewJob(
+            jobId,
+            chunk.numberedText,
+            iteration
+        );
+
+        return new Promise((resolve, reject) => {
+            let hasResolved = false;
+
+            SummarizerLangGraphProxy.watchJob(
+                jobId,
+                // onUpdate
+                verbose ? (summaries, logs, progress) => {
+                    console.log(`[SummarizerLangGraph] 청크 ${chunkIndex + 1}/${totalChunks} - Progress: ${progress}%`);
+                } : () => {},
+                // onComplete (summaries, logs, progress, isFailed)
+                (summaries, logs, progress, isFailed) => {
+                    if (hasResolved) return;
+                    hasResolved = true;
+                    if (verbose) {
+                        console.log(`[SummarizerLangGraph] 청크 ${chunkIndex + 1}/${totalChunks} 완료: ${summaries ? summaries.length : 0}개 요약`);
+                    }
+                    resolve({ summarizedRequirements: summaries || [] });
+                },
+                // onWaiting
+                verbose ? (waitingCount) => {
+                    console.log(`[SummarizerLangGraph] 청크 ${chunkIndex + 1}/${totalChunks} 대기 중... Queue: ${waitingCount}`);
+                } : () => {},
+                // onFailed
+                (error) => {
+                    if (hasResolved) return;
+                    hasResolved = true;
+                    console.error(`[SummarizerLangGraph] 청크 ${chunkIndex + 1}/${totalChunks} 오류:`, error);
+                    reject(new Error(error));
+                }
+            );
+        });
+    }
+
+    /**
+     * 청크 배열을 제한된 동시성으로 병렬 처리. 결과 순서는 인덱스 기준 보존.
+     * 청크 1개라도 실패하면 즉시 throw (Promise.all 의 fail-fast 의미).
+     */
+    async _processChunksParallel(chunks, iteration, verbose) {
+        const results = new Array(chunks.length);
+        let nextIdx = 0;
+
+        const worker = async () => {
+            while (true) {
+                const i = nextIdx++;
+                if (i >= chunks.length) return;
+                results[i] = await this._runChunkJob(chunks[i], i, chunks.length, iteration, verbose);
+            }
+        };
+
+        const workerCount = Math.min(this.chunkConcurrency, chunks.length);
+        await Promise.all(Array.from({ length: workerCount }, () => worker()));
+
+        return results;
+    }
+
+    /**
+     * 청크 결과 배열을 단일 structured result 로 병합.
+     * 순서는 입력 그대로 — 라인 ref 가 그대로 유지되어야 하므로.
+     */
+    _combineChunkResults(chunkResults, logLabel) {
+        const allSummaries = [];
+        for (const chunkResult of chunkResults) {
+            if (chunkResult && chunkResult.summarizedRequirements) {
+                allSummaries.push(...chunkResult.summarizedRequirements);
+            }
+        }
+        const result = { summarizedRequirements: allSummaries };
+        console.log(`[SummarizerLangGraph] ✅ ${logLabel} 병합 완료: ${allSummaries.length}개 요약, 총 ${this._getCurrentTextLength(result)} 자`);
+        return result;
+    }
+
+    /**
      * 첫 번째 Iteration 처리 (청크별로 Backend Job 생성)
      */
     async _processFirstIteration(structuredResult) {
         const chunks = this._prepareLineNumberedChunks(structuredResult);
         this.currentChunks = chunks;
-        this.summarizedChunks = [];
-        
-        console.log(`[SummarizerLangGraph] 첫 번째 요약: ${chunks.length}개 청크`);
-        
-        // 각 청크별로 Backend Job 처리
-        for (let i = 0; i < chunks.length; i++) {
-            const chunk = chunks[i];
-            console.log(`[SummarizerLangGraph] 청크 ${i + 1}/${chunks.length} 처리 중...`);
-            
-            // Job ID 생성
-            this.jobId = this._generateJobId();
-            
-            // Firebase Job 생성
-            await SummarizerLangGraphProxy.makeNewJob(
-                this.jobId,
-                chunk.numberedText,
-                this.iterations
-            );
-            
-            // Job 완료 대기
-            const chunkResult = await new Promise((resolve, reject) => {
-                let hasResolved = false;
-                
-                SummarizerLangGraphProxy.watchJob(
-                    this.jobId,
-                    // onUpdate
-                    (summaries, logs, progress) => {
-                        console.log(`[SummarizerLangGraph] 청크 ${i + 1} - Progress: ${progress}%`);
-                    },
-                    // onComplete (summaries, logs, progress, isFailed)
-                    (summaries, logs, progress, isFailed) => {
-                        if (hasResolved) return; // 중복 호출 방지
-                        hasResolved = true;
-                        
-                        console.log(`[SummarizerLangGraph] 청크 ${i + 1} 완료: ${summaries ? summaries.length : 0}개 요약`);
-                        resolve({ summarizedRequirements: summaries || [] });
-                    },
-                    // onWaiting
-                    (waitingCount) => {
-                        console.log(`[SummarizerLangGraph] 청크 ${i + 1} 대기 중... Queue: ${waitingCount}`);
-                    },
-                    // onError
-                    (error) => {
-                        if (hasResolved) return; // 중복 호출 방지
-                        hasResolved = true;
-                        
-                        console.error(`[SummarizerLangGraph] 청크 ${i + 1} 오류:`, error);
-                        reject(new Error(error));
-                    }
-                );
-            });
-            
-            this.summarizedChunks.push(chunkResult);
-        }
-        
-        // 모든 청크 결과 병합
-        return this._combineFirstIterationResults();
-    }
 
-    /**
-     * 첫 번째 요약 결과 병합
-     */
-    _combineFirstIterationResults() {
-        const allSummaries = [];
-        
-        for (const chunkResult of this.summarizedChunks) {
-            if (chunkResult.summarizedRequirements) {
-                allSummaries.push(...chunkResult.summarizedRequirements);
-            }
-        }
-        
-        const result = {
-            summarizedRequirements: allSummaries
-        };
-        
-        console.log(`[SummarizerLangGraph] ✅ 청크 병합 완료: ${allSummaries.length}개 요약, 총 ${this._getCurrentTextLength(result)} 자`);
-        
-        return result;
+        console.log(`[SummarizerLangGraph] 첫 번째 요약: ${chunks.length}개 청크, 동시성 ${this.chunkConcurrency}`);
+
+        const chunkResults = await this._processChunksParallel(chunks, this.iterations, /*verbose*/ true);
+        this.summarizedChunks = chunkResults;
+        return this._combineChunkResults(chunkResults, '청크');
     }
 
     /**
@@ -189,113 +221,34 @@ class RecursiveRequirementsSummarizerLangGraph extends RequirementsSummarizer {
     async _processSubsequentIteration(structuredResult) {
         const chunks = this._prepareLineNumberedChunks(structuredResult);
         this.currentChunks = chunks;
-        this.summarizedChunks = [];
-        
-        console.log(`[SummarizerLangGraph] Iteration ${this.iterations}: ${chunks.length}개 청크`);
-        
-        // 각 청크별로 Backend Job 처리
-        for (let i = 0; i < chunks.length; i++) {
-            const chunk = chunks[i];
-            this.jobId = this._generateJobId();
-            
-            await SummarizerLangGraphProxy.makeNewJob(
-                this.jobId,
-                chunk.numberedText,
-                this.iterations
-            );
-            
-            const chunkResult = await new Promise((resolve, reject) => {
-                let hasResolved = false;
-                
-                SummarizerLangGraphProxy.watchJob(
-                    this.jobId,
-                    null,
-                    (summaries, logs, progress, isFailed) => {
-                        if (hasResolved) return;
-                        hasResolved = true;
-                        resolve({ summarizedRequirements: summaries || [] });
-                    },
-                    null,
-                    (error) => {
-                        if (hasResolved) return;
-                        hasResolved = true;
-                        reject(new Error(error));
-                    }
-                );
-            });
-            
-            this.summarizedChunks.push(chunkResult);
-        }
-        
-        return this._combineSubsequentResults();
+
+        console.log(`[SummarizerLangGraph] Iteration ${this.iterations}: ${chunks.length}개 청크, 동시성 ${this.chunkConcurrency}`);
+
+        const chunkResults = await this._processChunksParallel(chunks, this.iterations, /*verbose*/ false);
+        this.summarizedChunks = chunkResults;
+        return this._combineChunkResults(chunkResults, '후속');
     }
 
     /**
-     * 후속 요약 결과 병합 및 refs 복원
-     */
-    _combineSubsequentResults() {
-        const allSummaries = [];
-        
-        for (const chunkResult of this.summarizedChunks) {
-            if (chunkResult.summarizedRequirements) {
-                allSummaries.push(...chunkResult.summarizedRequirements);
-            }
-        }
-        
-        const result = {
-            summarizedRequirements: allSummaries
-        };
-        
-        console.log(`[SummarizerLangGraph] ✅ 후속 병합 완료: ${allSummaries.length}개 요약, 총 ${this._getCurrentTextLength(result)} 자`);
-        
-        return result;
-    }
-
-    /**
-     * 최종 요약 처리
+     * 최종 요약 처리 (현재는 summarizeRecursively 에서 호출하지 않음 — no-progress 가드 도입으로 비수렴
+     * 시 추가 패스를 안 돌리도록 변경했음. 외부에서 직접 호출하는 경우를 대비해 정의는 유지.)
      */
     async _processFinalSummary(structuredResult) {
-        console.log(`[SummarizerLangGraph] 최종 요약 처리`);
-        
+        console.log('[SummarizerLangGraph] 최종 요약 처리');
         const chunks = this._prepareLineNumberedChunks(structuredResult);
         this.currentChunks = chunks;
-        this.summarizedChunks = [];
-        
-        // 단일 청크로 처리
-        for (let i = 0; i < chunks.length; i++) {
-            const chunk = chunks[i];
-            this.jobId = this._generateJobId();
-            
-            await SummarizerLangGraphProxy.makeNewJob(
-                this.jobId,
-                chunk.numberedText,
-                this.iterations + 1
-            );
-            
-            const chunkResult = await new Promise((resolve, reject) => {
-                let hasResolved = false;
-                
-                SummarizerLangGraphProxy.watchJob(
-                    this.jobId,
-                    null,
-                    (summaries, logs, progress, isFailed) => {
-                        if (hasResolved) return;
-                        hasResolved = true;
-                        resolve({ summarizedRequirements: summaries || [] });
-                    },
-                    null,
-                    (error) => {
-                        if (hasResolved) return;
-                        hasResolved = true;
-                        reject(new Error(error));
-                    }
-                );
-            });
-            
-            this.summarizedChunks.push(chunkResult);
-        }
-        
-        return this._combineSubsequentResults();
+
+        const chunkResults = await this._processChunksParallel(chunks, this.iterations + 1, /*verbose*/ false);
+        this.summarizedChunks = chunkResults;
+        return this._combineChunkResults(chunkResults, '최종');
+    }
+
+    // (deprecated 호환용 — 외부 코드가 호출할 수도 있어 남겨둠. 신규 코드는 _combineChunkResults 사용.)
+    _combineFirstIterationResults() {
+        return this._combineChunkResults(this.summarizedChunks, '청크');
+    }
+    _combineSubsequentResults() {
+        return this._combineChunkResults(this.summarizedChunks, '후속');
     }
 
     /**
