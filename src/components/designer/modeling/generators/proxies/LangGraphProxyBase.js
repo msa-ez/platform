@@ -78,9 +78,40 @@ class LangGraphProxyBase {
 
     static watchJob(jobId, onUpdate, onComplete, onWaiting, onFailed) {
         const jobState = this._initializeJobState(jobId);
+        // 이 job 에서 등록한 모든 watch path 를 모아두는 Set — 완료/실패 시 일괄 watch_off.
+        // 미정리 시 같은 path 에 listener 가 누적되어 acebase reconnect 후 N 회씩 callback 폭주.
+        jobState._watchedPaths = new Set();
         const callbacks = { onUpdate, onComplete, onWaiting, onFailed };
-        
+
         this._setupJobWatchers(jobId, jobState, callbacks);
+    }
+
+    /**
+     * job 종료(완료/실패) 후 등록된 모든 watch listener 해제.
+     * notifyJobState 안에서 isCompleted/isFailed 인 경우, 그리고 onFailed callback 호출 후에 호출.
+     */
+    static _cleanupJobWatchers(jobState) {
+        if (!jobState || !jobState._watchedPaths || jobState._watchersCleaned) return;
+        jobState._watchersCleaned = true;
+        try {
+            const storage = this.STORAGE;
+            for (const path of jobState._watchedPaths) {
+                try { storage.watch_off(path); } catch (e) { /* noop */ }
+            }
+            jobState._watchedPaths.clear();
+        } catch (e) {
+            console.warn('[LangGraphProxyBase] _cleanupJobWatchers failed:', e);
+        }
+    }
+
+    /**
+     * subclass 가 _onSetupJobWatchers 에서 직접 STORAGE.watch* 를 호출할 때
+     * cleanup 대상에 path 를 등록하도록 호출해주는 헬퍼. 빠뜨리면 해당 path 의 listener 가 누수됨.
+     */
+    static _trackWatchedPath(jobState, path) {
+        if (jobState && jobState._watchedPaths) {
+            jobState._watchedPaths.add(path);
+        }
     }
 
     static _initializeJobState(jobId) {
@@ -96,7 +127,7 @@ class LangGraphProxyBase {
     static _setupJobWatchers(jobId, jobState, callbacks) {
         const notifyJobState = async () => await this._notifyJobState(jobState, callbacks);
 
-        this._watchWaitingJobCount(jobId, callbacks.onWaiting);
+        this._watchWaitingJobCount(jobId, callbacks.onWaiting, jobState);
         this._watchJobStatus(jobId, jobState, callbacks.onFailed, notifyJobState);
         this._watchJobProgress(jobId, jobState, notifyJobState);
         this._watchJobLogs(jobId, jobState, notifyJobState);
@@ -125,6 +156,8 @@ class LangGraphProxyBase {
             await callbacks.onComplete(
                 notifyState.outputs, notifyState.logs, notifyState.totalPercentage, notifyState.isFailed
             );
+            // 완료 후엔 더 이상 이 job 의 출력 노드를 watch 할 필요 없음 — 누수 방지 위해 정리.
+            this._cleanupJobWatchers(jobState);
         } else {
             await callbacks.onUpdate(
                 notifyState.outputs, notifyState.logs, notifyState.totalPercentage, notifyState.isFailed
@@ -135,8 +168,10 @@ class LangGraphProxyBase {
         return notifyState;
     }
 
-    static _watchWaitingJobCount(jobId, onWaiting) {
-        this.STORAGE.watch(`${this._getRequestJobPath(jobId)}/waitingJobCount`, async (waitingJobCount) => {
+    static _watchWaitingJobCount(jobId, onWaiting, jobState) {
+        const path = `${this._getRequestJobPath(jobId)}/waitingJobCount`;
+        this._trackWatchedPath(jobState, path);
+        this.STORAGE.watch(path, async (waitingJobCount) => {
             if (waitingJobCount && waitingJobCount > 0) {
                 await onWaiting(waitingJobCount);
             }
@@ -144,21 +179,28 @@ class LangGraphProxyBase {
     }
 
     static _watchJobStatus(jobId, jobState, onFailed, notifyJobState) {
-        this.STORAGE.watch(`${this._getJobPath(jobId)}/state/outputs/isFailed`, async (isFailed) => {
+        const failedPath = `${this._getJobPath(jobId)}/state/outputs/isFailed`;
+        const completedPath = `${this._getJobPath(jobId)}/state/outputs/isCompleted`;
+        this._trackWatchedPath(jobState, failedPath);
+        this._trackWatchedPath(jobState, completedPath);
+
+        this.STORAGE.watch(failedPath, async (isFailed) => {
             if (!isFailed) return;
-            
+
             jobState.isFailed = isFailed;
             await notifyJobState();
-            
+
             const errorLogs = jobState.logs.filter(log => log.level === "error");
             logger.error("Job 실패 후, 에러 로그가 발생함", errorLogs)
 
             await onFailed(errorLogs.join("\n"));
+            // 실패 처리 끝나면 더 이상 이 job 의 변화는 의미 없음 → listener 해제.
+            this._cleanupJobWatchers(jobState);
         });
 
-        this.STORAGE.watch(`${this._getJobPath(jobId)}/state/outputs/isCompleted`, async (isCompleted) => {
+        this.STORAGE.watch(completedPath, async (isCompleted) => {
             if (!isCompleted) return;
-            
+
             jobState.isCompleted = isCompleted;
 
             logger.debug("Job 완료 후, 출력 상태가 완전히 구축됨", jobState)
@@ -167,25 +209,32 @@ class LangGraphProxyBase {
     }
 
     static _watchJobProgress(jobId, jobState, notifyJobState) {
-        this.STORAGE.watch(`${this._getJobPath(jobId)}/state/outputs/totalProgressCount`, async (totalProgressCount) => {
+        const totalPath = `${this._getJobPath(jobId)}/state/outputs/totalProgressCount`;
+        const currentPath = `${this._getJobPath(jobId)}/state/outputs/currentProgressCount`;
+        this._trackWatchedPath(jobState, totalPath);
+        this._trackWatchedPath(jobState, currentPath);
+
+        this.STORAGE.watch(totalPath, async (totalProgressCount) => {
             if (!totalProgressCount) return;
-            
+
             jobState.totalProgressCount = totalProgressCount;
             await notifyJobState();
         });
 
-        this.STORAGE.watch(`${this._getJobPath(jobId)}/state/outputs/currentProgressCount`, async (currentProgressCount) => {
+        this.STORAGE.watch(currentPath, async (currentProgressCount) => {
             if (!currentProgressCount) return;
-            
+
             jobState.currentProgressCount = currentProgressCount;
             await notifyJobState();
         });
     }
 
     static _watchJobLogs(jobId, jobState, notifyJobState) {
-        this.STORAGE.watch_added(`${this._getJobPath(jobId)}/state/outputs/logs`, null, async (log) => {
+        const logsPath = `${this._getJobPath(jobId)}/state/outputs/logs`;
+        this._trackWatchedPath(jobState, logsPath);
+        this.STORAGE.watch_added(logsPath, null, async (log) => {
             if (!log) return;
-            
+
             jobState.logs.push(this._restoreDataFromFirebase(log));
             await notifyJobState();
         });

@@ -1230,8 +1230,17 @@
             },
             async backupProject(){
                 // type: eventStorming,  businessModel, customerJourneyMap
+                // @change 이벤트로 다이얼로거 자식 컴포넌트가 자주 호출함 → 매 호출 setObject 시 acebase 부하 증가.
+                // 800ms debounce 로 코얼레스 — 마지막 상태만 실제 저장.
                 var me = this
+                if (!me._debouncedBackup) {
+                    me._debouncedBackup = _.debounce(() => me._doBackupProject(), 800);
+                }
+                me._debouncedBackup();
+            },
 
+            async _doBackupProject(){
+                var me = this
                 if( me.isServer ) {
                     if( me.isLogin ){
                         me.setObject(`db://definitions/${me.projectInfo.projectId}/information/eventStorming`, me.projectInfo.eventStorming)
@@ -1361,6 +1370,9 @@
                 if (this._debouncedSaveDraft && typeof this._debouncedSaveDraft.flush === 'function') {
                     this._debouncedSaveDraft.flush();
                 }
+                if (this._debouncedBackup && typeof this._debouncedBackup.flush === 'function') {
+                    this._debouncedBackup.flush();
+                }
             },
 
             updateLocalDraft(draft){
@@ -1417,10 +1429,12 @@
                     me.projectInfo['eventStorming']['modelList'].push(`${me.userInfo.providerUid}_es_${modelId}`)
 
                     if(me.projectInfo && me.projectInfo.projectId){
-                        await me.putObject(`db://definitions/${me.projectInfo.projectId}/information/eventStorming`, me.projectInfo['eventStorming'])
+                        // 기존엔 eventStorming 객체 전체를 putObject — 매 모델 추가마다 전체 트리 재직렬화.
+                        // 실제 변경분은 modelList 배열뿐이므로 부분 path 쓰기로 전환.
+                        await me.putObject(`db://definitions/${me.projectInfo.projectId}/information/eventStorming/modelList`, me.projectInfo['eventStorming']['modelList'])
                         await me.putObject(`db://definitions/${me.projectInfo.projectId}/information/eventStormingModelIds`, me.projectInfo['eventStormingModelIds'])
                     }
-                    
+
                 }
                 // this.unsavedChanges = true;
             },

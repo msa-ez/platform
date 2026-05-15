@@ -51,33 +51,37 @@ class EsValueLangGraphStudioProxy extends LangGraphProxyBase {
 
     static _onSetupJobWatchers(jobId, jobState, notifyJobState) {
         this._watchEsValueCollection(
-            jobId, 
-            'elements', 
-            jobState.esValue.elements, 
-            notifyJobState
+            jobId,
+            'elements',
+            jobState.esValue.elements,
+            notifyJobState,
+            jobState
         );
 
         this._watchEsValueCollection(
-            jobId, 
-            'relations', 
-            jobState.esValue.relations, 
-            notifyJobState
+            jobId,
+            'relations',
+            jobState.esValue.relations,
+            notifyJobState,
+            jobState
         );
     }
 
-    static _watchEsValueCollection(jobId, collectionName, targetCollection, notifyJobState) {
+    static _watchEsValueCollection(jobId, collectionName, targetCollection, notifyJobState, jobState) {
         const basePath = `${this._getJobPath(jobId)}/state/outputs/esValue/${collectionName}`;
-        
+        // 부모(LangGraphProxyBase) 의 cleanup 대상에 등록 — job 완료/실패 시 watch_off 됨.
+        this._trackWatchedPath(jobState, basePath);
+
         this.STORAGE.watch_changed(basePath, async (item, key) => {
             if (!item || !key) return;
-            
+
             targetCollection[key] = this._restoreDataFromFirebase(item);
             await notifyJobState();
         });
 
         this.STORAGE.watch_added(basePath, null, async (item) => {
             if (!item || !item.id) return;
-            
+
             targetCollection[item.id] = this._restoreDataFromFirebase(item);
             await notifyJobState();
         });
