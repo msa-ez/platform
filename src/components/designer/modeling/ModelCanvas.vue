@@ -3331,9 +3331,12 @@
             },
             releaseQueue(projectId){
                 var me = this
-                if(!projectId) return;
+                // 호출부(executeBeforeDestroy)는 인자 없이 호출해서 기존엔 early-return → queue watch_added 누수.
+                // projectId 미지정 시 현재 캔버스 projectId 로 정리.
+                let target = projectId || me.projectId;
+                if(!target) return;
 
-                me.watch_off(`db://definitions/${projectId}/queue`)
+                me.watch_off(`db://definitions/${target}/queue`)
             },
             watchProjectInformation(associatedProjectId){
                 var me = this
@@ -4780,8 +4783,13 @@
                     async action(me){
                         let opengraph = me.$refs['opengraph']
                         if (!opengraph) return;
-                        if (!me.isUserInteractionActive()) return;   
+                        if (!me.isUserInteractionActive()) return;
                         let canvasEl = $(opengraph.container);
+
+                        // 재진입(예: projectVersion 변경/모델 switch)으로 onEventHandler 가 두 번 불릴 때
+                        // AceBase 의 .on() 은 중복 listener 를 등록함 → 같은 콜백이 N 회 실행되는 누수.
+                        // 새 watch 걸기 전에 같은 path 의 기존 listener 를 먼저 해제.
+                        me.watch_off(`db://definitions/${me.projectId}/eventHandler`);
 
                         me.watch(`db://definitions/${me.projectId}/eventHandler`,function (callback) {
                             if(callback ) {
@@ -4923,17 +4931,20 @@
                     me.handleMouseMove(e, opengraph, canvasEl);
                 });
             },
-            // 실제 마우스 이벤트 처리 로직
+            // 실제 마우스 이벤트 처리 로직.
+            // 기존엔 30 이벤트 카운트 기반 throttle 이라 브라우저/CPU 부하에 따라 발사 빈도가 출렁이고
+            // 빠른 드래그에선 1초에 ~6 번까지 putObject 가 발사돼 N 명 동시 편집 시 acebase 부하 큼.
+            // 시간 기반 throttle (leading + trailing) 로 바꿔 최대 ~6 writes/sec 로 고정.
             handleMouseMove: function (e, opengraph, canvasEl) {
-                this.mouseEventCnt++;
-                // Event 발생 30회 마다 1회 push.
-                if (this.mouseEventCnt % 30 == 1) {
-                    this.mouseEventCnt = 1;
-                    let scale = opengraph.canvas._CONFIG.SLIDER[0].innerText / 100;
-                    let offsetX = (e.clientX - canvasEl.offset().left + canvasEl[0].scrollLeft) / scale;
-                    let offsetY = (e.clientY - canvasEl.offset().top + canvasEl[0].scrollTop) / scale;
-                    this.sendMoveEvents(offsetX, offsetY);
+                if (!this._throttledSendMoveEvents) {
+                    this._throttledSendMoveEvents = _.throttle((x, y) => {
+                        this.sendMoveEvents(x, y);
+                    }, 150, { leading: true, trailing: true });
                 }
+                let scale = opengraph.canvas._CONFIG.SLIDER[0].innerText / 100;
+                let offsetX = (e.clientX - canvasEl.offset().left + canvasEl[0].scrollLeft) / scale;
+                let offsetY = (e.clientY - canvasEl.offset().top + canvasEl[0].scrollTop) / scale;
+                this._throttledSendMoveEvents(offsetX, offsetY);
             },
             setIsPauseQueue(val){
                 this.isPauseQueue = val

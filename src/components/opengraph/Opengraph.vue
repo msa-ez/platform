@@ -1313,7 +1313,10 @@
         position: absolute;
         top: 0px;
         left: 0px;
-        overflow: scroll;
+        /* overflow: scroll 는 컨텐츠 크기와 무관하게 스크롤바를 항상 표시 →
+           바깥 페이지의 scroll 과 동시에 표시되어 "이중 스크롤" 처럼 보임.
+           auto 로 바꿔 필요할 때만 표시. */
+        overflow: auto;
     }
 
     .canvas-container {

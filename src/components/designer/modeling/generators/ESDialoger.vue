@@ -1089,10 +1089,10 @@ import { value } from 'jsonpath';
                                         () => {
                                             if(returnObj.isFeedbackBased) {
                                                 this.workingMessages.AggregateDraftDialogDto.draftUIInfos.leftBoundedContextCount = 0
-                                                this.$emit("update:draft", this.messages);
+                                                this.triggerDraftEmit();
                                             }
                                             else if(!this.generators.DraftGeneratorByFunctions.generateIfInputsExist()){
-                                                this.$emit("update:draft", this.messages);
+                                                this.triggerDraftEmit();
                                             }
                                         }
                                     )
@@ -1129,10 +1129,10 @@ import { value } from 'jsonpath';
                                     () => {
                                         if(returnObj.isFeedbackBased) {
                                             this.workingMessages.AggregateDraftDialogDto.draftUIInfos.leftBoundedContextCount = 0
-                                            this.$emit("update:draft", this.messages);
+                                            this.triggerDraftEmit();
                                         }
                                         else if(!this.generators.DraftGeneratorByFunctions.generateIfInputsExist()){
-                                            this.$emit("update:draft", this.messages);
+                                            this.triggerDraftEmit();
                                         }
                                     }
                                 )
@@ -1714,6 +1714,18 @@ import { value } from 'jsonpath';
             }
         },
         methods: {
+            // update:draft 는 청크 검증 / 트레이스 / 프리뷰 콜백마다 N 번 emit 되는데,
+            // 그때마다 부모(AutoModelingDialog) 가 messages 전체를 새 객체로 받아서 reactivity·debounce 큐를 돌림.
+            // 부모가 800ms debounce 로 setObject 는 코얼레스하지만, 여기서 emit 자체와 messages 직렬화는 N 회 실행됨.
+            // 같은 tick·짧은 시간 안의 연속 emit 을 trailing 300ms 로 합쳐 호출 횟수를 줄임.
+            triggerDraftEmit() {
+                if (!this._debouncedEmitDraft) {
+                    this._debouncedEmitDraft = _.debounce(() => {
+                        this.triggerDraftEmit();
+                    }, 300, { leading: false, trailing: true });
+                }
+                this._debouncedEmitDraft();
+            },
             async initESDialoger() {
                 if(!this.draft) return;
                 this.done = true;
@@ -2094,7 +2106,7 @@ import { value } from 'jsonpath';
                         }
 
                         // localStorage.setItem("siteMap", JSON.stringify(me.siteMap));
-                        me.$emit("update:draft", me.messages);
+                        me.triggerDraftEmit();
                     } catch(e) {
                         console.warn('Recursive sitemap incremental update failed:', e);
                     }
@@ -2111,7 +2123,7 @@ import { value } from 'jsonpath';
                     });
 
                     // localStorage.setItem("siteMap", JSON.stringify(me.siteMap));
-                    me.$emit("update:draft", me.messages)
+                    me.triggerDraftEmit();
                 }
 
                 // Recursive UserStory: 청크 단위 결과는 생성기 내부에서 누적 처리하며 진행상황/부분결과 업데이트
@@ -2234,7 +2246,7 @@ import { value } from 'jsonpath';
                         currentGeneratedLength: me.currentGeneratedLength
                     });
 
-                    me.$emit("update:draft", me.messages);
+                    me.triggerDraftEmit();
                 }
 
                 if (me.state.generator === "CommandReadModelExtractor") {
@@ -2326,7 +2338,7 @@ import { value } from 'jsonpath';
                     });
 
                     me.resultDevideBoundedContext = JSON.parse(JSON.stringify(newResult));
-                    me.$emit("update:draft", me.messages);
+                    me.triggerDraftEmit();
 
                     console.log("output: ", model)
                 }
@@ -3430,7 +3442,7 @@ import { value } from 'jsonpath';
                 if (targetMessage) {
                     // Deep copy로 Vue 반응성 참조 공유 방지
                     this.$set(targetMessage, 'selectedOptionItem', JSON.parse(JSON.stringify(selectedOptionItem)));
-                    this.$emit("update:draft", this.messages);
+                    this.triggerDraftEmit();
                 } else {
                     console.warn('[ESDialoger] ⚠️ targetMessage를 찾을 수 없음!');
                 }
@@ -3450,7 +3462,7 @@ import { value } from 'jsonpath';
                 if (targetMessage) {
                     // Deep copy로 Vue 반응성 참조 공유 방지
                     this.$set(targetMessage, 'draftOptions', JSON.parse(JSON.stringify(draftOptions)));
-                    this.$emit("update:draft", this.messages);
+                    this.triggerDraftEmit();
                 } else {
                     console.warn('[ESDialoger] ⚠️ updateDraftOptions: targetMessage를 찾을 수 없음!');
                 }
@@ -3817,7 +3829,7 @@ import { value } from 'jsonpath';
                         
                         // UI 강제 업데이트
                         self.$forceUpdate();
-                        self.$emit("update:draft", self.messages);
+                        self.triggerDraftEmit();
                         
                         // 원본 변경 체크 (최종)
                         checkOriginalUnchanged();
@@ -4326,7 +4338,7 @@ import { value } from 'jsonpath';
                 let filteredMessages = this.messages.filter(msg => !typesToRemove.includes(msg.type));
                 // 해당 타입의 메시지들 제거
                 this.messages = [...filteredMessages];
-                this.$emit('update:draft', this.messages)
+                this.triggerDraftEmit()
             },
 
             updateDevideBoundedContext(selectedAspect, devideBoundedContext){
@@ -4334,7 +4346,7 @@ import { value } from 'jsonpath';
                 this.updateMessageState(this.messages.find(message => message.type === 'boundedContextResult').uniqueId, {
                     result: this.resultDevideBoundedContext
                 });
-                this.$emit('update:draft', this.messages)
+                this.triggerDraftEmit()
             },
 
             updateSiteMap(siteMap){
@@ -4343,7 +4355,7 @@ import { value } from 'jsonpath';
                     siteMap: siteMap
                 });
                 // localStorage.setItem("siteMap", JSON.stringify(this.siteMap));
-                this.$emit('update:draft', this.messages)
+                this.triggerDraftEmit()
             },
 
             deleteDefinition(id, information){
@@ -4616,7 +4628,7 @@ import { value } from 'jsonpath';
                             siteMap: this.siteMap,
                             isGenerating: false
                         });
-                        this.$emit('update:draft', this.messages)
+                        this.triggerDraftEmit()
                     });
                 } else if (shouldUseRecursive) {
                     this.generator.generateRecursively(this.projectInfo.usedUserStory).then(result => {
@@ -4625,7 +4637,7 @@ import { value } from 'jsonpath';
                             siteMap: this.siteMap,
                             isGenerating: false
                         });
-                        this.$emit('update:draft', this.messages)
+                        this.triggerDraftEmit()
                     });
                 } else {
                     this.generator.generate()
