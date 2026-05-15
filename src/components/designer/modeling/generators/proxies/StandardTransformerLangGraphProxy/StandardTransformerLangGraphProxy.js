@@ -69,8 +69,25 @@ class StandardTransformerLangGraphProxy {
             isCompleted: false,
             isFailed: false,
             error: '',
-            originalDraftOptions: null  // 원본 옵션 저장 (검증용)
+            originalDraftOptions: null,  // 원본 옵션 저장 (검증용)
+            _watchedPaths: new Set(),
+            _watchersCleaned: false
         }
+    }
+
+    static _trackWatch(jobState, path) {
+        if (jobState && jobState._watchedPaths) {
+            jobState._watchedPaths.add(path)
+        }
+    }
+
+    static _cleanupWatchers(storage, jobState) {
+        if (!jobState || !jobState._watchedPaths || jobState._watchersCleaned) return
+        jobState._watchersCleaned = true
+        for (const path of jobState._watchedPaths) {
+            try { storage.watch_off(path) } catch (e) { /* noop */ }
+        }
+        jobState._watchedPaths.clear()
     }
 
     static _setupJobWatchers(storage, jobId, jobState, callbacks) {
@@ -90,7 +107,7 @@ class StandardTransformerLangGraphProxy {
         }
 
         // 대기 중인 작업 수 감시
-        this._watchWaitingJobCount(storage, jobId, callbacks.onWaiting)
+        this._watchWaitingJobCount(storage, jobId, jobState, callbacks.onWaiting)
         
         // 작업 상태 감시
         this._watchJobStatus(storage, jobId, jobState, callbacks.onFailed, parseState)
@@ -106,7 +123,9 @@ class StandardTransformerLangGraphProxy {
     }
 
     static _watchTransformedOptions(storage, jobId, jobState, parseState) {
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/transformedOptions`, async (transformedOptions) => {
+        const path = `${this._getJobPath(jobId)}/state/outputs/transformedOptions`
+        this._trackWatch(jobState, path)
+        storage.watch(path, async (transformedOptions) => {
             if (transformedOptions) {
                 // 🔒 CRITICAL: Firebase에서 ["@"] 마커를 빈 배열로 복원
                 jobState.transformedOptions = this._restoreDataFromFirebase(transformedOptions)
@@ -116,7 +135,9 @@ class StandardTransformerLangGraphProxy {
     }
 
     static _watchTransformationLog(storage, jobId, jobState, parseState) {
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/transformationLog`, async (log) => {
+        const path = `${this._getJobPath(jobId)}/state/outputs/transformationLog`
+        this._trackWatch(jobState, path)
+        storage.watch(path, async (log) => {
             if (log) {
                 jobState.transformationLog = log
                 await parseState()
@@ -125,7 +146,9 @@ class StandardTransformerLangGraphProxy {
     }
 
     static _watchJobProgress(storage, jobId, jobState, parseState) {
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/progress`, async (progress) => {
+        const path = `${this._getJobPath(jobId)}/state/outputs/progress`
+        this._trackWatch(jobState, path)
+        storage.watch(path, async (progress) => {
             if (progress !== undefined && progress !== null) {
                 jobState.progress = progress
                 await parseState()
@@ -134,14 +157,21 @@ class StandardTransformerLangGraphProxy {
     }
 
     static _watchJobStatus(storage, jobId, jobState, onFailed, parseState) {
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/isCompleted`, async (isCompleted) => {
+        const completedPath = `${this._getJobPath(jobId)}/state/outputs/isCompleted`
+        this._trackWatch(jobState, completedPath)
+        storage.watch(completedPath, async (isCompleted) => {
             if (isCompleted !== undefined && isCompleted !== null) {
                 jobState.isCompleted = isCompleted
                 await parseState()
+                if (isCompleted === true) {
+                    this._cleanupWatchers(storage, jobState)
+                }
             }
         })
 
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/error`, async (error) => {
+        const errorPath = `${this._getJobPath(jobId)}/state/outputs/error`
+        this._trackWatch(jobState, errorPath)
+        storage.watch(errorPath, async (error) => {
             // Firebase에서 None이 "@"로 변환되므로, "@"는 무시
             if (error && error !== "@") {
                 jobState.isFailed = true
@@ -149,14 +179,16 @@ class StandardTransformerLangGraphProxy {
                 if (onFailed) {
                     onFailed(error)
                 }
+                this._cleanupWatchers(storage, jobState)
             }
         })
     }
 
-    static _watchWaitingJobCount(storage, jobId, onWaiting) {
+    static _watchWaitingJobCount(storage, jobId, jobState, onWaiting) {
         if (!onWaiting) return
         
         const requestedJobsPath = `db://${this.PATHS.REQUESTED_JOBS}/${this.JOB_TYPE}`
+        this._trackWatch(jobState, requestedJobsPath)
         storage.watch(requestedJobsPath, async (requestedJobs) => {
             if (requestedJobs) {
                 const jobIds = Object.keys(requestedJobs)

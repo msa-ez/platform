@@ -53,7 +53,23 @@ class RequirementsFlowStitcherLangGraphProxy {
             content: null,
             isCompleted: false,
             isFailed: false,
-            error: ''
+            error: '',
+            _watchedPaths: new Set(),
+            _watchersCleaned: false
+        };
+
+        const trackWatch = (path) => {
+            if (jobState && jobState._watchedPaths) {
+                jobState._watchedPaths.add(path);
+            }
+        };
+        const cleanupWatchers = () => {
+            if (!jobState || !jobState._watchedPaths || jobState._watchersCleaned) return;
+            jobState._watchersCleaned = true;
+            for (const path of jobState._watchedPaths) {
+                try { storage.watch_off(path); } catch (e) { /* noop */ }
+            }
+            jobState._watchedPaths.clear();
         };
 
         let invoked = false;
@@ -63,23 +79,30 @@ class RequirementsFlowStitcherLangGraphProxy {
             invoked = true;
             const events = (jobState.content && jobState.content.events) || [];
             await onComplete(events, jobState.error || null);
+            cleanupWatchers();
         };
 
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/content`, async (content) => {
+        const contentPath = `${this._getJobPath(jobId)}/state/outputs/content`;
+        trackWatch(contentPath);
+        storage.watch(contentPath, async (content) => {
             if (content) {
                 jobState.content = this._restoreDataFromFirebase(content);
                 await tryNotifyComplete();
             }
         });
 
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/isCompleted`, async (isCompleted) => {
+        const completedPath = `${this._getJobPath(jobId)}/state/outputs/isCompleted`;
+        trackWatch(completedPath);
+        storage.watch(completedPath, async (isCompleted) => {
             if (isCompleted === true) {
                 jobState.isCompleted = true;
                 await tryNotifyComplete();
             }
         });
 
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/isFailed`, async (isFailed) => {
+        const failedPath = `${this._getJobPath(jobId)}/state/outputs/isFailed`;
+        trackWatch(failedPath);
+        storage.watch(failedPath, async (isFailed) => {
             if (isFailed === true && !invoked) {
                 invoked = true;
                 jobState.isFailed = true;
@@ -87,10 +110,13 @@ class RequirementsFlowStitcherLangGraphProxy {
                 if (typeof onFailed === 'function') {
                     await onFailed(msg);
                 }
+                cleanupWatchers();
             }
         });
 
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/error`, async (error) => {
+        const errorPath = `${this._getJobPath(jobId)}/state/outputs/error`;
+        trackWatch(errorPath);
+        storage.watch(errorPath, async (error) => {
             if (error) {
                 jobState.error = error;
             }

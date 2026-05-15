@@ -95,18 +95,40 @@ class SummarizerLangGraphProxy {
         if (!accumulatedOutputState.error) {
             accumulatedOutputState.error = '';
         }
+        accumulatedOutputState._watchedPaths = new Set();
+        accumulatedOutputState._watchersCleaned = false;
         
         return accumulatedOutputState;
+    }
+
+    static _trackWatch(jobState, path) {
+        if (jobState && jobState._watchedPaths) {
+            jobState._watchedPaths.add(path);
+        }
+    }
+
+    static _cleanupWatchers(storage, jobState) {
+        if (!jobState || !jobState._watchedPaths || jobState._watchersCleaned) return;
+        jobState._watchersCleaned = true;
+        for (const path of jobState._watchedPaths) {
+            try { storage.watch_off(path); } catch (e) { /* noop */ }
+        }
+        jobState._watchedPaths.clear();
     }
 
     /**
      * 모든 워처 설정
      */
     static _setupJobWatchers(storage, jobId, jobState, callbacks) {
-        const parseState = async () => await this._parseAndNotifyJobState(jobState, callbacks);
+        const parseState = async () => {
+            await this._parseAndNotifyJobState(jobState, callbacks);
+            if (jobState.isCompleted || jobState.isFailed) {
+                this._cleanupWatchers(storage, jobState);
+            }
+        };
         
         // 대기 중인 작업 수 감시
-        this._watchWaitingJobCount(storage, jobId, callbacks.onWaiting);
+        this._watchWaitingJobCount(storage, jobId, jobState, callbacks.onWaiting);
         
         // 작업 상태 감시 (완료/실패)
         this._watchJobStatus(storage, jobId, jobState, callbacks.onFailed, parseState);
@@ -124,8 +146,10 @@ class SummarizerLangGraphProxy {
     /**
      * 대기 중인 작업 수 감시
      */
-    static _watchWaitingJobCount(storage, jobId, onWaiting) {
-        storage.watch(`${this._getRequestJobPath(jobId)}/waitingJobCount`, async (waitingJobCount) => {
+    static _watchWaitingJobCount(storage, jobId, jobState, onWaiting) {
+        const path = `${this._getRequestJobPath(jobId)}/waitingJobCount`;
+        this._trackWatch(jobState, path);
+        storage.watch(path, async (waitingJobCount) => {
             if (waitingJobCount && waitingJobCount > 0) {
                 await onWaiting(waitingJobCount);
             }
@@ -137,7 +161,9 @@ class SummarizerLangGraphProxy {
      */
     static _watchJobStatus(storage, jobId, jobState, onFailed, parseState) {
         // 실패 상태 감시
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/isFailed`, async (isFailed) => {
+        const failedPath = `${this._getJobPath(jobId)}/state/outputs/isFailed`;
+        this._trackWatch(jobState, failedPath);
+        storage.watch(failedPath, async (isFailed) => {
             if (isFailed === null || isFailed === undefined) return;
             if (!isFailed) return;
 
@@ -155,6 +181,7 @@ class SummarizerLangGraphProxy {
             if (typeof onFailed === 'function') {
                 await onFailed(errorMsg);
             }
+            this._cleanupWatchers(storage, jobState);
         });
 
         // 완료 상태 감시
@@ -167,7 +194,9 @@ class SummarizerLangGraphProxy {
         // jobState.isCompleted 가 아직 false → onUpdate 분기만 타고 끝남.
         // isCompleted watcher 가 parseState 를 안 부르면 onComplete 가 영영 fire 안 돼서
         // 재귀 드라이버의 청크 Promise 가 hang → 프론트가 "진행중" 으로 영구 정지됨.
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/isCompleted`, async (isCompleted) => {
+        const completedPath = `${this._getJobPath(jobId)}/state/outputs/isCompleted`;
+        this._trackWatch(jobState, completedPath);
+        storage.watch(completedPath, async (isCompleted) => {
             if (isCompleted) {
                 jobState.isCompleted = isCompleted;
                 await parseState();
@@ -175,7 +204,9 @@ class SummarizerLangGraphProxy {
         });
         
         // 에러 메시지 감시
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/error`, async (error) => {
+        const errorPath = `${this._getJobPath(jobId)}/state/outputs/error`;
+        this._trackWatch(jobState, errorPath);
+        storage.watch(errorPath, async (error) => {
             if (error) {
                 jobState.error = error;
             }
@@ -186,7 +217,9 @@ class SummarizerLangGraphProxy {
      * 작업 진행률 감시
      */
     static _watchJobProgress(storage, jobId, jobState, parseState) {
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/progress`, async (progress) => {
+        const path = `${this._getJobPath(jobId)}/state/outputs/progress`;
+        this._trackWatch(jobState, path);
+        storage.watch(path, async (progress) => {
             if (progress !== null && progress !== undefined) {
                 jobState.progress = progress;
                 // parseState는 _watchSummaries에서만 호출됨
@@ -199,7 +232,9 @@ class SummarizerLangGraphProxy {
      */
     static _watchSummaries(storage, jobId, jobState, parseState) {
         console.log('[SummarizerLangGraphProxy] _watchSummaries 시작:', jobId);
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/summarizedRequirements`, async (summaries) => {
+        const path = `${this._getJobPath(jobId)}/state/outputs/summarizedRequirements`;
+        this._trackWatch(jobState, path);
+        storage.watch(path, async (summaries) => {
             console.log('[SummarizerLangGraphProxy] _watchSummaries 감지:', summaries);
             if (summaries) {
                 jobState.summarizedRequirements = this._restoreArrayFromFirebase(summaries);
@@ -215,7 +250,9 @@ class SummarizerLangGraphProxy {
      * 로그 감시
      */
     static _watchJobLogs(storage, jobId, jobState, parseState) {
-        storage.watch_added(`${this._getJobPath(jobId)}/state/outputs/logs`, null, async (log) => {
+        const path = `${this._getJobPath(jobId)}/state/outputs/logs`;
+        this._trackWatch(jobState, path);
+        storage.watch_added(path, null, async (log) => {
             if (!log) return;
             
             const restoredLog = this._restoreDataFromFirebase(log);

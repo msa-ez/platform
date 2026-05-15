@@ -140,18 +140,40 @@ class BoundedContextLangGraphProxy {
         if (!accumulatedOutputState.error) {
             accumulatedOutputState.error = '';
         }
+        accumulatedOutputState._watchedPaths = new Set();
+        accumulatedOutputState._watchersCleaned = false;
         
         return accumulatedOutputState;
+    }
+
+    static _trackWatch(jobState, path) {
+        if (jobState && jobState._watchedPaths) {
+            jobState._watchedPaths.add(path);
+        }
+    }
+
+    static _cleanupWatchers(storage, jobState) {
+        if (!jobState || !jobState._watchedPaths || jobState._watchersCleaned) return;
+        jobState._watchersCleaned = true;
+        for (const path of jobState._watchedPaths) {
+            try { storage.watch_off(path); } catch (e) { /* noop */ }
+        }
+        jobState._watchedPaths.clear();
     }
 
     /**
      * 모든 워처 설정
      */
     static _setupJobWatchers(storage, jobId, jobState, callbacks) {
-        const parseState = async () => await this._parseAndNotifyJobState(jobState, callbacks);
+        const parseState = async () => {
+            await this._parseAndNotifyJobState(jobState, callbacks);
+            if (jobState.isCompleted || jobState.isFailed) {
+                this._cleanupWatchers(storage, jobState);
+            }
+        };
         
         // 대기 중인 작업 수 감시
-        this._watchWaitingJobCount(storage, jobId, callbacks.onWaiting);
+        this._watchWaitingJobCount(storage, jobId, jobState, callbacks.onWaiting);
         
         // 작업 상태 감시 (완료/실패)
         this._watchJobStatus(storage, jobId, jobState, callbacks.onFailed, parseState);
@@ -169,8 +191,10 @@ class BoundedContextLangGraphProxy {
     /**
      * 대기 중인 작업 수 감시
      */
-    static _watchWaitingJobCount(storage, jobId, onWaiting) {
-        storage.watch(`${this._getRequestJobPath(jobId)}/waitingJobCount`, async (count) => {
+    static _watchWaitingJobCount(storage, jobId, jobState, onWaiting) {
+        const path = `${this._getRequestJobPath(jobId)}/waitingJobCount`;
+        this._trackWatch(jobState, path);
+        storage.watch(path, async (count) => {
             if (count !== null && count !== undefined) {
                 await onWaiting(count);
             }
@@ -182,7 +206,9 @@ class BoundedContextLangGraphProxy {
      */
     static _watchJobStatus(storage, jobId, jobState, onFailed, parseState) {
         // 실패 상태 감시
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/isFailed`, async (isFailed) => {
+        const failedPath = `${this._getJobPath(jobId)}/state/outputs/isFailed`;
+        this._trackWatch(jobState, failedPath);
+        storage.watch(failedPath, async (isFailed) => {
             if (isFailed === null || isFailed === undefined) return;
             if (!isFailed) return;
             
@@ -191,10 +217,13 @@ class BoundedContextLangGraphProxy {
             
             const errorMsg = jobState.error || "Unknown error occurred";
             await onFailed(errorMsg);
+            this._cleanupWatchers(storage, jobState);
         });
 
         // 완료 상태 감시
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/isCompleted`, async (isCompleted) => {
+        const completedPath = `${this._getJobPath(jobId)}/state/outputs/isCompleted`;
+        this._trackWatch(jobState, completedPath);
+        storage.watch(completedPath, async (isCompleted) => {
             console.log('[BoundedContextLangGraphProxy] _watchJobStatus isCompleted 감지:', isCompleted);
             if (isCompleted) {
                 jobState.isCompleted = isCompleted;
@@ -222,7 +251,9 @@ class BoundedContextLangGraphProxy {
         });
         
         // 에러 메시지 감시
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/error`, async (error) => {
+        const errorPath = `${this._getJobPath(jobId)}/state/outputs/error`;
+        this._trackWatch(jobState, errorPath);
+        storage.watch(errorPath, async (error) => {
             if (error) {
                 jobState.error = error;
             }
@@ -233,7 +264,9 @@ class BoundedContextLangGraphProxy {
      * 작업 진행률 감시
      */
     static _watchJobProgress(storage, jobId, jobState, parseState) {
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/progress`, async (progress) => {
+        const progressPath = `${this._getJobPath(jobId)}/state/outputs/progress`;
+        this._trackWatch(jobState, progressPath);
+        storage.watch(progressPath, async (progress) => {
             if (progress !== null && progress !== undefined) {
                 jobState.progress = progress;
                 // parseState는 _watchBoundedContexts에서만 호출됨
@@ -241,7 +274,9 @@ class BoundedContextLangGraphProxy {
         });
         
         // currentGeneratedLength 감시
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/currentGeneratedLength`, async (currentGeneratedLength) => {
+        const lengthPath = `${this._getJobPath(jobId)}/state/outputs/currentGeneratedLength`;
+        this._trackWatch(jobState, lengthPath);
+        storage.watch(lengthPath, async (currentGeneratedLength) => {
             if (currentGeneratedLength !== null && currentGeneratedLength !== undefined) {
                 jobState.currentGeneratedLength = currentGeneratedLength;
                 await parseState();
@@ -253,7 +288,9 @@ class BoundedContextLangGraphProxy {
      * Bounded Contexts 감시
      */
     static _watchBoundedContexts(storage, jobId, jobState, parseState) {
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/boundedContexts`, async (boundedContexts) => {
+        const path = `${this._getJobPath(jobId)}/state/outputs/boundedContexts`;
+        this._trackWatch(jobState, path);
+        storage.watch(path, async (boundedContexts) => {
             if (boundedContexts) {
                 jobState.boundedContexts = this._restoreArrayFromFirebase(boundedContexts);
                 
@@ -284,7 +321,9 @@ class BoundedContextLangGraphProxy {
      * 로그 감시
      */
     static _watchJobLogs(storage, jobId, jobState, parseState) {
-        storage.watch_added(`${this._getJobPath(jobId)}/state/outputs/logs`, null, async (log) => {
+        const path = `${this._getJobPath(jobId)}/state/outputs/logs`;
+        this._trackWatch(jobState, path);
+        storage.watch_added(path, null, async (log) => {
             if (!log) return;
             
             const restoredLog = this._restoreDataFromFirebase(log);

@@ -87,10 +87,27 @@ class DDLFieldsLangGraphProxy {
             progress: 0,
             isCompleted: false,
             isFailed: false,
-            error: ''
+            error: '',
+            _watchedPaths: new Set(),
+            _watchersCleaned: false
         };
         
         return accumulatedOutputState;
+    }
+
+    static _trackWatch(jobState, path) {
+        if (jobState && jobState._watchedPaths) {
+            jobState._watchedPaths.add(path);
+        }
+    }
+
+    static _cleanupWatchers(storage, jobState) {
+        if (!jobState || !jobState._watchedPaths || jobState._watchersCleaned) return;
+        jobState._watchersCleaned = true;
+        for (const path of jobState._watchedPaths) {
+            try { storage.watch_off(path); } catch (e) { /* noop */ }
+        }
+        jobState._watchedPaths.clear();
     }
 
     /**
@@ -112,10 +129,13 @@ class DDLFieldsLangGraphProxy {
             }
             
             await this._parseAndNotifyJobState(jobState, callbacks);
+            if (jobState.isCompleted || jobState.isFailed) {
+                this._cleanupWatchers(storage, jobState);
+            }
         };
         
         // 대기 중인 작업 수 감시
-        this._watchWaitingJobCount(storage, jobId, callbacks.onWaiting);
+        this._watchWaitingJobCount(storage, jobId, jobState, callbacks.onWaiting);
         
         // 작업 상태 감시 (완료/실패)
         this._watchJobStatus(storage, jobId, jobState, callbacks.onFailed, parseState);
@@ -136,8 +156,10 @@ class DDLFieldsLangGraphProxy {
     /**
      * 대기 중인 작업 수 감시
      */
-    static _watchWaitingJobCount(storage, jobId, onWaiting) {
-        storage.watch(`${this._getRequestJobPath(jobId)}/waitingJobCount`, async (count) => {
+    static _watchWaitingJobCount(storage, jobId, jobState, onWaiting) {
+        const path = `${this._getRequestJobPath(jobId)}/waitingJobCount`;
+        this._trackWatch(jobState, path);
+        storage.watch(path, async (count) => {
             if (count !== null && count !== undefined) {
                 await onWaiting(count);
             }
@@ -149,7 +171,9 @@ class DDLFieldsLangGraphProxy {
      */
     static _watchJobStatus(storage, jobId, jobState, onFailed, parseState) {
         // 완료 여부 감시
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/isCompleted`, async (isCompleted) => {
+        const completedPath = `${this._getJobPath(jobId)}/state/outputs/isCompleted`;
+        this._trackWatch(jobState, completedPath);
+        storage.watch(completedPath, async (isCompleted) => {
             if (isCompleted === true) {
                 jobState.isCompleted = true;
                 console.log(`[DDLFieldsProxy] ⏰ isCompleted triggered, calling parseState once`);
@@ -158,7 +182,9 @@ class DDLFieldsLangGraphProxy {
         });
         
         // 실패 여부 감시
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/isFailed`, async (isFailed) => {
+        const failedPath = `${this._getJobPath(jobId)}/state/outputs/isFailed`;
+        this._trackWatch(jobState, failedPath);
+        storage.watch(failedPath, async (isFailed) => {
             if (isFailed === true) {
                 jobState.isFailed = true;
                 const errorMsg = jobState.error || 'Job failed';
@@ -166,6 +192,7 @@ class DDLFieldsLangGraphProxy {
                 if (onFailed) {
                     await onFailed(errorMsg);
                 }
+                this._cleanupWatchers(storage, jobState);
             }
         });
     }
@@ -174,7 +201,9 @@ class DDLFieldsLangGraphProxy {
      * 진행률 감시
      */
     static _watchJobProgress(storage, jobId, jobState, parseState) {
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/progress`, async (progress) => {
+        const path = `${this._getJobPath(jobId)}/state/outputs/progress`;
+        this._trackWatch(jobState, path);
+        storage.watch(path, async (progress) => {
             if (progress !== null && progress !== undefined) {
                 jobState.progress = progress;
                 await parseState();
@@ -186,7 +215,9 @@ class DDLFieldsLangGraphProxy {
      * Inference 감시
      */
     static _watchInference(storage, jobId, jobState, parseState) {
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/inference`, async (inference) => {
+        const path = `${this._getJobPath(jobId)}/state/outputs/inference`;
+        this._trackWatch(jobState, path);
+        storage.watch(path, async (inference) => {
             if (inference) {
                 jobState.inference = inference;
                 await parseState();
@@ -198,7 +229,9 @@ class DDLFieldsLangGraphProxy {
      * AggregateFieldAssignments 감시
      */
     static _watchFieldAssignments(storage, jobId, jobState, parseState) {
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/aggregateFieldAssignments`, async (assignments) => {
+        const path = `${this._getJobPath(jobId)}/state/outputs/aggregateFieldAssignments`;
+        this._trackWatch(jobState, path);
+        storage.watch(path, async (assignments) => {
             if (assignments) {
                 console.log(`[DDLFieldsProxy] 📝 Field assignments updated:`, assignments);
                 jobState.aggregateFieldAssignments = this._restoreArrayFromFirebase(assignments);
@@ -211,7 +244,9 @@ class DDLFieldsLangGraphProxy {
      * 로그 감시
      */
     static _watchJobLogs(storage, jobId, jobState, parseState) {
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/logs`, async (logs) => {
+        const path = `${this._getJobPath(jobId)}/state/outputs/logs`;
+        this._trackWatch(jobState, path);
+        storage.watch(path, async (logs) => {
             if (logs) {
                 jobState.logs = this._restoreArrayFromFirebase(logs);
                 await parseState();

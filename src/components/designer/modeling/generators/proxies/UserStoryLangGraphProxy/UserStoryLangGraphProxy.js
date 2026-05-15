@@ -122,18 +122,40 @@ class UserStoryLangGraphProxy {
         if (!accumulatedOutputState.error) {
             accumulatedOutputState.error = '';
         }
+        accumulatedOutputState._watchedPaths = new Set();
+        accumulatedOutputState._watchersCleaned = false;
         
         return accumulatedOutputState;
+    }
+
+    static _trackWatch(jobState, path) {
+        if (jobState && jobState._watchedPaths) {
+            jobState._watchedPaths.add(path);
+        }
+    }
+
+    static _cleanupWatchers(storage, jobState) {
+        if (!jobState || !jobState._watchedPaths || jobState._watchersCleaned) return;
+        jobState._watchersCleaned = true;
+        for (const path of jobState._watchedPaths) {
+            try { storage.watch_off(path); } catch (e) { /* noop */ }
+        }
+        jobState._watchedPaths.clear();
     }
 
     /**
      * 모든 워처 설정
      */
     static _setupJobWatchers(storage, jobId, jobState, callbacks) {
-        const parseState = async () => await this._parseAndNotifyJobState(jobState, callbacks);
+        const parseState = async () => {
+            await this._parseAndNotifyJobState(jobState, callbacks);
+            if (jobState.isCompleted || jobState.isFailed) {
+                this._cleanupWatchers(storage, jobState);
+            }
+        };
         
         // 대기 중인 작업 수 감시
-        this._watchWaitingJobCount(storage, jobId, callbacks.onWaiting);
+        this._watchWaitingJobCount(storage, jobId, jobState, callbacks.onWaiting);
         
         // 작업 상태 감시 (완료/실패)
         this._watchJobStatus(storage, jobId, jobState, callbacks.onFailed, parseState);
@@ -151,8 +173,10 @@ class UserStoryLangGraphProxy {
     /**
      * 대기 중인 작업 수 감시
      */
-    static _watchWaitingJobCount(storage, jobId, onWaiting) {
-        storage.watch(`${this._getRequestJobPath(jobId)}/waitingJobCount`, async (waitingJobCount) => {
+    static _watchWaitingJobCount(storage, jobId, jobState, onWaiting) {
+        const path = `${this._getRequestJobPath(jobId)}/waitingJobCount`;
+        this._trackWatch(jobState, path);
+        storage.watch(path, async (waitingJobCount) => {
             if (waitingJobCount && waitingJobCount > 0) {
                 await onWaiting(waitingJobCount);
             }
@@ -164,7 +188,9 @@ class UserStoryLangGraphProxy {
      */
     static _watchJobStatus(storage, jobId, jobState, onFailed, parseState) {
         // 실패 상태 감시
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/isFailed`, async (isFailed) => {
+        const failedPath = `${this._getJobPath(jobId)}/state/outputs/isFailed`;
+        this._trackWatch(jobState, failedPath);
+        storage.watch(failedPath, async (isFailed) => {
             if (!isFailed) return;
             
             jobState.isFailed = isFailed;
@@ -172,10 +198,13 @@ class UserStoryLangGraphProxy {
             
             const errorMsg = jobState.error || "Unknown error occurred";
             await onFailed(errorMsg);
+            this._cleanupWatchers(storage, jobState);
         });
 
         // 완료 상태 감시
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/isCompleted`, async (isCompleted) => {
+        const completedPath = `${this._getJobPath(jobId)}/state/outputs/isCompleted`;
+        this._trackWatch(jobState, completedPath);
+        storage.watch(completedPath, async (isCompleted) => {
             if (!isCompleted) return;
             
             jobState.isCompleted = isCompleted;
@@ -183,7 +212,9 @@ class UserStoryLangGraphProxy {
         });
         
         // 에러 메시지 감시
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/error`, async (error) => {
+        const errorPath = `${this._getJobPath(jobId)}/state/outputs/error`;
+        this._trackWatch(jobState, errorPath);
+        storage.watch(errorPath, async (error) => {
             if (error) {
                 jobState.error = error;
             }
@@ -194,7 +225,9 @@ class UserStoryLangGraphProxy {
      * 작업 진행률 감시
      */
     static _watchJobProgress(storage, jobId, jobState, parseState) {
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/progress`, async (progress) => {
+        const path = `${this._getJobPath(jobId)}/state/outputs/progress`;
+        this._trackWatch(jobState, path);
+        storage.watch(path, async (progress) => {
             if (progress !== null && progress !== undefined) {
                 jobState.progress = progress;
                 await parseState();
@@ -207,7 +240,9 @@ class UserStoryLangGraphProxy {
      */
     static _watchUserStories(storage, jobId, jobState, parseState) {
         // User Stories 배열 전체 감시 (camelCase)
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/userStories`, async (userStories) => {
+        const userStoriesPath = `${this._getJobPath(jobId)}/state/outputs/userStories`;
+        this._trackWatch(jobState, userStoriesPath);
+        storage.watch(userStoriesPath, async (userStories) => {
             if (userStories) {
                 jobState.userStories = this._restoreArrayFromFirebase(userStories);
                 await parseState();
@@ -215,7 +250,9 @@ class UserStoryLangGraphProxy {
         });
         
         // Actors 감시
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/actors`, async (actors) => {
+        const actorsPath = `${this._getJobPath(jobId)}/state/outputs/actors`;
+        this._trackWatch(jobState, actorsPath);
+        storage.watch(actorsPath, async (actors) => {
             if (actors) {
                 jobState.actors = this._restoreArrayFromFirebase(actors);
                 await parseState();
@@ -223,7 +260,9 @@ class UserStoryLangGraphProxy {
         });
         
         // Business Rules 감시
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/businessRules`, async (businessRules) => {
+        const businessRulesPath = `${this._getJobPath(jobId)}/state/outputs/businessRules`;
+        this._trackWatch(jobState, businessRulesPath);
+        storage.watch(businessRulesPath, async (businessRules) => {
             if (businessRules) {
                 jobState.businessRules = this._restoreArrayFromFirebase(businessRules);
                 await parseState();
@@ -231,7 +270,9 @@ class UserStoryLangGraphProxy {
         });
         
         // Bounded Contexts 감시
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/boundedContexts`, async (boundedContexts) => {
+        const boundedContextsPath = `${this._getJobPath(jobId)}/state/outputs/boundedContexts`;
+        this._trackWatch(jobState, boundedContextsPath);
+        storage.watch(boundedContextsPath, async (boundedContexts) => {
             if (boundedContexts) {
                 jobState.boundedContexts = this._restoreArrayFromFirebase(boundedContexts);
                 await parseState();
@@ -239,7 +280,9 @@ class UserStoryLangGraphProxy {
         });
         
         // Text Response 감시 (텍스트 모드용)
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/textResponse`, async (textResponse) => {
+        const textResponsePath = `${this._getJobPath(jobId)}/state/outputs/textResponse`;
+        this._trackWatch(jobState, textResponsePath);
+        storage.watch(textResponsePath, async (textResponse) => {
             if (textResponse) {
                 jobState.textResponse = textResponse;
                 await parseState();
@@ -251,7 +294,9 @@ class UserStoryLangGraphProxy {
      * 로그 감시
      */
     static _watchJobLogs(storage, jobId, jobState, parseState) {
-        storage.watch_added(`${this._getJobPath(jobId)}/state/outputs/logs`, null, async (log) => {
+        const path = `${this._getJobPath(jobId)}/state/outputs/logs`;
+        this._trackWatch(jobState, path);
+        storage.watch_added(path, null, async (log) => {
             if (!log) return;
             
             const restoredLog = this._restoreDataFromFirebase(log);
