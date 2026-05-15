@@ -126,14 +126,15 @@
                             return;
                         }
 
-                        // userLists는 크기가 상대적으로 작지만, 안전하게 중첩 객체 로딩을 줄임
-                        // child_objects=false는 "재귀 금지"의 완전한 보장은 아니지만 payload 감소에 도움됨
-                        const options = {};
-                        if (path && path.includes('userLists')) {
-                            options.child_objects = false;
-                        }
-
-                        reference.get(options, snapshot => {
+                        // userLists 경로는 두 종류의 트리거가 채움:
+                        //   - Trigger 1: userLists/{uid}/(mine|share|share_first|share_{type})/{projectId} 에 top-level 스칼라
+                        //   - Trigger 2: userLists/{uid}/mine/{projectId}/information 에 nested object
+                        // 이전엔 child_objects:false 로 nested 를 잘라냈는데, Trigger 1 이 silent catch 로
+                        // 실패하는 케이스(예: acebase/main.js:241 beforeInformation ReferenceError)에선
+                        // Trigger 2 의 nested 만 남아 있는데 그걸 잘라내면 data[key] = {} 가 되어 setListByAcebase
+                        // 의 `item.type` 필터에 걸려 Mine/Share/Public 어디에도 안 보이게 됨.
+                        // userLists 데이터는 크지 않으므로 그냥 통째 읽음.
+                        reference.get(snapshot => {
                             if (snapshot) {
                                 resolve(snapshot)
                             } else {
