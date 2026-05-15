@@ -564,13 +564,18 @@
 
                     draftOptions.map(option => {  
                         if(!option.boundedContext || option.defaultOptionIndex == null) return
+                        if(!Array.isArray(option.options) || option.options.length === 0) return
                         
                         if(this.selectedCardIndex[option.boundedContext] == null)
                             this.selectedCardIndex[option.boundedContext] = option.defaultOptionIndex
                         if(this.selectedCardIndex[option.boundedContext] >= option.options.length)
                             this.selectedCardIndex[option.boundedContext] = option.options.length - 1
+                        if(this.selectedCardIndex[option.boundedContext] < 0)
+                            this.selectedCardIndex[option.boundedContext] = 0
 
-                        const selectedOption = JSON.parse(JSON.stringify(option.options[this.selectedCardIndex[option.boundedContext]]));
+                        const selectedRawOption = option.options[this.selectedCardIndex[option.boundedContext]];
+                        if(!selectedRawOption) return
+                        const selectedOption = JSON.parse(JSON.stringify(selectedRawOption));
                         
                         // 표준 변환된 경우: boundedContext 정보를 객체 형태로 추가 (원본 구조와 동일하게)
                         if (this.isStandardTransformed) {
