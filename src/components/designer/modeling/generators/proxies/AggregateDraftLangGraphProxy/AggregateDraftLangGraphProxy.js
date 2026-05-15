@@ -149,9 +149,8 @@ class AggregateDraftLangGraphProxy {
         
         // Inference 감시
         this._watchInference(storage, jobId, jobState, parseState);
-        
-        // Options 감시
-        this._watchOptions(storage, jobId, jobState, parseState);
+
+        // options 는 완료 시에만 로드 (large-tree value watch 회피 — AceBase #49)
         
         // 로그 감시
         this._watchJobLogs(storage, jobId, jobState, parseState);
@@ -207,26 +206,39 @@ class AggregateDraftLangGraphProxy {
                 completedCalled = true;
                 jobState.isCompleted = isCompleted;
 
-                // 완료 시 전체 outputs 객체 읽기 — DB 가 일시적으로 끊긴 상태일 수 있어 retry 버전 사용
-                const outputs = await storage.getObjectWithRetry(`${this._getJobPath(jobId)}/state/outputs`);
+                const outputsPath = `${this._getJobPath(jobId)}/state/outputs`;
+                const [
+                    boundedContext,
+                    inference,
+                    defaultOptionIndex,
+                    conclusions,
+                    optionsChunked,
+                    optionsChunkCount
+                ] = await Promise.all([
+                    storage.getObjectWithRetry(`${outputsPath}/boundedContext`),
+                    storage.getObjectWithRetry(`${outputsPath}/inference`),
+                    storage.getObjectWithRetry(`${outputsPath}/defaultOptionIndex`),
+                    storage.getObjectWithRetry(`${outputsPath}/conclusions`),
+                    storage.getObjectWithRetry(`${outputsPath}/optionsChunked`),
+                    storage.getObjectWithRetry(`${outputsPath}/optionsChunkCount`)
+                ]);
 
-                if (outputs) {
-                    if (!jobState.boundedContext && outputs.boundedContext) {
-                        jobState.boundedContext = outputs.boundedContext;
-                    }
-                    if (outputs.inference) {
-                        jobState.inference = outputs.inference;
-                    }
-                    if (outputs.options) {
-                        jobState.options = this._restoreArrayFromFirebase(outputs.options);
-                    }
-                    if (outputs.defaultOptionIndex !== null && outputs.defaultOptionIndex !== undefined) {
-                        jobState.defaultOptionIndex = outputs.defaultOptionIndex;
-                    }
-                    if (outputs.conclusions) {
-                        jobState.conclusions = outputs.conclusions;
-                    }
+                if (!jobState.boundedContext && boundedContext) {
+                    jobState.boundedContext = boundedContext;
                 }
+                if (inference) {
+                    jobState.inference = inference;
+                }
+                if (defaultOptionIndex !== null && defaultOptionIndex !== undefined) {
+                    jobState.defaultOptionIndex = defaultOptionIndex;
+                }
+                if (conclusions) {
+                    jobState.conclusions = conclusions;
+                }
+                jobState.options = await this._loadJobOptions(storage, jobId, {
+                    optionsChunked,
+                    optionsChunkCount
+                });
 
                 await parseState();
 
@@ -273,17 +285,60 @@ class AggregateDraftLangGraphProxy {
     }
 
     /**
-     * Options 감시
+     * 완료 시 options 로드 — chunked 이면 optionsChunks 만, 아니면 options 경로만 읽음.
      */
-    static _watchOptions(storage, jobId, jobState, parseState) {
-        const path = `${this._getJobPath(jobId)}/state/outputs/options`;
-        this._trackWatch(jobState, path);
-        storage.watch(path, async (options) => {
-            if (options) {
-                jobState.options = this._restoreArrayFromFirebase(options);
-                await parseState();
+    static async _loadJobOptions(storage, jobId, outputMeta) {
+        const outputsPath = `${this._getJobPath(jobId)}/state/outputs`;
+        const meta = outputMeta || {};
+
+        if (meta.optionsChunked) {
+            const chunkCount = meta.optionsChunkCount;
+            for (let attempt = 0; attempt < 3; attempt++) {
+                const optionsChunks = await storage.getObjectWithRetry(`${outputsPath}/optionsChunks`);
+                const restored = this._restoreChunkedOptions(optionsChunks, chunkCount);
+                if (restored.length > 0 || !chunkCount) {
+                    return restored;
+                }
+                if (attempt < 2) {
+                    await new Promise(r => setTimeout(r, 400 * (attempt + 1)));
+                }
             }
-        });
+            return [];
+        }
+
+        const options = await storage.getObjectWithRetry(`${outputsPath}/options`);
+        return this._restoreArrayFromFirebase(options);
+    }
+
+    static _restoreChunkedOptions(optionsChunks, expectedCount) {
+        try {
+            if (!optionsChunks || typeof optionsChunks !== 'object') return [];
+            const chunkKeys = Object.keys(optionsChunks)
+                .filter(k => /^\d+$/.test(String(k)))
+                .sort((a, b) => Number(a) - Number(b));
+            if (expectedCount && chunkKeys.length < expectedCount) {
+                // 일부 chunk 누락 시 빈 배열로 처리 (완료 이후 재조회 시 복구 가능)
+                return [];
+            }
+
+            const jsonText = chunkKeys.map(k => {
+                const chunkNode = optionsChunks[k];
+                if (chunkNode && typeof chunkNode === 'object' && chunkNode.data !== undefined) {
+                    return String(chunkNode.data);
+                }
+                return String(chunkNode || '');
+            }).join('');
+
+            if (!jsonText) return [];
+            const parsed = JSON.parse(jsonText);
+            if (Array.isArray(parsed)) {
+                return parsed.map(item => this._restoreDataFromFirebase(item));
+            }
+            return [];
+        } catch (e) {
+            console.warn('[AggregateDraftLangGraphProxy] Failed to restore chunked options:', e);
+            return [];
+        }
     }
 
     /**
