@@ -63,6 +63,7 @@ class TraceabilityLangGraphProxy {
             isCompleted: false,
             isFailed: false,
             error: '',
+            _completionReady: false,
             // watcher 누수 방지 — 완료/실패 시 일괄 watch_off.
             _watchedPaths: new Set(),
             _watchersCleaned: false
@@ -89,6 +90,8 @@ class TraceabilityLangGraphProxy {
 
         const parseState = async () => {
             if (callbackInvoked) return
+            // 완료 이벤트만 먼저 왔고 payload가 아직 안 채워진 경우 완료 콜백을 지연한다.
+            if (jobState.isCompleted && !jobState._completionReady) return
             if (jobState.isCompleted) callbackInvoked = true
             await this._parseAndNotifyJobState(jobState, callbacks)
             if (jobState.isCompleted || jobState.isFailed) {
@@ -143,6 +146,22 @@ class TraceabilityLangGraphProxy {
         storage.watch(completedPath, async (isCompleted) => {
             if (isCompleted === true) {
                 jobState.isCompleted = true
+                const outputs = await storage.getObjectWithRetry(`${this._getJobPath(jobId)}/state/outputs`)
+                if (outputs) {
+                    if (outputs.draftTraceMap) {
+                        jobState.draftTraceMap = outputs.draftTraceMap
+                    }
+                    if (outputs.inference) {
+                        jobState.inference = outputs.inference
+                    }
+                    if (outputs.logs) {
+                        jobState.logs = outputs.logs
+                    }
+                    if (outputs.progress !== null && outputs.progress !== undefined) {
+                        jobState.progress = outputs.progress
+                    }
+                }
+                jobState._completionReady = true
                 await parseState()
             }
         })
@@ -202,6 +221,13 @@ class TraceabilityLangGraphProxy {
     }
 
     static async _parseAndNotifyJobState(jobState, callbacks) {
+        const draftTraceMap = jobState.draftTraceMap || {}
+        const safeDraftTraceMap = {
+            aggregates: Array.isArray(draftTraceMap.aggregates) ? draftTraceMap.aggregates : [],
+            enumerations: Array.isArray(draftTraceMap.enumerations) ? draftTraceMap.enumerations : [],
+            valueObjects: Array.isArray(draftTraceMap.valueObjects) ? draftTraceMap.valueObjects : []
+        }
+
         // Update 콜백 (진행 중)
         if (callbacks.onUpdate && jobState.progress < 100) {
             await callbacks.onUpdate({
@@ -213,7 +239,7 @@ class TraceabilityLangGraphProxy {
         // Complete 콜백 (완료 시)
         if (callbacks.onComplete && jobState.isCompleted) {
             await callbacks.onComplete({
-                draftTraceMap: jobState.draftTraceMap,
+                draftTraceMap: safeDraftTraceMap,
                 inference: jobState.inference,
                 logs: jobState.logs,
                 progress: jobState.progress,

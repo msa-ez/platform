@@ -443,6 +443,8 @@
 
                 try{
                     var reference = window.$acebase.ref(path)
+                    var isJobsPath = path.startsWith('jobs/') || path.includes('/jobs/') || path.startsWith('db://jobs/')
+                        || path.startsWith('requestedJobs/') || path.includes('/requestedJobs/') || path.startsWith('db://requestedJobs/');
 
                     if(metadata){
                         // metadata all null check
@@ -544,6 +546,12 @@
 
                     // 1) 먼저 child_added 구독 등록 (레이스 컨디션 방지)
                     reference.on('child_added', handler);
+
+                    // jobs/requestedJobs 계열은 초기 list 재조회가 reconnect/중복 등록 상황에서
+                    // 대량 요청 burst를 만들기 쉬워 child_added 스트림만 사용한다.
+                    if (isJobsPath) {
+                        return;
+                    }
                     
                     // 2) 그 다음 list로 초기 데이터 로드 (dedup으로 중복 제거)
                     me.list(path, metadata).then(function(items) {

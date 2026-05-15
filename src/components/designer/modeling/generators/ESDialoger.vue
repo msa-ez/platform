@@ -1178,17 +1178,21 @@ import { value } from 'jsonpath';
             }
 
             this.generators.DraftGeneratorByFunctions._getXAIDtoDraftOptions = (output, targetBoundedContext, description, inference) => {
+                const safeOptions = (output && Array.isArray(output.options)) ? output.options : []
+                const safeDefaultOptionIndex = Number.isInteger(output && output.defaultOptionIndex)
+                    ? output.defaultOptionIndex
+                    : 0
                 return {
                     boundedContext: targetBoundedContext.name,
                     boundedContextAlias: targetBoundedContext.displayName,
                     description: description,
-                    options: (output.options) ? output.options.map(option => ({
+                    options: safeOptions.map(option => ({
                         ...option,
                         boundedContext: targetBoundedContext,
                         description: description
-                    })) : [],
-                    conclusions: output.conclusions,
-                    defaultOptionIndex: output.defaultOptionIndex,
+                    })),
+                    conclusions: output ? output.conclusions : undefined,
+                    defaultOptionIndex: safeDefaultOptionIndex,
                     inference: inference
                 }
             }

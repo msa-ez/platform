@@ -68,8 +68,13 @@ class DraftGeneratorByFunctions extends FormattedJSONAIGenerator{
     }
 
     static outputToAccumulatedDrafts(output, targetBoundedContext){
+        const options = (output && Array.isArray(output.options)) ? output.options : []
+        const defaultOptionIndex = Number.isInteger(output && output.defaultOptionIndex) ? output.defaultOptionIndex : 0
+        const selectedOption = options[defaultOptionIndex] || options[0]
+        const structure = (selectedOption && Array.isArray(selectedOption.structure)) ? selectedOption.structure : []
+
         return {
-            [targetBoundedContext.name]: output.options[output.defaultOptionIndex].structure
+            [targetBoundedContext.name]: structure
         }
     }
 
