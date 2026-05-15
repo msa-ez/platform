@@ -125,9 +125,28 @@
             
                 <v-row class="ma-0 pa-4 pt-0">
                     <v-spacer></v-spacer>
-                    <div v-if="isSummarizeStarted" style="margin-left: 2%; margin-bottom: 1%;">
-                        <span>{{ $t('ESDialoger.summarizing') }}</span>
-                        <v-progress-circular color="primary" indeterminate></v-progress-circular>
+                    <div v-if="isSummarizeStarted" style="margin-left: 2%; margin-bottom: 1%; display: flex; align-items: center; gap: 8px;">
+                        <v-progress-circular
+                            v-if="!summarizeProgress || !summarizeProgress.totalChunks"
+                            color="primary"
+                            indeterminate
+                            size="20"
+                        ></v-progress-circular>
+                        <v-progress-circular
+                            v-else
+                            color="primary"
+                            :value="summarizePercent"
+                            size="32"
+                            :width="3"
+                        >
+                            <span style="font-size: 9px;">{{ summarizePercent }}%</span>
+                        </v-progress-circular>
+                        <div style="display: flex; flex-direction: column;">
+                            <span style="font-weight: 500;">{{ $t('ESDialoger.summarizing') }}</span>
+                            <span v-if="summarizeProgress && summarizeProgress.totalChunks" style="font-size: 12px; color: rgba(0,0,0,0.6);">
+                                {{ summarizeProgressLabel }}
+                            </span>
+                        </div>
                     </div>
                     <v-btn @click="onConfirm"
                         color="primary"
@@ -153,7 +172,14 @@ export default {
         recommendedBoundedContextsNumber: {type: Number, default: 3},
         reasonOfRecommendedBoundedContextsNumber: String,
         generateOption: Object,
-        isEditable: Boolean
+        isEditable: Boolean,
+        // RecursiveRequirementsSummarizerLangGraph 가 청크 단위로 갱신:
+        // { iteration, maxIterations, completedChunks, totalChunks } | null
+        summarizeProgress: {
+            type: Object,
+            required: false,
+            default: null
+        }
     },
 
     data() {
@@ -182,8 +208,24 @@ export default {
 
     computed: {
         isValid() {
-            return this.localOptions.numberOfBCs > 0 && 
+            return this.localOptions.numberOfBCs > 0 &&
                    this.localOptions.selectedAspects.length > 0;
+        },
+
+        summarizePercent() {
+            const p = this.summarizeProgress;
+            if (!p || !p.totalChunks) return 0;
+            return Math.round((p.completedChunks / p.totalChunks) * 100);
+        },
+
+        summarizeProgressLabel() {
+            const p = this.summarizeProgress;
+            if (!p || !p.totalChunks) return '';
+            return this.$t('ESDialoger.summarizingProgress', {
+                iteration: p.iteration,
+                completed: p.completedChunks,
+                total: p.totalChunks
+            });
         },
 
         bcNumberError() {

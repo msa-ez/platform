@@ -166,16 +166,25 @@ class RecursiveRequirementsSummarizerLangGraph extends RequirementsSummarizer {
     /**
      * 청크 배열을 제한된 동시성으로 병렬 처리. 결과 순서는 인덱스 기준 보존.
      * 청크 1개라도 실패하면 즉시 throw (Promise.all 의 fail-fast 의미).
+     *
+     * 매 청크 완료마다 client.updateSummarizeProgress 가 있으면 진행률을 알림.
+     * (BCGenerationOption 의 "요구사항을 분석 및 요약하고 있습니다..." 표시를 청크 진행률로 대체)
      */
     async _processChunksParallel(chunks, iteration, verbose) {
         const results = new Array(chunks.length);
         let nextIdx = 0;
+        let completed = 0;
+
+        // 0/N 초기 상태로 한 번 알림 (iteration 시작 시점에 UI 가 즉시 갱신되도록)
+        this._emitProgress(iteration, 0, chunks.length);
 
         const worker = async () => {
             while (true) {
                 const i = nextIdx++;
                 if (i >= chunks.length) return;
                 results[i] = await this._runChunkJob(chunks[i], i, chunks.length, iteration, verbose);
+                completed++;
+                this._emitProgress(iteration, completed, chunks.length);
             }
         };
 
@@ -183,6 +192,20 @@ class RecursiveRequirementsSummarizerLangGraph extends RequirementsSummarizer {
         await Promise.all(Array.from({ length: workerCount }, () => worker()));
 
         return results;
+    }
+
+    _emitProgress(iteration, completed, total) {
+        if (!this.client || typeof this.client.updateSummarizeProgress !== 'function') return;
+        try {
+            this.client.updateSummarizeProgress({
+                iteration: iteration,
+                maxIterations: this.maxIterations,
+                completedChunks: completed,
+                totalChunks: total
+            });
+        } catch (e) {
+            console.warn('[SummarizerLangGraph] updateSummarizeProgress callback failed:', e);
+        }
     }
 
     /**

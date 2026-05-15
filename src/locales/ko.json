@@ -98,6 +98,8 @@
     "validateRequirements": "요구사항 검증",
     "createBoundedContext": "Bounded Context 생성",
     "summarizing": "요구사항을 분석 및 요약하고 있습니다...",
+    "summarizingProgress": "{iteration}차 요약 진행 중 ({completed}/{total} 청크)",
+    "stitchingEvents": "이벤트 흐름 연결 중...",
     "userStory": "유저스토리",
     "userStoryText": "유저스토리를 입력해주세요.",
     "generateUserStory": "유저스토리를 자동 생성하시겠습니까?",
