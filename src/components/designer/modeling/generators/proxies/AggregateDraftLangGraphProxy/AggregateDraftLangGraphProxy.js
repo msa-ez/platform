@@ -181,9 +181,9 @@ class AggregateDraftLangGraphProxy {
                 jobState._pollAttempts += 1;
                 const [boundedContext, inference, defaultOptionIndex, conclusions, optionsChunked, optionsChunkCount] = await Promise.all([
                     storage.getObjectWithRetry(`${outputsPath}/boundedContext`),
-                    storage.getObjectWithRetry(`${outputsPath}/inference`),
+                    this._getPrimitiveWithRetry(storage, `${outputsPath}/inference`),
                     storage.getObjectWithRetry(`${outputsPath}/defaultOptionIndex`),
-                    storage.getObjectWithRetry(`${outputsPath}/conclusions`),
+                    this._getPrimitiveWithRetry(storage, `${outputsPath}/conclusions`),
                     storage.getObjectWithRetry(`${outputsPath}/optionsChunked`),
                     storage.getObjectWithRetry(`${outputsPath}/optionsChunkCount`)
                 ]);
@@ -228,6 +228,25 @@ class AggregateDraftLangGraphProxy {
         setTimeout(() => {
             pollCompletion();
         }, 500);
+    }
+
+    static async _getPrimitiveWithRetry(storage, path, maxRetries = 10) {
+        let delay = 200;
+        for (let attempt = 0; attempt < maxRetries; attempt++) {
+            try {
+                const value = await storage.getString(path);
+                if (value !== undefined && value !== null) {
+                    return value;
+                }
+            } catch (e) {
+                // noop: retry
+            }
+            if (attempt < maxRetries - 1) {
+                await new Promise(r => setTimeout(r, delay));
+                delay = Math.min(2000, Math.round(delay * 1.5));
+            }
+        }
+        return undefined;
     }
 
     /**
@@ -290,9 +309,9 @@ class AggregateDraftLangGraphProxy {
                     optionsChunkCount
                 ] = await Promise.all([
                     storage.getObjectWithRetry(`${outputsPath}/boundedContext`),
-                    storage.getObjectWithRetry(`${outputsPath}/inference`),
+                    this._getPrimitiveWithRetry(storage, `${outputsPath}/inference`),
                     storage.getObjectWithRetry(`${outputsPath}/defaultOptionIndex`),
-                    storage.getObjectWithRetry(`${outputsPath}/conclusions`),
+                    this._getPrimitiveWithRetry(storage, `${outputsPath}/conclusions`),
                     storage.getObjectWithRetry(`${outputsPath}/optionsChunked`),
                     storage.getObjectWithRetry(`${outputsPath}/optionsChunkCount`)
                 ]);
