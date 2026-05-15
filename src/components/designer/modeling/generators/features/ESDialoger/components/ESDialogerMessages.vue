@@ -152,7 +152,7 @@
                         class="auto-modeling-user-story-card" 
                         style="margin-top: 30px !important;"
                     >
-                        <RequirementAnalysis 
+                        <RequirementAnalysis
                             :analysisResult="message.content"
                             :isAnalizing="message.isAnalizing"
                             :isSummarizeStarted="message.isSummarizeStarted"
@@ -161,6 +161,7 @@
                             :processingRate="message.processingRate"
                             :isEditable="isEditable"
                             :currentGeneratedLength="message.currentGeneratedLength"
+                            :statusLabel="message.statusLabel"
                             @showBCGenerationOption="emitShowBCGenerationOption"
                             @stop="$emit('stop')"
                         />
@@ -180,6 +181,7 @@
                             :recommendedBoundedContextsNumber="message.recommendedBoundedContextsNumber"
                             :reasonOfRecommendedBoundedContextsNumber="message.reasonOfRecommendedBoundedContextsNumber"
                             :generateOption="message.generateOption"
+                            :summarizeProgress="message.summarizeProgress"
                             :isEditable="isEditable"
                             @setGenerateOption="(option, boolean) => $emit('setGenerateOption', option, boolean)"
                         ></BCGenerationOption>

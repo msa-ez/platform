@@ -98,6 +98,8 @@
     "validateRequirements": "Validate Requirements",
     "createBoundedContext": "Create Bounded Context",
     "summarizing": "Analyzing and summarizing requirements...",
+    "summarizingProgress": "Summarization pass {iteration} ({completed}/{total} chunks)",
+    "stitchingEvents": "Connecting event flows...",
     "userStory": "User Story",
     "userStoryText": "Please enter the user story.",
     "generateUserStory": "Would you like to generate the user story automatically?",

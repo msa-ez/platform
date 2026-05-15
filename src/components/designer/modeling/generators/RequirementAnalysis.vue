@@ -8,7 +8,8 @@
                     size="24"
                     class="mr-2"
                 ></v-progress-circular>
-                <span v-if="processingRate==0 || processingRate==100">{{ $t('RequirementAnalysis.validateRequirements') }} ({{ currentGeneratedLength }} Text generated.)</span>
+                <span v-if="statusLabel">{{ statusLabel }}</span>
+                <span v-else-if="processingRate==0 || processingRate==100">{{ $t('RequirementAnalysis.validateRequirements') }} ({{ currentGeneratedLength }} Text generated.)</span>
                 <span v-else>{{ $t('RequirementAnalysis.validateRequirements') }} ({{ processingRate }}%)</span>
                 <v-btn v-if="isAnalizing" text color="primary" @click="stop()">Stop</v-btn>
             </div>
@@ -218,6 +219,11 @@ export default {
             type: Number,
             required: false,
             default: 0
+        },
+        statusLabel: {
+            type: String,
+            required: false,
+            default: null
         }
     },
     data() {

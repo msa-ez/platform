@@ -1632,6 +1632,10 @@ import { value } from 'jsonpath';
                     isAnalizing: false,
                     isGeneratingBoundedContext: false,
                 },
+                // 요약 진행률 (RecursiveRequirementsSummarizerLangGraph 가 청크 단위로 갱신).
+                // null = 진행 정보 없음 (초기/완료 상태). BCGenerationOption 의 "분석 및 요약 중..." 메시지를
+                // 청크 진행률로 보강하는 데 사용.
+                summarizeProgress: null,
                 isStopped: false,
 
                 boundedContextVersion: null,
@@ -1837,6 +1841,7 @@ import { value } from 'jsonpath';
                                 await addPropertyWithDelay(newMessage, 'processingRate', msg.processingRate);
                                 await addPropertyWithDelay(newMessage, 'isEditable', msg.isEditable);
                                 await addPropertyWithDelay(newMessage, 'currentGeneratedLength', 0);
+                                await addPropertyWithDelay(newMessage, 'statusLabel', null);
                                 
                                 // content 객체 점진적 처리
                                 if (msg.content) {
@@ -1906,7 +1911,8 @@ import { value } from 'jsonpath';
                                 await addPropertyWithDelay(newMessage, 'recommendedBoundedContextsNumber', msg.recommendedBoundedContextsNumber);
                                 await addPropertyWithDelay(newMessage, 'reasonOfRecommendedBoundedContextsNumber', msg.reasonOfRecommendedBoundedContextsNumber);
                                 await addPropertyWithDelay(newMessage, 'isEditable', msg.isEditable);
-                                
+                                await addPropertyWithDelay(newMessage, 'summarizeProgress', null);
+
                                 this.bcGenerationOption = JSON.parse(JSON.stringify(msg.generateOption));
                                 break;
 
@@ -2179,13 +2185,36 @@ import { value } from 'jsonpath';
                             
                         } else {
                             me.generator.handleGenerationFinished(model);
-                            me.processingState.isAnalizing = false;
-                            me.processingRate = 0;
-                            me.updateMessageState(currentMessage.uniqueId, {
-                                content: me.generator.accumulatedResults,
-                                processingRate: me.processingRate
-                            });
-                            me.requirementsValidationResult = me.generator.accumulatedResults;
+
+                            // 마지막 청크 완료 직후엔 RecursiveRequirementsValidationGeneratorLangGraph 가
+                            // EventFlowStitcher 후속 처리(~30s)를 한 번 더 돌림. 그동안 isAnalizing 을 false 로
+                            // 떨어뜨리면 사용자가 unstitched(빈 nextEvents) 결과를 들고 다음 단계로 진행해버릴
+                            // 위험이 있어서, stitching 이 실행될 케이스는 진행 상태를 유지하고 statusLabel 만 갱신.
+                            // stitching 완료 후 _runFlowStitching 가 onGenerationSucceeded 를 다시 발사하는데,
+                            // 그 시점엔 currentChunkIndex == currentChunks.length 라 아래 분기를 안 탐 (finalize 분기를 탐).
+                            const isRecursiveLG = me.state.generator === "RecursiveRequirementsValidationGeneratorLangGraph";
+                            const willRunStitching = isRecursiveLG
+                                && me.generator.currentChunks
+                                && me.generator.currentChunks.length > 1
+                                && me.generator.currentChunkIndex === me.generator.currentChunks.length - 1;
+
+                            if (willRunStitching) {
+                                // 진행 상태 유지 (isAnalizing/processingRate 그대로) + stitching 단계 안내
+                                me.updateMessageState(currentMessage.uniqueId, {
+                                    content: me.generator.accumulatedResults,
+                                    processingRate: me.processingRate,
+                                    statusLabel: me.$t('ESDialoger.stitchingEvents')
+                                });
+                            } else {
+                                me.processingState.isAnalizing = false;
+                                me.processingRate = 0;
+                                me.updateMessageState(currentMessage.uniqueId, {
+                                    content: me.generator.accumulatedResults,
+                                    processingRate: me.processingRate,
+                                    statusLabel: null
+                                });
+                                me.requirementsValidationResult = me.generator.accumulatedResults;
+                            }
                         }
                     } else {
                         // 일반 검증인 경우 (기존 로직)
@@ -2671,7 +2700,7 @@ import { value } from 'jsonpath';
             async summarizeRequirements() {
                 // 로컬 스토리지에서 LangGraph 사용 여부 확인 (기본값: false)
                 const useLangGraph = localStorage.getItem('useLangGraph') === 'true';
-                
+
                 if (useLangGraph) {
                     this.generator = new RecursiveRequirementsSummarizerLangGraph(this);
                     this.state.generator = "RecursiveRequirementsSummarizerLangGraph";
@@ -2683,6 +2712,7 @@ import { value } from 'jsonpath';
                 }
 
                 this.processingState.isSummarizeStarted = true;
+                this.summarizeProgress = null;
 
                 try {
                     const summarizedResult = await this.generator.summarizeRecursively(this.projectInfo.usedUserStory);
@@ -2700,6 +2730,8 @@ import { value } from 'jsonpath';
                     console.log("최종 요약 결과: ", this.summarizedResult);
 
                     this.processingState.isSummarizeStarted = false;
+                    this.summarizeProgress = null;
+                    this._syncSummarizeProgressToMessage();
 
                     // BC 생성이 대기 중이었다면 진행
                     if (this.pendingBCGeneration) {
@@ -2709,6 +2741,27 @@ import { value } from 'jsonpath';
                 } catch (error) {
                     console.error('Summarization failed:', error);
                     this.processingState.isSummarizeStarted = false;
+                    this.summarizeProgress = null;
+                    this._syncSummarizeProgressToMessage();
+                }
+            },
+
+            /**
+             * RecursiveRequirementsSummarizerLangGraph 가 청크 완료마다 호출하는 콜백.
+             * progress = { iteration, maxIterations, completedChunks, totalChunks }
+             * BCGenerationOption 메시지에 진행 정보를 박아 화면 갱신.
+             */
+            updateSummarizeProgress(progress) {
+                this.summarizeProgress = progress;
+                this._syncSummarizeProgressToMessage();
+            },
+
+            _syncSummarizeProgressToMessage() {
+                const msg = this.messages.find(m => m.type === 'bcGenerationOption');
+                if (msg) {
+                    this.updateMessageState(msg.uniqueId, {
+                        summarizeProgress: this.summarizeProgress
+                    });
                 }
             },
 
@@ -3068,7 +3121,7 @@ import { value } from 'jsonpath';
                         message: feedback,
                         timestamp: new Date()
                     };
-                } else if(type === "processAnalysis") { 
+                } else if(type === "processAnalysis") {
                     return {
                         uniqueId: this.uuid(),
                         type: type,
@@ -3079,6 +3132,8 @@ import { value } from 'jsonpath';
                         processingRate: this.processingRate,
                         content: result,
                         currentGeneratedLength: this.currentGeneratedLength,
+                        // 청크 검증 후 stitching 단계 등 진행 중 단계명을 별도로 표시 (없으면 null)
+                        statusLabel: null,
                         timestamp: new Date()
                     };
                 } else if(type === "bcGenerationOption") {
@@ -3092,6 +3147,8 @@ import { value } from 'jsonpath';
                         generateOption: {},
                         recommendedBoundedContextsNumber: this.requirementsValidationResult && this.requirementsValidationResult.analysisResult ? this.requirementsValidationResult.analysisResult.recommendedBoundedContextsNumber : 2,
                         reasonOfRecommendedBoundedContextsNumber: this.requirementsValidationResult && this.requirementsValidationResult.analysisResult ? this.requirementsValidationResult.analysisResult.reasonOfRecommendedBoundedContextsNumber : "",
+                        // 요약 진행률 (초기엔 null, summarizer 가 청크별로 갱신)
+                        summarizeProgress: this.summarizeProgress,
                         timestamp: new Date()
                     };
                 } else if(type === "siteMapViewer") {
