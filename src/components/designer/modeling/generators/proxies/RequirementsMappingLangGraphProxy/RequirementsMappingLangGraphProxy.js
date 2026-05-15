@@ -114,8 +114,27 @@ class RequirementsMappingLangGraphProxy {
         if (!accumulatedOutputState.error) {
             accumulatedOutputState.error = '';
         }
+
+        // watcher 누수 방지용 path 추적
+        accumulatedOutputState._watchedPaths = new Set();
+        accumulatedOutputState._watchersCleaned = false;
         
         return accumulatedOutputState;
+    }
+
+    static _trackWatch(jobState, path) {
+        if (jobState && jobState._watchedPaths) {
+            jobState._watchedPaths.add(path);
+        }
+    }
+
+    static _cleanupWatchers(storage, jobState) {
+        if (!jobState || !jobState._watchedPaths || jobState._watchersCleaned) return;
+        jobState._watchersCleaned = true;
+        for (const path of jobState._watchedPaths) {
+            try { storage.watch_off(path); } catch (e) { /* noop */ }
+        }
+        jobState._watchedPaths.clear();
     }
 
     /**
@@ -138,7 +157,7 @@ class RequirementsMappingLangGraphProxy {
         };
         
         // 대기 중인 작업 수 감시
-        this._watchWaitingJobCount(storage, jobId, callbacks.onWaiting);
+        this._watchWaitingJobCount(storage, jobId, jobState, callbacks.onWaiting);
         
         // 작업 상태 감시 (완료/실패)
         this._watchJobStatus(storage, jobId, jobState, callbacks.onFailed, parseState);
@@ -156,8 +175,10 @@ class RequirementsMappingLangGraphProxy {
     /**
      * 대기 중인 작업 수 감시
      */
-    static _watchWaitingJobCount(storage, jobId, onWaiting) {
-        storage.watch(`${this._getRequestJobPath(jobId)}/waitingJobCount`, async (count) => {
+    static _watchWaitingJobCount(storage, jobId, jobState, onWaiting) {
+        const path = `${this._getRequestJobPath(jobId)}/waitingJobCount`;
+        this._trackWatch(jobState, path);
+        storage.watch(path, async (count) => {
             if (count !== null && count !== undefined) {
                 await onWaiting(count);
             }
@@ -169,7 +190,9 @@ class RequirementsMappingLangGraphProxy {
      */
     static _watchJobStatus(storage, jobId, jobState, onFailed, parseState) {
         // 실패 상태 감시
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/isFailed`, async (isFailed) => {
+        const failedPath = `${this._getJobPath(jobId)}/state/outputs/isFailed`;
+        this._trackWatch(jobState, failedPath);
+        storage.watch(failedPath, async (isFailed) => {
             if (isFailed === null || isFailed === undefined) return;
             if (!isFailed) return;
             
@@ -178,10 +201,13 @@ class RequirementsMappingLangGraphProxy {
             
             const errorMsg = jobState.error || "Unknown error occurred";
             await onFailed(errorMsg);
+            this._cleanupWatchers(storage, jobState);
         });
 
         // BoundedContext 감시 (개별 필드 감시 - 데이터만 저장, 콜백 호출 안함)
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/boundedContext`, async (boundedContext) => {
+        const bcPath = `${this._getJobPath(jobId)}/state/outputs/boundedContext`;
+        this._trackWatch(jobState, bcPath);
+        storage.watch(bcPath, async (boundedContext) => {
             if (boundedContext !== null && boundedContext !== undefined) {
                 jobState.boundedContext = boundedContext;
             }
@@ -189,7 +215,9 @@ class RequirementsMappingLangGraphProxy {
         
         // 완료 상태 감시 (중복 호출 방지 + watch 해제)
         let completedCalled = false;
-        const unwatchCompleted = storage.watch(`${this._getJobPath(jobId)}/state/outputs/isCompleted`, async (isCompleted) => {
+        const completedPath = `${this._getJobPath(jobId)}/state/outputs/isCompleted`;
+        this._trackWatch(jobState, completedPath);
+        const unwatchCompleted = storage.watch(completedPath, async (isCompleted) => {
             if (isCompleted && !completedCalled) {
                 completedCalled = true;
                 jobState.isCompleted = isCompleted;
@@ -212,11 +240,14 @@ class RequirementsMappingLangGraphProxy {
                 
                 // 콜백 완료 후 watch 해제
                 if (unwatchCompleted) unwatchCompleted();
+                this._cleanupWatchers(storage, jobState);
             }
         });
         
         // 에러 메시지 감시
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/error`, async (error) => {
+        const errorPath = `${this._getJobPath(jobId)}/state/outputs/error`;
+        this._trackWatch(jobState, errorPath);
+        storage.watch(errorPath, async (error) => {
             if (error) {
                 jobState.error = error;
             }
@@ -227,7 +258,9 @@ class RequirementsMappingLangGraphProxy {
      * 작업 진행률 감시
      */
     static _watchJobProgress(storage, jobId, jobState, parseState) {
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/progress`, async (progress) => {
+        const path = `${this._getJobPath(jobId)}/state/outputs/progress`;
+        this._trackWatch(jobState, path);
+        storage.watch(path, async (progress) => {
             if (progress !== null && progress !== undefined) {
                 jobState.progress = progress;
             }
@@ -238,7 +271,9 @@ class RequirementsMappingLangGraphProxy {
      * Requirements 감시
      */
     static _watchRequirements(storage, jobId, jobState, parseState) {
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/requirements`, async (requirements) => {
+        const path = `${this._getJobPath(jobId)}/state/outputs/requirements`;
+        this._trackWatch(jobState, path);
+        storage.watch(path, async (requirements) => {
             if (requirements) {
                 jobState.requirements = this._restoreArrayFromFirebase(requirements);
                 await parseState();
@@ -250,7 +285,9 @@ class RequirementsMappingLangGraphProxy {
      * 로그 감시
      */
     static _watchJobLogs(storage, jobId, jobState, parseState) {
-        storage.watch_added(`${this._getJobPath(jobId)}/state/outputs/logs`, null, async (log) => {
+        const path = `${this._getJobPath(jobId)}/state/outputs/logs`;
+        this._trackWatch(jobState, path);
+        storage.watch_added(path, null, async (log) => {
             if (!log) return;
             
             const restoredLog = this._restoreDataFromFirebase(log);

@@ -31,6 +31,8 @@
                             Object.keys(instance._watchCallbacks || {}).forEach(async function(path) {
                                 var w = instance._watchCallbacks[path];
                                 if (!w) return;
+                                var isJobsPath = path.startsWith('jobs/') || path.includes('/jobs/') || path.startsWith('db://jobs/')
+                                    || path.startsWith('requestedJobs/') || path.includes('/requestedJobs/') || path.startsWith('db://requestedJobs/');
                                 
                                 // 재구독 (중복 방지: 기존 핸들러 off 후 on)
                                 try {
@@ -49,6 +51,11 @@
                                 w.reference.on('value', w.handler);
                                 
                                 // 2) 누락 보정: 현재값 강제 동기화 (재연결이므로 grace period 없이 바로 전달)
+                                // jobs/requestedJobs 계열은 경로 수가 많아 reconnect 직후 GET 폭주를 유발하므로
+                                // value 이벤트의 초기 스냅샷에 의존하고 강제 get은 생략한다.
+                                if (isJobsPath) {
+                                    return;
+                                }
                                 try {
                                     var v = await instance.get(path);
                                     if (v !== null && v !== undefined) {
@@ -65,6 +72,8 @@
                             Object.keys(instance._watchAddedCallbacks || {}).forEach(async function(path) {
                                 var w = instance._watchAddedCallbacks[path];
                                 if (!w) return;
+                                var isJobsPath = path.startsWith('jobs/') || path.includes('/jobs/') || path.startsWith('db://jobs/')
+                                    || path.startsWith('requestedJobs/') || path.includes('/requestedJobs/') || path.startsWith('db://requestedJobs/');
                                 
                                 // 재구독 (중복 방지: 기존 핸들러 off 후 on)
                                 try {
@@ -85,6 +94,11 @@
                                 w.reference.on('child_added', w.handler);
                                 
                                 // 누락 보정: list()로 전체 데이터 다시 로드 (dedup 포함)
+                                // jobs/requestedJobs 계열은 reconnect 직후 LIST 폭주가 심해 리소스 고갈을 유발할 수 있으므로
+                                // child_added 스트림만 복구하고 강제 list 재조회는 생략한다.
+                                if (isJobsPath) {
+                                    return;
+                                }
                                 try {
                                     var items = await instance.list(path, w.metadata);
                                     if (Array.isArray(items)) {
@@ -312,7 +326,8 @@
             watch(path, userCallback){
                 var me = this
                 var reference = window.$acebase.ref(path)
-                var isJobsPath = path.startsWith('jobs/') || path.includes('/jobs/');
+                var isJobsPath = path.startsWith('jobs/') || path.includes('/jobs/') || path.startsWith('db://jobs/')
+                    || path.startsWith('requestedJobs/') || path.includes('/requestedJobs/') || path.startsWith('db://requestedJobs/');
 
                 // 기존 구독 있으면 먼저 정리
                 if (me._watchCallbacks && me._watchCallbacks[path]) {
@@ -379,6 +394,12 @@
 
                 // 1) 먼저 구독을 등록 (레이스 방지: 데이터 생성 이벤트를 놓치지 않음)
                 reference.on('value', handler);
+
+                // jobs/requestedJobs 계열은 on('value') 초기 스냅샷으로 충분하며
+                // 추가 get 호출은 요청 폭주를 만들 수 있어 생략
+                if (isJobsPath) {
+                    return;
+                }
 
                 // 2) get()으로 초기값 확인 (null이면 grace period 후 확정)
                 me.get(path).then(function(v) {
