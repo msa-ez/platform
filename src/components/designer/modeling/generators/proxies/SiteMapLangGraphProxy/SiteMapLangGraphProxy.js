@@ -198,13 +198,14 @@ class SiteMapLangGraphProxy {
 
     /**
      * Job 취소 요청. backend 가 jobStates 의 isRemoveRequested 를 감지해 작업 중단/제거.
+     * setObjectWithRetry 로 일시 DB 끊김에도 stop 신호 안 유실되게.
      */
     async removeJob(jobId) {
         const targetId = jobId || this.jobId;
         if (!targetId) return;
         try {
             const storage = new Vue(StorageBase);
-            await storage.setObject(this._getJobStatePath(targetId), {
+            await storage.setObjectWithRetry(this._getJobStatePath(targetId), {
                 isRemoveRequested: true
             });
         } catch (error) {

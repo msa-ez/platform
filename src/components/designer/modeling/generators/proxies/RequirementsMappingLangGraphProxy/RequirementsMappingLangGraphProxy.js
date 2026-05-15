@@ -74,7 +74,8 @@ class RequirementsMappingLangGraphProxy {
      */
     static async removeJob(jobId) {
         const storage = new Vue(StorageBase);
-        await storage.setObject(this._getJobStatePath(jobId), {
+        // setObjectWithRetry 로 일시 DB 끊김에도 stop 신호 안 유실되게.
+        await storage.setObjectWithRetry(this._getJobStatePath(jobId), {
             "isRemoveRequested": true
         });
     }
@@ -193,8 +194,8 @@ class RequirementsMappingLangGraphProxy {
                 completedCalled = true;
                 jobState.isCompleted = isCompleted;
                 
-                // 완료 시 전체 outputs 객체 읽기
-                const outputs = await storage.getObject(`${this._getJobPath(jobId)}/state/outputs`);
+                // 완료 시 전체 outputs 객체 읽기 — DB 가 일시적으로 끊긴 상태일 수 있어 retry 버전 사용
+                const outputs = await storage.getObjectWithRetry(`${this._getJobPath(jobId)}/state/outputs`);
                 
                 if (outputs) {
                     // boundedContext가 비어있으면 outputs에서 다시 가져오기

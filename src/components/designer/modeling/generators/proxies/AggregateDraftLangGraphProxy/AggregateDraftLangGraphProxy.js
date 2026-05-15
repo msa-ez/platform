@@ -173,8 +173,8 @@ class AggregateDraftLangGraphProxy {
                 completedCalled = true;
                 jobState.isCompleted = isCompleted;
                 
-                // 완료 시 전체 outputs 객체 읽기
-                const outputs = await storage.getObject(`${this._getJobPath(jobId)}/state/outputs`);
+                // 완료 시 전체 outputs 객체 읽기 — DB 가 일시적으로 끊긴 상태일 수 있어 retry 버전 사용
+                const outputs = await storage.getObjectWithRetry(`${this._getJobPath(jobId)}/state/outputs`);
                 
                 if (outputs) {
                     if (!jobState.boundedContext && outputs.boundedContext) {

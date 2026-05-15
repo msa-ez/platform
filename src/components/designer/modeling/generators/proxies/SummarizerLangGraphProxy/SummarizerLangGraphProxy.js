@@ -338,11 +338,13 @@ class SummarizerLangGraphProxy {
      * Job 취소 요청 — backend 의 decentralized_job_manager 가 jobStates 의 isRemoveRequested 를
      * 감지해서 진행 중인 작업을 중단/제거함. immediate removal 인 deleteJob 과 달리
      * 진행 중인 작업도 안전하게 중단시킬 수 있음.
+     *
+     * DB 일시 연결 끊김에 견디도록 setObjectWithRetry 사용 — stop 신호가 유실되면 백엔드는 계속 LLM 호출함.
      */
     static async removeJob(jobId) {
         try {
             const storage = new Vue(StorageBase);
-            await storage.setObject(this._getJobStatePath(jobId), {
+            await storage.setObjectWithRetry(this._getJobStatePath(jobId), {
                 isRemoveRequested: true
             });
         } catch (error) {
