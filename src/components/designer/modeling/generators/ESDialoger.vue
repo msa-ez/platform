@@ -1720,8 +1720,10 @@ import { value } from 'jsonpath';
             // 같은 tick·짧은 시간 안의 연속 emit 을 trailing 300ms 로 합쳐 호출 횟수를 줄임.
             triggerDraftEmit() {
                 if (!this._debouncedEmitDraft) {
+                    // ⚠️ 이 디바운스 콜백 안에서 triggerDraftEmit() 을 호출하면 무한 재귀 — 부모에게 emit 이 절대 안 가서
+                    // draft 가 acebase 에 저장 안 되고 빈 리스트로만 남는다. 반드시 $emit 으로 끝맺어야 함.
                     this._debouncedEmitDraft = _.debounce(() => {
-                        this.triggerDraftEmit();
+                        this.$emit("update:draft", this.messages);
                     }, 300, { leading: false, trailing: true });
                 }
                 this._debouncedEmitDraft();
