@@ -91,7 +91,10 @@ class AggregateDraftLangGraphProxy {
             error: '',
             // 이 job 에서 등록한 모든 watch path. 완료/실패 시 일괄 watch_off — 누수 방지.
             _watchedPaths: new Set(),
-            _watchersCleaned: false
+            _watchersCleaned: false,
+            _pollTimer: null,
+            _pollInFlight: false,
+            _pollAttempts: 0
         };
 
         return accumulatedOutputState;
@@ -113,6 +116,10 @@ class AggregateDraftLangGraphProxy {
     static _cleanupWatchers(storage, jobState) {
         if (!jobState || !jobState._watchedPaths || jobState._watchersCleaned) return;
         jobState._watchersCleaned = true;
+        if (jobState._pollTimer) {
+            clearInterval(jobState._pollTimer);
+            jobState._pollTimer = null;
+        }
         for (const path of jobState._watchedPaths) {
             try { storage.watch_off(path); } catch (e) { /* noop */ }
         }
@@ -154,6 +161,73 @@ class AggregateDraftLangGraphProxy {
         
         // 로그 감시
         this._watchJobLogs(storage, jobId, jobState, parseState);
+
+        // websocket ping timeout으로 value 이벤트를 놓쳐도 완료를 놓치지 않도록 폴링 복구 경로를 둔다.
+        this._startCompletionPolling(storage, jobId, jobState, parseState);
+    }
+
+    static _startCompletionPolling(storage, jobId, jobState, parseState) {
+        const outputsPath = `${this._getJobPath(jobId)}/state/outputs`;
+        const pollCompletion = async () => {
+            if (!jobState || jobState._watchersCleaned || jobState.isFailed || jobState._pollInFlight) return;
+            jobState._pollInFlight = true;
+            try {
+                if (!jobState.isCompleted) {
+                    const isCompleted = await storage.getObjectWithRetry(`${outputsPath}/isCompleted`);
+                    if (!isCompleted) return;
+                    jobState.isCompleted = true;
+                }
+
+                jobState._pollAttempts += 1;
+                const [boundedContext, inference, defaultOptionIndex, conclusions, optionsChunked, optionsChunkCount] = await Promise.all([
+                    storage.getObjectWithRetry(`${outputsPath}/boundedContext`),
+                    storage.getObjectWithRetry(`${outputsPath}/inference`),
+                    storage.getObjectWithRetry(`${outputsPath}/defaultOptionIndex`),
+                    storage.getObjectWithRetry(`${outputsPath}/conclusions`),
+                    storage.getObjectWithRetry(`${outputsPath}/optionsChunked`),
+                    storage.getObjectWithRetry(`${outputsPath}/optionsChunkCount`)
+                ]);
+
+                if (!jobState.boundedContext && boundedContext) jobState.boundedContext = boundedContext;
+                if (inference) jobState.inference = inference;
+                if (defaultOptionIndex !== null && defaultOptionIndex !== undefined) {
+                    jobState.defaultOptionIndex = defaultOptionIndex;
+                }
+                if (conclusions) jobState.conclusions = conclusions;
+
+                const loadedOptions = await this._loadJobOptions(storage, jobId, {
+                    optionsChunked,
+                    optionsChunkCount
+                });
+
+                // options chunk가 늦게 보일 수 있어 빈 배열이면 조금 더 폴링한 뒤 완료 처리한다.
+                if (Array.isArray(loadedOptions) && loadedOptions.length > 0) {
+                    jobState.options = loadedOptions;
+                    await parseState();
+                    this._cleanupWatchers(storage, jobState);
+                    return;
+                }
+
+                if (jobState._pollAttempts >= 30) {
+                    console.warn('[AggregateDraftLangGraphProxy] completion polling exhausted with empty options:', { jobId, optionsChunkCount });
+                    jobState.options = loadedOptions || [];
+                    await parseState();
+                    this._cleanupWatchers(storage, jobState);
+                }
+            } catch (e) {
+                // 폴링 복구 경로는 실패해도 다음 주기에 재시도
+            } finally {
+                jobState._pollInFlight = false;
+            }
+        };
+
+        jobState._pollTimer = setInterval(() => {
+            pollCompletion();
+        }, 1500);
+
+        setTimeout(() => {
+            pollCompletion();
+        }, 500);
     }
 
     /**
