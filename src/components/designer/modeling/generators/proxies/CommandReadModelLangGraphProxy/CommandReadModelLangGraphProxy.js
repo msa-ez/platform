@@ -185,7 +185,7 @@ class CommandReadModelLangGraphProxy {
         if (!targetId) return;
         try {
             const storage = new Vue(StorageBase);
-            await storage.setObject(this._getJobStatePath(targetId), {
+            await storage.setObjectWithRetry(this._getJobStatePath(targetId), {
                 isRemoveRequested: true
             });
         } catch (error) {

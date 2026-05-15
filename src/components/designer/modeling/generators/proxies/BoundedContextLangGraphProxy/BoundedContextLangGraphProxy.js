@@ -88,7 +88,8 @@ class BoundedContextLangGraphProxy {
      */
     static async removeJob(jobId) {
         const storage = new Vue(StorageBase);
-        await storage.setObject(this._getJobStatePath(jobId), {
+        // setObjectWithRetry 로 일시 DB 끊김에도 stop 신호 안 유실되게.
+        await storage.setObjectWithRetry(this._getJobStatePath(jobId), {
             "isRemoveRequested": true
         });
     }
@@ -199,7 +200,7 @@ class BoundedContextLangGraphProxy {
                 jobState.isCompleted = isCompleted;
                 
                 // 완료 시 전체 outputs 객체 읽기
-                const outputs = await storage.getObject(`${this._getJobPath(jobId)}/state/outputs`);
+                const outputs = await storage.getObjectWithRetry(`${this._getJobPath(jobId)}/state/outputs`);
                 
                 if (outputs) {
                     if (outputs.devisionAspect !== null && outputs.devisionAspect !== undefined) {
@@ -257,7 +258,7 @@ class BoundedContextLangGraphProxy {
                 jobState.boundedContexts = this._restoreArrayFromFirebase(boundedContexts);
                 
                 // 전체 outputs 객체 읽기
-                const outputs = await storage.getObject(`${this._getJobPath(jobId)}/state/outputs`);
+                const outputs = await storage.getObjectWithRetry(`${this._getJobPath(jobId)}/state/outputs`);
                 
                 if (outputs) {
                     if (outputs.devisionAspect !== null && outputs.devisionAspect !== undefined) {

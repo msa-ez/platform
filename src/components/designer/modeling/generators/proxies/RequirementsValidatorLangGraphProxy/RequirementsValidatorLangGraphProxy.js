@@ -214,11 +214,12 @@ class RequirementsValidatorLangGraphProxy {
     /**
      * Job 취소 요청 — backend 의 decentralized_job_manager 가 jobStates 의 isRemoveRequested 를
      * 감지해 진행 중인 작업도 안전하게 중단/제거.
+     * setObjectWithRetry 로 일시 DB 끊김에도 stop 신호 안 유실되게.
      */
     static async removeJob(jobId) {
         try {
             const storage = new Vue(StorageBase);
-            await storage.setObject(this._getJobStatePath(jobId), {
+            await storage.setObjectWithRetry(this._getJobStatePath(jobId), {
                 isRemoveRequested: true
             });
         } catch (error) {

@@ -83,7 +83,8 @@ class UserStoryLangGraphProxy {
      */
     static async removeJob(jobId) {
         const storage = new Vue(StorageBase);
-        await storage.setObject(this._getJobStatePath(jobId), {
+        // setObjectWithRetry 로 일시 DB 끊김에도 stop 신호 안 유실되게.
+        await storage.setObjectWithRetry(this._getJobStatePath(jobId), {
             "isRemoveRequested": true
         });
     }

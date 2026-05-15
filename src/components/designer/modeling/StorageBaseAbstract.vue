@@ -157,9 +157,72 @@
 
                     return data;
                 } catch (e) {
-                    console.log(e)
+                    // 연결 끊김 동안엔 watcher 가 stale 값으로 fire → getObject 가 매번 실패 → 매번 로그.
+                    // 같은 경로의 실패는 일정 간격으로만 출력해서 콘솔 폭주 방지. 로직은 그대로 undefined 반환.
+                    this._logStorageError(path, e);
                     return undefined
                 }
+            },
+            /**
+             * 동일 경로의 storage 에러 로그를 throttle.
+             * - 처음 한 번은 즉시 출력
+             * - 그 다음부턴 5초마다 한 번씩만 (누적 count 같이 표기)
+             * - 성공하면 카운터 리셋
+             */
+            _logStorageError(path, error) {
+                try {
+                    if (!this.$root) {
+                        // mixin 컨텍스트에 따라 $root 가 없을 수도 있음 — 그 경우 그냥 한 번 로그
+                        console.log(error);
+                        return;
+                    }
+                    const reg = (this.$root._storageErrorRegistry = this.$root._storageErrorRegistry || {});
+                    const now = Date.now();
+                    const key = path || '__unknown__';
+                    const entry = reg[key] || { count: 0, lastLoggedAt: 0 };
+                    entry.count += 1;
+                    if (entry.count === 1 || now - entry.lastLoggedAt > 5000) {
+                        console.log(`[Storage] ${key} (${entry.count}x):`, error);
+                        entry.lastLoggedAt = now;
+                    }
+                    reg[key] = entry;
+                } catch (_) {
+                    // 로깅 자체 실패는 무시
+                }
+            },
+            /**
+             * getObject 의 재시도 버전 — DB 연결이 일시적으로 끊긴 동안 호출되면
+             * exponential backoff 으로 재시도해서 reconnect 후 데이터를 받아옴.
+             *
+             * `null/undefined` 도 "아직 데이터 없음"으로 간주하고 재시도하지만, 최종 retry 까지 그대로면
+             * undefined 반환 (실제로 데이터 자체가 없는 정상 케이스도 있어서).
+             *
+             * @param {string} path
+             * @param {Object} [options] - { maxRetries=6, baseDelay=400, maxDelay=4000, tenant }
+             */
+            async getObjectWithRetry(path, options) {
+                const opts = options || {};
+                const maxRetries = opts.maxRetries != null ? opts.maxRetries : 6;
+                const baseDelay = opts.baseDelay != null ? opts.baseDelay : 400;
+                const maxDelay = opts.maxDelay != null ? opts.maxDelay : 4000;
+                let delay = baseDelay;
+                for (let attempt = 0; attempt < maxRetries; attempt++) {
+                    try {
+                        const string = await this._get(path, opts.tenant);
+                        if (string !== undefined && string !== null) {
+                            return typeof string === 'string' ? JSON.parse(string) : string;
+                        }
+                    } catch (e) {
+                        if (attempt === maxRetries - 1) {
+                            this._logStorageError(path, e);
+                        }
+                    }
+                    if (attempt < maxRetries - 1) {
+                        await new Promise(r => setTimeout(r, delay));
+                        delay = Math.min(maxDelay, Math.round(delay * 1.6));
+                    }
+                }
+                return undefined;
             },
             //update
             async putString(path, string) {
@@ -187,6 +250,35 @@
             async setObject(path, obj) {
                 var string = JSON.stringify(obj);
                 return await this._set(path, string);
+            },
+            /**
+             * setObject 의 재시도 버전 — DB 연결이 일시적으로 끊긴 동안 호출되면
+             * exponential backoff 으로 재시도. _set 이 false 를 반환하면 실패로 간주.
+             *
+             * 사용처: stop() 에서 isRemoveRequested 박는 경우처럼 한 번이라도 실패하면 안 되는 쓰기.
+             */
+            async setObjectWithRetry(path, obj, options) {
+                const opts = options || {};
+                const maxRetries = opts.maxRetries != null ? opts.maxRetries : 5;
+                const baseDelay = opts.baseDelay != null ? opts.baseDelay : 400;
+                const maxDelay = opts.maxDelay != null ? opts.maxDelay : 4000;
+                const string = JSON.stringify(obj);
+                let delay = baseDelay;
+                for (let attempt = 0; attempt < maxRetries; attempt++) {
+                    try {
+                        const ok = await this._set(path, string);
+                        if (ok !== false) return true; // _set 이 true 또는 undefined 면 성공
+                    } catch (e) {
+                        if (attempt === maxRetries - 1) {
+                            this._logStorageError(path, e);
+                        }
+                    }
+                    if (attempt < maxRetries - 1) {
+                        await new Promise(r => setTimeout(r, delay));
+                        delay = Math.min(maxDelay, Math.round(delay * 1.6));
+                    }
+                }
+                return false;
             },
             isValidatePath(path) {
                 return this._isValidatePath(path)
