@@ -56,8 +56,25 @@ class RequirementsValidatorLangGraphProxy {
             currentGeneratedLength: 0,
             isCompleted: false,
             isFailed: false,
-            error: ''
+            error: '',
+            _watchedPaths: new Set(),
+            _watchersCleaned: false
         };
+    }
+
+    static _trackWatch(jobState, path) {
+        if (jobState && jobState._watchedPaths) {
+            jobState._watchedPaths.add(path);
+        }
+    }
+
+    static _cleanupWatchers(storage, jobState) {
+        if (!jobState || !jobState._watchedPaths || jobState._watchersCleaned) return;
+        jobState._watchersCleaned = true;
+        for (const path of jobState._watchedPaths) {
+            try { storage.watch_off(path); } catch (e) { /* noop */ }
+        }
+        jobState._watchedPaths.clear();
     }
 
     static _setupJobWatchers(storage, jobId, jobState, callbacks) {
@@ -69,7 +86,7 @@ class RequirementsValidatorLangGraphProxy {
             await this._parseAndNotifyJobState(jobState, callbacks);
         };
 
-        this._watchWaitingJobCount(storage, jobId, callbacks.onWaiting);
+        this._watchWaitingJobCount(storage, jobId, jobState, callbacks.onWaiting);
         this._watchJobStatus(storage, jobId, jobState, callbacks.onFailed, parseState);
         this._watchJobProgress(storage, jobId, jobState, parseState);
         this._watchCurrentGeneratedLength(storage, jobId, jobState, parseState);
@@ -78,9 +95,11 @@ class RequirementsValidatorLangGraphProxy {
         this._watchJobLogs(storage, jobId, jobState, parseState);
     }
 
-    static _watchWaitingJobCount(storage, jobId, onWaiting) {
+    static _watchWaitingJobCount(storage, jobId, jobState, onWaiting) {
         if (!onWaiting) return;
-        storage.watch(`${this._getRequestJobPath(jobId)}/waitingJobCount`, async (count) => {
+        const path = `${this._getRequestJobPath(jobId)}/waitingJobCount`;
+        this._trackWatch(jobState, path);
+        storage.watch(path, async (count) => {
             if (count !== null && count !== undefined) {
                 await onWaiting(count);
             }
@@ -88,26 +107,34 @@ class RequirementsValidatorLangGraphProxy {
     }
 
     static _watchJobStatus(storage, jobId, jobState, onFailed, parseState) {
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/isCompleted`, async (isCompleted) => {
+        const completedPath = `${this._getJobPath(jobId)}/state/outputs/isCompleted`;
+        this._trackWatch(jobState, completedPath);
+        storage.watch(completedPath, async (isCompleted) => {
             if (isCompleted === true) {
                 jobState.isCompleted = true;
                 await parseState();
+                this._cleanupWatchers(storage, jobState);
             }
         });
 
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/isFailed`, async (isFailed) => {
+        const failedPath = `${this._getJobPath(jobId)}/state/outputs/isFailed`;
+        this._trackWatch(jobState, failedPath);
+        storage.watch(failedPath, async (isFailed) => {
             if (isFailed === true) {
                 jobState.isFailed = true;
                 const errorMsg = jobState.error || 'Job failed';
                 if (onFailed) {
                     await onFailed(errorMsg);
                 }
+                this._cleanupWatchers(storage, jobState);
             }
         });
     }
 
     static _watchJobProgress(storage, jobId, jobState, parseState) {
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/progress`, async (progress) => {
+        const path = `${this._getJobPath(jobId)}/state/outputs/progress`;
+        this._trackWatch(jobState, path);
+        storage.watch(path, async (progress) => {
             if (progress !== null && progress !== undefined) {
                 jobState.progress = progress;
                 await parseState();
@@ -116,7 +143,9 @@ class RequirementsValidatorLangGraphProxy {
     }
 
     static _watchCurrentGeneratedLength(storage, jobId, jobState, parseState) {
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/currentGeneratedLength`, async (length) => {
+        const path = `${this._getJobPath(jobId)}/state/outputs/currentGeneratedLength`;
+        this._trackWatch(jobState, path);
+        storage.watch(path, async (length) => {
             if (length !== null && length !== undefined) {
                 jobState.currentGeneratedLength = length;
                 await parseState();
@@ -125,7 +154,9 @@ class RequirementsValidatorLangGraphProxy {
     }
 
     static _watchJobType(storage, jobId, jobState, parseState) {
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/type`, async (type) => {
+        const path = `${this._getJobPath(jobId)}/state/outputs/type`;
+        this._trackWatch(jobState, path);
+        storage.watch(path, async (type) => {
             if (type) {
                 jobState.type = type;
                 await parseState();
@@ -134,7 +165,9 @@ class RequirementsValidatorLangGraphProxy {
     }
 
     static _watchJobContent(storage, jobId, jobState, parseState) {
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/content`, async (content) => {
+        const path = `${this._getJobPath(jobId)}/state/outputs/content`;
+        this._trackWatch(jobState, path);
+        storage.watch(path, async (content) => {
             if (content) {
                 jobState.content = this._restoreDataFromFirebase(content);
                 await parseState();
@@ -143,7 +176,9 @@ class RequirementsValidatorLangGraphProxy {
     }
 
     static _watchJobLogs(storage, jobId, jobState, parseState) {
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/logs`, async (logs) => {
+        const path = `${this._getJobPath(jobId)}/state/outputs/logs`;
+        this._trackWatch(jobState, path);
+        storage.watch(path, async (logs) => {
             if (logs) {
                 jobState.logs = logs;
                 if (Array.isArray(logs) && logs.length > 0) {
