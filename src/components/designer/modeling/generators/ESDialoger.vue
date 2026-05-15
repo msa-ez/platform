@@ -2000,28 +2000,32 @@ import { value } from 'jsonpath';
                 }
 
                 if((model && model.modelValue && model.modelValue.output && model.modelValue.output.currentGeneratedLength) || (model && model.currentGeneratedLength)){
+                    // stop() 가 messages 에서 processAnalysis/boundedContextResult/siteMapViewer 메시지를 splice 로 제거한 뒤,
+                    // 아직 떠나지 못한 watchJob/acebase 콜백이 도착해 onModelCreated 까지 흘러오면 currentMessage = undefined →
+                    // .uniqueId 접근 시 throw. 메시지 없으면 조용히 스킵.
                     this.currentGeneratedLength = model.currentGeneratedLength || model.modelValue.output.currentGeneratedLength;
-                    if(this.state.generator === "RequirementsValidationGenerator" || 
+                    if(this.isStopped) return;
+                    let targetType = null;
+                    if(this.state.generator === "RequirementsValidationGenerator" ||
                         this.state.generator === "RecursiveRequirementsValidationGenerator" ||
                         this.state.generator === "RequirementsValidationGeneratorLangGraph" ||
                         this.state.generator === "RecursiveRequirementsValidationGeneratorLangGraph"){
-                        const currentMessage = this.messages.find(msg => msg.type === 'processAnalysis');
-                        this.updateMessageState(currentMessage.uniqueId, {
-                            currentGeneratedLength: this.currentGeneratedLength,
-                        });
+                        targetType = 'processAnalysis';
                     }else if(this.state.generator === "DevideBoundedContextGenerator" ||
                         this.state.generator === "DevideBoundedContextGeneratorLangGraph"){
-                        const currentMessage = this.messages.find(msg => msg.type === 'boundedContextResult');
-                        this.updateMessageState(currentMessage.uniqueId, {
-                            currentGeneratedLength: this.currentGeneratedLength,
-                        });
+                        targetType = 'boundedContextResult';
                     }else if(this.state.generator === "SiteMapGenerator" ||
                         this.state.generator === "SiteMapGeneratorLangGraph" ||
                         this.state.generator === "RecursiveSiteMapGeneratorLangGraph"){
-                        const currentMessage = this.messages.find(msg => msg.type === 'siteMapViewer');
-                        this.updateMessageState(currentMessage.uniqueId, {
-                            currentGeneratedLength: this.currentGeneratedLength,
-                        });
+                        targetType = 'siteMapViewer';
+                    }
+                    if (targetType) {
+                        const currentMessage = this.messages.find(msg => msg.type === targetType);
+                        if (currentMessage) {
+                            this.updateMessageState(currentMessage.uniqueId, {
+                                currentGeneratedLength: this.currentGeneratedLength,
+                            });
+                        }
                     }
                 }
             },
@@ -3255,14 +3259,21 @@ import { value } from 'jsonpath';
                         this.generatorName = "RecursiveRequirementsValidationGeneratorLangGraph";
 
                         this.messages.push(this.generateMessage("processAnalysis", {}));
-                        this.generator.validateRecursively(usedUserStory);
+                        // .catch 없으면 stop() 으로 인한 reject 가 "Uncaught (in promise)" 로 뜸.
+                        // generator 내부에서 isStopped 분기로 resolve 하도록 바꿨지만, 다른 실패 경로
+                        // (백엔드 timeout 등) 도 console.error 로만 흘리도록 안전망.
+                        this.generator.validateRecursively(usedUserStory).catch(err => {
+                            console.error('[ESDialoger] validateRecursively failed:', err);
+                        });
                     } else {
                         this.generator = new RecursiveRequirementsValidationGenerator(this);
                         this.state.generator = "RecursiveRequirementsValidationGenerator";
                         this.generatorName = "RecursiveRequirementsValidationGenerator";
 
                         this.messages.push(this.generateMessage("processAnalysis", {}));
-                        this.generator.validateRecursively(usedUserStory);
+                        this.generator.validateRecursively(usedUserStory).catch(err => {
+                            console.error('[ESDialoger] validateRecursively failed:', err);
+                        });
                     }
                 } else {
                     if (useLangGraph) {
