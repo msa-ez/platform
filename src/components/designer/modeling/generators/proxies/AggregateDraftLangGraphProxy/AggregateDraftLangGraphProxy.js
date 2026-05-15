@@ -293,16 +293,22 @@ class AggregateDraftLangGraphProxy {
 
         if (meta.optionsChunked) {
             const chunkCount = meta.optionsChunkCount;
-            for (let attempt = 0; attempt < 3; attempt++) {
+            // ping timeout/reconnect 상황에서는 chunk 조회가 늦게 동기화될 수 있어 재시도를 충분히 둔다.
+            for (let attempt = 0; attempt < 12; attempt++) {
                 const optionsChunks = await storage.getObjectWithRetry(`${outputsPath}/optionsChunks`);
                 const restored = this._restoreChunkedOptions(optionsChunks, chunkCount);
                 if (restored.length > 0 || !chunkCount) {
                     return restored;
                 }
-                if (attempt < 2) {
-                    await new Promise(r => setTimeout(r, 400 * (attempt + 1)));
+                if (attempt < 11) {
+                    const waitMs = Math.min(3000, 300 * (attempt + 1));
+                    await new Promise(r => setTimeout(r, waitMs));
                 }
             }
+            console.warn('[AggregateDraftLangGraphProxy] optionsChunks restore exhausted retries:', {
+                jobId,
+                chunkCount
+            });
             return [];
         }
 
