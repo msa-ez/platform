@@ -77,6 +77,17 @@ class RecursiveCommandReadModelExtractorLangGraph {
             this.proxy = null;
         }
     }
+
+    stop() {
+        this.isStopped = true;
+        if (this.proxy && typeof this.proxy.removeJob === 'function') {
+            try {
+                this.proxy.removeJob();
+            } catch (e) {
+                console.warn('[RecursiveCommandReadModelExtractorLangGraph] removeJob failed:', e);
+            }
+        }
+    }
 }
 
 module.exports = RecursiveCommandReadModelExtractorLangGraph;

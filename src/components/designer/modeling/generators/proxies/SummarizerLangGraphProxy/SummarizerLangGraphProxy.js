@@ -324,13 +324,29 @@ class SummarizerLangGraphProxy {
      */
     static async deleteJob(jobId) {
         const storage = new Vue(StorageBase);
-        
+
         try {
             await storage.removeObject(this._getJobPath(jobId));
             await storage.removeObject(this._getRequestJobPath(jobId));
             console.log(`✅ Summarizer Job deleted: ${jobId}`);
         } catch (error) {
             console.error(`❌ Failed to delete Summarizer Job ${jobId}:`, error);
+        }
+    }
+
+    /**
+     * Job 취소 요청 — backend 의 decentralized_job_manager 가 jobStates 의 isRemoveRequested 를
+     * 감지해서 진행 중인 작업을 중단/제거함. immediate removal 인 deleteJob 과 달리
+     * 진행 중인 작업도 안전하게 중단시킬 수 있음.
+     */
+    static async removeJob(jobId) {
+        try {
+            const storage = new Vue(StorageBase);
+            await storage.setObject(this._getJobStatePath(jobId), {
+                isRemoveRequested: true
+            });
+        } catch (error) {
+            console.error(`❌ Summarizer removeJob failed for ${jobId}:`, error);
         }
     }
 

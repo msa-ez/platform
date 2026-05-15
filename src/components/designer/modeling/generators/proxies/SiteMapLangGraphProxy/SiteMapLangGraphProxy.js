@@ -195,6 +195,22 @@ class SiteMapLangGraphProxy {
     _getJobStatePath(jobId) {
         return `db://${SiteMapLangGraphProxy.PATHS.JOB_STATES}/${SiteMapLangGraphProxy.JOB_TYPE}/${jobId}`;
     }
+
+    /**
+     * Job 취소 요청. backend 가 jobStates 의 isRemoveRequested 를 감지해 작업 중단/제거.
+     */
+    async removeJob(jobId) {
+        const targetId = jobId || this.jobId;
+        if (!targetId) return;
+        try {
+            const storage = new Vue(StorageBase);
+            await storage.setObject(this._getJobStatePath(targetId), {
+                isRemoveRequested: true
+            });
+        } catch (error) {
+            console.error(`❌ SiteMap removeJob failed for ${targetId}:`, error);
+        }
+    }
 }
 
 module.exports = SiteMapLangGraphProxy;

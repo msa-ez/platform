@@ -123,6 +123,17 @@ class SiteMapGeneratorLangGraph {
             return 0;
         }
     }
+
+    stop() {
+        this.isStopped = true;
+        if (this.proxy && typeof this.proxy.removeJob === 'function') {
+            try {
+                this.proxy.removeJob();
+            } catch (e) {
+                console.warn('[SiteMapGeneratorLangGraph] removeJob failed:', e);
+            }
+        }
+    }
 }
 
 module.exports = SiteMapGeneratorLangGraph;
