@@ -107,6 +107,33 @@
             _list(reference) {
                 return new Promise(function (resolve, reject) {
                     try{
+                        const path = reference.path;
+
+                        // ✅ 목록 화면에서 필요한 필드만 가져오도록 최적화
+                        // - definitions 루트는 매우 큰 객체들을 자식으로 갖기 때문에 통째로 읽으면 "Reading node" 폭발이 발생함
+                        // - 목록에서는 definitions/{id}/information 만 필요하므로 include로 제한
+                        // - include wildcard 지원 여부에 따라 동작이 달라질 수 있어 fallback 제공
+                        const isDefinitionsRoot = path === 'definitions' || path === '/definitions';
+                        if (isDefinitionsRoot) {
+                            // 서버가 wildcard include를 지원한다면 payload/IO 모두 크게 감소
+                            reference.get({ include: ['*/information'] }, (snapshot) => {
+                                if (snapshot) {
+                                    resolve(snapshot);
+                                } else {
+                                    resolve(null);
+                                }
+                            });
+                            return;
+                        }
+
+                        // userLists 경로는 두 종류의 트리거가 채움:
+                        //   - Trigger 1: userLists/{uid}/(mine|share|share_first|share_{type})/{projectId} 에 top-level 스칼라
+                        //   - Trigger 2: userLists/{uid}/mine/{projectId}/information 에 nested object
+                        // 이전엔 child_objects:false 로 nested 를 잘라냈는데, Trigger 1 이 silent catch 로
+                        // 실패하는 케이스(예: acebase/main.js:241 beforeInformation ReferenceError)에선
+                        // Trigger 2 의 nested 만 남아 있는데 그걸 잘라내면 data[key] = {} 가 되어 setListByAcebase
+                        // 의 `item.type` 필터에 걸려 Mine/Share/Public 어디에도 안 보이게 됨.
+                        // userLists 데이터는 크지 않으므로 그냥 통째 읽음.
                         reference.get(snapshot => {
                             if (snapshot) {
                                 resolve(snapshot)
