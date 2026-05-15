@@ -33,6 +33,7 @@
                                 if (!w) return;
                                 var isJobsPath = path.startsWith('jobs/') || path.includes('/jobs/') || path.startsWith('db://jobs/')
                                     || path.startsWith('requestedJobs/') || path.includes('/requestedJobs/') || path.startsWith('db://requestedJobs/');
+                                var isTerminalJobWatch = /(?:^|\/)state\/outputs\/(?:isCompleted|isFailed)$/.test(path.replace(/^db:\/\//, ''));
                                 
                                 // 재구독 (중복 방지: 기존 핸들러 off 후 on)
                                 try {
@@ -53,7 +54,7 @@
                                 // 2) 누락 보정: 현재값 강제 동기화 (재연결이므로 grace period 없이 바로 전달)
                                 // jobs/requestedJobs 계열은 경로 수가 많아 reconnect 직후 GET 폭주를 유발하므로
                                 // value 이벤트의 초기 스냅샷에 의존하고 강제 get은 생략한다.
-                                if (isJobsPath) {
+                                if (isJobsPath && !isTerminalJobWatch) {
                                     return;
                                 }
                                 try {
@@ -328,6 +329,8 @@
                 var reference = window.$acebase.ref(path)
                 var isJobsPath = path.startsWith('jobs/') || path.includes('/jobs/') || path.startsWith('db://jobs/')
                     || path.startsWith('requestedJobs/') || path.includes('/requestedJobs/') || path.startsWith('db://requestedJobs/');
+                var normalizedPath = String(path || '').replace(/^db:\/\//, '');
+                var isTerminalJobWatch = /(?:^|\/)state\/outputs\/(?:isCompleted|isFailed)$/.test(normalizedPath);
 
                 // 기존 구독 있으면 먼저 정리
                 if (me._watchCallbacks && me._watchCallbacks[path]) {
@@ -397,7 +400,7 @@
 
                 // jobs/requestedJobs 계열은 on('value') 초기 스냅샷으로 충분하며
                 // 추가 get 호출은 요청 폭주를 만들 수 있어 생략
-                if (isJobsPath) {
+                if (isJobsPath && !isTerminalJobWatch) {
                     return;
                 }
 
