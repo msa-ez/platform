@@ -92,10 +92,28 @@ class PreviewFieldsLangGraphProxy {
             progress: 0,
             isCompleted: false,
             isFailed: false,
-            error: ''
+            error: '',
+            // watcher 누수 방지 — 완료/실패 시 일괄 watch_off.
+            _watchedPaths: new Set(),
+            _watchersCleaned: false
         };
-        
+
         return accumulatedOutputState;
+    }
+
+    static _trackWatch(jobState, path) {
+        if (jobState && jobState._watchedPaths) {
+            jobState._watchedPaths.add(path);
+        }
+    }
+
+    static _cleanupWatchers(storage, jobState) {
+        if (!jobState || !jobState._watchedPaths || jobState._watchersCleaned) return;
+        jobState._watchersCleaned = true;
+        for (const path of jobState._watchedPaths) {
+            try { storage.watch_off(path); } catch (e) { /* noop */ }
+        }
+        jobState._watchedPaths.clear();
     }
 
     /**
@@ -104,36 +122,38 @@ class PreviewFieldsLangGraphProxy {
     static _setupJobWatchers(storage, jobId, jobState, callbacks) {
         // 중복 호출 방지를 위한 플래그
         let callbackInvoked = false;
-        
+
         const parseState = async () => {
             if (callbackInvoked) {
-                // console.log(`[PreviewFieldsProxy] ⚠️ Callback already invoked, skipping duplicate call`);
                 return;
             }
-            
+
             if (jobState.isCompleted) {
-                // console.log(`[PreviewFieldsProxy] 🎬 First callback invocation, locking further calls`);
                 callbackInvoked = true;
             }
-            
+
             await this._parseAndNotifyJobState(jobState, callbacks);
+
+            if (jobState.isCompleted || jobState.isFailed) {
+                this._cleanupWatchers(storage, jobState);
+            }
         };
-        
+
         // 대기 중인 작업 수 감시
-        this._watchWaitingJobCount(storage, jobId, callbacks.onWaiting);
-        
+        this._watchWaitingJobCount(storage, jobId, callbacks.onWaiting, jobState);
+
         // 작업 상태 감시 (완료/실패)
         this._watchJobStatus(storage, jobId, jobState, callbacks.onFailed, parseState);
-        
+
         // 작업 진행률 감시
         this._watchJobProgress(storage, jobId, jobState, parseState);
-        
+
         // Inference 감시
         this._watchInference(storage, jobId, jobState, parseState);
-        
+
         // AggregateFieldAssignments 감시
         this._watchFieldAssignments(storage, jobId, jobState, parseState);
-        
+
         // 로그 감시
         this._watchJobLogs(storage, jobId, jobState, parseState);
     }
@@ -141,8 +161,10 @@ class PreviewFieldsLangGraphProxy {
     /**
      * 대기 중인 작업 수 감시
      */
-    static _watchWaitingJobCount(storage, jobId, onWaiting) {
-        storage.watch(`${this._getRequestJobPath(jobId)}/waitingJobCount`, async (count) => {
+    static _watchWaitingJobCount(storage, jobId, onWaiting, jobState) {
+        const path = `${this._getRequestJobPath(jobId)}/waitingJobCount`;
+        this._trackWatch(jobState, path);
+        storage.watch(path, async (count) => {
             if (count !== null && count !== undefined) {
                 await onWaiting(count);
             }
@@ -154,16 +176,19 @@ class PreviewFieldsLangGraphProxy {
      */
     static _watchJobStatus(storage, jobId, jobState, onFailed, parseState) {
         // 완료 여부 감시
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/isCompleted`, async (isCompleted) => {
+        const completedPath = `${this._getJobPath(jobId)}/state/outputs/isCompleted`;
+        this._trackWatch(jobState, completedPath);
+        storage.watch(completedPath, async (isCompleted) => {
             if (isCompleted === true) {
                 jobState.isCompleted = true;
-                // console.log(`[PreviewFieldsProxy] ⏰ isCompleted triggered, calling parseState once`);
                 await parseState();
             }
         });
-        
+
         // 실패 여부 감시
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/isFailed`, async (isFailed) => {
+        const failedPath = `${this._getJobPath(jobId)}/state/outputs/isFailed`;
+        this._trackWatch(jobState, failedPath);
+        storage.watch(failedPath, async (isFailed) => {
             if (isFailed === true) {
                 jobState.isFailed = true;
                 const errorMsg = jobState.error || 'Job failed';
@@ -171,6 +196,7 @@ class PreviewFieldsLangGraphProxy {
                 if (onFailed) {
                     await onFailed(errorMsg);
                 }
+                this._cleanupWatchers(storage, jobState);
             }
         });
     }
@@ -179,7 +205,9 @@ class PreviewFieldsLangGraphProxy {
      * 진행률 감시
      */
     static _watchJobProgress(storage, jobId, jobState, parseState) {
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/progress`, async (progress) => {
+        const path = `${this._getJobPath(jobId)}/state/outputs/progress`;
+        this._trackWatch(jobState, path);
+        storage.watch(path, async (progress) => {
             if (progress !== null && progress !== undefined) {
                 jobState.progress = progress;
                 await parseState();
@@ -191,7 +219,9 @@ class PreviewFieldsLangGraphProxy {
      * Inference 감시
      */
     static _watchInference(storage, jobId, jobState, parseState) {
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/inference`, async (inference) => {
+        const path = `${this._getJobPath(jobId)}/state/outputs/inference`;
+        this._trackWatch(jobState, path);
+        storage.watch(path, async (inference) => {
             if (inference) {
                 jobState.inference = inference;
                 await parseState();
@@ -203,9 +233,10 @@ class PreviewFieldsLangGraphProxy {
      * AggregateFieldAssignments 감시
      */
     static _watchFieldAssignments(storage, jobId, jobState, parseState) {
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/aggregateFieldAssignments`, async (assignments) => {
+        const path = `${this._getJobPath(jobId)}/state/outputs/aggregateFieldAssignments`;
+        this._trackWatch(jobState, path);
+        storage.watch(path, async (assignments) => {
             if (assignments) {
-                // console.log(`[PreviewFieldsProxy] 📝 Field assignments updated:`, assignments);
                 jobState.aggregateFieldAssignments = this._restoreArrayFromFirebase(assignments);
                 await parseState();
             }
@@ -216,7 +247,9 @@ class PreviewFieldsLangGraphProxy {
      * 로그 감시
      */
     static _watchJobLogs(storage, jobId, jobState, parseState) {
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/logs`, async (logs) => {
+        const path = `${this._getJobPath(jobId)}/state/outputs/logs`;
+        this._trackWatch(jobState, path);
+        storage.watch(path, async (logs) => {
             if (logs) {
                 jobState.logs = this._restoreArrayFromFirebase(logs);
                 await parseState();

@@ -61,16 +61,16 @@ class AggregateDraftLangGraphProxy {
      */
     static watchJob(jobId, onUpdate, onComplete, onWaiting, onFailed) {
         const storage = new Vue(StorageBase);
-        
+
         const callbacks = {
             onUpdate,
             onComplete,
             onWaiting,
             onFailed
         };
-        
+
         const jobState = this._initializeJobState();
-        
+
         this._setupJobWatchers(storage, jobId, jobState, callbacks);
     }
 
@@ -88,10 +88,35 @@ class AggregateDraftLangGraphProxy {
             progress: 0,
             isCompleted: false,
             isFailed: false,
-            error: ''
+            error: '',
+            // 이 job 에서 등록한 모든 watch path. 완료/실패 시 일괄 watch_off — 누수 방지.
+            _watchedPaths: new Set(),
+            _watchersCleaned: false
         };
-        
+
         return accumulatedOutputState;
+    }
+
+    /**
+     * watch 등록 직전 path 를 추적 Set 에 넣어 _cleanupWatchers 가 일괄 해제 가능하게.
+     */
+    static _trackWatch(jobState, path) {
+        if (jobState && jobState._watchedPaths) {
+            jobState._watchedPaths.add(path);
+        }
+    }
+
+    /**
+     * job 종료(완료/실패) 시 등록된 모든 watch listener 해제.
+     * 미정리 시 같은 path 에 listener 가 누적 → acebase reconnect 후 callback 폭주 → ws 부하 → ping timeout.
+     */
+    static _cleanupWatchers(storage, jobState) {
+        if (!jobState || !jobState._watchedPaths || jobState._watchersCleaned) return;
+        jobState._watchersCleaned = true;
+        for (const path of jobState._watchedPaths) {
+            try { storage.watch_off(path); } catch (e) { /* noop */ }
+        }
+        jobState._watchedPaths.clear();
     }
 
     /**
@@ -114,8 +139,8 @@ class AggregateDraftLangGraphProxy {
         };
         
         // 대기 중인 작업 수 감시
-        this._watchWaitingJobCount(storage, jobId, callbacks.onWaiting);
-        
+        this._watchWaitingJobCount(storage, jobId, callbacks.onWaiting, jobState);
+
         // 작업 상태 감시 (완료/실패)
         this._watchJobStatus(storage, jobId, jobState, callbacks.onFailed, parseState);
         
@@ -135,8 +160,10 @@ class AggregateDraftLangGraphProxy {
     /**
      * 대기 중인 작업 수 감시
      */
-    static _watchWaitingJobCount(storage, jobId, onWaiting) {
-        storage.watch(`${this._getRequestJobPath(jobId)}/waitingJobCount`, async (count) => {
+    static _watchWaitingJobCount(storage, jobId, onWaiting, jobState) {
+        const path = `${this._getRequestJobPath(jobId)}/waitingJobCount`;
+        this._trackWatch(jobState, path);
+        storage.watch(path, async (count) => {
             if (count !== null && count !== undefined) {
                 await onWaiting(count);
             }
@@ -148,34 +175,41 @@ class AggregateDraftLangGraphProxy {
      */
     static _watchJobStatus(storage, jobId, jobState, onFailed, parseState) {
         // 실패 상태 감시
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/isFailed`, async (isFailed) => {
+        const failedPath = `${this._getJobPath(jobId)}/state/outputs/isFailed`;
+        this._trackWatch(jobState, failedPath);
+        storage.watch(failedPath, async (isFailed) => {
             if (isFailed === null || isFailed === undefined) return;
             if (!isFailed) return;
-            
+
             jobState.isFailed = isFailed;
             await parseState();
-            
+
             const errorMsg = jobState.error || "Unknown error occurred";
             await onFailed(errorMsg);
+            this._cleanupWatchers(storage, jobState);
         });
 
         // BoundedContext 감시
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/boundedContext`, async (boundedContext) => {
+        const bcPath = `${this._getJobPath(jobId)}/state/outputs/boundedContext`;
+        this._trackWatch(jobState, bcPath);
+        storage.watch(bcPath, async (boundedContext) => {
             if (boundedContext !== null && boundedContext !== undefined) {
                 jobState.boundedContext = boundedContext;
             }
         });
-        
+
         // 완료 상태 감시 (중복 호출 방지)
         let completedCalled = false;
-        const unwatchCompleted = storage.watch(`${this._getJobPath(jobId)}/state/outputs/isCompleted`, async (isCompleted) => {
+        const completedPath = `${this._getJobPath(jobId)}/state/outputs/isCompleted`;
+        this._trackWatch(jobState, completedPath);
+        storage.watch(completedPath, async (isCompleted) => {
             if (isCompleted && !completedCalled) {
                 completedCalled = true;
                 jobState.isCompleted = isCompleted;
-                
+
                 // 완료 시 전체 outputs 객체 읽기 — DB 가 일시적으로 끊긴 상태일 수 있어 retry 버전 사용
                 const outputs = await storage.getObjectWithRetry(`${this._getJobPath(jobId)}/state/outputs`);
-                
+
                 if (outputs) {
                     if (!jobState.boundedContext && outputs.boundedContext) {
                         jobState.boundedContext = outputs.boundedContext;
@@ -193,16 +227,18 @@ class AggregateDraftLangGraphProxy {
                         jobState.conclusions = outputs.conclusions;
                     }
                 }
-                
+
                 await parseState();
-                
-                // watch 해제
-                if (unwatchCompleted) unwatchCompleted();
+
+                // 완료 후 등록된 모든 watch listener 해제 (logs/options/inference/error/progress 등 누수 방지)
+                this._cleanupWatchers(storage, jobState);
             }
         });
-        
+
         // 에러 메시지 감시
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/error`, async (error) => {
+        const errorPath = `${this._getJobPath(jobId)}/state/outputs/error`;
+        this._trackWatch(jobState, errorPath);
+        storage.watch(errorPath, async (error) => {
             if (error) {
                 jobState.error = error;
             }
@@ -213,7 +249,9 @@ class AggregateDraftLangGraphProxy {
      * 작업 진행률 감시
      */
     static _watchJobProgress(storage, jobId, jobState, parseState) {
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/progress`, async (progress) => {
+        const path = `${this._getJobPath(jobId)}/state/outputs/progress`;
+        this._trackWatch(jobState, path);
+        storage.watch(path, async (progress) => {
             if (progress !== null && progress !== undefined) {
                 jobState.progress = progress;
             }
@@ -224,7 +262,9 @@ class AggregateDraftLangGraphProxy {
      * Inference 감시
      */
     static _watchInference(storage, jobId, jobState, parseState) {
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/inference`, async (inference) => {
+        const path = `${this._getJobPath(jobId)}/state/outputs/inference`;
+        this._trackWatch(jobState, path);
+        storage.watch(path, async (inference) => {
             if (inference) {
                 jobState.inference = inference;
                 await parseState();
@@ -236,7 +276,9 @@ class AggregateDraftLangGraphProxy {
      * Options 감시
      */
     static _watchOptions(storage, jobId, jobState, parseState) {
-        storage.watch(`${this._getJobPath(jobId)}/state/outputs/options`, async (options) => {
+        const path = `${this._getJobPath(jobId)}/state/outputs/options`;
+        this._trackWatch(jobState, path);
+        storage.watch(path, async (options) => {
             if (options) {
                 jobState.options = this._restoreArrayFromFirebase(options);
                 await parseState();
@@ -248,9 +290,11 @@ class AggregateDraftLangGraphProxy {
      * 로그 감시
      */
     static _watchJobLogs(storage, jobId, jobState, parseState) {
-        storage.watch_added(`${this._getJobPath(jobId)}/state/outputs/logs`, null, async (log) => {
+        const path = `${this._getJobPath(jobId)}/state/outputs/logs`;
+        this._trackWatch(jobState, path);
+        storage.watch_added(path, null, async (log) => {
             if (!log) return;
-            
+
             const restoredLog = this._restoreDataFromFirebase(log);
             jobState.logs.push(restoredLog);
         });
