@@ -169,7 +169,25 @@
                                             <span>{{ item.name }}</span>
                                         </v-edit-dialog>
                                     </td>
-                                    <td>{{ item.role }}</td>
+                                    <td>
+                                        <v-edit-dialog
+                                            :return-value.sync="item.role"
+                                            @save="saveItemEdit(item, 'role')"
+                                            @open="initializeEditFields(item)"
+                                            @cancel="cancelEdit(item)"
+                                            large
+                                            persistent
+                                        >
+                                            <template v-slot:input>
+                                                <v-text-field v-model="editedFields.role"
+                                                    :label="$t('DevideBoundedContextDialog.role')"
+                                                    single-line
+                                                    auto-grow
+                                                ></v-text-field>
+                                            </template>
+                                            <span>{{ item.role }}</span>
+                                        </v-edit-dialog>
+                                    </td>
                                     <td>
                                         <v-select
                                             v-model="item.importance"
@@ -465,7 +483,25 @@
                                                 <span>{{ item.name }}</span>
                                             </v-edit-dialog>
                                         </td>
-                                        <td>{{ item.role }}</td>
+                                        <td>
+                                            <v-edit-dialog
+                                                :return-value.sync="item.role"
+                                                @save="saveItemEdit(item, 'role')"
+                                                @open="initializeEditFields(item)"
+                                                @cancel="cancelEdit(item)"
+                                                large
+                                                persistent
+                                            >
+                                                <template v-slot:input>
+                                                    <v-text-field v-model="editedFields.role"
+                                                        :label="$t('DevideBoundedContextDialog.role')"
+                                                        single-line
+                                                        auto-grow
+                                                    ></v-text-field>
+                                                </template>
+                                                <span>{{ item.role }}</span>
+                                            </v-edit-dialog>
+                                        </td>
                                         <td>
                                             <v-select
                                                 v-model="item.importance"
@@ -792,6 +828,7 @@
                 editedFields: {
                     name: '',
                     alias: '',
+                    role: '',
                     importance: '',
                     implementationStrategy: ''
                 },
@@ -1066,6 +1103,14 @@
                                 boundedContext.alias = this.editedFields.alias;
                                 break;
 
+                        case 'role':
+                            // v-edit-dialog 의 v-text-field 는 editedFields.role 에 바인딩되어 있어서
+                            // 저장 시 editedFields → boundedContext 로 명시 복사 필요. item.role 은
+                            // :return-value.sync 로 자동 동기화되지만 editedFields 값이 source of truth.
+                            boundedContext.role = this.editedFields.role || '';
+                            item.role = boundedContext.role;
+                            break;
+
                         case 'importance':
                             boundedContext.importance = item.importance;
                             break;
@@ -1095,6 +1140,7 @@
                 this.editedFields = {
                     name: boundedContext.name || item.name,
                     alias: boundedContext.alias || item.name,
+                    role: boundedContext.role || item.role || '',
                     importance: item.importance,
                     implementationStrategy: item.implementationStrategy
                 };
@@ -1110,6 +1156,7 @@
                 this.editedFields = {
                     name: boundedContext.name || item.name,
                     alias: boundedContext.alias || item.name,
+                    role: boundedContext.role || item.role || '',
                     importance: item.importance,
                     implementationStrategy: item.implementationStrategy
                 };
