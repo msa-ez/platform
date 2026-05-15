@@ -250,9 +250,42 @@ class RecursiveRequirementsValidationGeneratorLangGraph {
             };
         });
 
-        // accumulatedResults 도 새 참조로 교체 (Vue 반응성 보장 — 이전 패치와 같은 이유).
+        // 누적 content.elements 에서 이벤트 element 를 name 으로 인덱싱.
+        // _createIncrementalElements (chunk 2+) 는 relations 를 안 만들기 때문에,
+        // stitching 끝난 시점에 전체 events 기준으로 relation 을 새로 빌드해야 BPMN 이 흐름선을 그림.
+        const prevElements = (this.accumulatedResults.content && this.accumulatedResults.content.elements) || {};
+        const prevRelations = (this.accumulatedResults.content && this.accumulatedResults.content.relations) || {};
+        const eventElementsByName = {};
+        for (const elId in prevElements) {
+            const el = prevElements[elId];
+            if (el && el._type === 'org.uengine.modeling.model.Event' && el.name) {
+                eventElementsByName[el.name] = el;
+            }
+        }
+
+        const newRelations = {};
+        let relationsBuilt = 0;
+        for (const ev of mergedEvents) {
+            if (!ev.nextEvents || ev.nextEvents.length === 0) continue;
+            const sourceEl = eventElementsByName[ev.name];
+            if (!sourceEl) continue;
+            for (const nextName of ev.nextEvents) {
+                const targetEl = eventElementsByName[nextName];
+                if (!targetEl) continue;
+                const relId = this._uuid();
+                newRelations[relId] = this._createRelation(sourceEl, targetEl, relId, ev.level || 1);
+                relationsBuilt++;
+            }
+        }
+
+        // accumulatedResults 를 새 최상위 참조로 교체 (Vue 반응성 보장 — 이전 패치와 같은 이유).
+        // content.elements 는 기존 그대로, relations 만 stitching 결과로 추가 (swim-lane 등은 보존).
         this.accumulatedResults = {
             ...this.accumulatedResults,
+            content: {
+                elements: { ...prevElements },
+                relations: { ...prevRelations, ...newRelations }
+            },
             analysisResult: {
                 ...this.accumulatedResults.analysisResult,
                 events: mergedEvents
@@ -260,7 +293,19 @@ class RecursiveRequirementsValidationGeneratorLangGraph {
         };
 
         const withFlow = mergedEvents.filter(e => Array.isArray(e.nextEvents) && e.nextEvents.length > 0).length;
-        console.log(`[RecursiveRequirementsValidationGeneratorLangGraph] 🧵 Flow stitching 완료: ${withFlow}/${mergedEvents.length}개 이벤트가 nextEvents 보유`);
+        console.log(`[RecursiveRequirementsValidationGeneratorLangGraph] 🧵 Flow stitching 완료: ${withFlow}/${mergedEvents.length}개 이벤트가 nextEvents 보유, ${relationsBuilt}개 relation 생성`);
+
+        // FE 강제 리렌더: 모든 청크 완료 후엔 onGenerationSucceeded 가 한 번도 다시 안 불려서
+        // RequirementAnalysis 의 events watcher 가 stitched 결과를 못 봄.
+        // 청크 완료 시와 동일한 경로(onGenerationSucceeded → handleGenerationFinished →
+        // _accumulateResults)로 한 번 더 보내서 새 참조를 박아주고 BPMN 을 redraw.
+        if (this.client && typeof this.client.onGenerationSucceeded === 'function') {
+            try {
+                this.client.onGenerationSucceeded({ modelValue: { output: this.accumulatedResults } });
+            } catch (e) {
+                console.error('[RecursiveRequirementsValidationGeneratorLangGraph] Post-stitch redraw notification failed:', e);
+            }
+        }
     }
 
     /**
