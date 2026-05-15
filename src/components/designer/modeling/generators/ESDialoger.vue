@@ -1715,18 +1715,11 @@ import { value } from 'jsonpath';
         },
         methods: {
             // update:draft 는 청크 검증 / 트레이스 / 프리뷰 콜백마다 N 번 emit 되는데,
-            // 그때마다 부모(AutoModelingDialog) 가 messages 전체를 새 객체로 받아서 reactivity·debounce 큐를 돌림.
-            // 부모가 800ms debounce 로 setObject 는 코얼레스하지만, 여기서 emit 자체와 messages 직렬화는 N 회 실행됨.
-            // 같은 tick·짧은 시간 안의 연속 emit 을 trailing 300ms 로 합쳐 호출 횟수를 줄임.
+            // 부모(AutoModelingDialog) 의 updateDraft 가 이미 800ms debounce 로 acebase 쓰기를 코얼레스함.
+            // 여기서 추가로 debounce 를 걸면 짧은 작업 후 사용자가 페이지를 떠날 때 pending emit 이 부모에게
+            // 도달 못 해서 draft 가 통째로 유실됨. 동기 emit 만 함 — emit 자체는 가벼움.
             triggerDraftEmit() {
-                if (!this._debouncedEmitDraft) {
-                    // ⚠️ 이 디바운스 콜백 안에서 triggerDraftEmit() 을 호출하면 무한 재귀 — 부모에게 emit 이 절대 안 가서
-                    // draft 가 acebase 에 저장 안 되고 빈 리스트로만 남는다. 반드시 $emit 으로 끝맺어야 함.
-                    this._debouncedEmitDraft = _.debounce(() => {
-                        this.$emit("update:draft", this.messages);
-                    }, 300, { leading: false, trailing: true });
-                }
-                this._debouncedEmitDraft();
+                this.$emit("update:draft", this.messages);
             },
             async initESDialoger() {
                 if(!this.draft) return;
