@@ -746,6 +746,8 @@
             window.addEventListener('beforeunload', this.handleBeforeUnload)
         },
         beforeRouteLeave(to, from, next) {
+            // pending debounced draft 가 있으면 떠나기 전 flush — 마지막 변경 유실 방지.
+            this._flushDraftSave && this._flushDraftSave();
             if (!this.isServer && this.hasUnsavedChanges()) {
                 this.showConfirmDialog = true
                 this.pendingAction = () => next()
@@ -756,6 +758,8 @@
         },
         beforeDestroy() {
             window.removeEventListener('beforeunload', this.handleBeforeUnload)
+            // pending debounced draft flush.
+            this._flushDraftSave && this._flushDraftSave();
 
             let getPrompt = localStorage.getItem('noLoginPrompt')
             if( !(this.isLogin && getPrompt)){
@@ -1329,8 +1333,34 @@
                 this.$emit('update:draft', messages)
                 if(!this.projectInfo || !this.projectInfo.projectId) return
 
-                await this.setObject(`db://definitions/${this.projectInfo.projectId}/draft`, messages)
-                this.autoSavedDraft = structuredClone(this.draft)
+                // ⚠️ 매 호출마다 전체 messages 를 통째 setObject 하면
+                // 청크 검증/요약/매핑처럼 update:draft 가 N 번 emit 되는 워크플로우에서
+                // AceBase 가 동일 노드(`/definitions/.../draft`)를 빠르게 연속 덮어씌우게 됨.
+                // → "[mydb] Node ... is being overwritten" 경고 → ws 부하 → timeout 으로 끊김.
+                // 800ms debounce 로 압축: 마지막 상태만 한 번 실제로 저장됨.
+                this._latestDraftMessages = messages;
+                if (!this._debouncedSaveDraft) {
+                    this._debouncedSaveDraft = _.debounce(() => this._doSaveDraft(), 800);
+                }
+                this._debouncedSaveDraft();
+            },
+
+            async _doSaveDraft() {
+                const projectId = this.projectInfo && this.projectInfo.projectId;
+                if (!projectId || !this._latestDraftMessages) return;
+                try {
+                    await this.setObject(`db://definitions/${projectId}/draft`, this._latestDraftMessages);
+                    this.autoSavedDraft = structuredClone(this.draft);
+                } catch (e) {
+                    console.warn('[AutoModelingDialog] draft 저장 실패:', e);
+                }
+            },
+
+            // 페이지 떠나기 전/destroy 전 호출 — pending debounce 즉시 flush 해서 마지막 변경 안 유실되게.
+            _flushDraftSave() {
+                if (this._debouncedSaveDraft && typeof this._debouncedSaveDraft.flush === 'function') {
+                    this._debouncedSaveDraft.flush();
+                }
             },
 
             updateLocalDraft(draft){
@@ -1658,6 +1688,9 @@
             },
 
             handleBeforeUnload(e) {
+                // 페이지 닫기/새로고침 직전 — pending debounced draft 즉시 flush (sync).
+                // setObject 자체는 async 라 완전 보장은 못 하지만 호출은 발사됨.
+                this._flushDraftSave && this._flushDraftSave();
                 if (window.location.pathname.includes('/project/') && !this.isServer && this.hasUnsavedChanges()) {
                     e.preventDefault()
                     e.returnValue = ''
