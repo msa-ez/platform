@@ -152,6 +152,19 @@ class RecursiveRequirementsValidationGeneratorLangGraph {
                 await this.processNextChunk();
                 
             } catch (error) {
+                // 사용자가 stop 을 눌러서 chunkReject 가 발사된 케이스는 외부 입장에선 정상 종료.
+                // rejectCurrentProcess 로 propagate 하면 caller (validateRequirements) 가 .catch 가 없어
+                // "Uncaught (in promise)" 가 뜸. accumulated 상태 그대로 resolve 해서 조용히 마침.
+                if (this.isStopped) {
+                    console.log('[RecursiveRequirementsValidationGeneratorLangGraph] Chunk aborted by user stop');
+                    if (this.resolveCurrentProcess) {
+                        const resolveFn = this.resolveCurrentProcess;
+                        this.resolveCurrentProcess = null;
+                        this.rejectCurrentProcess = null;
+                        resolveFn(this.accumulatedResults);
+                    }
+                    return;
+                }
                 console.error('[RecursiveRequirementsValidationGeneratorLangGraph] Chunk processing failed:', error);
                 if (this.rejectCurrentProcess) {
                     this.rejectCurrentProcess(error);
@@ -320,6 +333,11 @@ class RecursiveRequirementsValidationGeneratorLangGraph {
      * @param {Object} result - { type, content, logs, progress, isFailed }
      */
     async _handleUpdate(result) {
+        // stop 이후 늦게 도착한 watchJob update 는 무시 — ESDialoger 가 이미 processAnalysis 메시지를
+        // splice 로 제거했기 때문에 onModelCreated 에서 messages.find(...).uniqueId 가 undefined → throw.
+        if (this.isStopped) {
+            return;
+        }
         const progress = result.progress || 0;
         console.log(`[RecursiveRequirementsValidationGeneratorLangGraph] Update - progress: ${progress}%`);
 
@@ -333,7 +351,7 @@ class RecursiveRequirementsValidationGeneratorLangGraph {
                 }
             });
         }
-        
+
         if (this.client.onGenerationUpdate) {
             this.client.onGenerationUpdate(this.accumulatedResults, progress);
         }
@@ -1004,15 +1022,18 @@ class RecursiveRequirementsValidationGeneratorLangGraph {
     /**
      * 진행 중 검증 중단.
      * 호출 효과:
-     *   1) isStopped 플래그를 세워 후속 청크/stitching 로직이 빨리 빠져나오게 함.
-     *   2) 현재 진행 중 chunk 의 Promise 를 reject 해서 processNextChunk 의 await 를 즉시 해제.
-     *      그러면 _handleFailed catch 로 흘러 rejectCurrentProcess 가 발사됨.
-     *   3) 백엔드의 진행 중 job 도 isRemoveRequested 로 안전하게 취소.
+     *   1) isStopped 플래그 — _handleUpdate / processNextChunk / _handleChunkComplete 가 일찍 빠져나옴.
+     *   2) 현재 진행 중 chunk 의 Promise 를 reject → processNextChunk 의 await 가 throw →
+     *      거기 catch 가 isStopped 분기를 타서 외부 promise 를 resolve 로 풀어줌 (uncaught 방지).
+     *   3) 백엔드의 진행 중 job 에 isRemoveRequested 를 박아 안전하게 취소.
+     *
+     * 주의: 여기서 rejectCurrentProcess 를 직접 호출하면 caller (validateRequirements) 가
+     * .catch 없이 호출하기 때문에 "Uncaught (in promise)" 가 콘솔에 뜸 → processNextChunk
+     * catch 한 곳에서만 외부 promise 를 풀어주도록 일원화.
      */
     stop() {
         this.isStopped = true;
 
-        // 1) 백엔드 현재 작업 취소
         if (this.jobId) {
             try {
                 RequirementsValidatorLangGraphProxy.removeJob(this.jobId);
@@ -1021,22 +1042,12 @@ class RecursiveRequirementsValidationGeneratorLangGraph {
             }
         }
 
-        // 2) chunk-level await 해제
         if (this.chunkReject) {
             try {
                 this.chunkReject(new Error('Generation stopped by user'));
             } catch (e) { /* noop */ }
             this.chunkResolve = null;
             this.chunkReject = null;
-        }
-
-        // 3) 외부 validateRecursively() promise 도 reject
-        if (this.rejectCurrentProcess) {
-            try {
-                this.rejectCurrentProcess(new Error('Generation stopped by user'));
-            } catch (e) { /* noop */ }
-            this.resolveCurrentProcess = null;
-            this.rejectCurrentProcess = null;
         }
     }
 }
