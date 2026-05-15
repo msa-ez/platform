@@ -1842,6 +1842,23 @@
                         await me.putObject(`db://definitions/${settingProjectId}/information`, informationObj)
                         await me.putObject(`db://userLists/${me.userInfo.uid}`, userInfoObj)
 
+                        // 서버 트리거(acebase/main.js의 /definitions/$projectId/information mutated 핸들러)가
+                        // ES 저장 케이스에서 일부 누락되어 userLists/{uid}/mine 에 항목이 안 생기는 사례 확인됨.
+                        // setForkData 와 동일 패턴으로 클라이언트가 mine 인덱스를 직접 갱신.
+                        // putObject 는 merge update 라 트리거가 같이 fire 돼도 idempotent.
+                        if (me.userInfo && me.userInfo.uid && informationObj.author) {
+                            await me.putObject(`db://userLists/${me.userInfo.uid}/mine/${settingProjectId}`, {
+                                author: informationObj.author,
+                                authorEmail: informationObj.authorEmail,
+                                projectName: informationObj.projectName,
+                                projectId: settingProjectId,
+                                lastModifiedTimeStamp: informationObj.lastModifiedTimeStamp,
+                                createdTimeStamp: informationObj.createdTimeStamp,
+                                type: informationObj.type,
+                                comment: informationObj.comment || ''
+                            })
+                        }
+
 
                         /* 백업용 사용자의 local에서 마지막 모델링 정보 */
                         await me.putObject(`db://definitions/${settingProjectId}/versionLists/${projectVersion}`, versionInfoObj)
