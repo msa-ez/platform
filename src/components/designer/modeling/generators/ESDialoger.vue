@@ -2557,32 +2557,58 @@ import { value } from 'jsonpath';
             stop(){
                 this.isStopped = true;
 
-                this.generator.stop();
+                // generator.stop 미정의 시 stop() 자체가 죽는 걸 방지 (이전엔 일부 generator 가
+                // stop() 미구현 상태라 호출 시 TypeError 로 후속 cleanup 이 안 돌았음).
+                if (this.generator && typeof this.generator.stop === 'function') {
+                    try {
+                        this.generator.stop();
+                    } catch (e) {
+                        console.warn('[ESDialoger] generator.stop() threw:', e);
+                    }
+                }
                 this.state.startTemplateGenerate = true
                 this.done = true;
 
                 let messageId = null
-                if(this.state.generator === "DevideBoundedContextGenerator"){
-                    messageId = this.messages.find(msg => msg.type === "boundedContextResult").uniqueId;
+                if(this.state.generator === "DevideBoundedContextGenerator" ||
+                    this.state.generator === "DevideBoundedContextGeneratorLangGraph"){
+                    const bcMsg = this.messages.find(msg => msg.type === "boundedContextResult");
+                    if (bcMsg) {
+                        messageId = bcMsg.uniqueId;
+                        this.updateMessageState(messageId, {
+                            currentGeneratedLength: 0
+                        });
+                    }
                     this.resultDevideBoundedContext = {};
                     this.currentGeneratedLength = 0;
-                    this.updateMessageState(messageId, {
-                        currentGeneratedLength: this.currentGeneratedLength
-                    });
                 }
 
-                if(this.state.generator === "RequirementsValidationGenerator" || 
-                    this.state.generator === "RecursiveRequirementsValidationGenerator"){
-                    messageId = this.messages.find(msg => msg.type === "processAnalysis").uniqueId;
-                    this.messages.splice(this.messages.findIndex(msg => msg.type === "processAnalysis"), 1);
+                if(this.state.generator === "RequirementsValidationGenerator" ||
+                    this.state.generator === "RecursiveRequirementsValidationGenerator" ||
+                    this.state.generator === "RequirementsValidationGeneratorLangGraph" ||
+                    this.state.generator === "RecursiveRequirementsValidationGeneratorLangGraph"){
+                    const analysisMsg = this.messages.find(msg => msg.type === "processAnalysis");
+                    if (analysisMsg) {
+                        messageId = analysisMsg.uniqueId;
+                        this.messages.splice(this.messages.findIndex(msg => msg.type === "processAnalysis"), 1);
+                    }
                     this.requirementsValidationResult = null;
                 }
 
-                if(this.state.generator === "RecursiveUserStoryGenerator"){
+                if(this.state.generator === "RecursiveUserStoryGenerator" ||
+                    this.state.generator === "RecursiveUserStoryGeneratorLangGraph"){
                     // recursive generator 중단 처리
                     if (this.generator && this.generator.resolveCurrentProcess) {
                         this.generator.resolveCurrentProcess = null;
                     }
+                }
+
+                // Summarizer 도 중단 시 진행 상태/메시지 정리
+                if(this.state.generator === "RecursiveRequirementsSummarizer" ||
+                    this.state.generator === "RecursiveRequirementsSummarizerLangGraph"){
+                    this.summarizeProgress = null;
+                    this._syncSummarizeProgressToMessage();
+                    this.pendingBCGeneration = false;
                 }
 
                 if(this.state.generator === "RequirementsMappingGenerator"){

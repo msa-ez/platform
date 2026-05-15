@@ -9,6 +9,9 @@ class DevideBoundedContextGeneratorLangGraph {
     constructor(client) {
         this.client = client;
         this.generatorName = 'DevideBoundedContextGeneratorLangGraph';
+        this.jobId = null;
+        this.isStopped = false;
+        this._reject = null;
     }
 
     /**
@@ -27,8 +30,13 @@ class DevideBoundedContextGeneratorLangGraph {
             hasRequirements: !!requirements
         });
 
-        // Job ID 생성
+        // 진행 중인 generate 에 대한 stop 추적 — 새 generate 시작 시점에 플래그 리셋.
+        this.isStopped = false;
+        this._reject = null;
+
+        // Job ID 생성 — 인스턴스에 저장해서 stop() 이 접근 가능하게.
         const jobId = this._generateJobId();
+        this.jobId = jobId;
 
         // Backend에 Job 생성
         await BoundedContextLangGraphProxy.makeNewJob(
@@ -43,13 +51,20 @@ class DevideBoundedContextGeneratorLangGraph {
         // Job 완료 대기
         return new Promise((resolve, reject) => {
             let hasResolved = false;
+            // stop() 이 외부에서 호출 시 즉시 reject 할 수 있도록 등록.
+            this._reject = (err) => {
+                if (hasResolved) return;
+                hasResolved = true;
+                reject(err);
+            };
 
             BoundedContextLangGraphProxy.watchJob(
                 jobId,
                 // onUpdate (사용하지 않음)
                 (devisionAspect, thoughts, boundedContexts, relations, explanations, logs, progress, currentGeneratedLength) => {
+                    if (this.isStopped) return;
                     const length = currentGeneratedLength || this._getGeneratedLength(boundedContexts, relations, explanations);
-                    
+
                     if (this.client.onModelCreated) {
                         this.client.onModelCreated({
                             modelValue: {
@@ -63,6 +78,7 @@ class DevideBoundedContextGeneratorLangGraph {
                 // onComplete
                 (devisionAspect, thoughts, boundedContexts, relations, explanations, logs, progress, currentGeneratedLength, isFailed) => {
                     if (hasResolved) return;
+                    if (this.isStopped) return;
                     hasResolved = true;
                     
                     console.log('[DevideBoundedContextGeneratorLangGraph] onComplete 호출:', {
@@ -148,6 +164,31 @@ class DevideBoundedContextGeneratorLangGraph {
             }).length;
         } catch (e) {
             return 0;
+        }
+    }
+
+    /**
+     * 생성 중지.
+     *  1) isStopped 플래그 → 미도착 watchJob 콜백이 도착해도 onComplete/onUpdate 가 no-op.
+     *  2) 백엔드 진행 중 작업에 isRemoveRequested 를 박아 안전하게 취소.
+     *  3) generate() 의 외부 promise 를 즉시 reject 해서 caller 가 await 에서 풀려나오게 함.
+     */
+    stop() {
+        this.isStopped = true;
+
+        if (this.jobId) {
+            try {
+                BoundedContextLangGraphProxy.removeJob(this.jobId);
+            } catch (e) {
+                console.warn('[DevideBoundedContextGeneratorLangGraph] removeJob failed:', e);
+            }
+        }
+
+        if (typeof this._reject === 'function') {
+            try {
+                this._reject(new Error('Generation stopped by user'));
+            } catch (e) { /* noop */ }
+            this._reject = null;
         }
     }
 }

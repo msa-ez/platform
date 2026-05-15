@@ -451,6 +451,24 @@ class RequirementsValidationGeneratorLangGraph {
         const random = Math.random().toString(36).substring(2, 9);
         return `req-valid-${timestamp}-${random}`;
     }
+
+    stop() {
+        this.isStopped = true;
+        if (this.jobId) {
+            try {
+                RequirementsValidatorLangGraphProxy.removeJob(this.jobId);
+            } catch (e) {
+                console.warn('[RequirementsValidationGeneratorLangGraph] removeJob failed:', e);
+            }
+        }
+        if (this.rejectCurrentProcess) {
+            try {
+                this.rejectCurrentProcess(new Error('Generation stopped by user'));
+            } catch (e) { /* noop */ }
+            this.resolveCurrentProcess = null;
+            this.rejectCurrentProcess = null;
+        }
+    }
 }
 
 module.exports = RequirementsValidationGeneratorLangGraph;

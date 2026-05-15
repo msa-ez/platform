@@ -207,6 +207,25 @@ class RequirementsValidatorLangGraphProxy {
         return `db://${this.PATHS.REQUESTED_JOBS}/${this.JOB_TYPE}/${jobId}`;
     }
 
+    static _getJobStatePath(jobId) {
+        return `db://${this.PATHS.JOB_STATES}/${this.JOB_TYPE}/${jobId}`;
+    }
+
+    /**
+     * Job 취소 요청 — backend 의 decentralized_job_manager 가 jobStates 의 isRemoveRequested 를
+     * 감지해 진행 중인 작업도 안전하게 중단/제거.
+     */
+    static async removeJob(jobId) {
+        try {
+            const storage = new Vue(StorageBase);
+            await storage.setObject(this._getJobStatePath(jobId), {
+                isRemoveRequested: true
+            });
+        } catch (error) {
+            console.error(`❌ Validator removeJob failed for ${jobId}:`, error);
+        }
+    }
+
     static generateJobId() {
         const timestamp = Date.now();
         const random = Math.random().toString(36).substring(2, 11);

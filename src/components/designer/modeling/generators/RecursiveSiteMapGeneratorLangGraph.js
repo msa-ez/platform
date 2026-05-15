@@ -156,6 +156,17 @@ class RecursiveSiteMapGeneratorLangGraph {
             return 0;
         }
     }
+
+    stop() {
+        this.isStopped = true;
+        if (this.proxy && typeof this.proxy.removeJob === 'function') {
+            try {
+                this.proxy.removeJob();
+            } catch (e) {
+                console.warn('[RecursiveSiteMapGeneratorLangGraph] removeJob failed:', e);
+            }
+        }
+    }
 }
 
 module.exports = RecursiveSiteMapGeneratorLangGraph;

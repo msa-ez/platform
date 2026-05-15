@@ -65,6 +65,17 @@ class CommandReadModelExtractorLangGraph {
             this.proxy = null;
         }
     }
+
+    stop() {
+        this.isStopped = true;
+        if (this.proxy && typeof this.proxy.removeJob === 'function') {
+            try {
+                this.proxy.removeJob();
+            } catch (e) {
+                console.warn('[CommandReadModelExtractorLangGraph] removeJob failed:', e);
+            }
+        }
+    }
 }
 
 module.exports = CommandReadModelExtractorLangGraph;

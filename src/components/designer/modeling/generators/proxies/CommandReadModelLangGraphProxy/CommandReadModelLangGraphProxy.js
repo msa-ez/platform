@@ -179,6 +179,19 @@ class CommandReadModelLangGraphProxy {
     _getJobStatePath(jobId) {
         return `db://${CommandReadModelLangGraphProxy.PATHS.JOB_STATES}/${CommandReadModelLangGraphProxy.JOB_TYPE}/${jobId}`;
     }
+
+    async removeJob(jobId) {
+        const targetId = jobId || this.jobId;
+        if (!targetId) return;
+        try {
+            const storage = new Vue(StorageBase);
+            await storage.setObject(this._getJobStatePath(targetId), {
+                isRemoveRequested: true
+            });
+        } catch (error) {
+            console.error(`❌ CommandReadModel removeJob failed for ${targetId}:`, error);
+        }
+    }
 }
 
 module.exports = CommandReadModelLangGraphProxy;

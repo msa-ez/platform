@@ -31,6 +31,12 @@ class RecursiveRequirementsSummarizerLangGraph extends RequirementsSummarizer {
         // Job 관리
         this.jobId = null;
         this.currentJobPromise = null;
+
+        // Stop 처리용 — 진행 중인 모든 청크 job 의 reject 와 jobId 를 추적.
+        // stop() 호출 시 한 번에 reject + removeJob.
+        this.isStopped = false;
+        this._activeJobIds = new Set();
+        this._activeJobRejects = new Map(); // jobId → reject fn
     }
 
     /**
@@ -65,6 +71,7 @@ class RecursiveRequirementsSummarizerLangGraph extends RequirementsSummarizer {
         this.iterations = 0;
 
         while (this._getCurrentTextLength(structuredResult) > this.textChunker.chunkSize && this.iterations < this.maxIterations) {
+            if (this.isStopped) throw new Error('Generation stopped by user');
             this.iterations++;
             const currentLength = this._getCurrentTextLength(structuredResult);
             console.log(`[SummarizerLangGraph] Iteration ${this.iterations} - Before: ${currentLength} 자`);
@@ -130,8 +137,26 @@ class RecursiveRequirementsSummarizerLangGraph extends RequirementsSummarizer {
             iteration
         );
 
+        // 시작 직전 stop 확인 — 이미 멈춰 있으면 새 job 안 만들고 reject.
+        if (this.isStopped) {
+            return Promise.reject(new Error('Generation stopped by user'));
+        }
+
         return new Promise((resolve, reject) => {
             let hasResolved = false;
+            const cleanup = () => {
+                this._activeJobIds.delete(jobId);
+                this._activeJobRejects.delete(jobId);
+            };
+
+            // stop() 가 즉시 reject 할 수 있도록 등록
+            this._activeJobIds.add(jobId);
+            this._activeJobRejects.set(jobId, (err) => {
+                if (hasResolved) return;
+                hasResolved = true;
+                cleanup();
+                reject(err);
+            });
 
             SummarizerLangGraphProxy.watchJob(
                 jobId,
@@ -143,6 +168,7 @@ class RecursiveRequirementsSummarizerLangGraph extends RequirementsSummarizer {
                 (summaries, logs, progress, isFailed) => {
                     if (hasResolved) return;
                     hasResolved = true;
+                    cleanup();
                     if (verbose) {
                         console.log(`[SummarizerLangGraph] 청크 ${chunkIndex + 1}/${totalChunks} 완료: ${summaries ? summaries.length : 0}개 요약`);
                     }
@@ -156,6 +182,7 @@ class RecursiveRequirementsSummarizerLangGraph extends RequirementsSummarizer {
                 (error) => {
                     if (hasResolved) return;
                     hasResolved = true;
+                    cleanup();
                     console.error(`[SummarizerLangGraph] 청크 ${chunkIndex + 1}/${totalChunks} 오류:`, error);
                     reject(new Error(error));
                 }
@@ -180,6 +207,7 @@ class RecursiveRequirementsSummarizerLangGraph extends RequirementsSummarizer {
 
         const worker = async () => {
             while (true) {
+                if (this.isStopped) return;  // stop() 호출 시 더 이상 새 청크 잡지 않음
                 const i = nextIdx++;
                 if (i >= chunks.length) return;
                 results[i] = await this._runChunkJob(chunks[i], i, chunks.length, iteration, verbose);
@@ -326,11 +354,33 @@ class RecursiveRequirementsSummarizerLangGraph extends RequirementsSummarizer {
     }
 
     /**
-     * 중단 처리
+     * 중단 처리.
+     *   1) isStopped 플래그 — worker 루프와 다음 iteration 진입을 막음.
+     *   2) 진행 중인 모든 청크 job 의 reject 를 호출 → Promise.all 즉시 throw → summarizeRecursively catch.
+     *   3) 백엔드의 진행 중 job 은 isRemoveRequested 로 안전하게 취소.
      */
     stop() {
         console.log('[SummarizerLangGraph] Stopping...');
-        // Job 취소 로직 필요시 추가
+        this.isStopped = true;
+
+        // 진행 중 job 백엔드 취소
+        for (const jobId of Array.from(this._activeJobIds)) {
+            try {
+                SummarizerLangGraphProxy.removeJob(jobId);
+            } catch (e) {
+                console.warn('[SummarizerLangGraph] removeJob failed:', e);
+            }
+        }
+
+        // 진행 중 job promise reject (worker 의 await 즉시 throw → Promise.all fail-fast)
+        const rejects = Array.from(this._activeJobRejects.values());
+        this._activeJobRejects.clear();
+        this._activeJobIds.clear();
+        for (const rej of rejects) {
+            try {
+                rej(new Error('Generation stopped by user'));
+            } catch (e) { /* noop */ }
+        }
     }
 }
 

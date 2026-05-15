@@ -14,6 +14,8 @@ class RecursiveRequirementsValidationGeneratorLangGraph {
         this.resolveCurrentProcess = null;
         this.rejectCurrentProcess = null;
         this.jobId = null;
+        // stop() 호출 시 후속 청크/이벤트 처리를 즉시 차단하는 플래그
+        this.isStopped = false;
         
         // TextChunker 설정
         this.textChunker = new TextChunker({
@@ -94,6 +96,11 @@ class RecursiveRequirementsValidationGeneratorLangGraph {
      * 다음 청크 처리 (재귀적)
      */
     async processNextChunk() {
+        // 사용자가 stop 을 누르면 즉시 빠져나옴 — chunkReject 가 호출돼 await 가 throw 하므로
+        // 정상 catch 로 흘러가지만, 다음 청크를 진입조차 하지 않도록 가드.
+        if (this.isStopped) {
+            return;
+        }
         if (this.currentChunkIndex < this.currentChunks.length) {
             const chunkData = this.currentChunks[this.currentChunkIndex];
             const chunkNumber = this.currentChunkIndex + 1;
@@ -374,6 +381,11 @@ class RecursiveRequirementsValidationGeneratorLangGraph {
      * @param {Object} result - { type, content, logs, progress, isFailed }
      */
     async _handleChunkComplete(result) {
+        // stop 이후 늦게 도착한 청크 완료는 무시 — onGenerationSucceeded 가 ESDialoger 의 isStopped 체크
+        // 이전에 호출되면 청크가 화면에 반영될 수 있음.
+        if (this.isStopped) {
+            return;
+        }
         if (result.isFailed) {
             console.error('[RecursiveRequirementsValidationGeneratorLangGraph] Chunk failed');
             if (this.chunkReject) {
@@ -987,6 +999,45 @@ class RecursiveRequirementsValidationGeneratorLangGraph {
         const timestamp = Date.now();
         const random = Math.random().toString(36).substring(2, 9);
         return `req-valid-${timestamp}-${random}`;
+    }
+
+    /**
+     * 진행 중 검증 중단.
+     * 호출 효과:
+     *   1) isStopped 플래그를 세워 후속 청크/stitching 로직이 빨리 빠져나오게 함.
+     *   2) 현재 진행 중 chunk 의 Promise 를 reject 해서 processNextChunk 의 await 를 즉시 해제.
+     *      그러면 _handleFailed catch 로 흘러 rejectCurrentProcess 가 발사됨.
+     *   3) 백엔드의 진행 중 job 도 isRemoveRequested 로 안전하게 취소.
+     */
+    stop() {
+        this.isStopped = true;
+
+        // 1) 백엔드 현재 작업 취소
+        if (this.jobId) {
+            try {
+                RequirementsValidatorLangGraphProxy.removeJob(this.jobId);
+            } catch (e) {
+                console.warn('[RecursiveRequirementsValidationGeneratorLangGraph] removeJob failed:', e);
+            }
+        }
+
+        // 2) chunk-level await 해제
+        if (this.chunkReject) {
+            try {
+                this.chunkReject(new Error('Generation stopped by user'));
+            } catch (e) { /* noop */ }
+            this.chunkResolve = null;
+            this.chunkReject = null;
+        }
+
+        // 3) 외부 validateRecursively() promise 도 reject
+        if (this.rejectCurrentProcess) {
+            try {
+                this.rejectCurrentProcess(new Error('Generation stopped by user'));
+            } catch (e) { /* noop */ }
+            this.resolveCurrentProcess = null;
+            this.rejectCurrentProcess = null;
+        }
     }
 }
 
