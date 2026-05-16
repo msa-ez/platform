@@ -180,6 +180,18 @@ class PreviewFieldsLangGraphProxy {
         this._trackWatch(jobState, completedPath);
         storage.watch(completedPath, async (isCompleted) => {
             if (isCompleted === true) {
+                // AggregateDraft 와 동일한 race 회피:
+                // isCompleted=true 만 먼저 보이고 aggregateFieldAssignments watch 가 나중에 도착하면
+                // 중간 parseState 에서 onComplete 가 빈 값으로 발사되어 ESDialoger 의 .find 가 TypeError.
+                // 여기서 outputs/aggregateFieldAssignments 를 직접 한 번 더 읽어 race 를 해소.
+                try {
+                    const path = `${this._getJobPath(jobId)}/state/outputs/aggregateFieldAssignments`;
+                    const assignments = await storage.getObjectWithRetry(path);
+                    if (assignments !== undefined && assignments !== null) {
+                        jobState.aggregateFieldAssignments = this._restoreArrayFromFirebase(assignments);
+                    }
+                } catch (e) { /* watch 가 채워줄 것이므로 무시 */ }
+
                 jobState.isCompleted = true;
                 await parseState();
             }
@@ -291,18 +303,29 @@ class PreviewFieldsLangGraphProxy {
     }
 
     /**
-     * Firebase 배열 복원 (Firebase는 빈 배열을 ['@']로 저장)
+     * Firebase/AceBase 배열 복원.
+     * - 빈 배열 마커 `["@"]` → `[]`
+     * - 진짜 배열 → 그대로 (요소만 복원)
+     * - numeric key dict (`{"0":..., "1":...}`) → 배열 — AceBase 가 list 를 dict 로 반환하는 케이스.
+     *   이 경우를 array 로 복원 안 하면 호출부의 `.find/.map` 가 TypeError.
      */
     static _restoreArrayFromFirebase(data) {
         if (!data) return [];
         if (Array.isArray(data)) {
-            // ['@']를 []로 변환
             if (data.length === 1 && data[0] === '@') {
                 return [];
             }
-            return data;
+            return data.map(item => this._restoreDataFromFirebase(item));
         }
         if (typeof data === 'object') {
+            const keys = Object.keys(data);
+            const allNumeric = keys.length > 0 && keys.every(k => /^\d+$/.test(k));
+            if (allNumeric) {
+                return keys
+                    .map(k => Number(k))
+                    .sort((a, b) => a - b)
+                    .map(k => this._restoreDataFromFirebase(data[String(k)]));
+            }
             return this._restoreDataFromFirebase(data);
         }
         return data;
