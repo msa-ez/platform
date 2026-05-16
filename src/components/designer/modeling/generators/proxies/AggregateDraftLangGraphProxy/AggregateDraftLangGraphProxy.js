@@ -172,11 +172,11 @@ class AggregateDraftLangGraphProxy {
             if (!jobState || jobState._watchersCleaned || jobState.isFailed || jobState._pollInFlight) return;
             jobState._pollInFlight = true;
             try {
-                if (!jobState.isCompleted) {
-                    const isCompleted = await storage.getObjectWithRetry(`${outputsPath}/isCompleted`);
-                    if (!isCompleted) return;
-                    jobState.isCompleted = true;
-                }
+                // 백엔드 isCompleted 확인. 단, 여기서 jobState.isCompleted = true 를 set 하면
+                // 다른 watch 가 parseState 발사 시 isCompleted=true && options=[] 로 onComplete 가 빈 배열 발사.
+                // 옵션이 ready 인 시점까지 jobState.isCompleted 는 false 로 둔다.
+                const backendCompleted = await storage.getObjectWithRetry(`${outputsPath}/isCompleted`);
+                if (!backendCompleted) return;
 
                 jobState._pollAttempts += 1;
                 const [boundedContext, inference, defaultOptionIndex, conclusions, optionsChunked, optionsChunkCount] = await Promise.all([
@@ -203,6 +203,7 @@ class AggregateDraftLangGraphProxy {
                 // chunks 가 다 모였으면 (정당한 empty 포함) 완료 처리.
                 if (loaded.ready) {
                     jobState.options = Array.isArray(loaded.options) ? loaded.options : [];
+                    jobState.isCompleted = true;
                     await parseState();
                     this._cleanupWatchers(storage, jobState);
                     return;
@@ -211,6 +212,7 @@ class AggregateDraftLangGraphProxy {
                 if (jobState._pollAttempts >= 30) {
                     console.warn('[AggregateDraftLangGraphProxy] completion polling exhausted with unready options:', { jobId, optionsChunkCount });
                     jobState.options = Array.isArray(loaded.options) ? loaded.options : [];
+                    jobState.isCompleted = true;
                     await parseState();
                     this._cleanupWatchers(storage, jobState);
                 }
@@ -296,7 +298,10 @@ class AggregateDraftLangGraphProxy {
         this._trackWatch(jobState, completedPath);
         storage.watch(completedPath, async (isCompleted) => {
             if (isCompleted && !completedCalled) {
-                jobState.isCompleted = isCompleted;
+                // 중요: jobState.isCompleted = true 를 옵션 로드 *시작* 시점에 set 하면
+                // 그 사이 _watchInference / _watchJobLogs 같은 다른 watch 가 비동기로 parseState() 를 부를 때
+                // isCompleted=true && options=[] 상태에서 onComplete([]) 가 발사된다.
+                // 옵션이 ready 가 된 직후에만 jobState.isCompleted 를 set.
 
                 const outputsPath = `${this._getJobPath(jobId)}/state/outputs`;
                 const [
@@ -340,6 +345,8 @@ class AggregateDraftLangGraphProxy {
                     return;
                 }
 
+                // 옵션이 확실히 준비됐을 때만 isCompleted=true 로 flip.
+                jobState.isCompleted = true;
                 completedCalled = true;
                 await parseState();
 
