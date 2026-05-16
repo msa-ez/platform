@@ -85,12 +85,17 @@
                                     } catch(_) {}
                                 }
                                 
-                                // seenKeys 리셋 (재연결 시 서버 상태를 기준으로 재동기화)
+                                // seenKeys 는 의도적으로 유지한다.
+                                // acebase-client 는 재구독 시 기존 child 도 child_added 로 다시 emit 하므로
+                                // seenKeys 를 리셋하면 jobState.logs 등 downstream 누적 상태에 중복이 쌓인다.
+                                // (이미 본 key 는 handler 가 skip → 누락 없이 새 child 만 콜백)
                                 if (!instance._watchAddedSeenKeys) {
                                     instance._watchAddedSeenKeys = {};
                                 }
-                                instance._watchAddedSeenKeys[path] = {};
-                                
+                                if (!instance._watchAddedSeenKeys[path]) {
+                                    instance._watchAddedSeenKeys[path] = {};
+                                }
+
                                 // 먼저 구독 등록 (레이스 컨디션 방지)
                                 w.reference.on('child_added', w.handler);
                                 
