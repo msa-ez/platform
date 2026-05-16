@@ -195,22 +195,22 @@ class AggregateDraftLangGraphProxy {
                 }
                 if (conclusions) jobState.conclusions = conclusions;
 
-                const loadedOptions = await this._loadJobOptions(storage, jobId, {
+                const loaded = await this._loadJobOptions(storage, jobId, {
                     optionsChunked,
                     optionsChunkCount
                 });
 
-                // options chunk가 늦게 보일 수 있어 빈 배열이면 조금 더 폴링한 뒤 완료 처리한다.
-                if (Array.isArray(loadedOptions) && loadedOptions.length > 0) {
-                    jobState.options = loadedOptions;
+                // chunks 가 다 모였으면 (정당한 empty 포함) 완료 처리.
+                if (loaded.ready) {
+                    jobState.options = Array.isArray(loaded.options) ? loaded.options : [];
                     await parseState();
                     this._cleanupWatchers(storage, jobState);
                     return;
                 }
 
                 if (jobState._pollAttempts >= 30) {
-                    console.warn('[AggregateDraftLangGraphProxy] completion polling exhausted with empty options:', { jobId, optionsChunkCount });
-                    jobState.options = loadedOptions || [];
+                    console.warn('[AggregateDraftLangGraphProxy] completion polling exhausted with unready options:', { jobId, optionsChunkCount });
+                    jobState.options = Array.isArray(loaded.options) ? loaded.options : [];
                     await parseState();
                     this._cleanupWatchers(storage, jobState);
                 }
@@ -296,7 +296,6 @@ class AggregateDraftLangGraphProxy {
         this._trackWatch(jobState, completedPath);
         storage.watch(completedPath, async (isCompleted) => {
             if (isCompleted && !completedCalled) {
-                completedCalled = true;
                 jobState.isCompleted = isCompleted;
 
                 const outputsPath = `${this._getJobPath(jobId)}/state/outputs`;
@@ -328,11 +327,20 @@ class AggregateDraftLangGraphProxy {
                 if (conclusions) {
                     jobState.conclusions = conclusions;
                 }
-                jobState.options = await this._loadJobOptions(storage, jobId, {
+                const loaded = await this._loadJobOptions(storage, jobId, {
                     optionsChunked,
                     optionsChunkCount
                 });
+                jobState.options = loaded.options;
 
+                // chunks 가 아직 다 안 보이면 onComplete 보류 — 폴링 fallback 에 위임.
+                // 여기서 cleanup 하면 폴링 타이머까지 죽어 빈 옵션이 영구화된다.
+                if (!loaded.ready) {
+                    console.warn('[AggregateDraftLangGraphProxy] completion watcher fired but chunks not yet visible; deferring to polling:', { jobId, optionsChunkCount });
+                    return;
+                }
+
+                completedCalled = true;
                 await parseState();
 
                 // 완료 후 등록된 모든 watch listener 해제 (logs/options/inference/error/progress 등 누수 방지)
@@ -379,6 +387,9 @@ class AggregateDraftLangGraphProxy {
 
     /**
      * 완료 시 options 로드 — chunked 이면 optionsChunks 만, 아니면 options 경로만 읽음.
+     * 반환: {options: Array, ready: boolean}
+     *   - ready=true 면 더 이상 기다릴 필요 없음 (성공이든 정당한 empty 든 결과 확정)
+     *   - ready=false 면 chunks 가 아직 안 보임 → 호출자가 폴링/재시도로 이어받아야 함
      */
     static async _loadJobOptions(storage, jobId, outputMeta) {
         const outputsPath = `${this._getJobPath(jobId)}/state/outputs`;
@@ -390,7 +401,7 @@ class AggregateDraftLangGraphProxy {
             for (let attempt = 0; attempt < 12; attempt++) {
                 const optionsChunks = await storage.getObjectWithRetry(`${outputsPath}/optionsChunks`);
                 const restored = this._restoreChunkedOptions(optionsChunks, chunkCount);
-                if (restored.length > 0 || !chunkCount) {
+                if (restored.ready) {
                     return restored;
                 }
                 if (attempt < 11) {
@@ -402,22 +413,29 @@ class AggregateDraftLangGraphProxy {
                 jobId,
                 chunkCount
             });
-            return [];
+            return { options: [], ready: false };
         }
 
         const options = await storage.getObjectWithRetry(`${outputsPath}/options`);
-        return this._restoreArrayFromFirebase(options);
+        return { options: this._restoreArrayFromFirebase(options), ready: true };
     }
 
+    /**
+     * chunks 를 합쳐서 options 배열 복원.
+     * 반환: {options, ready}
+     *   - ready=false: chunkKeys 가 expectedCount 보다 적음 → 아직 다 도착 안 함, 재시도 필요
+     *   - ready=true: chunks 가 다 모였고 파싱 성공 (혹은 빈 결과여도 정당한 종결)
+     */
     static _restoreChunkedOptions(optionsChunks, expectedCount) {
         try {
-            if (!optionsChunks || typeof optionsChunks !== 'object') return [];
+            if (!optionsChunks || typeof optionsChunks !== 'object') {
+                return { options: [], ready: false };
+            }
             const chunkKeys = Object.keys(optionsChunks)
                 .filter(k => /^\d+$/.test(String(k)))
                 .sort((a, b) => Number(a) - Number(b));
             if (expectedCount && chunkKeys.length < expectedCount) {
-                // 일부 chunk 누락 시 빈 배열로 처리 (완료 이후 재조회 시 복구 가능)
-                return [];
+                return { options: [], ready: false };
             }
 
             const jsonText = chunkKeys.map(k => {
@@ -428,15 +446,18 @@ class AggregateDraftLangGraphProxy {
                 return String(chunkNode || '');
             }).join('');
 
-            if (!jsonText) return [];
+            if (!jsonText) return { options: [], ready: true };
             const parsed = JSON.parse(jsonText);
             if (Array.isArray(parsed)) {
-                return parsed.map(item => this._restoreDataFromFirebase(item));
+                return {
+                    options: parsed.map(item => this._restoreDataFromFirebase(item)),
+                    ready: true
+                };
             }
-            return [];
+            return { options: [], ready: true };
         } catch (e) {
             console.warn('[AggregateDraftLangGraphProxy] Failed to restore chunked options:', e);
-            return [];
+            return { options: [], ready: false };
         }
     }
 
