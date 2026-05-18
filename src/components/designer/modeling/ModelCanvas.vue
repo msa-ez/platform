@@ -2924,11 +2924,19 @@
                         // 우선 direct lookup 으로 찾고, 실패 시 기존 쿼리로 fallback.
                         var addedFromDirect = false
                         var duplicateExisting = null
+                        var selfAliasHit = false
                         try {
                             var convertEmail = String(user.email).replace(/\./g, '_')
                             var enrolled = await me.getObject(`db://enrolledUsers/${convertEmail}`)
                             if (enrolled && enrolled.uid) {
                                 var passesMyselfFilter = (myself && me.userInfo.uid == enrolled.uid) || (!myself && me.userInfo.uid != enrolled.uid)
+                                // 본인 acebase 계정과 같은 uid 인데 invite 대상으로 들어온 경우
+                                // (예: 한 사람이 Gitea 에서 이메일을 바꿔와 enrolledUsers 두 키가 같은 uid 를 가리킬 때)
+                                // — fallback 쿼리로 빠져 "찾을 수 없음" 으로 끝나면 사용자에게 오해를 줌.
+                                // 명시적으로 식별해서 안내한다.
+                                if (!passesMyselfFilter && !myself && me.userInfo.uid == enrolled.uid) {
+                                    selfAliasHit = true
+                                }
                                 if (passesMyselfFilter) {
                                     if (!me.invitationLists) me.invitationLists = {}
                                     // invitationLists 는 uid-keyed. acebase 한 사용자가 이메일을
@@ -2967,6 +2975,14 @@
                             return
                         }
 
+                        if (selfAliasHit) {
+                            me.$EventBus.$emit('inviteCallBack', {
+                                msg: `공유실패: 이 이메일(${user.email})은 본인 계정(${me.userInfo.email})과 동일합니다. 자기 자신은 초대할 수 없습니다.`
+                            })
+                            resolve(false)
+                            return
+                        }
+
                         if (addedFromDirect) {
                             resolve(true)
                             return
@@ -2984,6 +3000,7 @@
                         if(snapshots){
                             if (!me.invitationLists) me.invitationLists = {}
                             var fallbackDuplicate = null
+                            var fallbackSelfAlias = false
                             snapshots.forEach(function (snapshot) {
                                 var uid = snapshot.key
                                 if( (myself && me.userInfo.uid == uid) || (!myself && me.userInfo.uid != uid) ){
@@ -3002,12 +3019,21 @@
                                             write: write,
                                             request: user.request ? user.request : null
                                         }
+                                } else if (!myself && me.userInfo.uid == uid) {
+                                    fallbackSelfAlias = true
                                 }
                             })
                             me.invitationLists.__ob__.dep.notify()
                             if (fallbackDuplicate) {
                                 me.$EventBus.$emit('inviteCallBack', {
                                     msg: `공유실패: 이 이메일(${user.email})은 이미 추가된 사용자(${fallbackDuplicate.email})와 동일 계정입니다.`
+                                })
+                                resolve(false)
+                                return
+                            }
+                            if (fallbackSelfAlias) {
+                                me.$EventBus.$emit('inviteCallBack', {
+                                    msg: `공유실패: 이 이메일(${user.email})은 본인 계정(${me.userInfo.email})과 동일합니다. 자기 자신은 초대할 수 없습니다.`
                                 })
                                 resolve(false)
                                 return
