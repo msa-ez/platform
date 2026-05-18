@@ -1990,24 +1990,21 @@
                         me.delete(`localstorage://${projectId}`)
                         me.delete(`localstorage://image_${projectId}`)
 
-
-                        // let imageObjects = await me.getObject(`localstorage://serverImageLists`);
-                        //
-                        // delete imageObjects[me.projectId]
-                        //
-                        // await me.putObject(`localstorage://serverImageLists`, imageObjects);
-
-
-
+                        // localLists 가 한 번도 안 쓰인 사용자는 null. 그대로 findIndex 호출하면
+                        // TypeError → 서버 삭제는 이미 끝났는데 alert 만 떠서 사용자가 "에러" 로 인지.
                         var localLists = await me.getObject(`localstorage://localLists`)
-                        var index = localLists.findIndex(info => info.projectId == projectId)
-                        if (index != -1)
-                            localLists.splice(index, 1)
-                        await me.putObject(`localstorage://localLists`, localLists)
+                        if (Array.isArray(localLists)) {
+                            var index = localLists.findIndex(info => info.projectId == projectId)
+                            if (index != -1) {
+                                localLists.splice(index, 1)
+                                await me.putObject(`localstorage://localLists`, localLists)
+                            }
+                        }
                     }
                     me.closeDeleteDialog()
                 } catch (e) {
-                    alert('Error:', e)
+                    console.error('deleteProject failed:', e)
+                    alert('Error: ' + (e && (e.message || e.toString())))
                 }
             },
             openDeleteDialog() {

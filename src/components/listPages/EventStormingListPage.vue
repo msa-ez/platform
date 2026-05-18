@@ -2075,15 +2075,22 @@
                         me.deleteItem.isDeletedProject = true
 
                         me.delete(`localstorage://${me.deleteItem.projectId}`)
+                        // localLists 가 한 번도 안 쓰인 사용자는 null 이라 그대로 findIndex 호출하면
+                        // TypeError → 서버 삭제는 이미 끝났는데 alert 만 떠서 사용자가 "에러" 로 인지.
                         var localLists = await me.getObject(`localstorage://localLists`)
-                        var index = localLists.findIndex(info => info.projectId == me.deleteItem.projectId)
-                        if (index != -1)
-                            localLists.splice(index, 1)
-                        await me.putObject(`localstorage://localLists`, localLists)
+                        if (Array.isArray(localLists)) {
+                            var index = localLists.findIndex(info => info.projectId == me.deleteItem.projectId)
+                            if (index != -1) {
+                                localLists.splice(index, 1)
+                                await me.putObject(`localstorage://localLists`, localLists)
+                            }
+                        }
                     }
                     me.closeDeleteDialog()
                 } catch (e) {
-                    alert('Error:', e)
+                    // alert 는 인자 1개만 받음 — 기존 alert('Error:', e) 는 e 가 무시되어 디버깅 불가능했음
+                    console.error('deleteProject failed:', e)
+                    alert('Error: ' + (e && (e.message || e.toString())))
                 }
             },
             openDeleteDialog() {
