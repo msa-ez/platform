@@ -1165,8 +1165,12 @@
                                 Object.keys(perms).forEach(function (permUid) {
                                     if (!perms[permUid]) return
                                     me.putObject(`db://userLists/${permUid}/share/${me.projectId}`, mirrorObj)
-                                    if (permUid === 'everyone' && me.information.type) {
-                                        me.putObject(`db://userLists/everyone/share_${me.information.type}/${me.projectId}`, mirrorObj)
+                                    if (permUid === 'everyone') {
+                                        if (me.information.type) {
+                                            me.putObject(`db://userLists/everyone/share_${me.information.type}/${me.projectId}`, mirrorObj)
+                                        }
+                                        // 기본 public 탭(mode='all') 이 읽는 인덱스 — 트리거 1만 채우는데 누락 사례 있어 같이 미러링
+                                        me.putObject(`db://userLists/everyone/share_first/${me.projectId}`, mirrorObj)
                                     }
                                 })
                             }
@@ -2999,11 +3003,54 @@
                         })
                     }
 
+                    // 트리거 누락 대비를 위해 before 스냅샷을 미리 떠둠 (회수된 권한 삭제용)
+                    var beforePerms = me.information && me.information.permissions ? Object.assign({}, me.information.permissions) : {}
+
                     me.putObject(`db://definitions/${me.projectId}/information/permissions`, me.invitationLists)
                     me.information.permissions = me.invitationLists
                     me.modelChanged = true
                     if (request) {
                         me.joinRequested = true
+                    }
+
+                    // acebase 트리거(/definitions/$projectId/information mutated 핸들러)가 sub-path 쓰기에서
+                    // 누락되거나 sub-snapshot 만 받아 afterInformation.projectName 등이 undefined 가 되는 사례
+                    // 확인됨 — 결과적으로 userLists/everyone/share* 인덱스가 안 채워져 public 목록에 미노출.
+                    // 클라이언트에서 인덱스 사본을 직접 갱신해 트리거와 idempotent merge.
+                    if (me.information) {
+                        var indexObj = {
+                            author: me.information.author,
+                            authorEmail: me.information.authorEmail,
+                            projectName: me.information.projectName,
+                            projectId: me.projectId,
+                            type: me.information.type,
+                            lastModifiedTimeStamp: Date.now(),
+                            createdTimeStamp: me.information.createdTimeStamp,
+                            img: me.information.img,
+                            comment: me.information.comment || ''
+                        }
+                        var allUids = Object.keys(beforePerms || {}).concat(Object.keys(me.invitationLists || {}))
+                        allUids = allUids.filter(function (v, i, a) { return a.indexOf(v) === i })
+                        allUids.forEach(function (uid) {
+                            var nowGranted = me.invitationLists && me.invitationLists[uid]
+                            if (nowGranted) {
+                                me.putObject(`db://userLists/${uid}/share/${me.projectId}`, indexObj)
+                                if (uid === 'everyone') {
+                                    if (me.information.type) {
+                                        me.putObject(`db://userLists/everyone/share_${me.information.type}/${me.projectId}`, indexObj)
+                                    }
+                                    me.putObject(`db://userLists/everyone/share_first/${me.projectId}`, indexObj)
+                                }
+                            } else {
+                                me.delete(`db://userLists/${uid}/share/${me.projectId}`)
+                                if (uid === 'everyone') {
+                                    if (me.information.type) {
+                                        me.delete(`db://userLists/everyone/share_${me.information.type}/${me.projectId}`)
+                                    }
+                                    me.delete(`db://userLists/everyone/share_first/${me.projectId}`)
+                                }
+                            }
+                        })
                     }
                 }
 
