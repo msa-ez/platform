@@ -2923,6 +2923,7 @@
                         // 동일 정보가 enrolledUsers/{convertEmail} 에 email-key 로 박혀 있으므로
                         // 우선 direct lookup 으로 찾고, 실패 시 기존 쿼리로 fallback.
                         var addedFromDirect = false
+                        var duplicateExisting = null
                         try {
                             var convertEmail = String(user.email).replace(/\./g, '_')
                             var enrolled = await me.getObject(`db://enrolledUsers/${convertEmail}`)
@@ -2930,23 +2931,40 @@
                                 var passesMyselfFilter = (myself && me.userInfo.uid == enrolled.uid) || (!myself && me.userInfo.uid != enrolled.uid)
                                 if (passesMyselfFilter) {
                                     if (!me.invitationLists) me.invitationLists = {}
-                                    // users/{uid} 에 추가 필드(username/profile_picture)가 있으면 보강
-                                    var userInfo = null
-                                    try { userInfo = await me.getObject(`db://users/${enrolled.uid}`) } catch (_) {}
-                                    me.invitationLists[enrolled.uid] = {
-                                        uid: enrolled.uid,
-                                        userName: enrolled.userName || (userInfo && (userInfo.userName || userInfo.username)) || 'anyone',
-                                        userPic: enrolled.profile_picture || (userInfo && userInfo.profile_picture) || '',
-                                        email: enrolled.email || user.email,
-                                        write: write,
-                                        request: user.request ? user.request : null
+                                    // invitationLists 는 uid-keyed. acebase 한 사용자가 이메일을
+                                    // 바꿔온 이력이 있으면 enrolledUsers 에는 두 키로 박혀도 uid 는
+                                    // 동일. 그 경우 두 번째 add 가 첫 번째를 침묵 덮어쓰던 회귀를
+                                    // 막기 위해 이미 같은 uid 의 entry 가 있으면 거절하고 알린다.
+                                    var existing = me.invitationLists[enrolled.uid]
+                                    if (existing && existing.email && existing.email !== user.email) {
+                                        duplicateExisting = existing
+                                    } else {
+                                        // users/{uid} 에 추가 필드(username/profile_picture)가 있으면 보강
+                                        var userInfo = null
+                                        try { userInfo = await me.getObject(`db://users/${enrolled.uid}`) } catch (_) {}
+                                        me.invitationLists[enrolled.uid] = {
+                                            uid: enrolled.uid,
+                                            userName: enrolled.userName || (userInfo && (userInfo.userName || userInfo.username)) || 'anyone',
+                                            userPic: enrolled.profile_picture || (userInfo && userInfo.profile_picture) || '',
+                                            email: enrolled.email || user.email,
+                                            write: write,
+                                            request: user.request ? user.request : null
+                                        }
+                                        me.invitationLists.__ob__.dep.notify()
+                                        addedFromDirect = true
                                     }
-                                    me.invitationLists.__ob__.dep.notify()
-                                    addedFromDirect = true
                                 }
                             }
                         } catch (e) {
                             console.log('addInviteUser direct lookup failed, will fallback to query:', e)
+                        }
+
+                        if (duplicateExisting) {
+                            me.$EventBus.$emit('inviteCallBack', {
+                                msg: `공유실패: 이 이메일(${user.email})은 이미 추가된 사용자(${duplicateExisting.email})와 동일 계정입니다.`
+                            })
+                            resolve(false)
+                            return
                         }
 
                         if (addedFromDirect) {
@@ -2965,10 +2983,16 @@
                         var snapshots = await me.list('db://users',options)
                         if(snapshots){
                             if (!me.invitationLists) me.invitationLists = {}
+                            var fallbackDuplicate = null
                             snapshots.forEach(function (snapshot) {
                                 var uid = snapshot.key
                                 if( (myself && me.userInfo.uid == uid) || (!myself && me.userInfo.uid != uid) ){
                                     var item = snapshot
+                                    var existing = me.invitationLists[uid]
+                                    if (existing && existing.email && existing.email !== user.email) {
+                                        fallbackDuplicate = existing
+                                        return
+                                    }
                                     me.invitationLists[uid] =
                                         {
                                             uid: uid,
@@ -2981,6 +3005,13 @@
                                 }
                             })
                             me.invitationLists.__ob__.dep.notify()
+                            if (fallbackDuplicate) {
+                                me.$EventBus.$emit('inviteCallBack', {
+                                    msg: `공유실패: 이 이메일(${user.email})은 이미 추가된 사용자(${fallbackDuplicate.email})와 동일 계정입니다.`
+                                })
+                                resolve(false)
+                                return
+                            }
                             if(!me.invitationLists){
                                 var obj = {
                                     msg: "공유실패: Can't find user. check email."
