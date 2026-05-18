@@ -56,19 +56,17 @@ class Gitea extends Git {
         // 없으면 localStorage의 gitToken 사용
         const envToken = window.GITEA_TOKEN;
         const gitToken = envToken || localStorage.getItem('gitToken');
-        
+
         if (!gitToken) {
             return {};
         }
-        
-        // JWT 토큰(OAuth)인 경우 Gitea API에서 직접 사용할 수 없음
-        // JWT는 점(.) 3개로 구분된 구조: header.payload.signature
-        const isJWT = gitToken.includes('.') && gitToken.split('.').length === 3;
-        if (isJWT) {
-            // JWT 토큰인 경우 빈 객체 반환 (Gitea API에서 사용 불가)
-            return {};
-        }
-        
+
+        // 이전 구현은 JWT(3-segment) 토큰을 "Gitea API에서 사용 불가"로 간주해
+        // 빈 헤더를 반환했으나, 실제로는 acebase OAuth 가 발급한 JWT 도 Gitea가
+        // `token <jwt>` 스킴으로 받아준다(설치 환경에서 콘솔로 직접 확인됨).
+        // 빈 헤더를 보내면 /api/v1/user 가 401 로 응답하고, AcebaseRedirectPage 의
+        // `git.getUserInfo()` .catch 브랜치로 빠져 userEmail 이 stale 한 상태로
+        // writeUserData 가 호출 → enrolledUsers 쓰기가 누락되는 회귀가 생겼다.
         return {
             Authorization: 'token ' + gitToken
         };
