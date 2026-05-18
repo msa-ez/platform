@@ -1974,16 +1974,33 @@
 
                 try {
                     if (me.deleteItem) {
-                        var isServer = false
                         let projectId = me.deleteItem.projectId ? me.deleteItem.projectId : me.deleteItem.objectID
                         let authorId = me.deleteItem.author ? me.deleteItem.author : me.deleteItem.authorId
+                        var information = await me.list(`db://definitions/${projectId}/information`)
+                        var isServer = !!information
 
-                        var modelSnap = await me.list(`db://definitions/${projectId}/information`)
-                        if (modelSnap) {
-                            isServer = true
-                        }
                         if (isServer) {
+                            // 1) Mine 인덱스 (서버 트리거 fallback)
                             await me.delete(`db://userLists/${authorId}/mine/${projectId}`)
+
+                            // 2) Public/share 인덱스 — 트리거가 share_es/share_first 만 다루므로 명시 제거.
+                            var type = (information && information.type) || me.deleteItem.type
+                            me.delete(`db://userLists/everyone/share/${projectId}`)
+                            me.delete(`db://userLists/everyone/share_first/${projectId}`)
+                            if (type) {
+                                me.delete(`db://userLists/everyone/share_${type}/${projectId}`)
+                            }
+
+                            // 3) 권한 받은 다른 사용자들의 share 인덱스 — 트리거는 마킹만 함.
+                            if (information && information.permissions) {
+                                Object.keys(information.permissions).forEach(function (permUid) {
+                                    if (permUid === 'everyone') return
+                                    me.delete(`db://userLists/${permUid}/share/${projectId}`)
+                                })
+                            }
+
+                            // 4) 본체 데이터 - draft, versionLists, snapshotLists 등 통째 제거.
+                            me.delete(`db://definitions/${projectId}`)
                         }
                         me.deleteItem.isDeletedProject = true
 

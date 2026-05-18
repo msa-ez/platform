@@ -450,9 +450,33 @@
                     console.log('!!!', me.deleteCondition);
                     // me.information.customerJourneyMap.modelList = me.information.customerJourneyMap.modelList.filter(id => id != me.deleteCondition.projectId)
                 }
-                
 
-                await me.delete(`db://userLists/${me.deleteCondition.author}/mine/${me.deleteCondition.projectId}`)
+
+                // 인덱스만 지우고 본체(definitions/{id})를 두면 disk leak + 같은 id 재사용 시 충돌.
+                // EventStormingListPage 의 deleteProject 와 동일 cascade 로 정리.
+                var projectId = me.deleteCondition.projectId
+                var authorId = me.deleteCondition.author
+                try {
+                    var nestedInformation = await me.list(`db://definitions/${projectId}/information`)
+                    await me.delete(`db://userLists/${authorId}/mine/${projectId}`)
+
+                    var nestedType = (nestedInformation && nestedInformation.type) || me.deleteCondition.type
+                    me.delete(`db://userLists/everyone/share/${projectId}`)
+                    me.delete(`db://userLists/everyone/share_first/${projectId}`)
+                    if (nestedType) {
+                        me.delete(`db://userLists/everyone/share_${nestedType}/${projectId}`)
+                    }
+                    if (nestedInformation && nestedInformation.permissions) {
+                        Object.keys(nestedInformation.permissions).forEach(function (permUid) {
+                            if (permUid === 'everyone') return
+                            me.delete(`db://userLists/${permUid}/share/${projectId}`)
+                        })
+                    }
+                    me.delete(`db://definitions/${projectId}`)
+                } catch (e) {
+                    console.error('deleteDefinition cascade failed:', e)
+                }
+
                 me.backupProject()
                 me.closeDeleteDialog()
             },

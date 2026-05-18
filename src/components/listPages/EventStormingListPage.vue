@@ -2063,23 +2063,47 @@
 
                 try {
                     if (me.deleteItem) {
-                        var isServer = false
-                        var modelSnap = await me.list(`db://definitions/${me.deleteItem.projectId}/information`)
-                        if (modelSnap) {
-                            isServer = true
-                        }
+                        var projectId = me.deleteItem.projectId
+                        var authorId = me.deleteItem.author
+                        var information = await me.list(`db://definitions/${projectId}/information`)
+                        var isServer = !!information
+
                         if (isServer) {
-                            await me.delete(`db://userLists/${me.deleteItem.author}/mine/${me.deleteItem.projectId}`)
+                            // 1) Mine 인덱스 — 서버 트리거가 이 child_removed 를 받아서 일부 정리하지만
+                            //    silent catch + 10s 초기화 그레이스라 누락 가능 → 아래서 명시 제거 fallback.
+                            await me.delete(`db://userLists/${authorId}/mine/${projectId}`)
+
+                            // 2) Public/share 인덱스 - 트리거가 share_es/share_first 만 다루고
+                            //    everyone/share 본체와 다른 타입은 안 건드림 → 클라이언트가 정리.
+                            var type = (information && information.type) || me.deleteItem.type
+                            me.delete(`db://userLists/everyone/share/${projectId}`)
+                            me.delete(`db://userLists/everyone/share_first/${projectId}`)
+                            if (type) {
+                                me.delete(`db://userLists/everyone/share_${type}/${projectId}`)
+                            }
+
+                            // 3) 권한 받은 다른 사용자들의 share 인덱스 — 트리거는 state:"deleted"
+                            //    마킹만 해서 항목이 안 사라짐 → 명시 remove.
+                            if (information && information.permissions) {
+                                Object.keys(information.permissions).forEach(function (permUid) {
+                                    if (permUid === 'everyone') return
+                                    me.delete(`db://userLists/${permUid}/share/${projectId}`)
+                                })
+                            }
+
+                            // 4) 본체 데이터 - draft, versionLists, snapshotLists 등 통째 제거.
+                            //    이게 빠지면 같은 id 재사용 시 충돌, 디스크 누수.
+                            me.delete(`db://definitions/${projectId}`)
                         }
                         // me.$EventBus.$emit(`completeDelete_${me.deleteItem.projectId}`)
                         me.deleteItem.isDeletedProject = true
 
-                        me.delete(`localstorage://${me.deleteItem.projectId}`)
+                        me.delete(`localstorage://${projectId}`)
                         // localLists 가 한 번도 안 쓰인 사용자는 null 이라 그대로 findIndex 호출하면
                         // TypeError → 서버 삭제는 이미 끝났는데 alert 만 떠서 사용자가 "에러" 로 인지.
                         var localLists = await me.getObject(`localstorage://localLists`)
                         if (Array.isArray(localLists)) {
-                            var index = localLists.findIndex(info => info.projectId == me.deleteItem.projectId)
+                            var index = localLists.findIndex(info => info.projectId == projectId)
                             if (index != -1) {
                                 localLists.splice(index, 1)
                                 await me.putObject(`localstorage://localLists`, localLists)
