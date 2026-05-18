@@ -1479,6 +1479,39 @@
                             write = true
                         }
 
+                        // acebase 의 users/*/email 비인덱스 query.filter 누락 대비:
+                        // enrolledUsers/{convertEmail} 의 email-key direct lookup 을 우선 시도.
+                        var addedFromDirect = false
+                        try {
+                            var convertEmail = String(user.email).replace(/\./g, '_')
+                            var enrolled = await me.getObject(`db://enrolledUsers/${convertEmail}`)
+                            if (enrolled && enrolled.uid) {
+                                var passesMyselfFilter = (myself && me.userInfo.uid == enrolled.uid) || (!myself && me.userInfo.uid != enrolled.uid)
+                                if (passesMyselfFilter) {
+                                    if (!me.invitationLists) me.invitationLists = {}
+                                    var userInfo = null
+                                    try { userInfo = await me.getObject(`db://users/${enrolled.uid}`) } catch (_) {}
+                                    me.invitationLists[enrolled.uid] = {
+                                        uid: enrolled.uid,
+                                        userName: enrolled.userName || (userInfo && (userInfo.userName || userInfo.username)) || 'anyone',
+                                        userPic: enrolled.profile_picture || (userInfo && userInfo.profile_picture) || '',
+                                        email: enrolled.email || user.email,
+                                        write: write,
+                                        request: user.request ? user.request : null
+                                    }
+                                    me.invitationLists.__ob__.dep.notify()
+                                    addedFromDirect = true
+                                }
+                            }
+                        } catch (e) {
+                            console.log('addInviteUser direct lookup failed, will fallback to query:', e)
+                        }
+
+                        if (addedFromDirect) {
+                            resolve(true)
+                            return
+                        }
+
                         var options = {
                             sort: "desc",
                             orderBy: 'email',
@@ -1508,7 +1541,7 @@
                             resolve(true)
                         } else {
                             var obj = {
-                                msg: "공유실패: 초대하려는 유저가 구글 로그인을 안했을 가능성이 높습니다."
+                                msg: "공유실패: 초대하려는 유저가 로그인 한 적이 없거나, 이메일이 일치하지 않습니다."
                             }
                             me.$EventBus.$emit('inviteCallBack', obj)
                             resolve(false)

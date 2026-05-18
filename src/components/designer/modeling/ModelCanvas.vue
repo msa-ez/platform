@@ -2918,6 +2918,42 @@
                             write = true
                         }
 
+                        // acebase 는 users/*/email 에 인덱스가 등록되지 않은 상태에선
+                        // query.filter('email','==',x) 가 빈 결과를 돌려준다(Firebase 와 동작 차이).
+                        // 동일 정보가 enrolledUsers/{convertEmail} 에 email-key 로 박혀 있으므로
+                        // 우선 direct lookup 으로 찾고, 실패 시 기존 쿼리로 fallback.
+                        var addedFromDirect = false
+                        try {
+                            var convertEmail = String(user.email).replace(/\./g, '_')
+                            var enrolled = await me.getObject(`db://enrolledUsers/${convertEmail}`)
+                            if (enrolled && enrolled.uid) {
+                                var passesMyselfFilter = (myself && me.userInfo.uid == enrolled.uid) || (!myself && me.userInfo.uid != enrolled.uid)
+                                if (passesMyselfFilter) {
+                                    if (!me.invitationLists) me.invitationLists = {}
+                                    // users/{uid} 에 추가 필드(username/profile_picture)가 있으면 보강
+                                    var userInfo = null
+                                    try { userInfo = await me.getObject(`db://users/${enrolled.uid}`) } catch (_) {}
+                                    me.invitationLists[enrolled.uid] = {
+                                        uid: enrolled.uid,
+                                        userName: enrolled.userName || (userInfo && (userInfo.userName || userInfo.username)) || 'anyone',
+                                        userPic: enrolled.profile_picture || (userInfo && userInfo.profile_picture) || '',
+                                        email: enrolled.email || user.email,
+                                        write: write,
+                                        request: user.request ? user.request : null
+                                    }
+                                    me.invitationLists.__ob__.dep.notify()
+                                    addedFromDirect = true
+                                }
+                            }
+                        } catch (e) {
+                            console.log('addInviteUser direct lookup failed, will fallback to query:', e)
+                        }
+
+                        if (addedFromDirect) {
+                            resolve(true)
+                            return
+                        }
+
                         var options = {
                             sort: "desc",
                             orderBy: 'email',
@@ -2958,11 +2994,11 @@
                             resolve(true)
                         }else{
                             var obj = {
-                                msg: "공유실패: 초대하려는 유저가 구글 로그인을 안했을 가능성이 높습니다."
+                                msg: "공유실패: 초대하려는 유저가 로그인 한 적이 없거나, 이메일이 일치하지 않습니다."
                             }
                             me.$EventBus.$emit('inviteCallBack', obj)
                             // me.snackbar.show = true
-                            // me.snackbar.text = '공유실패: 초대하려는 유저가 구글 로그인을 안했을 가능성이 높습니다.'
+                            // me.snackbar.text = '공유실패: 초대하려는 유저가 로그인 한 적이 없거나, 이메일이 일치하지 않습니다.'
                             // me.snackbar.color = '#E57373'
                             resolve(false)
                         }
