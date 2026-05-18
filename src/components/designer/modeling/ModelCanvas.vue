@@ -1149,6 +1149,28 @@
                 try {
                     if( me.projectId && me.isServerModel && !me.isReadOnlyModel ){
                         me.putObject(`db://definitions/${me.projectId}/information`,informationObj)
+
+                        // 인라인 rename(projectName 변경) 시 acebase 서버 트리거의 누락 가능성을 보완.
+                        // saveModel(27ade4ec) 과 동일한 패턴으로 클라이언트가 인덱스 사본을 직접 갱신.
+                        // putObject 는 merge 라 트리거가 같이 fire 돼도 idempotent.
+                        if (informationObj && informationObj.projectName !== undefined && me.userInfo && me.userInfo.uid) {
+                            var mirrorObj = {
+                                projectName: informationObj.projectName,
+                                lastModifiedTimeStamp: Date.now()
+                            }
+                            me.putObject(`db://userLists/${me.userInfo.uid}/mine/${me.projectId}`, mirrorObj)
+
+                            var perms = me.information && me.information.permissions
+                            if (perms) {
+                                Object.keys(perms).forEach(function (permUid) {
+                                    if (!perms[permUid]) return
+                                    me.putObject(`db://userLists/${permUid}/share/${me.projectId}`, mirrorObj)
+                                    if (permUid === 'everyone' && me.information.type) {
+                                        me.putObject(`db://userLists/everyone/share_${me.information.type}/${me.projectId}`, mirrorObj)
+                                    }
+                                })
+                            }
+                        }
                     }
                 } catch (e) {
                     console.error(`Update information Exception: ${e}`);
