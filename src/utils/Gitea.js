@@ -52,27 +52,40 @@ class Gitea extends Git {
     }
 
     getHeader() {
-        // 우선순위: 사용자 본인 토큰(localStorage.gitToken) > env 의 서비스 토큰(window.GITEA_TOKEN).
-        // env 토큰을 먼저 쓰면 /api/v1/user 가 "현재 로그인 사용자"가 아니라 서비스 계정의
-        // 정체성을 돌려주어 (예: env 토큰 발급자가 다른 이메일이면) 잘못된 이메일로
-        // localStorage/users 가 박힌다. env 토큰은 사용자 토큰이 없는 경우에만 fallback.
-        const userToken = localStorage.getItem('gitToken');
+        // window.GITEA_TOKEN (env.txt 의 서비스 PAT) 우선 — 공용 template repo 읽기/푸시 등
+        // 모든 로그인 사용자가 동일한 권한으로 접근해야 하는 호출 경로용. 사용자 토큰은
+        // 서비스 PAT 가 없을 때(혹은 익명 상태)의 fallback.
+        // 단, "현재 로그인 사용자의 신원"을 묻는 호출(/api/v1/user)은 이 헤더를 쓰면
+        // env 토큰 발급자의 신원이 반환되어 신원 혼동이 발생하므로 getUserHeader() 사용.
         const envToken = window.GITEA_TOKEN;
-        const gitToken = userToken || envToken;
+        const gitToken = envToken || localStorage.getItem('gitToken');
 
         if (!gitToken) {
             return {};
         }
 
-        // 과거 구현은 JWT(3-segment) 토큰을 빈 헤더로 우회했지만, 설치 환경에서 acebase
-        // OAuth 가 발급한 JWT 도 Gitea가 `token <jwt>` 스킴으로 받아준다(콘솔 검증 완료).
         return {
             Authorization: 'token ' + gitToken
         };
     }
 
+    getUserHeader() {
+        // /api/v1/user 처럼 "현재 로그인 사용자 본인의 신원" 이 필요한 호출 전용.
+        // env 서비스 PAT 로 호출하면 그 PAT 발급자(보통 admin)의 정보가 반환되어
+        // 로그인 사용자 이메일이 admin 의 이메일로 박히는 회귀가 생긴다.
+        const userToken = localStorage.getItem('gitToken');
+        if (!userToken) {
+            return {};
+        }
+        return {
+            Authorization: 'token ' + userToken
+        };
+    }
+
     async getUserInfo() {
-        return this.client.get(`/api/v1/user`, { headers: this.getHeader() });
+        // 사용자 본인 토큰으로 호출 — env PAT 가 우선이면 admin 신원이 돌아와 잘못된
+        // 이메일이 localStorage/db://users 에 박혀 invite 검색까지 깨진다.
+        return this.client.get(`/api/v1/user`, { headers: this.getUserHeader() });
     }
 
     async getBranch(org, repo, forkedTag) {
