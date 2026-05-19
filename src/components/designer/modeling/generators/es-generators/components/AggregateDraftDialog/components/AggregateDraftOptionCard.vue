@@ -221,6 +221,24 @@
                 const getValidAlias = (alias) => {
                     return alias.replace(/[^a-zA-Z0-9가-힣_]/g, '');
                 }
+
+                // Mermaid 노드 라벨([-Role-<br/>...] 안에 들어감) 정제.
+                // alias/name 이 그대로 들어가면 `]` `[` `|` 등이 노드 경계를 깨고
+                // `\n` 은 mermaid 파싱을 통째로 끊음. <br/> 자체는 유지해야 하므로
+                // 일반적인 HTML escape 대신 충돌 문자만 골라서 제거.
+                const sanitizeMermaidLabel = (s) => {
+                    if (s == null) return '?'
+                    const out = String(s)
+                        .replace(/[\r\n\t]+/g, ' ')
+                        .replace(/[\[\]\(\){}]/g, ' ')
+                        .replace(/[|`\\]/g, ' ')
+                        .replace(/[;#]/g, ' ')
+                        .replace(/"/g, "'")
+                        .replace(/&(?!(amp|lt|gt|quot|#\d+);)/g, '&amp;')
+                        .replace(/\s+/g, ' ')
+                        .trim()
+                    return out || '?'
+                }
                 
                 const addClassToGroup = (groupKey, classId, label, role, fieldNames = null) => {
                     if (!groups[groupKey]) {
@@ -240,61 +258,66 @@
                 
 
                 structure.forEach((item, aggIndex) => {
-                    const aggAlias = item.aggregate.alias || item.aggregate.name || `Temp Aggregate Root ${aggIndex + 1}`;
-                    const aggName = item.aggregate.name || '';
+                    const aggAlias = (item.aggregate && item.aggregate.alias) || (item.aggregate && item.aggregate.name) || `Temp Aggregate Root ${aggIndex + 1}`;
+                    const aggName = (item.aggregate && item.aggregate.name) || '';
                     const aggKey = getValidAlias(aggAlias);
-                    
-                    // Aggregate Root의 표시명 (줄바꿈으로 구분)
+
+                    // Aggregate Root의 표시명 (줄바꿈으로 구분) — sanitize 후 결합
+                    const safeAggAlias = sanitizeMermaidLabel(aggAlias);
+                    const safeAggName = sanitizeMermaidLabel(aggName);
                     const displayName = aggName && aggAlias !== aggName
-                        ? aggAlias + '<br/>' + aggName  // 한글<br/>영문
-                        : aggAlias;
-                    
+                        ? safeAggAlias + '<br/>' + safeAggName  // 한글<br/>영문
+                        : safeAggAlias;
+
                     const fieldNames = (item.previewAttributes) ? item.previewAttributes.map(attr => attr.fieldName) : null;
                     // Mermaid에 displayName 사용 (label 파라미터로 전달)
                     addClassToGroup(aggKey, aggKey, displayName, "Aggregate Root", this.__sanitizePreviewAttributes(fieldNames));
-                    
+
                     if (item.enumerations) {
                         item.enumerations.forEach((enumeration, enumIndex) => {
                             const enumAlias = enumeration.alias || enumeration.name || `Temp Enumeration ${aggIndex + 1}-${enumIndex + 1}`;
                             const enumName = enumeration.name || '';
                             const enumKey = getValidAlias(enumAlias);
-                            
-                            // Enumeration 표시명 (한글<br/>영문)
+
+                            const safeEnumAlias = sanitizeMermaidLabel(enumAlias);
+                            const safeEnumName = sanitizeMermaidLabel(enumName);
                             const enumDisplayName = enumName && enumAlias !== enumName
-                                ? enumAlias + '<br/>' + enumName
-                                : enumAlias;
-                            
-                            addClassToGroup(aggKey, enumKey, enumDisplayName, "Enumeration");   
+                                ? safeEnumAlias + '<br/>' + safeEnumName
+                                : safeEnumAlias;
+
+                            addClassToGroup(aggKey, enumKey, enumDisplayName, "Enumeration");
                             relSet.add(`    ${aggKey} --> ${enumKey}`);
                         });
                     }
-                    
+
                     if (item.valueObjects) {
                         item.valueObjects.forEach((vo, voIndex) => {
                             const voAlias = vo.alias || vo.name || `Temp Value Object ${aggIndex + 1}-${voIndex + 1}`;
                             const voName = vo.name || '';
                             const voKey = getValidAlias(voAlias);
-                            
-                            // ValueObject 표시명 (한글<br/>영문)
+
+                            const safeVoAlias = sanitizeMermaidLabel(voAlias);
+                            const safeVoName = sanitizeMermaidLabel(voName);
                             const voDisplayName = voName && voAlias !== voName
-                                ? voAlias + '<br/>' + voName
-                                : voAlias;
-                            
+                                ? safeVoAlias + '<br/>' + safeVoName
+                                : safeVoAlias;
+
                             addClassToGroup(aggKey, voKey, voDisplayName, "Value Object");
                             relSet.add(`    ${aggKey} --> ${voKey}`);
-                            
+
                             if (vo.referencedAggregate) {
                                 const refAggAlias = vo.referencedAggregate.alias || vo.referencedAggregate.name || `Temp Referenced Aggregate Root ${aggIndex + 1}-${voIndex + 1}`;
                                 const refAggName = vo.referencedAggregate.name || '';
                                 const refAggKey = getValidAlias(refAggAlias);
-                                
-                                // Referenced Aggregate 표시명 (한글<br/>영문)
+
+                                const safeRefAggAlias = sanitizeMermaidLabel(refAggAlias);
+                                const safeRefAggName = sanitizeMermaidLabel(refAggName);
                                 const refAggDisplayName = refAggName && refAggAlias !== refAggName
-                                    ? refAggAlias + '<br/>' + refAggName
-                                    : refAggAlias;
-                                
+                                    ? safeRefAggAlias + '<br/>' + safeRefAggName
+                                    : safeRefAggAlias;
+
                                 addClassToGroup(refAggKey, refAggKey, refAggDisplayName, "Aggregate Root");
-                                
+
                                 if (aggKey !== refAggKey)
                                     relSet.add(`    ${voKey} --> ${refAggKey}`);
                             }

@@ -928,11 +928,55 @@
             }
         },
         methods: {
+            // Mermaid 노드 stadium 안에 들어가는 텍스트 정제.
+            // vue-mermaid 가 `${id}([${text}])` 로 raw 삽입하므로 다음이 깨짐:
+            //  - 개행: 파서가 다음 라인을 별개 statement 로 인식
+            //  - `"` / `<` `>` / `&`: htmlLabels=true 와 충돌
+            //  - `|`: 엣지 라벨 구분자
+            //  - `{` `}`: 다른 노드 shape
+            //  - `(` `[` `)` `]`: stadium 경계 깨짐 (기존 처리 유지)
+            //  - `` ` `` `\` `;` `#`: 파서/주석 충돌
+            //  - null/undefined: replaceAll 호출 시 TypeError 로 컴포넌트 다운
+            sanitizeMermaidNodeText(s) {
+                if (s == null) return '?'
+                const out = String(s)
+                    .replace(/[\r\n\t]+/g, ' ')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, "'")
+                    .replace(/\|/g, '/')
+                    .replace(/[{}]/g, ' ')
+                    .replace(/[`\\]/g, ' ')
+                    .replace(/[;#]/g, ' ')
+                    .replace(/·/g, '/')
+                    .replace(/[(\[]/g, '-')
+                    .replace(/[)\]]/g, '')
+                    .replace(/\s+/g, ' ')
+                    .trim()
+                return out || '?'
+            },
+
+            // 엣지 라벨 `-->|"..."|` 안에 들어가는 텍스트. 이미 따옴표 안이라
+            // 노드 텍스트보다 허용 범위가 살짝 넓지만 `"` 와 `|` 는 반드시 제거.
+            sanitizeMermaidEdgeLabel(s) {
+                if (s == null) return ''
+                return String(s)
+                    .replace(/[\r\n\t]+/g, ' ')
+                    .replace(/"/g, "'")
+                    .replace(/\|/g, '/')
+                    .replace(/[{}]/g, '')
+                    .replace(/[`\\]/g, '')
+                    .replace(/\s+/g, ' ')
+                    .trim()
+            },
+
             generateNodes(result) {
+                const me = this
                 const nodes = [];
                 const boundedContexts = result.boundedContexts || [];
                 const relations = result.relations || [];
-                
+
                 // 도메인 타입별로 그룹화
                 const domainGroups = {
                     'Core Domain': [],
@@ -944,12 +988,8 @@
                 boundedContexts.forEach((bc, index) => {
                     const node = {
                         id: `BC${index}`,
-                        text: bc.alias
-                            .replaceAll('·', '/')
-                            .replaceAll('(', '-')
-                            .replaceAll('[', '-')
-                            .replaceAll(')', '')
-                            .replaceAll(']', ''),
+                        // alias 가 비어있거나 null 인 경우 name 으로 폴백, 그것도 없으면 '?'.
+                        text: me.sanitizeMermaidNodeText(bc.alias || bc.name),
                         editable: true,
                         edgeType: 'stadium',
                         style: this.getDomainStyle(bc.importance),
@@ -958,23 +998,24 @@
                         link: []  // 초기화
                     };
                     nodes.push(node);
-                    
+
                     if (bc.importance && domainGroups[bc.importance]) {
                         domainGroups[bc.importance].push(node);
                     } else {
                         domainGroups['Generic Domain'].push(node);
                     }
                 });
-                
+
                 // 관계 정보 추가
                 relations.forEach((rel) => {
+                    if (!rel || !rel.upStream || !rel.downStream) return
                     const sourceIndex = boundedContexts.findIndex(bc => bc.name === rel.upStream.name);
                     const targetIndex = boundedContexts.findIndex(bc => bc.name === rel.downStream.name);
-                    
+
                     if (sourceIndex !== -1 && targetIndex !== -1) {
                         const sourceNode = nodes[sourceIndex];
                         sourceNode.next.push(`BC${targetIndex}`);
-                        sourceNode.link.push(`-->|"${rel.type}"|`);
+                        sourceNode.link.push(`-->|"${me.sanitizeMermaidEdgeLabel(rel.type)}"|`);
                     }
                 });
 
