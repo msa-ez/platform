@@ -892,34 +892,27 @@
                 }
             },
             openStorageDialog(type){
-                var providerUid = this.userInfo.providerUid || localStorage.getItem('providerUid')
                 var resolvedType = type == 'cm' ? 'cm' : 'project'
 
-                // 이미 서버에 저장된 프로젝트면 같은 id 를 재사용해 "update" 로 동작해야 한다.
-                // 기존 코드는 항상 새 uuid 를 발급해서 클릭마다 새 프로젝트가 복제 생성됐고,
-                // 그래서 이름만 바꿔도 "전체가 새로 저장되는" 체감을 줬다.
-                var reuseId = null
-                if (this.isServer && this.projectInfo && this.projectInfo.projectId) {
-                    reuseId = this.projectInfo.projectId
-                    // settingProjectId 는 ${providerUid}_${type}_${rawId} 포맷으로 재구성됨.
-                    // 만약 projectInfo.projectId 가 이미 prefix 를 포함하면 rawId 만 추출.
-                    var prefix = providerUid ? `${providerUid}_${resolvedType}_` : null
-                    if (prefix && reuseId.startsWith(prefix)) {
-                        reuseId = reuseId.substring(prefix.length)
-                    }
-                }
+                // 이미 서버에 저장된 프로젝트면 update 모드로. 새 저장이면 새 uuid.
+                // 핵심: write 권한자(non-owner)는 owner 의 providerUid 로 prefix 된 projectId 를
+                // 갖고 있으므로, 본인 providerUid 로 prefix 를 strip 하면 매치 실패 → 잘못된 path.
+                // 그래서 update 모드에선 fullProjectId 를 그대로 들고 가고 saveProject 가
+                // 재-prefixing 없이 그 path 에 직접 쓰도록 한다.
+                var isUpdate = !!(this.isServer && this.projectInfo && this.projectInfo.projectId)
 
                 this.storageCondition = {
-                    action: this.isServer ? 'update' : 'save',
-                    title: this.isServer ? 'Update Project' : 'Save Project',
+                    action: isUpdate ? 'update' : 'save',
+                    title: isUpdate ? 'Update Project' : 'Save Project',
                     comment: '',
                     projectName: (this.projectInfo && this.projectInfo.projectName) || this.projectInfo.prompt,
-                    projectId: reuseId || this.uuid(),
+                    // update 면 owner-prefixed full id 그대로, 새 저장이면 raw uuid
+                    projectId: isUpdate ? this.projectInfo.projectId : this.uuid(),
                     error: null,
                     loading: false,
                     version: '1.0.0',
                     type: resolvedType,
-                    isUpdate: !!reuseId
+                    isUpdate: isUpdate
                 }
                 // this.showStorageDialog = true;
                 this.saveStorageDialog();
@@ -938,20 +931,39 @@
             async saveProject(){
                 var me = this
 
-                let validate = await me.validateStorageCondition(me.storageCondition, 'save');
+                var isUpdate = me.storageCondition.isUpdate === true
+                let validate = await me.validateStorageCondition(me.storageCondition, isUpdate ? 'update' : 'save');
                 if(validate) {
-                    var settingProjectId = me.storageCondition.projectId.replaceAll(' ', '-').trim();
-                    let originSetProjectId = JSON.parse(JSON.stringify(settingProjectId))
-                    // userInfo가 hydrate 되기 전 race를 막기 위해 localStorage fallback 사용
-                    let providerUid = me.userInfo.providerUid || localStorage.getItem('providerUid')
-                    if(!providerUid){
-                        me.storageCondition.loading = false
-                        alert('User identity not loaded yet. Please re-login and try again.')
-                        return
-                    }
-                    settingProjectId = `${providerUid}_${me.storageCondition.type}_${settingProjectId}`
+                    var settingProjectId, originSetProjectId, providerUid
 
-                    var isUpdate = me.storageCondition.isUpdate === true
+                    if (isUpdate) {
+                        // update: storageCondition.projectId 가 이미 full owner-prefixed id.
+                        // 절대 재-prefixing 하지 말 것 — non-owner write 사용자의 경우 owner uid 와
+                        // 본인 uid 가 달라서 한 번 더 붙이면 중첩 path 가 생긴다.
+                        settingProjectId = me.storageCondition.projectId.replaceAll(' ', '-').trim()
+                        // router push 용 raw id 를 prefix 에서 분리
+                        var underscoreParts = settingProjectId.split('_')
+                        if (underscoreParts.length >= 3 && underscoreParts[1] === me.storageCondition.type) {
+                            providerUid = underscoreParts[0]
+                            originSetProjectId = underscoreParts.slice(2).join('_')
+                        } else {
+                            // prefix 가 기대 포맷이 아니면 보수적으로 그대로 사용
+                            providerUid = me.userInfo.providerUid || localStorage.getItem('providerUid')
+                            originSetProjectId = settingProjectId
+                        }
+                    } else {
+                        settingProjectId = me.storageCondition.projectId.replaceAll(' ', '-').trim()
+                        originSetProjectId = JSON.parse(JSON.stringify(settingProjectId))
+                        // userInfo 가 hydrate 되기 전 race 를 막기 위해 localStorage fallback 사용
+                        providerUid = me.userInfo.providerUid || localStorage.getItem('providerUid')
+                        if(!providerUid){
+                            me.storageCondition.loading = false
+                            alert('User identity not loaded yet. Please re-login and try again.')
+                            return
+                        }
+                        settingProjectId = `${providerUid}_${me.storageCondition.type}_${settingProjectId}`
+                    }
+
                     var existingCreatedTs = (isUpdate && me.projectInfo && me.projectInfo.createdTimeStamp) || Date.now()
 
                     me.projectInfo.author = me.userInfo.uid
@@ -1095,7 +1107,7 @@
                     return false;
                 }
 
-                // checked duplicate projectId
+                // path 형식 자체 검증은 모든 액션에서 동일
                 var validateInfo = await me.isValidatePath(`db://definitions/${condition.projectId}/information`);
                 if( !validateInfo.status ){
                     var obj ={
@@ -1105,13 +1117,16 @@
                     return false;
                 }
 
-                var information = await me.list(`db://definitions/${condition.projectId}/information`)
-                if(information){
-                    var obj ={
-                        'projectId': 'This project id already exists.'
+                // 새 저장(create)만 중복 거절. update 는 당연히 존재하는 path 에 덮어쓰므로 통과시킨다.
+                if (action !== 'update') {
+                    var information = await me.list(`db://definitions/${condition.projectId}/information`)
+                    if(information){
+                        var obj ={
+                            'projectId': 'This project id already exists.'
+                        }
+                        condition.error = obj
+                        return false;
                     }
-                    condition.error = obj
-                    return false;
                 }
 
 
