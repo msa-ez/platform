@@ -1363,10 +1363,21 @@ import { value } from 'jsonpath';
             this.generators.DraftGeneratorByFunctions.generateIfInputsExist = () => {
                 if(this.generators.DraftGeneratorByFunctions.inputs.length > 0) {
                     const input = this.generators.DraftGeneratorByFunctions.inputs.shift()
-                    
+
+                    // BC 가 새로 popped 된 시점에 remaining count 즉시 반영.
+                    // LangGraph 모드는 onSend/onFirstResponse 콜백을 부르지 않아서
+                    // 다음 BC 의 aggregate-draft 가 끝날 때까지 count 가 갱신되지 않음 →
+                    // "3개 진행됐는데 4 remaining" 같은 stale 표시 발생.
+                    if (this.workingMessages
+                        && this.workingMessages.AggregateDraftDialogDto
+                        && this.workingMessages.AggregateDraftDialogDto.draftUIInfos) {
+                        this.workingMessages.AggregateDraftDialogDto.draftUIInfos.leftBoundedContextCount =
+                            this.generators.DraftGeneratorByFunctions.inputs.length + 1
+                    }
+
                     // LangGraph 사용 여부 확인
                     const useLangGraph = localStorage.getItem('useLangGraph') === 'true';
-                    
+
                     if (useLangGraph) {
                         // LangGraph Generator 사용
                         const langGraphGenerator = new DraftGeneratorByFunctionsLangGraph({
