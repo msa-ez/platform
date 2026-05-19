@@ -892,16 +892,34 @@
                 }
             },
             openStorageDialog(type){
+                var providerUid = this.userInfo.providerUid || localStorage.getItem('providerUid')
+                var resolvedType = type == 'cm' ? 'cm' : 'project'
+
+                // 이미 서버에 저장된 프로젝트면 같은 id 를 재사용해 "update" 로 동작해야 한다.
+                // 기존 코드는 항상 새 uuid 를 발급해서 클릭마다 새 프로젝트가 복제 생성됐고,
+                // 그래서 이름만 바꿔도 "전체가 새로 저장되는" 체감을 줬다.
+                var reuseId = null
+                if (this.isServer && this.projectInfo && this.projectInfo.projectId) {
+                    reuseId = this.projectInfo.projectId
+                    // settingProjectId 는 ${providerUid}_${type}_${rawId} 포맷으로 재구성됨.
+                    // 만약 projectInfo.projectId 가 이미 prefix 를 포함하면 rawId 만 추출.
+                    var prefix = providerUid ? `${providerUid}_${resolvedType}_` : null
+                    if (prefix && reuseId.startsWith(prefix)) {
+                        reuseId = reuseId.substring(prefix.length)
+                    }
+                }
+
                 this.storageCondition = {
-                    action: 'save',
-                    title: 'Save Project',
+                    action: this.isServer ? 'update' : 'save',
+                    title: this.isServer ? 'Update Project' : 'Save Project',
                     comment: '',
-                    projectName: this.projectInfo.prompt,
-                    projectId: this.uuid(),
+                    projectName: (this.projectInfo && this.projectInfo.projectName) || this.projectInfo.prompt,
+                    projectId: reuseId || this.uuid(),
                     error: null,
                     loading: false,
                     version: '1.0.0',
-                    type: type == 'cm' ? 'cm' : 'project'
+                    type: resolvedType,
+                    isUpdate: !!reuseId
                 }
                 // this.showStorageDialog = true;
                 this.saveStorageDialog();
@@ -933,19 +951,32 @@
                     }
                     settingProjectId = `${providerUid}_${me.storageCondition.type}_${settingProjectId}`
 
+                    var isUpdate = me.storageCondition.isUpdate === true
+                    var existingCreatedTs = (isUpdate && me.projectInfo && me.projectInfo.createdTimeStamp) || Date.now()
+
                     me.projectInfo.author = me.userInfo.uid
                     me.projectInfo.authorEmail = me.userInfo.email
                     me.projectInfo.projectId = settingProjectId
                     me.projectInfo.projectName = me.storageCondition.projectName ? me.storageCondition.projectName : me.projectInfo.prompt;
                     me.projectInfo.prompt =  me.projectInfo.prompt ? me.projectInfo.prompt : me.projectInfo.projectName
                     me.projectInfo.type = me.storageCondition.type;
-                    me.projectInfo.createdTimeStamp = Date.now();
+                    me.projectInfo.createdTimeStamp = existingCreatedTs
                     me.projectInfo.lastModifiedTimeStamp = Date.now();
                     me.projectInfo['comment'] = me.storageCondition.comment;
 
+                    // information 은 항상 작은 메타데이터라 가볍게 쓰면 됨.
                     await me.putObject(`db://definitions/${settingProjectId}/information`, me.projectInfo)
-                    await me.setObject(`db://definitions/${settingProjectId}/draft`, me.draft)
-                    me.autoSavedDraft = structuredClone(me.draft)
+
+                    // draft 는 LLM 결과로 매우 큰 경우가 있어 websocket ping-out 의 주범.
+                    // - update 인데 직전 저장 이후 draft 가 변하지 않았다면 (이름만 바꾼 경우 등) 스킵.
+                    // - 새 저장이거나 draft 가 실제로 변했을 때만 write.
+                    var draftChanged = !isUpdate
+                        || me.autoSavedDraft == null
+                        || JSON.stringify(me.draft) !== JSON.stringify(me.autoSavedDraft)
+                    if (draftChanged) {
+                        await me.setObject(`db://definitions/${settingProjectId}/draft`, me.draft)
+                        me.autoSavedDraft = structuredClone(me.draft)
+                    }
                     me.isServer = true;
 
                     let path = `/${providerUid}/${me.storageCondition.type}/${originSetProjectId}`
