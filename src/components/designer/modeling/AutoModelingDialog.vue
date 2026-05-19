@@ -1678,23 +1678,46 @@
                         })
                     }
 
+                    // 트리거 누락 대비를 위해 before 스냅샷
+                    var beforePerms = me.projectInfo && me.projectInfo.permissions
+                        ? Object.assign({}, me.projectInfo.permissions) : {}
+
                     me.putObject(`db://definitions/${me.projectInfo.projectId}/information/permissions`, me.invitationLists)
                     me.projectInfo.permissions = me.invitationLists
                     if (request) {
                         me.joinRequested = true
                     }
 
-                    const modelList = me.projectInfo && 
-                                 me.projectInfo.eventStorming && 
+                    // acebase 트리거가 sub-path 쓰기(/permissions)에서 partial snapshot 만 받아
+                    // afterInformation.type/projectName 이 undefined 가 되거나 silent catch 로 누락되면
+                    // userLists/{permUid}/share 인덱스가 안 채워져 shared 탭에 안 보임.
+                    // ES 모델은 ModelCanvas.applyInviteUsers 의 동일 미러링 패치(37710ca5)로 보호되지만
+                    // 프로젝트는 여기서 별도 처리 필요.
+                    me._mirrorPermissionsToShareIndexes(
+                        me.projectInfo.projectId,
+                        me.projectInfo,
+                        beforePerms,
+                        me.invitationLists
+                    )
+
+                    const modelList = me.projectInfo &&
+                                 me.projectInfo.eventStorming &&
                                  me.projectInfo.eventStorming.modelList || [];
-                    
-                    // set permission for models that are associated with the project
+
+                    // 자식 ES 모델들의 permissions 도 함께 갱신 + 각 모델의 share 인덱스도 미러링.
                     modelList.forEach(async (modelId) => {
                         try {
                             const model = await me.list(`db://definitions/${modelId}/information`);
 
                             if(model){
+                                var childBeforePerms = model.permissions ? Object.assign({}, model.permissions) : {}
                                 me.putObject(`db://definitions/${modelId}/information/permissions`, me.invitationLists)
+                                me._mirrorPermissionsToShareIndexes(
+                                    modelId,
+                                    model,
+                                    childBeforePerms,
+                                    me.invitationLists
+                                )
                             }
                         } catch (error) {
                             console.error('Error set permission for model:', error);
@@ -1709,6 +1732,47 @@
                     me.$EventBus.$emit('inviteCallBack', obj)
                     me.inviteDialog = false
                 }
+            },
+
+            // 권한 변경 시 userLists/{uid}/share, userLists/everyone/share* 를 클라이언트가 직접 미러링.
+            // acebase 트리거가 sub-path mutation 에서 partial snapshot 만 받아 share 인덱스를 못 채우는
+            // 회귀를 우회. ModelCanvas.applyInviteUsers(37710ca5) 와 동일한 패턴의 project/child-model 버전.
+            _mirrorPermissionsToShareIndexes(projectId, information, beforePerms, afterPerms) {
+                var me = this
+                if (!projectId || !information) return
+                var indexObj = {
+                    author: information.author,
+                    authorEmail: information.authorEmail,
+                    projectName: information.projectName,
+                    projectId: projectId,
+                    type: information.type,
+                    lastModifiedTimeStamp: Date.now(),
+                    createdTimeStamp: information.createdTimeStamp,
+                    img: information.img,
+                    comment: information.comment || ''
+                }
+                var allUids = Object.keys(beforePerms || {}).concat(Object.keys(afterPerms || {}))
+                allUids = allUids.filter(function (v, i, a) { return a.indexOf(v) === i })
+                allUids.forEach(function (uid) {
+                    var nowGranted = afterPerms && afterPerms[uid]
+                    if (nowGranted) {
+                        me.putObject(`db://userLists/${uid}/share/${projectId}`, indexObj)
+                        if (uid === 'everyone') {
+                            if (information.type) {
+                                me.putObject(`db://userLists/everyone/share_${information.type}/${projectId}`, indexObj)
+                            }
+                            me.putObject(`db://userLists/everyone/share_first/${projectId}`, indexObj)
+                        }
+                    } else {
+                        me.delete(`db://userLists/${uid}/share/${projectId}`)
+                        if (uid === 'everyone') {
+                            if (information.type) {
+                                me.delete(`db://userLists/everyone/share_${information.type}/${projectId}`)
+                            }
+                            me.delete(`db://userLists/everyone/share_first/${projectId}`)
+                        }
+                    }
+                })
             },
 
             closeInviteUsers(beforeInvitationLists) {
