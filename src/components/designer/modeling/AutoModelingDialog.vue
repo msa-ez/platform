@@ -966,8 +966,17 @@
 
                     var existingCreatedTs = (isUpdate && me.projectInfo && me.projectInfo.createdTimeStamp) || Date.now()
 
-                    me.projectInfo.author = me.userInfo.uid
-                    me.projectInfo.authorEmail = me.userInfo.email
+                    // 새 저장에서만 author 를 현재 사용자로. update 일 땐 owner(author) 를 절대 안 바꿈.
+                    // 기존 코드는 update 에서도 author = me.userInfo.uid 로 덮어써, write 권한자가
+                    // 저장하는 순간 owner 가 그 사용자로 바뀌고 원래 owner 가 권한을 잃는 회귀가 있었음.
+                    if (!isUpdate) {
+                        me.projectInfo.author = me.userInfo.uid
+                        me.projectInfo.authorEmail = me.userInfo.email
+                    }
+                    // 누가 마지막으로 변경했는지는 별도 필드로 추적 — owner 식별과는 분리.
+                    me.projectInfo.lastModifiedUser = me.userInfo.uid
+                    me.projectInfo.lastModifiedEmail = me.userInfo.email
+
                     me.projectInfo.projectId = settingProjectId
                     me.projectInfo.projectName = me.storageCondition.projectName ? me.storageCondition.projectName : me.projectInfo.prompt;
                     me.projectInfo.prompt =  me.projectInfo.prompt ? me.projectInfo.prompt : me.projectInfo.projectName
