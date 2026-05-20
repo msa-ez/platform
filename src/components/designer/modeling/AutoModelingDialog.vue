@@ -856,14 +856,17 @@
             });
         },
         methods: {
+            // 한글 IME 의 한 글자 조합 commit 도 keydown 으로 key='Enter' 를 발화시킴.
+            // event.isComposing / keyCode 229 가드를 안 두면 한글 한 자마다 Enter 가 눌린 것처럼
+            // 처리되어 매 입력마다 startGen / openStorageDialog 가 호출됨.
             startGenHandleKeydown(genType) {
-                if (event.key === 'Enter' && !event.shiftKey) {
+                if (event.key === 'Enter' && !event.shiftKey && !event.isComposing && event.keyCode !== 229) {
                     event.preventDefault(); // 기본 Enter 동작 방지
                     this.startGen(genType) // 메서드 실행
                 }
             },
             openProjectDialogHandleKeydown(event) {
-                if (event.key === 'Enter' && !event.shiftKey) {
+                if (event.key === 'Enter' && !event.shiftKey && !event.isComposing && event.keyCode !== 229) {
                     event.preventDefault(); // 기본 Enter 동작 방지
                     this.openProjectDialog(); // 메서드 실행
                 }
