@@ -1289,9 +1289,14 @@
             async cancelCreateModel(val) {
                 const me = this;
 
+                // 사용자가 prompt 만 바꾸고 저장 안 한 채 닫는 경우, draft 와 무관하게 이름은
+                // 적용되도록 lightweight 갱신만 silent 로 박는다. 사용자가 "Don't Save" 를
+                // 골라도 이건 별개라 보존됨.
+                await me._persistPromptRenameOnClose()
+
                 const hasUnsavedChanges = me.hasUnsavedChanges();
                 console.log("Has unsaved changes:", hasUnsavedChanges);
-                
+
                 if (hasUnsavedChanges) {
                     this.showConfirmDialog = true;
                     this.pendingAction = () => this.closeComponent();
@@ -1929,6 +1934,59 @@
                 
                 if (this.$refs.documentPreview) {
                     await this.$refs.documentPreview.show();
+                }
+            },
+
+            // AutoModeling 다이얼로그 close 시점에 prompt 가 저장된 projectName 과 다르면
+            // 이름만 silent 로 박아 listing 정합화. draft 의 unsaved 상태와는 독립적으로
+            // 동작 — "Don't Save" 로 닫아도 이름 변경분은 보존하는 게 사용자 의도(닫을 때 적용).
+            async _persistPromptRenameOnClose() {
+                var me = this
+                try {
+                    if (!me.isServer) return
+                    var projectId = me.projectInfo && me.projectInfo.projectId
+                    if (!projectId) return
+                    var newName = me.projectInfo.prompt && String(me.projectInfo.prompt).trim()
+                    if (!newName) return
+                    var savedName = me.projectInfo.projectName && String(me.projectInfo.projectName).trim()
+                    if (newName === savedName) return   // 변동 없음 — no-op
+
+                    var lastModifiedTimeStamp = Date.now()
+                    me.projectInfo.projectName = newName
+                    me.projectInfo.lastModifiedTimeStamp = lastModifiedTimeStamp
+                    if (me.userInfo) {
+                        me.projectInfo.lastModifiedUser = me.userInfo.uid
+                        me.projectInfo.lastModifiedEmail = me.userInfo.email
+                    }
+
+                    // 작은 메타데이터만 — draft 는 안 건드림 (LLM 결과 큰 write 가 ping-out 의 주범).
+                    await me.putObject(`db://definitions/${projectId}/information`, {
+                        projectName: newName,
+                        prompt: newName,
+                        lastModifiedTimeStamp: lastModifiedTimeStamp,
+                        lastModifiedUser: me.projectInfo.lastModifiedUser,
+                        lastModifiedEmail: me.projectInfo.lastModifiedEmail
+                    })
+
+                    // listing 인덱스 미러링 — 트리거 누락 대비.
+                    var indexMirror = { projectName: newName, lastModifiedTimeStamp: lastModifiedTimeStamp }
+                    if (me.projectInfo.author) {
+                        me.putObject(`db://userLists/${me.projectInfo.author}/mine/${projectId}`, indexMirror)
+                    }
+                    if (me.projectInfo.permissions) {
+                        Object.keys(me.projectInfo.permissions).forEach(function (permUid) {
+                            if (!me.projectInfo.permissions[permUid]) return
+                            me.putObject(`db://userLists/${permUid}/share/${projectId}`, indexMirror)
+                            if (permUid === 'everyone') {
+                                if (me.projectInfo.type) {
+                                    me.putObject(`db://userLists/everyone/share_${me.projectInfo.type}/${projectId}`, indexMirror)
+                                }
+                                me.putObject(`db://userLists/everyone/share_first/${projectId}`, indexMirror)
+                            }
+                        })
+                    }
+                } catch (e) {
+                    console.warn('_persistPromptRenameOnClose failed (이름 자동 적용 실패):', e)
                 }
             },
 
