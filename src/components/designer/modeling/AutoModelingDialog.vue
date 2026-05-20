@@ -905,7 +905,9 @@
                     action: isUpdate ? 'update' : 'save',
                     title: isUpdate ? 'Update Project' : 'Save Project',
                     comment: '',
-                    projectName: (this.projectInfo && this.projectInfo.projectName) || this.projectInfo.prompt,
+                    // prompt 가 UI 입력의 진실원. 이전엔 projectName 우선이라 prompt 갱신분이
+                    // 무시됐고 update 후 listing 에 옛 이름이 그대로 노출됐다.
+                    projectName: (this.projectInfo && this.projectInfo.prompt) || this.projectInfo.projectName,
                     // update 면 owner-prefixed full id 그대로, 새 저장이면 raw uuid
                     projectId: isUpdate ? this.projectInfo.projectId : this.uuid(),
                     error: null,
@@ -978,8 +980,16 @@
                     me.projectInfo.lastModifiedEmail = me.userInfo.email
 
                     me.projectInfo.projectId = settingProjectId
-                    me.projectInfo.projectName = me.storageCondition.projectName ? me.storageCondition.projectName : me.projectInfo.prompt;
-                    me.projectInfo.prompt =  me.projectInfo.prompt ? me.projectInfo.prompt : me.projectInfo.projectName
+                    // UI 에서 사용자가 직접 편집하는 값은 prompt 이고 projectName 을 따로 편집하는
+                    // UI 가 없으므로 prompt 가 표시명의 진실원. 기존 코드는 storageCondition.projectName
+                    // 을 먼저 사용했는데 그 값은 openStorageDialog 에서 projectInfo.projectName 우선
+                    // 폴백으로 채우기 때문에 update 시 prompt 변경분이 무시되어 listing 에 안 반영됐다.
+                    // → 현재 prompt 가 있으면 그것을 새 projectName 으로 채택.
+                    me.projectInfo.projectName = me.projectInfo.prompt
+                        || me.storageCondition.projectName
+                        || me.projectInfo.projectName
+                    // prompt 자체는 사용자가 비웠을 때만 projectName 으로 폴백.
+                    if (!me.projectInfo.prompt) me.projectInfo.prompt = me.projectInfo.projectName
                     me.projectInfo.type = me.storageCondition.type;
                     me.projectInfo.createdTimeStamp = existingCreatedTs
                     me.projectInfo.lastModifiedTimeStamp = Date.now();
@@ -987,6 +997,35 @@
 
                     // information 은 항상 작은 메타데이터라 가볍게 쓰면 됨.
                     await me.putObject(`db://definitions/${settingProjectId}/information`, me.projectInfo)
+
+                    // userLists/{author}/mine 인덱스의 projectName 도 같이 갱신 — 서버 트리거가
+                    // sub-path 갱신에서 누락되는 사례가 있어 클라이언트에서 직접 미러링.
+                    // 작가 본인이 저장한 경우(=일반 케이스)만 mine 인덱스를 갱신; write 권한자 update
+                    // 시엔 그 사람의 mine 에 owner 의 project 가 박히면 안 되므로 author 기준.
+                    if (me.projectInfo.author) {
+                        await me.putObject(`db://userLists/${me.projectInfo.author}/mine/${settingProjectId}`, {
+                            projectName: me.projectInfo.projectName,
+                            lastModifiedTimeStamp: me.projectInfo.lastModifiedTimeStamp
+                        })
+                    }
+
+                    // permissions 에 권한받은 사용자들의 share 인덱스 projectName 도 미러링.
+                    if (me.projectInfo.permissions) {
+                        var indexMirror = {
+                            projectName: me.projectInfo.projectName,
+                            lastModifiedTimeStamp: me.projectInfo.lastModifiedTimeStamp
+                        }
+                        Object.keys(me.projectInfo.permissions).forEach(function (permUid) {
+                            if (!me.projectInfo.permissions[permUid]) return
+                            me.putObject(`db://userLists/${permUid}/share/${settingProjectId}`, indexMirror)
+                            if (permUid === 'everyone') {
+                                if (me.projectInfo.type) {
+                                    me.putObject(`db://userLists/everyone/share_${me.projectInfo.type}/${settingProjectId}`, indexMirror)
+                                }
+                                me.putObject(`db://userLists/everyone/share_first/${settingProjectId}`, indexMirror)
+                            }
+                        })
+                    }
 
                     // draft 는 LLM 결과로 매우 큰 경우가 있어 websocket ping-out 의 주범.
                     // - update 인데 직전 저장 이후 draft 가 변하지 않았다면 (이름만 바꾼 경우 등) 스킵.
