@@ -1799,10 +1799,19 @@
                         if(data != null && Object.keys(data).length != 0) {
                             const keys = Object.keys(data);
                             keys.forEach(function (key, idx) {
-                                if(data[key].information)
-                                    result.lists.push(data[key].information)
-                                else 
-                                result.lists.push(data[key])
+                                // userLists/{uid}/(mine|share)/{projectId} 는 두 종류 데이터가 공존:
+                                //  - top-level: 클라이언트가 rename/save 시 직접 미러링하는 최신 인덱스
+                                //  - nested .information: 서버 mutated 트리거가 채우는 사본 (자주 stale)
+                                // 옛 구현은 .information 이 있으면 무조건 그쪽을 쓰는 바람에 rename 이
+                                // listing 에 반영 안 되는 회귀가 있었음. 두 쪽 합치고 top-level 을 우선.
+                                var entry = data[key]
+                                if (entry && entry.information) {
+                                    var merged = Object.assign({}, entry.information, entry)
+                                    delete merged.information
+                                    result.lists.push(merged)
+                                } else {
+                                    result.lists.push(entry)
+                                }
                                 if(keys.length-1 == idx) {
                                     resolve(result)
                                 }
