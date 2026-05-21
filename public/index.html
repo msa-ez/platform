@@ -296,32 +296,9 @@
   <body>
     <script>
       if (window.MODE == "onprem" || window.MODE == "bpm") {
-        window.$acebase = new AceBaseClient({
-          host: window.DB_HOST,
-          port: window.DB_PORT,
-          dbname: window.DB_NAME,
-          https: window.DB_HTTPS,
-          // 네트워크 모니터링 활성화: 연결 상태를 주기적으로 확인하여 끊김을 조기에 감지
-          network: {
-            monitor: true,
-            interval: 30, // 30초마다 연결 상태 확인
-            realtime: true,
-            transports: ['websocket', 'polling'] // websocket 실패 시 polling으로 폴백
-          }
-        });
-        window.$acebase.ready(() => {
-          console.log("Connected successfully");
-        });
-        // WebSocket 재연결 시 구독 복구를 위한 이벤트 리스너
-        window.$acebase.on('connect', () => {
-          console.log("[AceBase] Connected");
-        });
-        window.$acebase.on('disconnect', (reason) => {
-          console.warn("[AceBase] Disconnected, reason:", reason);
-        });
-        window.$acebase.on('connect_error', (error) => {
-          console.error("[AceBase] Connection error:", error);
-        });
+        // v1.0.30 — DB 계층이 PostgreSQL 게이트웨이(msaez-data-gateway)로 전환됨.
+        // 게이트웨이 클라이언트(window.$pgGateway)는 StorageBasePostgres 가
+        // 최초 사용 시 생성하므로 여기서 별도 초기화가 필요 없다.
       } else {
         var head = document.getElementsByTagName("head")[0];
         var app = document.createElement("script");

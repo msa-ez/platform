@@ -17,7 +17,9 @@
             var me = this;
             // console.log("GitlabRedirectPage");
             const callbackResult = window.location.search.match(/[?&]result=(.*?)(?:&|$)/)[1]; // Or some other way you'd get the ?result from the url
-            window.$acebase.auth.finishAuthProviderSignIn(callbackResult)
+            // v1.0.30 — 게이트웨이가 base64(JSON) 으로 result 를 전달.
+            // AceBase SDK(finishAuthProviderSignIn) 없이 직접 디코드한다.
+            Promise.resolve(JSON.parse(atob(decodeURIComponent(callbackResult))))
             .then(async result => {
                 console.log(`Signed in with ${result.provider.name}`);
                 let git;

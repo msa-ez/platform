@@ -3,7 +3,7 @@
 <script>
     import StorageBaseAbstract from "./StorageBaseAbstract";
     import StorageBaseFireBase from "./StorageBaseFireBase";
-    import StorageBaseAceBase from "./StorageBaseAceBase";
+    import StorageBasePostgres from "./StorageBasePostgres";
     import StorageBaseLocalStorage from "./StorageBaseLocalStorage";
     import StorageBaseCloudStorage from "./StorageBaseCloudStorage";
 
@@ -26,9 +26,9 @@
             var StorageBaseCloudStorageClazz;
             var StorageBaseDBClass;
             if (this.$isElectron || window.MODE == 'onprem' || window.MODE == "bpm") {
-                // Electron-specific code
-                StorageBaseDBClass = Vue.extend(StorageBaseAceBase);
-                StorageBaseCloudStorageClazz = Vue.extend(StorageBaseAceBase);
+                // v1.0.30 — onprem/Electron 은 PostgreSQL 게이트웨이 사용 (AceBase 대체)
+                StorageBaseDBClass = Vue.extend(StorageBasePostgres);
+                StorageBaseCloudStorageClazz = Vue.extend(StorageBasePostgres);
             } else {
                 // Browser-specific code
                 StorageBaseCloudStorageClazz = Vue.extend(StorageBaseCloudStorage);

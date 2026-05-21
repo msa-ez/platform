@@ -1,0 +1,32 @@
+# 로컬 개발용 PostgreSQL — Phase 1 어댑터 개발/테스트 기반
+#
+# 사용:
+#   docker compose -f docker-compose.dev.yml up -d      # 기동
+#   docker compose -f docker-compose.dev.yml down       # 중지 (데이터 유지)
+#   docker compose -f docker-compose.dev.yml down -v    # 중지 + 데이터 삭제
+#
+# 사내 운영 VM(AceBase 운영 중)과 무관한 로컬 전용 환경이다.
+# migrations/*.sql 은 컨테이너 최초 기동 시 1회 자동 적용된다
+# (postgres 이미지의 /docker-entrypoint-initdb.d 규칙).
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: msaez-postgres-dev
+    environment:
+      POSTGRES_USER: msaez
+      POSTGRES_PASSWORD: msaez_dev
+      POSTGRES_DB: msaez
+    ports:
+      - "5432:5432"          # 로컬 개발 전용 노출 (운영에선 미노출 — 계획서 §3.2)
+    volumes:
+      - ./migrations:/docker-entrypoint-initdb.d:ro
+      - msaez_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U msaez -d msaez"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  msaez_pgdata:

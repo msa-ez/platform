@@ -1,0 +1,20 @@
+{
+  "name": "msaez-data-gateway",
+  "version": "1.0.30",
+  "private": true,
+  "type": "module",
+  "description": "MSAez data gateway — OAuth + Data API + realtime watch over PostgreSQL (v1.0.30)",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --env-file=.env src/server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "pg": "^8.13.1",
+    "ws": "^8.18.0"
+  }
+}
