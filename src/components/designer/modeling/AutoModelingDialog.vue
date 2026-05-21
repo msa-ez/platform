@@ -1410,9 +1410,23 @@
             onReceive(content){
                 console.log(content);
             },
+            // UI 에서 사용자가 직접 편집하는 값은 prompt 이고 projectName 을 따로 편집하는 UI 가
+            // 없으므로 prompt 가 표시명의 진실원. 명시 saveProject 외에 userStory 워크플로 중의
+            // auto-save(updateUserStory/updateProjectInfo/updateInputDDL) 가 첫 서버 저장을
+            // 만드는데, 그 경로엔 projectName 동기화가 없어 빈 이름으로 박히던 회귀가 있었음.
+            // information write 직전에 호출해 projectName 을 prompt 로 채워준다.
+            _syncProjectNameFromPrompt(){
+                var p = this.projectInfo && this.projectInfo.prompt
+                if (p && String(p).trim()) {
+                    if (!this.projectInfo.projectName || !String(this.projectInfo.projectName).trim()) {
+                        this.$set(this.projectInfo, 'projectName', String(p).trim())
+                    }
+                }
+            },
             async updateUserStory(content, isSave){
                 this.$set(this.projectInfo, 'userStory', content);
                 if(isSave){
+                    this._syncProjectNameFromPrompt()
                     await this.putObject(`db://definitions/${this.projectInfo.projectId}/information`, this.projectInfo)
                 }
             },
@@ -1422,10 +1436,12 @@
                 if(info.usedUserStory) this.$set(this.projectInfo, 'usedUserStory', info.usedUserStory);
                 if(info.usedInputDDL) this.$set(this.projectInfo, 'usedInputDDL', info.usedInputDDL);
                 if(info.commandReadModelData) this.$set(this.projectInfo, 'commandReadModelData', info.commandReadModelData);
+                this._syncProjectNameFromPrompt()
                 await this.putObject(`db://definitions/${this.projectInfo.projectId}/information`, this.projectInfo)
             },
             async updateInputDDL(content){
                 this.$set(this.projectInfo, 'inputDDL', content);
+                this._syncProjectNameFromPrompt()
                 await this.putObject(`db://definitions/${this.projectInfo.projectId}/information`, this.projectInfo)
             },
             openCanvas(val){
