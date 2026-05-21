@@ -1688,7 +1688,7 @@
                                 } else if(obj.id == 'mine'&& obj.show){
                                     if(window.MODE == 'bpm' || window.MODE == 'onprem') {
                                         let data = await this.list(`db://userLists/${me.userInfo.uid}/mine`)
-                                        result = await this.setListByAcebase(data)
+                                        result = await this.setListByAcebase(data, `db://userLists/${me.userInfo.uid}/mine`)
                                         await Promise.all([result])
                                         result.lists.map(x =>x.versions = null);
                                         // count 와 화면 list 의 소스를 일치시킴. 화면은 아래에서
@@ -1710,7 +1710,7 @@
                                 } else if(obj.id == 'share' && obj.show){
                                     if(window.MODE == 'bpm' || window.MODE == 'onprem') {
                                         let data = await this.getObject(`db://userLists/${me.userInfo.uid}/share`)
-                                        result = await this.setListByAcebase(data)
+                                        result = await this.setListByAcebase(data, `db://userLists/${me.userInfo.uid}/share`)
                                         await Promise.all([result])
                                         result.lists.map((x,idx) =>{
                                             x.versions = null
@@ -1740,7 +1740,7 @@
                                             ? `db://userLists/everyone/share_${me.searchObj.type}`
                                             : `db://userLists/everyone/share_first`
                                         let data = await this.list(publicPath)
-                                        result = await this.setListByAcebase(data)
+                                        result = await this.setListByAcebase(data, publicPath)
                                         await Promise.all([result])
                                         result.lists.map((x,idx) =>{
                                             x.versions = null
@@ -1795,7 +1795,10 @@
 
                 }
             },
-            setListByAcebase(data) {
+            // repairBasePath 가 주어지면(예: 'db://userLists/{uid}/mine'), type 누락 엔트리를
+            // key 에서 역추출해 item 에 채우고 DB 도 복구한다. key 포맷: {providerUid}_{type}_{rawId}.
+            setListByAcebase(data, repairBasePath) {
+                var me = this
                 return new Promise(function (resolve, reject) {
                     try {
                         let result = {}
@@ -1809,13 +1812,38 @@
                                 // 옛 구현은 .information 이 있으면 무조건 그쪽을 쓰는 바람에 rename 이
                                 // listing 에 반영 안 되는 회귀가 있었음. 두 쪽 합치고 top-level 을 우선.
                                 var entry = data[key]
+                                var item
                                 if (entry && entry.information) {
-                                    var merged = Object.assign({}, entry.information, entry)
-                                    delete merged.information
-                                    result.lists.push(merged)
+                                    item = Object.assign({}, entry.information, entry)
+                                    delete item.information
                                 } else {
-                                    result.lists.push(entry)
+                                    item = entry
                                 }
+
+                                // type 누락 엔트리 자가복구 — 부분 객체 미러링/트리거 누락으로
+                                // type 없이 박힌 엔트리는 listing 의 filter(item => item.type) 에서
+                                // 탈락해 "count 엔 잡히는데 목록엔 없음" 이 된다. key 의 두 번째
+                                // 세그먼트가 곧 type 이므로 거기서 복원하고 DB 도 함께 고친다.
+                                if (item && typeof item === 'object' && !item.type) {
+                                    var parts = String(key).split('_')
+                                    if (parts.length >= 3 && parts[1]) {
+                                        var derivedType = parts[1]
+                                        item.type = derivedType
+                                        if (!item.projectId) item.projectId = key
+                                        if (repairBasePath) {
+                                            try {
+                                                me.putObject(`${repairBasePath}/${key}`, {
+                                                    type: derivedType,
+                                                    projectId: key
+                                                })
+                                            } catch (re) {
+                                                console.warn('type 자가복구 putObject 실패:', key, re)
+                                            }
+                                        }
+                                    }
+                                }
+
+                                result.lists.push(item)
                                 if(keys.length-1 == idx) {
                                     resolve(result)
                                 }
