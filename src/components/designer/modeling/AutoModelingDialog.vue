@@ -1001,31 +1001,36 @@
                     // information 은 항상 작은 메타데이터라 가볍게 쓰면 됨.
                     await me.putObject(`db://definitions/${settingProjectId}/information`, me.projectInfo)
 
-                    // userLists/{author}/mine 인덱스의 projectName 도 같이 갱신 — 서버 트리거가
-                    // sub-path 갱신에서 누락되는 사례가 있어 클라이언트에서 직접 미러링.
-                    // 작가 본인이 저장한 경우(=일반 케이스)만 mine 인덱스를 갱신; write 권한자 update
-                    // 시엔 그 사람의 mine 에 owner 의 project 가 박히면 안 되므로 author 기준.
+                    // userLists/{author}/mine 인덱스를 클라이언트가 직접 미러링 — 서버 트리거가
+                    // 누락되는 사례 대비. ★ 반드시 완전한 인덱스 객체를 써야 함:
+                    //   listing 은 filter(item => item.type) 로 거르고 count 는 안 거르므로,
+                    //   type 빠진 부분 객체로 엔트리를 새로 만들면 "count 엔 잡히는데 목록엔 없음"
+                    //   회귀가 생긴다(신규 definition 에서 트리거까지 누락되면 영구적).
+                    // 작가 본인이 저장한 경우만 mine 갱신; write 권한자 update 시엔 author 기준.
+                    var fullIndexObj = {
+                        projectName: me.projectInfo.projectName,
+                        projectId: settingProjectId,
+                        author: me.projectInfo.author,
+                        authorEmail: me.projectInfo.authorEmail,
+                        type: me.projectInfo.type,
+                        comment: me.projectInfo.comment || '',
+                        createdTimeStamp: me.projectInfo.createdTimeStamp,
+                        lastModifiedTimeStamp: me.projectInfo.lastModifiedTimeStamp
+                    }
                     if (me.projectInfo.author) {
-                        await me.putObject(`db://userLists/${me.projectInfo.author}/mine/${settingProjectId}`, {
-                            projectName: me.projectInfo.projectName,
-                            lastModifiedTimeStamp: me.projectInfo.lastModifiedTimeStamp
-                        })
+                        await me.putObject(`db://userLists/${me.projectInfo.author}/mine/${settingProjectId}`, fullIndexObj)
                     }
 
-                    // permissions 에 권한받은 사용자들의 share 인덱스 projectName 도 미러링.
+                    // permissions 에 권한받은 사용자들의 share 인덱스도 동일하게 완전 객체로 미러링.
                     if (me.projectInfo.permissions) {
-                        var indexMirror = {
-                            projectName: me.projectInfo.projectName,
-                            lastModifiedTimeStamp: me.projectInfo.lastModifiedTimeStamp
-                        }
                         Object.keys(me.projectInfo.permissions).forEach(function (permUid) {
                             if (!me.projectInfo.permissions[permUid]) return
-                            me.putObject(`db://userLists/${permUid}/share/${settingProjectId}`, indexMirror)
+                            me.putObject(`db://userLists/${permUid}/share/${settingProjectId}`, fullIndexObj)
                             if (permUid === 'everyone') {
                                 if (me.projectInfo.type) {
-                                    me.putObject(`db://userLists/everyone/share_${me.projectInfo.type}/${settingProjectId}`, indexMirror)
+                                    me.putObject(`db://userLists/everyone/share_${me.projectInfo.type}/${settingProjectId}`, fullIndexObj)
                                 }
-                                me.putObject(`db://userLists/everyone/share_first/${settingProjectId}`, indexMirror)
+                                me.putObject(`db://userLists/everyone/share_first/${settingProjectId}`, fullIndexObj)
                             }
                         })
                     }
@@ -1984,8 +1989,18 @@
                         lastModifiedEmail: me.projectInfo.lastModifiedEmail
                     })
 
-                    // listing 인덱스 미러링 — 트리거 누락 대비.
-                    var indexMirror = { projectName: newName, lastModifiedTimeStamp: lastModifiedTimeStamp }
+                    // listing 인덱스 미러링 — 트리거 누락 대비. 완전 객체를 써야 listing 의
+                    // filter(item => item.type) 를 통과한다(부분 객체면 count 엔 잡히고 목록엔 누락).
+                    var indexMirror = {
+                        projectName: newName,
+                        projectId: projectId,
+                        author: me.projectInfo.author,
+                        authorEmail: me.projectInfo.authorEmail,
+                        type: me.projectInfo.type,
+                        comment: me.projectInfo.comment || '',
+                        createdTimeStamp: me.projectInfo.createdTimeStamp,
+                        lastModifiedTimeStamp: lastModifiedTimeStamp
+                    }
                     if (me.projectInfo.author) {
                         me.putObject(`db://userLists/${me.projectInfo.author}/mine/${projectId}`, indexMirror)
                     }

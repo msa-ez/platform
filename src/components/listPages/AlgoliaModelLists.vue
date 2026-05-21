@@ -1691,7 +1691,10 @@
                                         result = await this.setListByAcebase(data)
                                         await Promise.all([result])
                                         result.lists.map(x =>x.versions = null);
-                                        let newArr = result.lists.filter((element, i) => element != null);
+                                        // count 와 화면 list 의 소스를 일치시킴. 화면은 아래에서
+                                        // filter(item => item.type) 로 거르는데 count 가 type 없는
+                                        // 엔트리까지 세면 "hover N개인데 목록엔 더 적음" 불일치 발생.
+                                        let newArr = result.lists.filter((element) => element != null && element.type);
                                         result.count = newArr.length
                                         result.totalCount = newArr.length
                                         result.lists = newArr
@@ -1715,7 +1718,8 @@
                                                 result.lists[idx] = null
                                             }
                                         });
-                                        let newArr = result.lists.filter((element, i) => element != null);
+                                        // count 도 화면 list 와 동일하게 type 기준 필터 (위 mine 과 동일 사유).
+                                        let newArr = result.lists.filter((element) => element != null && element.type);
                                         result.count = newArr.length
                                         result.totalCount = newArr.length
                                         result.lists = newArr
