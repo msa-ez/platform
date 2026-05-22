@@ -32,15 +32,14 @@ PostgreSQL 로 교체하는 절차다. Gitea·OAuth2 앱·Personal Access Token 
 | backend-es-generators | docker | 5000 |
 | gitea | docker | 3000 / 222 |
 
-### 핵심 — 질문하신 흐름이 맞다
+### 핵심
 
-> *".30 을 pull 받아서 data-gateway 를 node 로 띄우고, 나머지는 docker 의
-> ghcr 이미지만 바꾸면 되는가?"* → **거의 그렇다.** 단 아래 3가지가 더 필요하다.
-
-1. **PostgreSQL 을 새로 띄우고 스키마를 넣어야 한다** — AceBase 자체가 DB 였으므로
-   v1.0.29 엔 없던 컴포넌트다 (§2).
-2. **백엔드는 이미지 태그뿐 아니라 DB 환경변수도 바꿔야 한다** — `ACEBASE_*` → `POSTGRES_*` (§5).
-3. **AceBase(node) 를 내려야 한다** — 5757 포트를 data-gateway 가 차지하므로 (§3).
+- **PostgreSQL 을 새로 띄우고 스키마를 넣는다** — AceBase 자체가 DB 였으므로
+  v1.0.29 엔 없던 컴포넌트다 (§2).
+- **AceBase(node) 를 내리고, 그 자리(5757)에 data-gateway 를 node 로 띄운다** (§3·§4).
+  AceBase 와 똑같이 환경변수를 `export` 한 뒤 실행한다.
+- **나머지(msaez·백엔드)는 `docker-compose.yml` 의 이미지·환경변수만 v1.0.30 용으로**
+  바뀐다 — 값은 compose 에 직접 넣는다 (§5).
 
 그대로 두는 것:
 
@@ -49,7 +48,7 @@ PostgreSQL 로 교체하는 절차다. Gitea·OAuth2 앱·Personal Access Token 
   Redirect URI 도 `http://<VM_IP>:5757/oauth2/mydb/signin` 으로 동일하므로 **재등록 불필요**.
 - **Gitea Personal Access Token** — 프론트엔드가 쓰던 값 그대로.
 - **포트** — 5757 / 8080 / 3000 / 2025 / 5000. 방화벽 규칙 변경 없음 (신규 5432 는 호스트 내부 전용).
-- **프론트엔드 설정** — 5757 을 그대로 바라보므로 환경변수 변경 없이 **이미지 태그만** 올린다.
+- **프론트엔드 설정** — 5757 을 그대로 바라보므로 동작상 변경 없이 **이미지 태그만** 올린다.
 
 ---
 
@@ -102,9 +101,7 @@ node -v                    # v20.x 확인
 
 ---
 
-## 1. v1.0.30 소스 받기 + 환경변수 설정
-
-### 1-1. 소스 받기
+## 1. v1.0.30 소스 받기
 
 platform 저장소에서 `release/v1.0.30` 브랜치로 전환한다.
 
@@ -127,40 +124,18 @@ git pull
 ```
 
 이걸로 받는 것: 새 `docker-compose.yml`(postgres 추가, 백엔드가 PostgreSQL 사용),
-[data-gateway/](data-gateway/)(게이트웨이 소스 + DB 스키마), `.env.example`.
+[data-gateway/](data-gateway/)(게이트웨이 소스 + DB 스키마).
 
-### 1-2. 환경변수 설정 (.env)
-
-v1.0.30 의 `docker-compose.yml` 은 **직접 수정하지 않는다.** 환경별 값(IP·비밀번호·
-API 키)은 `.env` 파일에 두고 compose 가 `${VAR}` 로 치환한다. `.env` 는 `.gitignore`
-대상이라 **git 에 추적되지 않으므로**, 비밀값이 커밋되지 않고 이후 `git pull` 도
-충돌하지 않는다 (compose 파일 자체는 손대지 않으니까).
-
-```sh
-cp .env.example .env
-```
-
-`.env` 를 열어 6개 값을 채운다 — 백업해 둔 `docker-compose.yml.v1029.bak` 에서
-그대로 옮겨오면 된다 (`DB_PASSWORD` 만 새로 정함):
-
-| 변수 | 값 |
-| --- | --- |
-| `DB_PASSWORD` | PostgreSQL 비밀번호 — 임의의 강한 값 (신규로 정함) |
-| `VM_IP` | 브라우저가 접근하는 호스트 IP/도메인 (예: `34.64.202.245`) |
-| `GITEA_PERSONAL_ACCESS_TOKEN` | v1.0.29 에서 쓰던 Gitea PAT 그대로 |
-| `OPENAI_API_KEY` | v1.0.29 에서 쓰던 LLM 키 그대로 (P-GPT 사용 시 P-GPT Key) |
-| `OPENAI_EMBEDDING_API_KEY` | 임베딩용 실제 OpenAI Key |
-| `GOOGLE_API_KEY` | Gemini 사용 시 Google AI Key |
-
-> P-GPT 를 쓰면 `.env` 에 `OPENAI_BASE_URL` 도 설정하고 `docker-compose.yml` 의
-> 해당 `OPENAI_BASE_URL` 주석 줄을 해제한다 (`.env.example` 참조).
+> 백업한 `docker-compose.yml.v1029.bak` 의 값(VM IP·PAT·LLM 키)은 §2·§5 에서
+> 새 `docker-compose.yml` 로 옮긴다.
 
 ---
 
 ## 2. PostgreSQL 기동
 
-`docker-compose.yml` 의 `postgres` 서비스를 먼저 띄운다 — 비밀번호는 §1-2 의 `.env`
-`DB_PASSWORD` 에서 읽으므로 compose 를 손댈 필요가 없다.
+`docker-compose.yml` 의 `postgres` 서비스에서 `<DB_PASSWORD>` 를 임의의 강한
+값으로 채운다 (이 값은 §4 게이트웨이·§5 백엔드에서도 **동일하게** 쓴다).
+그 다음 postgres 만 먼저 띄운다:
 
 ```sh
 docker compose up -d postgres
@@ -205,47 +180,45 @@ AceBase 가 차지하던 5757 자리에 게이트웨이를 올린다.
 ```sh
 cd data-gateway
 npm install
-cp .env.example .env
 ```
 
-게이트웨이는 **자체 `.env`** 를 쓴다 — `data-gateway/.env` 로, §1-2 의
-`platform/.env`(docker-compose 용)와는 **다른 파일**이다. `POSTGRES_PASSWORD` 는
-`platform/.env` 의 `DB_PASSWORD` 와 **같은 값**으로, OAuth 3종(`CLIENT_ID`/
-`CLIENT_SECRET`/`GIT`)은 **AceBase 가 쓰던 값을 그대로** 넣는다:
+게이트웨이는 **AceBase 와 동일하게 환경변수를 `export` 한 뒤 실행**한다.
+`POSTGRES_PASSWORD` 는 §2 의 postgres 와 같은 값, OAuth 3종(`CLIENT_ID`/
+`CLIENT_SECRET`/`GIT`)은 AceBase 가 쓰던 값을 그대로 넣는다:
 
 ```sh
-GATEWAY_PORT=5757
-DB_NAME=mydb
-
-# PostgreSQL — platform/.env 의 DB_PASSWORD 와 동일하게
-POSTGRES_HOST=127.0.0.1
-POSTGRES_PORT=5432
-POSTGRES_DB=msaez
-POSTGRES_USER=msaez
-POSTGRES_PASSWORD=<DB_PASSWORD 와 동일>
-
-# JWT 서명 시크릿 — 임의의 긴 랜덤 문자열 (신규)
-JWT_SECRET=<JWT_SECRET>
-
+export GATEWAY_PORT=5757
+export DB_NAME=mydb
+# PostgreSQL — §2 의 postgres 와 동일한 비밀번호
+export POSTGRES_HOST=127.0.0.1
+export POSTGRES_PORT=5432
+export POSTGRES_DB=msaez
+export POSTGRES_USER=msaez
+export POSTGRES_PASSWORD=<DB_PASSWORD 와 동일>
+# JWT 서명 시크릿 — 임의의 긴 랜덤 문자열
+export JWT_SECRET=<임의 랜덤 문자열>
 # Gitea OAuth — AceBase 가 쓰던 값 그대로 (재발급 불필요)
-PROVIDER=gitea
-CLIENT_ID=<기존 Gitea OAuth Client ID>
-CLIENT_SECRET=<기존 Gitea OAuth Client Secret>
-GIT=<VM_IP>:3000
-PROTOCOL=http
+export PROVIDER=gitea
+export CLIENT_ID=<기존 Gitea OAuth Client ID>
+export CLIENT_SECRET=<기존 Gitea OAuth Client Secret>
+export GIT=<VM_IP>:3000
+export PROTOCOL=http
+
+# 실행
+node src/server.js
 ```
 
-실행 — **`--env-file=.env` 를 반드시 붙인다.** `node src/server.js` 만으로는
-`.env` 가 로드되지 않아 `client password must be a string` 으로 DB 접속이 실패한다:
+`[gateway] ... listening on :5757` 과 `[notify] LISTEN msaez_change 시작` 이
+뜨면 정상이다.
+
+> `export` 는 그 셸 세션에만 유효하다 — 터미널을 다시 열어 재시작할 땐 위 `export`
+> 들을 다시 실행해야 한다 (한 스크립트 파일로 묶어두면 편하다).
+
+상주 실행(터미널을 닫아도 유지)은 AceBase 와 동일하게 `nohup`·`pm2`·`systemd`
+중 택일 — `export` 를 끝낸 같은 셸에서:
 
 ```sh
-node --env-file=.env src/server.js
-```
-
-상주 실행(터미널을 닫아도 유지)은 AceBase 와 동일하게 `nohup`·`pm2`·`systemd` 중 택일:
-
-```sh
-nohup node --env-file=.env src/server.js > gateway.log 2>&1 &
+nohup node src/server.js > gateway.log 2>&1 &
 ```
 
 확인:
@@ -254,26 +227,30 @@ nohup node --env-file=.env src/server.js > gateway.log 2>&1 &
 curl http://localhost:5757/health      # {"status":"ok"} 면 정상
 ```
 
-`{"status":"db_unavailable"}` 가 나오면 `data-gateway/.env` 의 `POSTGRES_PASSWORD` 가
-`platform/.env` 의 `DB_PASSWORD` 와 일치하는지, postgres 컨테이너가 떠 있는지 확인한다.
+`{"status":"db_unavailable"}` 가 나오면 `export` 한 `POSTGRES_PASSWORD` 가 §2 의
+postgres 와 일치하는지, postgres 컨테이너가 떠 있는지 확인한다.
 
 ---
 
-## 5. 나머지 서비스 기동 (msaez · 백엔드 · gitea)
+## 5. docker-compose.yml 설정 → 나머지 서비스 기동
 
-`docker-compose.yml` 은 이미 v1.0.30 용으로 맞춰져 있다 — `msaez`/백엔드 이미지
-`:v1.0.30`, 백엔드 DB 가 `POSTGRES_*`, `postgres` 서비스 포함. 환경별 값은 §1-2 의
-`.env` 에서 `${VAR}` 로 치환된다. **compose 파일은 손대지 않는다.**
+`docker-compose.yml` 의 `<...>` 자리표시자를 채운다 — 백업해 둔
+`docker-compose.yml.v1029.bak` 에서 값을 그대로 옮겨오면 된다:
+
+| 자리표시자 | 위치 | 값 |
+| --- | --- | --- |
+| `<DB_PASSWORD>` | postgres / backend ×2 | §2 에서 정한 값 — 3곳 모두 동일하게 |
+| `<VM_IP>` | msaez / backend-es-generators | 브라우저가 접근하는 호스트 IP (예: `34.64.202.245`) |
+| `<GITEA_PERSONAL_ACCESS_TOKEN>` | msaez | v1.0.29 에서 쓰던 PAT 그대로 |
+| `OPENAI_API_KEY` / `GOOGLE_API_KEY` 등 | backend ×2 | v1.0.29 에서 쓰던 LLM 키 그대로 (P-GPT 는 compose 주석 참조) |
+
+채운 뒤 기동 — 변경된 서비스만 재생성된다 (gitea 는 영향 없음):
 
 ```sh
 docker compose up -d
 ```
 
-- postgres 는 §2 에서 이미 떠 있고, 나머지(msaez·백엔드·gitea)가 기동/재생성된다.
-- gitea 는 이미지·설정이 동일하므로 영향 없다.
-
-> `.env` 미설정 시 compose 가 `The "VM_IP" variable is not set` 같은 경고를 내고
-> 빈 값으로 치환한다 — §1-2 의 6개 값이 모두 채워졌는지 확인할 것.
+postgres 는 §2 에서 이미 떠 있고, 나머지(msaez·백엔드·gitea)가 기동/재생성된다.
 
 <details>
 <summary>참고 — v1.0.29 대비 docker-compose.yml 이 바뀐 점</summary>
@@ -282,7 +259,6 @@ docker compose up -d
 - `acebase` 서비스 제거, `postgres` 서비스 추가
 - 백엔드 DB 환경변수: `ACEBASE_*` 제거 → `POSTGRES_*`
   (`POSTGRES_HOST: postgres` — compose 내부 서비스명), `STORAGE_TYPE`/`DB_TYPE` → `postgres`
-- 환경별 값이 `<자리표시자>` 직접 입력에서 `${VAR}`(+ `.env`) 방식으로 바뀜
 - `msaez` 의 `VUE_APP_*` 는 5757(게이트웨이)을 그대로 가리킴 — 동작상 변경 없음
 </details>
 
@@ -369,10 +345,10 @@ v1.0.29 이미지(`platform:v1.0.29`, AceBase, 백엔드)는 그대로 남아 �
 
 | 증상 | 확인 |
 | --- | --- |
-| 게이트웨이 `{"status":"db_unavailable"}` | `data-gateway/.env` 의 `POSTGRES_PASSWORD` 가 `platform/.env` 의 `DB_PASSWORD` 와 일치하는지, `docker compose ps postgres` |
+| 게이트웨이 `{"status":"db_unavailable"}` | `export` 한 `POSTGRES_PASSWORD` 가 postgres 와 일치하는지, `docker compose ps postgres` |
+| 게이트웨이 `client password must be a string` | `POSTGRES_PASSWORD` 를 `export` 하지 않고 `node src/server.js` 를 실행함 — §4 의 `export` 후 재실행 |
 | 게이트웨이가 5757 바인딩 실패 | AceBase 가 아직 떠 있음 — §3 으로 중지 (`lsof -i :5757`) |
-| OAuth 로그인 실패 | `data-gateway/.env` 의 `CLIENT_ID`/`CLIENT_SECRET`/`GIT` 가 Gitea OAuth2 앱과 일치하는지 |
-| 백엔드가 DB 접속 실패 | 백엔드는 `POSTGRES_HOST: postgres`(서비스명) 로 접속 — `platform/.env` 의 `DB_PASSWORD` 가 채워졌는지 |
-| compose `variable is not set` 경고 | `platform/.env` 의 6개 값 누락 — `cp .env.example .env` 후 채웠는지 (§1-2) |
+| OAuth 로그인 실패 | 게이트웨이 실행 시 `export` 한 `CLIENT_ID`/`CLIENT_SECRET`/`GIT` 가 Gitea OAuth2 앱과 일치하는지 |
+| 백엔드가 DB 접속 실패 | `docker-compose.yml` 백엔드의 `POSTGRES_HOST: postgres`(서비스명)·`POSTGRES_PASSWORD` 확인 |
 | 스키마 미적용 | postgres 볼륨이 비어 있을 때만 자동 적용. 재적용은 `docker compose down -v` 후 재기동 (데이터 삭제 주의) |
 | 실시간 갱신 안 됨 | 게이트웨이 로그에 `LISTEN msaez_change` 가 보이는지 |

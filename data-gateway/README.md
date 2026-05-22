@@ -10,15 +10,18 @@ MSAez의 DB 계층(AceBase → PostgreSQL) 전환을 담당하는 컴포넌트.
 
 ## 운영 환경에서의 실행
 
-설치형 MSAez 를 v1.0.29 → v1.0.30 으로 전환하는 절차는 상위 [../README.md](../README.md) 참조.
-게이트웨이는 호스트에서 node 로 직접 실행한다:
+설치형 MSAez 를 v1.0.29 → v1.0.30 으로 전환하는 절차는 상위 [../README.md](../README.md) §4 참조.
+게이트웨이는 AceBase 와 동일하게 호스트에서 환경변수를 `export` 한 뒤 node 로 실행한다:
 
 ```sh
 cd data-gateway
 npm install
-cp .env.example .env                      # POSTGRES_* / Gitea OAuth 채우기
-node --env-file=.env src/server.js        # 포트 5757 (--env-file 필수: .env 로드)
+export POSTGRES_PASSWORD=... CLIENT_ID=... CLIENT_SECRET=... GIT=...:3000 ...   # 전체 목록은 ../README.md §4
+node src/server.js                        # 포트 5757
 ```
+
+> 게이트웨이는 표준 환경변수(`process.env`)를 읽으므로, `export` 든 docker
+> `environment:` 든 무방하다. `.env` 파일로 개발할 땐 `npm run dev` 사용.
 
 ## 로컬 개발 PostgreSQL 기동
 
