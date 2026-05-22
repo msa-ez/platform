@@ -30,6 +30,14 @@ export class PostgresGatewayClient {
     this.ws = null;
     this.wsReady = false;
     this._wsClosed = false;
+
+    // 쓰기 동시성 제한 — 다량의 쓰기를 한꺼번에 fetch 하면 브라우저가
+    // ERR_INSUFFICIENT_RESOURCES 로 죽으므로 동시 in-flight 쓰기를 제한한다.
+    // (AceBase 클라이언트 SDK 가 하던 쓰기 큐잉을 대체)
+    this._wq = [];
+    this._wqActive = 0;
+    this._WQ_MAX = 6;
+
     this._connectWs();
   }
 
@@ -44,6 +52,23 @@ export class PostgresGatewayClient {
   _dataUrl(path) {
     const clean = String(path || '').replace(/^\/+/, '');
     return `${this.baseUrl}/data/${this.dbName}/${clean}`;
+  }
+
+  // 쓰기 fetch 를 동시성 제한 큐에 통과시켜 브라우저 fetch 폭주를 막는다.
+  _throttledWrite(doFetch) {
+    return new Promise((resolve, reject) => {
+      this._wq.push({ doFetch, resolve, reject });
+      this._drainWq();
+    });
+  }
+
+  _drainWq() {
+    while (this._wqActive < this._WQ_MAX && this._wq.length > 0) {
+      const job = this._wq.shift();
+      this._wqActive++;
+      Promise.resolve().then(job.doFetch).then(job.resolve, job.reject)
+        .then(() => { this._wqActive--; this._drainWq(); });
+    }
   }
 
   async getData(path) {
@@ -66,31 +91,31 @@ export class PostgresGatewayClient {
   }
 
   async setData(path, value) {
-    const r = await fetch(this._dataUrl(path), {
+    const r = await this._throttledWrite(() => fetch(this._dataUrl(path), {
       method: 'PUT', headers: this._headers(), body: JSON.stringify(value),
-    });
+    }));
     return r.ok;
   }
 
   async updateData(path, value) {
-    const r = await fetch(this._dataUrl(path), {
+    const r = await this._throttledWrite(() => fetch(this._dataUrl(path), {
       method: 'PATCH', headers: this._headers(), body: JSON.stringify(value),
-    });
+    }));
     return r.ok;
   }
 
   async pushData(path, value) {
-    const r = await fetch(this._dataUrl(path), {
+    const r = await this._throttledWrite(() => fetch(this._dataUrl(path), {
       method: 'POST', headers: this._headers(), body: JSON.stringify(value),
-    });
+    }));
     if (!r.ok) return null;
     return (await r.json()).key;
   }
 
   async deleteData(path) {
-    const r = await fetch(this._dataUrl(path), {
+    const r = await this._throttledWrite(() => fetch(this._dataUrl(path), {
       method: 'DELETE', headers: this._headers(),
-    });
+    }));
     return r.ok;
   }
 
