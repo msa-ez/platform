@@ -179,7 +179,30 @@
                 };
             },
             _getRef(auth) {
-                // AceBase 호환용 — PostgreSQL 어댑터는 ref 객체 개념 없음
+                // AceBase 호환용. auth 참조 요청 시 Firebase-auth 호환 shim 을 반환해
+                // App.vue/Login.vue 등의 getRef('auth').XXX 레거시 호출이 깨지지 않게 한다.
+                if (auth === 'auth') {
+                    var self = this;
+                    var hasToken = !!window.localStorage.getItem('accessToken');
+                    return {
+                        currentUser: hasToken
+                            ? { uid: window.localStorage.getItem('uid') } : null,
+                        getRedirectResult: function () {
+                            // OAuth 리다이렉트 결과는 AcebaseRedirectPage.vue 가 처리한다.
+                            return Promise.resolve({ credential: null });
+                        },
+                        signInWithRedirect: function () { return self._signIn(); },
+                        signInWithPopup: function () { return self._signIn(); },
+                        signOut: function () {
+                            ['accessToken', 'gitToken', 'email', 'name', 'uid',
+                             'picture', 'providerUid'].forEach(function (k) {
+                                window.localStorage.removeItem(k);
+                            });
+                            return Promise.resolve();
+                        },
+                        onAuthStateChanged: function () { /* no-op */ }
+                    };
+                }
                 return gateway();
             },
             _getServerTimestamp() {

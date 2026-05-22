@@ -11,6 +11,20 @@ import { attachWatchServer } from './watch/ws.js';
 import { startChangeListener } from './watch/notify.js';
 
 const app = express();
+
+// CORS — 브라우저(8080 등)에서 게이트웨이(5757)로의 cross-origin 요청 허용.
+// origin 을 echo 하고 자격증명 허용, preflight(OPTIONS)에 응답한다.
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin) res.setHeader('Access-Control-Allow-Origin', origin);
+  res.setHeader('Vary', 'Origin');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  if (req.method === 'OPTIONS') return res.status(204).end();
+  next();
+});
+
 app.use(express.json({ limit: '50mb', strict: false }));
 
 // 헬스 체크
