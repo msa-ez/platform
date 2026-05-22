@@ -2,12 +2,18 @@
 # MSAez 설치형 docker-compose (v1.0.30 — PostgreSQL 전환판)
 #
 # v1.0.29 대비 변경:
-#   - acebase 제거 → postgres + msaez-data-gateway 추가
+#   - acebase 제거 → postgres 추가 (data-gateway 는 호스트에서 node 로 실행)
 #   - 백엔드의 ACEBASE_* → POSTGRES_*, STORAGE_TYPE/DB_TYPE → postgres
-#   - DB 접근이 compose 내부 네트워크로 통일 (host.docker.internal 불필요)
+#   - 백엔드는 compose 내부 네트워크로 postgres 에 접근 (POSTGRES_HOST: postgres)
 #
-# 설정 방법은 README.md 참조. <...> 부분을 환경에 맞게 채울 것.
-# =====================================================================
+# data-gateway 는 이 compose 에 없다 — AceBase 와 동일하게 호스트에서
+# `node src/server.js` 로 직접 실행한다 (README.md §4 참조).
+#
+# ─────────────────────────────────────────────────────────────────────
+# 이 파일은 직접 수정하지 않는다. 환경별 값(IP·비밀번호·API 키)은 같은
+# 디렉토리의 .env 파일에 두고 ${VAR} 로 치환된다 (.env 는 .gitignore 대상
+# 이라 git 추적 안 됨 → git pull 충돌 없음). 설정은 .env.example / README.md 참조.
+# ─────────────────────────────────────────────────────────────────────
 
 networks:
   msaez:
@@ -25,13 +31,16 @@ services:
       - msaez
     environment:
       POSTGRES_USER: msaez
-      POSTGRES_PASSWORD: <DB_PASSWORD>   # 임의의 강한 비밀번호로 변경
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: msaez
     volumes:
       - msaez_pgdata:/var/lib/postgresql/data
       # 최초 기동 시 스키마(001_init, 002_notify) 자동 적용
       - ./data-gateway/migrations:/docker-entrypoint-initdb.d:ro
-    # 포트는 외부로 노출하지 않음 — compose 내부 네트워크에서만 접근 (계획서 §3.2)
+    ports:
+      # 호스트의 data-gateway(node) 가 접근하도록 127.0.0.1 에만 바인딩.
+      # 외부에는 노출되지 않으므로 방화벽 변경 불필요 (계획서 §3.2).
+      - "127.0.0.1:5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U msaez -d msaez"]
       interval: 5s
@@ -39,34 +48,10 @@ services:
       retries: 12
     restart: unless-stopped
 
-  # ── msaez-data-gateway — OAuth + Data API + 실시간 watch ───────────
-  msaez-data-gateway:
-    build: ./data-gateway          # data-gateway/ 소스에서 빌드 (Node 20 컨테이너)
-    container_name: msaez-data-gateway
-    networks:
-      - msaez
-    ports:
-      - "5757:5757"                # 기존 AceBase 자리 — 브라우저/백엔드가 접근
-    depends_on:
-      - postgres
-    environment:
-      GATEWAY_PORT: 5757
-      DB_NAME: mydb
-      # PostgreSQL 연결 (compose 내부 서비스명)
-      POSTGRES_HOST: postgres
-      POSTGRES_PORT: 5432
-      POSTGRES_DB: msaez
-      POSTGRES_USER: msaez
-      POSTGRES_PASSWORD: <DB_PASSWORD>      # postgres 서비스와 동일하게
-      # Gitea OAuth (Gitea OAuth2 Application 에서 발급)
-      PROVIDER: gitea
-      CLIENT_ID: <GITEA_OAUTH_CLIENT_ID>
-      CLIENT_SECRET: <GITEA_OAUTH_CLIENT_SECRET>
-      GIT: <VM_IP>:3000                     # 브라우저가 접근 가능한 Gitea 주소 (예: 34.64.202.245:3000)
-      PROTOCOL: http                        # HTTPS 사용 시 https
-      # JWT 서명 시크릿 — 임의의 긴 랜덤 문자열
-      JWT_SECRET: <JWT_SECRET>
-    restart: unless-stopped
+  # ── data-gateway 는 이 compose 에 없다 ────────────────────────────
+  # AceBase 와 동일하게 호스트에서 node 로 직접 실행한다 (README.md §4):
+  #   cd data-gateway && npm install && node src/server.js   (포트 5757)
+  # 게이트웨이 .env 에 POSTGRES_*(위 postgres 와 동일) + Gitea OAuth 설정.
 
   # ── msaez — 프론트엔드 ─────────────────────────────────────────────
   msaez:
@@ -76,15 +61,15 @@ services:
     ports:
       - 8080:8080
     environment:
-      VUE_APP_DB_HOST: <VM_IP>     # 게이트웨이 호스트 (브라우저가 접근하는 주소, 예: 34.64.202.245)
-      VUE_APP_DB_PORT: 5757        # 게이트웨이 포트
+      VUE_APP_DB_HOST: ${VM_IP}        # 게이트웨이 호스트 (브라우저가 접근하는 주소)
+      VUE_APP_DB_PORT: 5757            # 게이트웨이 포트
       VUE_APP_DB_NAME: mydb
       VUE_APP_MODE: onprem
       VUE_APP_DB_HTTPS: "false"
       VUE_APP_GIT: gitea
-      VUE_APP_GIT_URL: http://<VM_IP>:3000        # Gitea URL (브라우저 접근 주소)
-      VUE_APP_GITEA_TOKEN: "<GITEA_PERSONAL_ACCESS_TOKEN>"
-      VUE_APP_BACKEND_URL: http://<VM_IP>:2025    # Backend URL
+      VUE_APP_GIT_URL: http://${VM_IP}:3000        # Gitea URL (브라우저 접근 주소)
+      VUE_APP_GITEA_TOKEN: "${GITEA_PERSONAL_ACCESS_TOKEN}"
+      VUE_APP_BACKEND_URL: http://${VM_IP}:2025    # Backend URL
     restart: unless-stopped
 
   # ── backend-generators (Project Generator) ────────────────────────
@@ -100,13 +85,14 @@ services:
     environment:
       # ──────────────────────────────────────────────────────────────
       # LLM API Key 설정 (OpenAI SDK 표준 환경변수로 통일)
+      # 키 값은 .env 에 둔다. (.env.example 참조)
       # ──────────────────────────────────────────────────────────────
       # [기본: OpenAI 직접 호출]
       #   - OPENAI_API_KEY 만 설정하면 api.openai.com으로 호출됩니다.
       #   - OPENAI_BASE_URL 은 비워두거나 미설정.
       #
       # [P-GPT(POSCO 사내 LLM 게이트웨이) 사용 시]
-      #   - OPENAI_BASE_URL 에 P-GPT 엔드포인트를 지정하면
+      #   - 아래 OPENAI_BASE_URL 줄의 주석을 해제하고 .env 에 OPENAI_BASE_URL 설정.
       #     Chat/Responses/Models 호출이 P-GPT로 라우팅됩니다. (OpenAI 호환)
       #   - OPENAI_API_KEY 에 P-GPT에서 발급받은 API Key를 입력합니다.
       #   - P-GPT는 임베딩(Embedding)을 지원하지 않으므로,
@@ -116,9 +102,9 @@ services:
       #       개발계: http://taigpt.posco.net/gpgpta01-gpt/v1
       #       운영계: http://aigpt.posco.net/gpgpta01-gpt/v1
       # ──────────────────────────────────────────────────────────────
-      OPENAI_API_KEY: your-openai-api-key-here              # OpenAI 직접 사용 시: OpenAI Key / P-GPT 사용 시: P-GPT Key
-      # OPENAI_BASE_URL: http://aigpt.posco.net/gpgpta01-gpt/v1   # P-GPT 사용 시 주석 해제
-      OPENAI_EMBEDDING_API_KEY: your-openai-api-key-here    # 임베딩용 실제 OpenAI Key (P-GPT 사용 시 필수)
+      OPENAI_API_KEY: ${OPENAI_API_KEY}                     # OpenAI 직접 사용 시: OpenAI Key / P-GPT 사용 시: P-GPT Key
+      # OPENAI_BASE_URL: ${OPENAI_BASE_URL}                 # P-GPT 사용 시 주석 해제 + .env 에 OPENAI_BASE_URL 설정
+      OPENAI_EMBEDDING_API_KEY: ${OPENAI_EMBEDDING_API_KEY} # 임베딩용 실제 OpenAI Key (P-GPT 사용 시 필수)
       DEFAULT_LLM_MODEL: gpt-4o
       # OPENAI_EMBEDDING_BASE_URL: https://...              # (선택) 별도 임베딩 엔드포인트 사용 시
       # DB 설정 — PostgreSQL (v1.0.30)
@@ -127,7 +113,7 @@ services:
       POSTGRES_PORT: 5432
       POSTGRES_DB: msaez
       POSTGRES_USER: msaez
-      POSTGRES_PASSWORD: <DB_PASSWORD>
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
       # Flask 서버 설정
       FLASK_HOST: 0.0.0.0
       FLASK_PORT: 2025
@@ -151,13 +137,14 @@ services:
     environment:
       # ──────────────────────────────────────────────────────────────
       # LLM API Key 설정 (OpenAI SDK 표준 환경변수로 통일)
+      # 키 값은 .env 에 둔다. (.env.example 참조)
       # ──────────────────────────────────────────────────────────────
       # [기본: OpenAI / Google AI 직접 호출]
       #   - OPENAI_API_KEY, GOOGLE_API_KEY 중 사용하는 모델에 맞춰 설정.
       #   - OPENAI_BASE_URL 은 비워두거나 미설정.
       #
       # [P-GPT(POSCO 사내 LLM 게이트웨이) 사용 시]
-      #   - OPENAI_BASE_URL 에 P-GPT 엔드포인트를 지정하면
+      #   - 아래 OPENAI_BASE_URL 줄의 주석을 해제하고 .env 에 OPENAI_BASE_URL 설정.
       #     Chat/Responses/Models 호출이 P-GPT로 라우팅됩니다. (OpenAI 호환)
       #   - OPENAI_API_KEY 에 P-GPT에서 발급받은 API Key를 입력합니다.
       #   - P-GPT 엔드포인트:
@@ -166,9 +153,9 @@ services:
       #   - AI_MODEL / AI_MODEL_LIGHT 는 P-GPT에서 제공하는 모델명으로 변경 필요
       #     (예: openai:gpt-4o, openai:gpt-4o-mini → /v1/models 로 확인)
       # ──────────────────────────────────────────────────────────────
-      GOOGLE_API_KEY: your-google-api-key-here
-      OPENAI_API_KEY: your-open-api-key-here                # OpenAI 직접 사용 시: OpenAI Key / P-GPT 사용 시: P-GPT Key
-      # OPENAI_BASE_URL: http://aigpt.posco.net/gpgpta01-gpt/v1   # P-GPT 사용 시 주석 해제
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}                     # OpenAI 직접 사용 시: OpenAI Key / P-GPT 사용 시: P-GPT Key
+      # OPENAI_BASE_URL: ${OPENAI_BASE_URL}                 # P-GPT 사용 시 주석 해제 + .env 에 OPENAI_BASE_URL 설정
       # AI 모델 설정 (P-GPT 사용 시 P-GPT가 제공하는 모델명으로 변경)
       AI_MODEL: openai:gpt-4.1-2025-04-14
       AI_MODEL_MAX_INPUT_LIMIT: 523788
@@ -182,11 +169,11 @@ services:
       POSTGRES_PORT: 5432
       POSTGRES_DB: msaez
       POSTGRES_USER: msaez
-      POSTGRES_PASSWORD: <DB_PASSWORD>
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
       # A2A 서버 설정
       A2A_HOST: 0.0.0.0
       A2A_PORT: 5000
-      A2A_EXTERNAL_URL: http://<VM_IP>:5000    # A2A 서버 외부 URL
+      A2A_EXTERNAL_URL: http://${VM_IP}:5000    # A2A 서버 외부 URL
       # 기타 설정
       NAMESPACE: eventstorming_generator
       POD_ID: docker-pod
