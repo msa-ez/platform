@@ -166,7 +166,7 @@ cp .env.example .env
 docker compose up -d postgres
 ```
 
-- **최초 기동 시** [data-gateway/migrations/](data-gateway/migrations/) 의 `001_init.sql`(테이블 8개) +
+- **최초 기동 시** [data-gateway/migrations/](data-gateway/migrations/) 의 `001_init.sql` +
   `002_notify.sql`(트리거/NOTIFY) 가 자동 적용된다.
 - 5432 포트는 `127.0.0.1` 에만 바인딩 — 호스트의 게이트웨이만 접근, 외부 노출 없음.
 
@@ -177,8 +177,9 @@ docker compose ps postgres
 docker exec msaez-postgres psql -U msaez -d msaez -c "\dt"
 ```
 
-`kv_store`, `users`, `definitions`, `user_lists`, `requested_jobs`, `jobs`,
-`definition_queue`, `definition_snapshots` 8개 테이블이 보이면 정상.
+도메인 테이블 8개 — `kv_store`, `users`, `definitions`, `user_lists`,
+`requested_jobs`, `jobs`, `definition_queue`, `definition_snapshots` — 와
+마이그레이션 관리용 `schema_migrations` 까지 **총 9개**가 보이면 정상.
 
 ---
 
@@ -234,16 +235,17 @@ GIT=<VM_IP>:3000
 PROTOCOL=http
 ```
 
-실행:
+실행 — **`--env-file=.env` 를 반드시 붙인다.** `node src/server.js` 만으로는
+`.env` 가 로드되지 않아 `client password must be a string` 으로 DB 접속이 실패한다:
 
 ```sh
-node src/server.js
+node --env-file=.env src/server.js
 ```
 
 상주 실행(터미널을 닫아도 유지)은 AceBase 와 동일하게 `nohup`·`pm2`·`systemd` 중 택일:
 
 ```sh
-nohup node src/server.js > gateway.log 2>&1 &
+nohup node --env-file=.env src/server.js > gateway.log 2>&1 &
 ```
 
 확인:

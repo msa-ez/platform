@@ -16,8 +16,8 @@ MSAez의 DB 계층(AceBase → PostgreSQL) 전환을 담당하는 컴포넌트.
 ```sh
 cd data-gateway
 npm install
-cp .env.example .env      # POSTGRES_* / Gitea OAuth 채우기
-node src/server.js        # 포트 5757
+cp .env.example .env                      # POSTGRES_* / Gitea OAuth 채우기
+node --env-file=.env src/server.js        # 포트 5757 (--env-file 필수: .env 로드)
 ```
 
 ## 로컬 개발 PostgreSQL 기동
