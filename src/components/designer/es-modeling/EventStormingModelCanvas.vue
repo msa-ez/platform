@@ -3331,6 +3331,8 @@
                     }
                 }, 500)
             }
+            // ES 생성 트리거 등 다른 메서드에서도 호출할 수 있도록 인스턴스에 노출
+            this.checkReconnectToExistingRun = checkReconnectToExistingRun
             await checkReconnectToExistingRun()         
         },
         mounted: function () {
@@ -4755,7 +4757,7 @@
                     // Job 감시 시작 (checkReconnectToExistingRun이 자동으로 감지하도록 대기)
                     // 저장 후 약간의 지연을 두어 DB 동기화 시간 확보
                     setTimeout(async () => {
-                        await checkReconnectToExistingRun()
+                        await this.checkReconnectToExistingRun()
                     }, 500)
                     return
                 }
