@@ -2304,6 +2304,17 @@
                             loadedDefinition.elements = bigPicture.content.content.elements
                             loadedDefinition.relations = bigPicture.content.content.relations
                         }
+                        // relation 의 sourceElement/targetElement 누락 보강 — 일부 LLM 생성 relation 이
+                        // from/to ID 만 가지고 객체 참조를 빼놓는 케이스가 있어 ClassRelation 렌더가 깨짐.
+                        if (loadedDefinition.relations && loadedDefinition.elements) {
+                            Object.values(loadedDefinition.relations).forEach(function (rel) {
+                                if (!rel) return
+                                if (!rel.sourceElement && rel.from)
+                                    rel.sourceElement = loadedDefinition.elements[rel.from]
+                                if (!rel.targetElement && rel.to)
+                                    rel.targetElement = loadedDefinition.elements[rel.to]
+                            })
+                        }
                         for(let key of Object.keys(loadedDefinition)) {
                             me.$set(me.value, key, loadedDefinition[key])
                         }

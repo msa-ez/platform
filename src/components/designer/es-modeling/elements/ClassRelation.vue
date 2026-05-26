@@ -91,6 +91,12 @@
                 // if (!this.value.name)
                 //     this.value.name = ''
 
+                // sourceElement/targetElement 누락된 깨진 relation 가드 (일부 LLM 출력에서 발생)
+                if (!this.value || !this.value.sourceElement || !this.value.targetElement
+                    || !this.value.sourceElement._type || !this.value.targetElement._type) {
+                    return { 'stroke': 'grey', 'stroke-width': 1.4 }
+                }
+
                 if (this.value.sourceElement._type.endsWith('Event') && this.value.targetElement._type.endsWith('Policy')){
                 //    this.value.name = 'Pub/Sub'
                     style = {
@@ -233,7 +239,10 @@
         mounted: function () {
             var me = this
 
-            if (me.value.sourceElement._type.endsWith('Aggregate') && me.value.targetElement._type.endsWith('Aggregate')) {
+            if (me.value && me.value.sourceElement && me.value.targetElement
+                && me.value.sourceElement._type && me.value.targetElement._type
+                && me.value.sourceElement._type.endsWith('Aggregate')
+                && me.value.targetElement._type.endsWith('Aggregate')) {
                 var obj = {
                     action: "addRelation",
                     element: me.value
@@ -262,7 +271,10 @@
         beforeDestroy: function() {
             var me = this
 
-            if (me.value.sourceElement._type.endsWith('Aggregate') && me.value.targetElement._type.endsWith('Aggregate')) {
+            if (me.value && me.value.sourceElement && me.value.targetElement
+                && me.value.sourceElement._type && me.value.targetElement._type
+                && me.value.sourceElement._type.endsWith('Aggregate')
+                && me.value.targetElement._type.endsWith('Aggregate')) {
                 var obj = {
                     action: "deleteRelation",
                     element: me.value
