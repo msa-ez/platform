@@ -4808,8 +4808,32 @@
             },
 
             async _sanpshotModelForcely() {
+                // ES generator 완료 시점에 latestQueueKey 가 비어있는 케이스(큐 watch 가
+                // 큐 push 보다 늦었거나 사용자가 캔버스를 잠시 떠난 사이 호출된 경우)에
+                // 대비해 PG 에서 직접 마지막 큐 키를 조회. 이 값이 빈 채로 박히면
+                // 다음 로드 시 receiveQueue 가 startAt='' 로 큐 전체를 재생하면서
+                // 116건 같은 대량 broadcast 로 브라우저가 freeze 된다.
+                let lastSnapshotKey = this.latestQueueKey
+                if (!lastSnapshotKey) {
+                    try {
+                        const queueLatest = await this.list(`db://definitions/${this.projectId}/queue`, {
+                            sort: 'desc',
+                            orderBy: null,
+                            size: 1,
+                            startAt: null,
+                            endAt: null
+                        })
+                        if (queueLatest && queueLatest.length > 0 && queueLatest[0].key) {
+                            lastSnapshotKey = queueLatest[0].key
+                        }
+                    } catch (e) {
+                        // 조회 실패해도 스냅샷 push 자체는 진행한다(lastSnapshotKey 가 빈 채라도
+                        // 최소한 me.value 의 통째 보존은 가능 — 사용자가 한 번 끝까지 받으면
+                        // 다음 _sanpshotModelForcely 호출에서 자가 회복).
+                    }
+                }
                 await this.pushObject(`db://definitions/${this.projectId}/snapshotLists`, {
-                    lastSnapshotKey: this.latestQueueKey,
+                    lastSnapshotKey: lastSnapshotKey || '',
                     snapshot: JSON.stringify(this.value),
                     snapshotImg: null,
                     timeStamp: Date.now()
