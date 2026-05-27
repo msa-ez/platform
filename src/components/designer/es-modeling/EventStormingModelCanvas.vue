@@ -3298,6 +3298,11 @@
                                             await EsValueLangGraphStudioProxy.removeJob(this.value.langgraphStudioInfos.esGenerator.jobId)
                                     },
                                     async (waitingJobCount) => { // onWaiting
+                                        // backend 가 job 시작 시 waitingJobCount=1 을 set 한 뒤 갱신하지 않는데,
+                                        // gateway 가 jobs row 의 어떤 sub-field 든 변경되면 같은 watch path 를
+                                        // 다시 발사한다. 그 결과 진행 중에도 onWaiting 이 매번 호출돼 progress
+                                        // 메시지를 "pending jobs N" 으로 덮어버리는 문제 가드.
+                                        if (this.generatorProgressDto && this.generatorProgressDto.globalProgress > 0) return;
                                         this.generatorProgressDto = {
                                             generateDone: false,
                                             displayMessage: `The task will begin after completing the ${waitingJobCount} pending jobs...`,
