@@ -3169,7 +3169,10 @@
             }
 
             const recorrect_boundedContexts = () => {
-                const boundedContexts = Object.values(this.value.elements).filter(element => element._type === "org.uengine.modeling.model.BoundedContext")
+                // me.value.elements 의 일부 값이 삭제 마커(null)로 남아있는 케이스 가드 —
+                // 큐 재생 도중 또는 협업 편집에서 nullify 된 element 가 onComplete 시점에
+                // 섞여 있으면 element._type 접근에서 'Cannot read properties of null' 발생.
+                const boundedContexts = Object.values(this.value.elements).filter(element => element && element._type === "org.uengine.modeling.model.BoundedContext")
 
                 for(const boundedContext of boundedContexts){
                     this.moveElementAction(boundedContext, {
@@ -3270,6 +3273,11 @@
                                         update_value_particaly(esValue)
                                     },
                                     async (esValue, logs, totalPercentage, isFailed) => { // onComplete
+                                        // gateway 의 sub-path watch 가 jobs row 변경마다 재발사되면서
+                                        // onComplete 도 중복 호출되어 recorrect_boundedContexts / PBC 생성 /
+                                        // _sanpshotModelForcely 가 다회 발사 → 큐 push 폭주로 브라우저 freeze.
+                                        // 첫 진입에 generateDone=true 로 표시해 두 번째 발사부터 skip.
+                                        if (this.generatorProgressDto && this.generatorProgressDto.generateDone) return;
                                         this.generatorProgressDto.generateDone = true
 
                                         update_value_particaly(esValue)
