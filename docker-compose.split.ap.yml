@@ -1,0 +1,111 @@
+# =====================================================================
+# MSAez 설치형 docker-compose (v1.0.30 — AP 서버용, 분리 VM)
+#
+# AP 서버에서만 띄우는 파일. DB 서버는 docker-compose.split.db.yml 사용.
+#
+# - backend ×2 의 POSTGRES_HOST 는 DB 서버 IP 로 (compose 내부 DNS X)
+# - VUE_APP_DB_HOST 는 DB 서버 IP (브라우저 → DB서버:5757 게이트웨이)
+# - postgres / data-gateway 서비스 없음 (DB 서버에 분리됨)
+# =====================================================================
+
+networks:
+  msaez:
+    external: false
+
+services:
+  # ── msaez — 프론트엔드 ─────────────────────────────────────────────
+  msaez:
+    image: ghcr.io/msa-ez/platform:v1.0.30
+    networks:
+      - msaez
+    ports:
+      - 8080:8080
+    environment:
+      VUE_APP_DB_HOST: <DB_SERVER_IP>            # 브라우저가 게이트웨이에 접근하는 IP
+      VUE_APP_DB_PORT: 5757
+      VUE_APP_DB_NAME: mydb
+      VUE_APP_MODE: onprem
+      VUE_APP_DB_HTTPS: "false"
+      VUE_APP_GIT: gitea
+      VUE_APP_GIT_URL: http://<AP_SERVER_IP>:3000
+      VUE_APP_GITEA_TOKEN: "<GITEA_PERSONAL_ACCESS_TOKEN>"
+      VUE_APP_BACKEND_URL: http://<AP_SERVER_IP>:2025
+    restart: unless-stopped
+
+  # ── backend-generators (Project Generator) ────────────────────────
+  backend-generators:
+    image: ghcr.io/msa-ez/msaez-automate-project-generator:v1.0.30
+    container_name: backend-generators
+    networks:
+      - msaez
+    ports:
+      - "2025:2025"
+    environment:
+      OPENAI_API_KEY: your-openai-api-key-here
+      # OPENAI_BASE_URL: http://aigpt.posco.net/gpgpta01-gpt/v1
+      OPENAI_EMBEDDING_API_KEY: your-openai-api-key-here
+      DEFAULT_LLM_MODEL: gpt-4o
+      STORAGE_TYPE: postgres
+      POSTGRES_HOST: <DB_SERVER_IP>              # ← 분리 환경 — DB 서버 IP
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: msaez
+      POSTGRES_USER: msaez
+      POSTGRES_PASSWORD: <DB_PASSWORD>
+      FLASK_HOST: 0.0.0.0
+      FLASK_PORT: 2025
+      ENVIRONMENT: production
+      IS_LOCAL_RUN: "true"
+      NAMESPACE: eventstorming_generator
+      POD_ID: docker-pod
+    restart: unless-stopped
+
+  # ── backend-es-generators (Event Storming Generator) ──────────────
+  backend-es-generators:
+    image: ghcr.io/msa-ez/msaez-automate-eventstorming-generator:v1.0.30
+    container_name: backend-es-generators
+    networks:
+      - msaez
+    ports:
+      - "5000:5000"
+    environment:
+      GOOGLE_API_KEY: your-google-api-key-here
+      OPENAI_API_KEY: your-open-api-key-here
+      # OPENAI_BASE_URL: http://aigpt.posco.net/gpgpta01-gpt/v1
+      AI_MODEL: openai:gpt-4.1-2025-04-14
+      AI_MODEL_MAX_INPUT_LIMIT: 523788
+      AI_MODEL_MAX_BATCH_SIZE: 15
+      AI_MODEL_LIGHT: openai:gpt-4.1-mini-2025-04-14
+      AI_MODEL_LIGHT_MAX_INPUT_LIMIT: 523788
+      AI_MODEL_LIGHT_MAX_BATCH_SIZE: 30
+      DB_TYPE: postgres
+      POSTGRES_HOST: <DB_SERVER_IP>              # ← 분리 환경 — DB 서버 IP
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: msaez
+      POSTGRES_USER: msaez
+      POSTGRES_PASSWORD: <DB_PASSWORD>
+      A2A_HOST: 0.0.0.0
+      A2A_PORT: 5000
+      A2A_EXTERNAL_URL: http://<AP_SERVER_IP>:5000
+      NAMESPACE: eventstorming_generator
+      POD_ID: docker-pod
+      IS_LOCAL_RUN: "true"
+      USE_GENERATOR_CACHE: "true"
+    restart: unless-stopped
+
+  # ── Gitea — Git 서버 + OAuth provider ──────────────────────────────
+  gitea:
+    image: gitea/gitea:1.22.3
+    container_name: gitea
+    networks:
+      - msaez
+    environment:
+      - USER_UID=1000
+      - USER_GID=1000
+    restart: always
+    volumes:
+      - ./gitea:/data
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - "3000:3000"
+      - "222:22"

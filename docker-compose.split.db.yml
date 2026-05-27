@@ -1,0 +1,67 @@
+# =====================================================================
+# MSAez 설치형 docker-compose (v1.0.30 — DB 서버용, 분리 VM)
+#
+# DB 서버에서만 띄우는 파일. AP 서버는 docker-compose.split.ap.yml 사용.
+#
+# - postgres: AP 서버에서 IP 로 접근해야 하므로 5432 를 외부 인터페이스에 바인딩
+#   (사내 AP→DB 통신용. 인터넷 노출은 회사 외부 방화벽이 차단)
+# - msaez-data-gateway: 브라우저가 접근하는 5757 외부 노출
+# =====================================================================
+
+networks:
+  msaez:
+    external: false
+
+volumes:
+  msaez_pgdata:
+
+services:
+  # ── PostgreSQL — 데이터 저장소 ─────────────────────────────────────
+  postgres:
+    image: postgres:16
+    container_name: msaez-postgres
+    networks:
+      - msaez
+    environment:
+      POSTGRES_USER: msaez
+      POSTGRES_PASSWORD: <DB_PASSWORD>
+      POSTGRES_DB: msaez
+    volumes:
+      - msaez_pgdata:/var/lib/postgresql/data
+      - ./data-gateway/migrations:/docker-entrypoint-initdb.d:ro
+    ports:
+      # 분리 VM — AP 서버가 IP 로 접근해야 하므로 외부 인터페이스에 바인딩.
+      # 인터넷 노출은 회사 외부 방화벽(화이트리스트)이 자동 차단.
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U msaez -d msaez"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
+  # ── msaez-data-gateway — 브라우저 진입점 (5757) ───────────────────
+  msaez-data-gateway:
+    image: ghcr.io/msa-ez/msaez-data-gateway:v1.0.30
+    container_name: msaez-data-gateway
+    networks:
+      - msaez
+    ports:
+      - "5757:5757"
+    depends_on:
+      - postgres
+    environment:
+      GATEWAY_PORT: 5757
+      DB_NAME: mydb
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: msaez
+      POSTGRES_USER: msaez
+      POSTGRES_PASSWORD: <DB_PASSWORD>
+      JWT_SECRET: <JWT_SECRET>
+      PROVIDER: gitea
+      CLIENT_ID: <GITEA_OAUTH_CLIENT_ID>
+      CLIENT_SECRET: <GITEA_OAUTH_CLIENT_SECRET>
+      GIT: <AP_SERVER_IP>:3000              # gitea 가 AP 서버에 있으므로 그쪽 IP
+      PROTOCOL: http
+    restart: unless-stopped

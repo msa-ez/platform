@@ -1,13 +1,15 @@
 # =====================================================================
-# MSAez 설치형 docker-compose (v1.0.30 — PostgreSQL 전환판)
+# MSAez 설치형 docker-compose (v1.0.30 — PostgreSQL 전환판, 단일 VM)
 #
 # v1.0.29 대비 변경:
-#   - acebase 제거 → postgres 추가 (data-gateway 는 호스트에서 node 로 실행)
+#   - acebase 제거 → postgres + msaez-data-gateway 컨테이너 추가
 #   - 백엔드의 ACEBASE_* → POSTGRES_*, STORAGE_TYPE/DB_TYPE → postgres
-#   - 백엔드는 compose 내부 네트워크로 postgres 에 접근 (POSTGRES_HOST: postgres)
+#   - 백엔드/게이트웨이는 compose 내부 네트워크로 postgres 접근
+#     (POSTGRES_HOST: postgres)
 #
-# data-gateway 는 이 compose 에 없다 — AceBase 와 동일하게 호스트에서
-# 환경변수를 export 한 뒤 `node src/server.js` 로 직접 실행한다 (README.md §4).
+# 분리 VM(DB/AP 호스트 분리) 환경은 별도 파일 사용:
+#   - docker-compose.split.db.yml  (DB 서버용 — postgres + data-gateway)
+#   - docker-compose.split.ap.yml  (AP 서버용 — msaez + backend×2 + gitea)
 #
 # 설정 방법은 README.md 참조. <...> 부분을 환경에 맞게 채울 것.
 # =====================================================================
@@ -35,8 +37,8 @@ services:
       # 최초 기동 시 스키마(001_init, 002_notify) 자동 적용
       - ./data-gateway/migrations:/docker-entrypoint-initdb.d:ro
     ports:
-      # 호스트의 data-gateway(node) 가 접근하도록 127.0.0.1 에만 바인딩.
-      # 외부에는 노출되지 않으므로 방화벽 변경 불필요 (계획서 §3.2).
+      # 백엔드/게이트웨이는 docker network 로 접근하므로 5432 호스트 노출은 불필요.
+      # loopback 바인딩으로 두면 외부에서 안 보임 (방화벽 변경 불필요 — 계획서 §3.2).
       - "127.0.0.1:5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U msaez -d msaez"]
@@ -45,10 +47,37 @@ services:
       retries: 12
     restart: unless-stopped
 
-  # ── data-gateway 는 이 compose 에 없다 ────────────────────────────
-  # AceBase 와 동일하게 호스트에서 node 로 직접 실행한다 (README.md §4):
-  #   cd data-gateway && npm install && export ... && node src/server.js
-  # (포트 5757, PostgreSQL/Gitea OAuth 환경변수는 export)
+  # ── msaez-data-gateway — AceBase 자리(5757) 대체 ──────────────────
+  # OAuth + Data API + 실시간 watch 를 담당하는 stateless 프록시.
+  # 상태(데이터) 는 모두 postgres 에 저장되므로 컨테이너 재기동/삭제는 안전.
+  msaez-data-gateway:
+    image: ghcr.io/msa-ez/msaez-data-gateway:v1.0.30
+    container_name: msaez-data-gateway
+    networks:
+      - msaez
+    ports:
+      - "5757:5757"
+    depends_on:
+      - postgres
+    environment:
+      GATEWAY_PORT: 5757
+      DB_NAME: mydb
+      # PostgreSQL — postgres 컨테이너 서비스명으로 접근
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: msaez
+      POSTGRES_USER: msaez
+      POSTGRES_PASSWORD: <DB_PASSWORD>          # postgres 와 동일한 값
+      # JWT 서명 시크릿 — openssl rand -hex 32 로 생성. 한 번 정하면 절대 바꾸지 말 것
+      # (바꾸면 로그인한 사용자 전원이 로그아웃됨)
+      JWT_SECRET: <JWT_SECRET>
+      # Gitea OAuth — v1.0.29 의 값 그대로 재사용
+      PROVIDER: gitea
+      CLIENT_ID: <GITEA_OAUTH_CLIENT_ID>
+      CLIENT_SECRET: <GITEA_OAUTH_CLIENT_SECRET>
+      GIT: <VM_IP>:3000                          # 브라우저가 접근하는 Gitea 주소
+      PROTOCOL: http
+    restart: unless-stopped
 
   # ── msaez — 프론트엔드 ─────────────────────────────────────────────
   msaez:
