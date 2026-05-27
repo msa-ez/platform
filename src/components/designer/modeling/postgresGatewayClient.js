@@ -130,12 +130,35 @@ export class PostgresGatewayClient {
   }
 
   async authSignin(token) {
-    const r = await fetch(`${this.baseUrl}/auth/${this.dbName}/signin`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ access_token: token }),
-    });
-    if (!r.ok) return null;
-    return (await r.json()).user;
+    // _getUserInfo() 가 reactive watcher / 컴포넌트 mount 등 다양한 경로로 자주
+    // 호출되는데, 그때마다 매번 새 fetch 를 보내면 ES generator 가 도는 동안
+    // 메인 스레드 점유 + connection pool 점유로 화면이 freeze 된다.
+    // 같은 토큰에 대해 5분간 응답을 캐시하고, 동시 in-flight 요청은 같은 promise 로 dedup.
+    if (this._signinCache && this._signinCache.token === token
+        && Date.now() - this._signinCache.at < 5 * 60 * 1000) {
+      return this._signinCache.user;
+    }
+    if (this._signinInflight && this._signinInflight.token === token) {
+      return this._signinInflight.promise;
+    }
+    const promise = (async () => {
+      const r = await fetch(`${this.baseUrl}/auth/${this.dbName}/signin`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ access_token: token }),
+      });
+      if (!r.ok) return null;
+      return (await r.json()).user;
+    })();
+    this._signinInflight = { token, promise };
+    try {
+      const user = await promise;
+      this._signinCache = { token, user, at: Date.now() };
+      return user;
+    } finally {
+      if (this._signinInflight && this._signinInflight.token === token) {
+        this._signinInflight = null;
+      }
+    }
   }
 
   async authSignup(userInfo) {
