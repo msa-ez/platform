@@ -4803,16 +4803,30 @@
                         this.value.langgraphStudioInfos, "esGenerator", {jobId: jobId, isCompleted:false, traceInfo: traceInfo}
                     )
 
-                    if(!this.value.siteMap && localStorage.getItem("associatedProjectId")){
-                        let draft = await me.list(`db://definitions/${localStorage.getItem("associatedProjectId")}/draft`)
+                    // ESDialoger 가 새 ES URL 을 직접 열 때 (window.open('/storming/{newId}'))
+                    // 프로젝트와의 연결은 localStorage.associatedProjectId 힌트로만 전달된다.
+                    // 이 캔버스에서 me.information.associatedProject 를 채워둬야 이후 saveComposition
+                    // 의 synchronizeAssociatedProject 가 프로젝트의 eventStorming.modelList 를
+                    // 갱신할 수 있다. 비어있으면 ES 가 프로젝트 목록에 안 보임.
+                    const _associatedFromLs = localStorage.getItem("associatedProjectId")
+                    if (_associatedFromLs) {
+                        if (!this.information) this.information = {}
+                        if (!this.information.associatedProject) {
+                            this.$set(this.information, 'associatedProject', _associatedFromLs)
+                        }
+                    }
+
+                    if(!this.value.siteMap && _associatedFromLs){
+                        let draft = await me.list(`db://definitions/${_associatedFromLs}/draft`)
                         if(draft) {
                             let siteMapMessage = draft.find(draft => draft.type === "siteMapViewer")
                             if(siteMapMessage && siteMapMessage.siteMap) {
                                 this.$set(this.value, "siteMap", siteMapMessage.siteMap)
                             }
                         }
-                        
+                    }
 
+                    if (_associatedFromLs) {
                         localStorage.removeItem("associatedProjectId")
                     }
 

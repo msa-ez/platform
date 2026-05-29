@@ -3042,8 +3042,24 @@ import { value } from 'jsonpath';
                         })
                     }
 
-                    // Associated Project ID 저장
-                    localStorage.setItem("associatedProjectId", this.projectInfo.projectId)
+                    // Associated Project ID 저장 — ES 캔버스가 이 값으로 information.associatedProject 를
+                    // 채워 saveComposition 의 synchronizeAssociatedProject 가 프로젝트의
+                    // eventStorming.modelList 를 갱신할 수 있게 한다.
+                    // projectInfo.projectId 가 비어있거나 raw UUID 인 경우 (새 프로젝트 미저장 상태 등)
+                    // providerUid + modelIds.projectId 로 full prefixed id 를 재구성해 fallback.
+                    const _providerUidForAssocPid = (this.userInfo && this.userInfo.providerUid)
+                        || localStorage.getItem('providerUid')
+                    const _associatedProjectIdForLs =
+                        (this.projectInfo && this.projectInfo.projectId
+                            && this.projectInfo.projectId.includes('_project_')
+                            ? this.projectInfo.projectId
+                            : null)
+                        || (_providerUidForAssocPid && this.modelIds && this.modelIds.projectId
+                            ? `${_providerUidForAssocPid}_project_${this.modelIds.projectId}`
+                            : null)
+                    if (_associatedProjectIdForLs) {
+                        localStorage.setItem("associatedProjectId", _associatedProjectIdForLs)
+                    }
                     
                     this.state = {
                         ...this.state,
