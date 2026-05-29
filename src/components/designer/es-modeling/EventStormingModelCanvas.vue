@@ -3327,6 +3327,14 @@
                                         if (this.generatorProgressDto && this.generatorProgressDto.generateDone) return;
                                         this.generatorProgressDto.generateDone = true
 
+                                        // generateDone=true 로 isGenerating 컴퓨티드가 false 가 되어
+                                        // 진행 패널/disabled 가 풀려야 하는데, 아래의 동기 작업들이
+                                        // (update_value_particaly 900개 / recorrect_boundedContexts /
+                                        // PBC / Frontend 생성) 첫 await 까지 main thread 를 점유하면
+                                        // Vue 가 재렌더하지 못해 UI 가 "생성 중" 으로 남아있게 된다.
+                                        // nextTick 으로 한 번 양보해 UI 갱신을 먼저 보장.
+                                        await this.$nextTick()
+
                                         _flushUpdateValue(esValue)
                                         recorrect_boundedContexts()
 
