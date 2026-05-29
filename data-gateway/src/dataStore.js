@@ -19,23 +19,45 @@ function nestedGet(root, subpath) {
   return cur;
 }
 
+// container 인지 — 배열도 traversal 가능한 container 로 인정.
+// isPlainObject 만 쓰면 array 가 traversal 경로에 있을 때 {} 로 덮어버려
+// modelList 같은 배열이 파괴된다 (예: information/eventStorming/modelList/0 쓰기).
+function isContainer(v) {
+  return v != null && typeof v === 'object';
+}
+
 function nestedSet(root, subpath, value) {
   let cur = root;
   for (let i = 0; i < subpath.length - 1; i++) {
     const k = subpath[i];
-    if (!isPlainObject(cur[k])) cur[k] = {};
+    if (!isContainer(cur[k])) cur[k] = {};
     cur = cur[k];
   }
   cur[subpath[subpath.length - 1]] = value;
 }
 
 function nestedMerge(root, subpath, value) {
+  // value 가 plain object 면 leaf 위치에서 키 단위 merge.
+  // value 가 scalar (string/number/bool/null) 나 array 면 leaf 자체를 replace.
+  // 이전엔 scalar 면 silently 무시해서 base64 썸네일 / versionValue 등이 사라졌다
+  // (DB 에 image:{} 만 남는 형태). Firebase update() 시멘틱은 leaf scalar 도 set.
+  if (!subpath.length) {
+    if (isPlainObject(value)) Object.assign(root, value);
+    return;
+  }
   let cur = root;
-  for (const k of subpath) {
-    if (!isPlainObject(cur[k])) cur[k] = {};
+  for (let i = 0; i < subpath.length - 1; i++) {
+    const k = subpath[i];
+    if (!isContainer(cur[k])) cur[k] = {};
     cur = cur[k];
   }
-  if (isPlainObject(value)) Object.assign(cur, value);
+  const lastKey = subpath[subpath.length - 1];
+  if (isPlainObject(value)) {
+    if (!isPlainObject(cur[lastKey])) cur[lastKey] = {};
+    Object.assign(cur[lastKey], value);
+  } else {
+    cur[lastKey] = value;
+  }
 }
 
 // ── PK WHERE 절 빌더 ────────────────────────────────────────────────

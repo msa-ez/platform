@@ -1111,7 +1111,10 @@
                         path = 'storming'
                         if(!me.projectInfo.eventStorming ) me.projectInfo.eventStorming = {}
                         if(!me.projectInfo.eventStorming.modelList) me.projectInfo.eventStorming.modelList = []
-                        // me.information.eventStorming.modelList.push(settingProjectId);
+                        // ProjectModel.vue:532 와 동일한 이유로 push 를 되살린다.
+                        // 주석 상태로 두면 backupProject 가 eventStorming 전체를 setObject 할 때
+                        // 신규 ES id 가 modelList 에 없어 프로젝트↔ES 연결이 끊긴 채 표시된다.
+                        me.projectInfo.eventStorming.modelList.push(settingProjectId);
                     } else if(me.storageCondition.type == 'bm') {
                         path = 'business-model-canvas'
                         if(!me.projectInfo.businessModel ) me.projectInfo.businessModel = {}
