@@ -489,6 +489,18 @@
                     var settingProjectId = me.storageCondition.projectId.replaceAll(' ','-').trim();
                     let initValue = {'elements': {}, 'relations': {}}
 
+                    // me.projectId 는 URL 파라미터 그대로 (raw UUID, prefix 없음).
+                    // me.information.projectId / me.storageCondition.associatedProject 가 모두
+                    // race condition 등으로 비어있는 경우를 대비해 providerUid + project 타입으로
+                    // 직접 재구성해 last-resort fallback 으로 사용.
+                    let _providerUidForAssoc = (me.userInfo && me.userInfo.providerUid)
+                        || localStorage.getItem('providerUid')
+                    let _fullProjectIdForAssoc = (me.information && me.information.projectId)
+                        || me.storageCondition.associatedProject
+                        || (_providerUidForAssoc && me.projectId
+                            ? `${_providerUidForAssoc}_project_${me.projectId}`
+                            : null)
+
                     let valueUrl = await me.putString(`storage://definitions/${settingProjectId}/versionLists/${projectVersion}/versionValue`, JSON.stringify(initValue));
                     await me.pushObject(`db://definitions/${settingProjectId}/snapshotLists`, {
                         lastSnapshotKey: '',
@@ -520,14 +532,8 @@
                         lastModifiedEmail: null,
                         projectName: me.projectName,
                         type: me.storageCondition.type,
-                        // me.projectId 는 URL 파라미터 그대로(prefix 없음). 그대로 쓰면 ES 캔버스가
-                        // associatedProject = <UUID> 로 보고 썸네일/synchronizeAssociatedProject 모두
-                        // {providerUid}_project_{uuid} 가 아닌 raw UUID 위치에 쓰게 되어 별도
-                        // definitions 행이 생기고 프로젝트는 갱신 안 됨.
-                        // me.information.projectId 는 saveProject 에서 full prefixed id 로 채워짐 —
-                        // fallback 으로 storageCondition.associatedProject (getCondition 의 정답).
-                        associatedProject: (me.information && me.information.projectId)
-                            || me.storageCondition.associatedProject
+                        // 위에서 계산한 _fullProjectIdForAssoc 사용. 항상 full prefixed id.
+                        associatedProject: _fullProjectIdForAssoc
                     })
 
 

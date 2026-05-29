@@ -1091,6 +1091,15 @@
                         valueUrl: valueUrl
                     })
 
+                    // me.projectId 는 URL 파라미터 그대로 (raw UUID, prefix 없음).
+                    // projectInfo.projectId 가 race 등으로 비어있는 경우 fallback 까지 보장.
+                    let _providerUidForAssoc = (me.userInfo && me.userInfo.providerUid)
+                        || localStorage.getItem('providerUid')
+                    let _fullProjectIdForAssoc = (me.projectInfo && me.projectInfo.projectId)
+                        || (_providerUidForAssoc && me.projectId
+                            ? `${_providerUidForAssoc}_project_${me.projectId}`
+                            : null)
+
                     await me.putObject(`db://definitions/${settingProjectId}/information`,  {
                         author: me.userInfo.uid,
                         authorEmail: me.userInfo.email,
@@ -1102,11 +1111,10 @@
                         lastModifiedEmail: null,
                         projectName: me.projectName,
                         type: me.storageCondition.type,
-                        // ProjectModel.vue:523 참조. me.projectId 는 prefix 없는 raw UUID 라서
-                        // ES 캔버스의 associatedProject 가 raw UUID 가 되고, 썸네일/synchronizeAssociatedProject
-                        // 가 잘못된 경로(별도 definitions 행)에 쓰여 프로젝트 갱신이 안 됨.
-                        // projectInfo.projectId 는 full prefixed id.
-                        associatedProject: (me.projectInfo && me.projectInfo.projectId) || me.projectId
+                        // 위 _fullProjectIdForAssoc 사용 — 항상 full prefixed id.
+                        // raw UUID 가 들어가면 ES 캔버스의 썸네일/synchronizeAssociatedProject 가
+                        // 잘못된 경로(별도 definitions 행)에 쓰여 프로젝트 갱신이 안 됨.
+                        associatedProject: _fullProjectIdForAssoc
                     })
 
 
