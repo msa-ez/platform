@@ -22,7 +22,25 @@
     >
         <div :key="renderKey">
             <slot name="image">
+                <!-- 프로젝트는 자체 그림이 없으므로 프로젝트명 텍스트 썸네일을 보여준다.
+                     (이전 동작: ES 캔버스의 마지막 스크린샷이 프로젝트 이미지로도 덮어쓰여
+                      "마지막 편집한 ES" 가 프로젝트 카드로 보였음 — 정책 변경) -->
+                <div
+                    v-if="copyInformation.type === 'project'"
+                    @click="openProject()"
+                    style="cursor:pointer; max-width:800px; height:200px;
+                           display:flex; align-items:center; justify-content:center;
+                           background: linear-gradient(135deg, #607d8b 0%, #455a64 100%);
+                           color: white; font-size: 28px; font-weight: 500;
+                           text-align: center; padding: 16px; overflow: hidden;"
+                >
+                    <slot name="chips"></slot>
+                    <div style="word-break: break-word; max-width: 100%;">
+                        {{ (copyInformation && (copyInformation.projectName || copyInformation.prompt)) || 'untitled' }}
+                    </div>
+                </div>
                 <v-img
+                        v-else
                         @click.native="openProject()"
                         style="cursor:pointer;"
                         :src="copyInformation.img"

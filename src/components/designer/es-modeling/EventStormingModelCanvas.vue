@@ -3147,6 +3147,14 @@
                             .catch(e => console.warn('[ES] synchronizeAssociatedProject 실패:', e))
                     }
 
+                    // 생성 직후 사용자가 페이지를 떠나면 saveLocalScreenshot debounce 1초가 발화하기
+                    // 전에 컨텍스트가 사라져 썸네일이 저장되지 않는다 → 목록에서 빈 카드로 보임.
+                    // 캔버스가 풀 렌더된 시점이므로 즉시 1회 명시 호출해 정상 썸네일 보장.
+                    this.$nextTick(() => {
+                        try { this.saveLocalScreenshot && this.saveLocalScreenshot() }
+                        catch (e) { console.warn('[ES] post-generation saveLocalScreenshot 실패:', e) }
+                    })
+
                     // es model list update for Project Model
                     // localStorage.setItem('modelListUpdate', Date.now().toString())
 

@@ -934,9 +934,10 @@
                         if(!me.isServerModel) return;
                         let base64Img = await me.screenshot();
                         await me.putString(`storage://definitions/${me.projectId}/information/image`, base64Img);
-                        if(me.information.associatedProject){
-                            await me.putString(`storage://definitions/${me.information.associatedProject}/information/image`, base64Img);
-                        }
+                        // 프로젝트(associatedProject) 의 썸네일을 ES 스크린샷으로 덮어쓰지 않음.
+                        // 이전 동작: ES 가 작업될 때마다 프로젝트의 information.image 가 ES 스크린샷
+                        // 으로 갱신돼 프로젝트 카드가 "마지막으로 편집한 ES 그림" 으로 보였음.
+                        // 정책 변경: 프로젝트 카드는 프로젝트명 텍스트 썸네일을 사용 (EventStormingListCard 참조).
                         
                         me.modelCanvasChannel.postMessage({
                             event: "ScreenShot",
@@ -1849,7 +1850,7 @@
                         if(associatedProject){
                             // Sync connected associatedProject.
                             await me.synchronizeAssociatedProject(associatedProject, settingProjectId);
-                            await me.putString(`storage://definitions/${associatedProject}/information/image`, img);
+                            // 프로젝트 썸네일을 ES 스크린샷으로 덮어쓰지 않음 (정책 변경 — 프로젝트는 텍스트 썸네일).
                         }
 
                         /** 
