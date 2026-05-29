@@ -1102,7 +1102,11 @@
                         lastModifiedEmail: null,
                         projectName: me.projectName,
                         type: me.storageCondition.type,
-                        associatedProject: me.projectId
+                        // ProjectModel.vue:523 참조. me.projectId 는 prefix 없는 raw UUID 라서
+                        // ES 캔버스의 associatedProject 가 raw UUID 가 되고, 썸네일/synchronizeAssociatedProject
+                        // 가 잘못된 경로(별도 definitions 행)에 쓰여 프로젝트 갱신이 안 됨.
+                        // projectInfo.projectId 는 full prefixed id.
+                        associatedProject: (me.projectInfo && me.projectInfo.projectId) || me.projectId
                     })
 
 

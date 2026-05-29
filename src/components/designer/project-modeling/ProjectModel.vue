@@ -520,7 +520,14 @@
                         lastModifiedEmail: null,
                         projectName: me.projectName,
                         type: me.storageCondition.type,
-                        associatedProject: me.projectId
+                        // me.projectId 는 URL 파라미터 그대로(prefix 없음). 그대로 쓰면 ES 캔버스가
+                        // associatedProject = <UUID> 로 보고 썸네일/synchronizeAssociatedProject 모두
+                        // {providerUid}_project_{uuid} 가 아닌 raw UUID 위치에 쓰게 되어 별도
+                        // definitions 행이 생기고 프로젝트는 갱신 안 됨.
+                        // me.information.projectId 는 saveProject 에서 full prefixed id 로 채워짐 —
+                        // fallback 으로 storageCondition.associatedProject (getCondition 의 정답).
+                        associatedProject: (me.information && me.information.projectId)
+                            || me.storageCondition.associatedProject
                     })
 
 
