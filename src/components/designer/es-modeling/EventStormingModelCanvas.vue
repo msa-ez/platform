@@ -1010,7 +1010,7 @@
                                     <span v-else>{{ $t('modelingPanelTool.draggableOff') }}</span>
                                 </v-tooltip>
 
-                                <v-tooltip right v-if="!isReadOnlyModel">
+                                <v-tooltip right v-if="!isReadOnlyModel && !isGenerating">
                                     <template v-slot:activator="{ on, attrs }">
                                         <span
                                             class="gs-automatic-guidance-btn"
@@ -1042,6 +1042,7 @@
                                     v-for="(item, key) in elementTypes"
                                     :key="key"
                                     right
+                                    v-if="!isGenerating"
                                 >
                                     <template v-slot:activator="{ on }">
                                         <span
@@ -1071,6 +1072,7 @@
                                         v-for="(item, key) in elementTypes.slice(0,5)"
                                         :key="key"
                                         right
+                                        v-if="!isGenerating"
                                 >
                                     <template v-slot:activator="{ on }">
                                         <span
@@ -1116,7 +1118,7 @@
                                     >
                                 </v-tooltip>
 
-                                <v-tooltip right v-if="!isReadOnlyModel">
+                                <v-tooltip right v-if="!isReadOnlyModel && !isGenerating">
                                     <template v-slot:activator="{ on, attrs }">
                                         <span
                                                 class="gs-automatic-guidance-btn"
@@ -1163,6 +1165,7 @@
                                     )"
                                         :key="key"
                                         right
+                                        v-if="!isGenerating"
                                 >
                                     <template v-slot:activator="{ on }">
                                         <span
@@ -2827,7 +2830,9 @@
             //     return false
             // },
             disableBtn() {
-                if (this.isDisable || !this.initLoad) {
+                // ES 생성기 동작 중 사용자 수정이 들어와도 다음 onUpdate 에 덮여 사라지므로
+                // SAVE/DEPLOY/VIEW/VERSIONS/SHARE/CODE 등 상단 액션 버튼 전체를 disabled.
+                if (this.isDisable || !this.initLoad || this.isGenerating) {
                     return true;
                 }
                 return false;

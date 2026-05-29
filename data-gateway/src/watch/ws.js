@@ -67,7 +67,11 @@ function safeSend(ws, obj) {
 //  - child_added/child_changed 는 deliver 가 listData 로 자식 목록을 다시 읽고
 //    sub._seen 과 대조해 신규/변경분만 가려 보내므로, 합쳐도 누락 없음.
 //  - 클라이언트 측 reactive watcher 가 받는 알림 수가 줄어 echo loop 의 진폭이 작아짐.
-const COALESCE_MS = 150;
+// 150ms 에서 300ms 로 상향. 생성 중 server-side write 가 빠르면 browser 가
+// 짧은 간격으로 메시지를 받아 main thread 가 busy 해지고 UI 가 살짝 끊긴다.
+// 300ms 면 사용자 체감 lag 은 그대로(시각 인지 200~300ms)지만 broadcast 빈도가
+// 절반으로 줄어 main thread 여유가 확보된다.
+const COALESCE_MS = 300;
 function scheduleDeliver(ws, sub, P) {
   if (!sub._pendingPaths) sub._pendingPaths = new Set();
   sub._pendingPaths.add(P);
