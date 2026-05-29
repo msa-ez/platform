@@ -37,6 +37,10 @@ export class PostgresGatewayClient {
     this._wq = [];
     this._wqActive = 0;
     this._WQ_MAX = 6;
+    // 쓰기 큐가 비정상적으로 부풀어 브라우저 메모리를 압박하는 경우를 운영자가
+    // 빨리 인지하도록 임계치 도달 시 1회 경고 (Fix 1 이 깨질 때의 진단 단서).
+    this._wqWarnAt = 100;
+    this._wqWarned = false;
 
     this._connectWs();
   }
@@ -58,6 +62,12 @@ export class PostgresGatewayClient {
   _throttledWrite(doFetch) {
     return new Promise((resolve, reject) => {
       this._wq.push({ doFetch, resolve, reject });
+      if (!this._wqWarned && this._wq.length >= this._wqWarnAt) {
+        this._wqWarned = true;
+        console.warn(`[pgGateway] 쓰기 큐가 ${this._wq.length} 건을 넘었습니다 — `
+          + `클라이언트가 한꺼번에 너무 많은 쓰기를 발사하고 있습니다. `
+          + `update_value_particaly 의 echo loop 차단이 유지되는지 확인하세요.`);
+      }
       this._drainWq();
     });
   }

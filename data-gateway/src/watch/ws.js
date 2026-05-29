@@ -52,6 +52,35 @@ function safeSend(ws, obj) {
   }
 }
 
+// 같은 구독에 대해 짧은 시간에 여러 변경이 쌓일 때, 마지막 변경 시점부터
+// COALESCE_MS 만큼 기다렸다가 한 번만 deliver 한다. 윈도우 안에서 새 변경이
+// 오면 타이머를 재설정 — debounce trailing-edge 패턴.
+// 효과:
+//  - jobs row 에 LangGraph 가 1초에 N 회 자식 필드를 갱신할 때, 클라이언트는
+//    한 번의 deliver 만 받음 (value watcher 는 항상 최신 row 를 fetch 하므로
+//    중간값을 잃지 않음).
+//  - child_added/child_changed 는 deliver 가 listData 로 자식 목록을 다시 읽고
+//    sub._seen 과 대조해 신규/변경분만 가려 보내므로, 합쳐도 누락 없음.
+//  - 클라이언트 측 reactive watcher 가 받는 알림 수가 줄어 echo loop 의 진폭이 작아짐.
+const COALESCE_MS = 150;
+function scheduleDeliver(ws, sub, P) {
+  if (!sub._pendingPaths) sub._pendingPaths = new Set();
+  sub._pendingPaths.add(P);
+  if (sub._coalesceTimer) clearTimeout(sub._coalesceTimer);
+  sub._coalesceTimer = setTimeout(async () => {
+    sub._coalesceTimer = null;
+    const paths = Array.from(sub._pendingPaths);
+    sub._pendingPaths.clear();
+    // value watcher 는 path 가 무엇이든 sub.path 의 최신 상태 하나만 보내면 충분.
+    // child_added/child_changed 는 각 변경 path 별로 자식 목록을 재조회해야 정확하다.
+    if (sub.watchType === 'value') {
+      await deliver(ws, sub, sub.path);
+    } else {
+      for (const p of paths) await deliver(ws, sub, p);
+    }
+  }, COALESCE_MS);
+}
+
 /**
  * child_added / child_changed 한 건을 sub._seen 과 대조해 신규/변경일 때만 전송.
  *  - child_added : key 가 처음 등장할 때만 1회 전송 (sub._seen 에는 key 만 기록)
@@ -141,15 +170,23 @@ export function attachWatchServer(httpServer) {
         ws.subs.set(msg.id, sub);
         await sendInitial(ws, sub);
       } else if (msg.action === 'unwatch' && msg.id) {
+        const old = ws.subs.get(msg.id);
+        if (old && old._coalesceTimer) clearTimeout(old._coalesceTimer);
         ws.subs.delete(msg.id);
       }
     });
 
-    ws.on('close', () => ws.subs.clear());
-    ws.on('error', () => ws.subs.clear());
+    const cleanup = () => {
+      for (const sub of ws.subs.values()) {
+        if (sub._coalesceTimer) clearTimeout(sub._coalesceTimer);
+      }
+      ws.subs.clear();
+    };
+    ws.on('close', cleanup);
+    ws.on('error', cleanup);
   });
 
-  // 변경 알림 → 구독 매칭 → 푸시
+  // 변경 알림 → 구독 매칭 → 푸시 (구독별 trailing-edge debounce)
   changeBus.on('change', (payload) => {
     const P = rowToPath(payload.table, payload.keys);
     if (!P) return;
@@ -157,7 +194,7 @@ export function attachWatchServer(httpServer) {
       if (ws.readyState !== ws.OPEN || !ws.subs) continue;
       for (const sub of ws.subs.values()) {
         if (matches(sub, P, payload.op)) {
-          deliver(ws, sub, P);
+          scheduleDeliver(ws, sub, P);
         }
       }
     }

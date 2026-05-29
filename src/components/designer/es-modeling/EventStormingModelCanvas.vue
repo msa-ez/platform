@@ -338,7 +338,7 @@
                                                                     color="primary"
                                                                     text
                                                                     @click="openCodeViewer()"
-                                                                    :disabled="!initLoad"
+                                                                    :disabled="!initLoad || isGenerating"
                                                                     v-on="on"
                                                                 >
                                                                     <v-icon>{{ icon.code }}</v-icon>
@@ -649,7 +649,7 @@
                                                                     class="gs-model-z-index-1 es-hide-share-btn"
                                                                     text
                                                                     style="margin-right: 5px;"
-                                                                    :disabled="!initLoad"
+                                                                    :disabled="!initLoad || isGenerating"
                                                                     v-on="on"
                                                                     @click="openInviteUsers()"
                                                                 >
@@ -696,7 +696,7 @@
                                                                         class="gs-model-z-index-1 es-hide-monitoring-btn"
                                                                         text
                                                                         style="margin-right: 5px;"
-                                                                        :disabled="!initLoad"
+                                                                        :disabled="!initLoad || isGenerating"
                                                                         @click="toggleMonitoringDialog()"
                                                                 >
                                                                     <v-icon>mdi-monitor</v-icon>
@@ -955,7 +955,7 @@
                                                                 class="gs-model-z-index-1 mobile-btn"
                                                                 text
                                                                 small
-                                                                :disabled="!initLoad"
+                                                                :disabled="!initLoad || isGenerating"
                                                                 @click="toggleMonitoringDialog()"
                                                         >
                                                             <v-icon>mdi-monitor</v-icon>
@@ -2728,6 +2728,13 @@
             };
         },
         computed: {
+            // ES 생성기가 동작 중이면 true. 생성 중 사용자 수정이 들어와도 다음 onUpdate 에
+            // 덮어쓰여 사라지므로, 캔버스 상단/팔레트 액션 버튼은 disabled 처리한다.
+            isGenerating() {
+                return !!(this.generatorProgressDto
+                    && this.generatorProgressDto.globalProgress > 0
+                    && !this.generatorProgressDto.generateDone)
+            },
             projectSendable(){
                 var me = this
                 if(!me.modelListOfassociatedProject().includes(me.projectId)) return false;
@@ -3190,7 +3197,14 @@
             }
 
             const update_value_particaly = (esValue) => {
-                this.changedByMe = true
+                // ES 생성기는 server-side 에서 jobs row 에 esValue 를 직접 쓰고, 모든 참여자는
+                // jobs row watch 로 동일한 onUpdate 를 받는다. 따라서 client 가 받은 변경을
+                // 다시 definitions/queue 로 push 할 필요가 없다 (server → 모든 client 가 이미 동기화됨).
+                //
+                // 이전에는 매 onUpdate 마다 changedByMe=true 로 두어 Vue watcher 가
+                // pushChangedValueQueue 를 발사 → 한 번의 ES 생성에 history/queue pushObject 가
+                // 수백건씩 발생 → 브라우저 메모리/freeze 의 주범이었다 (echo loop).
+                // 최종 상태는 onComplete 의 _sanpshotModelForcely 가 snapshotLists 로 1회 push 한다.
 
                 for(const element of Object.values(esValue.elements)){
                     if(!this.value.elements[element.id] || JSON.stringify(this.value.elements[element.id]) !== JSON.stringify(element)){
