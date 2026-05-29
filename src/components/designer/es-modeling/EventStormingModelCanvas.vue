@@ -3224,6 +3224,34 @@
                 }
             }
 
+            // onUpdate 마다 update_value_particaly 가 즉시 돌면 main thread 가 묶임:
+            //  - 900 elements × JSON.stringify ×2 / 매 호출
+            //  - 각 $set 마다 copyValue 컴퓨티드의 _.cloneDeep 전체 재실행
+            //  - 그 결과로 onChangedValue 의 jsondiffpatch.diff 가 큰 객체 deep traversal
+            // 결과: 매 ~300ms 마다 수백 ms 작업으로 살짝씩 끊김.
+            //
+            // 500ms trailing-edge debounce 로 묶어 main thread 부담을 1/2~2/3 감소.
+            // 사용자 인지 (300ms vs 500ms 갱신 간격) 차이 없음.
+            // onComplete 는 _flushUpdateValue 로 cancel + 즉시 1회 풀 적용해서 최종 상태 보장.
+            const _scheduleUpdateValue = (esValue) => {
+                this._pendingEsValue = esValue
+                if (this._updateValueTimer) return
+                this._updateValueTimer = setTimeout(() => {
+                    this._updateValueTimer = null
+                    const v = this._pendingEsValue
+                    this._pendingEsValue = null
+                    if (v) update_value_particaly(v)
+                }, 500)
+            }
+            const _flushUpdateValue = (esValue) => {
+                if (this._updateValueTimer) {
+                    clearTimeout(this._updateValueTimer)
+                    this._updateValueTimer = null
+                }
+                this._pendingEsValue = null
+                update_value_particaly(esValue)
+            }
+
             const checkReconnectToExistingRun = async () => {
                 setTimeout(async () => {
                     if(this.isModelDefinitionLoaded && this.initLoad) {
@@ -3289,7 +3317,7 @@
                                             }
                                         }
 
-                                        update_value_particaly(esValue)
+                                        _scheduleUpdateValue(esValue)
                                     },
                                     async (esValue, logs, totalPercentage, isFailed) => { // onComplete
                                         // gateway 의 sub-path watch 가 jobs row 변경마다 재발사되면서
@@ -3299,7 +3327,7 @@
                                         if (this.generatorProgressDto && this.generatorProgressDto.generateDone) return;
                                         this.generatorProgressDto.generateDone = true
 
-                                        update_value_particaly(esValue)
+                                        _flushUpdateValue(esValue)
                                         recorrect_boundedContexts()
 
                                         const filteredPBCs = JSON.parse(localStorage.getItem("filteredPBCs"))
