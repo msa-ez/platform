@@ -3403,10 +3403,13 @@
                                             console.warn('[ES] modelList 동기화 실패:', e)
                                         }
                                         try {
-                                            // 생성 직후 사용자가 페이지를 떠나도 썸네일이 저장돼 있도록 보장.
-                                            // saveLocalScreenshot 내부의 debounce 가 발화하기 전에 떠나면 누락됨.
+                                            // 생성 직후 사용자가 페이지를 떠나도 썸네일이 DB 에 저장돼 있도록 보장.
+                                            // saveLocalScreenshot 은 localstorage 만 쓰므로 X — publishScreenShot
+                                            // 이 isServerModel 분기를 통해 saveServerScreenshot 으로 DB 에 쓴다.
+                                            // (이전엔 잘못 saveLocalScreenshot 만 호출해 모델에 재진입해야
+                                            //  beforeDestroy 의 publishScreenShot 이 늦게 발화하던 문제)
                                             this.$nextTick(() => {
-                                                try { this.saveLocalScreenshot && this.saveLocalScreenshot() }
+                                                try { this.publishScreenShot && this.publishScreenShot() }
                                                 catch (e) { /* noop */ }
                                             })
                                         } catch (e) { /* noop */ }

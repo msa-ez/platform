@@ -703,11 +703,22 @@
             }
 
             me.watch(`db://definitions/${me.projectInfo.projectId}/information`, function (projectInfo) {
-                if (projectInfo && projectInfo.permissions) {
+                if (!projectInfo) return
+                if (projectInfo.permissions) {
                     me.invitationLists = projectInfo.permissions
                     me.participantLists = projectInfo.permissions
                     me.requestCount = Object.keys(projectInfo.permissions).filter(key => key != 'evenyone' && projectInfo.permissions[key].request).length
                 }
+                // 다른 탭에서 ES 생성이 완료돼 modelList 가 갱신될 때 즉시 반영되도록
+                // projectInfo.eventStorming/businessModel/contextMapping/userStoryMap 도 sync.
+                // 이전에는 watch 콜백이 permissions 만 갱신해서 새로 추가된 ES 가 새로고침 전까지 안 보였음.
+                ['eventStorming', 'businessModel', 'contextMapping', 'userStoryMap', 'customerJourneyMap'].forEach(function (k) {
+                    if (projectInfo[k] && me.projectInfo) {
+                        if (JSON.stringify(me.projectInfo[k]) !== JSON.stringify(projectInfo[k])) {
+                            me.$set(me.projectInfo, k, projectInfo[k])
+                        }
+                    }
+                })
             })
         },
         watch: {
