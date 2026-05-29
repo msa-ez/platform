@@ -3271,8 +3271,13 @@
             }
 
             const checkReconnectToExistingRun = async () => {
+                // 모델 정의 로드 대기 중에는 v-overlay (showOverlay = overlayText) 로
+                // "Loading..." 표시. isModelDefinitionLoaded && initLoad 가 되면 해제.
+                // (이전엔 폴링만 하고 overlayText 를 안 채워서 캔버스에 진행 표시가 없었음)
+                if (!this.overlayText) this.overlayText = 'Loading model...'
                 setTimeout(async () => {
                     if(this.isModelDefinitionLoaded && this.initLoad) {
+                        this.overlayText = null
                         console.log("[*] 모델 정의 로드 완료", this.value)
 
                         // A2A를 통한 Job 요청시에 생성되는 URL에 대한 별도 처리

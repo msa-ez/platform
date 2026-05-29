@@ -22,13 +22,10 @@ class AIGenerator {
             this
         )
 
-        console.log("[*] apiClient가 세팅됨", {
-            generator: this,
-            apiClient: this.apiClient,
-            apiClientParams: this.apiClientParams,
-            modelInfo: this.modelInfo,
-            requestModelName: this.modelInfo.requestModelName
-        })
+        // 이 로그는 한 모델 로드에 700+ 회 발생하는데, 매번 generator 인스턴스 전체와
+        // apiClient/modelInfo 참조까지 함께 console 에 잡혀 있어 GC 가 못 풀어내고
+        // 브라우저 메모리를 크게 잡아먹는 원인이 된다. 디버깅용 노이즈를 줄여 안정화.
+        // console.log("[*] apiClient가 세팅됨", {...})
 
         this.onApiClientChanged()
     }
