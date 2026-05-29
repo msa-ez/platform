@@ -1111,10 +1111,10 @@
                         path = 'storming'
                         if(!me.projectInfo.eventStorming ) me.projectInfo.eventStorming = {}
                         if(!me.projectInfo.eventStorming.modelList) me.projectInfo.eventStorming.modelList = []
-                        // ProjectModel.vue:532 와 동일한 이유로 push 를 되살린다.
-                        // 주석 상태로 두면 backupProject 가 eventStorming 전체를 setObject 할 때
-                        // 신규 ES id 가 modelList 에 없어 프로젝트↔ES 연결이 끊긴 채 표시된다.
-                        me.projectInfo.eventStorming.modelList.push(settingProjectId);
+                        // ES 만 push 가 없는 건 의도. ProjectModel.vue:532 참조 —
+                        // ES 생성 완료 후 EventStormingModelCanvas 가 synchronizeAssociatedProject
+                        // 로 추가해준다. v30 에서 이 경로가 깨졌던 진짜 원인은 gateway
+                        // nestedSet 이 배열을 {} 로 덮어버려 modelList 가 corrupt 됐던 것 (수정됨).
                     } else if(me.storageCondition.type == 'bm') {
                         path = 'business-model-canvas'
                         if(!me.projectInfo.businessModel ) me.projectInfo.businessModel = {}

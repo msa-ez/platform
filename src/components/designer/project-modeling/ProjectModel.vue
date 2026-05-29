@@ -529,12 +529,10 @@
                         path = 'storming'
                         if(!me.information.eventStorming ) me.information.eventStorming = {}
                         if(!me.information.eventStorming.modelList) me.information.eventStorming.modelList = []
-                        // 다른 타입(bm/cm/usm)과 동일하게 push 가 살아있어야 backupProject 가
-                        // 프로젝트의 eventStorming.modelList 에 신규 ES id 를 반영한다.
-                        // 12개월 전 commit c8303d7e 가 이 줄을 주석 처리해 v29 에서도 사용자가
-                        // 프로젝트→ES 생성 직후 연결이 끊긴 채 보이는 케이스가 있었고, v30 으로 넘어와서
-                        // 동일 증상이 재발해 다시 살린다.
-                        me.information.eventStorming.modelList.push(settingProjectId);
+                        // ES 만 다른 타입과 달리 push 가 없는 건 의도. 생성 완료 후
+                        // EventStormingModelCanvas 의 saveComposition('save') 가
+                        // synchronizeAssociatedProject 로 modelList 에 추가해준다.
+                        // 미리 push 하면 생성 실패/취소 시 dead reference 가 남는다.
                     } else if(me.storageCondition.type == 'bm') {
                         path = 'business-model-canvas'
                         if(!me.information.businessModel ) me.information.businessModel = {}
