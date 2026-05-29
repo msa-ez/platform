@@ -3375,6 +3375,37 @@
                                         this.value.langgraphStudioInfos.esGenerator.isCompleted = true
                                         this.value.langgraphStudioInfos.esGenerator.logs = logs
                                         await this._sanpshotModelForcely()
+
+                                        // server-side langgraph ES 생성 경로에서는 client-side 의
+                                        // CommandGWTGeneratorByFunctions.onGenerationDone 콜백이 안 돌아
+                                        // 그 안의 saveComposition + synchronizeAssociatedProject 호출이
+                                        // 실행되지 않는다. 결과적으로 프로젝트의 eventStorming.modelList 가
+                                        // 영영 갱신되지 않음 → 사용자가 프로젝트에서 ES 가 안 보임.
+                                        // 여기서 직접 read-modify-write 로 modelList 갱신을 보장.
+                                        try {
+                                            const assoc = this.information && this.information.associatedProject
+                                            const newEsId = this.projectId
+                                            if (assoc && newEsId) {
+                                                const esPath = `db://definitions/${assoc}/information/eventStorming`
+                                                const cur = (await this.getObject(esPath)) || {}
+                                                const list = Array.isArray(cur.modelList) ? cur.modelList.slice() : []
+                                                if (!list.includes(newEsId)) {
+                                                    list.push(newEsId)
+                                                    await this.setObject(esPath, Object.assign({}, cur, { modelList: list }))
+                                                }
+                                            }
+                                        } catch (e) {
+                                            console.warn('[ES] modelList 동기화 실패:', e)
+                                        }
+                                        try {
+                                            // 생성 직후 사용자가 페이지를 떠나도 썸네일이 저장돼 있도록 보장.
+                                            // saveLocalScreenshot 내부의 debounce 가 발화하기 전에 떠나면 누락됨.
+                                            this.$nextTick(() => {
+                                                try { this.saveLocalScreenshot && this.saveLocalScreenshot() }
+                                                catch (e) { /* noop */ }
+                                            })
+                                        } catch (e) { /* noop */ }
+
                                         if(!isFailed)
                                             await EsValueLangGraphStudioProxy.removeJob(this.value.langgraphStudioInfos.esGenerator.jobId)
                                     },
