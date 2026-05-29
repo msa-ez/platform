@@ -3395,7 +3395,8 @@
                                                 const cur = (await this.getObject(esPath)) || {}
                                                 const list = Array.isArray(cur.modelList) ? cur.modelList.slice() : []
                                                 if (!list.includes(newEsId)) {
-                                                    list.push(newEsId)
+                                                    // 최신을 앞에 — 사용자가 새 ES 를 더 빨리 발견하도록.
+                                                    list.unshift(newEsId)
                                                     await this.setObject(esPath, Object.assign({}, cur, { modelList: list }))
                                                 }
                                             }
