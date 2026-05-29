@@ -3134,8 +3134,18 @@
                     
                     byFunctionCallbacks.onGenerationDone()
 
-                    // AI 생성된 모델을 Project에 저장하기 위해 세팅
+                    // AI 생성된 모델을 Project에 저장하기 위해 세팅 (다이얼로그만 열림)
                     this.saveComposition('save')
+
+                    // saveComposition('save') 는 storage 다이얼로그만 열고 사용자 확인을 기다린다.
+                    // 사용자가 그 다이얼로그를 닫으면 backupModel/saveModel 안의
+                    // synchronizeAssociatedProject 가 호출되지 않아 프로젝트의 eventStorming.modelList
+                    // 에 이 ES id 가 안 들어간다. 다이얼로그 confirm 여부와 무관하게 modelList
+                    // 동기화는 무조건 수행.
+                    if (this.information && this.information.associatedProject && this.projectId) {
+                        this.synchronizeAssociatedProject(this.information.associatedProject, this.projectId)
+                            .catch(e => console.warn('[ES] synchronizeAssociatedProject 실패:', e))
+                    }
 
                     // es model list update for Project Model
                     // localStorage.setItem('modelListUpdate', Date.now().toString())
