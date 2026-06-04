@@ -156,6 +156,22 @@ export class PostgresGatewayClient {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ access_token: token }),
       });
+      // 401 = 토큰 만료/무효. 그대로 두면 페이지 reactive watcher 들이 같은 stale
+      // 토큰으로 계속 시도하고 console 에 401 이 반복 노출된다. localStorage 의
+      // accessToken 을 비우면 이후 _getUserInfo 가 token 없음 → null 로 빠르게
+      // 끝나고 앱은 로그아웃 상태로 인식 → 사용자가 다시 로그인하도록 유도.
+      if (r.status === 401) {
+        try {
+          if (typeof window !== 'undefined' && window.localStorage) {
+            const stored = window.localStorage.getItem('accessToken');
+            if (stored === token) {
+              window.localStorage.removeItem('accessToken');
+              console.warn('[pgGateway] accessToken expired (401) — cleared from localStorage. Please log in again.');
+            }
+          }
+        } catch (e) { /* noop */ }
+        return null;
+      }
       if (!r.ok) return null;
       return (await r.json()).user;
     })();
