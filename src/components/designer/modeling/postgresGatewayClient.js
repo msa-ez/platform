@@ -156,17 +156,29 @@ export class PostgresGatewayClient {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ access_token: token }),
       });
-      // 401 = 토큰 만료/무효. 그대로 두면 페이지 reactive watcher 들이 같은 stale
-      // 토큰으로 계속 시도하고 console 에 401 이 반복 노출된다. localStorage 의
-      // accessToken 을 비우면 이후 _getUserInfo 가 token 없음 → null 로 빠르게
-      // 끝나고 앱은 로그아웃 상태로 인식 → 사용자가 다시 로그인하도록 유도.
+      // 401 = 토큰 만료/무효. signOut shim 과 동일한 키 셋을 모두 제거해
+      // 앱이 완전히 로그아웃 상태로 인식하게 만들고, alert + reload 로 사용자에게
+      // 명확히 알림. dedupe (window._pgAuthExpiredAlerted) 로 alert 가 중복 안 뜨게.
       if (r.status === 401) {
         try {
           if (typeof window !== 'undefined' && window.localStorage) {
             const stored = window.localStorage.getItem('accessToken');
-            if (stored === token) {
-              window.localStorage.removeItem('accessToken');
-              console.warn('[pgGateway] accessToken expired (401) — cleared from localStorage. Please log in again.');
+            if (stored === token && !window._pgAuthExpiredAlerted) {
+              window._pgAuthExpiredAlerted = true;
+              // StorageBasePostgres._getRef('auth').signOut 와 동일한 키 셋.
+              ['accessToken', 'gitToken', 'email', 'name', 'uid',
+               'picture', 'providerUid'].forEach(function (k) {
+                window.localStorage.removeItem(k);
+              });
+              // signin 캐시도 비워 다음 호출이 stale null 을 안 받게.
+              this._signinCache = null;
+              console.warn('[pgGateway] accessToken expired (401) — auth cleared. Redirecting to login.');
+              // alert 후 페이지 reload → 로그인 화면으로 자연 유도.
+              // setTimeout 으로 띄워 현재 진행 중인 promise chain 이 정리될 시간 확보.
+              setTimeout(function () {
+                try { window.alert('세션이 만료되었습니다. 다시 로그인해주세요.'); } catch (e) { /* noop */ }
+                try { window.location.reload(); } catch (e) { /* noop */ }
+              }, 0);
             }
           }
         } catch (e) { /* noop */ }
