@@ -52,6 +52,58 @@ git checkout release/v1.0.30
 git pull
 ```
 
+### 1-A. 사내망에서 `git fetch/checkout/pull` 이 막힐 때 (대안)
+
+`git clone` 은 되지만 fetch/checkout 이 막히거나, 기존 디렉토리의 git 상태가
+꼬여 checkout 이 안 되는 경우. 임시 경로에 v1.0.30 을 fresh clone 한 후
+필요한 파일만 기존 운영 디렉토리로 복사한다 (기존 디렉토리 git 상태는 무시).
+
+```sh
+# 어딘가 빈 임시 경로
+cd /tmp
+git clone -b release/v1.0.30 https://github.com/msa-ez/platform.git platform-v1.0.30
+#   -b release/v1.0.30 으로 받아 checkout 단계 자체를 생략
+
+# 기존 운영 디렉토리에서 백업
+cd ~/platform
+cp docker-compose.yml docker-compose.yml.v1029.bak
+
+# v1.0.30 파일 복사 (서버 역할에 맞게 1개만)
+cp /tmp/platform-v1.0.30/docker-compose.yml .                          # 단일 VM
+# cp /tmp/platform-v1.0.30/docker-compose.split.db.yml .               # 분리 VM — DB 서버
+# cp /tmp/platform-v1.0.30/docker-compose.split.ap.yml .               # 분리 VM — AP 서버
+
+# migrations 폴더 (postgres init 자동 적용용 — compose 가 host 경로를 마운트한다)
+# 단일 VM 또는 분리 VM 의 DB 서버에서만 필요. AP 서버에는 필요 없음.
+mkdir -p data-gateway
+cp -r /tmp/platform-v1.0.30/data-gateway/migrations data-gateway/
+
+# README 도 같이 두면 운영 시 절차 확인에 편함
+cp /tmp/platform-v1.0.30/README.md .
+
+# 정리
+rm -rf /tmp/platform-v1.0.30
+```
+
+이 방식의 장점:
+- 기존 `platform` 디렉토리의 git working tree 를 건드리지 않음
+- 운영 중인 `acebase/` / `gitea/` 데이터 보존
+- 롤백도 `docker-compose.yml.v1029.bak` 복원 + v1.0.29 이미지로 다시 띄우면 끝
+
+### 1-B. 분리 VM 환경에서 양쪽 서버에 받아야 하는 파일
+
+이미지뿐 아니라 **각 서버에 v1.0.30 코드 파일** 도 필요하다 (양쪽 다 받아야 함).
+다만 서버 역할에 따라 받는 파일 셋이 다르다.
+
+| 서버 | 받아야 할 v1.0.30 파일 |
+| --- | --- |
+| **DB 서버** | `docker-compose.split.db.yml` + `data-gateway/migrations/{001_init,002_notify}.sql` |
+| **AP 서버** | `docker-compose.split.ap.yml` 만 (migrations 불필요 — DB 가 분리됨) |
+
+이미지는 양쪽 모두 자기가 띄우는 컨테이너 이미지만 있으면 됨 (compose 의 `image:`
+에 지정된 것). 관리자가 `docker save` / `docker load` 로 사전 배치할 경우 각
+서버에 해당 이미지만 올려두면 된다.
+
 ---
 
 ## 2. 기존 스택 중지
