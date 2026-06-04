@@ -162,6 +162,7 @@ class SummarizerLangGraphProxy {
     static _watchJobStatus(storage, jobId, jobState, onFailed, parseState) {
         // 실패 상태 감시
         const failedPath = `${this._getJobPath(jobId)}/state/outputs/isFailed`;
+        const errorPath = `${this._getJobPath(jobId)}/state/outputs/error`;
         this._trackWatch(jobState, failedPath);
         storage.watch(failedPath, async (isFailed) => {
             if (isFailed === null || isFailed === undefined) return;
@@ -175,6 +176,17 @@ class SummarizerLangGraphProxy {
                 await parseState();
             } catch (e) {
                 console.warn('[SummarizerLangGraphProxy] parseState threw during isFailed handling:', e);
+            }
+
+            // errorPath watch 가 failedPath 보다 늦게 발화하는 race 대비 — 실제 에러 메시지를 직접 fetch.
+            if (!jobState.error) {
+                for (let i = 0; i < 5; i++) {
+                    try {
+                        const err = await storage.getObject(errorPath);
+                        if (err) { jobState.error = err; break; }
+                    } catch (e) { /* noop */ }
+                    await new Promise(r => setTimeout(r, 200));
+                }
             }
 
             const errorMsg = jobState.error || "Unknown error occurred";
@@ -203,8 +215,7 @@ class SummarizerLangGraphProxy {
             }
         });
         
-        // 에러 메시지 감시
-        const errorPath = `${this._getJobPath(jobId)}/state/outputs/error`;
+        // 에러 메시지 감시 (errorPath 는 위에서 선언)
         this._trackWatch(jobState, errorPath);
         storage.watch(errorPath, async (error) => {
             if (error) {
