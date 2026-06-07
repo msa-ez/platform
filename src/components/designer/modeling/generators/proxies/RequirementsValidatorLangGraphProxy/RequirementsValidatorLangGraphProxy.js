@@ -81,13 +81,22 @@ class RequirementsValidatorLangGraphProxy {
         let callbackInvoked = false;
 
         const parseState = async () => {
+            console.log('[RVProxy DIAG] parseState entered', {
+                callbackInvoked,
+                isCompleted: jobState.isCompleted,
+                contentReceived: !!jobState._contentReceived,
+                progress: jobState.progress
+            });
             if (callbackInvoked) return;
             // Race fix: isCompleted 와 content 는 같은 row update 에 대해 별도 sub 로
             // fan-out 되는데, 게이트웨이 deliver 가 sub 등록 순서를 따르므로 isCompleted
             // (먼저 등록) 가 content(나중 등록) 보다 먼저 도착한다. content 도착 전에
             // onComplete 가 호출되면 빈 content 로 발사되고 "No events generated" 로 끝남.
             // 따라서 isCompleted=true 인데 content 미도착이면 호출 자체를 보류.
-            if (jobState.isCompleted && !jobState._contentReceived) return;
+            if (jobState.isCompleted && !jobState._contentReceived) {
+                console.log('[RVProxy DIAG] parseState early-return (waiting for content)');
+                return;
+            }
             if (jobState.isCompleted) callbackInvoked = true;
             await this._parseAndNotifyJobState(jobState, callbacks);
             // onComplete 가 실제로 발사된 직후에만 cleanup. 미발사 상태에서 cleanup 하면
@@ -180,7 +189,14 @@ class RequirementsValidatorLangGraphProxy {
     static _watchJobContent(storage, jobId, jobState, parseState) {
         const path = `${this._getJobPath(jobId)}/state/outputs/content`;
         this._trackWatch(jobState, path);
+        // 진단 로그 — race fix 검증용. 안정화 후 제거.
+        console.log('[RVProxy DIAG] content watch registered', path);
         storage.watch(path, async (content) => {
+            console.log('[RVProxy DIAG] content callback fired:', {
+                truthy: !!content,
+                type: typeof content,
+                keys: content && typeof content === 'object' ? Object.keys(content) : null
+            });
             if (content) {
                 jobState.content = this._restoreDataFromFirebase(content);
                 jobState._contentReceived = true;
