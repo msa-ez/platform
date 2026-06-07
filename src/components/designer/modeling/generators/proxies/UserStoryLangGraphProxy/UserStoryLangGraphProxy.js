@@ -147,10 +147,34 @@ class UserStoryLangGraphProxy {
      * 모든 워처 설정
      */
     static _setupJobWatchers(storage, jobId, jobState, callbacks) {
+        const hasUserStoryData = () => {
+            return !!jobState.textResponse
+                || (Array.isArray(jobState.userStories) && jobState.userStories.length > 0)
+                || (Array.isArray(jobState.actors) && jobState.actors.length > 0)
+                || (Array.isArray(jobState.businessRules) && jobState.businessRules.length > 0);
+        };
         const parseState = async () => {
+            console.log('[USProxy DIAG] parseState entered', {
+                isCompleted: jobState.isCompleted,
+                isFailed: jobState.isFailed,
+                hasData: hasUserStoryData(),
+                textResponseLen: jobState.textResponse ? jobState.textResponse.length : 0,
+                userStoriesLen: jobState.userStories ? jobState.userStories.length : 0
+            });
             await this._parseAndNotifyJobState(jobState, callbacks);
-            if (jobState.isCompleted || jobState.isFailed) {
+            if (jobState.isFailed) {
                 this._cleanupWatchers(storage, jobState);
+                return;
+            }
+            // Race fix: isCompleted 가 textResponse/userStories 보다 먼저 도착하면 onComplete
+            // 가 빈 데이터로 발사되고 consumer 가 미해결 상태로 대기. 그 직후 cleanup 하면
+            // 뒤따라 도착할 textResponse/userStories WS 메시지의 sub 가 사라져 영영 안 옴.
+            // 데이터가 실제로 도착한 뒤에만 cleanup.
+            if (jobState.isCompleted && hasUserStoryData()) {
+                console.log('[USProxy DIAG] cleanup (data present)');
+                this._cleanupWatchers(storage, jobState);
+            } else if (jobState.isCompleted) {
+                console.log('[USProxy DIAG] cleanup deferred (no data yet)');
             }
         };
         
@@ -296,6 +320,10 @@ class UserStoryLangGraphProxy {
         const textResponsePath = `${this._getJobPath(jobId)}/state/outputs/textResponse`;
         this._trackWatch(jobState, textResponsePath);
         storage.watch(textResponsePath, async (textResponse) => {
+            console.log('[USProxy DIAG] textResponse callback', {
+                truthy: !!textResponse,
+                len: textResponse ? String(textResponse).length : 0
+            });
             if (textResponse) {
                 jobState.textResponse = textResponse;
                 await parseState();
