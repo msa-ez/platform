@@ -105,9 +105,10 @@ class StandardTransformerLangGraphProxy {
             if (parseTimeout) clearTimeout(parseTimeout)
             parseTimeout = setTimeout(async () => {
                 if (callbackInvoked) return
-                if (jobState.isCompleted && jobState._transformedOptionsReceived) {
-                    callbackInvoked = true
-                }
+                // 본 데이터 미도착이면 onComplete 호출 자체 보류 — 다음 watch 가
+                // parseState 재호출하면 다시 평가됨.
+                if (jobState.isCompleted && !jobState._transformedOptionsReceived) return
+                if (jobState.isCompleted) callbackInvoked = true
                 await this._parseAndNotifyJobState(jobState, callbacks)
             }, 100) // 100ms 대기
         }

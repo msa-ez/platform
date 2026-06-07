@@ -124,8 +124,9 @@ class DDLFieldsLangGraphProxy {
             }
             // Race fix: isCompleted 와 aggregateFieldAssignments 가 같은 row update 에 대해
             // 별도 sub 로 fan-out 될 때 게이트웨이는 sub 등록 순서대로 deliver → isCompleted
-            // 가 데이터보다 먼저 도착. 본 데이터가 도착한 뒤에만 lock.
-            if (jobState.isCompleted && jobState._assignmentsReceived) {
+            // 가 데이터보다 먼저 도착. 본 데이터 미도착이면 onComplete 호출 자체 보류.
+            if (jobState.isCompleted && !jobState._assignmentsReceived) return;
+            if (jobState.isCompleted) {
                 console.log(`[DDLFieldsProxy] 🎬 First callback invocation, locking further calls`);
                 callbackInvoked = true;
             }

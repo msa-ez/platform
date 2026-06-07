@@ -85,11 +85,10 @@ class RequirementsValidatorLangGraphProxy {
             // Race fix: isCompleted 와 content 는 같은 row update 에 대해 별도 sub 로
             // fan-out 되는데, 게이트웨이 deliver 가 sub 등록 순서를 따르므로 isCompleted
             // (먼저 등록) 가 content(나중 등록) 보다 먼저 도착한다. content 도착 전에
-            // lock 을 걸어버리면 onComplete 가 빈 content 로 발사되고 "No events
-            // generated" 로 끝남. content 가 한 번이라도 도착한 뒤에만 lock 한다.
-            if (jobState.isCompleted && jobState._contentReceived) {
-                callbackInvoked = true;
-            }
+            // onComplete 가 호출되면 빈 content 로 발사되고 "No events generated" 로 끝남.
+            // 따라서 isCompleted=true 인데 content 미도착이면 호출 자체를 보류.
+            if (jobState.isCompleted && !jobState._contentReceived) return;
+            if (jobState.isCompleted) callbackInvoked = true;
             await this._parseAndNotifyJobState(jobState, callbacks);
         };
 

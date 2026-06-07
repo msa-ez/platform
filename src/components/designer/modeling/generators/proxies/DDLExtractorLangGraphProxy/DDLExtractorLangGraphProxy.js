@@ -80,11 +80,10 @@ class DDLExtractorLangGraphProxy {
             if (callbackInvoked) return;
             // Race fix: isCompleted 와 ddlFieldRefs 는 같은 row update 에 대해 별도 sub 로
             // fan-out 되는데, 게이트웨이 deliver 가 sub 등록 순서를 따르므로 isCompleted
-            // 가 ddlFieldRefs 보다 먼저 도착한다. 본 데이터(ddlFieldRefs) 가 한 번이라도
-            // 도착한 뒤에만 lock — 안 그러면 onComplete 가 빈 결과로 발사됨.
-            if (jobState.isCompleted && jobState._ddlFieldRefsReceived) {
-                callbackInvoked = true;
-            }
+            // 가 ddlFieldRefs 보다 먼저 도착한다. 본 데이터 미도착이면 onComplete 호출
+            // 자체를 보류 (호출하면 빈 결과로 발사됨).
+            if (jobState.isCompleted && !jobState._ddlFieldRefsReceived) return;
+            if (jobState.isCompleted) callbackInvoked = true;
             await this._parseAndNotifyJobState(jobState, callbacks);
             if (callbackInvoked && (jobState.isCompleted || jobState.isFailed)) {
                 this._cleanupWatchers(storage, jobState);
