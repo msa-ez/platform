@@ -232,11 +232,14 @@ class RequirementsMappingLangGraphProxy {
         const unwatchCompleted = storage.watch(completedPath, async (isCompleted) => {
             if (isCompleted && !completedCalled) {
                 completedCalled = true;
-                jobState.isCompleted = isCompleted;
-                
-                // 완료 시 전체 outputs 객체 읽기 — DB 가 일시적으로 끊긴 상태일 수 있어 retry 버전 사용
+
+                // ⚠️ jobState.isCompleted = true 를 pre-fetch 전에 set 하면, 그 사이
+                // (await 동안) 다른 watch (progress/logs 등) 가 parseState 를 부르면
+                // isCompleted=true && requirements=빈배열 상태에서 onComplete 가 빈
+                // 결과로 발사되고 callbackInvoked 가 잠겨 후속 fire 가 전부 무시됨.
+                // 따라서 데이터를 모두 채운 뒤에 isCompleted=true 를 set.
                 const outputs = await storage.getObjectWithRetry(`${this._getJobPath(jobId)}/state/outputs`);
-                
+
                 if (outputs) {
                     // boundedContext가 비어있으면 outputs에서 다시 가져오기
                     if (!jobState.boundedContext && outputs.boundedContext) {
@@ -246,8 +249,9 @@ class RequirementsMappingLangGraphProxy {
                         jobState.requirements = this._restoreArrayFromFirebase(outputs.requirements);
                     }
                 }
-                
-                // parseState 호출 (콜백 실행)
+
+                // 채운 다음에 완료 플래그 set → parseState 가 이번엔 안전하게 full data 로 발사.
+                jobState.isCompleted = isCompleted;
                 await parseState();
                 
                 // 콜백 완료 후 watch 해제
