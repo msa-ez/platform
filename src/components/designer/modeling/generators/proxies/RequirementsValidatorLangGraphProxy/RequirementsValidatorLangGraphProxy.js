@@ -90,6 +90,12 @@ class RequirementsValidatorLangGraphProxy {
             if (jobState.isCompleted && !jobState._contentReceived) return;
             if (jobState.isCompleted) callbackInvoked = true;
             await this._parseAndNotifyJobState(jobState, callbacks);
+            // onComplete 가 실제로 발사된 직후에만 cleanup. 미발사 상태에서 cleanup 하면
+            // 뒤따라 도착할 content WS 메시지가 unsubscribe 된 sub 라 callback 못 받고
+            // _contentReceived 가 영원히 false → onComplete 도 영원히 안 옴.
+            if (callbackInvoked) {
+                this._cleanupWatchers(storage, jobState);
+            }
         };
 
         this._watchWaitingJobCount(storage, jobId, jobState, callbacks.onWaiting);
@@ -118,8 +124,9 @@ class RequirementsValidatorLangGraphProxy {
         storage.watch(completedPath, async (isCompleted) => {
             if (isCompleted === true) {
                 jobState.isCompleted = true;
+                // cleanup 은 parseState 안쪽에서 callbackInvoked 가 set 된 뒤에만 실행.
+                // 여기서 무조건 cleanup 하면 content 가 아직 안 왔는데 sub 가 끊김.
                 await parseState();
-                this._cleanupWatchers(storage, jobState);
             }
         });
 

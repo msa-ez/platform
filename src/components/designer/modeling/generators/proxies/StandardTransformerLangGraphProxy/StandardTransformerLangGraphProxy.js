@@ -110,6 +110,12 @@ class StandardTransformerLangGraphProxy {
                 if (jobState.isCompleted && !jobState._transformedOptionsReceived) return
                 if (jobState.isCompleted) callbackInvoked = true
                 await this._parseAndNotifyJobState(jobState, callbacks)
+                // onComplete 실제 발사된 직후에만 cleanup. 미발사 상태 cleanup 하면
+                // 뒤따라 도착할 transformedOptions WS 메시지의 sub 가 사라져 onComplete
+                // 가 영원히 안 옴.
+                if (callbackInvoked) {
+                    this._cleanupWatchers(storage, jobState)
+                }
             }, 100) // 100ms 대기
         }
 
@@ -170,10 +176,8 @@ class StandardTransformerLangGraphProxy {
         storage.watch(completedPath, async (isCompleted) => {
             if (isCompleted !== undefined && isCompleted !== null) {
                 jobState.isCompleted = isCompleted
+                // cleanup 은 parseState 안쪽에서 callbackInvoked 가 set 된 뒤에만 실행.
                 await parseState()
-                if (isCompleted === true) {
-                    this._cleanupWatchers(storage, jobState)
-                }
             }
         })
 
