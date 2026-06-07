@@ -122,14 +122,16 @@ class DDLFieldsLangGraphProxy {
                 console.log(`[DDLFieldsProxy] ⚠️ Callback already invoked, skipping duplicate call`);
                 return;
             }
-            
-            if (jobState.isCompleted) {
+            // Race fix: isCompleted 와 aggregateFieldAssignments 가 같은 row update 에 대해
+            // 별도 sub 로 fan-out 될 때 게이트웨이는 sub 등록 순서대로 deliver → isCompleted
+            // 가 데이터보다 먼저 도착. 본 데이터가 도착한 뒤에만 lock.
+            if (jobState.isCompleted && jobState._assignmentsReceived) {
                 console.log(`[DDLFieldsProxy] 🎬 First callback invocation, locking further calls`);
                 callbackInvoked = true;
             }
-            
+
             await this._parseAndNotifyJobState(jobState, callbacks);
-            if (jobState.isCompleted || jobState.isFailed) {
+            if (callbackInvoked && (jobState.isCompleted || jobState.isFailed)) {
                 this._cleanupWatchers(storage, jobState);
             }
         };
@@ -235,6 +237,7 @@ class DDLFieldsLangGraphProxy {
             if (assignments) {
                 console.log(`[DDLFieldsProxy] 📝 Field assignments updated:`, assignments);
                 jobState.aggregateFieldAssignments = this._restoreArrayFromFirebase(assignments);
+                jobState._assignmentsReceived = true;
                 await parseState();
             }
         });

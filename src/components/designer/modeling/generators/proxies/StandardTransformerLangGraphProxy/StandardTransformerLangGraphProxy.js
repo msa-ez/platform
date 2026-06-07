@@ -96,12 +96,18 @@ class StandardTransformerLangGraphProxy {
         
         const parseState = async () => {
             if (callbackInvoked) return
-            
-            // 타이밍 이슈 해결: 모든 필드가 도착할 시간을 주기 위해 약간 지연
+
+            // 타이밍 이슈 해결: 모든 필드가 도착할 시간을 주기 위해 약간 지연.
+            // 다만 100ms 디바운스만으로는 transformedOptions 도착이 늦을 때 빈 결과로
+            // lock 되는 race 가 남는다 (게이트웨이 COALESCE 300ms 와 결합되면
+            // isCompleted 가 등록 순서상 먼저 도착). 본 데이터가 한 번이라도 도착한
+            // 뒤에만 lock 으로 결정타.
             if (parseTimeout) clearTimeout(parseTimeout)
             parseTimeout = setTimeout(async () => {
                 if (callbackInvoked) return
-                if (jobState.isCompleted) callbackInvoked = true
+                if (jobState.isCompleted && jobState._transformedOptionsReceived) {
+                    callbackInvoked = true
+                }
                 await this._parseAndNotifyJobState(jobState, callbacks)
             }, 100) // 100ms 대기
         }
@@ -129,6 +135,7 @@ class StandardTransformerLangGraphProxy {
             if (transformedOptions) {
                 // 🔒 CRITICAL: Firebase에서 ["@"] 마커를 빈 배열로 복원
                 jobState.transformedOptions = this._restoreDataFromFirebase(transformedOptions)
+                jobState._transformedOptionsReceived = true
                 await parseState()
             }
         })

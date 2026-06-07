@@ -76,6 +76,10 @@ class RequirementsFlowStitcherLangGraphProxy {
         const tryNotifyComplete = async () => {
             if (invoked) return;
             if (!jobState.isCompleted) return;
+            // Race fix: isCompleted 가 content 보다 먼저 도착하는 케이스에서 content=null
+            // 인 채로 invoked 가 잠기면 onComplete 가 빈 events 로 발사되고 끝남.
+            // content 가 한 번이라도 채워진 뒤에만 잠근다.
+            if (!jobState.content) return;
             invoked = true;
             const events = (jobState.content && jobState.content.events) || [];
             await onComplete(events, jobState.error || null);
