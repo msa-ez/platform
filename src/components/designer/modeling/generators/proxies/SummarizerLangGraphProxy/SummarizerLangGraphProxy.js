@@ -120,9 +120,20 @@ class SummarizerLangGraphProxy {
      * 모든 워처 설정
      */
     static _setupJobWatchers(storage, jobId, jobState, callbacks) {
+        const hasSummaryData = () => {
+            return Array.isArray(jobState.summarizedRequirements)
+                && jobState.summarizedRequirements.length > 0;
+        };
         const parseState = async () => {
             await this._parseAndNotifyJobState(jobState, callbacks);
-            if (jobState.isCompleted || jobState.isFailed) {
+            if (jobState.isFailed) {
+                this._cleanupWatchers(storage, jobState);
+                return;
+            }
+            // Race fix: isCompleted 가 summarizedRequirements 보다 먼저 도착하면 빈 결과로
+            // onComplete 발사 후 cleanup → 뒤따라 도착할 summaries WS 메시지의 sub 가
+            // 사라져 영영 안 옴. 데이터 들어온 뒤에만 cleanup.
+            if (jobState.isCompleted && hasSummaryData()) {
                 this._cleanupWatchers(storage, jobState);
             }
         };

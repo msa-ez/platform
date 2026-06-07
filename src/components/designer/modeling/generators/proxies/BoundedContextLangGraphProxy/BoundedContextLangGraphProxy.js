@@ -165,9 +165,23 @@ class BoundedContextLangGraphProxy {
      * 모든 워처 설정
      */
     static _setupJobWatchers(storage, jobId, jobState, callbacks) {
+        const hasBCData = () => {
+            return (Array.isArray(jobState.boundedContexts) && jobState.boundedContexts.length > 0)
+                || (Array.isArray(jobState.relations) && jobState.relations.length > 0)
+                || (Array.isArray(jobState.explanations) && jobState.explanations.length > 0)
+                || !!jobState.devisionAspect
+                || !!jobState.thoughts;
+        };
         const parseState = async () => {
             await this._parseAndNotifyJobState(jobState, callbacks);
-            if (jobState.isCompleted || jobState.isFailed) {
+            if (jobState.isFailed) {
+                this._cleanupWatchers(storage, jobState);
+                return;
+            }
+            // Race fix: isCompleted 가 데이터(boundedContexts 등) 보다 먼저 도착하면
+            // 빈 결과로 onComplete 발사 후 cleanup → 뒤따라 도착할 데이터 WS 메시지
+            // 의 sub 가 사라져 영영 안 옴. 데이터가 들어온 뒤에만 cleanup.
+            if (jobState.isCompleted && hasBCData()) {
                 this._cleanupWatchers(storage, jobState);
             }
         };
@@ -238,11 +252,11 @@ class BoundedContextLangGraphProxy {
         storage.watch(completedPath, async (isCompleted) => {
             console.log('[BoundedContextLangGraphProxy] _watchJobStatus isCompleted 감지:', isCompleted);
             if (isCompleted) {
-                jobState.isCompleted = isCompleted;
-                
-                // 완료 시 전체 outputs 객체 읽기
+                // ⚠️ jobState.isCompleted = true 를 pre-fetch 전에 set 하면 그 사이
+                // 다른 watch 가 parseState 호출 시 cleanup 으로 sub 가 사라져 race 발생.
+                // 데이터를 모두 채운 뒤에 isCompleted set.
                 const outputs = await storage.getObjectWithRetry(`${this._getJobPath(jobId)}/state/outputs`);
-                
+
                 if (outputs) {
                     if (outputs.devisionAspect !== null && outputs.devisionAspect !== undefined) {
                         jobState.devisionAspect = outputs.devisionAspect;
@@ -256,8 +270,13 @@ class BoundedContextLangGraphProxy {
                     if (outputs.explanations !== null && outputs.explanations !== undefined) {
                         jobState.explanations = this._restoreArrayFromFirebase(outputs.explanations);
                     }
+                    if (Array.isArray(outputs.boundedContexts)) {
+                        jobState.boundedContexts = this._restoreArrayFromFirebase(outputs.boundedContexts);
+                    }
                 }
-                
+
+                // 데이터 채운 뒤 완료 플래그 set.
+                jobState.isCompleted = isCompleted;
                 await parseState();
             }
         });
