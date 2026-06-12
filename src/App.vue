@@ -925,19 +925,19 @@
             ],
             design : [
                 {
+                    type: 'project',
+                    title: 'tools.project',
+                    image: '/static/image/main/mainProject.png',
+                    subtitle: 'tools.project-inst',
+                    disabled: true,
+                    tagStatus: 'Stable'
+                },
+                {
                     type: 'es',
                     title: 'tools.eventstorming',
                     image: '/static/image/main/mainModeling.png',
                     subtitle: 'tools.eventstorming-inst',
                     disabled: false,
-                    tagStatus: 'Stable'
-                },
-                {
-                    type: 'project', 
-                    title: 'tools.project',
-                    image: '/static/image/main/mainProject.png',
-                    subtitle: 'tools.project-inst',
-                    disabled: true,
                     tagStatus: 'Stable'
                 },
                 {

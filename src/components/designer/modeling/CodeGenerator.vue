@@ -293,10 +293,13 @@
                             </v-btn>
                             <v-card-text style="height:100%;">
                                 Java/Spring Version
+                                <!-- Marketplace 비활성화 (사내 배포)
                                 <v-btn style="margin-bottom: 1px; color:gray" text @click="marketplaceDialog = true">
                                     <v-icon style="margin-right: 5px; color:gray" small>mdi-cart</v-icon>
                                     Marketplace
                                 </v-btn>
+                                -->
+
 
                                 <v-divider></v-divider>
                                 <div>
@@ -552,10 +555,12 @@
                                         </template>
                                         <v-tabs>
                                             <v-tab> {{editableTemplate ? 'Change Template' : 'Cannot be changed.' }} </v-tab>
+                                            <!-- Marketplace 비활성화 (사내 배포)
                                             <v-btn style="margin: 5px 0px 0px 10px;" text @click="openMarketplaceDialog('BASE')">
                                                 <v-icon style="margin-right: 5px;" small>mdi-cart</v-icon>
                                                 Marketplace
                                             </v-btn>
+                                            -->
                                             <v-tab v-if="isExistConfTemplate('BASE', basePlatform)"> Configuration </v-tab>
                                             <v-tab-item>
                                                 <v-list v-if="editableTemplate">
@@ -712,10 +717,12 @@
 
                                                                     <v-tabs style="max-height:450px; overflow-x:scroll;">
                                                                         <v-tab> {{editableTemplate ? 'Change Template' : 'Cannot be changed.' }} </v-tab>
+                                                                        <!-- Marketplace 비활성화 (사내 배포)
                                                                         <v-btn style="margin: 5px 0px 0px 10px;" text @click="openMarketplaceDialog('TEMPLATE', item)">
                                                                             <v-icon style="margin-right: 5px;" small>mdi-cart</v-icon>
                                                                             Marketplace
                                                                         </v-btn>
+                                                                        -->
                                                                         <v-tab v-if="isExistConfTemplate('MAIN', item.preferredPlatform)"> Configuration </v-tab>
 
                                                                         <v-tab-item>
