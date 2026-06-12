@@ -10,7 +10,6 @@
                         {{$t('word.ceo')}}  : {{$t('company.ceo')}},  {{$t('word.registrationNumber')}} : {{$t('company.registrationNumber')}}<br/>
                         {{$t('info.refundComment')}} / {{$t('word.refundUser')}} : {{$t('company.refundUser')}}  ({{$t('company.refundNumber')}})<br/>
                     </div>
-                    <div> Copyright © uEngine All Rights Reserved </div>
                 </div>
                 <v-row style="margin:0px;" justify="center">
                     <div @click="provision()" class="footer-btn">{{$t('word.terms')}}</div>
