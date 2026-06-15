@@ -1457,9 +1457,28 @@
                 await this.putObject(`db://definitions/${this.projectInfo.projectId}/information`, this.projectInfo)
                 this._syncProjectName && this._syncProjectName();
             },
-            async updateInputDDL(content){
+            // inputDDL watcher 가 debounce 없이 매 키입력마다 emit 하던 경로.
+            // putObject(information) 가 키입력당 발사되던 잠재 비효율을 여기서 묶음.
+            // jobState/draft 와 동일하게 800ms debounce — 마지막 입력 기준으로만 저장.
+            updateInputDDL(content){
                 this.$set(this.projectInfo, 'inputDDL', content);
-                await this.putObject(`db://definitions/${this.projectInfo.projectId}/information`, this.projectInfo)
+                if (!this._debouncedSaveInputDDL) {
+                    this._debouncedSaveInputDDL = _.debounce(
+                        () => this._doSaveInputDDL(),
+                        800
+                    );
+                }
+                this._debouncedSaveInputDDL();
+            },
+
+            async _doSaveInputDDL() {
+                const projectId = this.projectInfo && this.projectInfo.projectId;
+                if (!projectId) return;
+                try {
+                    await this.putObject(`db://definitions/${projectId}/information`, this.projectInfo);
+                } catch (e) {
+                    console.warn('[AutoModelingDialog] inputDDL 저장 실패:', e);
+                }
                 this._syncProjectName && this._syncProjectName();
             },
             openCanvas(val){
@@ -1511,6 +1530,9 @@
                 }
                 if (this._debouncedBackup && typeof this._debouncedBackup.flush === 'function') {
                     this._debouncedBackup.flush();
+                }
+                if (this._debouncedSaveInputDDL && typeof this._debouncedSaveInputDDL.flush === 'function') {
+                    this._debouncedSaveInputDDL.flush();
                 }
                 if (this._debouncedSyncProjectName && typeof this._debouncedSyncProjectName.flush === 'function') {
                     this._debouncedSyncProjectName.flush();
