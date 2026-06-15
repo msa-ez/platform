@@ -1444,6 +1444,9 @@
                 this.$set(this.projectInfo, 'userStory', content);
                 if(isSave){
                     await this.putObject(`db://definitions/${this.projectInfo.projectId}/information`, this.projectInfo)
+                    // userStory 갱신 경로는 update:draft 를 안 거치므로 mine/share
+                    // 미러링이 누락됨 — 여기서 직접 호출해 storage list 갱신.
+                    this._syncProjectName && this._syncProjectName();
                 }
             },
             async updateProjectInfo(info){
@@ -1453,10 +1456,12 @@
                 if(info.usedInputDDL) this.$set(this.projectInfo, 'usedInputDDL', info.usedInputDDL);
                 if(info.commandReadModelData) this.$set(this.projectInfo, 'commandReadModelData', info.commandReadModelData);
                 await this.putObject(`db://definitions/${this.projectInfo.projectId}/information`, this.projectInfo)
+                this._syncProjectName && this._syncProjectName();
             },
             async updateInputDDL(content){
                 this.$set(this.projectInfo, 'inputDDL', content);
                 await this.putObject(`db://definitions/${this.projectInfo.projectId}/information`, this.projectInfo)
+                this._syncProjectName && this._syncProjectName();
             },
             openCanvas(val){
                 var me = this
