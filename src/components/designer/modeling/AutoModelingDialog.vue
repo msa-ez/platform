@@ -759,6 +759,8 @@
         beforeRouteLeave(to, from, next) {
             // pending debounced draft 가 있으면 떠나기 전 flush — 마지막 변경 유실 방지.
             this._flushDraftSave && this._flushDraftSave();
+            // close 시점에 projectName 도 prompt 기준으로 동기화 (untitled 남는 문제 해결).
+            this._syncProjectNameOnClose && this._syncProjectNameOnClose();
             if (!this.isServer && this.hasUnsavedChanges()) {
                 this.showConfirmDialog = true
                 this.pendingAction = () => next()
@@ -771,6 +773,8 @@
             window.removeEventListener('beforeunload', this.handleBeforeUnload)
             // pending debounced draft flush.
             this._flushDraftSave && this._flushDraftSave();
+            // projectName 동기화 — listing 에서 "untitled" 남는 문제 fix.
+            this._syncProjectNameOnClose && this._syncProjectNameOnClose();
 
             let getPrompt = localStorage.getItem('noLoginPrompt')
             if( !(this.isLogin && getPrompt)){
@@ -1500,6 +1504,59 @@
                 }
                 if (this._debouncedBackup && typeof this._debouncedBackup.flush === 'function') {
                     this._debouncedBackup.flush();
+                }
+            },
+
+            // 프로젝트 close 시점에 projectName 을 현재 prompt 로 동기화.
+            // updateDraft 경로에서는 projectName 을 갱신하지 않아 storage list 가
+            // "untitled" 로 남는 문제 — close 시점에 한 번에 보정.
+            async _syncProjectNameOnClose() {
+                try {
+                    const projectId = this.projectInfo && this.projectInfo.projectId;
+                    if (!projectId) return;
+                    const currentName = this.projectInfo.prompt
+                        || this.projectInfo.projectName;
+                    if (!currentName) return;
+                    if (this.projectInfo.projectName === currentName) return; // 변경 없음
+
+                    this.projectInfo.projectName = currentName;
+                    this.projectInfo.lastModifiedTimeStamp = Date.now();
+
+                    await this.setObject(
+                        `db://definitions/${projectId}/information/projectName`,
+                        currentName
+                    );
+                    await this.setObject(
+                        `db://definitions/${projectId}/information/lastModifiedTimeStamp`,
+                        this.projectInfo.lastModifiedTimeStamp
+                    );
+
+                    // userLists/{author}/mine 인덱스 미러링 (storage list 갱신용).
+                    if (this.projectInfo.author) {
+                        await this.putObject(
+                            `db://userLists/${this.projectInfo.author}/mine/${projectId}`,
+                            {
+                                projectName: currentName,
+                                lastModifiedTimeStamp: this.projectInfo.lastModifiedTimeStamp
+                            }
+                        );
+                    }
+                    // permissions share 인덱스도 동일하게 미러링.
+                    if (this.projectInfo.permissions) {
+                        for (const uid of Object.keys(this.projectInfo.permissions)) {
+                            try {
+                                await this.putObject(
+                                    `db://userLists/${uid}/share/${projectId}`,
+                                    {
+                                        projectName: currentName,
+                                        lastModifiedTimeStamp: this.projectInfo.lastModifiedTimeStamp
+                                    }
+                                );
+                            } catch (e) { /* noop */ }
+                        }
+                    }
+                } catch (e) {
+                    console.warn('[AutoModelingDialog] projectName 동기화 실패:', e);
                 }
             },
 

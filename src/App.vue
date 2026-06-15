@@ -880,9 +880,6 @@
             customizationHome: 'https://intro.msaez.io',
             showBeta: false,
             paymentLists: [
-                {key: 'manager', display: `loginList.purchaseList`},
-                {key: 'getCoin', display: `loginList.CoinsCoupons`},
-                {key: 'payQuestion', display: `loginList.inquiry`},
                 {key: 'aiModelSetting', display: "loginList.aiModelSetting"},
                 {key: 'standardDocuments', display: "loginList.standardDocuments"},
                 {key: 'logout', display: `loginList.logout`}
