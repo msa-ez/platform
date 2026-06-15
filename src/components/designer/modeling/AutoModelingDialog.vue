@@ -757,10 +757,10 @@
             window.addEventListener('beforeunload', this.handleBeforeUnload)
         },
         beforeRouteLeave(to, from, next) {
-            // pending debounced draft 가 있으면 떠나기 전 flush — 마지막 변경 유실 방지.
-            this._flushDraftSave && this._flushDraftSave();
-            // close 시점에 projectName 도 prompt 기준으로 동기화 (untitled 남는 문제 해결).
+            // close 시점에 projectName 동기화 schedule. _flushDraftSave 가 이어서
+            // pending debouncer 를 모두 즉시 발사시킴 (draft + projectName).
             this._syncProjectName && this._syncProjectName();
+            this._flushDraftSave && this._flushDraftSave();
             if (!this.isServer && this.hasUnsavedChanges()) {
                 this.showConfirmDialog = true
                 this.pendingAction = () => next()
@@ -771,10 +771,9 @@
         },
         beforeDestroy() {
             window.removeEventListener('beforeunload', this.handleBeforeUnload)
-            // pending debounced draft flush.
-            this._flushDraftSave && this._flushDraftSave();
-            // projectName 동기화 — listing 에서 "untitled" 남는 문제 fix.
+            // projectName 동기화 schedule → flush 로 즉시 발사.
             this._syncProjectName && this._syncProjectName();
+            this._flushDraftSave && this._flushDraftSave();
 
             let getPrompt = localStorage.getItem('noLoginPrompt')
             if( !(this.isLogin && getPrompt)){
@@ -1513,12 +1512,26 @@
                 if (this._debouncedBackup && typeof this._debouncedBackup.flush === 'function') {
                     this._debouncedBackup.flush();
                 }
+                if (this._debouncedSyncProjectName && typeof this._debouncedSyncProjectName.flush === 'function') {
+                    this._debouncedSyncProjectName.flush();
+                }
             },
 
             // updateDraft 경로에서는 projectName 을 갱신하지 않아 storage list 가
-            // "untitled" 로 남는 문제 보정. draft 저장(_doSaveDraft) 직후와 close
-            // 시점(beforeDestroy/beforeRouteLeave) 양쪽에서 호출.
-            async _syncProjectName() {
+            // "untitled" 로 남는 문제 보정. draft 저장(_doSaveDraft) / userStory /
+            // inputDDL / projectInfo 갱신 / close 시점에서 호출. inputDDL watcher
+            // 같이 매 키입력마다 발사되는 경로가 있어 _syncProjectNameImmediate 를
+            // 호출하기 전 800ms debounce 로 묶음.
+            _syncProjectName() {
+                if (!this._debouncedSyncProjectName) {
+                    this._debouncedSyncProjectName = _.debounce(
+                        () => this._syncProjectNameImmediate(),
+                        800
+                    );
+                }
+                this._debouncedSyncProjectName();
+            },
+            async _syncProjectNameImmediate() {
                 try {
                     const projectId = this.projectInfo && this.projectInfo.projectId;
                     if (!projectId) return;
