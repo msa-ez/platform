@@ -760,7 +760,7 @@
             // pending debounced draft 가 있으면 떠나기 전 flush — 마지막 변경 유실 방지.
             this._flushDraftSave && this._flushDraftSave();
             // close 시점에 projectName 도 prompt 기준으로 동기화 (untitled 남는 문제 해결).
-            this._syncProjectNameOnClose && this._syncProjectNameOnClose();
+            this._syncProjectName && this._syncProjectName();
             if (!this.isServer && this.hasUnsavedChanges()) {
                 this.showConfirmDialog = true
                 this.pendingAction = () => next()
@@ -774,7 +774,7 @@
             // pending debounced draft flush.
             this._flushDraftSave && this._flushDraftSave();
             // projectName 동기화 — listing 에서 "untitled" 남는 문제 fix.
-            this._syncProjectNameOnClose && this._syncProjectNameOnClose();
+            this._syncProjectName && this._syncProjectName();
 
             let getPrompt = localStorage.getItem('noLoginPrompt')
             if( !(this.isLogin && getPrompt)){
@@ -1495,6 +1495,9 @@
                 } catch (e) {
                     console.warn('[AutoModelingDialog] draft 저장 실패:', e);
                 }
+                // draft 저장 시점에 projectName 도 동기화 — 다른 브라우저에서 storage list
+                // 열어봐도 최신 제목이 보이게. 800ms debounce 안쪽이라 키입력마다 발사 안 됨.
+                this._syncProjectName && this._syncProjectName();
             },
 
             // 페이지 떠나기 전/destroy 전 호출 — pending debounce 즉시 flush 해서 마지막 변경 안 유실되게.
@@ -1507,10 +1510,10 @@
                 }
             },
 
-            // 프로젝트 close 시점에 projectName 을 현재 prompt 로 동기화.
             // updateDraft 경로에서는 projectName 을 갱신하지 않아 storage list 가
-            // "untitled" 로 남는 문제 — close 시점에 한 번에 보정.
-            async _syncProjectNameOnClose() {
+            // "untitled" 로 남는 문제 보정. draft 저장(_doSaveDraft) 직후와 close
+            // 시점(beforeDestroy/beforeRouteLeave) 양쪽에서 호출.
+            async _syncProjectName() {
                 try {
                     const projectId = this.projectInfo && this.projectInfo.projectId;
                     if (!projectId) return;

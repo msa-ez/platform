@@ -419,43 +419,28 @@
                     offset-y
             >
                 <template v-slot:activator="{ on }">
-                    <!-- 추가 -->
-                    <v-badge
-                            :value="isLogin"
-                            color="green"
-                            :top="LoginHover"
-                            :left="LoginHover"
-                            :bottom="!LoginHover"
-                            overlap
-                            style="margin-right: 30px;"
-                            transition="slide-x-transition"
-                    >
-                        <template v-slot:badge>
-                            <div v-if="isLogin"> {{getSavedCoin}}</div>
-                        </template>
-
-                        <v-hover style="margin-right:-20px;" v-model="LoginHover">
-                            <v-avatar size="40" v-on="on">
-                                <div v-if="loadingMigrateHistory">
-                                    <v-progress-circular
-                                            indeterminate
-                                            color="green"
-                                    ></v-progress-circular>
+                    <!-- v-badge (코인/포인트) 제거 — v30 에선 미사용 -->
+                    <v-hover style="margin-right:10px;" v-model="LoginHover">
+                        <v-avatar size="40" v-on="on">
+                            <div v-if="loadingMigrateHistory">
+                                <v-progress-circular
+                                        indeterminate
+                                        color="green"
+                                ></v-progress-circular>
+                            </div>
+                            <div v-else>
+                                <div v-if="userInfo && userInfo.profile">
+                                    <img
+                                            :src=userInfo.profile
+                                            style="width:100%;"
+                                    >
                                 </div>
                                 <div v-else>
-                                    <div v-if="userInfo && userInfo.profile">
-                                        <img
-                                                :src=userInfo.profile
-                                                style="width:100%;"
-                                        >
-                                    </div>
-                                    <div v-else>
-                                        <v-icon x-large>mdi-account-circle</v-icon>
-                                    </div>
+                                    <v-icon x-large>mdi-account-circle</v-icon>
                                 </div>
-                            </v-avatar>
-                        </v-hover>
-                    </v-badge>
+                            </div>
+                        </v-avatar>
+                    </v-hover>
                 </template>
 
 
