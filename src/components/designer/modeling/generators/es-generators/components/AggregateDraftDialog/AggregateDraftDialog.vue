@@ -579,8 +579,21 @@
                         
                         // 표준 변환된 경우: boundedContext 정보를 객체 형태로 추가 (원본 구조와 동일하게)
                         if (this.isStandardTransformed) {
+                            // 표준 변환은 aggregate/enum/vo 이름만 변경하므로, requirements (traceMap·commandInfos·readModelInfos)
+                            // 는 원본 BC 의 것을 그대로 사용해야 ES 생성 단계에서 추적성 정보가 살아남음.
+                            const originalBC = option.originalBoundedContext;
+                            const preservedRequirements = (originalBC && originalBC.requirements)
+                                ? JSON.parse(JSON.stringify(originalBC.requirements))
+                                : {
+                                    ddl: '',
+                                    description: option.description || '',
+                                    event: option.description || '',
+                                    eventNames: '',
+                                    traceMap: {},
+                                    userStory: ''
+                                };
                             selectedOption.boundedContext = {
-                                aggregates: selectedOption.structure ? 
+                                aggregates: selectedOption.structure ?
                                     selectedOption.structure.map(s => ({
                                         alias: (s.aggregate && s.aggregate.alias) || '',
                                         name: (s.aggregate && s.aggregate.name) || ''
@@ -589,16 +602,9 @@
                                 description: option.description || '',
                                 displayName: option.boundedContextAlias || option.boundedContext,
                                 name: option.boundedContext,
-                                requirements: {
-                                    ddl: '',
-                                    description: option.description || '',
-                                    event: option.description || '',
-                                    eventNames: '',
-                                    traceMap: {},
-                                    userStory: ''
-                                }
+                                requirements: preservedRequirements
                             };
-                            
+
                             // inference와 conclusions도 최상위에 추가
                             selectedOption.inference = option.inference || '';
                             selectedOption.conclusions = option.conclusions || '';

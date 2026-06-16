@@ -3824,21 +3824,37 @@ import { value } from 'jsonpath';
                                 inference: bcResult.inference || '',
                                 conclusions: bcResult.conclusions || '',
                                 options: JSON.parse(JSON.stringify(bcResult.transformedOptions)),  // deep copy
-                                defaultOptionIndex: 0
+                                defaultOptionIndex: 0,
+                                // 원본 BC 의 requirements (traceMap, commandInfos, readModelInfos 등) 를 전파
+                                // — selectedOption.boundedContext 재구성 시 사용됨
+                                originalBoundedContext: bcResult.originalBoundedContext || null
                             };
                         });
                         self.$set(transformedMessage, 'draftOptions', draftOptions);
-                        
+
                         // selectedOptionItem 자동 설정: options[defaultIndex]에 boundedContext 정보를 추가하여 원본과 동일한 구조 유지
                         const autoSelectedOptionItem = {};
                         draftOptions.forEach(function(draftOption) {
                             if (draftOption.options && draftOption.options.length > 0) {
                                 const defaultIndex = draftOption.defaultOptionIndex != null ? draftOption.defaultOptionIndex : 0;
                                 const selectedOption = JSON.parse(JSON.stringify(draftOption.options[defaultIndex]));
-                                
+
                                 // boundedContext 정보를 객체 형태로 추가 (원본 구조와 동일하게)
+                                // 표준 변환은 aggregate/enum/vo 이름만 변경하므로, requirements (traceMap·commandInfos·readModelInfos)
+                                // 는 원본 BC 의 것을 그대로 사용해야 ES 생성 단계에서 추적성 정보가 살아남음.
+                                const originalBC = draftOption.originalBoundedContext;
+                                const preservedRequirements = (originalBC && originalBC.requirements)
+                                    ? JSON.parse(JSON.stringify(originalBC.requirements))
+                                    : {
+                                        ddl: '',
+                                        description: draftOption.description || '',
+                                        event: draftOption.description || '',
+                                        eventNames: '',
+                                        traceMap: {},
+                                        userStory: ''
+                                    };
                                 selectedOption.boundedContext = {
-                                    aggregates: draftOption.options[defaultIndex].structure ? 
+                                    aggregates: draftOption.options[defaultIndex].structure ?
                                         draftOption.options[defaultIndex].structure.map(s => ({
                                             alias: (s.aggregate && s.aggregate.alias) || '',
                                             name: (s.aggregate && s.aggregate.name) || ''
@@ -3847,14 +3863,7 @@ import { value } from 'jsonpath';
                                     description: draftOption.description || '',
                                     displayName: draftOption.boundedContextAlias || draftOption.boundedContext,
                                     name: draftOption.boundedContext,
-                                    requirements: {
-                                        ddl: '',
-                                        description: draftOption.description || '',
-                                        event: draftOption.description || '',
-                                        eventNames: '',
-                                        traceMap: {},
-                                        userStory: ''
-                                    }
+                                    requirements: preservedRequirements
                                 };
                                 
                                 // inference와 conclusions도 최상위에 추가
@@ -4051,7 +4060,12 @@ import { value } from 'jsonpath';
                                     description: currentBC.bcDraftOption.description || '',
                                     inference: currentBC.bcDraftOption.inference || '', // 원본에서 inference 복사
                                     conclusions: currentBC.bcDraftOption.conclusions || '', // 원본에서 conclusions 복사
-                                    transformedOptions: formattedOptions  // 포맷팅된 옵션 배열 (deep copy됨)
+                                    transformedOptions: formattedOptions,  // 포맷팅된 옵션 배열 (deep copy됨)
+                                    // traceMap / commandInfos / readModelInfos 등 원본 BC 의 요구사항 정보를 보존
+                                    // (표준 변환은 aggregate/enum/vo 이름만 바꾸므로 trace 는 그대로 사용 가능)
+                                    originalBoundedContext: currentBC.boundedContextData
+                                        ? JSON.parse(JSON.stringify(currentBC.boundedContextData))
+                                        : null
                                 });
                                 
                                 // draftUIInfos 전체 객체 교체 (Vue 반응성 보장)
@@ -4087,11 +4101,13 @@ import { value } from 'jsonpath';
                                         inference: bcResult.inference || '',
                                         conclusions: bcResult.conclusions || '',
                                         options: JSON.parse(JSON.stringify(bcResult.transformedOptions)),  // deep copy
-                                        defaultOptionIndex: 0
+                                        defaultOptionIndex: 0,
+                                        // 원본 BC 의 requirements (traceMap 포함) 전파 — selectedOption.boundedContext 재구성에서 사용
+                                        originalBoundedContext: bcResult.originalBoundedContext || null
                                     };
                                 });
                                 self.$set(transformedMessage, 'draftOptions', draftOptions);
-                                
+
                                 // selectedOptionItem 업데이트: options[defaultIndex]에 boundedContext 정보를 추가하여 원본과 동일한 구조 유지
                                 // 기존 selectedOptionItem을 유지하면서 새로 추가/업데이트만 수행
                                 const currentSelectedOptionItem = transformedMessage.selectedOptionItem || {};
@@ -4100,10 +4116,23 @@ import { value } from 'jsonpath';
                                     if (draftOption.options && draftOption.options.length > 0) {
                                         const defaultIndex = draftOption.defaultOptionIndex != null ? draftOption.defaultOptionIndex : 0;
                                         const selectedOption = JSON.parse(JSON.stringify(draftOption.options[defaultIndex]));
-                                        
+
                                         // boundedContext 정보를 객체 형태로 추가 (원본 구조와 동일하게)
+                                        // 표준 변환은 aggregate/enum/vo 이름만 변경하므로, requirements (traceMap·commandInfos·readModelInfos)
+                                        // 는 원본 BC 의 것을 그대로 사용해야 ES 생성 단계에서 추적성 정보가 살아남음.
+                                        const originalBC = draftOption.originalBoundedContext;
+                                        const preservedRequirements = (originalBC && originalBC.requirements)
+                                            ? JSON.parse(JSON.stringify(originalBC.requirements))
+                                            : {
+                                                ddl: '',
+                                                description: draftOption.description || '',
+                                                event: draftOption.description || '',
+                                                eventNames: '',
+                                                traceMap: {},
+                                                userStory: ''
+                                            };
                                         selectedOption.boundedContext = {
-                                            aggregates: draftOption.options[defaultIndex].structure ? 
+                                            aggregates: draftOption.options[defaultIndex].structure ?
                                                 draftOption.options[defaultIndex].structure.map(s => ({
                                                     alias: (s.aggregate && s.aggregate.alias) || '',
                                                     name: (s.aggregate && s.aggregate.name) || ''
@@ -4112,14 +4141,7 @@ import { value } from 'jsonpath';
                                             description: draftOption.description || '',
                                             displayName: draftOption.boundedContextAlias || draftOption.boundedContext,
                                             name: draftOption.boundedContext,
-                                            requirements: {
-                                                ddl: '',
-                                                description: draftOption.description || '',
-                                                event: draftOption.description || '',
-                                                eventNames: '',
-                                                traceMap: {},
-                                                userStory: ''
-                                            }
+                                            requirements: preservedRequirements
                                         };
                                         
                                         // inference와 conclusions도 최상위에 추가
@@ -4167,6 +4189,9 @@ import { value } from 'jsonpath';
                                 inference: currentBC.bcDraftOption.inference || '',
                                 conclusions: currentBC.bcDraftOption.conclusions || '',
                                 transformedOptions: currentBC.optionsToTransform,  // 원본 옵션 사용
+                                originalBoundedContext: currentBC.boundedContextData
+                                    ? JSON.parse(JSON.stringify(currentBC.boundedContextData))
+                                    : null,
                                 error: error.errorMessage || '표준 변환 실패'
                             });
                             
@@ -4192,6 +4217,9 @@ import { value } from 'jsonpath';
                             inference: currentBC.bcDraftOption.inference || '',
                             conclusions: currentBC.bcDraftOption.conclusions || '',
                             transformedOptions: currentBC.optionsToTransform,  // 원본 옵션 사용
+                            originalBoundedContext: currentBC.boundedContextData
+                                ? JSON.parse(JSON.stringify(currentBC.boundedContextData))
+                                : null,
                             error: '타임아웃'
                         });
                         
