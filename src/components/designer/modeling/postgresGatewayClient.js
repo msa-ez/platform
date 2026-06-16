@@ -53,9 +53,18 @@ export class PostgresGatewayClient {
     return h;
   }
 
+  // 코드베이스 전반에서 storage 호출 시 AceBase URI 컨벤션을 따른 `db://...` 형태를
+  // 그대로 넘기는 경우가 많다 (e.g. AutoModelingDialog: `db://definitions/${id}/information`,
+  // me.watch('db://definitions/...')). 이 prefix 를 떼지 않으면 게이트웨이가 `db:` 를
+  // path 의 한 segment 로 보고 못 찾아 `{value: null}` 을 돌려주거나 watch 가 안 붙는다.
+  _normalizePath(path) {
+    return String(path || '')
+      .replace(/^db:\/+/, '')
+      .replace(/^\/+/, '');
+  }
+
   _dataUrl(path) {
-    const clean = String(path || '').replace(/^\/+/, '');
-    return `${this.baseUrl}/data/${this.dbName}/${clean}`;
+    return `${this.baseUrl}/data/${this.dbName}/${this._normalizePath(path)}`;
   }
 
   // 쓰기 fetch 를 동시성 제한 큐에 통과시켜 브라우저 fetch 폭주를 막는다.
@@ -247,7 +256,8 @@ export class PostgresGatewayClient {
   /** 구독 등록. callback 은 게이트웨이 메시지 {id,watchType,path,key?,value} 를 받는다. */
   subscribe(path, watchType, startAt, callback) {
     const subId = `s${++this._subSeq}`;
-    const s = { path, watchType, startAt, callback };
+    // watch 도 `db://...` 형태로 들어오는 경우가 있어 _dataUrl 과 동일하게 정규화.
+    const s = { path: this._normalizePath(path), watchType, startAt, callback };
     this.subs.set(subId, s);
     this._sendWatch(subId, s); // 아직 미연결이면 onopen 에서 복구
     return subId;
