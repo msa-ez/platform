@@ -6,7 +6,9 @@ class ESDialogerTraceUtil {
             draftOptions,
             projectInfo
         })
-        this.__validateIndexOfRefs(draftOptions, projectInfo)
+        // 유효하지 않은 refs (라인/열 범위 초과, 빈 줄 가리키는 ref) 를 clamp 또는 drop
+        // — 이전 구현은 로그만 찍고 실제 정리는 안 해서 잘못된 ref 가 그대로 ES 로 흘러갔음.
+        draftOptions = this.__sanitizeRefsAgainstSourceText(draftOptions, projectInfo)
 
 
         const result = structuredClone(draftOptions);
@@ -270,68 +272,75 @@ class ESDialogerTraceUtil {
         }
     }
     /**
-     * refs에 존재하는 인덱스 정보가 원천 정보에 대해서 유효한 인덱스인지를 최종 검증하고, 유효하지 않은 ref는 제거
+     * 모든 refs 를 source 텍스트(userStory + ddl) 좌표계에서 검증/정리.
+     * - 라인/열 범위 초과: 가능한 범위로 clamp
+     * - 빈 줄을 가리키는 ref: drop (highlight 대상이 없음)
+     * - 구조적으로 잘못된 ref: drop
+     * 정리된 결과를 반환 (입력은 변경하지 않음).
      */
-    static __validateIndexOfRefs(draftOptions, projectInfo) {
-        const userText = [projectInfo.userStory, projectInfo.ddl].join("\n")
-        const userTextLines = userText.split("\n")
+    static __sanitizeRefsAgainstSourceText(draftOptions, projectInfo) {
+        const userText = [projectInfo.userStory, projectInfo.ddl].join("\n");
+        const userTextLines = userText.split("\n");
+        const totalLines = userTextLines.length;
 
-        let removedCount = 0;
-        let errorMessages = [];
-        
-        RefsTraceUtil.searchRefsArrayRecursively(draftOptions, (refsArray) => {
+        let clampedCount = 0;
+        let droppedCount = 0;
+
+        const cleaned = RefsTraceUtil.searchRefsArrayRecursively(draftOptions, (refsArray) => {
             const validRefs = [];
-            
-            refsArray.forEach(refArray => {
+
+            for (const refArray of refsArray) {
                 try {
-                    const startLineIndex = refArray[0][0] - 1
-                    const startColumnIndex = refArray[0][1] - 1
-                    const endLineIndex = refArray[1][0] - 1
-                    const endColumnIndex = refArray[1][1] - 1
-
-                    let isValid = true;
-
-                    if(userTextLines.length <= startLineIndex || userTextLines.length <= endLineIndex) {
-                        isValid = false;
-                        removedCount++;
-                        errorMessages.push(`Invalid ref removed: ${JSON.stringify(refArray)} - line out of range (total_lines=${userTextLines.length}, start_line=${startLineIndex + 1}, end_line=${endLineIndex + 1})`);
+                    if (!Array.isArray(refArray) || refArray.length !== 2 ||
+                        !Array.isArray(refArray[0]) || refArray[0].length !== 2 ||
+                        !Array.isArray(refArray[1]) || refArray[1].length !== 2) {
+                        droppedCount++;
+                        continue;
                     }
 
-                    if(isValid) {
-                        const startLineContent = userTextLines[startLineIndex]
-                        if(startLineContent.length <= startColumnIndex) {
-                            isValid = false;
-                            removedCount++;
-                            errorMessages.push(`Invalid ref removed: ${JSON.stringify(refArray)} - start_col ${startColumnIndex + 1} > line_length ${startLineContent.length} (line ${startLineIndex + 1}: "${startLineContent.substring(0, 50)}...")`);
-                        }
+                    const sLine = refArray[0][0];
+                    const sCol  = refArray[0][1];
+                    const eLine = refArray[1][0];
+                    const eCol  = refArray[1][1];
+
+                    // 라인이 텍스트 범위를 완전히 벗어남 → drop
+                    if (typeof sLine !== 'number' || typeof eLine !== 'number' ||
+                        sLine < 1 || eLine < 1 || sLine > totalLines || eLine > totalLines) {
+                        droppedCount++;
+                        continue;
                     }
 
-                    if(isValid) {
-                        const endLineContent = userTextLines[endLineIndex]
-                        if(endLineContent.length <= endColumnIndex) {
-                            isValid = false;
-                            removedCount++;
-                            errorMessages.push(`Invalid ref removed: ${JSON.stringify(refArray)} - end_col ${endColumnIndex + 1} > line_length ${endLineContent.length} (line ${endLineIndex + 1}: "${endLineContent.substring(0, 50)}...")`);
-                        }
+                    const sLen = (userTextLines[sLine - 1] || '').length;
+                    const eLen = (userTextLines[eLine - 1] || '').length;
+
+                    // 시작·끝 라인이 모두 빈 줄 → highlight 의미 없음 → drop
+                    if (sLen === 0 && eLen === 0) {
+                        droppedCount++;
+                        continue;
                     }
 
-                    if(isValid) {
-                        validRefs.push(refArray);
-                    }
+                    const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+                    const ns = (typeof sCol === 'number') ? sCol : 1;
+                    const ne = (typeof eCol === 'number') ? eCol : eLen;
+                    const newSCol = sLen > 0 ? clamp(ns, 1, sLen) : 1;
+                    const newECol = eLen > 0 ? clamp(ne, 1, eLen) : 1;
 
-                } catch(e) {
-                    removedCount++;
-                    errorMessages.push(`Invalid ref removed (exception): ${JSON.stringify(refArray)} - ${e.message}`);
+                    if (newSCol !== ns || newECol !== ne) clampedCount++;
+
+                    validRefs.push([[sLine, newSCol], [eLine, newECol]]);
+                } catch (e) {
+                    droppedCount++;
                 }
-            })
-            
-            return validRefs ? validRefs : undefined;
-        })
-        
-        if(errorMessages.length > 0) {
-            console.error(`[ESDialogerTraceUtil] Removed ${removedCount} invalid refs:`);
-            errorMessages.forEach(msg => console.error(`[ESDialogerTraceUtil] ${msg}`));
+            }
+
+            return validRefs;
+        });
+
+        if (clampedCount > 0 || droppedCount > 0) {
+            console.warn(`[ESDialogerTraceUtil] refs sanitized — clamped=${clampedCount}, dropped=${droppedCount} (against userStory+ddl text)`);
         }
+
+        return cleaned;
     }
 }
 
