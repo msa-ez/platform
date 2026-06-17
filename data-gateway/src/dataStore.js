@@ -157,18 +157,28 @@ async function collectionRead(r, options = {}) {
   const conds = filterCols.map((c, i) => `${c} = $${i + 1}`);
   const params = filterCols.map((c) => r.filters[c]);
   let p = params.length;
+  // startAt/endAt 범위도 ORDER BY 와 동일하게 byte order (COLLATE "C") 로 비교해야
+  // pushId 의 시간순 의미가 유지된다. en_US 콜레이션에서 `_` 와 `Z` 의 순서가 깨지면
+  // 큐 replay (queue/seq_key > lastSnapshotKey) 도 누락/중복 발생.
   if (options.startAt != null) {
-    conds.push(`${r.keyCol} >= $${++p}`);
+    conds.push(`${r.keyCol} COLLATE "C" >= $${++p}`);
     params.push(options.startAt);
   }
   if (options.endAt != null) {
-    conds.push(`${r.keyCol} <= $${++p}`);
+    conds.push(`${r.keyCol} COLLATE "C" <= $${++p}`);
     params.push(options.endAt);
   }
   const where = conds.length ? conds.join(' AND ') : 'TRUE';
   const order = options.sort === 'desc' ? 'DESC' : 'ASC';
+  // pushId (definition_queue.seq_key, definition_snapshots.snapshot_key 등) 는 ASCII
+  // 바이트 순서가 곧 시간순이 되도록 설계됨 (pushId.js 의 PUSH_CHARS 참고).
+  // 하지만 PostgreSQL 의 기본 locale 콜레이션(en_US.utf8 등)은 punctuation 처리
+  // 차이 때문에 ASCII 순과 다른 순서를 만들어 (예: `_` < `Z` < `a` 가 깨짐),
+  // 시간순으로 가장 최신인 snapshot 이 sort=desc 결과의 1번째로 안 잡힌다.
+  // → 최근 ES 생성 후 loadDefinitionLocal 이 옛 snapshot 을 끌어와 elements 가
+  // 사라진 것처럼 보이는 버그의 직접 원인. COLLATE "C" 로 강제하여 byte order 사용.
   let sql = `SELECT ${r.keyCol} AS k, value FROM ${r.table} WHERE ${where} ` +
-    `ORDER BY ${r.keyCol} ${order}`;
+    `ORDER BY ${r.keyCol} COLLATE "C" ${order}`;
   if (options.size) {
     sql += ` LIMIT $${++p}`;
     params.push(options.size);
