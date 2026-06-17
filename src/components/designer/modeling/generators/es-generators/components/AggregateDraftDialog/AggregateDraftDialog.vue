@@ -22,9 +22,31 @@
         >
             <v-tabs v-model="activeTab" class="model-draft-dialog-tab">
                 <v-tab v-for="(boundedContextInfo, index) in draftOptions" :key="index" style="text-transform: none;">
+                    <!-- 해당 BC 가 옵션 0 개로 끝난 silent-failure 상태면 탭에 경고 아이콘.
+                         다른 탭에 머물러 있는 사용자도 즉시 인지하도록. -->
+                    <v-icon
+                        v-if="bcHasEmptyOptions(boundedContextInfo)"
+                        color="warning"
+                        small
+                        class="mr-1"
+                    >mdi-alert-circle</v-icon>
                     {{ getBoundedContextDisplayName(boundedContextInfo) }}<br>
                 </v-tab>
             </v-tabs>
+
+            <!-- 여러 BC 가 실패한 경우 활성 탭과 무관하게 항상 보이는 상단 배너 -->
+            <v-alert
+                v-if="failedBoundedContextNames.length > 0 && !isGenerationInProgress"
+                type="warning"
+                class="ma-4 mb-0"
+                border="left"
+                dense
+            >
+                <strong>{{ failedBoundedContextNames.length }} 개 BC 의 초안 생성이 실패했습니다</strong>:
+                {{ failedBoundedContextNames.join(', ') }}.
+                해당 탭으로 이동해 "재생성" 으로 다시 시도하거나, "다시 시도" 로 전체를 다시 돌릴 수 있습니다.
+                이대로 이벤트스토밍 모델을 만들면 실패한 BC 는 누락됩니다.
+            </v-alert>
 
             <div v-if="activeContext">
                 <!-- LLM 응답 truncation 등으로 이 BC 만 옵션이 비어버린 silent failure 상황 명시.
@@ -367,6 +389,15 @@
                 return !Array.isArray(ctx.options) || ctx.options.length === 0
             },
 
+            // 옵션 0 개로 끝난 BC 들의 displayName 리스트.
+            // 다른 탭에 머무는 사용자가 실패 사실을 놓치지 않도록 상단 배너에 노출.
+            failedBoundedContextNames() {
+                if (!Array.isArray(this.draftOptions)) return []
+                return this.draftOptions
+                    .filter(opt => this.bcHasEmptyOptions(opt))
+                    .map(opt => this.getBoundedContextDisplayName(opt))
+            },
+
             currentHeaderComponent() {
                 return this.uiType === 'EventStormingModelCanvas' 
                     ? 'EventStormingHeader' 
@@ -380,6 +411,12 @@
             }
         },
         methods: {
+            // 한 BC 가 옵션 0 개로 끝났는지 — 탭 아이콘 / 상단 배너 / 활성 BC 안내에서 공통 사용.
+            bcHasEmptyOptions(boundedContextInfo) {
+                if (!boundedContextInfo) return false
+                return !Array.isArray(boundedContextInfo.options) || boundedContextInfo.options.length === 0
+            },
+
             feedbackFromDraft(boundedContextInfo, feedback, draftOptions){
                 this.$emit('feedbackFromDraft', boundedContextInfo, feedback, draftOptions, this.messageUniqueId);
             },

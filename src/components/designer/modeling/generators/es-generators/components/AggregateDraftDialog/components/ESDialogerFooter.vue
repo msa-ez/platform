@@ -43,15 +43,22 @@
                 <v-icon class="auto-modeling-btn-icon">mdi-refresh</v-icon>
                 {{ $t('ESDialoger.tryAgain') }}
             </v-btn>
-            <v-btn 
-                :disabled="isGenerateButtonDisabled || !isEditable" 
-                class="auto-modeling-btn" 
-                color="primary" 
-                @click="$emit('generateFromDraft')"
-            >
-                {{ $t('ModelDraftDialogForDistribution.createEventStormingModelCanvas') }}
-                <v-icon class="auto-modeling-btn-icon">mdi-arrow-right</v-icon>
-            </v-btn>
+            <v-tooltip bottom :disabled="!isGenerateButtonDisabled || isGenerationInProgress">
+                <template v-slot:activator="{ on, attrs }">
+                    <span v-bind="attrs" v-on="on">
+                        <v-btn
+                            :disabled="isGenerateButtonDisabled || !isEditable"
+                            class="auto-modeling-btn"
+                            color="primary"
+                            @click="$emit('generateFromDraft')"
+                        >
+                            {{ $t('ModelDraftDialogForDistribution.createEventStormingModelCanvas') }}
+                            <v-icon class="auto-modeling-btn-icon">mdi-arrow-right</v-icon>
+                        </v-btn>
+                    </span>
+                </template>
+                <span>일부 BC 의 초안이 비어있어 진행할 수 없습니다. 해당 BC 를 재생성하거나 전체를 다시 시도해주세요.</span>
+            </v-tooltip>
         </v-row>
     </div>
 </template>

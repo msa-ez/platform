@@ -16,14 +16,21 @@
         </v-card>
 
         <v-row class="ma-0 pa-4">
-            <v-btn 
-                @click="$emit('generateFromDraft')" 
-                :disabled="isGenerateButtonDisabled"
-                block 
-                color="primary" 
-            >
-                {{ $t('ModelDraftDialogForDistribution.createEventStormingModelCanvas') }}
-            </v-btn>
+            <v-tooltip bottom :disabled="!isGenerateButtonDisabled || isGenerationInProgress">
+                <template v-slot:activator="{ on, attrs }">
+                    <div v-bind="attrs" v-on="on" style="width:100%;">
+                        <v-btn
+                            @click="$emit('generateFromDraft')"
+                            :disabled="isGenerateButtonDisabled"
+                            block
+                            color="primary"
+                        >
+                            {{ $t('ModelDraftDialogForDistribution.createEventStormingModelCanvas') }}
+                        </v-btn>
+                    </div>
+                </template>
+                <span>일부 BC 의 초안이 비어있어 진행할 수 없습니다. 해당 BC 를 재생성하거나 전체를 다시 시도해주세요.</span>
+            </v-tooltip>
         </v-row>
     </div>
 </template>
