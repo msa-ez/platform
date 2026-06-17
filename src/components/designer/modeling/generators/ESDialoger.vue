@@ -1418,23 +1418,45 @@ import { value } from 'jsonpath';
 
                 const accumulatedDrafts = {}
                 draftOptions.forEach(draftOption => {
-                    accumulatedDrafts[draftOption.boundedContext] = draftOption.options[draftOption.defaultOptionIndex].structure
+                    // 옵션 자체가 비어있는 BC (silent-failure 상태) 는 accumulatedDrafts 에서 빈 배열로 둔다
+                    if (!Array.isArray(draftOption.options) || draftOption.options.length === 0) {
+                        accumulatedDrafts[draftOption.boundedContext] = []
+                        return
+                    }
+                    const selectedOpt = draftOption.options[draftOption.defaultOptionIndex] || draftOption.options[0]
+                    accumulatedDrafts[draftOption.boundedContext] = (selectedOpt && selectedOpt.structure) ? selectedOpt.structure : []
                 })
                 accumulatedDrafts[boundedContextInfo.boundedContext] = []
 
+                // boundedContextInfo.options[0].boundedContext 가 비어있는 케이스 (이 BC 가 LLM truncation 등으로
+                // 옵션 0 개로 끝난 경우) 에서는 initialInputs 의 동일 BC 설정을 fallback 으로 사용해야
+                // TypeError 없이 재생성을 시도할 수 있다.
+                const firstOption = (boundedContextInfo.options && boundedContextInfo.options[0]) || null
+                let bcConfig = firstOption && firstOption.boundedContext
+                if (!bcConfig) {
+                    const fallbackInput = (this.generators.DraftGeneratorByFunctions.initialInputs || [])
+                        .find(i => i && i.boundedContext && i.boundedContext.name === boundedContextInfo.boundedContext)
+                    bcConfig = fallbackInput && fallbackInput.boundedContext
+                }
+                if (!bcConfig) {
+                    console.error("[!] 재생성에 필요한 BoundedContext 설정을 찾지 못했습니다", { boundedContextInfo })
+                    alert(`[!] ${boundedContextInfo.boundedContext} 재생성에 필요한 컨텍스트 정보를 찾지 못했습니다. 전체 재시도를 사용해주세요.`)
+                    return
+                }
+
+                const previousStructures = (Array.isArray(boundedContextInfo.options) ? boundedContextInfo.options : [])
+                    .map(option => option && option.structure)
+                    .filter(Boolean)
+
                 this.generators.DraftGeneratorByFunctions.generator.client.input = {
-                    description: boundedContextInfo.description || "",
+                    description: boundedContextInfo.description || bcConfig.description || "",
                     boundedContext: {
-                        ...boundedContextInfo.options[0].boundedContext,
+                        ...bcConfig,
                         aggregates: []
                     },
                     accumulatedDrafts: accumulatedDrafts,
                     feedback: {
-                        previousDraftOutput: {options: 
-                            RefsTraceUtil.removeRefsAttributes(
-                                boundedContextInfo.options.map(option => option.structure)
-                            )
-                        },
+                        previousDraftOutput: {options: RefsTraceUtil.removeRefsAttributes(previousStructures)},
                         feedbacks: [
                             feedback
                         ]
