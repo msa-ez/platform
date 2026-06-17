@@ -3341,6 +3341,18 @@
                                         }
 
                                         _scheduleUpdateValue(esValue)
+
+                                        // 가드: 생성이 끝나기 전에 브라우저가 닫혀도 요소가 살아남도록 60초마다
+                                        // 중간 snapshot push. _sanpshotModelForcely 는 in-flight dedup 이 있어
+                                        // 동시 호출 안전. elements 가 아직 비어 있으면 skip (의미 없는 빈 snapshot 방지).
+                                        try {
+                                            const hasElements = this.value && this.value.elements && Object.keys(this.value.elements).length > 0
+                                            const now = Date.now()
+                                            if (hasElements && (!this._lastPeriodicSnapshotAt || now - this._lastPeriodicSnapshotAt > 60000)) {
+                                                this._lastPeriodicSnapshotAt = now
+                                                this._sanpshotModelForcely().catch(e => console.warn('[ES] periodic snapshot failed:', e))
+                                            }
+                                        } catch (e) { /* noop */ }
                                     },
                                     async (esValue, logs, totalPercentage, isFailed) => { // onComplete
                                         // gateway 의 sub-path watch 가 jobs row 변경마다 재발사되면서
@@ -3516,6 +3528,20 @@
                 console.log(event);
 
                 me.closeEmbeddedCanvas();
+
+                // 가드: 생성 중간에 사용자가 브라우저를 닫는 경우 elements 가 메모리에만 있고
+                // snapshotLists 에 없는 상태로 끝나 다음 로드 시 텅 빈 캔버스가 된다.
+                // langgraph esGenerator 가 아직 isCompleted=false 이고 elements 가 있으면
+                // 마지막 snapshot 을 시도. (beforeunload 는 awaits 못 받으므로 fire-and-forget;
+                // 일부 브라우저는 요청 도중에 페이지를 닫지만 대부분은 in-flight fetch 를 보낸다.)
+                try {
+                    const v = me.value
+                    const eg = v && v.langgraphStudioInfos && v.langgraphStudioInfos.esGenerator
+                    const hasElements = v && v.elements && Object.keys(v.elements).length > 0
+                    if (eg && eg.isCompleted === false && hasElements) {
+                        me._sanpshotModelForcely().catch(() => {})
+                    }
+                } catch (e) { /* noop */ }
             });
 
             // if (localStorage.getItem(me.$route.params.projectId + '-Project-Name')) {
@@ -3553,6 +3579,18 @@
                 clearInterval(this.fetchEventInterval);
                 this.fetchEventInterval = null
             }
+            // 가드: route 이동/탭 변경으로 컴포넌트가 unmount 될 때 langgraph esGenerator 가
+            // 아직 미완료 상태고 elements 가 있으면 마지막 snapshot 시도. beforeunload 와
+            // 별도 경로 — 사용자가 SPA 안에서 다른 화면으로 이동하는 경우엔 beforeunload 가
+            // 안 발사되므로 여기서 잡아야 elements 가 살아남는다.
+            try {
+                const v = this.value
+                const eg = v && v.langgraphStudioInfos && v.langgraphStudioInfos.esGenerator
+                const hasElements = v && v.elements && Object.keys(v.elements).length > 0
+                if (eg && eg.isCompleted === false && hasElements) {
+                    this._sanpshotModelForcely().catch(() => {})
+                }
+            } catch (e) { /* noop */ }
         },
         watch: {
             "initLoad":function(newVal){
