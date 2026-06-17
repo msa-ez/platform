@@ -19,10 +19,18 @@
                            class="auto-modeling-user-story-card" 
                            style="margin-top: 30px !important;">
                         <v-tabs v-model="activeAggregateTab" show-arrows>
-                            <v-tab v-for="(msg, idx) in aggregateDraftMessages" 
+                            <v-tab v-for="(msg, idx) in aggregateDraftMessages"
                                    :key="msg.uniqueId"
                                    :disabled="shouldHideMessage(msg)">
                                 Version {{ idx + 1 }}
+                                <!-- 가장 최신 (가장 마지막) 버전임을 표시.
+                                     재생성 후 사용자가 옛 버전에서 ES 진행하지 않도록 강조. -->
+                                <v-chip
+                                    v-if="idx === aggregateDraftMessages.length - 1 && aggregateDraftMessages.length > 1"
+                                    x-small
+                                    color="primary"
+                                    class="ml-2"
+                                >Latest</v-chip>
                             </v-tab>
                         </v-tabs>
 
@@ -305,6 +313,13 @@ export default {
         }
     },
     watch: {
+        // 새 AggregateDraft 메시지가 추가되면 (e.g. 한 BC 재생성으로 인한 새 버전) 자동으로
+        // 가장 최신 탭으로 전환. 옛 버전에 머물러 있다가 빈 BC 채로 ES 생성하는 실수 방지.
+        "aggregateDraftMessages.length": function(newLen, oldLen) {
+            if (typeof oldLen === 'number' && newLen > oldLen) {
+                this.activeAggregateTab = newLen - 1;
+            }
+        },
         messages: {
             immediate: true,
             handler(newMessages) {
