@@ -27,6 +27,18 @@
             </v-tabs>
 
             <div v-if="activeContext">
+                <!-- LLM 응답 truncation 등으로 이 BC 만 옵션이 비어버린 silent failure 상황 명시.
+                     사용자가 footer 의 "재생성" 버튼으로 이 BC 만 다시 시도할 수 있도록 안내. -->
+                <v-alert
+                    v-if="currentBCHasEmptyOptions && !isGenerationInProgress"
+                    type="warning"
+                    class="ma-4"
+                    border="left"
+                    dense
+                >
+                    <strong>{{ getBoundedContextDisplayName(activeContext) }}</strong> 의 초안 생성이 실패했습니다 (LLM 응답이 토큰 한도에 도달하여 잘렸을 가능성). 아래 "재생성" 버튼으로 이 BC 만 다시 시도하거나, "다시 시도" 로 전체를 다시 돌릴 수 있습니다.
+                </v-alert>
+
                 <div v-if="!isTransforming" class="mt-4 pl-4 pr-4">
                     <CoTToggle :inference="activeContext.inference" :isStandardTransformed="isStandardTransformed"/>
                 </div>
@@ -127,9 +139,11 @@
                 </div>
             </div>
 
-                <component 
+                <component
                 :is="currentFooterComponent"
                 :isGenerateButtonDisabled="isGenerateButtonDisabled"
+                :isGenerationInProgress="isGenerationInProgress"
+                :currentBCHasEmptyOptions="currentBCHasEmptyOptions"
                 :draftOptions="draftOptions"
                 :activeTab="activeTab"
                 :feedback="feedback"
@@ -331,6 +345,26 @@
                 }
                 // 표준 전환 전에는 기존 로직 유지
                 return !this.isGeneratorButtonEnabled || this.draftUIInfos.leftBoundedContextCount > 0 || (!this.selectedOptionItem || Object.keys(this.selectedOptionItem).length !== this.draftOptions.length)
+            },
+
+            // 생성이 *진행 중* 인 상태인가? (전체 BC 가 아직 다 나오지 않음)
+            // — feedback / retry 버튼은 이 상태에서만 막아야 한다.
+            // 어느 한 BC 가 LLM 토큰 한도 등으로 빈 options 를 반환하는 경우
+            // isGenerateButtonDisabled 는 true 가 되지만 생성 자체는 "끝난" 상태라
+            // 사용자는 그 BC 만 재생성하거나 전체를 재시도할 길이 열려있어야 한다.
+            isGenerationInProgress() {
+                if (!this.isGeneratorButtonEnabled) return true
+                if (this.draftUIInfos && this.draftUIInfos.leftBoundedContextCount > 0) return true
+                return false
+            },
+
+            // 활성 탭의 BC 가 옵션 0 개로 끝난 경우 — LLM 응답 truncation 등 silent failure.
+            // 이 상태에선 feedback 텍스트가 없어도 "이 BC 만 다시 생성" 을 허용.
+            currentBCHasEmptyOptions() {
+                if (this.activeTab === null) return false
+                const ctx = this.draftOptions && this.draftOptions[this.activeTab]
+                if (!ctx) return false
+                return !Array.isArray(ctx.options) || ctx.options.length === 0
             },
 
             currentHeaderComponent() {

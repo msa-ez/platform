@@ -4,13 +4,13 @@
             <v-textarea v-model="localFeedback" label="Feedback" rows="3"></v-textarea>
             <v-row class="pa-0 ma-0">
                 <v-spacer></v-spacer>
-                <v-btn 
-                    :disabled="isGenerateButtonDisabled || !localFeedback" 
-                    class="auto-modeling-btn" 
+                <v-btn
+                    :disabled="isGenerationInProgress || (!localFeedback && !currentBCHasEmptyOptions)"
+                    class="auto-modeling-btn"
                     @click="handleFeedback"
                 >
-                    {{ getBoundedContextDisplayName(draftOptions[activeTab]) }} 
-                    {{ $t('ModelDraftDialogForDistribution.reGenerate') }} 
+                    {{ getBoundedContextDisplayName(draftOptions[activeTab]) }}
+                    {{ $t('ModelDraftDialogForDistribution.reGenerate') }}
                 </v-btn>
             </v-row>
         </v-card>
@@ -54,6 +54,18 @@ export default {
             required: false
         },
         isTransforming: {
+            type: Boolean,
+            default: () => false,
+            required: false
+        },
+        // "생성이 진행 중" — feedback 만 막아야 하는 케이스
+        isGenerationInProgress: {
+            type: Boolean,
+            default: () => false,
+            required: false
+        },
+        // 활성 BC 가 옵션 0 개로 끝난 silent failure 상태
+        currentBCHasEmptyOptions: {
             type: Boolean,
             default: () => false,
             required: false

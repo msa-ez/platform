@@ -4,13 +4,13 @@
             <v-textarea v-model="localFeedback" label="Feedback" :placeholder="$t('ModelDraftDialogForDistribution.feedbackPlaceholder')" rows="3"></v-textarea>
             <v-row class="pa-0 ma-0">
                 <v-spacer></v-spacer>
-                <v-btn 
-                    :disabled="isGenerateButtonDisabled || !localFeedback || !isEditable" 
-                    class="auto-modeling-btn" 
+                <v-btn
+                    :disabled="isGenerationInProgress || !isEditable || (!localFeedback && !currentBCHasEmptyOptions)"
+                    class="auto-modeling-btn"
                     @click="handleFeedback"
                 >
-                    {{ getBoundedContextDisplayName(draftOptions[activeTab]) }} 
-                    {{ $t('ModelDraftDialogForDistribution.reGenerate') }} 
+                    {{ getBoundedContextDisplayName(draftOptions[activeTab]) }}
+                    {{ $t('ModelDraftDialogForDistribution.reGenerate') }}
                 </v-btn>
             </v-row>
         </v-card>
@@ -34,10 +34,10 @@
                     {{ $t('ModelDraftDialogForDistribution.uploadMetadataToUseFeature') }}
                 </span>
             </v-tooltip>
-            <v-btn 
+            <v-btn
                 v-if="!isStandardTransformed"
-                :disabled="isGenerateButtonDisabled || !isEditable" 
-                class="auto-modeling-btn" 
+                :disabled="isGenerationInProgress || !isEditable"
+                class="auto-modeling-btn"
                 @click="$emit('retry')"
             >
                 <v-icon class="auto-modeling-btn-icon">mdi-refresh</v-icon>
@@ -69,6 +69,20 @@ export default {
             type: Boolean,
             required: true
         },
+        // "생성이 진행 중" 인 상태 — feedback/retry 가 막혀야 하는 유일한 케이스.
+        // (참고: 어느 한 BC 가 빈 options 로 끝나는 silent failure 의 경우엔
+        //  isGenerateButtonDisabled 는 true 지만 isGenerationInProgress 는 false.)
+        isGenerationInProgress: {
+            type: Boolean,
+            default: () => false,
+            required: false
+        },
+        // 활성 탭의 BC 가 옵션 0 개로 끝났는지. true 면 feedback 텍스트 없이도 재생성 허용.
+        currentBCHasEmptyOptions: {
+            type: Boolean,
+            default: () => false,
+            required: false
+        },
         draftOptions: {
             type: Array,
             required: true
@@ -92,11 +106,6 @@ export default {
             required: false
         },
         isStandardTransformed: {
-            type: Boolean,
-            default: () => false,
-            required: false
-        },
-        isTransforming: {
             type: Boolean,
             default: () => false,
             required: false
