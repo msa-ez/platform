@@ -360,29 +360,40 @@ export default {
                 const userStory = this.userInputs.userStory || '';
                 const userStoryLineCount = userStory.split('\n').length;
                 
+                // multi-line ref 는 highlightedRefs() 의 렌더링 로직상 DOM 에 여러 개의
+                // `<span class="highlight">` 를 만든다 (outer span 1 + 중간 라인마다 inner span).
+                // 따라서 "ref 1개 = highlight 1개" 가정으로 highlightIndexInTab 을 세면
+                // multi-line ref 가 섞일 때 "다음" 네비게이션이 같은 ref 안의 중간 라인으로 점프해
+                // 어색하게 동작한다. 실제 DOM highlight 개수를 카운트.
+                const domHighlightsPerRef = (ref) => {
+                    const [[rs], [re]] = ref;
+                    if (rs === re) return 1;             // single-line: 1 span
+                    return Math.max(1, re - rs);         // multi-line: outer + (re-rs-1) 중간 = (re-rs) spans
+                };
+
                 consolidatedRefs.forEach((ref, refIndex) => {
                     const [[startLine, startCol], [endLine, endCol]] = ref;
-                    
+
                     // 탭 인덱스 결정 (USER STORY: 0, DDL: 1)
                     const tabIndex = startLine <= userStoryLineCount ? 0 : 1;
                     const container = tabContainers[tabIndex];
-                    
+
                     if (!container) return;
-                    
+
                     // 해당 탭 컨테이너에서 첫 번째 하이라이트 요소 찾기 (대표 요소로 사용)
                     const highlights = container.querySelectorAll('.highlight');
                     if (highlights.length > 0) {
-                        // 병합된 참조의 순서에 맞는 대표 하이라이트 요소 선택
-                        // DOM에서 하이라이트들이 순서대로 나타나므로, 현재 refIndex에 해당하는 그룹의 첫 번째 요소를 찾음
                         let representativeHighlight = null;
-                        
-                        // 현재 탭에서 이미 처리된 참조 개수 계산
+
+                        // 현재 탭에서 이미 처리된 ref 들이 만들어낸 실제 DOM highlight 개수를 합산
                         const refsInCurrentTab = consolidatedRefs.slice(0, refIndex).filter(r => {
                             const [[rStartLine]] = r;
                             return tabIndex === 0 ? rStartLine <= userStoryLineCount : rStartLine > userStoryLineCount;
                         });
-                        
-                        const highlightIndexInTab = refsInCurrentTab.length;
+
+                        const highlightIndexInTab = refsInCurrentTab.reduce(
+                            (sum, r) => sum + domHighlightsPerRef(r), 0
+                        );
                         representativeHighlight = highlights[highlightIndexInTab];
                         
                         if (representativeHighlight) {
