@@ -44,7 +44,7 @@
             >
                 <strong>{{ failedBoundedContextNames.length }} 개 BC 의 초안 생성이 실패했습니다</strong>:
                 {{ failedBoundedContextNames.join(', ') }}.
-                해당 탭으로 이동해 "재생성" 으로 다시 시도하거나, "다시 시도" 로 전체를 다시 돌릴 수 있습니다.
+                해당 탭으로 이동해 "{BC 이름} 재생성" 버튼으로 그 BC 만 다시 만들거나, 새로고침 아이콘의 "재생성" 버튼으로 전체를 다시 돌릴 수 있습니다.
                 이대로 이벤트스토밍 모델을 만들면 실패한 BC 는 누락됩니다.
             </v-alert>
 
@@ -58,7 +58,7 @@
                     border="left"
                     dense
                 >
-                    <strong>{{ getBoundedContextDisplayName(activeContext) }}</strong> 의 초안 생성이 실패했습니다 (LLM 응답이 토큰 한도에 도달하여 잘렸을 가능성). 아래 "재생성" 버튼으로 이 BC 만 다시 시도하거나, "다시 시도" 로 전체를 다시 돌릴 수 있습니다.
+                    <strong>{{ getBoundedContextDisplayName(activeContext) }}</strong> 의 초안 생성이 실패했습니다 (LLM 응답이 토큰 한도에 도달하여 잘렸을 가능성). 아래 "{{ getBoundedContextDisplayName(activeContext) }} 재생성" 버튼으로 이 BC 만 다시 만들거나, 새로고침 아이콘의 "재생성" 버튼으로 전체를 다시 돌릴 수 있습니다.
                 </v-alert>
 
                 <div v-if="!isTransforming" class="mt-4 pl-4 pr-4">
