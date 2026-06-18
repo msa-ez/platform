@@ -2,6 +2,12 @@ const { DataValidationUtil, RefsTraceUtil } = require("../../../../utils");
 
 class ESDialogerTraceUtil {
     static extractTraceInfoFromDraftOptions(draftOptions, projectInfo) {
+        // 1차: 백엔드 sanitize 가 실패해 string-phrase refs (예: [[3, "create"], [3, "course"]])
+        // 가 남아있는 경우 schema 검증이 throw 해 ES 생성이 통째로 죽는다 (실제 사용자 케이스
+        // previewAttributes[k].refs[0][0][1] 이 string).
+        // → 검증 전에 모든 refs 의 col 이 number 가 아니면 강제 정수화 (col=1) 하거나 drop.
+        draftOptions = this.__coerceStringRefsToNumeric(draftOptions)
+
         this.__validateExtractTraceInfoFromDraftOptionsParams({
             draftOptions,
             projectInfo
@@ -271,6 +277,48 @@ class ESDialogerTraceUtil {
             throw new Error("Invalid params : " + JSON.stringify(params));
         }
     }
+    /**
+     * 백엔드 sanitize 가 실패해 LLM 의 원본 phrase-string refs 가
+     * draftOptions 에 남아있는 경우를 방어. col 위치에 string 이 있으면
+     * 정수로 강제 (col=1) 하거나 구조가 깨진 ref 는 drop.
+     * 이 단계가 없으면 그 아래 __validateExtractTraceInfoFromDraftOptionsParams 가
+     * "must be number but got string" 으로 throw 해서 ES 생성 자체가 실패한다.
+     */
+    static __coerceStringRefsToNumeric(draftOptions) {
+        let coerced = 0
+        let dropped = 0
+        const result = RefsTraceUtil.searchRefsArrayRecursively(draftOptions, (refsArray) => {
+            const out = []
+            for (const r of refsArray) {
+                if (!Array.isArray(r) || r.length !== 2 ||
+                    !Array.isArray(r[0]) || r[0].length !== 2 ||
+                    !Array.isArray(r[1]) || r[1].length !== 2) {
+                    dropped++
+                    continue
+                }
+                const sLine = r[0][0]
+                const sColRaw = r[0][1]
+                const eLine = r[1][0]
+                const eColRaw = r[1][1]
+                if (typeof sLine !== 'number' || typeof eLine !== 'number') {
+                    dropped++
+                    continue
+                }
+                const sCol = typeof sColRaw === 'number' ? sColRaw : 1
+                const eCol = typeof eColRaw === 'number' ? eColRaw : Math.max(sCol, 1)
+                if (typeof sColRaw !== 'number' || typeof eColRaw !== 'number') {
+                    coerced++
+                }
+                out.push([[sLine, sCol], [eLine, eCol]])
+            }
+            return out
+        })
+        if (coerced > 0 || dropped > 0) {
+            console.warn(`[ESDialogerTraceUtil] string refs coerced=${coerced}, dropped=${dropped} (백엔드 sanitize 실패 잔존)`)
+        }
+        return result
+    }
+
     /**
      * 모든 refs 를 source 텍스트(userStory + ddl) 좌표계에서 검증/정리.
      * - 라인/열 범위 초과: 가능한 범위로 clamp
