@@ -167,7 +167,25 @@
       "aggregateDesign": "Aggregate Design",
       "eventStorming": "Event Storming Model",
       "aggregateDetail": "Aggregate Detail Information",
-      "apiSpecification": "API Specification"
+      "apiSpecification": "API Specification",
+      "traceabilityMatrix": "Traceability Matrix"
+    },
+    "traceabilityMatrix": {
+      "description": "Maps user stories (US-FR-###, US-NFR-###) to Aggregate / Command / Event / Policy elements in the event storming model using traceability references.",
+      "noData": "No user story headers (##### [US-...]) or traceability info found; matrix cannot be built.",
+      "summaryMapped": "Mapped rows: {mapped} · Unmapped rows: {unmapped}",
+      "usId": "User Story ID",
+      "usName": "User Story Name",
+      "serviceId": "Service ID",
+      "serviceName": "Service Name",
+      "aggregateId": "Aggregate ID",
+      "aggregateName": "Aggregate Name",
+      "commandId": "Command ID",
+      "commandName": "Command Name",
+      "eventId": "Event ID",
+      "eventName": "Event Name",
+      "policyId": "Policy ID",
+      "policyName": "Policy Name"
     },
     "cover": {
       "subtitle": "Domain-Driven Design Based Analysis/Design Report",

@@ -44,6 +44,12 @@
                 hide-details
                 class="section-checkbox"
             ></v-checkbox>
+            <v-checkbox
+                v-model="selectedSections.traceabilityMatrix"
+                :label="$t('DocumentTemplate.sections.traceabilityMatrix')"
+                hide-details
+                class="section-checkbox"
+            ></v-checkbox>
         </div>
 
         <!-- 표지 -->
@@ -95,6 +101,9 @@
                 </template>
                 <template v-if="selectedSections.aggregateDetail">
                     <li>{{ sectionNumbers.aggregateDetail }}. {{ $t('DocumentTemplate.sections.aggregateDetail') }}</li>
+                </template>
+                <template v-if="selectedSections.traceabilityMatrix">
+                    <li>{{ sectionNumbers.traceabilityMatrix }}. {{ $t('DocumentTemplate.sections.traceabilityMatrix') }}</li>
                 </template>
             </ul>
         </div>
@@ -579,6 +588,61 @@
                 </div>
             </div>
         </div>
+
+        <!-- 추적성 매트릭스 섹션 -->
+        <div v-if="selectedSections.traceabilityMatrix" class="section">
+            <div class="cover-section-title pdf-content-item">
+                <div class="main-title">{{ sectionNumbers.traceabilityMatrix }}. {{ $t('DocumentTemplate.sections.traceabilityMatrix') }}</div>
+                <div class="subtitle">{{ $t('DocumentTemplate.traceabilityMatrix.description') }}</div>
+            </div>
+
+            <div class="pdf-content-item">
+                <div v-if="traceabilityMatrixRows.rows.length === 0" class="text--secondary" style="padding: 12px;">
+                    {{ $t('DocumentTemplate.traceabilityMatrix.noData') }}
+                </div>
+                <div v-else>
+                    <div class="trace-matrix-summary mb-3" style="padding: 0 4px;">
+                        <span>{{ $t('DocumentTemplate.traceabilityMatrix.summaryMapped', { mapped: traceabilityMatrixRows.mappedCount, unmapped: traceabilityMatrixRows.unmappedCount }) }}</span>
+                    </div>
+                    <v-simple-table dense class="trace-matrix-table">
+                        <thead>
+                            <tr>
+                                <th>{{ $t('DocumentTemplate.traceabilityMatrix.usId') }}</th>
+                                <th>{{ $t('DocumentTemplate.traceabilityMatrix.usName') }}</th>
+                                <th>{{ $t('DocumentTemplate.traceabilityMatrix.serviceId') }}</th>
+                                <th>{{ $t('DocumentTemplate.traceabilityMatrix.serviceName') }}</th>
+                                <th>{{ $t('DocumentTemplate.traceabilityMatrix.aggregateId') }}</th>
+                                <th>{{ $t('DocumentTemplate.traceabilityMatrix.aggregateName') }}</th>
+                                <th>{{ $t('DocumentTemplate.traceabilityMatrix.commandId') }}</th>
+                                <th>{{ $t('DocumentTemplate.traceabilityMatrix.commandName') }}</th>
+                                <th>{{ $t('DocumentTemplate.traceabilityMatrix.eventId') }}</th>
+                                <th>{{ $t('DocumentTemplate.traceabilityMatrix.eventName') }}</th>
+                                <th>{{ $t('DocumentTemplate.traceabilityMatrix.policyId') }}</th>
+                                <th>{{ $t('DocumentTemplate.traceabilityMatrix.policyName') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="(row, idx) in traceabilityMatrixRows.rows"
+                                :key="`trace-row-${idx}`"
+                                :class="{ 'trace-row-unmapped': row.usId === '(미매핑)' }">
+                                <td>{{ row.usId }}</td>
+                                <td>{{ row.usName }}</td>
+                                <td>{{ row.bcId }}</td>
+                                <td>{{ row.bcName }}</td>
+                                <td>{{ row.aggId }}</td>
+                                <td>{{ row.aggName }}</td>
+                                <td>{{ row.cmdId }}</td>
+                                <td>{{ row.cmdName }}</td>
+                                <td>{{ row.evtId }}</td>
+                                <td>{{ row.evtName }}</td>
+                                <td>{{ row.polId }}</td>
+                                <td>{{ row.polName }}</td>
+                            </tr>
+                        </tbody>
+                    </v-simple-table>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -647,7 +711,8 @@ export default {
                 aggregateDesign: true,
                 eventStorming: true,
                 apiSpecification: true,
-                aggregateDetail: true
+                aggregateDetail: true,
+                traceabilityMatrix: true
             }
         }
     },
@@ -980,6 +1045,165 @@ export default {
                 };
             }).filter(Boolean); // null 값 제거
         },
+
+        /**
+         * userStory 텍스트를 파싱해 사용자 스토리 섹션 목록을 만든다.
+         * 인식 패턴 (예시 기준, 사용자 포맷 약속):
+         *   - `##### [<ID>] <이름>` 형태의 헤더 — <ID>는 보통 `PROJ-US-FR-001` 또는 `US-FR-001`
+         *   - 각 섹션의 라인 범위 = 이 헤더 라인 다음 라인부터 다음 같은 레벨 헤더 직전까지
+         * 매핑 판정은 ES 요소의 ref 라인이 이 범위에 들어오는지로 결정.
+         */
+        userStorySections() {
+            const text = this.projectInfo && this.projectInfo.userStory
+            if (!text) return []
+            const lines = text.split('\n')
+            const headerRe = /^#####\s+\[([A-Za-z][\w-]*US-(?:FR|NFR)-\d+)\]\s+(.+?)\s*$/
+            const sections = []
+            let current = null
+            for (let i = 0; i < lines.length; i++) {
+                const m = lines[i].match(headerRe)
+                if (m) {
+                    if (current) {
+                        current.endLine = i  // i 가 새 헤더 라인 (1-based 로는 i+1) → 직전 라인까지
+                        sections.push(current)
+                    }
+                    current = {
+                        id: m[1],
+                        name: m[2].trim(),
+                        startLine: i + 1,  // 1-based
+                        endLine: lines.length  // 마지막 섹션은 일단 끝까지
+                    }
+                }
+            }
+            if (current) sections.push(current)
+            return sections
+        },
+
+        traceabilityMatrixRows() {
+            const sections = this.userStorySections
+            const rows = []
+            const stats = { aggregate: 0, command: 0, event: 0, policy: 0, readModel: 0, unmappedTotal: 0 }
+
+            const models = this.eventStormingModels
+                ? (Array.isArray(this.eventStormingModels) ? this.eventStormingModels : Object.values(this.eventStormingModels))
+                : []
+
+            const findUsForRefs = (refs) => {
+                if (!Array.isArray(refs) || refs.length === 0 || sections.length === 0) return []
+                const hits = new Set()
+                for (const ref of refs) {
+                    if (!ref || !ref[0] || !ref[1]) continue
+                    const sLine = typeof ref[0][0] === 'number' ? ref[0][0] : null
+                    const eLine = typeof ref[1][0] === 'number' ? ref[1][0] : sLine
+                    if (sLine == null) continue
+                    for (const sec of sections) {
+                        if (sLine <= sec.endLine && eLine >= sec.startLine) hits.add(sec.id)
+                    }
+                }
+                return [...hits]
+            }
+
+            const getRefsForElement = (model, bcTraceName, el) => {
+                // traceInfo 우선 (원본 userStory 좌표계로 정규화됨)
+                const traceInfo = model && model.models &&
+                    model.models.langgraphStudioInfos &&
+                    model.models.langgraphStudioInfos.esGenerator &&
+                    model.models.langgraphStudioInfos.esGenerator.traceInfo
+                const tn = el.traceName || el.name
+                const t = el._type || ''
+                if (traceInfo && bcTraceName && tn) {
+                    if (t.includes('Aggregate')) {
+                        return (((traceInfo.structureRefs || {})[bcTraceName] || {}).aggregates || {})[tn] || el.refs || []
+                    }
+                    if (t.includes('Command')) {
+                        return (((traceInfo.commandRefs || {})[bcTraceName] || {}).commands || {})[tn] || el.refs || []
+                    }
+                    if (t.includes('View')) {
+                        return (((traceInfo.commandRefs || {})[bcTraceName] || {}).readModels || {})[tn] || el.refs || []
+                    }
+                }
+                // Event / Policy 또는 traceInfo 미존재 시 element.refs fallback (markdown 좌표일 가능성 있음 → 매핑 실패할 수 있음)
+                return el.refs || []
+            }
+
+            const findRelatedAggregate = (el, aggregates) => {
+                if (el.aggregate && el.aggregate.id) {
+                    const a = aggregates.find(a => a.id === el.aggregate.id)
+                    if (a) return a
+                }
+                return null
+            }
+
+            const makeRow = (us, bc, agg, cmd, evt, pol) => ({
+                usId: us ? us.id : '(미매핑)',
+                usName: us ? us.name : '',
+                bcId: bc ? (bc.id || '') : '',
+                bcName: bc ? (bc.displayName || bc.name || '') : '',
+                aggId: agg ? (agg.id || '') : '',
+                aggName: agg ? (agg.displayName || agg.name || '') : '',
+                cmdId: cmd ? (cmd.id || '') : '',
+                cmdName: cmd ? (cmd.displayName || cmd.name || '') : '',
+                evtId: evt ? (evt.id || '') : '',
+                evtName: evt ? (evt.displayName || evt.name || '') : '',
+                polId: pol ? (pol.id || '') : '',
+                polName: pol ? (pol.displayName || pol.name || '') : ''
+            })
+
+            for (const model of models) {
+                if (!model || !model.models || !model.models.elements) continue
+                const elements = Array.isArray(model.models.elements)
+                    ? model.models.elements
+                    : Object.values(model.models.elements)
+
+                const bcs = elements.filter(el => el && el._type && el._type.includes('BoundedContext'))
+                for (const bc of bcs) {
+                    const inBc = elements.filter(el => el && el.boundedContext && el.boundedContext.id === bc.id)
+                    const aggs = inBc.filter(el => el._type && el._type.includes('Aggregate'))
+                    const cmds = inBc.filter(el => el._type && el._type.includes('Command'))
+                    // Event 는 PostIt 등 보조 타입 제거
+                    const evts = inBc.filter(el => el._type && el._type.includes('Event'))
+                    const pols = inBc.filter(el => el._type && el._type.includes('Policy'))
+                    const bcTraceName = bc.traceName || bc.name
+
+                    const emit = (el, kind, makeFn) => {
+                        const refs = getRefsForElement(model, bcTraceName, el)
+                        const usIds = findUsForRefs(refs)
+                        if (usIds.length === 0) {
+                            stats[kind]++
+                            stats.unmappedTotal++
+                            rows.push(makeFn(null))
+                            return
+                        }
+                        for (const usId of usIds) {
+                            const us = sections.find(s => s.id === usId)
+                            rows.push(makeFn(us))
+                        }
+                    }
+
+                    for (const agg of aggs) {
+                        emit(agg, 'aggregate', (us) => makeRow(us, bc, agg, null, null, null))
+                    }
+                    for (const cmd of cmds) {
+                        const parentAgg = findRelatedAggregate(cmd, aggs)
+                        emit(cmd, 'command', (us) => makeRow(us, bc, parentAgg, cmd, null, null))
+                    }
+                    for (const evt of evts) {
+                        const parentAgg = findRelatedAggregate(evt, aggs)
+                        emit(evt, 'event', (us) => makeRow(us, bc, parentAgg, null, evt, null))
+                    }
+                    for (const pol of pols) {
+                        const parentAgg = findRelatedAggregate(pol, aggs)
+                        emit(pol, 'policy', (us) => makeRow(us, bc, parentAgg, null, null, pol))
+                    }
+                }
+            }
+
+            // 매핑된 행을 먼저, 미매핑은 맨 뒤로
+            const mapped = rows.filter(r => r.usId !== '(미매핑)')
+            const unmapped = rows.filter(r => r.usId === '(미매핑)')
+            return { rows: [...mapped, ...unmapped], mappedCount: mapped.length, unmappedCount: unmapped.length, stats }
+        },
+
         sectionNumbers() {
             const numbers = {};
             let currentNumber = 1;
@@ -1004,6 +1228,9 @@ export default {
             }
             if (this.selectedSections.aggregateDetail) {
                 numbers.aggregateDetail = currentNumber++;
+            }
+            if (this.selectedSections.traceabilityMatrix) {
+                numbers.traceabilityMatrix = currentNumber++;
             }
 
             return numbers;
