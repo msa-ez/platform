@@ -597,57 +597,80 @@
             </div>
 
             <div class="pdf-content-item">
-                <div v-if="traceabilityMatrixRows.rows.length === 0" class="text--secondary" style="padding: 12px;">
+                <div v-if="traceabilityMatrixGroups.groups.length === 0 && traceabilityMatrixGroups.unmapped.length === 0" class="text--secondary" style="padding: 12px;">
                     {{ $t('DocumentTemplate.traceabilityMatrix.noData') }}
                 </div>
                 <div v-else>
                     <div class="trace-matrix-summary mb-3" style="padding: 0 4px;">
-                        <span>{{ $t('DocumentTemplate.traceabilityMatrix.summaryMapped', { mapped: traceabilityMatrixRows.mappedCount, unmapped: traceabilityMatrixRows.unmappedCount }) }}</span>
+                        <span>{{ $t('DocumentTemplate.traceabilityMatrix.summaryGroups', { groups: traceabilityMatrixGroups.groups.length, unmapped: traceabilityMatrixGroups.unmapped.length }) }}</span>
                     </div>
-                    <!-- 12 컬럼이 PDF 페이지 폭을 초과해 잘리는 문제 → ID 를 이름 아래
-                         작은 글씨로 묶어 6 컬럼으로 압축. 이름 우선 노출, ID 는 보조 정보. -->
-                    <v-simple-table dense class="trace-matrix-table">
-                        <thead>
-                            <tr>
-                                <th>{{ $t('DocumentTemplate.traceabilityMatrix.usName') }}</th>
-                                <th>{{ $t('DocumentTemplate.traceabilityMatrix.serviceName') }}</th>
-                                <th>{{ $t('DocumentTemplate.traceabilityMatrix.aggregateName') }}</th>
-                                <th>{{ $t('DocumentTemplate.traceabilityMatrix.commandName') }}</th>
-                                <th>{{ $t('DocumentTemplate.traceabilityMatrix.eventName') }}</th>
-                                <th>{{ $t('DocumentTemplate.traceabilityMatrix.policyName') }}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="(row, idx) in traceabilityMatrixRows.rows"
-                                :key="`trace-row-${idx}`"
-                                :class="{ 'trace-row-unmapped': row.usId === '(미매핑)' }">
-                                <td>
-                                    <div class="trace-cell-name">{{ row.usName || row.usId }}</div>
-                                    <div class="trace-cell-id">{{ row.usId }}</div>
-                                </td>
-                                <td>
-                                    <div class="trace-cell-name">{{ row.bcName }}</div>
-                                    <div v-if="row.bcId" class="trace-cell-id">{{ row.bcId }}</div>
-                                </td>
-                                <td>
-                                    <div class="trace-cell-name">{{ row.aggName }}</div>
-                                    <div v-if="row.aggId" class="trace-cell-id">{{ row.aggId }}</div>
-                                </td>
-                                <td>
-                                    <div class="trace-cell-name">{{ row.cmdName }}</div>
-                                    <div v-if="row.cmdId" class="trace-cell-id">{{ row.cmdId }}</div>
-                                </td>
-                                <td>
-                                    <div class="trace-cell-name">{{ row.evtName }}</div>
-                                    <div v-if="row.evtId" class="trace-cell-id">{{ row.evtId }}</div>
-                                </td>
-                                <td>
-                                    <div class="trace-cell-name">{{ row.polName }}</div>
-                                    <div v-if="row.polId" class="trace-cell-id">{{ row.polId }}</div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </v-simple-table>
+
+                    <!-- US 별 그룹 블록: 각 US 헤더 + 좁은 3 컬럼 테이블 (유형 / 이름 / ID).
+                         12 컬럼 매트릭스의 잘림 문제 해소 + US 단위 가독성 향상. -->
+                    <div v-for="group in traceabilityMatrixGroups.groups"
+                         :key="`us-group-${group.us.id}`"
+                         class="trace-us-group pdf-content-item">
+                        <h4 class="trace-us-header">
+                            <span class="trace-us-id">{{ group.us.id }}</span>
+                            <span class="trace-us-name">{{ group.us.name }}</span>
+                        </h4>
+                        <v-simple-table dense class="trace-group-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 100px;">{{ $t('DocumentTemplate.traceabilityMatrix.elementType') }}</th>
+                                    <th>{{ $t('DocumentTemplate.traceabilityMatrix.elementName') }}</th>
+                                    <th style="width: 30%;">{{ $t('DocumentTemplate.traceabilityMatrix.elementId') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="(row, idx) in group.rows" :key="`row-${group.us.id}-${idx}`">
+                                    <td>
+                                        <span class="trace-type-chip" :class="`trace-type-${row.type}`">{{ $t('DocumentTemplate.traceabilityMatrix.types.' + row.type) }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="trace-cell-name">{{ row.name || '-' }}</div>
+                                        <div v-if="row.technical && row.technical !== row.name" class="trace-cell-technical">{{ row.technical }}</div>
+                                        <div v-if="row.parent" class="trace-cell-parent">↳ {{ row.parent }}</div>
+                                    </td>
+                                    <td>
+                                        <div class="trace-cell-id">{{ row.id || '-' }}</div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </v-simple-table>
+                    </div>
+
+                    <!-- 미매핑 요소 (LLM ref 누락/오류 진단용) -->
+                    <div v-if="traceabilityMatrixGroups.unmapped.length > 0" class="trace-us-group pdf-content-item">
+                        <h4 class="trace-us-header trace-us-header-unmapped">
+                            {{ $t('DocumentTemplate.traceabilityMatrix.unmappedHeader') }}
+                            <span class="trace-us-count">({{ traceabilityMatrixGroups.unmapped.length }})</span>
+                        </h4>
+                        <v-simple-table dense class="trace-group-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 100px;">{{ $t('DocumentTemplate.traceabilityMatrix.elementType') }}</th>
+                                    <th>{{ $t('DocumentTemplate.traceabilityMatrix.elementName') }}</th>
+                                    <th style="width: 30%;">{{ $t('DocumentTemplate.traceabilityMatrix.elementId') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="(row, idx) in traceabilityMatrixGroups.unmapped" :key="`unmapped-${idx}`">
+                                    <td>
+                                        <span class="trace-type-chip" :class="`trace-type-${row.type}`">{{ $t('DocumentTemplate.traceabilityMatrix.types.' + row.type) }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="trace-cell-name">{{ row.name || '-' }}</div>
+                                        <div v-if="row.technical && row.technical !== row.name" class="trace-cell-technical">{{ row.technical }}</div>
+                                        <div v-if="row.parent" class="trace-cell-parent">↳ {{ row.parent }}</div>
+                                    </td>
+                                    <td>
+                                        <div class="trace-cell-id">{{ row.id || '-' }}</div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </v-simple-table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1210,6 +1233,77 @@ export default {
             const mapped = rows.filter(r => r.usId !== '(미매핑)')
             const unmapped = rows.filter(r => r.usId === '(미매핑)')
             return { rows: [...mapped, ...unmapped], mappedCount: mapped.length, unmappedCount: unmapped.length, stats }
+        },
+
+        /**
+         * traceabilityMatrixRows 를 US 별로 그룹핑하고 요소 단위 행으로 재구성.
+         * 12 컬럼 매트릭스 대신 US 헤더 + 좁은 3 컬럼 (유형 / 이름 / ID) 테이블 N 개 형태.
+         * PDF 페이지 폭 제약과 가독성 양쪽 개선.
+         */
+        traceabilityMatrixGroups() {
+            const flat = this.traceabilityMatrixRows
+            const groupMap = new Map()
+            const unmapped = []
+            const seen = new Set()  // 중복 행 제거 (같은 US 안에서 같은 요소가 여러 ref 로 잡힌 경우)
+
+            // flat.rows 는 (US, BC, Aggregate, Command|Event|Policy) 조합으로 한 행에 한 요소만
+            // 채워져 있다. 여기서 type 별로 다시 풀어서 row 생성.
+            const pickElement = (r) => {
+                if (r.polId || r.polName) return { type: 'policy', id: r.polId, name: r.polName, technical: '', parent: r.aggName || '' }
+                if (r.evtId || r.evtName) return { type: 'event', id: r.evtId, name: r.evtName, technical: '', parent: r.aggName || '' }
+                if (r.cmdId || r.cmdName) return { type: 'command', id: r.cmdId, name: r.cmdName, technical: '', parent: r.aggName || '' }
+                if (r.aggId || r.aggName) return { type: 'aggregate', id: r.aggId, name: r.aggName, technical: '', parent: r.bcName || '' }
+                return null
+            }
+
+            for (const r of flat.rows) {
+                const elem = pickElement(r)
+                if (!elem) continue
+                const isUnmapped = r.usId === '(미매핑)'
+                const groupKey = isUnmapped ? '__unmapped__' : r.usId
+                const dedupKey = `${groupKey}::${elem.type}::${elem.id || elem.name}`
+                if (seen.has(dedupKey)) continue
+                seen.add(dedupKey)
+
+                if (isUnmapped) {
+                    unmapped.push(elem)
+                    continue
+                }
+                if (!groupMap.has(groupKey)) {
+                    groupMap.set(groupKey, { us: { id: r.usId, name: r.usName }, rows: [], bcs: new Set() })
+                }
+                const group = groupMap.get(groupKey)
+                // Service(BC) 행은 그룹별로 한 번만 (dedup 은 set 으로)
+                if (r.bcId && !group.bcs.has(r.bcId)) {
+                    group.bcs.add(r.bcId)
+                    const serviceDedup = `${groupKey}::service::${r.bcId}`
+                    if (!seen.has(serviceDedup)) {
+                        seen.add(serviceDedup)
+                        group.rows.push({
+                            type: 'service',
+                            id: r.bcId,
+                            name: r.bcName,
+                            technical: '',
+                            parent: ''
+                        })
+                    }
+                }
+                group.rows.push(elem)
+            }
+
+            // 그룹 안에서 요소를 유형 순으로 정렬 (Service → Aggregate → Command → Event → Policy)
+            const typeOrder = { service: 0, aggregate: 1, command: 2, event: 3, policy: 4 }
+            const groups = []
+            // US-ID 가 문자열 순(예: PROJ-US-FR-001 → -002 …) 자연 정렬 위해 sort
+            const sortedKeys = [...groupMap.keys()].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
+            for (const k of sortedKeys) {
+                const g = groupMap.get(k)
+                g.rows.sort((a, b) => (typeOrder[a.type] - typeOrder[b.type]) || (a.name || '').localeCompare(b.name || ''))
+                groups.push({ us: g.us, rows: g.rows })
+            }
+            unmapped.sort((a, b) => (typeOrder[a.type] - typeOrder[b.type]) || (a.name || '').localeCompare(b.name || ''))
+
+            return { groups, unmapped }
         },
 
         sectionNumbers() {
@@ -2757,4 +2851,75 @@ img {
     font-size: 12px;
     color: #555;
 }
+
+/* US 별 그룹 블록 */
+.trace-us-group {
+    margin-bottom: 16px;
+}
+.trace-us-header {
+    margin: 8px 0 4px 0;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 6px 8px;
+    background-color: #f5f7fa;
+    border-left: 3px solid #1976d2;
+}
+.trace-us-header-unmapped {
+    background-color: #fff8e1;
+    border-left-color: #f9a825;
+}
+.trace-us-header .trace-us-id {
+    font-family: monospace;
+    color: #1976d2;
+    margin-right: 8px;
+}
+.trace-us-header .trace-us-name {
+    color: #333;
+}
+.trace-us-header .trace-us-count {
+    font-size: 12px;
+    color: #f9a825;
+    font-weight: 400;
+    margin-left: 6px;
+}
+.trace-group-table {
+    font-size: 11px;
+}
+.trace-group-table th {
+    background-color: #fafafa;
+    font-weight: bold;
+    font-size: 11px;
+    padding: 6px 8px !important;
+}
+.trace-group-table td {
+    padding: 4px 8px !important;
+    vertical-align: top;
+    white-space: normal;
+    word-break: break-word;
+    border-top: 1px solid #eeeeee;
+}
+.trace-group-table .trace-cell-technical {
+    font-size: 10px;
+    color: #888;
+    font-family: monospace;
+    margin-top: 1px;
+}
+.trace-group-table .trace-cell-parent {
+    font-size: 10px;
+    color: #999;
+    margin-top: 2px;
+}
+.trace-type-chip {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 8px;
+    font-size: 10px;
+    font-weight: 500;
+    color: #fff;
+}
+.trace-type-service   { background-color: #546e7a; }
+.trace-type-aggregate { background-color: #1976d2; }
+.trace-type-command   { background-color: #43a047; }
+.trace-type-event     { background-color: #fb8c00; }
+.trace-type-policy    { background-color: #8e24aa; }
 </style>

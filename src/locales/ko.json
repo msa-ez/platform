@@ -171,9 +171,21 @@
       "traceabilityMatrix": "추적성 매트릭스"
     },
     "traceabilityMatrix": {
-      "description": "사용자 스토리(US-FR-###, US-NFR-###)와 이벤트스토밍 모델의 Aggregate / Command / Event / Policy 간 매핑 관계를 추적성 정보 기반으로 보여줍니다",
+      "description": "사용자 스토리(US-FR-###, US-NFR-###) 별로 매핑된 이벤트스토밍 모델 요소(Service / Aggregate / Command / Event / Policy)를 보여줍니다",
       "noData": "사용자 스토리 헤더(##### [US-...]) 또는 추적성 정보를 찾을 수 없어 매트릭스를 만들 수 없습니다.",
       "summaryMapped": "매핑된 행: {mapped} · 미매핑 행: {unmapped}",
+      "summaryGroups": "매핑된 사용자 스토리: {groups}개 · 미매핑 요소: {unmapped}개",
+      "unmappedHeader": "(미매핑) 추적성 정보가 어느 사용자 스토리와도 매칭되지 않은 요소",
+      "elementType": "유형",
+      "elementName": "이름",
+      "elementId": "ID",
+      "types": {
+        "service": "Service",
+        "aggregate": "Aggregate",
+        "command": "Command",
+        "event": "Event",
+        "policy": "Policy"
+      },
       "usId": "사용자스토리 ID",
       "usName": "사용자 스토리명",
       "serviceId": "서비스 ID",

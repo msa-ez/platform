@@ -171,9 +171,21 @@
       "traceabilityMatrix": "Traceability Matrix"
     },
     "traceabilityMatrix": {
-      "description": "Maps user stories (US-FR-###, US-NFR-###) to Aggregate / Command / Event / Policy elements in the event storming model using traceability references.",
+      "description": "For each user story (US-FR-###, US-NFR-###), lists the matched Service / Aggregate / Command / Event / Policy elements.",
       "noData": "No user story headers (##### [US-...]) or traceability info found; matrix cannot be built.",
       "summaryMapped": "Mapped rows: {mapped} · Unmapped rows: {unmapped}",
+      "summaryGroups": "User stories mapped: {groups} · Unmapped elements: {unmapped}",
+      "unmappedHeader": "(Unmapped) Elements whose traceability does not match any user story",
+      "elementType": "Type",
+      "elementName": "Name",
+      "elementId": "ID",
+      "types": {
+        "service": "Service",
+        "aggregate": "Aggregate",
+        "command": "Command",
+        "event": "Event",
+        "policy": "Policy"
+      },
       "usId": "User Story ID",
       "usName": "User Story Name",
       "serviceId": "Service ID",
