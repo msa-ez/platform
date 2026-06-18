@@ -604,20 +604,16 @@
                     <div class="trace-matrix-summary mb-3" style="padding: 0 4px;">
                         <span>{{ $t('DocumentTemplate.traceabilityMatrix.summaryMapped', { mapped: traceabilityMatrixRows.mappedCount, unmapped: traceabilityMatrixRows.unmappedCount }) }}</span>
                     </div>
+                    <!-- 12 컬럼이 PDF 페이지 폭을 초과해 잘리는 문제 → ID 를 이름 아래
+                         작은 글씨로 묶어 6 컬럼으로 압축. 이름 우선 노출, ID 는 보조 정보. -->
                     <v-simple-table dense class="trace-matrix-table">
                         <thead>
                             <tr>
-                                <th>{{ $t('DocumentTemplate.traceabilityMatrix.usId') }}</th>
                                 <th>{{ $t('DocumentTemplate.traceabilityMatrix.usName') }}</th>
-                                <th>{{ $t('DocumentTemplate.traceabilityMatrix.serviceId') }}</th>
                                 <th>{{ $t('DocumentTemplate.traceabilityMatrix.serviceName') }}</th>
-                                <th>{{ $t('DocumentTemplate.traceabilityMatrix.aggregateId') }}</th>
                                 <th>{{ $t('DocumentTemplate.traceabilityMatrix.aggregateName') }}</th>
-                                <th>{{ $t('DocumentTemplate.traceabilityMatrix.commandId') }}</th>
                                 <th>{{ $t('DocumentTemplate.traceabilityMatrix.commandName') }}</th>
-                                <th>{{ $t('DocumentTemplate.traceabilityMatrix.eventId') }}</th>
                                 <th>{{ $t('DocumentTemplate.traceabilityMatrix.eventName') }}</th>
-                                <th>{{ $t('DocumentTemplate.traceabilityMatrix.policyId') }}</th>
                                 <th>{{ $t('DocumentTemplate.traceabilityMatrix.policyName') }}</th>
                             </tr>
                         </thead>
@@ -625,18 +621,30 @@
                             <tr v-for="(row, idx) in traceabilityMatrixRows.rows"
                                 :key="`trace-row-${idx}`"
                                 :class="{ 'trace-row-unmapped': row.usId === '(미매핑)' }">
-                                <td>{{ row.usId }}</td>
-                                <td>{{ row.usName }}</td>
-                                <td>{{ row.bcId }}</td>
-                                <td>{{ row.bcName }}</td>
-                                <td>{{ row.aggId }}</td>
-                                <td>{{ row.aggName }}</td>
-                                <td>{{ row.cmdId }}</td>
-                                <td>{{ row.cmdName }}</td>
-                                <td>{{ row.evtId }}</td>
-                                <td>{{ row.evtName }}</td>
-                                <td>{{ row.polId }}</td>
-                                <td>{{ row.polName }}</td>
+                                <td>
+                                    <div class="trace-cell-name">{{ row.usName || row.usId }}</div>
+                                    <div class="trace-cell-id">{{ row.usId }}</div>
+                                </td>
+                                <td>
+                                    <div class="trace-cell-name">{{ row.bcName }}</div>
+                                    <div v-if="row.bcId" class="trace-cell-id">{{ row.bcId }}</div>
+                                </td>
+                                <td>
+                                    <div class="trace-cell-name">{{ row.aggName }}</div>
+                                    <div v-if="row.aggId" class="trace-cell-id">{{ row.aggId }}</div>
+                                </td>
+                                <td>
+                                    <div class="trace-cell-name">{{ row.cmdName }}</div>
+                                    <div v-if="row.cmdId" class="trace-cell-id">{{ row.cmdId }}</div>
+                                </td>
+                                <td>
+                                    <div class="trace-cell-name">{{ row.evtName }}</div>
+                                    <div v-if="row.evtId" class="trace-cell-id">{{ row.evtId }}</div>
+                                </td>
+                                <td>
+                                    <div class="trace-cell-name">{{ row.polName }}</div>
+                                    <div v-if="row.polId" class="trace-cell-id">{{ row.polId }}</div>
+                                </td>
                             </tr>
                         </tbody>
                     </v-simple-table>
@@ -2708,5 +2716,45 @@ img {
 .api-table th {
     background-color: #f5f5f5;
     font-weight: bold;
+}
+
+/* 추적성 매트릭스 — 6 컬럼(이름) + ID 보조 표기, PDF 폭에 맞춰 압축 */
+.trace-matrix-table {
+    table-layout: fixed;
+    width: 100%;
+    font-size: 11px;
+}
+.trace-matrix-table th {
+    background-color: #f5f5f5;
+    font-weight: bold;
+    font-size: 11px;
+    padding: 6px 4px !important;
+    white-space: normal;
+    word-break: break-word;
+}
+.trace-matrix-table td {
+    padding: 4px 4px !important;
+    vertical-align: top;
+    white-space: normal;
+    word-break: break-word;
+    border-top: 1px solid #e0e0e0;
+}
+.trace-matrix-table .trace-cell-name {
+    font-weight: 500;
+    line-height: 1.25;
+}
+.trace-matrix-table .trace-cell-id {
+    font-size: 9px;
+    color: #757575;
+    font-family: monospace;
+    margin-top: 2px;
+    word-break: break-all;
+}
+.trace-matrix-table .trace-row-unmapped td {
+    background-color: #fff8e1;
+}
+.trace-matrix-summary {
+    font-size: 12px;
+    color: #555;
 }
 </style>

@@ -726,8 +726,19 @@ export default {
             if (!this.directRefInfos || !this.directRefInfos.refs || this.directRefInfos.refs.length === 0) {
                 return [];
             }
-            
-            const mergedRefs = RefsMergeUtil.mergeRefs(this.directRefInfos.refs);
+
+            // start == end (라인·열 모두 동일) 인 zero-length ref 제거.
+            // 그대로 두면 DOM 에 빈 <span class="highlight"></span> 가 생기고
+            // querySelectorAll 카운트는 올라가지만 시각적으론 안 보여서
+            // "2개라고 했는데 1군데만 강조" 같은 혼란 발생 (upstream LLM/converter
+            // 가 단일점 ref 를 생성하는 경우 — DataValidationUtil 통과는 가능).
+            const visibleRefs = this.directRefInfos.refs.filter(r => {
+                if (!r || !Array.isArray(r) || r.length !== 2 ||
+                    !Array.isArray(r[0]) || !Array.isArray(r[1])) return false
+                return !(r[0][0] === r[1][0] && r[0][1] === r[1][1])
+            })
+
+            const mergedRefs = RefsMergeUtil.mergeRefs(visibleRefs);
             return this.consolidateConsecutiveLines(mergedRefs);
         },
         
