@@ -1196,9 +1196,32 @@ export default {
                     const pols = inBc.filter(el => el._type && el._type.includes('Policy'))
                     const bcTraceName = bc.traceName || bc.name
 
-                    const emit = (el, kind, makeFn) => {
+                    // BC 단위로 미리 Aggregate→US 매핑을 캐시한다.
+                    // ES generator 가 element-level refs 를 sparse 하게 만드는 경우 대비
+                    // (Aggregate 의 refs 가 있으면 그 아래 Command/Event/Policy 는 부모의 US 를 상속)
+                    const aggUsCache = new Map()
+                    for (const agg of aggs) {
+                        const refs = getRefsForElement(model, bcTraceName, agg)
+                        aggUsCache.set(agg.id, findUsForRefs(refs))
+                    }
+                    // BC 차원의 union — Aggregate 도 0 매핑일 때 마지막 fallback 용
+                    const bcUsUnion = new Set()
+                    for (const ids of aggUsCache.values()) {
+                        for (const id of ids) bcUsUnion.add(id)
+                    }
+
+                    const emit = (el, kind, makeFn, parentAgg) => {
                         const refs = getRefsForElement(model, bcTraceName, el)
-                        const usIds = findUsForRefs(refs)
+                        let usIds = findUsForRefs(refs)
+
+                        // Fallback chain: element refs → parent Aggregate refs → BC 의 US union
+                        if (usIds.length === 0 && parentAgg && aggUsCache.has(parentAgg.id)) {
+                            usIds = aggUsCache.get(parentAgg.id)
+                        }
+                        if (usIds.length === 0 && bcUsUnion.size > 0) {
+                            usIds = [...bcUsUnion]
+                        }
+
                         if (usIds.length === 0) {
                             stats[kind]++
                             stats.unmappedTotal++
@@ -1212,19 +1235,19 @@ export default {
                     }
 
                     for (const agg of aggs) {
-                        emit(agg, 'aggregate', (us) => makeRow(us, bc, agg, null, null, null))
+                        emit(agg, 'aggregate', (us) => makeRow(us, bc, agg, null, null, null), agg)
                     }
                     for (const cmd of cmds) {
                         const parentAgg = findRelatedAggregate(cmd, aggs)
-                        emit(cmd, 'command', (us) => makeRow(us, bc, parentAgg, cmd, null, null))
+                        emit(cmd, 'command', (us) => makeRow(us, bc, parentAgg, cmd, null, null), parentAgg)
                     }
                     for (const evt of evts) {
                         const parentAgg = findRelatedAggregate(evt, aggs)
-                        emit(evt, 'event', (us) => makeRow(us, bc, parentAgg, null, evt, null))
+                        emit(evt, 'event', (us) => makeRow(us, bc, parentAgg, null, evt, null), parentAgg)
                     }
                     for (const pol of pols) {
                         const parentAgg = findRelatedAggregate(pol, aggs)
-                        emit(pol, 'policy', (us) => makeRow(us, bc, parentAgg, null, null, pol))
+                        emit(pol, 'policy', (us) => makeRow(us, bc, parentAgg, null, null, pol), parentAgg)
                     }
                 }
             }
