@@ -648,7 +648,9 @@
     "dontSave": "Leave",
     "save": "Save",
     "restoreDraft": "Restore Draft",
-    "restoreDraftConfirm": "Are you sure you want to restore the draft?"
+    "restoreDraftConfirm": "Are you sure you want to restore the draft?",
+    "created": "Created",
+    "modified": "Modified"
   },
   "UIWizardDialoger": {
     "imageMessage": "Here are a logo for this service:",

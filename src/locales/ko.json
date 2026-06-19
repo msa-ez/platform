@@ -650,6 +650,8 @@
     "unsavedChanges": "저장하시겠습니까?",
     "dontSave": "나가기",
     "save": "저장",
+    "created": "생성",
+    "modified": "수정",
     "restoreDraft": "최근 작업 복구",
     "restoreDraftConfirm": "최근 작업을 복구하시겠습니까?"
   },

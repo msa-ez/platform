@@ -349,21 +349,36 @@
         <!-- Model Selection Dialog -->
         <v-dialog
             v-model="showModelSelectionDialog"
-            max-width="500"
+            max-width="560"
         >
             <v-card v-if="projectInfo && projectInfo.eventStorming && projectInfo.eventStorming.modelList && projectInfo.eventStorming.modelList.length > 0">
                 <v-card-title class="headline">
                     Select Model for PDF Export
                 </v-card-title>
                 <v-card-text>
-                    <v-list>
+                    <v-list two-line>
                         <v-list-item
-                            v-for="modelId in projectInfo.eventStorming.modelList"
+                            v-for="modelId in sortedESModelList"
                             :key="modelId"
                             @click="handleModelSelection(modelId)"
                         >
+                            <v-list-item-icon class="me-3">
+                                <v-icon color="primary">mdi-file-document-outline</v-icon>
+                            </v-list-item-icon>
                             <v-list-item-content>
-                                <v-list-item-title>{{ ESModelNames[modelId] }}</v-list-item-title>
+                                <v-list-item-title class="d-flex align-center">
+                                    <span class="font-weight-medium">{{ esModelDisplayName(modelId) }}</span>
+                                    <v-chip
+                                        x-small
+                                        label
+                                        outlined
+                                        class="ml-2"
+                                        style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px;"
+                                    >#{{ esModelShortId(modelId) }}</v-chip>
+                                </v-list-item-title>
+                                <v-list-item-subtitle class="mt-1 text--secondary" style="font-size: 12px;">
+                                    {{ esModelSubtitle(modelId) }}
+                                </v-list-item-subtitle>
                             </v-list-item-content>
                         </v-list-item>
                     </v-list>
@@ -648,7 +663,10 @@
                 unsavedChanges: false,
                 showModelSelectionDialog: false,
                 showPublicModel: false,
-                modelNamesCache: {}
+                modelNamesCache: {},
+                // PDF Export 모델 선택 다이얼로그에서 untitled 가 중복되는 케이스 구분용 메타.
+                // { [modelId]: { projectName, createdTimeStamp, lastModifiedTimeStamp } }
+                modelMetaCache: {}
             }
         },
         computed: {
@@ -662,24 +680,34 @@
                 }
             },
             ESModelNames() {
-                const modelList = this.projectInfo && 
-                                 this.projectInfo.eventStorming && 
+                const modelList = this.projectInfo &&
+                                 this.projectInfo.eventStorming &&
                                  this.projectInfo.eventStorming.modelList || [];
-                
-                // Load model names if not in cache
+
+                // Load model names AND meta (createdTimeStamp 등) if not in cache.
+                // 다이얼로그에서 untitled 가 중복돼도 short-id + 생성시각으로 구분 가능하도록.
                 modelList.forEach(async (modelId) => {
                     if (!this.modelNamesCache[modelId]) {
                         try {
                             const model = await this.list(`db://definitions/${modelId}/information`);
                             if(model){
                                 this.$set(this.modelNamesCache, modelId, model.projectName || modelId);
+                                this.$set(this.modelMetaCache, modelId, {
+                                    projectName: model.projectName || '',
+                                    createdTimeStamp: model.createdTimeStamp || null,
+                                    lastModifiedTimeStamp: model.lastModifiedTimeStamp || null
+                                });
                             }else{
-                                // this.deleteModelList(modelId)
                                 throw new Error(`Model not found: ${modelId}`);
                             }
                         } catch (error) {
                             console.error('Error loading model name:', error);
                             this.$set(this.modelNamesCache, modelId, modelId);
+                            this.$set(this.modelMetaCache, modelId, {
+                                projectName: '',
+                                createdTimeStamp: null,
+                                lastModifiedTimeStamp: null
+                            });
                         }
                     }
                 });
@@ -688,6 +716,23 @@
                     acc[modelId] = this.modelNamesCache[modelId] || modelId;
                     return acc;
                 }, {});
+            },
+            // PDF Export 다이얼로그용 — 최근 생성순으로 정렬된 modelList
+            sortedESModelList() {
+                const modelList = (this.projectInfo &&
+                                  this.projectInfo.eventStorming &&
+                                  this.projectInfo.eventStorming.modelList) || [];
+                // 메타가 로딩될 때마다 재정렬되게 ESModelNames 도 참조해 의존성을 만든다.
+                // (Vue 의 computed 종속 추적이 modelMetaCache 변경을 감지)
+                // eslint-disable-next-line no-unused-vars
+                const _ = this.ESModelNames;
+                return [...modelList].sort((a, b) => {
+                    const ma = this.modelMetaCache[a];
+                    const mb = this.modelMetaCache[b];
+                    const ta = (ma && ma.createdTimeStamp) || 0;
+                    const tb = (mb && mb.createdTimeStamp) || 0;
+                    return tb - ta; // 최신순
+                });
             }
         },
         async created(){
@@ -870,6 +915,57 @@
             });
         },
         methods: {
+            // PDF Export 모델 선택 다이얼로그 헬퍼:
+            //   동일 projectName ('untitled') 모델이 여러개일 때 short-id 와 생성시각으로 구분.
+            esModelShortId(modelId) {
+                if (!modelId) return '';
+                // 끝 6 자리 (UUID 의 마지막 부분). prefix '1_es_' 는 표시 노이즈라 잘라냄.
+                const stripped = String(modelId).replace(/^1?_?es_/, '');
+                return stripped.slice(-6);
+            },
+            esModelDisplayName(modelId) {
+                const name = (this.modelNamesCache && this.modelNamesCache[modelId]) || modelId;
+                // raw modelId 가 그대로 들어온 경우 (로드 실패 또는 untitled fallback) 는 untitled 로 표시
+                if (name === modelId) return 'Untitled';
+                return name;
+            },
+            esModelSubtitle(modelId) {
+                const meta = this.modelMetaCache && this.modelMetaCache[modelId];
+                const parts = [`#${this.esModelShortId(modelId)}`];
+                const created = meta && meta.createdTimeStamp;
+                if (created) {
+                    parts.push(`${this.$t('autoModeling.created') || 'Created'} ${this.formatRelativeTimestamp(created)}`);
+                }
+                const modified = meta && meta.lastModifiedTimeStamp;
+                if (modified && (!created || Math.abs(modified - created) > 60000)) {
+                    parts.push(`${this.$t('autoModeling.modified') || 'Modified'} ${this.formatRelativeTimestamp(modified)}`);
+                }
+                return parts.join(' · ');
+            },
+            formatRelativeTimestamp(ts) {
+                if (!ts) return '';
+                const n = Number(ts);
+                if (!isFinite(n) || n <= 0) return '';
+                const now = Date.now();
+                const diff = now - n;
+                const sec = Math.floor(diff / 1000);
+                if (sec < 0) {
+                    // 미래 시각 — 절대 시간으로 fallback
+                    try { return new Date(n).toLocaleString(); } catch (_) { return ''; }
+                }
+                if (sec < 60) return `${sec}s ago`;
+                const min = Math.floor(sec / 60);
+                if (min < 60) return `${min}m ago`;
+                const hr = Math.floor(min / 60);
+                if (hr < 24) return `${hr}h ago`;
+                const day = Math.floor(hr / 24);
+                if (day < 7) return `${day}d ago`;
+                // 일주일 이상이면 절대 날짜로
+                try {
+                    const d = new Date(n);
+                    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+                } catch (_) { return ''; }
+            },
             // 한글 IME 의 한 글자 조합 commit 도 keydown 으로 key='Enter' 를 발화시킴.
             // event.isComposing / keyCode 229 가드를 안 두면 한글 한 자마다 Enter 가 눌린 것처럼
             // 처리되어 매 입력마다 startGen / openStorageDialog 가 호출됨.
