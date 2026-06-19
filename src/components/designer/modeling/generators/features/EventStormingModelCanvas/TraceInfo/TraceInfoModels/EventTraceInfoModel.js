@@ -50,6 +50,14 @@ export default class EventTraceInfoModel extends TraceInfoModelAbstract {
             return this.value.refs;
         }
 
+        // TYPE 4: fallback — 부모 Aggregate 의 trace refs 상속.
+        // (ES backend 가 commandRefs 와 event.refs 양쪽 다 비워두는 케이스 대응 —
+        //  실측 시 Event 의 0/8 만 trace 보이던 비대칭 해소)
+        const parentRefs = this._getParentAggregateRefsFallback();
+        if(parentRefs) {
+            return parentRefs;
+        }
+
         return null;
     }
     __isValidEventTraceValue(value) {

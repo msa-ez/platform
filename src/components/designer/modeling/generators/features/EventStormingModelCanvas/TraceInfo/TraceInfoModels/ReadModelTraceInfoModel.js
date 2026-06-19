@@ -40,6 +40,13 @@ export default class ReadModelTraceInfoModel extends TraceInfoModelAbstract {
             return this.value.refs;
         }
 
+        // TYPE 4: fallback — 부모 Aggregate 의 trace refs 상속.
+        // (ES backend 가 traceInfo.commandRefs.readModels 를 sparse 하게 비우는 케이스 대응)
+        const parentRefs = this._getParentAggregateRefsFallback();
+        if(parentRefs) {
+            return parentRefs;
+        }
+
         return null;
     }
     __isValidReadModelTraceValue(value) {
