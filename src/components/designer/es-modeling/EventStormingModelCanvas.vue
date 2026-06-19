@@ -3392,6 +3392,10 @@
                                         this.value.langgraphStudioInfos.esGenerator.isCompleted = true
                                         this.value.langgraphStudioInfos.esGenerator.logs = logs
                                         await this._sanpshotModelForcely()
+                                        // snapshotLists 외에 versionLists 에도 자동으로 새 버전 push.
+                                        // (이전엔 사용자가 수동 Save 를 안 누르면 v0-0-1 빈 스냅샷만 남고
+                                        //  refresh 시 elements 잃어버리는 문제 — 매번 재현되던 버그)
+                                        await this._autoBackupAfterGeneration()
 
                                         // server-side langgraph ES 생성 경로에서는 client-side 의
                                         // CommandGWTGeneratorByFunctions.onGenerationDone 콜백이 안 돌아
@@ -5037,6 +5041,139 @@
                     return await this._snapshotInflight;
                 } finally {
                     this._snapshotInflight = null;
+                }
+            },
+
+            /**
+             * ES 자동 생성 완료 시 versionLists 에 자동으로 새 버전을 push.
+             *
+             * 그동안 onComplete 의 _sanpshotModelForcely 는 snapshotLists 에만 쓰고
+             * versionLists 에는 안 써서, 사용자가 캔버스에서 수동 Save 를 누르기 전엔
+             * v0-0-1 (생성 직후 빈 스냅샷) 만 남아있고 elements 0 인 상태로 persist 되던
+             * 문제가 매번 재현. (브라우저 메모리엔 elements 가 있어도 refresh 하면 잃음)
+             *
+             * 이 메서드는 backupModel 의 핵심 단계를 프로그래매틱으로 수행:
+             *   1) information.lastVersionName 의 마지막 숫자 증가 (v0-0-1 → v0-0-2)
+             *   2) 캔버스 스크린샷 (실패해도 진행)
+             *   3) versionValue / image 를 storage:// 에 putString
+             *   4) versionLists/{version} 메타 (saveUser, timeStamp, valueUrl 등) putObject
+             *   5) information.lastVersionName 갱신
+             *
+             * In-flight dedup 으로 onComplete 중복 발사에 안전.
+             */
+            async _autoBackupAfterGeneration() {
+                if (this._autoBackupInflight) return this._autoBackupInflight;
+                this._autoBackupInflight = (async () => {
+                    try {
+                        if (!this.isServerModel) return; // 로컬 모델은 versionLists 없음
+                        const originProjectId = this.projectId;
+                        if (!originProjectId) return;
+
+                        // elements 가 비어있으면 의미 없는 빈 버전 push 방지.
+                        const elemCount = (this.value && this.value.elements)
+                            ? Object.keys(this.value.elements).length : 0;
+                        if (elemCount === 0) {
+                            console.warn('[ES] auto-backup skipped — elements still empty')
+                            return;
+                        }
+
+                        // 다음 version 이름 계산 (ModelCanvas saveModel 의 backup 분기와 동일)
+                        const fallbackBase = this.defaultVersion || 'v0-0-1';
+                        let nextVer = (this.information && this.information.lastVersionName)
+                            ? this.information.lastVersionName : fallbackBase;
+                        if (this.information && this.information.lastVersionName) {
+                            const last = nextVer.slice(-1);
+                            const inc = !isNaN(Number(last)) ? String(Number(last) + 1) : '';
+                            nextVer = `${nextVer.slice(0, -1)}${inc}`;
+                        }
+                        const projectVersion = String(nextVer).replaceAll('.', '-').trim();
+                        if (!projectVersion || projectVersion.includes('/') || projectVersion.includes(':')) {
+                            console.warn('[ES] auto-backup skipped — invalid version', projectVersion)
+                            return;
+                        }
+
+                        // 이미 같은 버전이 존재하면 skip (중복 발사 / race 가드)
+                        try {
+                            const existing = await this.list(`db://definitions/${originProjectId}/versionLists/${projectVersion}`);
+                            if (existing && (Array.isArray(existing) ? existing.length > 0 : true)) {
+                                console.warn('[ES] auto-backup skipped — version exists', projectVersion)
+                                return;
+                            }
+                        } catch (_) { /* not-found 가 정상 */ }
+
+                        // 스크린샷 (실패해도 버전 push 자체는 진행)
+                        let img = null;
+                        try {
+                            if (this.$refs['modeler-image-generator']) {
+                                img = await this.$refs['modeler-image-generator'].save(this.projectName, this.canvas);
+                            }
+                        } catch (e) { /* noop */ }
+
+                        // SCM 태그 (있는 경우)
+                        try {
+                            if (this.value && this.value.scm && this.value.scm.org && this.value.scm.repo) {
+                                this.value.scm.tag = projectVersion;
+                            }
+                        } catch (_) { /* noop */ }
+
+                        // 본 데이터 + 이미지 storage 에 (backupModel 과 동일 경로)
+                        let valueUrl = null;
+                        try {
+                            valueUrl = await this.putString(
+                                `storage://definitions/${originProjectId}/versionLists/${projectVersion}/versionValue`,
+                                JSON.stringify(this.value)
+                            );
+                        } catch (e) {
+                            console.error('[ES] auto-backup versionValue putString 실패', e)
+                            return; // 본 데이터 못 올리면 의미 없음
+                        }
+                        let imageUrl = null;
+                        if (img) {
+                            try {
+                                imageUrl = await this.putString(
+                                    `storage://definitions/${originProjectId}/versionLists/${projectVersion}/image`,
+                                    img
+                                );
+                            } catch (_) { /* noop */ }
+                        }
+
+                        // versionLists 메타 row
+                        try {
+                            await this.putObject(`db://definitions/${originProjectId}/versionLists/${projectVersion}`, {
+                                lastQueueKey: this.latestQueueKey || '',
+                                saveUser: this.userInfo ? this.userInfo.uid : '',
+                                saveUserEmail: this.userInfo ? this.userInfo.email : '',
+                                saveUserName: this.userInfo ? this.userInfo.name : '',
+                                projectName: this.projectName || (this.information && this.information.projectName) || 'untitled',
+                                img: imageUrl,
+                                timeStamp: Date.now(),
+                                comment: 'auto-saved after generation',
+                                valueUrl: valueUrl
+                            });
+                        } catch (e) {
+                            console.error('[ES] auto-backup versionLists meta putObject 실패', e)
+                            return;
+                        }
+
+                        // information.lastVersionName 갱신
+                        try {
+                            await this.putObject(`db://definitions/${originProjectId}/information`, {
+                                lastVersionName: projectVersion
+                            });
+                        } catch (_) { /* noop */ }
+
+                        // 다른 탭의 프로젝트 목록 갱신 신호
+                        try { localStorage.setItem('modelListUpdate', Date.now().toString()) } catch (_) { /* noop */ }
+
+                        console.info('[ES] auto-backup 완료 →', projectVersion, `(elements=${elemCount})`);
+                    } catch (e) {
+                        console.error('[ES] auto-backup 실패 (수동 Save 로 복구 가능)', e)
+                    }
+                })();
+                try {
+                    return await this._autoBackupInflight;
+                } finally {
+                    this._autoBackupInflight = null;
                 }
             },
 
