@@ -27,9 +27,9 @@ class EsValueLangGraphStudioProxy extends LangGraphProxyBase {
     }
 
     
-    static async makeNewJob(selectedDraftOptions, userInfo, information, preferedLanguage) {
+    static async makeNewJob(selectedDraftOptions, userInfo, information, preferedLanguage, fullRequirementsText) {
         const inputObj = ProxyInputObjectConverter.toEsProxyInputObject(
-            selectedDraftOptions, userInfo, information, preferedLanguage
+            selectedDraftOptions, userInfo, information, preferedLanguage, fullRequirementsText
         );
         logger.debug('구축된 데이터를 기반으로 Job 생성 요청', inputObj);
         return await super.makeNewJob(inputObj);

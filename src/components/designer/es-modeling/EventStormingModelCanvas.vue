@@ -4886,11 +4886,22 @@
                         delete this.selectedDraftOptions.traceInfo
                     }
 
+                    // ES backend 의 노이즈 필터가 BC-chunked 가 아닌 원본 userStory 좌표계 기준으로
+                    // markdown 헤더/표/빈 라인 ref 를 drop 하려면 전체 userStory 텍스트가 필요.
+                    // traceInfo.userInputs.userStory 에 있으면 우선 사용, 없으면 selectedDraftOptions
+                    // 안의 BC description 들을 합쳐 fallback (좌표 부정확하지만 빈 상태보단 나음).
+                    const fullRequirementsText = (traceInfo
+                        && traceInfo.userInputs
+                        && typeof traceInfo.userInputs.userStory === 'string')
+                        ? traceInfo.userInputs.userStory
+                        : ''
+
                     const jobId = await EsValueLangGraphStudioProxy.makeNewJob(
                         this.selectedDraftOptions,
                         this.userInfo,
                         this.information,
-                        preferedLanguage
+                        preferedLanguage,
+                        fullRequirementsText
                     )
                     
                     if(!this.value.langgraphStudioInfos) 

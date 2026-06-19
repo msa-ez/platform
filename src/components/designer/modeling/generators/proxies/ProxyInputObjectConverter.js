@@ -1,5 +1,5 @@
 class ProxyInputObjectConverter {
-    static toEsProxyInputObject(selectedDraftOptions, userInfo, information, preferedLanguage) {
+    static toEsProxyInputObject(selectedDraftOptions, userInfo, information, preferedLanguage, fullRequirementsText) {
         if(!selectedDraftOptions) {
             throw new Error("selectedDraftOptions is required")
         }
@@ -10,7 +10,7 @@ class ProxyInputObjectConverter {
             throw new Error("information.projectId is required")
         }
 
-        return {
+        const payload = {
             "requestType": "fromDraft",
             "draft": this._toDraft(selectedDraftOptions),
             "ids": {
@@ -19,6 +19,15 @@ class ProxyInputObjectConverter {
             },
             "preferedLanguage": (preferedLanguage) ? preferedLanguage : "English"
         }
+
+        // 전체 userStory 도 함께 전달 — ES backend 의 노이즈 필터가 BC-chunked 가 아닌
+        // 원본 userStory 좌표계 기준으로 markdown 헤더/표/빈 라인 ref 를 drop 하도록.
+        // (fromDraft 모드에서는 boundedContextRequirements 만 BC 별로 잘려있고 원본 텍스트가 없음)
+        if (fullRequirementsText && typeof fullRequirementsText === 'string' && fullRequirementsText.length > 0) {
+            payload.requirements = fullRequirementsText
+        }
+
+        return payload
     }
 
     static _toDraft(selectedDraftOptions) {
