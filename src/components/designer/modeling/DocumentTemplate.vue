@@ -1124,6 +1124,12 @@ export default {
                 ? (Array.isArray(this.eventStormingModels) ? this.eventStormingModels : Object.values(this.eventStormingModels))
                 : []
 
+            // 구조 라인(목차 표 행/헤더) US-ID fallback 용 — userStory 원문 라인 + 알려진 섹션 ID
+            const usLines = (this.projectInfo && this.projectInfo.userStory)
+                ? this.projectInfo.userStory.split('\n') : []
+            const sectionIds = new Set(sections.map(s => s.id))
+            const usIdRe = /\[?([A-Za-z][\w-]*US-(?:FR|NFR)-\d+)\]?/
+
             const findUsForRefs = (refs) => {
                 if (!Array.isArray(refs) || refs.length === 0 || sections.length === 0) return []
                 const hits = new Set()
@@ -1132,8 +1138,19 @@ export default {
                     const sLine = typeof ref[0][0] === 'number' ? ref[0][0] : null
                     const eLine = typeof ref[1][0] === 'number' ? ref[1][0] : sLine
                     if (sLine == null) continue
+                    let matched = false
                     for (const sec of sections) {
-                        if (sLine <= sec.endLine && eLine >= sec.startLine) hits.add(sec.id)
+                        if (sLine <= sec.endLine && eLine >= sec.startLine) { hits.add(sec.id); matched = true }
+                    }
+                    // fallback: 섹션 본문 범위 밖(목차 표 행/헤더 등)이지만 그 줄에 US-ID 가
+                    // 적혀 있으면 그 US 로 귀속. draft traceability 가 TOC 행/구조 라인에
+                    // (zero-length 로) 떨어뜨린 ref 를 구제 — 매핑 가능한 근거가 그 줄에 있음.
+                    if (!matched) {
+                        const lo = Math.max(1, sLine), hi = Math.min(eLine, usLines.length)
+                        for (let ln = lo; ln <= hi; ln++) {
+                            const mm = (usLines[ln - 1] || '').match(usIdRe)
+                            if (mm && sectionIds.has(mm[1])) { hits.add(mm[1]); break }
+                        }
                     }
                 }
                 return [...hits]
