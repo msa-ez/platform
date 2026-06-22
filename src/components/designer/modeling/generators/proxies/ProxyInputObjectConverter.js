@@ -12,7 +12,7 @@ class ProxyInputObjectConverter {
 
         const payload = {
             "requestType": "fromDraft",
-            "draft": this._toDraft(selectedDraftOptions),
+            "draft": this._toDraft(selectedDraftOptions, bcRequirementIndexMapping),
             "ids": {
                 "uid": userInfo.uid,
                 "projectId": information.projectId
@@ -30,7 +30,7 @@ class ProxyInputObjectConverter {
         return payload
     }
 
-    static _toDraft(selectedDraftOptions) {
+    static _toDraft(selectedDraftOptions, bcRequirementIndexMapping) {
         const structures = [];
         const boundedContextRequirements = {};
         const essentialAggregateAttributes = {};
