@@ -354,7 +354,10 @@ class RefsTraceUtil {
             sLine = clamp(sLine, minLine, maxLine);
             eLine = clamp(eLine, minLine, maxLine);
 
-            // 문구가 해당 라인에 없으면 ±5 라인 탐색
+            // 문구가 해당 라인에 없으면 ±5 라인 탐색.
+            // 가드: 짧은(< 4 자) phrase 는 흔한 토큰/조사일 수 있어 무관한 라인으로 잘못
+            // 옮겨질 위험이 크므로 relocate 안 함. ±5 window 안 매칭이 모호(2 곳 이상)하면
+            // 어디로 옮길지 확신 불가 → 원래 라인 유지. (false relocation 방지)
             const tryRelocate = (line, phrase, isEnd) => {
                 if (typeof phrase !== 'string' || !phrase.trim()) return line;
                 const has = (ln) => {
@@ -363,15 +366,15 @@ class RefsTraceUtil {
                     return content.includes(phrase);
                 };
                 if (has(line)) return line;
+                if (phrase.trim().length < 4) return line;
 
-                console.warn("Phrase not found in line. Trying to relocate...", phrase, line);
+                const candidates = [];
                 for (let d = 1; d <= 5; d++) {
-                    if (line - d >= minLine && has(line - d)) return line - d;
-                    if (line + d <= maxLine && has(line + d)) return line + d;
+                    if (line - d >= minLine && has(line - d)) candidates.push(line - d);
+                    if (line + d <= maxLine && has(line + d)) candidates.push(line + d);
                 }
-
-                console.warn("Phrase not found in range. Keeping the original line...", phrase, line);
-                return line; // 못 찾으면 원래 라인 유지
+                if (candidates.length === 1) return candidates[0];
+                return line; // 없거나 모호하면 원래 라인 유지
             };
 
             sLine = tryRelocate(sLine, sPhrase, false);

@@ -628,7 +628,12 @@
                                         <span class="trace-type-chip" :class="`trace-type-${row.type}`">{{ $t('DocumentTemplate.traceabilityMatrix.types.' + row.type) }}</span>
                                     </td>
                                     <td>
-                                        <div class="trace-cell-name">{{ row.name || '-' }}</div>
+                                        <div class="trace-cell-name">
+                                            {{ row.name || '-' }}
+                                            <span v-if="row.provenance === 'inferred'"
+                                                  style="display:inline-block;margin-left:6px;font-size:0.68em;padding:1px 5px;border-radius:3px;background:#fff3e0;color:#e65100;border:1px solid #ffcc80;vertical-align:middle;"
+                                                  title="직접 근거 텍스트가 없어 상위 Aggregate 의 매핑을 상속한 추론 매핑입니다. 원본 요구사항에 해당 요소를 직접 가리키는 문장은 없습니다.">추론</span>
+                                        </div>
                                         <div v-if="row.technical && row.technical !== row.name" class="trace-cell-technical">{{ row.technical }}</div>
                                         <div v-if="row.parent" class="trace-cell-parent">↳ {{ row.parent }}</div>
                                     </td>
@@ -1165,7 +1170,7 @@ export default {
                 return null
             }
 
-            const makeRow = (us, bc, agg, cmd, evt, pol) => ({
+            const makeRow = (us, bc, agg, cmd, evt, pol, provenance) => ({
                 usId: us ? us.id : '(미매핑)',
                 usName: us ? us.name : '',
                 bcId: bc ? (bc.id || '') : '',
@@ -1177,7 +1182,8 @@ export default {
                 evtId: evt ? (evt.id || '') : '',
                 evtName: evt ? (evt.displayName || evt.name || '') : '',
                 polId: pol ? (pol.id || '') : '',
-                polName: pol ? (pol.displayName || pol.name || '') : ''
+                polName: pol ? (pol.displayName || pol.name || '') : '',
+                provenance: provenance || 'direct'
             })
 
             for (const model of models) {
@@ -1204,50 +1210,51 @@ export default {
                         const refs = getRefsForElement(model, bcTraceName, agg)
                         aggUsCache.set(agg.id, findUsForRefs(refs))
                     }
-                    // BC 차원의 union — Aggregate 도 0 매핑일 때 마지막 fallback 용
-                    const bcUsUnion = new Set()
-                    for (const ids of aggUsCache.values()) {
-                        for (const id of ids) bcUsUnion.add(id)
-                    }
-
                     const emit = (el, kind, makeFn, parentAgg) => {
                         const refs = getRefsForElement(model, bcTraceName, el)
                         let usIds = findUsForRefs(refs)
+                        let provenance = 'direct'
 
-                        // Fallback chain: element refs → parent Aggregate refs → BC 의 US union
-                        if (usIds.length === 0 && parentAgg && aggUsCache.has(parentAgg.id)) {
+                        // 추론 단계: element 자체 refs 가 없으면 부모 Aggregate 의 매핑을 상속.
+                        // Command/Event/Policy 는 구조상 Aggregate 에 속하므로 합당한 추론이나,
+                        // direct 매핑과 구별되도록 provenance='inferred' 로 표시한다.
+                        //
+                        // NOTE: 기존의 'BC 의 US union' fallback (refs 없는 요소를 BC 의 모든 US 에
+                        // 매핑) 은 제거. 한 요소가 BC 내 모든 user story 에 붙어버리는 대량 거짓
+                        // 매핑의 원인이었음. 근거 없는 요소는 정직하게 '미매핑' 으로 남긴다.
+                        // (ES generator 의 keyword fallback 제거와 동일한 '거짓보다 빈 값이 정직' 정책)
+                        if (usIds.length === 0 && parentAgg && parentAgg.id !== el.id &&
+                            aggUsCache.has(parentAgg.id) && aggUsCache.get(parentAgg.id).length > 0) {
                             usIds = aggUsCache.get(parentAgg.id)
-                        }
-                        if (usIds.length === 0 && bcUsUnion.size > 0) {
-                            usIds = [...bcUsUnion]
+                            provenance = 'inferred'
                         }
 
                         if (usIds.length === 0) {
                             stats[kind]++
                             stats.unmappedTotal++
-                            rows.push(makeFn(null))
+                            rows.push(makeFn(null, 'none'))
                             return
                         }
                         for (const usId of usIds) {
                             const us = sections.find(s => s.id === usId)
-                            rows.push(makeFn(us))
+                            rows.push(makeFn(us, provenance))
                         }
                     }
 
                     for (const agg of aggs) {
-                        emit(agg, 'aggregate', (us) => makeRow(us, bc, agg, null, null, null), agg)
+                        emit(agg, 'aggregate', (us, prov) => makeRow(us, bc, agg, null, null, null, prov), agg)
                     }
                     for (const cmd of cmds) {
                         const parentAgg = findRelatedAggregate(cmd, aggs)
-                        emit(cmd, 'command', (us) => makeRow(us, bc, parentAgg, cmd, null, null), parentAgg)
+                        emit(cmd, 'command', (us, prov) => makeRow(us, bc, parentAgg, cmd, null, null, prov), parentAgg)
                     }
                     for (const evt of evts) {
                         const parentAgg = findRelatedAggregate(evt, aggs)
-                        emit(evt, 'event', (us) => makeRow(us, bc, parentAgg, null, evt, null), parentAgg)
+                        emit(evt, 'event', (us, prov) => makeRow(us, bc, parentAgg, null, evt, null, prov), parentAgg)
                     }
                     for (const pol of pols) {
                         const parentAgg = findRelatedAggregate(pol, aggs)
-                        emit(pol, 'policy', (us) => makeRow(us, bc, parentAgg, null, null, pol), parentAgg)
+                        emit(pol, 'policy', (us, prov) => makeRow(us, bc, parentAgg, null, null, pol, prov), parentAgg)
                     }
                 }
             }
@@ -1272,10 +1279,10 @@ export default {
             // flat.rows 는 (US, BC, Aggregate, Command|Event|Policy) 조합으로 한 행에 한 요소만
             // 채워져 있다. 여기서 type 별로 다시 풀어서 row 생성.
             const pickElement = (r) => {
-                if (r.polId || r.polName) return { type: 'policy', id: r.polId, name: r.polName, technical: '', parent: r.aggName || '' }
-                if (r.evtId || r.evtName) return { type: 'event', id: r.evtId, name: r.evtName, technical: '', parent: r.aggName || '' }
-                if (r.cmdId || r.cmdName) return { type: 'command', id: r.cmdId, name: r.cmdName, technical: '', parent: r.aggName || '' }
-                if (r.aggId || r.aggName) return { type: 'aggregate', id: r.aggId, name: r.aggName, technical: '', parent: r.bcName || '' }
+                if (r.polId || r.polName) return { type: 'policy', id: r.polId, name: r.polName, technical: '', parent: r.aggName || '', provenance: r.provenance }
+                if (r.evtId || r.evtName) return { type: 'event', id: r.evtId, name: r.evtName, technical: '', parent: r.aggName || '', provenance: r.provenance }
+                if (r.cmdId || r.cmdName) return { type: 'command', id: r.cmdId, name: r.cmdName, technical: '', parent: r.aggName || '', provenance: r.provenance }
+                if (r.aggId || r.aggName) return { type: 'aggregate', id: r.aggId, name: r.aggName, technical: '', parent: r.bcName || '', provenance: r.provenance }
                 return null
             }
 
