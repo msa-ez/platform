@@ -59,12 +59,68 @@ class TextChunker {
      * @returns {Array<{text: string, startLine: number}>} 청크 배열 (텍스트와 시작 라인 번호 포함)
      */
     splitIntoChunksByLine(text) {
+        // US-단위 경계 인식: '##### [PROJ-US-FR/NFR-XXX]' 같은 user story 헤더.
+        // 이런 헤더가 있으면 US-단위로 묶어 청크를 나눈다 → mid-story 분할/overlap 누출 제거.
+        // (overlap 기반 line 청킹은 한 story 의 끝 줄이 다음 청크에 반복되어, 인접 BC 로
+        //  이벤트가 1개씩 새는 off-by-one 누출의 원인이었음.)
+        const usHeaderRe = /^\s*#{4,6}\s+\[[A-Za-z][\w-]*US-(?:FR|NFR)-\d+\]/;
+        const allLines = text.split('\n');
+        if (allLines.some(l => usHeaderRe.test(l))) {
+            return this._splitIntoChunksByUserStory(text, usHeaderRe);
+        }
+        // US 헤더가 없는 비표준 입력 → 기존 line+overlap 방식 유지 (backward-compat)
+        return this._splitIntoChunksByLineRaw(text);
+    }
+
+    /**
+     * US-단위(`##### [PROJ-US-FR/NFR-XXX]` 블록)로 청크 분할.
+     * - 첫 US 헤더 이전(목차/개요 preamble)은 하나의 unit.
+     * - 각 US 헤더에서 새 unit 시작, 다음 US 헤더 직전까지가 한 블록.
+     * - unit 은 절대 쪼개지 않고, overlap 없이 chunkSize 까지 greedy 하게 묶음.
+     *   (한 unit 이 chunkSize 를 넘으면 그 unit 단독 청크 — story 를 쪼개는 것보다 나음.)
+     * - 라인이 연속이라 startLine 기반 traceMap 좌표가 그대로 유지됨.
+     */
+    _splitIntoChunksByUserStory(text, usHeaderRe) {
+        const lines = text.split('\n');
+        const units = []; // [{ startLine, lines:[...] }]
+        let cur = null;
+        for (let i = 0; i < lines.length; i++) {
+            if (usHeaderRe.test(lines[i])) {
+                if (cur) units.push(cur);
+                cur = { startLine: i + 1, lines: [] };
+            } else if (!cur) {
+                cur = { startLine: i + 1, lines: [] }; // preamble
+            }
+            cur.lines.push(lines[i]);
+        }
+        if (cur) units.push(cur);
+
+        const chunks = [];
+        let buf = null; // { startLine, text }
+        for (const u of units) {
+            const uText = u.lines.join('\n');
+            if (buf && (buf.text.length + 1 + uText.length) > this.chunkSize) {
+                chunks.push({ text: buf.text, startLine: buf.startLine });
+                buf = null;
+            }
+            if (!buf) {
+                buf = { startLine: u.startLine, text: uText };
+            } else {
+                buf.text += '\n' + uText;
+            }
+        }
+        if (buf) chunks.push({ text: buf.text, startLine: buf.startLine });
+        return chunks;
+    }
+
+    /** 기존 line+overlap 청킹 (US 헤더 없는 입력용 fallback) */
+    _splitIntoChunksByLineRaw(text) {
         const lines = text.split('\n');
         const chunks = [];
         let currentChunk = '';
         let currentStartLine = 1;
         let currentLineCount = 0;
-        
+
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i];
             const lineWithNewline = i < lines.length - 1 ? line + '\n' : line;
