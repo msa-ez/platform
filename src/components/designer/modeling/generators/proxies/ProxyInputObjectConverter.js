@@ -1,5 +1,5 @@
 class ProxyInputObjectConverter {
-    static toEsProxyInputObject(selectedDraftOptions, userInfo, information, preferedLanguage, fullRequirementsText) {
+    static toEsProxyInputObject(selectedDraftOptions, userInfo, information, preferedLanguage, fullRequirementsText, bcRequirementIndexMapping) {
         if(!selectedDraftOptions) {
             throw new Error("selectedDraftOptions is required")
         }
@@ -37,11 +37,12 @@ class ProxyInputObjectConverter {
         const essentialEventNames = {};
         const essentialCommandNames = {};
         const essentialReadModelNames = {};
-        // BC description 의 라인 번호 → 원본 userStory 라인 번호 매핑.
-        // ES backend 의 command/event/policy/readModel worker 가 이 매핑으로 LLM 이 BC-local
-        // 좌표로 준 refs 를 원본 userStory 좌표로 변환한다. 이게 비면 refs 가 BC-local 인 채로
-        // 원본 좌표(목차 표/헤더 영역)와 충돌해 전부 drop/오매핑됨(역추적 공백의 진짜 원인).
-        const boundedContextRequirementIndexMapping = {};
+        // BC description local line → 원본 userStory line 매핑. ES backend 의 command/event/
+        // policy/readModel worker 가 LLM 의 BC-local refs 를 원본 좌표로 변환하는 데 필요.
+        // 호출부(EventStormingModelCanvas)가 traceInfo.traceMaps 로부터 만들어 전달한다.
+        // (requirements.traceMap 은 ESDialogerTraceUtil 이 traceInfo 로 옮기며 삭제하므로
+        //  여기선 직접 만들 수 없음 — 그래서 인자로 받는다.)
+        const boundedContextRequirementIndexMapping = bcRequirementIndexMapping || {};
 
         // selectedDraftOptions의 각 Bounded Context를 순회
         for (const [bcName, bcData] of Object.entries(selectedDraftOptions)) {
@@ -90,28 +91,6 @@ class ProxyInputObjectConverter {
             // 2. boundedContextRequirements 수집
             if (bcData.description) {
                 boundedContextRequirements[bcName] = bcData.description;
-            }
-
-            // 2-1. boundedContextRequirementIndexMapping 수집 (descLine → 원본 global line)
-            // requirements.traceMap 구조: { "<descLine>": { refs: [[[globalLine, col], [globalLine, col]]], isDirectMatching } }
-            const _tm = bcData.boundedContext && bcData.boundedContext.requirements && bcData.boundedContext.requirements.traceMap;
-            if (_tm && typeof _tm === 'object') {
-                const idxMap = {};
-                for (const descLineKey of Object.keys(_tm)) {
-                    const dl = parseInt(descLineKey, 10);
-                    if (!Number.isFinite(dl)) continue;
-                    const info = _tm[descLineKey];
-                    let g = null;
-                    try {
-                        if (info && Array.isArray(info.refs) && info.refs[0] && Array.isArray(info.refs[0][0])) {
-                            g = info.refs[0][0][0]; // 첫 ref 의 start global line
-                        }
-                    } catch (e) { /* skip */ }
-                    if (typeof g === 'number' && Number.isFinite(g)) idxMap[dl] = g;
-                }
-                if (Object.keys(idxMap).length > 0) {
-                    boundedContextRequirementIndexMapping[bcName] = idxMap;
-                }
             }
 
             // 3. essentialEventNames 수집 (이벤트 파싱)

@@ -4900,12 +4900,38 @@
                         ? traceInfo.userInputs.userStory
                         : ''
 
+                    // BC description local line → 원본 userStory line 매핑.
+                    // ES backend 의 command/event/policy/readModel worker 가 LLM 의 BC-local refs 를
+                    // 원본 좌표로 변환하는 데 필요. traceMap 은 ESDialogerTraceUtil 이
+                    // requirements.traceMap 에서 traceInfo.traceMaps 로 옮기며 삭제하므로, 여기(아직
+                    // traceInfo 가 살아있는 시점)에서 traceInfo.traceMaps 로부터 매핑을 만든다.
+                    // traceMaps[bc] = { "<descLine>": { refs:[[[globalLine,col],...]], isDirectMatching } }
+                    const bcRequirementIndexMapping = {}
+                    try {
+                        const _traceMaps = (traceInfo && traceInfo.traceMaps) ? traceInfo.traceMaps : {}
+                        for (const _bcName of Object.keys(_traceMaps)) {
+                            const _tm = _traceMaps[_bcName]
+                            if (!_tm || typeof _tm !== 'object') continue
+                            const _idx = {}
+                            for (const _dlKey of Object.keys(_tm)) {
+                                const _dl = parseInt(_dlKey, 10)
+                                if (!Number.isFinite(_dl)) continue
+                                const _info = _tm[_dlKey]
+                                let _g = null
+                                if (_info && Array.isArray(_info.refs) && _info.refs[0] && Array.isArray(_info.refs[0][0])) _g = _info.refs[0][0][0]
+                                if (typeof _g === 'number' && Number.isFinite(_g)) _idx[_dl] = _g
+                            }
+                            if (Object.keys(_idx).length > 0) bcRequirementIndexMapping[_bcName] = _idx
+                        }
+                    } catch (e) { console.error('Failed to build bcRequirementIndexMapping', e) }
+
                     const jobId = await EsValueLangGraphStudioProxy.makeNewJob(
                         this.selectedDraftOptions,
                         this.userInfo,
                         this.information,
                         preferedLanguage,
-                        fullRequirementsText
+                        fullRequirementsText,
+                        bcRequirementIndexMapping
                     )
                     
                     if(!this.value.langgraphStudioInfos) 
