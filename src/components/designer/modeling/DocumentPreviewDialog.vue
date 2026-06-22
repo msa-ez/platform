@@ -160,12 +160,14 @@ export default {
     },
     methods: {
         async getEventStormingModel(){
-            // 연결된 ES 목록은 reactive 한 eventStorming.modelList 를 우선 사용.
-            // eventStormingModelIds 는 full reload 시에만 갱신돼, 새 ES 생성 직후 새로고침
-            // 전까지 export-to-pdf 목록에 안 뜨던 원인. (하단 프로젝트 리스트 / sortedESModelList
-            // 는 modelList 를 쓰므로 자동 렌더됨 — 동일 소스로 일치시킨다.)
-            const modelIds = (this.projectInfo.eventStorming && this.projectInfo.eventStorming.modelList)
-                || this.projectInfo['eventStormingModelIds'];
+            // 로드 대상은 '선택된' ES (eventStormingModelIds) 여야 한다.
+            // 주의: 이전에 reactive 목적으로 modelList(전체)를 쓰게 바꿨다가, 모델을 골라도
+            // 프로젝트의 모든 ES 를 로드해 매트릭스가 N 개 모델을 합쳐 보여주는(BC/Aggregate 가
+            // 모델 수만큼 중복) 회귀가 발생했음. → 선택된 ID 우선, 없을 때만 modelList fallback.
+            const selected = this.projectInfo['eventStormingModelIds'];
+            const modelIds = (Array.isArray(selected) && selected.length)
+                ? selected
+                : ((this.projectInfo.eventStorming && this.projectInfo.eventStorming.modelList) || []);
             if(!modelIds || !modelIds.length) return;
 
             var option = {

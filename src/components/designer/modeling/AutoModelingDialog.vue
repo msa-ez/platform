@@ -2144,7 +2144,9 @@
                     return;
                 }
                 
-                // Single model case
+                // Single model case — 선택 ID 를 명시해 getEventStormingModel 이 그 1개만 로드하도록
+                const onlyId = this.projectInfo.eventStorming.modelList[0];
+                this.projectInfo.eventStormingModelIds = onlyId ? [onlyId] : [];
                 this.$refs.documentPreview.show();
             },
 
