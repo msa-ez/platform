@@ -919,9 +919,9 @@
             //   동일 projectName ('untitled') 모델이 여러개일 때 short-id 와 생성시각으로 구분.
             esModelShortId(modelId) {
                 if (!modelId) return '';
-                // 끝 6 자리 (UUID 의 마지막 부분). prefix '1_es_' 는 표시 노이즈라 잘라냄.
+                // 앞 8 자리 (UUID 앞부분 — git short hash 스타일). prefix '1_es_' 는 표시 노이즈라 잘라냄.
                 const stripped = String(modelId).replace(/^1?_?es_/, '');
-                return stripped.slice(-6);
+                return stripped.slice(0, 8);
             },
             esModelDisplayName(modelId) {
                 const name = (this.modelNamesCache && this.modelNamesCache[modelId]) || modelId;
