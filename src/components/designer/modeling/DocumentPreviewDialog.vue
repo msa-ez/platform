@@ -160,7 +160,13 @@ export default {
     },
     methods: {
         async getEventStormingModel(){
-            if(!this.projectInfo['eventStormingModelIds']) return;
+            // 연결된 ES 목록은 reactive 한 eventStorming.modelList 를 우선 사용.
+            // eventStormingModelIds 는 full reload 시에만 갱신돼, 새 ES 생성 직후 새로고침
+            // 전까지 export-to-pdf 목록에 안 뜨던 원인. (하단 프로젝트 리스트 / sortedESModelList
+            // 는 modelList 를 쓰므로 자동 렌더됨 — 동일 소스로 일치시킨다.)
+            const modelIds = (this.projectInfo.eventStorming && this.projectInfo.eventStorming.modelList)
+                || this.projectInfo['eventStormingModelIds'];
+            if(!modelIds || !modelIds.length) return;
 
             var option = {
                 sort: "desc",
@@ -170,7 +176,7 @@ export default {
                 endAt: null,
             }
 
-            for (const modelId of this.projectInfo['eventStormingModelIds']) {
+            for (const modelId of modelIds) {
                 if(modelId){
                     const [snapshots, information] = await Promise.all([
                         this.list(`db://definitions/${modelId}/snapshotLists`, option),
