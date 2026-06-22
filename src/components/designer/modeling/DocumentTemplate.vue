@@ -645,6 +645,38 @@
                         </v-simple-table>
                     </div>
 
+                    <!-- 추론 매핑 요소 (직접 근거 없이 상위 Aggregate 매핑 상속) — US 그룹과 분리 -->
+                    <div v-if="traceabilityMatrixGroups.inferred && traceabilityMatrixGroups.inferred.length > 0" class="trace-us-group pdf-content-item">
+                        <h4 class="trace-us-header" style="border-left-color:#e65100;">
+                            <span style="color:#e65100;">추론 매핑</span>
+                            <span class="trace-us-name" style="font-weight:normal;font-size:12px;">직접 근거 텍스트 없이 상위 Aggregate 의 매핑을 상속한 요소</span>
+                            <span class="trace-us-count">({{ traceabilityMatrixGroups.inferred.length }})</span>
+                        </h4>
+                        <v-simple-table dense class="trace-group-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 100px;">{{ $t('DocumentTemplate.traceabilityMatrix.elementType') }}</th>
+                                    <th>{{ $t('DocumentTemplate.traceabilityMatrix.elementName') }}</th>
+                                    <th style="width: 28%;">추론된 US</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="(row, idx) in traceabilityMatrixGroups.inferred" :key="`inferred-${idx}`">
+                                    <td>
+                                        <span class="trace-type-chip" :class="`trace-type-${row.type}`">{{ $t('DocumentTemplate.traceabilityMatrix.types.' + row.type) }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="trace-cell-name">{{ row.name || '-' }}</div>
+                                        <div v-if="row.parent" class="trace-cell-parent">↳ {{ row.parent }}</div>
+                                    </td>
+                                    <td>
+                                        <div class="trace-cell-id" style="color:#e65100;">{{ row.inferredUs || '-' }}</div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </v-simple-table>
+                    </div>
+
                     <!-- 미매핑 요소 (LLM ref 누락/오류 진단용) -->
                     <div v-if="traceabilityMatrixGroups.unmapped.length > 0" class="trace-us-group pdf-content-item">
                         <h4 class="trace-us-header trace-us-header-unmapped">
@@ -1291,6 +1323,8 @@ export default {
             const flat = this.traceabilityMatrixRows
             const groupMap = new Map()
             const unmapped = []
+            const inferred = []              // 추론 매핑 요소 (US 그룹과 분리해 별도 섹션으로 모음)
+            const inferredSeen = new Map()   // type::id|name → row (여러 US 로 추론된 경우 1행으로 합침)
             const seen = new Set()  // 중복 행 제거 (같은 US 안에서 같은 요소가 여러 ref 로 잡힌 경우)
 
             // flat.rows 는 (US, BC, Aggregate, Command|Event|Policy) 조합으로 한 행에 한 요소만
@@ -1307,15 +1341,35 @@ export default {
                 const elem = pickElement(r)
                 if (!elem) continue
                 const isUnmapped = r.usId === '(미매핑)'
-                const groupKey = isUnmapped ? '__unmapped__' : r.usId
+
+                if (isUnmapped) {
+                    const dk = `__unmapped__::${elem.type}::${elem.id || elem.name}`
+                    if (seen.has(dk)) continue
+                    seen.add(dk)
+                    unmapped.push(elem)
+                    continue
+                }
+
+                // 추론 매핑(부모 Aggregate 상속)은 US 그룹에 섞지 않고 별도 섹션으로 모은다.
+                // 한 요소가 여러 US 로 추론돼도 1행으로 합쳐 중복/혼잡을 제거한다.
+                if (elem.provenance === 'inferred') {
+                    const ik = `${elem.type}::${elem.id || elem.name}`
+                    if (inferredSeen.has(ik)) {
+                        if (r.usId) inferredSeen.get(ik).usIds.add(r.usId)
+                        continue
+                    }
+                    const row = { ...elem, usIds: new Set(r.usId ? [r.usId] : []) }
+                    inferredSeen.set(ik, row)
+                    inferred.push(row)
+                    continue
+                }
+
+                // direct 매핑만 US 그룹에 넣는다.
+                const groupKey = r.usId
                 const dedupKey = `${groupKey}::${elem.type}::${elem.id || elem.name}`
                 if (seen.has(dedupKey)) continue
                 seen.add(dedupKey)
 
-                if (isUnmapped) {
-                    unmapped.push(elem)
-                    continue
-                }
                 if (!groupMap.has(groupKey)) {
                     groupMap.set(groupKey, { us: { id: r.usId, name: r.usName }, rows: [], bcs: new Set() })
                 }
@@ -1350,7 +1404,14 @@ export default {
             }
             unmapped.sort((a, b) => (typeOrder[a.type] - typeOrder[b.type]) || (a.name || '').localeCompare(b.name || ''))
 
-            return { groups, unmapped }
+            // 추론 섹션: 추론된 US 목록을 문자열로 변환 후 정렬
+            inferred.forEach(row => {
+                row.inferredUs = [...row.usIds].sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).join(', ')
+                delete row.usIds
+            })
+            inferred.sort((a, b) => (typeOrder[a.type] - typeOrder[b.type]) || (a.name || '').localeCompare(b.name || ''))
+
+            return { groups, unmapped, inferred }
         },
 
         sectionNumbers() {
