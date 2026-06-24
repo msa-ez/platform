@@ -375,6 +375,15 @@ class ESDialogerTraceUtil {
 
                     if (newSCol !== ns || newECol !== ne) clampedCount++;
 
+                    // zero-length ref (start === end) drop — highlight 대상이 없는 degenerate ref.
+                    // 범용 cross-cutting 라인(예: FR-003 L97 "동일 이벤트가 중복 발생했을 때")에
+                    // 요소가 zero-width 점으로 anchor 되어 매트릭스에서 엉뚱한 FR 을 거짓 매핑하는
+                    // 케이스 방지 (python es_trace_util._is_zero 와 동일 정책의 draft 경로 mirror).
+                    if (sLine === eLine && newSCol === newECol) {
+                        droppedCount++;
+                        continue;
+                    }
+
                     validRefs.push([[sLine, newSCol], [eLine, newECol]]);
                 } catch (e) {
                     droppedCount++;
