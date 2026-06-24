@@ -10,6 +10,100 @@ import { DataBasedDocumentExporterBase } from './DataBasedDocumentExporterBase';
 export class DataBasedWordExporter extends DataBasedDocumentExporterBase {
     constructor(projectInfo, draft, eventStormingModels, selectedSections, container = null) {
         super(projectInfo, draft, eventStormingModels, selectedSections, container);
+
+        // Word(OOXML)는 XML 1.0 비허용 제어문자가 텍스트에 섞이면 문서를 열 때
+        // "일부 콘텐츠를 읽을 수 없거나 신뢰할 수 없습니다" 복구 프롬프트를 띄운다.
+        // LLM/DDL 원본 텍스트에 그런 문자(0x00-0x08, 0x0B, 0x0C, 0x0E-0x1F 등)가 섞일 수 있으므로
+        // 입력 데이터를 deep-clone + sanitize 해서, 어느 빌더를 거치든 비허용 문자가 docx 에
+        // 도달하지 못하게 한다. (원본 객체는 mutate 하지 않음 — clone 후 치환)
+        this.projectInfo = DataBasedWordExporter.deepSanitizeXml(this.projectInfo);
+        this.draft = DataBasedWordExporter.deepSanitizeXml(this.draft);
+        this.eventStormingModels = DataBasedWordExporter.deepSanitizeXml(this.eventStormingModels);
+    }
+
+    /**
+     * XML 1.0 에서 허용되지 않는 문자를 제거. 탭(0x09)/LF(0x0A)/CR(0x0D) 은 유효하므로 보존.
+     * 비문자 U+FFFE/U+FFFF 도 제거.
+     */
+    static _stripInvalidXmlChars(s) {
+        // eslint-disable-next-line no-control-regex
+        return s.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\uFFFE\uFFFF]/g, '');
+    }
+
+    /**
+     * 객체/배열/문자열을 재귀적으로 복제하면서 모든 문자열의 비허용 XML 문자를 제거.
+     */
+    static deepSanitizeXml(value) {
+        if (typeof value === 'string') return DataBasedWordExporter._stripInvalidXmlChars(value);
+        if (Array.isArray(value)) return value.map(v => DataBasedWordExporter.deepSanitizeXml(v));
+        if (value && typeof value === 'object') {
+            const out = {};
+            for (const k of Object.keys(value)) out[k] = DataBasedWordExporter.deepSanitizeXml(value[k]);
+            return out;
+        }
+        return value;
+    }
+
+    /**
+     * 캡처된 이미지 버퍼가 docx 에 넣어도 안전한 유효 PNG 인지 검증.
+     * 빈/잘린 캡처(htmlToImage 실패 시 빈 dataURL)가 ImageRun 으로 들어가면 docx 가 손상돼
+     * Word 복구 프롬프트가 뜨므로, 유효하지 않으면 이미지를 생략한다.
+     */
+    isValidPngBuffer(buf) {
+        if (!buf) return false;
+        const len = (buf.byteLength != null) ? buf.byteLength : (buf.length || 0);
+        if (len < 100) return false; // 사실상 빈/잘린 캡처
+        try {
+            const view = (buf instanceof Uint8Array) ? buf : new Uint8Array(buf);
+            // PNG signature: 89 50 4E 47
+            return view[0] === 0x89 && view[1] === 0x50 && view[2] === 0x4E && view[3] === 0x47;
+        } catch (e) {
+            return false;
+        }
+    }
+
+    /**
+     * 유효 PNG 일 때만 가운데 정렬 이미지 문단을 children 에 추가.
+     * 빈/손상 캡처(htmlToImage 실패 잔재)가 ImageRun 으로 들어가면 docx 가 깨져
+     * Word 복구 프롬프트가 뜨므로, 유효하지 않으면 이미지를 생략한다.
+     */
+    pushCapturedImage(children, arrayBuffer, after = 200, maxWidth = 600, maxHeight = 760) {
+        if (!this.isValidPngBuffer(arrayBuffer)) return false;
+        // 고정 500x400 은 다이어그램 종횡비를 왜곡한다. PNG 실제 크기를 읽어 페이지(maxWidth/maxHeight)
+        // 안에 들어오도록 비율을 보존해 스케일.
+        let width = 500, height = 400;
+        const dim = this._readPngSize(arrayBuffer);
+        if (dim && dim.w > 0 && dim.h > 0) {
+            const scale = Math.min(maxWidth / dim.w, maxHeight / dim.h);
+            width = Math.max(1, Math.round(dim.w * scale));
+            height = Math.max(1, Math.round(dim.h * scale));
+        }
+        children.push(new Paragraph({
+            children: [
+                new ImageRun({
+                    data: arrayBuffer,
+                    transformation: { width, height }
+                })
+            ],
+            alignment: AlignmentType.CENTER,
+            spacing: { after }
+        }));
+        return true;
+    }
+
+    /**
+     * PNG 버퍼의 IHDR 청크에서 픽셀 크기를 읽는다 (시그니처 직후 고정 오프셋, big-endian).
+     */
+    _readPngSize(buf) {
+        try {
+            const v = (buf instanceof Uint8Array) ? buf : new Uint8Array(buf);
+            if (v.length < 24) return null;
+            const w = ((v[16] << 24) | (v[17] << 16) | (v[18] << 8) | v[19]) >>> 0;
+            const h = ((v[20] << 24) | (v[21] << 16) | (v[22] << 8) | v[23]) >>> 0;
+            return { w, h };
+        } catch (e) {
+            return null;
+        }
     }
 
     /**
@@ -516,20 +610,7 @@ export class DataBasedWordExporter extends DataBasedDocumentExporterBase {
                         });
                         const imageBlob = await this.dataUrlToBlob(imageData);
                         const arrayBuffer = await this.blobToArrayBuffer(imageBlob);
-                        
-                        children.push(new Paragraph({
-                            children: [
-                                new ImageRun({
-                                    data: arrayBuffer,
-                                    transformation: {
-                                        width: 500,
-                                        height: 400
-                                    }
-                                })
-                            ],
-                            alignment: AlignmentType.CENTER,
-                            spacing: { after: 200 }
-                        }));
+                        this.pushCapturedImage(children, arrayBuffer, 200);
                     } catch (captureError) {
                         // CSS 에러가 아닌 경우에만 경고
                         if (!captureError.message || (!captureError.message.includes('cssRules') && !captureError.message.includes('CSSStyleSheet'))) {
@@ -547,20 +628,7 @@ export class DataBasedWordExporter extends DataBasedDocumentExporterBase {
                                 });
                                 const imageBlob = await this.dataUrlToBlob(imageData);
                                 const arrayBuffer = await this.blobToArrayBuffer(imageBlob);
-                                
-                                children.push(new Paragraph({
-                                    children: [
-                                        new ImageRun({
-                                            data: arrayBuffer,
-                                            transformation: {
-                                                width: 500,
-                                                height: 400
-                                            }
-                                        })
-                                    ],
-                                    alignment: AlignmentType.CENTER,
-                                    spacing: { after: 200 }
-                                }));
+                                this.pushCapturedImage(children, arrayBuffer, 200);
                             } catch (parentError) {
                                 // CSS 에러가 아닌 경우에만 경고
                                 if (!parentError.message || (!parentError.message.includes('cssRules') && !parentError.message.includes('CSSStyleSheet'))) {
@@ -679,20 +747,7 @@ export class DataBasedWordExporter extends DataBasedDocumentExporterBase {
                         });
                         const imageBlob = await this.dataUrlToBlob(imageData);
                         const arrayBuffer = await this.blobToArrayBuffer(imageBlob);
-                        
-                        children.push(new Paragraph({
-                            children: [
-                                new ImageRun({
-                                    data: arrayBuffer,
-                                    transformation: {
-                                        width: 500,
-                                        height: 400
-                                    }
-                                })
-                            ],
-                            alignment: AlignmentType.CENTER,
-                            spacing: { after: 400 }
-                        }));
+                        this.pushCapturedImage(children, arrayBuffer, 400);
                     } finally {
                         // 원래 console.warn 복원
                         console.warn = originalWarn;
@@ -1496,21 +1551,7 @@ export class DataBasedWordExporter extends DataBasedDocumentExporterBase {
         if (this.container) {
             try {
                 const arrayBuffer = await this.captureAggregateMermaidImage(draft);
-                if (arrayBuffer) {
-                    children.push(new Paragraph({
-                        children: [
-                            new ImageRun({
-                                data: arrayBuffer,
-                                transformation: {
-                                    width: 500,
-                                    height: 400
-                                }
-                            })
-                        ],
-                        alignment: AlignmentType.CENTER,
-                        spacing: { after: 400 }
-                    }));
-                } else {
+                if (!this.pushCapturedImage(children, arrayBuffer, 400)) {
                     children.push(new Paragraph({
                         text: '[Mermaid 다이어그램을 찾을 수 없습니다]',
                         spacing: { before: 0, after: 200 }
