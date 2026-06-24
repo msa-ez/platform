@@ -865,7 +865,7 @@ export class DataBasedWordExporter extends DataBasedDocumentExporterBase {
                 shading: { fill: 'F5F5F5' }
             })
         ];
-        rows.push(new TableRow({ children: headerCells }));
+        rows.push(new TableRow({ children: headerCells, tableHeader: true, cantSplit: true }));
         
         // 데이터 행
         boundedContexts.forEach(bc => {
@@ -883,7 +883,7 @@ export class DataBasedWordExporter extends DataBasedDocumentExporterBase {
                     children: [new Paragraph({ text: bc.implementationStrategy || '' })]
                 })
             ];
-            rows.push(new TableRow({ children: cells }));
+            rows.push(new TableRow({ children: cells, cantSplit: true }));
         });
         
         return new Table({
@@ -935,7 +935,7 @@ export class DataBasedWordExporter extends DataBasedDocumentExporterBase {
                 shading: { fill: 'F5F5F5' }
             })
         ];
-        rows.push(new TableRow({ children: headerCells }));
+        rows.push(new TableRow({ children: headerCells, tableHeader: true, cantSplit: true }));
         
         // 데이터 행
         explanations.forEach(relation => {
@@ -959,7 +959,7 @@ export class DataBasedWordExporter extends DataBasedDocumentExporterBase {
                     children: [new Paragraph({ text: interactionPattern })]
                 })
             ];
-            rows.push(new TableRow({ children: cells }));
+            rows.push(new TableRow({ children: cells, cantSplit: true }));
         });
         
         return new Table({
@@ -1003,7 +1003,7 @@ export class DataBasedWordExporter extends DataBasedDocumentExporterBase {
                 shading: { fill: 'F5F5F5' }
             })
         ];
-        rows.push(new TableRow({ children: headerCells }));
+        rows.push(new TableRow({ children: headerCells, tableHeader: true, cantSplit: true }));
         
         // 데이터 행
         items.forEach(item => {
@@ -1015,7 +1015,7 @@ export class DataBasedWordExporter extends DataBasedDocumentExporterBase {
                     children: [new Paragraph({ text: item.description || item.displayName || '' })]
                 })
             ];
-            rows.push(new TableRow({ children: cells }));
+            rows.push(new TableRow({ children: cells, cantSplit: true }));
         });
         
         return new Table({
@@ -1071,7 +1071,7 @@ export class DataBasedWordExporter extends DataBasedDocumentExporterBase {
                 shading: { fill: 'F5F5F5' }
             })
         ];
-        rows.push(new TableRow({ children: headerCells }));
+        rows.push(new TableRow({ children: headerCells, tableHeader: true, cantSplit: true }));
         
         // 데이터 행
         commands
@@ -1098,7 +1098,7 @@ export class DataBasedWordExporter extends DataBasedDocumentExporterBase {
                         children: [new Paragraph({ text: params || '-' })]
                     })
                 ];
-                rows.push(new TableRow({ children: cells }));
+                rows.push(new TableRow({ children: cells, cantSplit: true }));
             });
         
         return new Table({
@@ -1150,7 +1150,7 @@ export class DataBasedWordExporter extends DataBasedDocumentExporterBase {
                 shading: { fill: 'F5F5F5' }
             })
         ];
-        rows.push(new TableRow({ children: headerCells }));
+        rows.push(new TableRow({ children: headerCells, tableHeader: true, cantSplit: true }));
         
         // 데이터 행
         fieldDescriptors.forEach(field => {
@@ -1175,7 +1175,7 @@ export class DataBasedWordExporter extends DataBasedDocumentExporterBase {
                     children: [new Paragraph({ text: description || '-' })]
                 })
             ];
-            rows.push(new TableRow({ children: cells }));
+            rows.push(new TableRow({ children: cells, cantSplit: true }));
         });
         
         return new Table({
@@ -1223,7 +1223,7 @@ export class DataBasedWordExporter extends DataBasedDocumentExporterBase {
                 shading: { fill: 'F5F5F5' }
             })
         ];
-        rows.push(new TableRow({ children: headerCells }));
+        rows.push(new TableRow({ children: headerCells, tableHeader: true, cantSplit: true }));
         
         // 데이터 행
         const keys = Object.keys(pros);
@@ -1239,7 +1239,7 @@ export class DataBasedWordExporter extends DataBasedDocumentExporterBase {
                     children: [new Paragraph({ text: cons[key] || '' })]
                 })
             ];
-            rows.push(new TableRow({ children: cells }));
+            rows.push(new TableRow({ children: cells, cantSplit: true }));
         });
         
         return new Table({
