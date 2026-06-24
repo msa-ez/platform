@@ -271,8 +271,12 @@ class RefsTraceUtil {
                 }
             }
         }
-        
-        return originalRefs
+
+        // traceMap 매치가 하나도 없으면 원본 refs 를 그대로 반환 (python 포트와 동일 동작).
+        // refs 가 이미 원본 userStory 좌표인 경우(ES backend 가 BC-local→global 변환을 마친
+        // element.refs) BC traceMap(BC-desc-line 키)에 매치가 없어 빈 배열이 되던 문제 방지.
+        // 이게 Policy(필드 없음) 등 element-level 추적성이 캔버스에서 안 뜨던 원인.
+        return originalRefs.length > 0 ? originalRefs : refs
     }
 
 
