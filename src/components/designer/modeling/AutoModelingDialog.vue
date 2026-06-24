@@ -2130,9 +2130,28 @@
                     await this.$refs.documentPreview.close();
                     await this.$nextTick();
                 }
-                
+
+                // 최신 ES 반영: export 진입 시 프로젝트 information 의 eventStorming 을 DB 에서 재동기화.
+                // 같은 탭에서 방금 생성한 ES 가 export 선택 목록(showModelSelectionDialog → sortedESModelList)에
+                // 새로고침 전까지 안 뜨던 문제. 하단 모델 리스트는 v-for 가 배열에 직접 바인딩돼
+                // __ob__.dep.notify() 로 즉시 리렌더되지만, export 목록은 sortedESModelList computed
+                // (modelMetaCache.createdTimeStamp async 의존)라 reactivity 체인을 일관되게 못 따라감.
+                // → 진입 시 1회 재조회로 항상 최신 보장 (watch(db://.../information) 콜백과 동일 경로·방식).
+                try {
+                    const freshEs = await this.list(`db://definitions/${this.projectInfo.projectId}/information/eventStorming`);
+                    if (freshEs && Array.isArray(freshEs.modelList)) {
+                        const cur = this.projectInfo.eventStorming && this.projectInfo.eventStorming.modelList;
+                        if (JSON.stringify(cur) !== JSON.stringify(freshEs.modelList)) {
+                            this.$set(this.projectInfo, 'eventStorming', freshEs);
+                            await this.$nextTick();
+                        }
+                    }
+                } catch (e) {
+                    console.warn('[openExportToPDF] eventStorming.modelList 재동기화 실패:', e);
+                }
+
                 // Check for multiple models
-                const hasMultipleModels = this.projectInfo.eventStorming && 
+                const hasMultipleModels = this.projectInfo.eventStorming &&
                     this.projectInfo.eventStorming.modelList && 
                     this.projectInfo.eventStorming.modelList.length > 1;
                 
