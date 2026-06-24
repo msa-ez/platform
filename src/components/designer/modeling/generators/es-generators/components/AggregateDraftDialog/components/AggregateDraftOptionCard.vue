@@ -222,6 +222,18 @@
                     return alias.replace(/[^a-zA-Z0-9가-힣_]/g, '');
                 }
 
+                // 합성 mermaid 노드 id — BC 다이어그램(BC${index})처럼 텍스트와 완전히 분리된 안전 id.
+                // alias 파생 id(getValidAlias 결과)는 빈문자/예약어('end','subgraph' 등)/숫자시작/유니코드일 때
+                // mermaid 파싱을 통째로 끊어 초안 다이어그램이 깨졌음(BC 는 합성 id 라 거의 안 깨짐).
+                // 같은 logical key 는 항상 같은 합성 id 로 매핑해 grouping/relation 일관성 유지.
+                const idMap = {};
+                let idSeq = 0;
+                const mid = (key) => {
+                    const k = String(key);
+                    if (!(k in idMap)) idMap[k] = 'n' + (idSeq++);
+                    return idMap[k];
+                };
+
                 // Mermaid 노드 라벨([-Role-<br/>...] 안에 들어감) 정제.
                 // alias/name 이 그대로 들어가면 `]` `[` `|` 등이 노드 경계를 깨고
                 // `\n` 은 mermaid 파싱을 통째로 끊음. <br/> 자체는 유지해야 하므로
@@ -286,7 +298,7 @@
                                 : safeEnumAlias;
 
                             addClassToGroup(aggKey, enumKey, enumDisplayName, "Enumeration");
-                            relSet.add(`    ${aggKey} --> ${enumKey}`);
+                            relSet.add(`    ${mid(aggKey)} --> ${mid(enumKey)}`);
                         });
                     }
 
@@ -303,7 +315,7 @@
                                 : safeVoAlias;
 
                             addClassToGroup(aggKey, voKey, voDisplayName, "Value Object");
-                            relSet.add(`    ${aggKey} --> ${voKey}`);
+                            relSet.add(`    ${mid(aggKey)} --> ${mid(voKey)}`);
 
                             if (vo.referencedAggregate) {
                                 const refAggAlias = vo.referencedAggregate.alias || vo.referencedAggregate.name || `Temp Referenced Aggregate Root ${aggIndex + 1}-${voIndex + 1}`;
@@ -319,7 +331,7 @@
                                 addClassToGroup(refAggKey, refAggKey, refAggDisplayName, "Aggregate Root");
 
                                 if (aggKey !== refAggKey)
-                                    relSet.add(`    ${voKey} --> ${refAggKey}`);
+                                    relSet.add(`    ${mid(voKey)} --> ${mid(refAggKey)}`);
                             }
                         });
                     }
@@ -327,7 +339,13 @@
                 
                 
                 Object.values(groups).forEach(group => {
-                    mermaidString += `subgraph ${group.id} \n`;
+                    // 합성 id 로 subgraph 선언 + 사람이 읽는 title([..]) 부여 (id 가 n0/n1 이라 title 없으면
+                    // subgraph 헤더가 의미없는 합성 id 로 보임). title 은 이미 sanitize 된 label 에서 <br/> 만 제거.
+                    const groupTitle = String(group.label || group.id)
+                        .replace(/<br\s*\/?>/gi, ' ')
+                        .replace(/\s+/g, ' ')
+                        .trim() || mid(group.id);
+                    mermaidString += `subgraph ${mid(group.id)} [${groupTitle}]\n`;
                     Object.values(group.classes).forEach(cls => {
                         // label 사용 (displayName: "한글(영문)" 형식 포함)
                         let nodeContent = `[-${cls.role}-<br/>${cls.label}`;
@@ -343,7 +361,7 @@
                         }
                         
                         nodeContent += `]`;
-                        mermaidString += `${cls.id}${nodeContent}\n`;
+                        mermaidString += `${mid(cls.id)}${nodeContent}\n`;
                     });
                     mermaidString += `end\n`;
                 });
