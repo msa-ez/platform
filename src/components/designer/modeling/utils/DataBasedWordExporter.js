@@ -261,18 +261,37 @@ export class DataBasedWordExporter extends DataBasedDocumentExporterBase {
      */
     createTraceabilityMatrixSections() {
         const tmg = this.traceabilityMatrixGroups;
-        const children = [];
         const num = this.sectionNumbers.traceabilityMatrix;
-        children.push(new Paragraph({ text: `${num ? num + '. ' : ''}추적성 매트릭스`, heading: HeadingLevel.HEADING_1, spacing: { after: 200 } }));
-        children.push(new Paragraph({ text: '요구사항(User Story)과 생성된 이벤트스토밍 요소 간의 매핑', spacing: { after: 200 } }));
 
+        // 1. 섹션 표지 (cover-section-title) — 다른 섹션과 동일하게 전용 페이지에 제목+설명.
+        const coverSection = {
+            properties: { page: { margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 } } },
+            children: [
+                new Paragraph({
+                    children: [new TextRun({ text: `${num ? num + '. ' : ''}추적성 매트릭스`, size: 32, bold: true })],
+                    heading: HeadingLevel.HEADING_1,
+                    spacing: { before: 0, after: 300 }
+                }),
+                new Paragraph({
+                    text: '요구사항(User Story)과 생성된 이벤트스토밍 요소 간의 매핑을 추적합니다.',
+                    spacing: { before: 0, after: 200 }
+                }),
+                new Paragraph({
+                    text: '각 요구사항이 어떤 모델 요소로 구현되었는지, 추론·미매핑 요소는 무엇인지 확인합니다.',
+                    spacing: { before: 0, after: 400 }
+                })
+            ]
+        };
+
+        // 2. 내용 (표)
+        const children = [];
         const groups = (tmg && tmg.groups) || [];
         const inferred = (tmg && tmg.inferred) || [];
         const unmapped = (tmg && tmg.unmapped) || [];
 
         if (groups.length === 0 && inferred.length === 0 && unmapped.length === 0) {
             children.push(new Paragraph({ text: '추적성 데이터가 없습니다.' }));
-            return [this._wrapTraceSection(children)];
+            return [coverSection, this._wrapTraceSection(children)];
         }
 
         children.push(new Paragraph({
@@ -305,7 +324,7 @@ export class DataBasedWordExporter extends DataBasedDocumentExporterBase {
             children.push(this._buildTraceTable(unmapped, 'id', 'ID'));
         }
 
-        return [this._wrapTraceSection(children)];
+        return [coverSection, this._wrapTraceSection(children)];
     }
 
     _wrapTraceSection(children) {
