@@ -222,15 +222,22 @@
                     return alias.replace(/[^a-zA-Z0-9가-힣_]/g, '');
                 }
 
-                // 합성 mermaid 노드 id — BC 다이어그램(BC${index})처럼 텍스트와 완전히 분리된 안전 id.
-                // alias 파생 id(getValidAlias 결과)는 빈문자/예약어('end','subgraph' 등)/숫자시작/유니코드일 때
-                // mermaid 파싱을 통째로 끊어 초안 다이어그램이 깨졌음(BC 는 합성 id 라 거의 안 깨짐).
-                // 같은 logical key 는 항상 같은 합성 id 로 매핑해 grouping/relation 일관성 유지.
+                // mermaid 노드 id 안전화 (하이브리드).
+                // 한글 등 정상 alias 는 mermaid 에서 그대로 잘 동작하므로(기존 정상 케이스) 그대로 쓰고,
+                // 파싱을 끊는 경우 — 빈문자(특수문자뿐인 alias)/예약어('end','subgraph','graph','class' 등)/
+                // 숫자 시작 — 일 때만 합성 id(n0,n1..)로 치환한다. 같은 logical key 는 항상 같은 id 로 매핑해
+                // grouping/relation 일관성 유지.
+                const MERMAID_RESERVED = new Set([
+                    'graph','subgraph','end','class','classdef','click','style','linkstyle',
+                    'direction','flowchart','default','call','href'
+                ]);
                 const idMap = {};
                 let idSeq = 0;
                 const mid = (key) => {
                     const k = String(key);
-                    if (!(k in idMap)) idMap[k] = 'n' + (idSeq++);
+                    if (k in idMap) return idMap[k];
+                    const safe = k && !MERMAID_RESERVED.has(k.toLowerCase()) && !/^[0-9]/.test(k);
+                    idMap[k] = safe ? k : ('n' + (idSeq++));
                     return idMap[k];
                 };
 
@@ -339,13 +346,11 @@
                 
                 
                 Object.values(groups).forEach(group => {
-                    // 합성 id 로 subgraph 선언 + 사람이 읽는 title([..]) 부여 (id 가 n0/n1 이라 title 없으면
-                    // subgraph 헤더가 의미없는 합성 id 로 보임). title 은 이미 sanitize 된 label 에서 <br/> 만 제거.
-                    const groupTitle = String(group.label || group.id)
-                        .replace(/<br\s*\/?>/gi, ' ')
-                        .replace(/\s+/g, ' ')
-                        .trim() || mid(group.id);
-                    mermaidString += `subgraph ${mid(group.id)} [${groupTitle}]\n`;
+                    // 원본과 동일한 subgraph 선언 형식 유지(제목 bracket 미사용 — 배포 mermaid 버전에서
+                    // `subgraph id [title]` 가 파싱을 깨 정상 다이어그램까지 회귀시켰던 것을 되돌림).
+                    // 안전 alias 는 mid() 가 alias 를 그대로 반환하므로 헤더에 원래 이름이 보이고,
+                    // 문제 alias 만 합성 id 로 표기된다.
+                    mermaidString += `subgraph ${mid(group.id)} \n`;
                     Object.values(group.classes).forEach(cls => {
                         // label 사용 (displayName: "한글(영문)" 형식 포함)
                         let nodeContent = `[-${cls.role}-<br/>${cls.label}`;
