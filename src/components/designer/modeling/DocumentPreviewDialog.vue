@@ -268,12 +268,15 @@ export default {
                 // 데이터 기반 변환 방식 사용
                 const container = this.$refs.documentTemplate.$el;
                 const selectedSections = this.$refs.documentTemplate.selectedSections;
+                // 추적성 매트릭스는 프리뷰에서 이미 계산된 그룹 데이터를 그대로 넘겨 Word 표로 만든다.
+                const traceabilityMatrixGroups = this.$refs.documentTemplate.traceabilityMatrixGroups;
                 const exporter = new DataBasedWordExporter(
                     this.projectInfo,
                     this.draft,
                     this.eventStormingModels,
                     selectedSections,
-                    container // HTML 컨테이너 전달 (이미지 캡쳐용)
+                    container, // HTML 컨테이너 전달 (이미지 캡쳐용)
+                    traceabilityMatrixGroups
                 );
                 
                 const blob = await exporter.exportToWord();

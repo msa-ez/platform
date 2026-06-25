@@ -93,6 +93,9 @@ export class DataBasedDocumentExporterBase {
         if (this.selectedSections.aggregateDetail) {
             numbers.aggregateDetail = currentNumber++;
         }
+        if (this.selectedSections.traceabilityMatrix) {
+            numbers.traceabilityMatrix = currentNumber++;
+        }
 
         return numbers;
     }

@@ -8,7 +8,7 @@ import * as htmlToImage from 'html-to-image';
 import { DataBasedDocumentExporterBase } from './DataBasedDocumentExporterBase';
 
 export class DataBasedWordExporter extends DataBasedDocumentExporterBase {
-    constructor(projectInfo, draft, eventStormingModels, selectedSections, container = null) {
+    constructor(projectInfo, draft, eventStormingModels, selectedSections, container = null, traceabilityMatrixGroups = null) {
         super(projectInfo, draft, eventStormingModels, selectedSections, container);
 
         // Word(OOXML)는 XML 1.0 비허용 제어문자가 텍스트에 섞이면 문서를 열 때
@@ -19,6 +19,11 @@ export class DataBasedWordExporter extends DataBasedDocumentExporterBase {
         this.projectInfo = DataBasedWordExporter.deepSanitizeXml(this.projectInfo);
         this.draft = DataBasedWordExporter.deepSanitizeXml(this.draft);
         this.eventStormingModels = DataBasedWordExporter.deepSanitizeXml(this.eventStormingModels);
+
+        // 추적성 매트릭스: 프리뷰(DocumentTemplate)에서 이미 계산한 traceabilityMatrixGroups 를
+        // 그대로 받아 Word 표로 만든다(로직 중복 방지). 이전에는 Word 섹션 빌더가 없어 프리뷰엔
+        // 보이지만 산출물에는 빠져 있었음.
+        this.traceabilityMatrixGroups = DataBasedWordExporter.deepSanitizeXml(traceabilityMatrixGroups);
     }
 
     /**
@@ -219,6 +224,20 @@ export class DataBasedWordExporter extends DataBasedDocumentExporterBase {
             }
         }
 
+        if (this.selectedSections.traceabilityMatrix) {
+            const traceSections = this.createTraceabilityMatrixSections();
+            if (traceSections && traceSections.length > 0) {
+                traceSections.forEach((section, idx) => {
+                    if (idx === 0 && isFirstContentSection) {
+                        isFirstContentSection = false;
+                    } else {
+                        this.addPageBreakToSection(section);
+                    }
+                });
+                sections.push(...traceSections);
+            }
+        }
+
         const doc = new Document({
             sections: sections,
             styles: {
@@ -236,6 +255,107 @@ export class DataBasedWordExporter extends DataBasedDocumentExporterBase {
         return await Packer.toBlob(doc);
     }
 
+    /**
+     * 추적성 매트릭스 섹션 — 프리뷰의 traceabilityMatrixGroups 데이터를 그대로 Word 표로 변환.
+     * (US 직접 매핑 그룹 / 추론 매핑 / 미매핑)
+     */
+    createTraceabilityMatrixSections() {
+        const tmg = this.traceabilityMatrixGroups;
+        const children = [];
+        const num = this.sectionNumbers.traceabilityMatrix;
+        children.push(new Paragraph({ text: `${num ? num + '. ' : ''}추적성 매트릭스`, heading: HeadingLevel.HEADING_1, spacing: { after: 200 } }));
+        children.push(new Paragraph({ text: '요구사항(User Story)과 생성된 이벤트스토밍 요소 간의 매핑', spacing: { after: 200 } }));
+
+        const groups = (tmg && tmg.groups) || [];
+        const inferred = (tmg && tmg.inferred) || [];
+        const unmapped = (tmg && tmg.unmapped) || [];
+
+        if (groups.length === 0 && inferred.length === 0 && unmapped.length === 0) {
+            children.push(new Paragraph({ text: '추적성 데이터가 없습니다.' }));
+            return [this._wrapTraceSection(children)];
+        }
+
+        children.push(new Paragraph({
+            children: [new TextRun({ text: `직접 매핑 ${groups.length}개 그룹 · 추론 ${inferred.length} · 미매핑 ${unmapped.length}`, italics: true, size: 20, color: '666666' })],
+            spacing: { after: 200 }
+        }));
+
+        groups.forEach(group => {
+            const us = group.us || {};
+            children.push(new Paragraph({
+                children: [new TextRun({ text: `${us.id || ''}  ${us.name || ''}`.trim(), bold: true })],
+                spacing: { before: 200, after: 80 }
+            }));
+            children.push(this._buildTraceTable(group.rows || [], 'id', 'ID'));
+        });
+
+        if (inferred.length > 0) {
+            children.push(new Paragraph({
+                children: [new TextRun({ text: `추론된 매핑 (${inferred.length}) — 상위 Aggregate 매핑을 상속한 요소`, bold: true })],
+                spacing: { before: 240, after: 80 }
+            }));
+            children.push(this._buildTraceTable(inferred, 'inferredUs', '추론된 US'));
+        }
+
+        if (unmapped.length > 0) {
+            children.push(new Paragraph({
+                children: [new TextRun({ text: `미매핑 (${unmapped.length})`, bold: true })],
+                spacing: { before: 240, after: 80 }
+            }));
+            children.push(this._buildTraceTable(unmapped, 'id', 'ID'));
+        }
+
+        return [this._wrapTraceSection(children)];
+    }
+
+    _wrapTraceSection(children) {
+        return {
+            properties: { page: { margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 } } },
+            children
+        };
+    }
+
+    _buildTraceTable(rows, thirdKey, thirdHeader) {
+        const TYPE_LABELS = {
+            service: 'Service(BC)', aggregate: 'Aggregate', command: 'Command',
+            event: 'Event', policy: 'Policy', view: 'View', readModel: 'ReadModel'
+        };
+        const availableWidth = 9026;
+        const widths = [Math.floor(availableWidth * 0.18), Math.floor(availableWidth * 0.52), Math.floor(availableWidth * 0.30)];
+        const tableRows = [];
+        const headerCells = ['유형', '요소명', thirdHeader].map(h => new TableCell({
+            children: [new Paragraph({ text: h, alignment: AlignmentType.CENTER })],
+            shading: { fill: 'F5F5F5' }
+        }));
+        tableRows.push(new TableRow({ children: headerCells, tableHeader: true, cantSplit: true }));
+
+        (rows || []).forEach(row => {
+            const nameChildren = [new Paragraph({ text: row.name || '-' })];
+            if (row.parent) {
+                nameChildren.push(new Paragraph({ children: [new TextRun({ text: `↳ ${row.parent}`, size: 18, color: '888888' })] }));
+            }
+            const cells = [
+                new TableCell({ children: [new Paragraph({ text: TYPE_LABELS[row.type] || row.type || '-' })] }),
+                new TableCell({ children: nameChildren }),
+                new TableCell({ children: [new Paragraph({ text: String(row[thirdKey] || '-') })] })
+            ];
+            tableRows.push(new TableRow({ children: cells, cantSplit: true }));
+        });
+
+        return new Table({
+            rows: tableRows,
+            width: { size: availableWidth, type: WidthType.DXA },
+            columnWidths: widths,
+            borders: {
+                top: { size: 1, color: '000000' },
+                bottom: { size: 1, color: '000000' },
+                left: { size: 1, color: '000000' },
+                right: { size: 1, color: '000000' },
+                insideHorizontal: { size: 1, color: '000000' },
+                insideVertical: { size: 1, color: '000000' }
+            }
+        });
+    }
 
     /**
      * 표지 생성 (전체 페이지)
@@ -393,7 +513,15 @@ export class DataBasedWordExporter extends DataBasedDocumentExporterBase {
                 indent: { left: 720 }
             }));
         }
-        
+
+        if (this.selectedSections.traceabilityMatrix) {
+            children.push(new Paragraph({
+                text: `${this.sectionNumbers.traceabilityMatrix}. 추적성 매트릭스`,
+                spacing: { before: 0, after: 200 },
+                indent: { left: 720 }
+            }));
+        }
+
         return {
             properties: {
                 page: {
