@@ -487,7 +487,7 @@
                                         <v-text-field
                                                 v-model="searchForContent.search"
                                                 append-outer-icon="mdi-close"
-                                                label="Search"
+                                                :label="searchForContent.mode === 'content' ? 'Search in code' : 'Search by name/path'"
                                                 type="text"
                                                 filled
                                                 sole
@@ -497,6 +497,15 @@
                                                 @input="debouncedSearchContents"
                                                 @click:append-outer="closeSearchForContents()"
                                         ></v-text-field>
+                                        <v-btn-toggle
+                                                v-model="searchForContent.mode"
+                                                mandatory dense
+                                                style="margin-top:6px;"
+                                                @change="debouncedSearchContents"
+                                        >
+                                            <v-btn value="name" x-small>이름/경로</v-btn>
+                                            <v-btn value="content" x-small>내용</v-btn>
+                                        </v-btn-toggle>
                                         <div v-if="searchForContent.search && searchContentResults && searchContentResults.length == 0" style="margin-left: 10px;">
                                             No results found.
                                         </div>
@@ -1833,6 +1842,7 @@
                 searchForContent:{
                     onOff: false,
                     search: '',
+                    mode: 'name',   // 'name' = 파일 이름/경로 검색, 'content' = 코드 내용 검색
                 },
                 //icon
                 icon: {
@@ -4824,34 +4834,43 @@ jobs:
 
                 try {
                     var search = me.searchForContent.search.toLowerCase();
+                    var mode = me.searchForContent.mode === 'content' ? 'content' : 'name';
+                    var cacheKey = mode + '::' + search;   // 모드별로 캐시 분리
                     var results = [];
 
                     // 캐시된 결과가 있는지 확인
-                    if (me.searchContentCache && me.searchContentCache[search]) {
-                        me.searchContentResults = me.searchContentCache[search];
+                    if (me.searchContentCache && me.searchContentCache[cacheKey]) {
+                        me.searchContentResults = me.searchContentCache[cacheKey];
                         me.isSearching = false;
                         return;
                     }
 
-                    // 간단하고 빠른 검색 로직
+                    // 이름/경로 검색과 내용 검색을 분리.
                     var count = 0;
                     for (var i = 0; i < me.codeLists.length && count < 50; i++) {
                         var codeObj = me.codeLists[i];
                         if (!codeObj) continue;
-                        // 파일 이름 / 경로 + 내용까지 검색.
-                        var nameLower = String(codeObj.fileName || '').toLowerCase();
-                        var pathLower = String(codeObj.fullPath || '').toLowerCase();
-                        var nameOrPathMatch = nameLower.includes(search) || pathLower.includes(search);
-                        var contentMatch = !!(codeObj.code && codeObj.code.toLowerCase().includes(search));
-                        if (nameOrPathMatch || contentMatch) {
-                            // 보조 라인: 이름/경로 매칭이면 경로, 내용에서만 매칭되면 매칭된 코드 라인.
-                            var secondary = String(codeObj.fullPath || '');
-                            if (!nameOrPathMatch && contentMatch) {
+                        var matched = false;
+                        var secondary = String(codeObj.fullPath || '');
+
+                        if (mode === 'name') {
+                            // 파일 이름 / 경로 기준
+                            var nameLower = String(codeObj.fileName || '').toLowerCase();
+                            var pathLower = String(codeObj.fullPath || '').toLowerCase();
+                            matched = nameLower.includes(search) || pathLower.includes(search);
+                            secondary = String(codeObj.fullPath || '');
+                        } else {
+                            // 코드 내용 기준 — 보조 라인에 매칭된 코드 라인 표시
+                            if (codeObj.code && codeObj.code.toLowerCase().includes(search)) {
+                                matched = true;
                                 try {
                                     var found = codeObj.code.split('\n').find(function(l){ return l.toLowerCase().includes(search); });
-                                    secondary = (found || '').trim().slice(0, 120) || secondary;
-                                } catch (e) { /* keep path */ }
+                                    secondary = (found || '').trim().slice(0, 120) || String(codeObj.fullPath || '');
+                                } catch (e) { secondary = String(codeObj.fullPath || ''); }
                             }
+                        }
+
+                        if (matched) {
                             var resultObj = {
                                 name: codeObj.fileName,
                                 key: codeObj.key,
@@ -4881,7 +4900,7 @@ jobs:
                     if (cacheKeys.length > 20) {
                         delete me.searchContentCache[cacheKeys[0]];
                     }
-                    me.searchContentCache[search] = results;
+                    me.searchContentCache[cacheKey] = results;
                     me.searchContentResults = results;
 
                 } catch (e) {
@@ -9866,9 +9885,15 @@ jobs:
 /* 소스트리/검색 결과 행 간격 압축 — 기본 v-treeview 노드가 너무 높아 위아래 폭이 컸음 */
 .gs-v-treeview-width .v-treeview-node__root {
     min-height: 32px !important;
+    border-bottom: 1px solid #f0f0f0;   /* 파일 간 구분선 */
 }
 .gs-v-treeview-width .v-treeview-node__content {
     margin-top: 0 !important;
     margin-bottom: 0 !important;
+}
+/* 아이콘을 이름(첫 줄)에 맞춰 상단 정렬 — 2줄(이름+경로/내용)일 때 어느 파일의 아이콘인지 명확히 */
+.gs-v-treeview-width .v-treeview-node__prepend {
+    align-self: flex-start !important;
+    margin-top: 5px;
 }
 </style>
