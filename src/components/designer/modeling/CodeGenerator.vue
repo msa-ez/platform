@@ -4838,10 +4838,20 @@ jobs:
                     for (var i = 0; i < me.codeLists.length && count < 50; i++) {
                         var codeObj = me.codeLists[i];
                         if (!codeObj) continue;
-                        // 파일 이름 / 경로 기준 검색 (파일 내용 검색 아님).
+                        // 파일 이름 / 경로 + 내용까지 검색.
                         var nameLower = String(codeObj.fileName || '').toLowerCase();
                         var pathLower = String(codeObj.fullPath || '').toLowerCase();
-                        if (nameLower.includes(search) || pathLower.includes(search)) {
+                        var nameOrPathMatch = nameLower.includes(search) || pathLower.includes(search);
+                        var contentMatch = !!(codeObj.code && codeObj.code.toLowerCase().includes(search));
+                        if (nameOrPathMatch || contentMatch) {
+                            // 보조 라인: 이름/경로 매칭이면 경로, 내용에서만 매칭되면 매칭된 코드 라인.
+                            var secondary = String(codeObj.fullPath || '');
+                            if (!nameOrPathMatch && contentMatch) {
+                                try {
+                                    var found = codeObj.code.split('\n').find(function(l){ return l.toLowerCase().includes(search); });
+                                    secondary = (found || '').trim().slice(0, 120) || secondary;
+                                } catch (e) { /* keep path */ }
+                            }
                             var resultObj = {
                                 name: codeObj.fileName,
                                 key: codeObj.key,
@@ -4853,7 +4863,7 @@ jobs:
                                 fullPath: codeObj.fullPath,
                                 template: codeObj.template,
                                 templatePath: codeObj.templatePath,
-                                searchContentLine: codeObj.fullPath  // 보조 라인에 경로 표시
+                                searchContentLine: secondary
                             };
                             results.push(resultObj);
                             count++;
