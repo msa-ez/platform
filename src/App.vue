@@ -387,18 +387,6 @@
             </v-dialog>
 
             <v-btn
-                @click="navigateToSlack"
-                class="question-btn"
-                :class="isRootPage ? 'question-btn-hide' : ''"
-                text
-                elevation="0"
-                color="primary"
-                style="text-transform: none;"
-            >
-                <div style="font-weight: 700; font-size: 16px;">{{ $t('inquiry.title') }}</div>
-            </v-btn>
-            
-            <v-btn
                 v-if="!(isLogin || isGuestLogin)"
                 @click="loginPage()"
                 fab icon

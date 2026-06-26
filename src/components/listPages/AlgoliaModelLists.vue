@@ -521,41 +521,8 @@
                                 :showChat="true"
                             />
 
-                            <!-- 제목을 위한 별도의 v-col (전체 너비) -->
-                            <div class="text-h6 main-examples-title-margin text-center font-weight-medium">
-                                {{$t('examples.modeling')}}
-                            </div>
-                            
-                            <v-row class="main-examples-card-box">
-                                <!-- 기존 v-col 카드들 -->
-                                <v-col class="main-examples-card-padding" v-for="(mainPublicModel, index) in mainPublicModeling" :key="index"
-                                    cols="12"
-                                    sm="6"
-                                    md="3"
-                                    lg="3"
-                                >
-                                    <v-card @click="openPublicModeling(mainPublicModel.url)" 
-                                        class="public-model-card"
-                                        outlined
-                                    >
-                                        <v-row class="ma-0 pa-2 pb-0" justify="center">
-                                            <v-card-sub-title class="pa-0 text-center"
-                                            >{{ $t(mainPublicModel.title) }}</v-card-sub-title>
-                                        </v-row>
-                                        <div class="pa-2">
-                                            <div style="height: 150px; overflow: hidden;" outlined>
-                                                <v-img 
-                                                    :src="mainPublicModel.imageUrl" 
-                                                    height="100%"
-                                                    width="100%"
-                                                    contain
-                                                    style="max-width: 100%; max-height: 100%; object-fit: contain;"
-                                                />
-                                            </div>
-                                        </div>
-                                    </v-card>
-                                </v-col>
-                            </v-row>
+                            <!-- 모델링 예제 섹션 제거 -->
+
                             <!-- <div style="margin-top:30px;">
                                 <carousel :perPageCustom="[[0, 1], [576, 2], [768, 3], [992, 4], [1200, 5]]">
                                     <slide v-for="(logo, index) in logos" :key="index">

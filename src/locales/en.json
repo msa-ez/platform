@@ -630,6 +630,7 @@
     "main1": "What do you want to create today?",
     "main2": "What do you want to create today? e.g. Class management system, Taxi-call service system",
     "mainClick": "Input Service Name e.g. Class management system, Taxi-call service system",
+    "serviceNameGuide": "Type the name of the service you want to build.",
     "selectOptions": "Choose what you want to create:",
     "isModelSelectMessage": "Please select the AI model you want to use.",
     "selectMessage1": "Sounds interesting! Let me come up with a few ideas...",

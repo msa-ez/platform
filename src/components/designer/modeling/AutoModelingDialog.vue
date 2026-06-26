@@ -6,13 +6,7 @@
         >
             <v-row class="justify-start auto-modeling-chip-box">
                 <v-col class="text-center pa-0">
-                    <v-chip class="main-auto-modeling-chip"
-                        v-for="(inputAutoModelingChip, index) in setAutoModelingTextChips"
-                        :key="index"
-                        @click="setAutoModelingText($t(inputAutoModelingChip))"
-                        outlined
-                    >{{ $t(inputAutoModelingChip) }}
-                    </v-chip>
+                    <div class="main-auto-modeling-guide">{{ $t('autoModeling.serviceNameGuide') }}</div>
                 </v-col>
             </v-row>
             <v-card-text class="pt-2 pb-2" style="font-weight: 500;">
@@ -528,12 +522,6 @@
         },
         data() {
             return {
-                setAutoModelingTextChips: [
-                    'autoModeling.chip1',
-                    'autoModeling.chip2',
-                    'autoModeling.chip3',
-                    'autoModeling.chip4'
-                ],
                 cardItems: [
                     {
                         type: 'CJM',
