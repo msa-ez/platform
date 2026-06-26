@@ -439,6 +439,7 @@
                                                         </v-list>
                                                     </v-menu>
                                                     <v-menu
+                                                            v-if="false"
                                                             class="pa-2"
                                                             open-on-hover
                                                             offset-y
@@ -463,7 +464,7 @@
                                                     </v-menu>
 
                                                     <v-menu
-                                                            v-if="isServerModel &&!isClazzModeling"
+                                                            v-if="false"
                                                             class="pa-2"
                                                             open-on-hover
                                                             offset-y
@@ -559,7 +560,7 @@
                                                     <!--                                                        </v-list>-->
                                                     <!--                                                    </v-menu>-->
 
-                                                    <v-menu v-if="isServerModel && !isClazzModeling"
+                                                    <v-menu v-if="false"
                                                         class="pa-2"
                                                         open-on-click
                                                         offset-y

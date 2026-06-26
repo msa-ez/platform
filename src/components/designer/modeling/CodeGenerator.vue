@@ -185,7 +185,7 @@
                     <v-tooltip bottom>
                         <template v-slot:activator="{ on, attrs }">
                             <v-btn v-on="on" class="code-preview-btn"
-                                    icon fab @click="searchForContent.onOff = !searchForContent.onOff"
+                                    icon fab @click="searchForContent.onOff ? closeSearchForContents() : (searchForContent.onOff = true)"
                             >
                                 <div>
                                     <v-icon size="22"
@@ -649,7 +649,7 @@
                                                         dense
                                                         style="text-overflow: clip !important;"
                                                         :style="editTemplateMode ? 'max-height: 70%;':''"
-                                                        class="gs-v-treeview-width "
+                                                        :class="['gs-v-treeview-width', searchForContent.search ? 'search-mode' : '']"
                                                 >
                                                     <template v-slot:prepend="{ item, open }">
                                                         <v-icon v-if="isChangedCode(item)"
@@ -9885,14 +9885,16 @@ jobs:
 /* 소스트리/검색 결과 행 간격 압축 — 기본 v-treeview 노드가 너무 높아 위아래 폭이 컸음 */
 .gs-v-treeview-width .v-treeview-node__root {
     min-height: 32px !important;
-    border-bottom: 1px solid #f0f0f0;   /* 파일 간 구분선 */
 }
 .gs-v-treeview-width .v-treeview-node__content {
     margin-top: 0 !important;
     margin-bottom: 0 !important;
 }
-/* 아이콘을 이름(첫 줄)에 맞춰 상단 정렬 — 2줄(이름+경로/내용)일 때 어느 파일의 아이콘인지 명확히 */
-.gs-v-treeview-width .v-treeview-node__prepend {
+/* 검색 결과 모드에서만: 파일 구분선 + 아이콘 상단 정렬(2줄 레이아웃). 기본 explorer 엔 미적용. */
+.gs-v-treeview-width.search-mode .v-treeview-node__root {
+    border-bottom: 1px solid #f0f0f0;
+}
+.gs-v-treeview-width.search-mode .v-treeview-node__prepend {
     align-self: flex-start !important;
     margin-top: 5px;
 }
