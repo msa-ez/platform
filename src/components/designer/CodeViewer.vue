@@ -11,7 +11,8 @@
             <v-card-text
                 id="scroll-target"
             >
-                <v-btn class="cp-explain-code" v-if="!editMode" @click="explain()"
+                <!-- Explain code 비활성화 (외부 LLM(OpenAI) 호출이라 사내 배포에서 사용 불가) -->
+                <v-btn class="cp-explain-code" v-if="false" @click="explain()"
                     small style="position:absolute; top:70px; right:15px; z-index: 999;" text
                     :loading="isExplainLoading"
                 >

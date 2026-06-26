@@ -275,7 +275,8 @@
                         <span>{{ $t('CodeGenerator.diffMode') }}</span>
                     </v-tooltip>
                     <v-spacer />
-                    <v-menu left :close-on-content-click="false" :close-on-click="false" @input="onClickToppingBox(true)"
+                    <!-- Toppings 비활성화 (외부 마켓플레이스/템플릿 add-on, 사내 배포 미사용) -->
+                    <v-menu v-if="false" left :close-on-content-click="false" :close-on-click="false" @input="onClickToppingBox(true)"
                         style="overflow-y:hidden !important;"
                     >
                         <template v-slot:activator="{ on, attrs }">

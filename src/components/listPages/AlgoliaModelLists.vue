@@ -102,14 +102,7 @@
                                             <v-list-item-title>검색</v-list-item-title>
                                         </v-list-item-content>
                                     </v-list-item>
-                                    <v-list-item @click="navigateToSlack" link>
-                                        <v-list-item-icon>
-                                            <Icons :icon="'question'" />
-                                        </v-list-item-icon>
-                                        <v-list-item-content>
-                                            <v-list-item-title>{{ $t('inquiry.title') }}</v-list-item-title>
-                                        </v-list-item-content>
-                                    </v-list-item>
+                                    <!-- 커뮤니티(Slack) 항목 제거 — 데스크탑 헤더와 동일하게 -->
                                     <!-- 네비게이션 탭 메뉴들 -->
                                     <v-list-item
                                         v-for="navTab in navigationTabs"
