@@ -196,7 +196,7 @@
                         <span>{{ $t('CodeGenerator.search') }}</span>
                     </v-tooltip>
 
-                    <v-tooltip bottom v-if="editableTemplate">
+                    <v-tooltip bottom v-if="false">
                         <template v-slot:activator="{ on, attrs }">
                             <v-btn v-on="on" class="code-preview-btn cp-edit-template-btn"
                                     icon fab @click="openTemplateEditor()"
@@ -221,7 +221,7 @@
                         <span>Export Aggregates Word</span>
                     </v-tooltip>
 
-                    <v-tooltip bottom v-if="editableTemplate">
+                    <v-tooltip bottom v-if="false">
                         <template v-slot:activator="{ on, attrs }">
                             <v-btn v-on="on" class="code-preview-btn"
                                     :disabled="isLoadingExpectedTemplate"
@@ -4835,17 +4835,13 @@ jobs:
 
                     // 간단하고 빠른 검색 로직
                     var count = 0;
-                    for (var i = 0; i < me.codeLists.length && count < 20; i++) {
+                    for (var i = 0; i < me.codeLists.length && count < 50; i++) {
                         var codeObj = me.codeLists[i];
-                        if (codeObj && codeObj.code && codeObj.code.toLowerCase().includes(search)) {
-                            // 매칭된 첫 줄을 추출해 결과에 함께 표시(어떤 내용이 잡혔는지 컨텍스트 제공).
-                            var matchedLine = '';
-                            try {
-                                var codeLines = codeObj.code.split('\n');
-                                var found = codeLines.find(function(l){ return l.toLowerCase().includes(search); });
-                                matchedLine = (found || '').trim().slice(0, 120);
-                            } catch (e) { matchedLine = ''; }
-
+                        if (!codeObj) continue;
+                        // 파일 이름 / 경로 기준 검색 (파일 내용 검색 아님).
+                        var nameLower = String(codeObj.fileName || '').toLowerCase();
+                        var pathLower = String(codeObj.fullPath || '').toLowerCase();
+                        if (nameLower.includes(search) || pathLower.includes(search)) {
                             var resultObj = {
                                 name: codeObj.fileName,
                                 key: codeObj.key,
@@ -4857,7 +4853,7 @@ jobs:
                                 fullPath: codeObj.fullPath,
                                 template: codeObj.template,
                                 templatePath: codeObj.templatePath,
-                                searchContentLine: matchedLine
+                                searchContentLine: codeObj.fullPath  // 보조 라인에 경로 표시
                             };
                             results.push(resultObj);
                             count++;
@@ -9857,4 +9853,12 @@ jobs:
     }
 </script>
 <style>
+/* 소스트리/검색 결과 행 간격 압축 — 기본 v-treeview 노드가 너무 높아 위아래 폭이 컸음 */
+.gs-v-treeview-width .v-treeview-node__root {
+    min-height: 32px !important;
+}
+.gs-v-treeview-width .v-treeview-node__content {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+}
 </style>
