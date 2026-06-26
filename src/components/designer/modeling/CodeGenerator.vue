@@ -237,7 +237,7 @@
 
                     <v-tooltip bottom>
                         <template v-slot:activator="{ on, attrs }">
-                            <v-btn v-on="on" class="code-preview-btn"
+                            <v-btn v-if="false" v-on="on" class="code-preview-btn"
                                     :disabled="!existChangedFile || !isGeneratorDone"
                                     icon fab @click="onOffChangedPathLists()"
                             >
@@ -252,7 +252,7 @@
 
                     <v-tooltip bottom>
                         <template v-slot:activator="{ on, attrs }">
-                            <v-btn v-on="on" class="code-preview-btn"
+                            <v-btn v-if="false" v-on="on" class="code-preview-btn"
                                     icon fab
                                     @click="onOffDesignPatterns()"
                             >
@@ -266,7 +266,7 @@
 
                     <v-tooltip bottom>
                         <template v-slot:activator="{ on, attrs }">
-                            <v-btn v-on="on" class="code-preview-btn"
+                            <v-btn v-if="false" v-on="on" class="code-preview-btn"
                                     icon fab @click="onDiffMode()"
                             >
                                 <Icons :icon="'diff'" :size="26" :color="diffMode ? 'rgb(25,118,210)' : '' "/>
@@ -669,7 +669,10 @@
                                                                 {{convertTemplatePath (item)}}
                                                             </div>
                                                             <div v-if="item.children && item.children.length > 0" > {{item.name}} </div>
-                                                            <div v-else-if="searchForContent.search" style="font-size:13px; cursor: pointer;" :style="templatePathStyle(item)">{{item.searchContentLine}}</div>
+                                                            <div v-else-if="searchForContent.search" style="cursor: pointer;" :style="templatePathStyle(item)">
+                                                                <div style="font-size:13px; font-weight:600;">{{item.name}}</div>
+                                                                <div v-if="item.searchContentLine" style="font-size:11px; color:#888; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:240px;">{{item.searchContentLine}}</div>
+                                                            </div>
                                                             <div v-else style="font-size:13px; cursor: pointer;" :style="templatePathStyle(item)">{{item.name}}</div>
                                                         </div>
                                                         <div v-else>
@@ -4835,6 +4838,14 @@ jobs:
                     for (var i = 0; i < me.codeLists.length && count < 20; i++) {
                         var codeObj = me.codeLists[i];
                         if (codeObj && codeObj.code && codeObj.code.toLowerCase().includes(search)) {
+                            // 매칭된 첫 줄을 추출해 결과에 함께 표시(어떤 내용이 잡혔는지 컨텍스트 제공).
+                            var matchedLine = '';
+                            try {
+                                var codeLines = codeObj.code.split('\n');
+                                var found = codeLines.find(function(l){ return l.toLowerCase().includes(search); });
+                                matchedLine = (found || '').trim().slice(0, 120);
+                            } catch (e) { matchedLine = ''; }
+
                             var resultObj = {
                                 name: codeObj.fileName,
                                 key: codeObj.key,
@@ -4845,12 +4856,18 @@ jobs:
                                 hash: codeObj.hash,
                                 fullPath: codeObj.fullPath,
                                 template: codeObj.template,
-                                templatePath: codeObj.templatePath
+                                templatePath: codeObj.templatePath,
+                                searchContentLine: matchedLine
                             };
                             results.push(resultObj);
                             count++;
                         }
                     }
+
+                    // 보기 좋게 정렬: 경로(폴더) 기준으로 묶고, 같은 폴더 내에서는 파일명 순.
+                    results.sort(function(a, b){
+                        return String(a.fullPath || a.name || '').localeCompare(String(b.fullPath || b.name || ''), undefined, { numeric: true });
+                    });
 
                     // 결과 캐싱 (최대 20개 캐시 유지)
                     if (!me.searchContentCache) me.searchContentCache = {};
