@@ -15,7 +15,7 @@ class DraftGeneratorByFunctionsLangGraph {
         const accumulatedDrafts = this.client.input['accumulatedDrafts'];
         const analysisResult = this.client.input['analysisResult'] || null;
 
-        const jobId = `aggr-draft-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        const jobId = `aggr-draft-${Date.now()}-${(crypto.getRandomValues(new Uint32Array(1))[0]/4294967296).toString(36).substr(2, 9)}`;
 
         try {
             // Job 생성

@@ -85,13 +85,13 @@ export default {
             
             this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
 
-            if (Math.random() < .3 && this.amount > 0) {
+            if ((crypto.getRandomValues(new Uint32Array(1))[0]/4294967296) < .3 && this.amount > 0) {
                 this.coins.push({
-                    x: Math.random() * this.canvas.width | 0,
+                    x: (crypto.getRandomValues(new Uint32Array(1))[0]/4294967296) * this.canvas.width | 0,
                     y: -50,
                     dy: 3,
-                    s: 0.5 + Math.random(),
-                    state: Math.random() * 10 | 0
+                    s: 0.5 + (crypto.getRandomValues(new Uint32Array(1))[0]/4294967296),
+                    state: (crypto.getRandomValues(new Uint32Array(1))[0]/4294967296) * 10 | 0
                 })
                 this.amount --;
 

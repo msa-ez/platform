@@ -30,7 +30,7 @@ class SiteMapLangGraphProxy {
     async generate(requirements, boundedContexts, commandReadModelData, existingNavigation = []) {
         try {
             // Job ID 생성
-            this.jobId = `smapgen-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+            this.jobId = `smapgen-${Date.now()}-${(crypto.getRandomValues(new Uint32Array(1))[0]/4294967296).toString(36).substr(2, 9)}`;
             
             // Firebase Job 초기화
             await this._initializeJobState(requirements, boundedContexts, commandReadModelData, existingNavigation);

@@ -68,7 +68,8 @@ class DDLExtractorLangGraphProxy {
         if (!jobState || !jobState._watchedPaths || jobState._watchersCleaned) return;
         jobState._watchersCleaned = true;
         for (const path of jobState._watchedPaths) {
-            try { storage.watch_off(path); } catch (e) { /* noop */ }
+            try { storage.watch_off(path); } catch (e) {
+                console.warn('Ignored error:', e); /* noop */ }
         }
         jobState._watchedPaths.clear();
     }
@@ -242,7 +243,7 @@ class DDLExtractorLangGraphProxy {
 
     static generateJobId() {
         const timestamp = Date.now();
-        const random = Math.random().toString(36).substring(2, 11);
+        const random = (crypto.getRandomValues(new Uint32Array(1))[0]/4294967296).toString(36).substring(2, 11);
         return `ddl-extract-${timestamp}-${random}`;
     }
 }

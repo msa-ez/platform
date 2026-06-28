@@ -698,8 +698,8 @@ import { group } from "d3";
                         var tmp = me.tmpValue;
                         tmp.id = me.canvas.uuid();
                         tmp.elementView.id = tmp.id;
-                        tmp.elementView.x = tmp.elementView.x + Math.floor(Math.random() * 101);
-                        tmp.elementView.y = tmp.elementView.y + Math.floor(Math.random() * 101);
+                        tmp.elementView.x = tmp.elementView.x + Math.floor((crypto.getRandomValues(new Uint32Array(1))[0]/4294967296) * 101);
+                        tmp.elementView.y = tmp.elementView.y + Math.floor((crypto.getRandomValues(new Uint32Array(1))[0]/4294967296) * 101);
 
                         me.canvas.appendElement(tmp);
                     }

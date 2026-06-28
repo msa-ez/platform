@@ -151,7 +151,7 @@ class DevideBoundedContextGeneratorLangGraph {
      */
     _generateJobId() {
         const timestamp = Date.now();
-        const random = Math.random().toString(36).substring(2, 11);
+        const random = (crypto.getRandomValues(new Uint32Array(1))[0]/4294967296).toString(36).substring(2, 11);
         return `bcgen-${timestamp}-${random}`;
     }
 
@@ -187,7 +187,8 @@ class DevideBoundedContextGeneratorLangGraph {
         if (typeof this._reject === 'function') {
             try {
                 this._reject(new Error('Generation stopped by user'));
-            } catch (e) { /* noop */ }
+            } catch (e) {
+                console.warn('Ignored error:', e); /* noop */ }
             this._reject = null;
         }
     }

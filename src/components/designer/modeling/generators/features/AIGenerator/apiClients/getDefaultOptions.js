@@ -27,7 +27,9 @@ function getDefaultOptions() {
             if (parsed && typeof parsed === 'object' && parsed.vendor) {
                 return ModelOptionDto.fromJSON(parsed);
             }
-        } catch {}
+        } catch {
+            console.warn('Ignored error');
+        }
 
         return new ModelOptionDto({ vendor: null, modelID: raw });
     }

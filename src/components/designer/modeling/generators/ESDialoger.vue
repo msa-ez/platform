@@ -1264,6 +1264,7 @@ import { value } from 'jsonpath';
                                 continue;
                             }
                         } catch (e) {
+                            console.warn('Ignored error:', e);
                             // 형식 체크 실패, 변환 진행
                         }
                         

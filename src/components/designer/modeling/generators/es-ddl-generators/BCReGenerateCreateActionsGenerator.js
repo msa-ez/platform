@@ -1096,7 +1096,9 @@ They represent complex domain concepts that don't qualify as Aggregates but need
             try {
                 const actionObj = this._parseToJson(action)
                 actions.push(actionObj)
-            } catch(e) {}
+            } catch(e) {
+                console.warn('Ignored error:', e);
+            }
         }
         if(actions.length === 0) return
 

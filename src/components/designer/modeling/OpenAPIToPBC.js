@@ -85,7 +85,7 @@ class OpenAPIToPBC {
 
     async convertOpenAPI(yaml){
         try{
-            const parser = yamlParser.load(yaml); // testYaml
+            const parser = yamlParser.safeLoad(yaml); // testYaml
             // const parser = await swagger.parse(yaml);
             if(parser){
                 let result = {

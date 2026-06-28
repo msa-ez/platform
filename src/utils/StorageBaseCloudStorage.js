@@ -82,7 +82,7 @@ class StorageBaseCloudStorage extends StorageBase {
     // PUSH
     async pushString(path, value, options){
         try {
-            const uniqueKey = Date.now().toString() + Math.random().toString(36).substring(2);
+            const uniqueKey = Date.now().toString() + (crypto.getRandomValues(new Uint32Array(1))[0]/4294967296).toString(36).substring(2);
 
             if(typeof value == 'object') value = JSON.stringify(value);
         
@@ -102,7 +102,7 @@ class StorageBaseCloudStorage extends StorageBase {
     }
     async pushObject(path, value, options){
         try {
-            const uniqueKey = Date.now().toString() + Math.random().toString(36).substring(2);
+            const uniqueKey = Date.now().toString() + (crypto.getRandomValues(new Uint32Array(1))[0]/4294967296).toString(36).substring(2);
 
             if(typeof value == 'object') value = JSON.stringify(value);
 

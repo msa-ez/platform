@@ -143,7 +143,8 @@
                 var reg = new RegExp(checkPoint.regExp);
                 testLog = testLog.replace(/'/gi, "\\'");
                 testLog = testLog.replace(/"/gi, '\\"');
-                return eval(checkPoint.regExp + '.test("' + testLog + '")');
+                var _re = (function (s) { var m = String(s).match(/^\/(.*)\/([a-zA-Z]*)$/); return m ? new RegExp(m[1], m[2]) : new RegExp(s); })(checkPoint.regExp);
+                return _re.test(testLog);
                 // return eval(checkPoint.regExp + ".test('" + testLog + "')");
 
 

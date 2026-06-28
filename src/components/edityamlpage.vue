@@ -642,6 +642,8 @@
 
                                 });
                             } catch (e) {
+                                console.warn('Ignored error:', e);
+                            
                             }
                         }
                     }

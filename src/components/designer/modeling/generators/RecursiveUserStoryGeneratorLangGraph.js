@@ -509,7 +509,7 @@ ${modelDescription}
      * Job ID 생성
      */
     _generateJobId() {
-        return `usgen-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        return `usgen-${Date.now()}-${(crypto.getRandomValues(new Uint32Array(1))[0]/4294967296).toString(36).substr(2, 9)}`;
     }
 
     /**

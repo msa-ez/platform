@@ -30,7 +30,7 @@ class CommandReadModelLangGraphProxy {
     async extract(requirements, boundedContexts) {
         try {
             // Job ID 생성
-            this.jobId = `cmrext-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+            this.jobId = `cmrext-${Date.now()}-${(crypto.getRandomValues(new Uint32Array(1))[0]/4294967296).toString(36).substr(2, 9)}`;
             
             // Firebase Job 초기화
             await this._initializeJobState(requirements, boundedContexts);

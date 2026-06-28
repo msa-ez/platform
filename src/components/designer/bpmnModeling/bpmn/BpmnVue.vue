@@ -1119,7 +1119,7 @@
              */
             uuid: function () {
                 function s4() {
-                    return Math.floor((1 + Math.random()) * 0x10000)
+                    return Math.floor((1 + (crypto.getRandomValues(new Uint32Array(1))[0]/4294967296)) * 0x10000)
                         .toString(16)
                         .substring(1);
                 }

@@ -185,12 +185,15 @@ export class PostgresGatewayClient {
               // alert 후 페이지 reload → 로그인 화면으로 자연 유도.
               // setTimeout 으로 띄워 현재 진행 중인 promise chain 이 정리될 시간 확보.
               setTimeout(function () {
-                try { window.alert('세션이 만료되었습니다. 다시 로그인해주세요.'); } catch (e) { /* noop */ }
-                try { window.location.reload(); } catch (e) { /* noop */ }
+                try { window.alert('세션이 만료되었습니다. 다시 로그인해주세요.'); } catch (e) {
+                    console.warn('Ignored error:', e); /* noop */ }
+                try { window.location.reload(); } catch (e) {
+                    console.warn('Ignored error:', e); /* noop */ }
               }, 0);
             }
           }
-        } catch (e) { /* noop */ }
+        } catch (e) {
+            console.warn('Ignored error:', e); /* noop */ }
         return null;
       }
       if (!r.ok) return null;
@@ -232,14 +235,16 @@ export class PostgresGatewayClient {
         catch (e) { return; }
         const s = this.subs.get(msg.id);
         if (s) {
-          try { s.callback(msg); } catch (e) { /* 콜백 오류 격리 */ }
+          try { s.callback(msg); } catch (e) {
+              console.warn('Ignored error:', e); /* 콜백 오류 격리 */ }
         }
       };
       this.ws.onclose = () => {
         this.wsReady = false;
         if (!this._wsClosed) setTimeout(() => this._connectWs(), 2000);
       };
-      this.ws.onerror = () => { try { this.ws.close(); } catch (e) { /* noop */ } };
+      this.ws.onerror = () => { try { this.ws.close(); } catch (e) {
+          console.warn('Ignored error:', e); /* noop */ } };
     } catch (e) {
       if (!this._wsClosed) setTimeout(() => this._connectWs(), 2000);
     }
@@ -268,7 +273,8 @@ export class PostgresGatewayClient {
     this.subs.delete(subId);
     if (this.wsReady) {
       try { this.ws.send(JSON.stringify({ action: 'unwatch', id: subId })); }
-      catch (e) { /* noop */ }
+      catch (e) {
+          console.warn('Ignored error:', e); /* noop */ }
     }
   }
 
@@ -278,6 +284,7 @@ export class PostgresGatewayClient {
 
   close() {
     this._wsClosed = true;
-    try { this.ws.close(); } catch (e) { /* noop */ }
+    try { this.ws.close(); } catch (e) {
+        console.warn('Ignored error:', e); /* noop */ }
   }
 }

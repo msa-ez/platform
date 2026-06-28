@@ -83,6 +83,8 @@
                     var log = await me.getString(me.getClassPath(`storage://labs-msaez.io/running/labs/${me.labId}/${me.userId}/Untitled1.ipynb`))
                     me.onResultChange(log)
                 } catch (e) {
+                    console.warn('Ignored error:', e);
+                
 
                 }
             }, 3000)

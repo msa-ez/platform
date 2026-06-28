@@ -45,7 +45,9 @@
                                 } catch(e) {
                                     try {
                                         w.reference.off('value');
-                                    } catch(_) {}
+                                    } catch(_) {
+                                        console.warn('Ignored error:', _);
+                                    }
                                 }
                                 
                                 // 1) 먼저 구독 등록 (레이스 방지)
@@ -65,6 +67,7 @@
                                     }
                                     // null이면 전달하지 않음 (이미 구독 중이므로 값이 생기면 handler가 처리)
                                 } catch(e) {
+                                    console.warn('Ignored error:', e);
                                     // get 실패는 무시 (구독은 계속 작동)
                                 }
                             });
@@ -82,7 +85,9 @@
                                 } catch(e) {
                                     try {
                                         w.reference.off('child_added');
-                                    } catch(_) {}
+                                    } catch(_) {
+                                        console.warn('Ignored error:', _);
+                                    }
                                 }
                                 
                                 // seenKeys 리셋 (재연결 시 서버 상태를 기준으로 재동기화)
@@ -113,6 +118,7 @@
                                         });
                                     }
                                 } catch(e) {
+                                    console.warn('Ignored error:', e);
                                     // list 실패는 무시
                                 }
                             });
@@ -354,7 +360,9 @@
                     } catch(e) {
                         try {
                             me._watchCallbacks[path].reference.off('value');
-                        } catch(_) {}
+                        } catch(_) {
+                            console.warn('Ignored error:', _);
+                        }
                     }
                     delete me._watchCallbacks[path];
                 }
@@ -486,7 +494,9 @@
                         } catch(e) {
                             try {
                                 me._watchAddedCallbacks[path].reference.off('child_added');
-                            } catch(_) {}
+                            } catch(_) {
+                                console.warn('Ignored error:', _);
+                            }
                         }
                         delete me._watchAddedCallbacks[path];
                     }
@@ -598,7 +608,9 @@
                     } catch(e) {
                         try {
                             w.reference.off('value');
-                        } catch(_) {}
+                        } catch(_) {
+                            console.warn('Ignored error:', _);
+                        }
                     }
                     delete me._watchCallbacks[path];
                 }
@@ -611,7 +623,9 @@
                     } catch(e) {
                         try {
                             wAdded.reference.off('child_added');
-                        } catch(_) {}
+                        } catch(_) {
+                            console.warn('Ignored error:', _);
+                        }
                     }
                     delete me._watchAddedCallbacks[path];
                     // seen keys도 정리
@@ -626,7 +640,9 @@
                         var ref = window.$acebase.ref(path);
                         ref.off('value');
                         ref.off('child_added');
-                    } catch(e) {}
+                    } catch(e) {
+                        console.warn('Ignored error:', e);
+                    }
                 }
                 return true;
             },

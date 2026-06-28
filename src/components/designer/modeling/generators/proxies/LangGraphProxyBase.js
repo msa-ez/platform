@@ -66,7 +66,7 @@ class LangGraphProxyBase {
     
     static _makeNewJobId() {
         function s4() {
-            return Math.floor((1 + Math.random()) * 0x10000)
+            return Math.floor((1 + (crypto.getRandomValues(new Uint32Array(1))[0]/4294967296)) * 0x10000)
                 .toString(16)
                 .substring(1);
         }
@@ -96,7 +96,8 @@ class LangGraphProxyBase {
         try {
             const storage = this.STORAGE;
             for (const path of jobState._watchedPaths) {
-                try { storage.watch_off(path); } catch (e) { /* noop */ }
+                try { storage.watch_off(path); } catch (e) {
+                    console.warn('Ignored error:', e); /* noop */ }
             }
             jobState._watchedPaths.clear();
         } catch (e) {

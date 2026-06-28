@@ -173,15 +173,15 @@
                     component: "workflowStep",
                     label: "step",
                     src: `${window.location.protocol + "//" + window.location.host}/static/image/symbol/kubernetes/argo/argo-icon-color.svg`,
-                    x: 500 + Math.random()*200,
-                    y: 280 + Math.random()*150
+                    x: 500 + (crypto.getRandomValues(new Uint32Array(1))[0]/4294967296)*200,
+                    y: 280 + (crypto.getRandomValues(new Uint32Array(1))[0]/4294967296)*150
                 },
                 taskComp: {
                     component: "workflowDag",
                     label: "dag",
                     src: `${window.location.protocol + "//" + window.location.host}/static/image/symbol/kubernetes/argo/argo-icon-color.svg`,
-                    x: 500 + Math.random()*200,
-                    y: 280 + Math.random()*150
+                    x: 500 + (crypto.getRandomValues(new Uint32Array(1))[0]/4294967296)*200,
+                    y: 280 + (crypto.getRandomValues(new Uint32Array(1))[0]/4294967296)*150
                 }
             };
         },

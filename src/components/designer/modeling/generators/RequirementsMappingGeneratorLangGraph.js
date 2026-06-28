@@ -19,7 +19,7 @@ class RequirementsMappingGeneratorLangGraph {
         this.isStopped = false;
 
         // Job ID 생성
-        const jobId = `reqmap-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        const jobId = `reqmap-${Date.now()}-${(crypto.getRandomValues(new Uint32Array(1))[0]/4294967296).toString(36).substr(2, 9)}`;
         this.jobId = jobId;
 
         try {

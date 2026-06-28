@@ -21,7 +21,7 @@ export function generatePushId(now = Date.now()) {
 
   if (!duplicateTime) {
     for (let i = 0; i < 12; i++) {
-      lastRandChars[i] = Math.floor(Math.random() * 64);
+      lastRandChars[i] = Math.floor((crypto.getRandomValues(new Uint32Array(1))[0]/4294967296) * 64);
     }
   } else {
     // 같은 밀리초 → 마지막 난수를 증가시켜 단조 증가 보장

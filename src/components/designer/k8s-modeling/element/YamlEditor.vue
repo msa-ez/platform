@@ -66,6 +66,8 @@
                             me.codemirror.refreshImg()
                         });
                     } catch (e) {
+                        console.warn('Ignored error:', e);
+                    
                     }
                     var some = yaml.load(this.yamlText);
                     this.$emit("input", some);

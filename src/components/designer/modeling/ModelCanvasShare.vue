@@ -101,6 +101,8 @@
                     me.image = resolve
                 })
             } catch (e) {
+                console.warn('Ignored error:', e);
+            
 
             }
 

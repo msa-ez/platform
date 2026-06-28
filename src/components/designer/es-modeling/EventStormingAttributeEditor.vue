@@ -795,8 +795,8 @@
                     'label': 'Value',
                     'width': 100,
                     'height': 100,
-                    'x': 500 + Math.floor(Math.random()*200),
-                    'y': 280 + Math.floor(Math.random()*150),
+                    'x': 500 + Math.floor((crypto.getRandomValues(new Uint32Array(1))[0]/4294967296)*200),
+                    'y': 280 + Math.floor((crypto.getRandomValues(new Uint32Array(1))[0]/4294967296)*150),
                 }
                 if(obj.items) {
                     componentInfo['component'] = 'enum-class-definition'

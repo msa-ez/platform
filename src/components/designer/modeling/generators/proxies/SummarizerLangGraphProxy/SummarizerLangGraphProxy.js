@@ -111,7 +111,8 @@ class SummarizerLangGraphProxy {
         if (!jobState || !jobState._watchedPaths || jobState._watchersCleaned) return;
         jobState._watchersCleaned = true;
         for (const path of jobState._watchedPaths) {
-            try { storage.watch_off(path); } catch (e) { /* noop */ }
+            try { storage.watch_off(path); } catch (e) {
+                console.warn('Ignored error:', e); /* noop */ }
         }
         jobState._watchedPaths.clear();
     }
@@ -195,7 +196,8 @@ class SummarizerLangGraphProxy {
                     try {
                         const err = await storage.getObject(errorPath);
                         if (err) { jobState.error = err; break; }
-                    } catch (e) { /* noop */ }
+                    } catch (e) {
+                        console.warn('Ignored error:', e); /* noop */ }
                     await new Promise(r => setTimeout(r, 200));
                 }
             }

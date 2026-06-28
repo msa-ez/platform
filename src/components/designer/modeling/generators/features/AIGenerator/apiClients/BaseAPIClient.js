@@ -240,7 +240,9 @@ class BaseAPIClient {
         try {
             requestInfo.requestData = requestParams.requestData ? JSON.parse(requestParams.requestData) : null
             requestInfo.singleMessage = messages.map((m) => m.content).join("\n\n---\n\n") + "\n\n---\n\n"
-        }catch{}
+        }catch{
+            console.warn('Ignored error');
+        }
 
         try {
             if((g.client && g.client.input)) {
@@ -251,7 +253,9 @@ class BaseAPIClient {
             }
             else
                 requestInfo.input = null
-        }catch{}
+        }catch{
+            console.warn('Ignored error');
+        }
 
         try {
             requestInfo = {
@@ -262,7 +266,9 @@ class BaseAPIClient {
                 apiClientID: g.apiClientID,
                 networkRequestID: new Date().getTime()
             }
-        }catch{}
+        }catch{
+            console.warn('Ignored error');
+        }
 
         return requestInfo
     }
@@ -416,12 +422,16 @@ class BaseAPIClient {
             }
             else
                 inputData = null
-        }catch{}
+        }catch{
+            console.warn('Ignored error');
+        }
 
         let messages = null
         try {
             messages = structuredClone(g.previousMessages)
-        }catch{}
+        }catch{
+            console.warn('Ignored error');
+        }
 
         return {
             generatorName: g.generatorName,

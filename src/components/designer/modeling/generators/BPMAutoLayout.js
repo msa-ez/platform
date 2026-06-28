@@ -1204,7 +1204,7 @@ function generateRandomGraph(nodeCount = 10, edgeDensity = 0.3) {
         const node = graph.addNode(i, `Node ${i}`).getNode(i);
         
         // 노드에 랜덤 크기 할당 (기본 크기의 60%~140%)
-        const sizeVariation = 0.6 + Math.random() * 0.8; // 0.6 ~ 1.4
+        const sizeVariation = 0.6 + (crypto.getRandomValues(new Uint32Array(1))[0]/4294967296) * 0.8; // 0.6 ~ 1.4
         node.width = Math.floor(80 * sizeVariation);
         node.height = Math.floor(40 * sizeVariation);
     }
@@ -1212,7 +1212,7 @@ function generateRandomGraph(nodeCount = 10, edgeDensity = 0.3) {
     // 엣지 추가 (Sugiyama 알고리즘이 제대로 작동하도록 DAG 보장)
     for (let i = 0; i < nodeCount; i++) {
         for (let j = i + 1; j < nodeCount; j++) {
-            if (Math.random() < edgeDensity) {
+            if ((crypto.getRandomValues(new Uint32Array(1))[0]/4294967296) < edgeDensity) {
                 graph.addEdge(i, j);
             }
         }

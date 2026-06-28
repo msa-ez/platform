@@ -16,6 +16,7 @@ class Gitea extends Git {
                     try {
                         window.dispatchEvent(new CustomEvent('gitea-401'));
                     } catch (e) {
+                        console.warn('Ignored error:', e);
                         // CustomEvent 미지원 환경 대비 — 무시
                     }
                 }

@@ -55,7 +55,7 @@ class ColorFactory {                                  // 색상을 관리하는 
   }
 
   static randomColor() {                              // 랜덤 색상을 생성하는 메소드입니다.
-    return `hsl(${Math.random() * 360}, 100%, 70%)`;  // HSL 색상 공간을 사용하여 랜덤 색상을 생성합니다.
+    return `hsl(${(crypto.getRandomValues(new Uint32Array(1))[0]/4294967296) * 360}, 100%, 70%)`;  // HSL 색상 공간을 사용하여 랜덤 색상을 생성합니다.
   }
 }
 

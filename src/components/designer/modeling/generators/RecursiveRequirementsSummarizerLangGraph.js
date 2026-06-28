@@ -44,7 +44,7 @@ class RecursiveRequirementsSummarizerLangGraph extends RequirementsSummarizer {
      */
     _generateJobId() {
         const timestamp = Date.now();
-        const random = Math.random().toString(36).substring(2, 15);
+        const random = (crypto.getRandomValues(new Uint32Array(1))[0]/4294967296).toString(36).substring(2, 15);
         return `summ-${timestamp}-${random}`;
     }
 
@@ -379,7 +379,8 @@ class RecursiveRequirementsSummarizerLangGraph extends RequirementsSummarizer {
         for (const rej of rejects) {
             try {
                 rej(new Error('Generation stopped by user'));
-            } catch (e) { /* noop */ }
+            } catch (e) {
+                console.warn('Ignored error:', e); /* noop */ }
         }
     }
 }

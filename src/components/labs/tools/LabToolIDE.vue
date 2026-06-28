@@ -164,6 +164,8 @@
                             var log = await me.getString('storage://labs-msaez.io/' + me.getClassPath(`labs/${me.labId}/${me.userId}/result.log`))
                             me.onResultChange(log)
                         } catch (e) {
+                            console.warn('Ignored error:', e);
+                        
 
                         }
                     }, 3000)

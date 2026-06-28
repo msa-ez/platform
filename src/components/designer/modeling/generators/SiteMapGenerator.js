@@ -229,7 +229,7 @@ IMPORTANT:
     }
 
     generateNodeId() {
-        return `node-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        return `node-${Date.now()}-${(crypto.getRandomValues(new Uint32Array(1))[0]/4294967296).toString(36).substr(2, 9)}`;
     }
 
     extractExistingTitles(navigation) {

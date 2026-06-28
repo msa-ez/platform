@@ -112,7 +112,7 @@
                     width: boundary.getWidth(),
                     height: boundary.getHeight(),
                     component: componentName,
-                    name: "Class" + Math.floor((1 + Math.random()) * 0x100)
+                    name: "Class" + Math.floor((1 + (crypto.getRandomValues(new Uint32Array(1))[0]/4294967296)) * 0x100)
                 }
 
                 if (me.canvas) {

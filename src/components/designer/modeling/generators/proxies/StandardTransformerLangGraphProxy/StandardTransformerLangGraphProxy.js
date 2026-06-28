@@ -13,7 +13,7 @@ class StandardTransformerLangGraphProxy {
 
     static generateJobId() {
         const ts = Date.now()
-        const rnd = Math.random().toString(36).substring(2, 10)
+        const rnd = (crypto.getRandomValues(new Uint32Array(1))[0]/4294967296).toString(36).substring(2, 10)
         return `std-trans-${ts}-${rnd}`
     }
 
@@ -85,7 +85,8 @@ class StandardTransformerLangGraphProxy {
         if (!jobState || !jobState._watchedPaths || jobState._watchersCleaned) return
         jobState._watchersCleaned = true
         for (const path of jobState._watchedPaths) {
-            try { storage.watch_off(path) } catch (e) { /* noop */ }
+            try { storage.watch_off(path) } catch (e) {
+                console.warn('Ignored error:', e); /* noop */ }
         }
         jobState._watchedPaths.clear()
     }

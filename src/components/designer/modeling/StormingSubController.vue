@@ -382,7 +382,7 @@
                     var bcH = JSON.parse(JSON.stringify(me.value.elementView.height))
 
                     function randomCoordinate(min, max) {
-                        return Math.floor(Math.random() * (max - min)) + min;
+                        return Math.floor((crypto.getRandomValues(new Uint32Array(1))[0]/4294967296) * (max - min)) + min;
                     }
                     
                     modelInfo.x = randomCoordinate(bcX-bcW/2+50, bcX+bcW/2-50)

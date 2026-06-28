@@ -251,7 +251,9 @@ function initializeListeners(db) {
           updateObj
         );
       }
-    } catch (e) {}
+    } catch (e) {
+        console.warn('Ignored error:', e);
+    }
   });
   // exports.onRegisterUser
   // on("value") 대신 on("child_added") 사용 - 새로운 계정만 감지 (초기 데이터 로드 방지)

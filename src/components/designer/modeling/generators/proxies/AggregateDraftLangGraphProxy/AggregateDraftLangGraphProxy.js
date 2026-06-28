@@ -121,7 +121,8 @@ class AggregateDraftLangGraphProxy {
             jobState._pollTimer = null;
         }
         for (const path of jobState._watchedPaths) {
-            try { storage.watch_off(path); } catch (e) { /* noop */ }
+            try { storage.watch_off(path); } catch (e) {
+                console.warn('Ignored error:', e); /* noop */ }
         }
         jobState._watchedPaths.clear();
     }
@@ -217,6 +218,7 @@ class AggregateDraftLangGraphProxy {
                     this._cleanupWatchers(storage, jobState);
                 }
             } catch (e) {
+                console.warn('Ignored error:', e);
                 // 폴링 복구 경로는 실패해도 다음 주기에 재시도
             } finally {
                 jobState._pollInFlight = false;
@@ -241,6 +243,7 @@ class AggregateDraftLangGraphProxy {
                     return value;
                 }
             } catch (e) {
+                console.warn('Ignored error:', e);
                 // noop: retry
             }
             if (attempt < maxRetries - 1) {
@@ -285,7 +288,8 @@ class AggregateDraftLangGraphProxy {
                     try {
                         const err = await storage.getObject(errorPath);
                         if (err) { jobState.error = err; break; }
-                    } catch (e) { /* noop */ }
+                    } catch (e) {
+                        console.warn('Ignored error:', e); /* noop */ }
                     await new Promise(r => setTimeout(r, 200));
                 }
             }

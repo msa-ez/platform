@@ -98,16 +98,16 @@ export default new Vuex.Store({
             return state.storeAuthorized
         },
         getWidth: (state) => (type) => {
-            return eval("state." + type.charAt(0).toLowerCase() + type.slice(1) + ".width")
+            return state[type.charAt(0).toLowerCase() + type.slice(1)].width
         },
         getHeight: (state) => (type) => {
-            return eval("state." + type.charAt(0).toLowerCase() + type.slice(1) + ".height")
+            return state[type.charAt(0).toLowerCase() + type.slice(1)].height
         },
     },
     mutations: {
         resize(state, data) {
-            eval("state." + data.type.charAt(0).toLowerCase() + data.type.slice(1) + ".width = " + data.width)
-            eval("state." + data.type.charAt(0).toLowerCase() + data.type.slice(1) + ".height = " + data.height)
+            state[data.type.charAt(0).toLowerCase() + data.type.slice(1)].width = data.width
+            state[data.type.charAt(0).toLowerCase() + data.type.slice(1)].height = data.height
         },
 
     },

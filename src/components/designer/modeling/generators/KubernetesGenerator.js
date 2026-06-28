@@ -42,7 +42,7 @@ export default class KubernetesGenerator extends AIGenerator{
 
     uuid() {
         function s4() {
-            return Math.floor((1 + Math.random()) * 0x10000)
+            return Math.floor((1 + (crypto.getRandomValues(new Uint32Array(1))[0]/4294967296)) * 0x10000)
                 .toString(16)
                 .substring(1);
         }
@@ -79,7 +79,7 @@ export default class KubernetesGenerator extends AIGenerator{
                         let deployment = model['elements']['deployments'][i]
                         let uuid = me.uuid()
                         let element = {}
-                        let eleSpec = yaml.load(deployment.yaml)
+                        let eleSpec = yaml.safeLoad(deployment.yaml)
 
                         elementView._type = "Deployment"
                         elementView.id = uuid
@@ -122,7 +122,7 @@ export default class KubernetesGenerator extends AIGenerator{
                         let service = model['elements']['services'][i]
                         let uuid = me.uuid()
                         let element = {}
-                        let eleSpec = yaml.load(service.yaml)
+                        let eleSpec = yaml.safeLoad(service.yaml)
 
                         elementView._type = "Service"
                         elementView.id = uuid

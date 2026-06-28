@@ -15,7 +15,7 @@ class AddTraceToDraftOptionsGeneratorLangGraph {
         const functionalRequirements = this.client.input['functionalRequirements'];
         const traceMap = this.client.input['traceMap'];
 
-        const jobId = `trace-add-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        const jobId = `trace-add-${Date.now()}-${(crypto.getRandomValues(new Uint32Array(1))[0]/4294967296).toString(36).substr(2, 9)}`;
 
         try {
             // Job 생성
