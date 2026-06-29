@@ -3,7 +3,7 @@
  * HTML 파싱 대신 원본 데이터를 직접 사용하여 안정적인 Word 문서 생성
  */
 
-import { Document, Packer, Paragraph, HeadingLevel, Table, TableRow, TableCell, WidthType, AlignmentType, ImageRun, PageBreak, TextRun, SectionType, BorderStyle } from 'docx';
+import { Document, Packer, Paragraph, HeadingLevel, Table, TableRow, TableCell, WidthType, AlignmentType, ImageRun, PageBreak, TextRun, SectionType, BorderStyle, ShadingType } from 'docx';
 import * as htmlToImage from 'html-to-image';
 import { DataBasedDocumentExporterBase } from './DataBasedDocumentExporterBase';
 
@@ -344,7 +344,7 @@ export class DataBasedWordExporter extends DataBasedDocumentExporterBase {
         const tableRows = [];
         const headerCells = ['유형', '요소명', thirdHeader].map(h => new TableCell({
             children: [new Paragraph({ text: h, alignment: AlignmentType.CENTER })],
-            shading: { fill: 'F5F5F5' }
+            shading: { type: ShadingType.CLEAR, color: 'auto', fill: 'F5F5F5' }
         }));
         tableRows.push(new TableRow({ children: headerCells, tableHeader: true, cantSplit: true }));
 
@@ -1052,19 +1052,19 @@ export class DataBasedWordExporter extends DataBasedDocumentExporterBase {
         const headerCells = [
             new TableCell({
                 children: [new Paragraph({ text: '바운디드 컨텍스트', alignment: AlignmentType.CENTER })],
-                shading: { fill: 'F5F5F5' }
+                shading: { type: ShadingType.CLEAR, color: 'auto', fill: 'F5F5F5' }
             }),
             new TableCell({
                 children: [new Paragraph({ text: '역할', alignment: AlignmentType.CENTER })],
-                shading: { fill: 'F5F5F5' }
+                shading: { type: ShadingType.CLEAR, color: 'auto', fill: 'F5F5F5' }
             }),
             new TableCell({
                 children: [new Paragraph({ text: '중요도', alignment: AlignmentType.CENTER })],
-                shading: { fill: 'F5F5F5' }
+                shading: { type: ShadingType.CLEAR, color: 'auto', fill: 'F5F5F5' }
             }),
             new TableCell({
                 children: [new Paragraph({ text: '구현 전략', alignment: AlignmentType.CENTER })],
-                shading: { fill: 'F5F5F5' }
+                shading: { type: ShadingType.CLEAR, color: 'auto', fill: 'F5F5F5' }
             })
         ];
         rows.push(new TableRow({ children: headerCells, tableHeader: true, cantSplit: true }));
@@ -1122,19 +1122,19 @@ export class DataBasedWordExporter extends DataBasedDocumentExporterBase {
         const headerCells = [
             new TableCell({
                 children: [new Paragraph({ text: '소스 컨텍스트', alignment: AlignmentType.CENTER })],
-                shading: { fill: 'F5F5F5' }
+                shading: { type: ShadingType.CLEAR, color: 'auto', fill: 'F5F5F5' }
             }),
             new TableCell({
                 children: [new Paragraph({ text: '타겟 컨텍스트', alignment: AlignmentType.CENTER })],
-                shading: { fill: 'F5F5F5' }
+                shading: { type: ShadingType.CLEAR, color: 'auto', fill: 'F5F5F5' }
             }),
             new TableCell({
                 children: [new Paragraph({ text: '관계 유형', alignment: AlignmentType.CENTER })],
-                shading: { fill: 'F5F5F5' }
+                shading: { type: ShadingType.CLEAR, color: 'auto', fill: 'F5F5F5' }
             }),
             new TableCell({
                 children: [new Paragraph({ text: '상호작용 패턴', alignment: AlignmentType.CENTER })],
-                shading: { fill: 'F5F5F5' }
+                shading: { type: ShadingType.CLEAR, color: 'auto', fill: 'F5F5F5' }
             })
         ];
         rows.push(new TableRow({ children: headerCells, tableHeader: true, cantSplit: true }));
@@ -1198,11 +1198,11 @@ export class DataBasedWordExporter extends DataBasedDocumentExporterBase {
         const headerCells = [
             new TableCell({
                 children: [new Paragraph({ text: '이름', alignment: AlignmentType.CENTER })],
-                shading: { fill: 'F5F5F5' }
+                shading: { type: ShadingType.CLEAR, color: 'auto', fill: 'F5F5F5' }
             }),
             new TableCell({
                 children: [new Paragraph({ text: '설명', alignment: AlignmentType.CENTER })],
-                shading: { fill: 'F5F5F5' }
+                shading: { type: ShadingType.CLEAR, color: 'auto', fill: 'F5F5F5' }
             })
         ];
         rows.push(new TableRow({ children: headerCells, tableHeader: true, cantSplit: true }));
@@ -1254,23 +1254,23 @@ export class DataBasedWordExporter extends DataBasedDocumentExporterBase {
         const headerCells = [
             new TableCell({
                 children: [new Paragraph({ text: 'API 경로', alignment: AlignmentType.CENTER })],
-                shading: { fill: 'F5F5F5' }
+                shading: { type: ShadingType.CLEAR, color: 'auto', fill: 'F5F5F5' }
             }),
             new TableCell({
                 children: [new Paragraph({ text: '메서드', alignment: AlignmentType.CENTER })],
-                shading: { fill: 'F5F5F5' }
+                shading: { type: ShadingType.CLEAR, color: 'auto', fill: 'F5F5F5' }
             }),
             new TableCell({
                 children: [new Paragraph({ text: '커맨드', alignment: AlignmentType.CENTER })],
-                shading: { fill: 'F5F5F5' }
+                shading: { type: ShadingType.CLEAR, color: 'auto', fill: 'F5F5F5' }
             }),
             new TableCell({
                 children: [new Paragraph({ text: '설명', alignment: AlignmentType.CENTER })],
-                shading: { fill: 'F5F5F5' }
+                shading: { type: ShadingType.CLEAR, color: 'auto', fill: 'F5F5F5' }
             }),
             new TableCell({
                 children: [new Paragraph({ text: '파라미터', alignment: AlignmentType.CENTER })],
-                shading: { fill: 'F5F5F5' }
+                shading: { type: ShadingType.CLEAR, color: 'auto', fill: 'F5F5F5' }
             })
         ];
         rows.push(new TableRow({ children: headerCells, tableHeader: true, cantSplit: true }));
@@ -1337,19 +1337,19 @@ export class DataBasedWordExporter extends DataBasedDocumentExporterBase {
         const headerCells = [
             new TableCell({
                 children: [new Paragraph({ text: '필드명', alignment: AlignmentType.CENTER })],
-                shading: { fill: 'F5F5F5' }
+                shading: { type: ShadingType.CLEAR, color: 'auto', fill: 'F5F5F5' }
             }),
             new TableCell({
                 children: [new Paragraph({ text: '타입', alignment: AlignmentType.CENTER })],
-                shading: { fill: 'F5F5F5' }
+                shading: { type: ShadingType.CLEAR, color: 'auto', fill: 'F5F5F5' }
             }),
             new TableCell({
                 children: [new Paragraph({ text: '키', alignment: AlignmentType.CENTER })],
-                shading: { fill: 'F5F5F5' }
+                shading: { type: ShadingType.CLEAR, color: 'auto', fill: 'F5F5F5' }
             }),
             new TableCell({
                 children: [new Paragraph({ text: '설명', alignment: AlignmentType.CENTER })],
-                shading: { fill: 'F5F5F5' }
+                shading: { type: ShadingType.CLEAR, color: 'auto', fill: 'F5F5F5' }
             })
         ];
         rows.push(new TableRow({ children: headerCells, tableHeader: true, cantSplit: true }));
@@ -1414,15 +1414,15 @@ export class DataBasedWordExporter extends DataBasedDocumentExporterBase {
         const headerCells = [
             new TableCell({
                 children: [new Paragraph({ text: '항목', alignment: AlignmentType.CENTER })],
-                shading: { fill: 'F5F5F5' }
+                shading: { type: ShadingType.CLEAR, color: 'auto', fill: 'F5F5F5' }
             }),
             new TableCell({
                 children: [new Paragraph({ text: '장점', alignment: AlignmentType.CENTER })],
-                shading: { fill: 'F5F5F5' }
+                shading: { type: ShadingType.CLEAR, color: 'auto', fill: 'F5F5F5' }
             }),
             new TableCell({
                 children: [new Paragraph({ text: '단점', alignment: AlignmentType.CENTER })],
-                shading: { fill: 'F5F5F5' }
+                shading: { type: ShadingType.CLEAR, color: 'auto', fill: 'F5F5F5' }
             })
         ];
         rows.push(new TableRow({ children: headerCells, tableHeader: true, cantSplit: true }));
