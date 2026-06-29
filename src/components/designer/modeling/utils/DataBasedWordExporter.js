@@ -86,6 +86,7 @@ export class DataBasedWordExporter extends DataBasedDocumentExporterBase {
         children.push(new Paragraph({
             children: [
                 new ImageRun({
+                    type: 'png',
                     data: arrayBuffer,
                     transformation: { width, height }
                 })
