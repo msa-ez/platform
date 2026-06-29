@@ -3,7 +3,7 @@
  * HTML 파싱 대신 원본 데이터를 직접 사용하여 안정적인 Word 문서 생성
  */
 
-import { Document, Packer, Paragraph, HeadingLevel, Table, TableRow, TableCell, WidthType, AlignmentType, ImageRun, PageBreak, TextRun, SectionType } from 'docx';
+import { Document, Packer, Paragraph, HeadingLevel, Table, TableRow, TableCell, WidthType, AlignmentType, ImageRun, PageBreak, TextRun, SectionType, BorderStyle } from 'docx';
 import * as htmlToImage from 'html-to-image';
 import { DataBasedDocumentExporterBase } from './DataBasedDocumentExporterBase';
 
@@ -366,12 +366,12 @@ export class DataBasedWordExporter extends DataBasedDocumentExporterBase {
             width: { size: availableWidth, type: WidthType.DXA },
             columnWidths: widths,
             borders: {
-                top: { size: 1, color: '000000' },
-                bottom: { size: 1, color: '000000' },
-                left: { size: 1, color: '000000' },
-                right: { size: 1, color: '000000' },
-                insideHorizontal: { size: 1, color: '000000' },
-                insideVertical: { size: 1, color: '000000' }
+                top: { style: BorderStyle.SINGLE, size: 1, color: '000000' },
+                bottom: { style: BorderStyle.SINGLE, size: 1, color: '000000' },
+                left: { style: BorderStyle.SINGLE, size: 1, color: '000000' },
+                right: { style: BorderStyle.SINGLE, size: 1, color: '000000' },
+                insideHorizontal: { style: BorderStyle.SINGLE, size: 1, color: '000000' },
+                insideVertical: { style: BorderStyle.SINGLE, size: 1, color: '000000' }
             }
         });
     }
@@ -1093,12 +1093,12 @@ export class DataBasedWordExporter extends DataBasedDocumentExporterBase {
             width: { size: availableWidth, type: WidthType.DXA },
             columnWidths: [cellWidth, cellWidth, cellWidth, cellWidth],
             borders: {
-                top: { size: 1, color: '000000' },
-                bottom: { size: 1, color: '000000' },
-                left: { size: 1, color: '000000' },
-                right: { size: 1, color: '000000' },
-                insideHorizontal: { size: 1, color: '000000' },
-                insideVertical: { size: 1, color: '000000' }
+                top: { style: BorderStyle.SINGLE, size: 1, color: '000000' },
+                bottom: { style: BorderStyle.SINGLE, size: 1, color: '000000' },
+                left: { style: BorderStyle.SINGLE, size: 1, color: '000000' },
+                right: { style: BorderStyle.SINGLE, size: 1, color: '000000' },
+                insideHorizontal: { style: BorderStyle.SINGLE, size: 1, color: '000000' },
+                insideVertical: { style: BorderStyle.SINGLE, size: 1, color: '000000' }
             }
         });
     }
@@ -1169,12 +1169,12 @@ export class DataBasedWordExporter extends DataBasedDocumentExporterBase {
             width: { size: availableWidth, type: WidthType.DXA },
             columnWidths: [cellWidth, cellWidth, cellWidth, cellWidth],
             borders: {
-                top: { size: 1, color: '000000' },
-                bottom: { size: 1, color: '000000' },
-                left: { size: 1, color: '000000' },
-                right: { size: 1, color: '000000' },
-                insideHorizontal: { size: 1, color: '000000' },
-                insideVertical: { size: 1, color: '000000' }
+                top: { style: BorderStyle.SINGLE, size: 1, color: '000000' },
+                bottom: { style: BorderStyle.SINGLE, size: 1, color: '000000' },
+                left: { style: BorderStyle.SINGLE, size: 1, color: '000000' },
+                right: { style: BorderStyle.SINGLE, size: 1, color: '000000' },
+                insideHorizontal: { style: BorderStyle.SINGLE, size: 1, color: '000000' },
+                insideVertical: { style: BorderStyle.SINGLE, size: 1, color: '000000' }
             }
         });
     }
@@ -1225,12 +1225,12 @@ export class DataBasedWordExporter extends DataBasedDocumentExporterBase {
             width: { size: availableWidth, type: WidthType.DXA },
             columnWidths: [cellWidth, cellWidth],
             borders: {
-                top: { size: 1, color: '000000' },
-                bottom: { size: 1, color: '000000' },
-                left: { size: 1, color: '000000' },
-                right: { size: 1, color: '000000' },
-                insideHorizontal: { size: 1, color: '000000' },
-                insideVertical: { size: 1, color: '000000' }
+                top: { style: BorderStyle.SINGLE, size: 1, color: '000000' },
+                bottom: { style: BorderStyle.SINGLE, size: 1, color: '000000' },
+                left: { style: BorderStyle.SINGLE, size: 1, color: '000000' },
+                right: { style: BorderStyle.SINGLE, size: 1, color: '000000' },
+                insideHorizontal: { style: BorderStyle.SINGLE, size: 1, color: '000000' },
+                insideVertical: { style: BorderStyle.SINGLE, size: 1, color: '000000' }
             }
         });
     }
@@ -1308,12 +1308,12 @@ export class DataBasedWordExporter extends DataBasedDocumentExporterBase {
             width: { size: availableWidth, type: WidthType.DXA },
             columnWidths: [cellWidth, cellWidth, cellWidth, cellWidth, cellWidth],
             borders: {
-                top: { size: 1, color: '000000' },
-                bottom: { size: 1, color: '000000' },
-                left: { size: 1, color: '000000' },
-                right: { size: 1, color: '000000' },
-                insideHorizontal: { size: 1, color: '000000' },
-                insideVertical: { size: 1, color: '000000' }
+                top: { style: BorderStyle.SINGLE, size: 1, color: '000000' },
+                bottom: { style: BorderStyle.SINGLE, size: 1, color: '000000' },
+                left: { style: BorderStyle.SINGLE, size: 1, color: '000000' },
+                right: { style: BorderStyle.SINGLE, size: 1, color: '000000' },
+                insideHorizontal: { style: BorderStyle.SINGLE, size: 1, color: '000000' },
+                insideVertical: { style: BorderStyle.SINGLE, size: 1, color: '000000' }
             }
         });
     }
@@ -1385,12 +1385,12 @@ export class DataBasedWordExporter extends DataBasedDocumentExporterBase {
             width: { size: availableWidth, type: WidthType.DXA },
             columnWidths: [cellWidth, cellWidth, cellWidth, cellWidth],
             borders: {
-                top: { size: 1, color: '000000' },
-                bottom: { size: 1, color: '000000' },
-                left: { size: 1, color: '000000' },
-                right: { size: 1, color: '000000' },
-                insideHorizontal: { size: 1, color: '000000' },
-                insideVertical: { size: 1, color: '000000' }
+                top: { style: BorderStyle.SINGLE, size: 1, color: '000000' },
+                bottom: { style: BorderStyle.SINGLE, size: 1, color: '000000' },
+                left: { style: BorderStyle.SINGLE, size: 1, color: '000000' },
+                right: { style: BorderStyle.SINGLE, size: 1, color: '000000' },
+                insideHorizontal: { style: BorderStyle.SINGLE, size: 1, color: '000000' },
+                insideVertical: { style: BorderStyle.SINGLE, size: 1, color: '000000' }
             }
         });
     }
@@ -1449,12 +1449,12 @@ export class DataBasedWordExporter extends DataBasedDocumentExporterBase {
             width: { size: availableWidth, type: WidthType.DXA },
             columnWidths: [cellWidth, cellWidth, cellWidth],
             borders: {
-                top: { size: 1, color: '000000' },
-                bottom: { size: 1, color: '000000' },
-                left: { size: 1, color: '000000' },
-                right: { size: 1, color: '000000' },
-                insideHorizontal: { size: 1, color: '000000' },
-                insideVertical: { size: 1, color: '000000' }
+                top: { style: BorderStyle.SINGLE, size: 1, color: '000000' },
+                bottom: { style: BorderStyle.SINGLE, size: 1, color: '000000' },
+                left: { style: BorderStyle.SINGLE, size: 1, color: '000000' },
+                right: { style: BorderStyle.SINGLE, size: 1, color: '000000' },
+                insideHorizontal: { style: BorderStyle.SINGLE, size: 1, color: '000000' },
+                insideVertical: { style: BorderStyle.SINGLE, size: 1, color: '000000' }
             }
         });
     }
