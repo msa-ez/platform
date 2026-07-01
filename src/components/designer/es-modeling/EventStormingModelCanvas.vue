@@ -306,7 +306,8 @@
                                                     :color="projectNameColor"
                                                     :error-messages="projectNameHint"
                                                     label="Project Name"
-                                                    v-model="projectName"
+                                                    :value="projectName"
+                                                    @change="projectName = $event"
                                                     @click.native="unselectedAll"
                                                 >
                                                 </v-text-field>
