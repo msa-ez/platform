@@ -353,7 +353,12 @@
                     mermaidString += `subgraph ${mid(group.id)} \n`;
                     Object.values(group.classes).forEach(cls => {
                         // label 사용 (displayName: "한글(영문)" 형식 포함)
-                        let nodeContent = `[-${cls.role}-<br/>${cls.label}`;
+                        // 노드 텍스트는 반드시 큰따옴표로 감싼다("...") — mermaid 8.14.0 의 unquoted 노드
+                        // 텍스트 lexer 는 중간점(·), 전각기호, em-dash, … 등 유니코드 문장부호를 거부해
+                        // "Syntax error in graph" 를 낸다(POSCO 명칭은 · 를 대량 사용). 따옴표로 감싸면
+                        // 이런 문자를 모두 허용하고 <br/> 렌더링도 유지된다. (sanitizeMermaidLabel 이 " → ' 로
+                        // 바꿔주므로 내부에 stray " 없음)
+                        let nodeContent = `["-${cls.role}-<br/>${cls.label}`;
                         
                         // Aggregate Root이고 fieldNames가 있는 경우 속성 목록 추가
                         if (cls.role === "Aggregate Root" && group.fieldNames && group.fieldNames.length > 0 && this.showDetailedAttributes) {               
@@ -365,7 +370,7 @@
                             });
                         }
                         
-                        nodeContent += `]`;
+                        nodeContent += `"]`;
                         mermaidString += `${mid(cls.id)}${nodeContent}\n`;
                     });
                     mermaidString += `end\n`;
