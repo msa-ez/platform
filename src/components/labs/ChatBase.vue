@@ -1132,7 +1132,7 @@
                 return beginString + replace + endString;
             },
             makeChatID() {
-                return 'chat' + Math.random().toString(36).substr(2, 9);
+                return 'chat' + (crypto.getRandomValues(new Uint32Array(1))[0]/4294967296).toString(36).substr(2, 9);
             },
             lineBreak() {
                 this.message = this.message + '\n'

@@ -316,7 +316,7 @@ export default {
                 for (const file of filesToUpload) {
                     try {
                         const fileExt = file.name.split('.').pop().toLowerCase();
-                        const fileName = `standard-document-${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+                        const fileName = `standard-document-${Date.now()}-${(crypto.getRandomValues(new Uint32Array(1))[0]/4294967296).toString(36).substr(2, 9)}.${fileExt}`;
                         const storagePath = `standard-documents/${userId}/${fileName}`;
                         const contentType = this.getContentType(fileExt);
                         

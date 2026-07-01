@@ -1739,7 +1739,7 @@
                                 width: parseInt(componentInfo.width, 10),
                                 height: parseInt(componentInfo.height, 10),
                                 label: componentInfo.label,
-                                name: componentInfo.label + Math.floor((1 + Math.random()) * 0x100)
+                                name: componentInfo.label + Math.floor((1 + (crypto.getRandomValues(new Uint32Array(1))[0]/4294967296)) * 0x100)
                             }
                             // me.openClassNameDialog(componentInfo);
                             me.addElement(componentInfo);
@@ -1750,7 +1750,7 @@
             },
             uuid: function () {
                 function s4() {
-                    return Math.floor((1 + Math.random()) * 0x10000)
+                    return Math.floor((1 + (crypto.getRandomValues(new Uint32Array(1))[0]/4294967296)) * 0x10000)
                         .toString(16)
                         .substring(1);
                 }

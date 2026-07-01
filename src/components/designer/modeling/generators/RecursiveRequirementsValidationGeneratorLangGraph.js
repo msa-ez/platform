@@ -1005,7 +1005,7 @@ class RecursiveRequirementsValidationGeneratorLangGraph {
 
     _uuid() {
         function s4() {
-            return Math.floor((1 + Math.random()) * 0x10000)
+            return Math.floor((1 + (crypto.getRandomValues(new Uint32Array(1))[0]/4294967296)) * 0x10000)
                 .toString(16)
                 .substring(1);
         }
@@ -1015,7 +1015,7 @@ class RecursiveRequirementsValidationGeneratorLangGraph {
 
     _generateJobId() {
         const timestamp = Date.now();
-        const random = Math.random().toString(36).substring(2, 9);
+        const random = (crypto.getRandomValues(new Uint32Array(1))[0]/4294967296).toString(36).substring(2, 9);
         return `req-valid-${timestamp}-${random}`;
     }
 

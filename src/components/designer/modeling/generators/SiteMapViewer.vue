@@ -267,7 +267,7 @@ export default {
         // Event Storming 관련 메서드들은 일반적인 사이트맵에서는 불필요하므로 제거
         
         generateId() {
-            return `node-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+            return `node-${Date.now()}-${(crypto.getRandomValues(new Uint32Array(1))[0]/4294967296).toString(36).substr(2, 9)}`;
         },
         
         
