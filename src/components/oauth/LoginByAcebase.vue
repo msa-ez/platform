@@ -204,7 +204,10 @@
         },
         computed: {
             provider() {
-                return window.PROVIDER
+                // 로그인 버튼 라벨/아이콘은 로그인 provider 기준(AUTH_PROVIDER).
+                // 코드생성용 git provider(window.PROVIDER)와 분리한다.
+                // posco 로 뜨려면 /static/image/posco.png 가 있어야 하며, 없으면 alt 텍스트로 degrade.
+                return window.AUTH_PROVIDER || window.PROVIDER
             }
         },
         methods: {

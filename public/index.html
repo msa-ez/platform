@@ -251,6 +251,12 @@
               let value = line.split("=")[1];
               window.PROVIDER = value.replace(/(?:\\[rn]|[\r\n]+)+/g, "");
             }
+            // 로그인 provider(AUTH_PROVIDER)는 코드생성용 git provider(PROVIDER)와 분리.
+            // VUE_APP_AUTH_PROVIDER=posco 면 로그인만 SWP SSO 로 가고, 코드생성은 계속 Gitea.
+            if (line && line.indexOf("VUE_APP_AUTH_PROVIDER=") == 0) {
+              let value = line.split("=")[1];
+              window.AUTH_PROVIDER = value.replace(/(?:\\[rn]|[\r\n]+)+/g, "");
+            }
 
             // if (line && line.indexOf('VUE_APP_CLUSTER_ADDRESS=') == 0) {
             //     let value = line.split('=')[1];

@@ -153,8 +153,16 @@
 
             // ── 인증 ─────────────────────────────────────────────────
             async _signIn(userInfo) {
-                var provider = window.PROVIDER || 'gitea';
                 var callbackUrl = `${window.location.protocol}//${window.location.host}/?oauth=acebase`;
+                // 로그인 provider 는 window.PROVIDER(코드생성용 git provider)와 분리한다.
+                // AUTH_PROVIDER=posco 면 SWP SSO, 그 외에는 기존 Gitea OAuth 경로.
+                var authProvider = window.AUTH_PROVIDER || window.PROVIDER || 'gitea';
+                if (authProvider === 'posco') {
+                    var ssoUrl = await gateway().ssoInitUrl(callbackUrl);
+                    window.location = ssoUrl; // SWP 로그인 화면으로 이동
+                    return;
+                }
+                var provider = window.PROVIDER || 'gitea';
                 var redirectUrl = await gateway().oauthInitUrl(provider, callbackUrl);
                 window.location = redirectUrl; // provider 로그인 화면으로 이동
             },

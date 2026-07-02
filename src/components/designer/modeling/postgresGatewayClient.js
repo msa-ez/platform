@@ -148,6 +148,15 @@ export class PostgresGatewayClient {
     return (await r.json()).redirectUrl;
   }
 
+  // SWP(POSCO) SSO 시작 — Gitea OAuth 와 독립 경로. 게이트웨이가 SWP redirect URL 을 돌려준다.
+  async ssoInitUrl(callbackUrl) {
+    const url = `${this.baseUrl}/sso/${this.dbName}/init`
+      + `?callbackUrl=${encodeURIComponent(callbackUrl)}`;
+    const r = await fetch(url);
+    if (!r.ok) throw new Error(`sso init -> HTTP ${r.status}`);
+    return (await r.json()).redirectUrl;
+  }
+
   async authSignin(token) {
     // _getUserInfo() 가 reactive watcher / 컴포넌트 mount 등 다양한 경로로 자주
     // 호출되는데, 그때마다 매번 새 fetch 를 보내면 ES generator 가 도는 동안

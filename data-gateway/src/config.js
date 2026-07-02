@@ -26,4 +26,27 @@ export const config = {
     gitHost: process.env.GIT || 'localhost:3000',
     protocol: process.env.PROTOCOL || 'http',
   },
+
+  // SWP(POSCO) SSO — SWP HTTP 인증 토큰 방식 (OIDC 아님).
+  // Gitea OAuth 와 독립된 로그인 경로. 코드생성용 Gitea 는 그대로 유지되고,
+  // 로그인만 SWP SSO 로 대체하기 위한 설정. 기본값은 가동계(운영) 기준.
+  swp: {
+    // 사용자를 보낼 SWP 로그인 redirect. 'redir_url=' 로 끝나야 하며 뒤에 콜백 URL 을 append 한다.
+    redirectUrl: process.env.SWP_SSO_REDIRECT_URL
+      || 'http://swpsso.posco.net/idms/U61/jsp/redirect.jsp?redir_url=',
+    // ssoToken 유효성 검증 (Cookie: SWP-H-SESSION-ID). 성공 시 사용자정보 CSV 를 반환.
+    validCheckUrl: process.env.SWP_SSO_VALID_CHECK_URL
+      || 'http://swpsso.posco.net/idms/U61/jsp/isValidSSO.jsp',
+    // 미인증 시 되돌려보낼 SWP 로그인 홈.
+    loginUrl: process.env.SWP_SSO_LOGIN_URL || 'http://swp.posco.net',
+    // isValidSSO 응답(콤마 구분)의 필드 인덱스(0-based) — 현장에서 raw 로그 확인 후
+    // 재빌드 없이 env 로만 조정 가능. 기본값은 "2-1. (SWP) 사용자 정보" 표 순서.
+    idxId: parseInt(process.env.SWP_IDX_ID || '0', 10),                   // iv-user (ID)
+    idxEmpno: parseInt(process.env.SWP_IDX_EMPNO || '1', 10),            // sp_empno (사번)
+    idxDisplayName: parseInt(process.env.SWP_IDX_DISPLAYNAME || '8', 10), // displayname (영문성명)
+    idxMail: parseInt(process.env.SWP_IDX_MAIL || '9', 10),              // mail (메일주소)
+    idxDept: parseInt(process.env.SWP_IDX_DEPT || '4', 10),              // seealso (부서명)
+    // mail 이 비어있을 때 enrolledUsers 키/식별용으로 합성할 이메일 도메인.
+    emailFallbackDomain: process.env.SWP_EMAIL_FALLBACK_DOMAIN || 'posco.local',
+  },
 };

@@ -26,6 +26,8 @@ app.use((req, res, next) => {
 });
 
 app.use(express.json({ limit: '50mb', strict: false }));
+// SWP(POSCO) SSO 콜백은 application/x-www-form-urlencoded 로 ssoToken 등을 POST 한다.
+app.use(express.urlencoded({ extended: false, limit: '5mb' }));
 
 // 헬스 체크
 app.get('/health', async (req, res) => {

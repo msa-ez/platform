@@ -151,6 +151,45 @@
                     me.$emit('isGitLogin')
                     me.$emit('close')
                     window.location.replace(window.location.origin)
+                } else if (result.provider.name == 'posco') {
+                    // POSCO SWP SSO — git 토큰 없음. 코드생성용 Gitea 접근은 서비스 PAT
+                    // (window.GITEA_TOKEN)가 담당하므로 gitToken 은 세팅하지 않는다.
+                    // 신원(email/이름)은 게이트웨이가 SWP isValidSSO 로 확정한 result.user 를 단일 진실원으로 사용.
+                    var pEmail = result.user.email || '';
+                    var pName = result.user.displayName || result.user.username || 'posco_user';
+                    var pPic = result.user.picture || '';
+                    var pProviderUid = (result.user.settings && result.user.settings.posco_id)
+                        || result.user.uid;
+
+                    window.localStorage.setItem("uid", result.user.uid);
+                    window.localStorage.setItem("accessToken", result.accessToken);
+                    window.localStorage.setItem("loginType", "posco");
+                    // Gitea util 은 getOrg()="posco" 고정 + getHeader()가 GITEA_TOKEN 우선이라
+                    // gitToken 없이도 코드생성이 동작한다. gitOrgName 만 일관되게 채워둔다.
+                    window.localStorage.setItem("gitOrgName", "posco");
+                    window.localStorage.setItem("gitAuthor", pEmail);
+                    window.localStorage.setItem("gitEmail", pEmail);
+                    window.localStorage.setItem("gitUserName", pName);
+                    window.localStorage.setItem("author", pEmail);
+                    window.localStorage.setItem("email", pEmail);
+                    window.localStorage.setItem("userName", pName);
+                    window.localStorage.setItem("picture", pPic);
+                    window.localStorage.setItem("providerUid", pProviderUid);
+                    window.localStorage.setItem(
+                        "authorized",
+                        (pEmail && pEmail.includes('@uengine.org')) ? 'admin' : 'student'
+                    );
+
+                    try {
+                        await me.writeUserData(result.user.uid, pName, pEmail, pPic, 'posco')
+                    } catch (e) {
+                        console.log('POSCO writeUserData failed:', e)
+                    }
+
+                    me.$EventBus.$emit('login', result.accessToken)
+                    me.$emit('login')
+                    me.$emit('close')
+                    window.location.replace(window.location.origin)
                 }
             })
         },
