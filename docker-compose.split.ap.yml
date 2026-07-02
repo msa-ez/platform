@@ -26,7 +26,8 @@ services:
       VUE_APP_DB_NAME: mydb
       VUE_APP_MODE: onprem
       VUE_APP_DB_HTTPS: "false"
-      VUE_APP_GIT: gitea
+      VUE_APP_GIT: gitea                            # 코드생성용 git provider — posco 로 바꾸지 말 것(코드생성 깨짐)
+      VUE_APP_AUTH_PROVIDER: posco                  # 로그인 provider — SWP SSO 사용(빈값/미설정이면 Gitea OAuth)
       VUE_APP_GIT_URL: http://<AP_SERVER_IP>:3000
       VUE_APP_GITEA_TOKEN: "<GITEA_PERSONAL_ACCESS_TOKEN>"
       VUE_APP_BACKEND_URL: http://<AP_SERVER_IP>:2025

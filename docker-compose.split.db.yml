@@ -64,4 +64,18 @@ services:
       CLIENT_SECRET: <GITEA_OAUTH_CLIENT_SECRET>
       GIT: <AP_SERVER_IP>:3000              # gitea 가 AP 서버에 있으므로 그쪽 IP
       PROTOCOL: http
+      # ── SWP(POSCO) SSO — 로그인 경로 (가동계/운영 기준) ────────────────
+      # OIDC 가 아닌 SWP HTTP 인증 토큰 방식. Gitea OAuth 와 독립적으로 동작한다.
+      # ⚠️ DB 서버(게이트웨이)가 아래 SWP 호스트에 접근 가능해야 함(hosts/DNS 등록).
+      SWP_SSO_REDIRECT_URL: "http://swpsso.posco.net/idms/U61/jsp/redirect.jsp?redir_url="
+      SWP_SSO_VALID_CHECK_URL: "http://swpsso.posco.net/idms/U61/jsp/isValidSSO.jsp"
+      SWP_SSO_LOGIN_URL: "http://swp.posco.net"
+      # isValidSSO 응답(콤마 구분) 필드 인덱스 — 현장 raw 로그 확인 후 필요 시만 조정.
+      # 기본값은 "2-1. (SWP) 사용자 정보" 표 순서(0=iv-user,1=sp_empno,8=displayname,9=mail,4=seealso).
+      SWP_IDX_ID: "0"
+      SWP_IDX_EMPNO: "1"
+      SWP_IDX_DISPLAYNAME: "8"
+      SWP_IDX_MAIL: "9"
+      SWP_IDX_DEPT: "4"
+      SWP_EMAIL_FALLBACK_DOMAIN: "posco.local"
     restart: unless-stopped

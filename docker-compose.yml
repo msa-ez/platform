@@ -71,12 +71,26 @@ services:
       # JWT 서명 시크릿 — openssl rand -hex 32 로 생성. 한 번 정하면 절대 바꾸지 말 것
       # (바꾸면 로그인한 사용자 전원이 로그아웃됨)
       JWT_SECRET: <JWT_SECRET>
-      # Gitea OAuth — v1.0.29 의 값 그대로 재사용
+      # Gitea OAuth — v1.0.29 의 값 그대로 재사용 (코드생성용 Gitea 접근에 계속 사용)
       PROVIDER: gitea
       CLIENT_ID: <GITEA_OAUTH_CLIENT_ID>
       CLIENT_SECRET: <GITEA_OAUTH_CLIENT_SECRET>
       GIT: <VM_IP>:3000                          # 브라우저가 접근하는 Gitea 주소
       PROTOCOL: http
+      # ── SWP(POSCO) SSO — 로그인 경로 (가동계/운영 기준) ────────────────
+      # OIDC 가 아닌 SWP HTTP 인증 토큰 방식. Gitea OAuth 와 독립적으로 동작한다.
+      # ⚠️ 게이트웨이(VM)가 아래 SWP 호스트에 접근 가능해야 함(hosts/DNS 등록).
+      SWP_SSO_REDIRECT_URL: "http://swpsso.posco.net/idms/U61/jsp/redirect.jsp?redir_url="
+      SWP_SSO_VALID_CHECK_URL: "http://swpsso.posco.net/idms/U61/jsp/isValidSSO.jsp"
+      SWP_SSO_LOGIN_URL: "http://swp.posco.net"
+      # isValidSSO 응답(콤마 구분) 필드 인덱스 — 현장 raw 로그 확인 후 필요 시만 조정.
+      # 기본값은 "2-1. (SWP) 사용자 정보" 표 순서(0=iv-user,1=sp_empno,8=displayname,9=mail,4=seealso).
+      SWP_IDX_ID: "0"
+      SWP_IDX_EMPNO: "1"
+      SWP_IDX_DISPLAYNAME: "8"
+      SWP_IDX_MAIL: "9"
+      SWP_IDX_DEPT: "4"
+      SWP_EMAIL_FALLBACK_DOMAIN: "posco.local"
     restart: unless-stopped
 
   # ── msaez — 프론트엔드 ─────────────────────────────────────────────
@@ -92,7 +106,8 @@ services:
       VUE_APP_DB_NAME: mydb
       VUE_APP_MODE: onprem
       VUE_APP_DB_HTTPS: "false"
-      VUE_APP_GIT: gitea
+      VUE_APP_GIT: gitea                          # 코드생성용 git provider — posco 로 바꾸지 말 것(코드생성 깨짐)
+      VUE_APP_AUTH_PROVIDER: posco                # 로그인 provider — SWP SSO 사용(빈값/미설정이면 Gitea OAuth)
       VUE_APP_GIT_URL: http://<VM_IP>:3000        # Gitea URL (브라우저 접근 주소)
       VUE_APP_GITEA_TOKEN: "<GITEA_PERSONAL_ACCESS_TOKEN>"
       VUE_APP_BACKEND_URL: http://<VM_IP>:2025    # Backend URL
