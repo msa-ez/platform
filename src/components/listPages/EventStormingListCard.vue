@@ -311,10 +311,16 @@
                         return null
                     }
             },
-            openProject(){ 
+            openProject(){
                 var me = this
                 if(me.information && me.information.isDeletedProject){
                     return;
+                }
+                // 비로그인 사용자는 프로젝트 카드로 모델링 페이지에 진입할 수 없다.
+                // (isLogin === accessToken 존재 여부. LabBase 에 isLogin 이 없을 수 있어 직접 확인)
+                if(!window.localStorage.getItem('accessToken')){
+                    me.$EventBus.$emit('showLoginDialog')
+                    return
                 }
                 // if (me.copyInformation.type == 'project') {
                 //     me.$emit("openAutoModelingDialog", me.copyInformation.projectId)

@@ -1378,6 +1378,11 @@
                 this.showDialog = false
             },
             openAutoModelingDialog(projectId){
+                // 비로그인 사용자는 오토모델링 다이얼로그(프로젝트 진입)를 열 수 없다.
+                if(!this.isLogin){
+                    this.$EventBus.$emit('showLoginDialog')
+                    return
+                }
                 this.showDialog = true
                 this.projectUid = projectId
             },
@@ -1399,6 +1404,11 @@
             },
             moveToPages(type) {
                 var me = this
+                // 비로그인 사용자는 메인의 생성/예제 진입 버튼으로 모델링 페이지에 들어갈 수 없다.
+                if(!me.isLogin){
+                    me.$EventBus.$emit('showLoginDialog')
+                    return
+                }
                 try {
                     let path = `storming/${me.dbuid()}`;
                     if (!type) type = 'es'

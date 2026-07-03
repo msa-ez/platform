@@ -1377,18 +1377,20 @@
             },
             openProjectDialog(){
                 var me = this
+                // 비로그인 사용자는 프롬프트 입력 후 엔터/생성해도 프로젝트가 열리지 않는다.
+                // 프롬프트는 로그인 후 이어서 생성할 수 있게 보관만 하고, 채팅 UI 는 열지 않는다.
+                if(!me.isLogin){
+                    localStorage.setItem('noLoginPrompt', me.projectInfo.prompt)
+                    me.$EventBus.$emit('showLoginDialog')
+                    return
+                }
                 if(!me.genType){
                     me.genType = 'ES2'
                 }
                 me.setModelIds()
                 me.openChatUI = true
-
-                if(!me.isLogin){
-                    localStorage.setItem('noLoginPrompt', me.projectInfo.prompt)
-                } else {
-                    me.startGen()
-                    me.openStorageDialog('project')
-                }
+                me.startGen()
+                me.openStorageDialog('project')
             },
             uuid: function () {
                 function s4() {
