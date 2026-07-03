@@ -986,7 +986,10 @@
                 if(!me.modelIds.USMDefinitionId) me.modelIds.USMDefinitionId = me.uuid()
             },
             checkLogin(type){
-                if(this.isLogin){
+                // reactive isLogin(=accessToken)은 async created 로 뒤늦게 채워져 mounted 자동
+                // 흐름(openProjectDialog→startGen→checkLogin)에선 로그인 사용자도 false 로 보임.
+                // 앱 전역 진리원인 localStorage.accessToken 을 직접 확인한다.
+                if(window.localStorage.getItem('accessToken')){
                     this.genType = type
                 } else {
                     this.$EventBus.$emit('showLoginDialog')
