@@ -1379,7 +1379,8 @@
             },
             openAutoModelingDialog(projectId){
                 // 비로그인 사용자는 오토모델링 다이얼로그(프로젝트 진입)를 열 수 없다.
-                if(!this.isLogin){
+                // reactive isLogin 은 async 로딩 타이밍에 따라 false 로 보일 수 있어 localStorage 직접 확인.
+                if(!window.localStorage.getItem('accessToken')){
                     this.$EventBus.$emit('showLoginDialog')
                     return
                 }
@@ -1405,7 +1406,8 @@
             moveToPages(type) {
                 var me = this
                 // 비로그인 사용자는 메인의 생성/예제 진입 버튼으로 모델링 페이지에 들어갈 수 없다.
-                if(!me.isLogin){
+                // reactive isLogin 은 async 로딩 타이밍에 따라 false 로 보일 수 있어 localStorage 직접 확인.
+                if(!window.localStorage.getItem('accessToken')){
                     me.$EventBus.$emit('showLoginDialog')
                     return
                 }

@@ -1088,7 +1088,8 @@
 
             me.$EventBus.$on('open-new-making-dialog', function () {
                 // 비로그인 사용자는 새 프로젝트/이벤트스토밍 생성 다이얼로그를 열 수 없다.
-                if (!me.isLogin) {
+                // reactive isLogin 은 async 로딩 타이밍에 따라 false 로 보일 수 있어 localStorage 직접 확인.
+                if (!window.localStorage.getItem('accessToken')) {
                     me.$EventBus.$emit('showLoginDialog')
                     return
                 }

@@ -1379,7 +1379,11 @@
                 var me = this
                 // 비로그인 사용자는 프롬프트 입력 후 엔터/생성해도 프로젝트가 열리지 않는다.
                 // 프롬프트는 로그인 후 이어서 생성할 수 있게 보관만 하고, 채팅 UI 는 열지 않는다.
-                if(!me.isLogin){
+                // 판정은 reactive me.isLogin(=accessToken) 대신 localStorage 를 직접 본다.
+                // accessToken 은 async created()의 setUserInfo() 로 뒤늦게 채워지는데, Vue 는
+                // async created 완료를 mounted 이전에 보장하지 않는다. mounted 에서 자동 호출되는
+                // openProjectDialog 시점엔 me.isLogin 이 아직 false 라 로그인 사용자도 팝업이 떴음.
+                if(!window.localStorage.getItem('accessToken')){
                     localStorage.setItem('noLoginPrompt', me.projectInfo.prompt)
                     me.$EventBus.$emit('showLoginDialog')
                     return
