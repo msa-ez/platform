@@ -279,18 +279,32 @@ export default {
                     traceabilityMatrixGroups
                 );
                 
-                const blob = await exporter.exportToWord();
+                let blob = await exporter.exportToWord();
+
+                const timestamp = new Date().toISOString().split('T')[0];
+                const fileName = `${this.projectInfo.projectName || 'untitled'}-${timestamp}.docx`;
+
+                // 백엔드(LibreOffice)에서 정본 OOXML 로 재직렬화한다. 프론트(docx+jszip) 산출물은
+                // [Content_Types].xml 비선두 + 디렉토리 엔트리 등 비정본 구조라, ECM 등 엄격한
+                // 콘텐츠 검출기가 application/zip 으로 판정해 등록을 거부할 수 있다.
+                // 백엔드 미응답 시에는 프론트 원본으로 폴백해 다운로드 자체는 되게 한다.
+                try {
+                    this.exportStatus = '문서 정본화 중...';
+                    blob = await this.normalizeDocxViaBackend(blob, fileName);
+                } catch (e) {
+                    console.warn('docx 정본화(backend) 실패 — 프론트 원본으로 폴백:', e);
+                    this.showSnackbar('정본화 서버 연결 실패 — 원본으로 저장합니다(ECM 등록이 거부될 수 있음).', 'warning');
+                }
+
                 const url = window.URL.createObjectURL(blob);
                 const link = document.createElement('a');
                 link.href = url;
-                
-                const timestamp = new Date().toISOString().split('T')[0];
-                link.download = `${this.projectInfo.projectName || 'untitled'}-${timestamp}.docx`;
+                link.download = fileName;
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
                 window.URL.revokeObjectURL(url);
-                
+
                 this.showSnackbar('Word 문서가 성공적으로 생성되었습니다.', 'success');
             } catch (error) {
                 console.error('Word export error:', error);
@@ -299,6 +313,23 @@ export default {
                 this.isExporting = false;
                 this.exportStatus = '문서 생성 중...';
             }
+        },
+        // 프론트에서 만든 docx blob 을 백엔드로 보내 LibreOffice 로 재직렬화한 정본 docx 를 받는다.
+        // 실패(네트워크/서버) 시 throw → 호출부에서 프론트 원본으로 폴백.
+        async normalizeDocxViaBackend(blob, fileName) {
+            const backend = String(window.BACKEND_URL || '').replace(/\/+$/, '');
+            if (!backend) throw new Error('BACKEND_URL 미설정');
+            const form = new FormData();
+            form.append('file', blob, fileName);
+            form.append('filename', fileName);
+            const res = await fetch(`${backend}/api/documents/normalize-docx`, {
+                method: 'POST',
+                body: form
+            });
+            if (!res.ok) throw new Error(`normalize-docx HTTP ${res.status}`);
+            const out = await res.blob();
+            if (!out || out.size === 0) throw new Error('normalize-docx 빈 응답');
+            return out;
         }
     }
 }
