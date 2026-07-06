@@ -28,12 +28,40 @@ function signinRedirectUri(req) {
   return `${req.protocol}://${req.get('host')}/oauth2/${req.params.db}/signin`;
 }
 
+// open redirect(A-028) 차단 — callbackUrl 을 허용 오리진으로 제한.
+//   - 상대경로(/...)는 허용, 프로토콜-상대(//host)는 외부이므로 불허.
+//   - config.oauth.allowedRedirectOrigins 에 있으면 허용.
+//   - 허용목록 미설정 시: 호출 페이지(Origin/Referer)와 동일 오리진만 허용(레거시 호환).
+function isAllowedCallback(callbackUrl, req) {
+  const s = String(callbackUrl || '');
+  if (!s) return false;
+  if (s.startsWith('/') && !s.startsWith('//')) return true; // 상대경로
+  let u;
+  try {
+    u = new URL(s);
+  } catch (e) {
+    return false;
+  }
+  if (u.protocol !== 'http:' && u.protocol !== 'https:') return false;
+  const allowed = config.oauth.allowedRedirectOrigins || [];
+  if (allowed.length) return allowed.includes(u.origin);
+  const ref = req.headers.origin || req.headers.referer || '';
+  try {
+    return !!ref && new URL(ref).origin === u.origin;
+  } catch (e) {
+    return false;
+  }
+}
+
 // ── GET /oauth2/:db/init ────────────────────────────────────────────
 oauthRouter.get('/oauth2/:db/init', asyncHandler(async (req, res) => {
   const provider = req.query.provider || config.oauth.provider;
   const callbackUrl = req.query.callbackUrl;
   if (!callbackUrl) {
     return res.status(400).json({ error: 'callbackUrl 쿼리 파라미터 필요' });
+  }
+  if (!isAllowedCallback(callbackUrl, req)) {
+    return res.status(400).json({ error: 'callbackUrl not allowed' });
   }
   const state = signState({ flow: 'redirect', provider, callbackUrl });
   const redirectUrl = await buildAuthUrl({
@@ -126,6 +154,9 @@ oauthRouter.get('/sso/:db/init', asyncHandler(async (req, res) => {
   const callbackUrl = req.query.callbackUrl;
   if (!callbackUrl) {
     return res.status(400).json({ error: 'callbackUrl 쿼리 파라미터 필요' });
+  }
+  if (!isAllowedCallback(callbackUrl, req)) {
+    return res.status(400).json({ error: 'callbackUrl not allowed' });
   }
   const state = signState({ flow: 'swp', provider: 'posco', callbackUrl });
   // SWP 는 로그인 후 이 redirUri 로 사용자를 되돌려보낸다(POST). state 를 query 로 실어

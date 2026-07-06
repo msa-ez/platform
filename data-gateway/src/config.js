@@ -25,6 +25,11 @@ export const config = {
     // GIT: Gitea 호스트:포트 (예: gitea:3000, 34.64.202.245:3000)
     gitHost: process.env.GIT || 'localhost:3000',
     protocol: process.env.PROTOCOL || 'http',
+    // OAuth/SSO 콜백(callbackUrl) 허용 오리진 — open redirect(A-028) 차단용.
+    // 예: "http://localhost:8080,https://msaez.example.com". 미설정 시에는 요청의
+    // Origin/Referer 와 동일 오리진만 허용(레거시 호환). 상대경로는 항상 허용.
+    allowedRedirectOrigins: (process.env.ALLOWED_REDIRECT_ORIGINS || '')
+      .split(',').map((s) => s.trim()).filter(Boolean),
   },
 
   // SWP(POSCO) SSO — SWP HTTP 인증 토큰 방식 (OIDC 아님).

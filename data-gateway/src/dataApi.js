@@ -11,8 +11,13 @@ import {
 } from './dataStore.js';
 import { asyncHandler } from './util.js';
 import { afterWrite, afterDelete } from './triggers.js';
+import { dataAuthz } from './authz.js';
 
 export const dataRouter = express.Router();
+
+// 인가 미들웨어 — 메서드 핸들러보다 먼저 등록해 모든 /data/:db/* 요청을 통과시킨다.
+// (모의해킹 A-005/A-007: 인증·인가 부재 → BOLA/열거 차단)
+dataRouter.all('/:db/*', dataAuthz());
 
 // 트리거는 fire-and-forget (AceBase 리스너처럼 eventual). 응답을 막지 않는다.
 function fireTrigger(promise) {
