@@ -95,7 +95,15 @@ export function dataAuthz() {
           if (!uid) return res.status(401).json({ error: 'authentication required' });
           return next();
         }
-        // definition_queue / definition_snapshots (특정 pid 로 스코프): 인증 필요.
+        // definition_queue / definition_snapshots (특정 pid 로 스코프):
+        //  - 인증 사용자: 허용(편집 흐름, 소유권 조회 생략해 고빈도 저비용 유지)
+        //  - 익명: 부모 definition 이 공유(everyone)면 read 허용(비로그인 공유 URL 열람 보존)
+        if (route.table === 'definition_queue' || route.table === 'definition_snapshots') {
+          if (uid) return next();
+          const pid = route.filters && route.filters.project_id;
+          if (await canAccessDefinition(pid, null, false)) return next();
+          return res.status(401).json({ error: 'authentication required' });
+        }
         if (!uid) return res.status(401).json({ error: 'authentication required' });
         return next();
       }
@@ -137,10 +145,17 @@ export function dataAuthz() {
         if (isWrite && route.pk.uid !== uid) return res.status(403).json({ error: 'forbidden' });
         return next();
       }
-      if (route.table === 'jobs' || route.table === 'requested_jobs'
-          || route.table === 'definition_queue' || route.table === 'definition_snapshots') {
+      if (route.table === 'jobs' || route.table === 'requested_jobs') {
         if (!uid) return res.status(401).json({ error: 'authentication required' });
         return next();
+      }
+      if (route.table === 'definition_queue' || route.table === 'definition_snapshots') {
+        // 인증 사용자는 허용(편집, 저비용). 익명은 부모 definition 이 공유(everyone)인 read 만 허용.
+        if (uid) return next();
+        if (isWrite) return res.status(401).json({ error: 'authentication required' });
+        const pid = route.pk && route.pk.project_id;
+        if (await canAccessDefinition(pid, null, false)) return next();
+        return res.status(401).json({ error: 'authentication required' });
       }
 
       // 기타(catch-all): 인증 필요.
