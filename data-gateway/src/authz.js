@@ -86,9 +86,13 @@ export function dataAuthz() {
           return res.status(403).json({ error: 'collection enumeration not allowed' });
         }
         if (route.table === 'user_lists') {
-          if (!uid || (route.filters && route.filters.uid !== uid)) {
-            return res.status(403).json({ error: 'forbidden' });
-          }
+          // 'everyone' 은 공개 인덱스(공유/Public 목록) — 읽기는 누구나, 쓰기는 인증(위 글로벌에서 확인).
+          // 그 외 개인 리스트는 인증 필요. 앱은 공유 시 "대상 사용자/everyone 인덱스에 미러링(write)"
+          // 하고, Public/Share 탭은 everyone·본인 리스트만 읽으므로 인증만 강제한다.
+          // (익명의 userLists 루트 통째 열거(A-007)는 kv 루트 차단으로 이미 방지됨)
+          const listUid = route.filters && route.filters.uid;
+          if (listUid === 'everyone') return next();
+          if (!uid) return res.status(401).json({ error: 'authentication required' });
           return next();
         }
         // definition_queue / definition_snapshots (특정 pid 로 스코프): 인증 필요.
@@ -120,7 +124,11 @@ export function dataAuthz() {
         return next();
       }
       if (route.table === 'user_lists') {
-        if (!uid || route.pk.uid !== uid) return res.status(403).json({ error: 'forbidden' });
+        // 컬렉션 규칙과 동일: everyone 공개 인덱스는 읽기 허용, 그 외는 인증 필요.
+        // (공유 미러링이 타 사용자 share 리스트에 write 하므로 소유 강제는 하지 않는다)
+        const listUid = route.pk.uid;
+        if (listUid === 'everyone') return next();
+        if (!uid) return res.status(401).json({ error: 'authentication required' });
         return next();
       }
       if (route.table === 'users') {
