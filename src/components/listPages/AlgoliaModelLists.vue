@@ -1646,6 +1646,13 @@
                         for(let obj of me.filterTabLists) {
                             if(obj.id != 'home') {
                                 let result = null
+                                // 비로그인 사용자는 서버(db) 목록(mine/share/public)을 조회할 수 없다
+                                // (게이트웨이 익명 401). 로컬만 처리하고 db 백엔드 탭은 건너뛴다 —
+                                // 콘솔 401 노이즈 방지 + 정책(로그인 필수)과 일관.
+                                if((obj.id == 'mine' || obj.id == 'share' || obj.id == 'public')
+                                    && !window.localStorage.getItem('accessToken')){
+                                    continue;
+                                }
                                 if(obj.id == 'local' && obj.show){
                                     result = await me.onLoadLocalModel();
                                     if(me.searchObj.name){
