@@ -147,6 +147,8 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
 Vue.prototype.$EventBus = new Vue()
 Vue.prototype.$ModelingBus = new Vue()
+// 비컴포넌트(예: postgresGatewayClient)에서도 로그인 유도 등을 emit 할 수 있게 전역 노출.
+if (typeof window !== 'undefined') window.$EventBus = Vue.prototype.$EventBus
 Vue.prototype.$JsonDiff = JsonDiff
 Vue.prototype.$super = VueSuperMethod
 

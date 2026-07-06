@@ -90,9 +90,28 @@ export class PostgresGatewayClient {
     }
   }
 
+  // 비로그인(토큰 없음) 상태에서 보호된 /data 에 접근하면 게이트웨이가 401 을 준다.
+  // 이는 오류가 아니라 "로그인 필요" 이므로, throw(→에러 토스트) 대신 로그인 유도 후 null 을
+  // 반환한다. 토큰이 있는 401(만료)은 기존대로 예외 처리 흐름(authSignin)에 맡긴다.
+  _handleAnonymous401(status) {
+    if (status !== 401 || this._getToken()) return false;
+    try {
+      if (typeof window !== 'undefined') {
+        if (!window._pgAnonAuthPrompted) {
+          window._pgAnonAuthPrompted = true;
+          if (window.$EventBus) window.$EventBus.$emit('showLoginDialog');
+        }
+      }
+    } catch (e) { /* noop */ }
+    return true;
+  }
+
   async getData(path) {
     const r = await fetch(this._dataUrl(path), { headers: this._headers() });
-    if (!r.ok) throw new Error(`GET ${path} -> HTTP ${r.status}`);
+    if (!r.ok) {
+      if (this._handleAnonymous401(r.status)) return null;
+      throw new Error(`GET ${path} -> HTTP ${r.status}`);
+    }
     return (await r.json()).value;
   }
 
@@ -105,7 +124,10 @@ export class PostgresGatewayClient {
       if (opts.size != null) url.searchParams.set('size', opts.size);
     }
     const r = await fetch(url, { headers: this._headers() });
-    if (!r.ok) throw new Error(`LIST ${path} -> HTTP ${r.status}`);
+    if (!r.ok) {
+      if (this._handleAnonymous401(r.status)) return null;
+      throw new Error(`LIST ${path} -> HTTP ${r.status}`);
+    }
     return (await r.json()).value;
   }
 
