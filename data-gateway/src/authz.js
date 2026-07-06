@@ -75,8 +75,10 @@ export function dataAuthz() {
       const uid = requesterUid(req);
       const route = routePath(path);
 
-      // 모든 쓰기는 인증 필수.
-      if (isWrite && !uid) {
+      // 익명(비로그인) 전면 차단 — 폐쇄망 정책상 모든 /data 접근은 SSO 인증 필요(공개 프로젝트 포함).
+      // 프론트에서도 로그인 유도하지만, API 직접 호출(모의해킹 A-005/A-007)을 막기 위해
+      // 게이트웨이에서도 강제한다. 이하 규칙은 "인증된 사용자 간" BOLA(타인 소유 자원 접근) 차단.
+      if (!uid) {
         return res.status(401).json({ error: 'authentication required' });
       }
 
