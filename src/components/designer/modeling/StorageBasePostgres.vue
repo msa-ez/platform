@@ -182,7 +182,8 @@
                     profile: user.picture || window.localStorage.getItem('picture'),
                     authorized: null,
                     accessToken: token,
-                    providerUid: settings.gitea_sub || settings.github_id
+                    // posco 는 사번(posco_sub)을 providerUid 로 사용 → 프로필 괄호에 사번 표시.
+                    providerUid: settings.gitea_sub || settings.github_id || settings.posco_sub
                         || window.localStorage.getItem('providerUid')
                 };
             },

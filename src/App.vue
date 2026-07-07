@@ -1267,6 +1267,27 @@
                 me.$router.push("/oauth/gitlab")
             if(window.location.search.includes("oauth=acebase"))
                 me.$router.push("/oauth/acebase")
+
+            // ── SWP(POSCO) SSO 자동 개시 ──────────────────────────────────
+            // SWP 는 최초 자격증명 로그인에서 redir_url 을 이어받지 않고 포스코 포털(EP)로
+            // 떨궈, 사용자가 msaez 로 돌아와도 로그인 버튼을 다시 눌러야 하는 문제가 있다.
+            // 미로그인 상태로 진입하면 /sso/init 를 자동 1회 태워, EP 를 거쳐 SSO 세션이
+            // 생긴 뒤 재진입 시엔 버튼 클릭 없이 바로 로그인되게 한다.
+            // 가드: posco provider · 미로그인 · oauth 콜백/에러 페이지 아님 · 탭당 1회.
+            if (!me.$isElectron
+                && (window.AUTH_PROVIDER || '') === 'posco'
+                && !window.localStorage.getItem('accessToken')
+                && !/[?&](oauth|result|error)=/.test(window.location.search)
+                && !window.sessionStorage.getItem('swpAutoInitTried')) {
+                window.sessionStorage.setItem('swpAutoInitTried', '1'); // 무한 리다이렉트 방지(탭 단위)
+                me.getRef('auth').signInWithRedirect() // → _signIn() → /sso/init 로 이동
+                    .catch(function () {
+                        // /sso/init 실패(게이트웨이 미가동 등) 시 재시도 가능하도록 플래그 해제
+                        window.sessionStorage.removeItem('swpAutoInitTried');
+                    });
+                return;
+            }
+
             if(window.document.title == '라운지'){
                 me.inSideRounge = true
             }

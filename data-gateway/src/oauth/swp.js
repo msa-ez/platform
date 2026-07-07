@@ -40,21 +40,32 @@ export async function validateSsoToken(ssoToken) {
     return { authenticated: false, raw };
   }
 
-  const at = (i) => (i >= 0 && i < parts.length ? String(parts[i]).trim() : '');
-  const empno = at(swp.idxEmpno);
-  const id = at(swp.idxId);
-  let email = at(swp.idxMail);
-  // mail 이 없으면 사번 기반 합성 이메일 — enrolledUsers 키/findUserByEmail 안정성 보장.
+  const trimmed = parts.map((p) => String(p).trim());
+  const at = (i) => (i >= 0 && i < trimmed.length ? trimmed[i] : '');
+  const decode = (s) => { try { return decodeURIComponent(s); } catch (e) { return s; } };
+  const empno = at(swp.idxEmpno);   // 사번 — 드리프트 앞이라 인덱스(1) 고정 안전
+  const id = at(swp.idxId);         // iv-user(로그인 ID) — 인덱스(0) 고정 안전
+
+  // 이메일/영문성명은 현장 피드가 스펙 표보다 필드 하나 더 밀려 오는 사례가 있어
+  // (idx 8 이 빈 값으로 들어와 displayname/mail 이 +1 어긋남) 인덱스에 의존하지 않는다.
+  //   - 이메일: '@' 를 포함한 토큰을 직접 찾는다(없으면 설정 인덱스 → 사번 합성).
+  //   - 영문성명(displayname): 스펙상 mail 바로 앞 필드이므로 이메일 토큰의 앞 토큰.
+  //     SWP 는 이 값을 URL 인코딩해 보내므로 decode 한다.
+  const emailIdx = trimmed.findIndex((p) => p.includes('@'));
+  let email = emailIdx >= 0 ? trimmed[emailIdx] : at(swp.idxMail);
   if (!email && empno) email = `${empno}@${swp.emailFallbackDomain}`;
+
+  let displayName = emailIdx > 0 ? decode(trimmed[emailIdx - 1]) : decode(at(swp.idxDisplayName));
+  displayName = displayName || id || empno;
 
   const userInfo = {
     id: empno || id,                          // 안정 고유키 = 사번
     username: id || empno,                     // 로그인 ID(iv-user)
-    name: at(swp.idxDisplayName) || id || empno,
+    name: displayName,                         // 영문성명(URL 디코드)
     email: email || null,
     emailVerified: true,
     picture: null,
-    raw: { department: at(swp.idxDept), source: 'swp' },
+    raw: { department: decode(at(swp.idxDept)), empno, source: 'swp' },
   };
   return { authenticated: true, userInfo, raw };
 }
