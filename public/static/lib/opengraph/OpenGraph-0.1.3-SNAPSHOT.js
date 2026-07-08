@@ -9460,7 +9460,7 @@ OG.geometry.Curve = function (controlPoints) {
 
     OG.geometry.Curve.superclass.call(this, controlPoints);
 
-    var t, cmRomSpline = OG.CurveUtil.CatmullRomSpline(eval("[" + this.vertices.toString() + "]"));
+    var t, cmRomSpline = OG.CurveUtil.CatmullRomSpline(this.vertices.toString().split(",").filter(function(s){return s.length>0}).map(Number));
 
     // t 는 0 ~ maxT 의 값으로, t 값의 증분값이 작을수록 세밀한 Curve 를 그린다.
     this.vertices = [];
@@ -9671,7 +9671,7 @@ OG.geometry.BezierCurve = function (controlPoints) {
     }
 
     // Bezier Curve
-    bezier = OG.CurveUtil.Bezier(eval("[" + this.controlPoints.toString() + "]"));
+    bezier = OG.CurveUtil.Bezier(this.controlPoints.toString().split(",").filter(function(s){return s.length>0}).map(Number));
 
     // t 는 0 ~ maxT 의 값으로, t 값의 증분값이 작을수록 세밀한 BezierCurve 를 그린다.
     this.vertices = [];
@@ -9709,7 +9709,7 @@ OG.geometry.BezierCurve.prototype.getVertices = function () {
     var bezier, t, i;
     if (!this.vertices) {
         // Bezier Curve
-        bezier = OG.CurveUtil.Bezier(eval("[" + this.controlPoints.toString() + "]"));
+        bezier = OG.CurveUtil.Bezier(this.controlPoints.toString().split(",").filter(function(s){return s.length>0}).map(Number));
 
         // t 는 0 ~ maxT 의 값으로, t 값의 증분값이 작을수록 세밀한 BezierCurve 를 그린다.
         this.vertices = [];
