@@ -440,19 +440,26 @@
                         </div>
                         <v-divider style="margin-top: 5px;"></v-divider>
                         <v-list-item
-                                v-for="(item, index) in paymentLists"
+                                v-for="(item, index) in loginMenuItems"
                                 :key="index"
                                 @click="onClickLoginMenu(item.key)"
                                 class="text-reader"
                         >
-                            <v-list-item-title>{{ $t(item.display) }}</v-list-item-title>
+                            <v-list-item-title>
+                                <v-icon v-if="item.key === 'approvalAdmin'" small class="mr-1">mdi-account-check</v-icon>{{ $t(item.display) }}
+                            </v-list-item-title>
                         </v-list-item>
                     </v-list-item-group>
                 </v-list>
             </v-menu>
 
         </v-app-bar>
-        
+
+        <!-- 가입 승인 전(pending)/거절(rejected) 전면 차단 오버레이 (승인 시 자동 진입) -->
+        <approval-pending v-if="needsApproval" :status="approvalStatus" :email="userInfo && userInfo.email"></approval-pending>
+        <!-- 관리자 가입 승인 화면 -->
+        <approval-admin v-if="isAdmin && isOnprem" v-model="showApprovalAdmin"></approval-admin>
+
         <course-navigator v-if="courseNavi && $route.path.includes('eventstorming')"
                           :value.sync="naviObject"></course-navigator>
         <v-content :style="headerFloating == true ? 'margin-top:-64px;':'margin-top:0px;'">
@@ -745,6 +752,8 @@
 <script>
     import axios from 'axios'
     import LogoView from './components/oauth/Logo.vue'
+    import ApprovalPending from './components/oauth/ApprovalPending.vue'
+    import ApprovalAdmin from './components/oauth/ApprovalAdmin.vue'
     import https from 'https'
     import CourseNavigator from "./components/labs/CourseNavigator";
     // import LabBase from './components/labs/LabBase';
@@ -802,6 +811,8 @@
             kubeHost: '',
             kubeToken: '',
             loginDialog: false,
+            approvalStatus: null,      // 'approved' | 'pending' | 'rejected' (가입 승인 상태)
+            showApprovalAdmin: false,  // 관리자 가입승인 다이얼로그
             openPaymentTime: false,
             refundDialog: false,
             refundInfo: null,
@@ -990,6 +1001,8 @@
             RefundItem,
             VueContext,
             LogoView,
+            ApprovalPending,
+            ApprovalAdmin,
             AIModelSetting,
             StandardDocumentsManagement,
         },
@@ -1023,6 +1036,26 @@
             // },
             inSideElectron() {
                 return window.ipcRenderer
+            },
+            // onprem(게이트웨이) 모드에서만 가입 승인 기능 활성화(SaaS/firebase 무관).
+            isOnprem() {
+                return window.MODE === 'onprem' || !!window.$pgGateway
+            },
+            // 로그인했지만 가입 승인 전(pending) 또는 거절(rejected)이면 전면 차단.
+            needsApproval() {
+                if (!this.isLogin || !this.isOnprem) return false
+                var s = this.approvalStatus || window.localStorage.getItem('approvalStatus') || 'approved'
+                return s === 'pending' || s === 'rejected'
+            },
+            // 프로필 메뉴 항목 — admin(onprem)이면 '가입 승인 관리'를 로그아웃 바로 위에 삽입.
+            loginMenuItems() {
+                var items = this.paymentLists.slice()
+                if (this.isAdmin && this.isOnprem) {
+                    var i = items.findIndex(function (x) { return x.key === 'logout' })
+                    var adminItem = { key: 'approvalAdmin', display: 'loginList.approvalAdmin' }
+                    if (i >= 0) items.splice(i, 0, adminItem); else items.push(adminItem)
+                }
+                return items
             },
             myUid() {
                 if (this.userInfo.uid) {
@@ -1124,6 +1157,9 @@
 
                 //set userInfo
                 await me.loginUser()
+
+                // 가입 승인 상태 반영(로그인 시 저장됨). pending/rejected 면 오버레이가 전면 차단.
+                me.approvalStatus = window.localStorage.getItem('approvalStatus') || 'approved'
 
                 // remove userId
                 // var routerPathList = me.$route.path.split('/')
@@ -2001,6 +2037,10 @@
             onClickLoginMenu(key) {
                 var me = this
                 try {
+                    if (key == 'approvalAdmin') {
+                        me.showApprovalAdmin = true;
+                        return;
+                    }
                     if (key == 'logout') {
                         me.logout();
                         if (window.ipcRenderer) {

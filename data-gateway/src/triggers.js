@@ -66,11 +66,21 @@ export async function onMineRemoved(uid, pid) {
   await deleteData(`userLists/everyone/share_first/${pid}`);
 }
 
-// 책임 4-(2): 신규 사용자 → enrolledUsers 자동 생성
+// 책임 4-(2): 신규 사용자 → enrolledUsers 자동 생성.
+// ★ 가입 승인제: status 가 'approved'(또는 status 없는 grandfather)일 때만 push.
+//   'pending'/'rejected' 는 보류 → admin 승인 시 approveUser 가 다시 호출한다.
 export async function onUserCreated(user) {
   if (!user || !user.email) return;
+  if ((user.status || 'approved') !== 'approved') return; // 미승인 보류
   const convertEmail = String(user.email).replace(/\./g, '_');
   await setData(`enrolledUsers/${convertEmail}`, { ...user });
+}
+
+// 승인 거절/차단 시 enrolledUsers 에서 제거(있으면).
+export async function removeEnrolledUser(user) {
+  if (!user || !user.email) return;
+  const convertEmail = String(user.email).replace(/\./g, '_');
+  await deleteData(`enrolledUsers/${convertEmail}`);
 }
 
 // ── dataApi 가 write/delete 후 호출하는 디스패처 ─────────────────────

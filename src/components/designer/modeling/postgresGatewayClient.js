@@ -251,6 +251,40 @@ export class PostgresGatewayClient {
     return r.json();
   }
 
+  // ── 가입 승인(admin approval) ────────────────────────────────────
+  // 승인상태 폴링. 승인되면 새 토큰(access_token)이 함께 옴 → 호출측이 교체.
+  async authStatus() {
+    const r = await fetch(`${this.baseUrl}/auth/${this.dbName}/status`, {
+      headers: this._headers(),
+    });
+    if (!r.ok) return null;
+    return r.json();
+  }
+
+  async adminPending() {
+    const r = await fetch(`${this.baseUrl}/admin/${this.dbName}/pending`, {
+      headers: this._headers(),
+    });
+    if (!r.ok) throw new Error(`admin pending -> HTTP ${r.status}`);
+    return (await r.json()).users;
+  }
+
+  async adminApprove(uid) {
+    const r = await fetch(`${this.baseUrl}/admin/${this.dbName}/approve`, {
+      method: 'POST', headers: this._headers(), body: JSON.stringify({ uid }),
+    });
+    if (!r.ok) throw new Error(`admin approve -> HTTP ${r.status}`);
+    return r.json();
+  }
+
+  async adminReject(uid) {
+    const r = await fetch(`${this.baseUrl}/admin/${this.dbName}/reject`, {
+      method: 'POST', headers: this._headers(), body: JSON.stringify({ uid }),
+    });
+    if (!r.ok) throw new Error(`admin reject -> HTTP ${r.status}`);
+    return r.json();
+  }
+
   // ── WebSocket (watch) ────────────────────────────────────────────
   _connectWs() {
     try {

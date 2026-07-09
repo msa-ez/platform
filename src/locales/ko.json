@@ -596,6 +596,7 @@
     "inquiry": "제휴 및 설치형 문의( help@uengine.org )",
     "aiModelSetting": "AI 모델 설정",
     "standardDocuments": "메타데이터 관리",
+    "approvalAdmin": "가입 승인 관리",
     "logout": "로그아웃",
     "LoginInformation1": "*Github 로그인을 권장하고 있습니다.",
     "LoginInformation2": "구글 로그인 시 일부 기능 사용에 제한이 있을 수 있습니다.",

@@ -175,6 +175,10 @@
                 var user = await gateway().authSignin(token);
                 if (!user) return null;
                 var settings = user.settings || {};
+                // 서버(게이트웨이) 판정을 단일 진실원으로 승인상태/권한을 로컬과 동기화
+                // → 관리자가 승인/거절/권한변경한 게 재로그인·새로고침 시 바로 반영.
+                if (user.status) window.localStorage.setItem('approvalStatus', user.status);
+                if (user.authorized) window.localStorage.setItem('authorized', user.authorized);
                 return {
                     name: user.username || user.display_name,
                     email: user.email || window.localStorage.getItem('email'),
@@ -204,9 +208,10 @@
                         signInWithPopup: function () { return self._signIn(); },
                         signOut: function () {
                             ['accessToken', 'gitToken', 'email', 'name', 'uid',
-                             'picture', 'providerUid'].forEach(function (k) {
+                             'picture', 'providerUid', 'authorized', 'approvalStatus'].forEach(function (k) {
                                 window.localStorage.removeItem(k);
                             });
+                            window.sessionStorage.removeItem('swpAutoInitTried');
                             return Promise.resolve();
                         },
                         onAuthStateChanged: function () { /* no-op */ }

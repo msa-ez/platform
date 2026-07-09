@@ -17,6 +17,7 @@
 import { verifyJwt } from './oauth/jwt.js';
 import { routePath } from './pathRouter.js';
 import { getData } from './dataStore.js';
+import { config } from './config.js';
 
 // 통째 열거·루트 접근을 막을 민감 최상위 컬렉션.
 const SENSITIVE_ROOTS = [
@@ -24,13 +25,13 @@ const SENSITIVE_ROOTS = [
   'userLists', 'enrolledUsers', 'users',
 ];
 
-/** 요청의 Bearer JWT 를 검증해 uid 를 반환. 없거나 무효면 null(익명). */
-function requesterUid(req) {
+/** 요청의 Bearer JWT 를 검증해 클레임을 반환. 없거나 무효면 null(익명). */
+function requesterClaims(req) {
   const h = req.headers['authorization'] || req.headers['Authorization'] || '';
   const m = /^Bearer\s+(.+)$/i.exec(String(h));
   if (!m) return null;
   try {
-    return verifyJwt(m[1]).sub || null;
+    return verifyJwt(m[1]) || null;
   } catch (e) {
     return null;
   }
@@ -72,7 +73,8 @@ export function dataAuthz() {
     try {
       const path = req.params[0] || '';
       const isWrite = req.method !== 'GET';
-      const uid = requesterUid(req);
+      const claims = requesterClaims(req);
+      const uid = claims && claims.sub;
       const route = routePath(path);
 
       // 익명(비로그인) 전면 차단 — 폐쇄망 정책상 모든 /data 접근은 SSO 인증 필요(공개 프로젝트 포함).
@@ -80,6 +82,13 @@ export function dataAuthz() {
       // 게이트웨이에서도 강제한다. 이하 규칙은 "인증된 사용자 간" BOLA(타인 소유 자원 접근) 차단.
       if (!uid) {
         return res.status(401).json({ error: 'authentication required' });
+      }
+
+      // 가입 승인 전(pending/rejected) 유저 전면 차단 — 승인 전까지 모든 기능 사용 불가.
+      // 클레임 approved 로만 판정(hot path 에 DB 조회 없음). 구 토큰(approved 없음)은
+      // grandfather 로 통과. 승인되면 /auth/status 가 새 토큰을 재발급한다.
+      if (config.approvalEnabled && claims.approved === false) {
+        return res.status(403).json({ error: 'approval pending' });
       }
 
       // 1) 컬렉션 열거

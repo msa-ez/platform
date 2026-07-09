@@ -17,6 +17,22 @@ export const config = {
   // JWT 서명 시크릿
   jwtSecret: process.env.JWT_SECRET || 'dev-insecure-secret-change-me',
 
+  // ── 가입 승인(admin approval) ─────────────────────────────────────
+  // ADMIN_EMAILS 에 지정한 이메일(콤마구분)로 로그인하면 admin 권한 + 자동 승인.
+  // approvalEnabled 가 켜지면 신규 유저는 'pending' 으로 생성되어 admin 승인 전까지
+  // enrolledUsers 미등록 + 모든 /data 접근 차단(authz). 기존 유저(status 없음)는
+  // grandfather(=approved)로 취급해 잠기지 않는다.
+  //   - REQUIRE_APPROVAL 명시(true/false)가 최우선.
+  //   - 미지정 시: ADMIN_EMAILS 가 하나라도 있으면 자동으로 켜짐.
+  adminEmails: (process.env.ADMIN_EMAILS || '')
+    .split(',').map((s) => s.trim().toLowerCase()).filter(Boolean),
+  get approvalEnabled() {
+    if (process.env.REQUIRE_APPROVAL != null && process.env.REQUIRE_APPROVAL !== '') {
+      return process.env.REQUIRE_APPROVAL === 'true';
+    }
+    return this.adminEmails.length > 0;
+  },
+
   // OAuth (Gitea OIDC) — AceBase 가 쓰던 환경변수를 그대로 흡수 (§3.3)
   oauth: {
     provider: process.env.PROVIDER || 'gitea',

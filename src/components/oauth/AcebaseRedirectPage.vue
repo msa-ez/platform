@@ -135,8 +135,9 @@
                     window.localStorage.setItem("providerUid", providerUid);
                     window.localStorage.setItem(
                         "authorized",
-                        (userEmail && userEmail.includes('@uengine.org')) ? 'admin' : 'student'
+                        result.user.authorized || ((userEmail && userEmail.includes('@uengine.org')) ? 'admin' : 'student')
                     );
+                    window.localStorage.setItem("approvalStatus", result.user.status || 'approved');
 
                     // DB 쓰기 완료 후 redirect — fire-and-forget putObject 가 window.location.replace
                     // 의 socket close 에 잘려 enrolledUsers 가 누락되는 race 를 방지.
@@ -175,10 +176,12 @@
                     window.localStorage.setItem("userName", pName);
                     window.localStorage.setItem("picture", pPic);
                     window.localStorage.setItem("providerUid", pProviderUid);
+                    // 권한/승인상태는 게이트웨이(ADMIN_EMAILS·가입승인) 판정을 단일 진실원으로 사용.
                     window.localStorage.setItem(
                         "authorized",
-                        (pEmail && pEmail.includes('@uengine.org')) ? 'admin' : 'student'
+                        result.user.authorized || ((pEmail && pEmail.includes('@uengine.org')) ? 'admin' : 'student')
                     );
+                    window.localStorage.setItem("approvalStatus", result.user.status || 'approved');
 
                     try {
                         await me.writeUserData(result.user.uid, pName, pEmail, pPic, 'posco')

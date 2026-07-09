@@ -11,7 +11,11 @@ import { asyncHandler } from '../util.js';
 import { signJwt, verifyJwt } from './jwt.js';
 import { buildAuthUrl, exchangeCode, fetchUserInfo } from './oidc.js';
 import { buildSwpRedirect, validateSsoToken } from './swp.js';
-import { upsertOAuthUser, getUserByUid, findUserByEmail } from './users.js';
+import {
+  upsertOAuthUser, getUserByUid, findUserByEmail,
+  listUsersByStatus, setUserStatus, resolveStatus, isApproved,
+} from './users.js';
+import { onUserCreated, removeEnrolledUser } from '../triggers.js';
 import { generatePushId } from '../pushId.js';
 
 export const oauthRouter = express.Router();
@@ -22,6 +26,42 @@ function signState(data) {
 }
 function verifyState(token) {
   return verifyJwt(token).st;
+}
+
+// 로그인 사용자 JWT 발급 — 승인상태(approved)·권한(role)을 클레임에 포함.
+// authz 가 클레임만으로 미승인 차단을 판정할 수 있어 hot path 에 DB 조회가 없다.
+function issueUserToken(user, req) {
+  return signJwt({
+    sub: user.uid,
+    ip: req.ip,
+    approved: isApproved(user),
+    role: user.authorized || 'student',
+  });
+}
+
+// Authorization: Bearer <jwt> 추출.
+function bearerToken(req) {
+  const h = req.headers['authorization'] || req.headers['Authorization'] || '';
+  const m = /^Bearer\s+(.+)$/i.exec(String(h));
+  if (m) return m[1];
+  return (req.body && req.body.access_token) || null;
+}
+
+// admin 전용 미들웨어 — JWT 검증 후 DB 로 authorized==='admin' 재확인(클레임만 신뢰 X).
+async function requireAdmin(req, res, next) {
+  const token = bearerToken(req);
+  let claims;
+  try {
+    claims = verifyJwt(token);
+  } catch (e) {
+    return res.status(401).json({ error: 'authentication required' });
+  }
+  const user = await getUserByUid(claims.sub);
+  if (!user || user.authorized !== 'admin') {
+    return res.status(403).json({ error: 'admin only' });
+  }
+  req.adminUser = user;
+  next();
 }
 
 function signinRedirectUri(req) {
@@ -101,7 +141,7 @@ oauthRouter.get('/oauth2/:db/signin', asyncHandler(async (req, res) => {
       refresh_token: tokens.refresh_token,
       expires_in: tokens.expires_in,
     },
-    accessToken: signJwt({ sub: user.uid, ip: req.ip }), // 게이트웨이 JWT (AceBase 토큰 대체)
+    accessToken: issueUserToken(user, req), // 게이트웨이 JWT (승인상태/권한 클레임 포함)
     user: {
       uid: user.uid,
       email: user.email,
@@ -109,6 +149,8 @@ oauthRouter.get('/oauth2/:db/signin', asyncHandler(async (req, res) => {
       displayName: user.display_name,
       picture: user.picture,
       settings: user.settings,
+      authorized: user.authorized || 'student',
+      status: resolveStatus(user),
     },
   };
   const base64Result = Buffer.from(JSON.stringify(result)).toString('base64');
@@ -135,7 +177,7 @@ async function emitSwpResult(req, res, st, userInfo) {
       refresh_token: null,
       expires_in: null,
     },
-    accessToken: signJwt({ sub: user.uid, ip: req.ip }), // 게이트웨이 JWT
+    accessToken: issueUserToken(user, req), // 게이트웨이 JWT (승인상태/권한 클레임 포함)
     user: {
       uid: user.uid,
       email: user.email,
@@ -143,6 +185,8 @@ async function emitSwpResult(req, res, st, userInfo) {
       displayName: user.display_name,
       picture: user.picture,
       settings: user.settings,
+      authorized: user.authorized || 'student',
+      status: resolveStatus(user),
     },
   };
   const base64Result = Buffer.from(JSON.stringify(result)).toString('base64');
@@ -204,7 +248,31 @@ oauthRouter.post('/auth/:db/signin', asyncHandler(async (req, res) => {
   }
   const user = await getUserByUid(claims.sub);
   if (!user) return res.status(401).json({ error: 'user not found' });
-  res.json({ access_token: token, user });
+  res.json({ access_token: token, user: { ...user, status: resolveStatus(user), authorized: user.authorized || 'student' } });
+}));
+
+// ── GET /auth/:db/status (승인상태 폴링) ────────────────────────────
+// 승인대기 화면이 주기적으로 호출. DB 최신 status 를 확인해 승인되면 새 토큰을
+// 재발급(클레임 approved=true)하여 재로그인 없이 자동 진입할 수 있게 한다.
+oauthRouter.get('/auth/:db/status', asyncHandler(async (req, res) => {
+  const token = bearerToken(req);
+  let claims;
+  try {
+    claims = verifyJwt(token);
+  } catch (e) {
+    return res.status(401).json({ error: 'authentication required' });
+  }
+  const user = await getUserByUid(claims.sub);
+  if (!user) return res.status(401).json({ error: 'user not found' });
+  const status = resolveStatus(user);            // approved | pending | rejected
+  const role = user.authorized || 'student';
+  const approved = status === 'approved';
+  const body = { status, role, approved };
+  // 클레임이 stale(approved=false)인데 DB 는 승인 → 새 토큰 재발급.
+  if (approved && claims.approved === false) {
+    body.access_token = issueUserToken(user, req);
+  }
+  res.json(body);
 }));
 
 // ── POST /auth/:db/signup (최소 사용자 생성) ────────────────────────
@@ -216,7 +284,7 @@ oauthRouter.post('/auth/:db/signup', asyncHandler(async (req, res) => {
   const existing = await findUserByEmail(email);
   if (existing) {
     return res.json({
-      access_token: signJwt({ sub: existing.uid, ip: req.ip }),
+      access_token: issueUserToken(existing, req),
       user: existing,
     });
   }
@@ -227,5 +295,51 @@ oauthRouter.post('/auth/:db/signup', asyncHandler(async (req, res) => {
     name: displayName || username || email,
     emailVerified: false,
   });
-  res.json({ access_token: signJwt({ sub: user.uid, ip: req.ip }), user });
+  res.json({ access_token: issueUserToken(user, req), user });
+}));
+
+// ── 가입 승인(admin) ────────────────────────────────────────────────
+// GET  /admin/:db/pending          대기 유저 목록
+// POST /admin/:db/approve {uid}    승인 → enrolledUsers push
+// POST /admin/:db/reject  {uid}    거절/차단 → enrolledUsers 제거
+function publicUser(u) {
+  return {
+    uid: u.uid,
+    email: u.email || null,
+    username: u.username || null,
+    displayName: u.display_name || null,
+    department: u.department || (u.raw && u.raw.department) || null,
+    status: resolveStatus(u),
+    authorized: u.authorized || 'student',
+    created: u.created || null,
+  };
+}
+
+oauthRouter.get('/admin/:db/pending', requireAdmin, asyncHandler(async (req, res) => {
+  const users = await listUsersByStatus('pending');
+  res.json({ users: users.map(publicUser) });
+}));
+
+oauthRouter.get('/admin/:db/users', requireAdmin, asyncHandler(async (req, res) => {
+  const status = req.query.status;
+  const users = status ? await listUsersByStatus(String(status)) : [];
+  res.json({ users: users.map(publicUser) });
+}));
+
+oauthRouter.post('/admin/:db/approve', requireAdmin, asyncHandler(async (req, res) => {
+  const uid = req.body && req.body.uid;
+  if (!uid) return res.status(400).json({ error: 'uid 필요' });
+  const user = await setUserStatus(uid, 'approved');
+  if (!user) return res.status(404).json({ error: 'user not found' });
+  await onUserCreated(user);             // 승인 시점에 enrolledUsers push
+  res.json({ ok: true, user: publicUser(user) });
+}));
+
+oauthRouter.post('/admin/:db/reject', requireAdmin, asyncHandler(async (req, res) => {
+  const uid = req.body && req.body.uid;
+  if (!uid) return res.status(400).json({ error: 'uid 필요' });
+  const user = await setUserStatus(uid, 'rejected');
+  if (!user) return res.status(404).json({ error: 'user not found' });
+  await removeEnrolledUser(user);        // 혹시 등록돼 있으면 제거
+  res.json({ ok: true, user: publicUser(user) });
 }));
