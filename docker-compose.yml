@@ -71,6 +71,11 @@ services:
       # JWT 서명 시크릿 — openssl rand -hex 32 로 생성. 한 번 정하면 절대 바꾸지 말 것
       # (바꾸면 로그인한 사용자 전원이 로그아웃됨)
       JWT_SECRET: <JWT_SECRET>
+      # ── 가입 승인(admin approval) ──────────────────────────────────
+      # 여기 지정한 이메일(콤마구분)로 로그인하면 admin 권한 + 자동 승인.
+      # 값이 하나라도 있으면 승인제가 켜져, 신규 유저는 admin 승인 전까지
+      # enrolledUsers 미등록 + 모든 기능 차단(승인대기 화면). 강제 on/off 는 REQUIRE_APPROVAL.
+      ADMIN_EMAILS: "yang1762@uengine.org"
       # Gitea OAuth — v1.0.29 의 값 그대로 재사용 (코드생성용 Gitea 접근에 계속 사용)
       PROVIDER: gitea
       CLIENT_ID: <GITEA_OAUTH_CLIENT_ID>
