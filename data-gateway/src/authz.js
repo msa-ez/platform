@@ -50,6 +50,7 @@ async function canAccessDefinition(pid, uid, isWrite) {
     perms = await getData(`definitions/${pid}/information/permissions`);
   } catch (e) {
     // 조회 실패 시 보수적으로 소유자만 통과(=uid 있어야). 아래 로직에서 처리.
+    console.warn('[authz] definition 메타 조회 실패:', e && e.message);
   }
   perms = perms && typeof perms === 'object' ? perms : {};
 

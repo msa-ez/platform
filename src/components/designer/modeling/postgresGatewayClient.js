@@ -102,7 +102,7 @@ export class PostgresGatewayClient {
           if (window.$EventBus) window.$EventBus.$emit('showLoginDialog');
         }
       }
-    } catch (e) { /* noop */ }
+    } catch (e) { console.warn('Ignored error:', e); /* noop */ }
     return true;
   }
 
@@ -236,7 +236,7 @@ export class PostgresGatewayClient {
           window.localStorage.setItem('accessToken', data.access_token);
           if (data.user && data.user.status) window.localStorage.setItem('approvalStatus', data.user.status);
           if (data.user && data.user.authorized) window.localStorage.setItem('authorized', data.user.authorized);
-        } catch (e) { /* noop */ }
+        } catch (e) { console.warn('Ignored error:', e); /* noop */ }
       }
       return data.user;
     })();
