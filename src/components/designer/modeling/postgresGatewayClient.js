@@ -228,7 +228,17 @@ export class PostgresGatewayClient {
         return null;
       }
       if (!r.ok) return null;
-      return (await r.json()).user;
+      const data = await r.json();
+      // 서버가 최신 승인상태/권한으로 토큰을 재발급했으면 교체 → 이후 /data 호출이
+      // 새 클레임(approved=true)으로 나가 새로고침만으로도 차단이 풀린다.
+      if (data.access_token && data.access_token !== token) {
+        try {
+          window.localStorage.setItem('accessToken', data.access_token);
+          if (data.user && data.user.status) window.localStorage.setItem('approvalStatus', data.user.status);
+          if (data.user && data.user.authorized) window.localStorage.setItem('authorized', data.user.authorized);
+        } catch (e) { /* noop */ }
+      }
+      return data.user;
     })();
     this._signinInflight = { token, promise };
     try {
@@ -266,6 +276,16 @@ export class PostgresGatewayClient {
       headers: this._headers(),
     });
     if (!r.ok) throw new Error(`admin pending -> HTTP ${r.status}`);
+    return (await r.json()).users;
+  }
+
+  // status 생략 시 전체 사용자.
+  async adminUsers(status) {
+    const q = status ? `?status=${encodeURIComponent(status)}` : '';
+    const r = await fetch(`${this.baseUrl}/admin/${this.dbName}/users${q}`, {
+      headers: this._headers(),
+    });
+    if (!r.ok) throw new Error(`admin users -> HTTP ${r.status}`);
     return (await r.json()).users;
   }
 

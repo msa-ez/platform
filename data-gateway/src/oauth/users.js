@@ -35,6 +35,14 @@ export async function getUserByUid(uid) {
   return res.rows.length ? { uid: res.rows[0].uid, ...res.rows[0].value } : null;
 }
 
+/** 전체 사용자 목록(admin 사용자 관리 화면). */
+export async function listAllUsers() {
+  const res = await query(
+    "SELECT uid, value FROM users ORDER BY value->>'created' DESC",
+  );
+  return res.rows.map((r) => ({ uid: r.uid, ...r.value }));
+}
+
 /** 특정 status 의 사용자 목록(admin 대기목록 등). */
 export async function listUsersByStatus(status) {
   const res = await query(

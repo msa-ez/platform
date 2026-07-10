@@ -13,7 +13,7 @@ import { buildAuthUrl, exchangeCode, fetchUserInfo } from './oidc.js';
 import { buildSwpRedirect, validateSsoToken } from './swp.js';
 import {
   upsertOAuthUser, getUserByUid, findUserByEmail,
-  listUsersByStatus, setUserStatus, resolveStatus, isApproved,
+  listUsersByStatus, listAllUsers, setUserStatus, resolveStatus, isApproved, isAdminEmail,
 } from './users.js';
 import { onUserCreated, removeEnrolledUser } from '../triggers.js';
 import { generatePushId } from '../pushId.js';
@@ -248,7 +248,13 @@ oauthRouter.post('/auth/:db/signin', asyncHandler(async (req, res) => {
   }
   const user = await getUserByUid(claims.sub);
   if (!user) return res.status(401).json({ error: 'user not found' });
-  res.json({ access_token: token, user: { ...user, status: resolveStatus(user), authorized: user.authorized || 'student' } });
+  // 승인상태가 토큰 클레임보다 최신(승인/거절/권한변경)이면 토큰 재발급 →
+  // 새로고침(signin)만으로도 즉시 반영(폴링과 동일 효과). grandfather(claim 없음)는 재발급 안 함.
+  let outToken = token;
+  if (isApproved(user) !== (claims.approved !== false) || (claims.role || 'student') !== (user.authorized || 'student')) {
+    outToken = issueUserToken(user, req);
+  }
+  res.json({ access_token: outToken, user: { ...user, status: resolveStatus(user), authorized: user.authorized || 'student' } });
 }));
 
 // ── GET /auth/:db/status (승인상태 폴링) ────────────────────────────
@@ -320,12 +326,14 @@ oauthRouter.get('/admin/:db/pending', requireAdmin, asyncHandler(async (req, res
   res.json({ users: users.map(publicUser) });
 }));
 
+// status 쿼리 없으면 전체 사용자 반환(사용자 관리 화면).
 oauthRouter.get('/admin/:db/users', requireAdmin, asyncHandler(async (req, res) => {
   const status = req.query.status;
-  const users = status ? await listUsersByStatus(String(status)) : [];
+  const users = status ? await listUsersByStatus(String(status)) : await listAllUsers();
   res.json({ users: users.map(publicUser) });
 }));
 
+// 활성화(승인) — pending/rejected → approved. enrolledUsers 등록.
 oauthRouter.post('/admin/:db/approve', requireAdmin, asyncHandler(async (req, res) => {
   const uid = req.body && req.body.uid;
   if (!uid) return res.status(400).json({ error: 'uid 필요' });
@@ -335,11 +343,20 @@ oauthRouter.post('/admin/:db/approve', requireAdmin, asyncHandler(async (req, re
   res.json({ ok: true, user: publicUser(user) });
 }));
 
+// 비활성화(거절/차단) — → rejected. enrolledUsers 제거.
+// 안전장치: 자기 자신 / ADMIN_EMAILS 계정은 비활성화 불가(관리자 잠금 방지).
 oauthRouter.post('/admin/:db/reject', requireAdmin, asyncHandler(async (req, res) => {
   const uid = req.body && req.body.uid;
   if (!uid) return res.status(400).json({ error: 'uid 필요' });
+  if (uid === req.adminUser.uid) {
+    return res.status(400).json({ error: '자기 자신은 비활성화할 수 없습니다' });
+  }
+  const target = await getUserByUid(uid);
+  if (!target) return res.status(404).json({ error: 'user not found' });
+  if (isAdminEmail(target.email)) {
+    return res.status(400).json({ error: '관리자 계정은 비활성화할 수 없습니다' });
+  }
   const user = await setUserStatus(uid, 'rejected');
-  if (!user) return res.status(404).json({ error: 'user not found' });
   await removeEnrolledUser(user);        // 혹시 등록돼 있으면 제거
   res.json({ ok: true, user: publicUser(user) });
 }));
