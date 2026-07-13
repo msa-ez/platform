@@ -1,5 +1,5 @@
 const JsonAIGenerator = require("./JsonAIGenerator");
-const jsonpath = require('jsonpath-plus');
+const jsonpath = require('jsonpath');
 
 class ModelModificationGenerator extends JsonAIGenerator{
 
@@ -270,8 +270,8 @@ in this json format:
                             }
                         }
 
-                        let match = jsonpath.JSONPath({ path: modifications[idx].jsonPath, json: selectedElement });
-                        let parentMatch = jsonpath.JSONPath({ path: parentPath, json: selectedElement });
+                        let match = jsonpath.query(selectedElement, modifications[idx].jsonPath);
+                        let parentMatch = jsonpath.query(selectedElement, parentPath);
     
                         let query = jsonPath.match(/\[\?\(@\.(\w+)==['"](\w+)['"]\)\]/)
     

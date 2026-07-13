@@ -457,7 +457,6 @@
     import GeneratorUI from "../modeling/generators/GeneratorUI";
     import MouseCursorComponent from "../modeling/MouseCursorComponent.vue"
 
-    const jsonpath = require('jsonpath-plus');
     var JSZip = require('jszip');
 
     var jsondiffpatch = require('jsondiffpatch').create({

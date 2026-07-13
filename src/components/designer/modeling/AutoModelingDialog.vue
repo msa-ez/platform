@@ -430,7 +430,6 @@
 
     import DocumentPreviewDialog from "./DocumentPreviewDialog.vue";
     import * as htmlToImage from 'html-to-image'
-    import { jsPDF } from 'jspdf'
 
     // const axios = require('axios');
     let partialParse = require('partial-json-parser');
