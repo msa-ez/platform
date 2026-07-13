@@ -24,7 +24,11 @@ jobs:
         id: cache
         with:
           path: node_modules
-          key: npm-packages-${{ hashFiles('**/package-lock.json') }}
+          # package-lock.json 은 저장소에 없어 해시가 항상 빈 값이 되고, 그 결과
+          # 캐시 키가 고정되어 package.json 변경 후에도 낡은 node_modules 가
+          # 복원되면서 Install Dependencies 가 건너뛰어졌다.
+          # 추적되는 package.json 을 해시해 의존성 변경 시 캐시가 무효화되도록 한다.
+          key: npm-packages-${{ hashFiles('package.json') }}
       - name: Install Dependencies
         if: steps.cache.outputs.cache-hit != 'true'
         run: npm install
