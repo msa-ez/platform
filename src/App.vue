@@ -446,7 +446,7 @@
                                 class="text-reader"
                         >
                             <v-list-item-title>
-                                <v-icon v-if="item.key === 'approvalAdmin'" small class="mr-1">mdi-account-check</v-icon>{{ $t(item.display) }}
+                                {{ $t(item.display) }}
                             </v-list-item-title>
                         </v-list-item>
                     </v-list-item-group>
