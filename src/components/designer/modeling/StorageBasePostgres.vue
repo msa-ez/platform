@@ -179,6 +179,14 @@
                 // → 관리자가 승인/거절/권한변경한 게 재로그인·새로고침 시 바로 반영.
                 if (user.status) window.localStorage.setItem('approvalStatus', user.status);
                 if (user.authorized) window.localStorage.setItem('authorized', user.authorized);
+                // providerUid 는 "현재 로그인 방식(loginType)" 기준으로 고른다.
+                // gitea 로 먼저 가입한 계정이 나중에 posco 로 로그인하면 settings 에 gitea_sub 와
+                // posco_sub 가 둘 다 남는데, 예전엔 gitea_sub 가 먼저라 프로필 괄호에 사번 대신
+                // gitea 값이 떴다. loginType 으로 현재 provider 의 식별자를 우선한다.
+                var loginType = window.localStorage.getItem('loginType');
+                var providerUid = (loginType === 'posco')
+                    ? (settings.posco_sub || settings.posco_id || settings.gitea_sub || settings.github_id)
+                    : (settings.gitea_sub || settings.github_id || settings.posco_sub);
                 return {
                     name: user.username || user.display_name,
                     email: user.email || window.localStorage.getItem('email'),
@@ -186,9 +194,7 @@
                     profile: user.picture || window.localStorage.getItem('picture'),
                     authorized: null,
                     accessToken: token,
-                    // posco 는 사번(posco_sub)을 providerUid 로 사용 → 프로필 괄호에 사번 표시.
-                    providerUid: settings.gitea_sub || settings.github_id || settings.posco_sub
-                        || window.localStorage.getItem('providerUid')
+                    providerUid: providerUid || window.localStorage.getItem('providerUid')
                 };
             },
             _getRef(auth) {
