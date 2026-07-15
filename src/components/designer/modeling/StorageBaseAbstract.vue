@@ -4,6 +4,22 @@
 
 <script>
     import TenantAware from "../../labs/TenantAware";
+    import { getJobRequestorIds } from "./JobRequestorContext";
+
+    // AI 생성 Job 최초 생성 write(db://jobs/{type}/{jobId}, body 에 state.inputs) 에만
+    // 요청자(uid)·definition(projectId) 를 inputs.ids 로 스탬프. 이미 ids.uid 가 있으면
+    // (EsValue 등 직접 채운 경우) 건드리지 않는다. 그 외 write 에는 전혀 영향 없음.
+    function stampJobRequestorIds(path, obj) {
+        if (!obj || typeof obj !== 'object') return;
+        var inputs = obj.state && obj.state.inputs;
+        if (!inputs || typeof inputs !== 'object') return;
+        var p = String(path || '').replace(/^db:\/\//, '');
+        var segs = p.split('/').filter(function (s) { return s !== ''; });
+        if (segs[0] !== 'jobs' || segs.length !== 3) return; // 정확히 jobs/{type}/{jobId} 만
+        if (inputs.ids && inputs.ids.uid) return;
+        var ids = getJobRequestorIds();
+        inputs.ids = Object.assign({ uid: ids.uid, projectId: ids.projectId }, inputs.ids || {});
+    }
 
     export default {
         name: "storage-base-abstract",
@@ -248,6 +264,7 @@
                 return await this._set(path, string, true);
             },
             async setObject(path, obj) {
+                try { stampJobRequestorIds(path, obj); } catch (e) { /* 스탬프 실패는 무시 */ }
                 var string = JSON.stringify(obj);
                 return await this._set(path, string);
             },

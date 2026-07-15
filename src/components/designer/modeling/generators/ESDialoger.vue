@@ -238,6 +238,7 @@
 
 <script>
     import { VueTypedJs } from 'vue-typed-js'
+    import { setJobRequestorProjectId } from '../JobRequestorContext'
     import Generator from './UserStoryGenerator.js'
     import RecursiveUserStoryGenerator from './RecursiveUserStoryGenerator.js'
     //import UserStoryGenerator from './UserStoryGenerator.js'
@@ -1489,6 +1490,12 @@ import { value } from 'jsonpath';
             }
         },
         watch: {
+            // 현재 작업 중인 definition(projectId) 을 Job 요청 컨텍스트에 publish →
+            // 모든 AI 생성 Job 의 inputs.ids 에 uid 와 함께 기록된다(StorageBaseAbstract.setObject).
+            "modelIds.projectId": {
+                immediate: true,
+                handler(newVal) { setJobRequestorProjectId(newVal); }
+            },
             "prompt": {
                 deep:true,
                 handler:  _.debounce(function(newVal, oldVal)  {
