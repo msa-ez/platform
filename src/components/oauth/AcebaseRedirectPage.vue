@@ -214,16 +214,16 @@
                 })
             },
             async writeUserData(userId, name, email, imageUrl, provider) {
-                // email 이 null 일 때 .includes 가 throw 하던 잠재 버그도 방어
-                var authorized = (email && email.includes('@uengine.org')) ? 'admin' : 'student';
-
+                // ★ authorized/status 는 게이트웨이(ADMIN_EMAILS·가입승인)가 단일 진실원이다.
+                // 여기서 authorized 를 쓰면(putObject=merge) 게이트웨이가 부여한 admin 을
+                // @uengine.org 아닌 이메일(예: POSCO)에서 'student' 로 덮어써 admin 지정이 풀린다.
+                // 따라서 users 레코드에는 authorized/status 를 절대 쓰지 않는다.
                 var obj = {
                     username: name,
                     email: email,
                     profile_picture: imageUrl,
                     state: 'signIn',
                     provider: provider,
-                    authorized: authorized,
                     loginDate: Date.now()
                 }
                 var eObj = {
