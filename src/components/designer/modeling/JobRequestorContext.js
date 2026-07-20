@@ -20,6 +20,9 @@ export function getJobRequestorIds() {
     if (typeof window !== 'undefined' && window.localStorage) {
       uid = window.localStorage.getItem('uid');
     }
-  } catch (e) { /* noop */ }
+  } catch (e) {
+    // localStorage 접근이 차단된 환경(사생활 보호 모드 등). uid 없이 진행한다.
+    console.warn('[JobRequestorContext] localStorage 에서 uid 조회 실패:', e && e.message);
+  }
   return { uid: uid || null, projectId: _projectId || null };
 }

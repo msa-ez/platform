@@ -1045,7 +1045,10 @@ class RecursiveRequirementsValidationGeneratorLangGraph {
         if (this.chunkReject) {
             try {
                 this.chunkReject(new Error('Generation stopped by user'));
-            } catch (e) { /* noop */ }
+            } catch (e) {
+                // 이미 정리된 promise 를 reject 하는 경우. 중단 처리 자체는 계속 진행한다.
+                console.warn('[RecursiveRequirementsValidationGeneratorLangGraph] chunkReject 실패:', e && e.message);
+            }
             this.chunkResolve = null;
             this.chunkReject = null;
         }
