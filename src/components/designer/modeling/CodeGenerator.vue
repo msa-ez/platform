@@ -8827,8 +8827,9 @@ jobs:
                                         // xhttp.open("GET", me.gitCodeUrl[element], true);
                                         if(me.templateFrameWorkList[platformFullName] && me.templateFrameWorkList[platformFullName][elementPath] && me.templateFrameWorkList[platformFullName][elementPath].requestUrl){
                                             xhttp.open("GET", me.templateFrameWorkList[platformFullName][elementPath].requestUrl, true);
-                                            // Gitea 로그인인 경우 window.GITEA_TOKEN 우선 사용
-                                            const token = (localStorage.getItem("loginType") === 'gitea' && window.GITEA_TOKEN) ? window.GITEA_TOKEN : me.gitAccessToken;
+                                            // 온프렘(Gitea) 은 로그인 종류(gitea·posco)와 무관하게
+                                            // 서비스 PAT(window.GITEA_TOKEN)를 우선 사용. 없으면 사용자 토큰.
+                                            const token = window.GITEA_TOKEN || me.gitAccessToken;
                                             if(token){
                                                 xhttp.setRequestHeader('Authorization', 'token ' + token);
                                             }

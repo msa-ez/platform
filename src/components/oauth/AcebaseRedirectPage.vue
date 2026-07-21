@@ -153,8 +153,14 @@
                     me.$emit('close')
                     window.location.replace(window.location.origin)
                 } else if (result.provider.name == 'posco') {
-                    // POSCO SWP SSO — git 토큰 없음. 코드생성용 Gitea 접근은 서비스 PAT
-                    // (window.GITEA_TOKEN)가 담당하므로 gitToken 은 세팅하지 않는다.
+                    // POSCO SWP SSO — SWP 는 git 토큰을 발급하지 않는다. 코드생성용 Gitea 접근은
+                    // 서비스 PAT(window.GITEA_TOKEN)가 담당한다.
+                    // ★ gitAccessToken 에 서비스 PAT 를 채워둔다: 코드 미리보기 흐름이 이 값의
+                    //   존재로 "git 접근 가능" 을 판정하고 Authorization 헤더 토큰으로도 쓰기 때문.
+                    //   비어 있으면 CodeGenerator 가 401 → login-by-gitlab 모달을 띄운다.
+                    // ★ gitToken 은 일부러 넣지 않는다: getUserHeader()(/api/v1/user, 사용자 본인
+                    //   신원 조회)가 이 값을 쓰는데, 서비스 PAT 를 넣으면 PAT 발급자(admin) 신원이
+                    //   돌아와 로그인 사용자 이메일이 admin 으로 오염되는 회귀가 있다.
                     // 신원(email/이름)은 게이트웨이가 SWP isValidSSO 로 확정한 result.user 를 단일 진실원으로 사용.
                     var pEmail = result.user.email || '';
                     var pName = result.user.displayName || result.user.username || 'posco_user';
@@ -165,6 +171,11 @@
                     window.localStorage.setItem("uid", result.user.uid);
                     window.localStorage.setItem("accessToken", result.accessToken);
                     window.localStorage.setItem("loginType", "posco");
+                    // 코드생성용 git 접근은 서비스 PAT 로 수행 — gitAccessToken 에 채워
+                    // 미리보기 흐름의 "git 접근 가능" 판정과 Authorization 헤더에 쓰이게 한다.
+                    if (window.GITEA_TOKEN) {
+                        window.localStorage.setItem("gitAccessToken", window.GITEA_TOKEN);
+                    }
                     // Gitea util 은 getOrg()="posco" 고정 + getHeader()가 GITEA_TOKEN 우선이라
                     // gitToken 없이도 코드생성이 동작한다. gitOrgName 만 일관되게 채워둔다.
                     window.localStorage.setItem("gitOrgName", "posco");
