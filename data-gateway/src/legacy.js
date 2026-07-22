@@ -4,6 +4,8 @@
 import express from 'express';
 import { asyncHandler } from './util.js';
 import { getData } from './dataStore.js';
+import { requesterClaims, canAccessDefinition } from './authz.js';
+import { config } from './config.js';
 
 export const legacyRouter = express.Router();
 
@@ -45,8 +47,22 @@ function bpmParser(projectId, model) {
   return out;
 }
 
+// 인가: /data/:db/definitions/{pid} 와 동일 정책을 적용한다.
+// 이 엔드포인트는 definitions 본문(최신 모델 전체)을 반환하므로, 인가가 없으면
+// /data 에 걸어둔 게이트를 우회해 익명으로 타 사용자 프로젝트를 열람할 수 있다
+// (모의해킹 A-005 와 동일 유형). 익명 401 + 소유자/공유 기준 접근 판정.
 legacyRouter.get('/api/definitions/:definition', asyncHandler(async (req, res) => {
   const pid = req.params.definition;
+
+  const claims = requesterClaims(req);
+  const uid = claims && claims.sub;
+  if (!uid) return res.status(401).json({ error: 'authentication required' });
+  if (config.approvalEnabled && claims.approved === false) {
+    return res.status(403).json({ error: 'approval pending' });
+  }
+  if (!(await canAccessDefinition(pid, uid, false))) {
+    return res.status(403).json({ error: 'forbidden' });
+  }
 
   const info = await getData(`definitions/${pid}/information`);
   if (!info) return res.status(404).json({ error: 'Definition not found' });

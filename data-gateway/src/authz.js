@@ -26,7 +26,7 @@ const SENSITIVE_ROOTS = [
 ];
 
 /** 요청의 Bearer JWT 를 검증해 클레임을 반환. 없거나 무효면 null(익명). */
-function requesterClaims(req) {
+export function requesterClaims(req) {
   const h = req.headers['authorization'] || req.headers['Authorization'] || '';
   const m = /^Bearer\s+(.+)$/i.exec(String(h));
   if (!m) return null;
@@ -41,7 +41,7 @@ function requesterClaims(req) {
  * definitions/{pid} 접근 가능 여부.
  * author 가 아직 없으면(신규 생성) 허용 — 최초 생성 흐름 보존(쓰기 인증은 상위에서 이미 확인).
  */
-async function canAccessDefinition(pid, uid, isWrite) {
+export async function canAccessDefinition(pid, uid, isWrite) {
   // image(수백 KB base64) 로딩을 피하려 author/permissions 만 좁혀서 조회.
   let author = null;
   let perms = null;
