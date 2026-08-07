@@ -92,6 +92,27 @@ export function dataAuthz() {
         return res.status(403).json({ error: 'approval pending' });
       }
 
+      // 0) userLists — 본인/everyone 외 타 사용자 리스트 접근 통제 (모의해킹 A-007).
+      //   재점검에서 userLists 로 타 사용자 uid 를 확보 → 그 uid 의 mine/share 를 읽어
+      //   비공개 프로젝트 목록까지 열람하는 체인이 남아 있었다(루트 열거는 이미 차단됨).
+      //   - 앱은 항상 "본인 uid + everyone" 만 읽는다(프론트 확인). → 읽기는 그 둘만 허용.
+      //   - 공유는 대상 사용자의 /share 로 mirror-write 하므로, 쓰기는 타 사용자라도
+      //     /share 서브패스에 한해 허용(그 외 남의 /mine 등 쓰기는 거부).
+      {
+        const uls = String(path).split('/').filter(Boolean);
+        if (uls[0] === 'userLists') {
+          const targetUid = uls[1];
+          if (!targetUid) {
+            return res.status(403).json({ error: 'enumeration not allowed' }); // 루트 열거
+          }
+          if (targetUid !== 'everyone' && targetUid !== uid) {
+            if (!isWrite) return res.status(403).json({ error: 'forbidden' });
+            if (uls[2] !== 'share') return res.status(403).json({ error: 'forbidden' });
+          }
+          return next();
+        }
+      }
+
       // 1) 컬렉션 열거
       if (route.kind === 'collection') {
         if (route.table === 'definitions' || route.table === 'jobs' || route.table === 'requested_jobs') {
