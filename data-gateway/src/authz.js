@@ -41,7 +41,7 @@ export function requesterClaims(req) {
  * definitions/{pid} 접근 가능 여부.
  * author 가 아직 없으면(신규 생성) 허용 — 최초 생성 흐름 보존(쓰기 인증은 상위에서 이미 확인).
  */
-export async function canAccessDefinition(pid, uid, isWrite) {
+export async function canAccessDefinition(pid, uid, isWrite, _depth = 0) {
   // image(수백 KB base64) 로딩을 피하려 author/permissions 만 좁혀서 조회.
   let author = null;
   let perms = null;
@@ -65,6 +65,25 @@ export async function canAccessDefinition(pid, uid, isWrite) {
   }
   if (uid && perms[uid]) {
     return isWrite ? !!perms[uid].write : true;
+  }
+
+  // 파생 모델(ESD 등)은 자체 권한이 없으면 연결된 부모 프로젝트(associatedProject)의
+  // 권한을 따른다. ESD 는 definitions/{creator}_es_{uuid} 로 저장되고 author 가 만든
+  // 사람이며 부모 권한을 상속하지 않는다. A-005/A-007 로 definition 직접 접근을 막은 뒤,
+  // 공유 프로젝트 안에서 타 사용자가 만든 ESD 를 협업자가 못 보는 회귀가 생겨 이를 복구한다.
+  // ★ 부모 프로젝트에 접근 가능한 사용자에게만 허용하므로 무단 접근은 여전히 차단된다.
+  // associatedProject 는 부모 프로젝트의 전체 definition 키({owner}_project_{id})를 담는다.
+  // 무한 재귀 방지를 위해 1 hop 만 따라간다.
+  if (_depth === 0) {
+    let associated = null;
+    try {
+      associated = await getData(`definitions/${pid}/information/associatedProject`);
+    } catch (e) {
+      // 무시 — associatedProject 없으면 접근 불가로 확정.
+    }
+    if (associated && typeof associated === 'string' && associated !== pid) {
+      return canAccessDefinition(associated, uid, isWrite, _depth + 1);
+    }
   }
   return false;
 }
