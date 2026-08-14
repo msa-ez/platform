@@ -191,18 +191,27 @@ class SummarizerLangGraphProxy {
             }
 
             // errorPath watch 가 failedPath 보다 늦게 발화하는 race 대비 — 실제 에러 메시지를 직접 fetch.
+            // 백엔드는 실패 시 outputs 에 error 를 반드시 남기므로(main.process_summarizer_job),
+            // 스칼라 경로 조회가 비면 outputs 객체 전체를 읽어 한 번 더 시도한다.
+            // 이 폴백이 없어 실제 원인("Unterminated string ...")이 화면에선
+            // "Unknown error occurred" 로만 보여 원인 파악이 늦어졌다.
+            const outputsPath = `${this._getJobPath(jobId)}/state/outputs`;
             if (!jobState.error) {
                 for (let i = 0; i < 5; i++) {
                     try {
                         const err = await storage.getObject(errorPath);
                         if (err) { jobState.error = err; break; }
+
+                        const outputs = await storage.getObject(outputsPath);
+                        if (outputs && outputs.error) { jobState.error = outputs.error; break; }
                     } catch (e) {
                         console.warn('Ignored error:', e); /* noop */ }
                     await new Promise(r => setTimeout(r, 200));
                 }
             }
 
-            const errorMsg = jobState.error || "Unknown error occurred";
+            const errorMsg = jobState.error
+                || `Job failed without an error message (jobId: ${jobId})`;
             if (typeof onFailed === 'function') {
                 await onFailed(errorMsg);
             }
