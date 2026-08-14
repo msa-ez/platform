@@ -1297,7 +1297,7 @@
                                         <div style="font-size:13px; color:#9a9a9a; line-height:1.7; max-width:420px;">
                                             코드 내용은 상단의
                                             <v-icon small color="grey">mdi-folder-download</v-icon>
-                                            <strong>Download Archive</strong> 로 내려받아 확인해 주세요.
+                                            <strong>아카이브 다운로드</strong> 로 내려받아 확인해 주세요.
                                         </div>
                                     </div>
                                     <template v-else>
