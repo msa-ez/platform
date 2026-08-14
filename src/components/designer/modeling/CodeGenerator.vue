@@ -1283,6 +1283,24 @@
                                             :modelingProjectId="modelingProjectId"
                                         />
                                     </v-dialog>
+                                    <!-- 보안: 온프렘(POSCO)은 웹 DRM 적용이 불가하여 코드 미리보기 우측 소스 노출을 차단.
+                                         소스는 Download Archive 로만 확인하도록 안내 문구만 표시한다.
+                                         (해제하려면 hideSourceCodePreview 를 false 로) -->
+                                    <div v-if="hideSourceCodePreview"
+                                         class="gs-source-hidden-notice"
+                                         style="display:flex; flex-direction:column; align-items:center; justify-content:center;
+                                                height:100%; min-height:300px; padding:40px; text-align:center; color:#8a8a8a;">
+                                        <v-icon size="60" color="grey lighten-1" style="margin-bottom:18px;">mdi-shield-lock-outline</v-icon>
+                                        <div style="font-size:16px; font-weight:600; color:#5f5f5f; margin-bottom:10px;">
+                                            보안 정책에 따라 소스 코드는 여기에서 표시되지 않습니다
+                                        </div>
+                                        <div style="font-size:13px; color:#9a9a9a; line-height:1.7; max-width:420px;">
+                                            코드 내용은 상단의
+                                            <v-icon small color="grey">mdi-folder-download</v-icon>
+                                            <strong>Download Archive</strong> 로 내려받아 확인해 주세요.
+                                        </div>
+                                    </div>
+                                    <template v-else>
                                     <div v-if="changedModifying">
                                         <h2 v-if="openCodeWeb.length > 0"
                                             style="float:left; margin-left: 27px">IDE Exist
@@ -1325,6 +1343,7 @@
                                                 @update="updatePathTmp"
                                         ></code-viewer>
                                     </div>
+                                    </template>
                                 </v-col>
                             </v-row>
                         </div>
@@ -2141,6 +2160,11 @@
                 } else {
                     return false
                 }
+            },
+            // 보안: 온프렘(POSCO)은 웹 DRM 적용이 불가하여 코드 미리보기 우측 소스 노출을 차단한다.
+            // 소스는 Download Archive 로만 확인. (전면 노출을 다시 허용하려면 false 반환)
+            hideSourceCodePreview() {
+                return this.isOnPrem
             },
             isNotFolderIcon(){
                 return this.searchForContent.onOff
