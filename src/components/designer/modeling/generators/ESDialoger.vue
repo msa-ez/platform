@@ -1896,12 +1896,23 @@ import { value } from 'jsonpath';
                                         await addPropertyWithDelay(newMessage.result, key, value);
                                     }
 
-                                    this.selectedAspect = msg.selectedAspect;
-                                    this.resultDevideBoundedContext[msg.selectedAspect] = JSON.parse(JSON.stringify(newMessage.result[msg.selectedAspect]));
+                                    // 선택지(_choice2 ...) 전체를 적재해야 함. 이전에는 selectedAspect
+                                    // 하나만 담았는데, 화면(ESDialogerMessages)은 message.result 전체로
+                                    // 탭을 그리기 때문에 저장 후 재접속하면 미적재 탭이 생기고,
+                                    // 그 탭을 누르는 순간 updateSelectedAspect 가
+                                    // undefined.devisionAspect 로 터졌다.
+                                    this.resultDevideBoundedContext = JSON.parse(JSON.stringify(newMessage.result));
+
+                                    // selectedAspect 가 result 에 없는 과거 데이터는 첫 선택지로 폴백
+                                    this.selectedAspect = this.resultDevideBoundedContext[msg.selectedAspect]
+                                        ? msg.selectedAspect
+                                        : Object.keys(this.resultDevideBoundedContext)[0];
 
                                     // pbc 항목 추가
-                                    this.pbcResults = this.resultDevideBoundedContext[this.selectedAspect].boundedContexts.filter(bc => bc.implementationStrategy.includes("PBC"));
-                                    this.frontEndResults = this.resultDevideBoundedContext[this.selectedAspect].boundedContexts.filter(bc => bc.name == "ui");
+                                    const restoredAspect = this.resultDevideBoundedContext[this.selectedAspect];
+                                    const restoredBoundedContexts = (restoredAspect && restoredAspect.boundedContexts) || [];
+                                    this.pbcResults = restoredBoundedContexts.filter(bc => bc.implementationStrategy && bc.implementationStrategy.includes("PBC"));
+                                    this.frontEndResults = restoredBoundedContexts.filter(bc => bc.name == "ui");
                                 }
                                 break;
 
@@ -3010,9 +3021,24 @@ import { value } from 'jsonpath';
 
                 if(versionInfo.data && versionInfo.version){
                     this.boundedContextVersion = versionInfo
+                    // 매핑(mappingRequirements)은 selectedAspect 기준, 초안 생성은
+                    // boundedContextVersion.aspect 기준이라 두 값이 어긋나면
+                    // "매핑 완료 → 여전히 비어있음 → 재매핑" 이 무한 반복된다.
+                    // 생성 대상 선택지를 단일 진리원으로 삼아 여기서 동기화.
+                    if(versionInfo.aspect) this.selectedAspect = versionInfo.aspect
                 }
 
-                let isRequirementsMapping = !this.resultDevideBoundedContext[this.boundedContextVersion.aspect].boundedContexts.every(bc => 
+                const targetStructureOption = this.resultDevideBoundedContext[this.boundedContextVersion.aspect]
+                if(!targetStructureOption || !targetStructureOption.boundedContexts) {
+                    console.error('[ESDialoger] 선택지를 찾을 수 없어 초안 생성을 중단함', {
+                        aspect: this.boundedContextVersion.aspect,
+                        loadedAspects: Object.keys(this.resultDevideBoundedContext)
+                    })
+                    alert('Selected bounded context option could not be found. Please re-select the tab and try again.')
+                    return;
+                }
+
+                let isRequirementsMapping = !targetStructureOption.boundedContexts.every(bc =>
                     !bc.requirements || bc.requirements.length === 0
                 );
 
@@ -3402,9 +3428,20 @@ import { value } from 'jsonpath';
                 }
             },
 
-            updateSelectedAspect(newTabIndex){
-                this.selectedAspect = this.resultDevideBoundedContext[newTabIndex].devisionAspect
-                this.updateMessageState(this.messages.find(message => message.type === 'boundedContextResult').uniqueId, {
+            // 인자는 인덱스가 아니라 aspect key 다 (DevideBoundedContextDialog 가 탭 전환 시
+            // currentAspectKey 를 emit). 미적재 선택지가 넘어와도 죽지 않도록 방어.
+            updateSelectedAspect(aspectKey){
+                const targetAspect = this.resultDevideBoundedContext[aspectKey]
+                if(!targetAspect) {
+                    console.warn('[ESDialoger] 적재되지 않은 선택지로 전환 시도:', aspectKey)
+                    return;
+                }
+
+                this.selectedAspect = targetAspect.devisionAspect || aspectKey
+                const boundedContextResultMessage = this.messages.find(message => message.type === 'boundedContextResult')
+                if(!boundedContextResultMessage) return;
+
+                this.updateMessageState(boundedContextResultMessage.uniqueId, {
                     selectedAspect: this.selectedAspect
                 });
             },

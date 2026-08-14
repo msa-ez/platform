@@ -876,6 +876,15 @@
             resultDevideBoundedContext: {
                 handler(newVal) {
                     const allAspectKeys = Object.keys(newVal);
+
+                    // 재생성으로 선택지가 늘어나면 새 탭으로 이동. 이전에는 activeTab 이 0 에
+                    // 머물러 "재생성했는데 화면은 예전 안 그대로" 로 보였고, 그 상태로 초안 생성을
+                    // 누르면 이전 선택지로 진행됐다. (addNewChoice 경로에만 있던 동작을 맞춤)
+                    if (this._prevAspectCount != null && allAspectKeys.length > this._prevAspectCount) {
+                        this.activeTab = allAspectKeys.length - 1;
+                    }
+                    this._prevAspectCount = allAspectKeys.length;
+
                     let aspectKeyForMermaid;
 
                     if (allAspectKeys.length === 0) {
