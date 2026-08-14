@@ -400,16 +400,17 @@
             </v-btn>
 
 
+            <!-- 프로필 메뉴: hover 개폐는 포인터가 아바타→목록으로 넘어가는 사이 hover 가
+                 풀려 불안정했다. 클릭 개폐 + 바깥 클릭 닫힘(v-menu 기본)으로 변경. -->
             <v-menu
                     v-if="(isLogin || isGuestLogin)"
                     v-model="openMenu"
-                    open-on-hover
                     offset-y
             >
-                <template v-slot:activator="{ on }">
+                <template v-slot:activator="{ on, attrs }">
                     <!-- v-badge (코인/포인트) 제거 — v30 에선 미사용 -->
                     <v-hover style="margin-right:10px;" v-model="LoginHover">
-                        <v-avatar size="40" v-on="on">
+                        <v-avatar size="40" style="cursor: pointer;" v-bind="attrs" v-on="on">
                             <div v-if="loadingMigrateHistory">
                                 <v-progress-circular
                                         indeterminate

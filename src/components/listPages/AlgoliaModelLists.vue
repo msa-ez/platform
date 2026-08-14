@@ -20,45 +20,52 @@
                         >
                             {{ $t(navTab.label) }}
                         </v-tab>
-                        <v-hover v-slot="{ hover }">
-                            <v-list-group class="main-nav-storage"
-                                :value="hover"
-                                :append-icon="null"
-                            >
-                                <template v-slot:activator>
-                                    <v-tab class="main-nav-tab">
-                                        {{$t('mainNav.Storage')}}
-                                    </v-tab>
-                                </template>
-                                <v-card
-                                    class="mx-auto pt-2 pb-2"
-                                    max-width="300"
+                        <!-- 저장소 메뉴: hover 개폐는 포인터가 활성자→목록으로 넘어가는 사이
+                             hover 가 풀려 불안정했다. 클릭 개폐 + 바깥 클릭 닫힘(v-menu 기본)으로 변경. -->
+                        <v-menu
+                            v-model="storageMenuOpen"
+                            offset-y
+                            nudge-bottom="4"
+                        >
+                            <template v-slot:activator="{ on, attrs }">
+                                <v-tab class="main-nav-tab"
+                                    v-bind="attrs"
+                                    v-on="on"
                                 >
-                                    <v-list-item
-                                        v-for="(tabObj, tabIndex) in filterTabLists"
-                                        v-if="tabObj.id !== 'home' && tabObj.show"
-                                        :key="tabObj.id"
-                                        link
-                                        @click="tabId = tabObj.id"
+                                    {{$t('mainNav.Storage')}}
+                                    <v-icon small class="ml-1">
+                                        {{ storageMenuOpen ? 'mdi-chevron-up' : 'mdi-chevron-down' }}
+                                    </v-icon>
+                                </v-tab>
+                            </template>
+                            <v-card
+                                class="mx-auto pt-2 pb-2"
+                                max-width="300"
+                            >
+                                <v-list-item
+                                    v-for="(tabObj, tabIndex) in filterTabLists"
+                                    v-if="tabObj.id !== 'home' && tabObj.show"
+                                    :key="tabObj.id"
+                                    link
+                                    @click="tabId = tabObj.id"
+                                >
+                                    <v-list-item-icon>
+                                        <v-icon color="black">mdi-folder-outline</v-icon>
+                                    </v-list-item-icon>
+                                    <v-list-item-content>
+                                        <v-list-item-title>{{ tabObj.display }}</v-list-item-title>
+                                    </v-list-item-content>
+                                    <v-list-item-avatar
+                                        v-if="tabObj.totalCount != null"
+                                        color="green lighten-5"
+                                        size="24"
+                                        style="font-size: 9px;"
                                     >
-                                        <v-list-item-icon>
-                                            <v-icon color="black">mdi-folder-outline</v-icon>
-                                        </v-list-item-icon>
-                                        <v-list-item-content>
-                                            <v-list-item-title>{{ tabObj.display }}</v-list-item-title>
-                                        </v-list-item-content>
-                                        <v-list-item-avatar
-                                            v-if="tabObj.totalCount != null"
-                                            color="green lighten-5"
-                                            size="24"
-                                            style="font-size: 9px;"
-                                        >
-                                            {{ tabObj.totalCount == null ? '...' : (tabObj.totalCount == 0 ? '0' : tabObj.totalCount) }}
-                                        </v-list-item-avatar>
-                                    </v-list-item>
-                                </v-card>
-                            </v-list-group>
-                        </v-hover>
+                                        {{ tabObj.totalCount == null ? '...' : (tabObj.totalCount == 0 ? '0' : tabObj.totalCount) }}
+                                    </v-list-item-avatar>
+                                </v-list-item>
+                            </v-card>
+                        </v-menu>
                     </v-row>
                     <div class="main-nav-sidebar-container">
                         <!-- 사이드바 토글 버튼 -->
@@ -744,6 +751,7 @@
         data() {
             return {
                 sidebarOpen: false,
+                storageMenuOpen: false,
                 navLectureTab: null,
                 wikiOpenUrl: [
                     {
@@ -2077,12 +2085,6 @@
         margin-top: 8px;
         width: max-content;    /* 내부 콘텐츠에 맞게 너비 조정 */
         white-space: nowrap;   /* 텍스트가 줄바꿈되지 않도록 설정 */
-    }
-    .main-nav-storage .v-list-group__header {
-        padding: 0px !important;
-    }
-    .main-nav-storage .v-list-group__items {
-        position: absolute;
     }
     .public-model-card:hover {
         background-color: #F5F5F5 !important;  /* 이미지의 회색과 동일한 색상 */
