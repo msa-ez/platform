@@ -20,22 +20,19 @@
                         >
                             {{ $t(navTab.label) }}
                         </v-tab>
-                        <!-- 저장소 메뉴: hover 개폐는 포인터가 활성자→목록으로 넘어가는 사이
-                             hover 가 풀려 불안정했다. 클릭 개폐 + 바깥 클릭 닫힘(v-menu 기본)으로 변경. -->
-                        <v-menu
+                        <!-- 저장소 메뉴: 기존(hover) 과 동일한 v-list-group 구조를 유지하고
+                             개폐만 클릭으로 변경. hover 개폐는 포인터가 활성자→목록으로 넘어가는
+                             사이 hover 가 풀려 불안정했다. 바깥 클릭은 v-click-outside 로 닫는다. -->
+                        <v-list-group class="main-nav-storage"
                             v-model="storageMenuOpen"
-                            offset-y
-                            nudge-bottom="4"
+                            :append-icon="null"
+                            v-click-outside="closeStorageMenu"
                         >
-                            <template v-slot:activator="{ on, attrs }">
+                            <template v-slot:activator>
                                 <v-tab class="main-nav-tab"
-                                    v-bind="attrs"
-                                    v-on="on"
+                                    @click.stop="storageMenuOpen = !storageMenuOpen"
                                 >
                                     {{$t('mainNav.Storage')}}
-                                    <v-icon small class="ml-1">
-                                        {{ storageMenuOpen ? 'mdi-chevron-up' : 'mdi-chevron-down' }}
-                                    </v-icon>
                                 </v-tab>
                             </template>
                             <v-card
@@ -47,7 +44,7 @@
                                     v-if="tabObj.id !== 'home' && tabObj.show"
                                     :key="tabObj.id"
                                     link
-                                    @click="tabId = tabObj.id"
+                                    @click="tabId = tabObj.id; storageMenuOpen = false"
                                 >
                                     <v-list-item-icon>
                                         <v-icon color="black">mdi-folder-outline</v-icon>
@@ -65,7 +62,7 @@
                                     </v-list-item-avatar>
                                 </v-list-item>
                             </v-card>
-                        </v-menu>
+                        </v-list-group>
                     </v-row>
                     <div class="main-nav-sidebar-container">
                         <!-- 사이드바 토글 버튼 -->
@@ -1344,6 +1341,10 @@
             },
         },
         methods: {
+            // 저장소 메뉴 바깥 클릭 시 닫기 (v-click-outside)
+            closeStorageMenu() {
+                this.storageMenuOpen = false
+            },
             openPublicModeling(url) {
                 window.open(url, '_blank')
             },
@@ -2085,6 +2086,14 @@
         margin-top: 8px;
         width: max-content;    /* 내부 콘텐츠에 맞게 너비 조정 */
         white-space: nowrap;   /* 텍스트가 줄바꿈되지 않도록 설정 */
+    }
+    .main-nav-storage .v-list-group__header {
+        padding: 0px !important;
+    }
+    /* 펼쳐진 목록이 탭 줄을 밀어내지 않고 드롭다운처럼 겹쳐 뜨게 함 */
+    .main-nav-storage .v-list-group__items {
+        position: absolute;
+        z-index: 10;
     }
     .public-model-card:hover {
         background-color: #F5F5F5 !important;  /* 이미지의 회색과 동일한 색상 */
