@@ -132,6 +132,22 @@ class EsValueLangGraphStudioProxy extends LangGraphProxyBase {
             }
         }
     }
+
+    /**
+     * 생성은 됐지만 일부 대상(Aggregate 등)이 비어있는 채로 끝난 경우 그 목록을 반환.
+     * 백엔드는 개별 워커가 재시도를 소진해도 잡 전체는 정상 종료시키므로, 이 값이 없으면
+     * 사용자가 캔버스를 눈으로 훑어 "이 Aggregate 만 커맨드가 없네" 를 발견해야 한다.
+     */
+    static async getIncompleteTargetsFromJob(jobId) {
+        try {
+            const path = `${this._getJobPath(jobId)}/state/outputs/incompleteTargets`;
+            const targets = await this.STORAGE.getObject(path)
+            return Array.isArray(targets) ? targets : []
+        } catch (e) {
+            console.warn('[EsValueLangGraphStudioProxy] incompleteTargets 조회 실패:', e)
+            return []
+        }
+    }
 }
 
 module.exports = EsValueLangGraphStudioProxy

@@ -3433,6 +3433,25 @@
                                             })
                                         } catch (e) { /* noop */ }
 
+                                        // 잡은 정상 종료됐어도 일부 Aggregate 가 재시도를 소진해 비어있을 수 있다.
+                                        // 잡 삭제 전에 목록을 읽어 사용자에게 알린다 (예전에는 캔버스를 눈으로
+                                        // 훑어서 "이 Aggregate 만 커맨드가 없네" 를 발견해야 했음).
+                                        try {
+                                            const incompleteTargets = await EsValueLangGraphStudioProxy.getIncompleteTargetsFromJob(
+                                                this.value.langgraphStudioInfos.esGenerator.jobId
+                                            )
+                                            if (incompleteTargets && incompleteTargets.length > 0) {
+                                                console.warn('[ES] 생성이 불완전한 대상:', incompleteTargets)
+                                                alert(
+                                                    `Generation finished, but some targets came out empty and need review:\n\n` +
+                                                    incompleteTargets.map(t => `  • ${t}`).join('\n') +
+                                                    `\n\nYou can add the missing elements manually, or re-run generation.`
+                                                )
+                                            }
+                                        } catch (e) {
+                                            console.warn('[ES] incompleteTargets 확인 실패:', e)
+                                        }
+
                                         if(!isFailed)
                                             await EsValueLangGraphStudioProxy.removeJob(this.value.langgraphStudioInfos.esGenerator.jobId)
                                     },
