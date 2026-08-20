@@ -3095,12 +3095,25 @@ import { value } from 'jsonpath';
                     if(this.isServerProject) this.state.associatedProject = this.modelIds.projectId
                     if(this.isTerminalEnabled) this._makeCollectedMockDatas(draftOptions)
 
-                    // 두 값은 스키마상 string 이 필수. undefined/null 이면 검증이 통째로 실패해
-                    // ES 생성이 시작조차 못 한다 (DDL 을 안 쓴 프로젝트에서 발생 가능).
-                    draftOptions = ESDialogerTraceUtil.extractTraceInfoFromDraftOptions(draftOptions, {
-                        userStory: this.projectInfo.usedUserStory || '',
-                        ddl: this.projectInfo.usedInputDDL || '',
-                    })
+                    // 추적성 정보 추출은 실패해도 ES 생성 자체를 막지 않는다.
+                    // 검증 대상(previewAttributes / traceMap / refs)은 전부 '추적성' 부가 데이터인데,
+                    // 하나라도 빠지면 생성이 시작조차 못 하고 팝업만 뜨는 문제가 있었다.
+                    // 추적성은 감사 대응 자산이라 조용히 버릴 수는 없으므로, 사용자에게 알리고 선택하게 한다.
+                    // 두 값은 스키마상 string 이 필수 — undefined/null 이면 그것만으로도 검증이 실패한다.
+                    try {
+                        draftOptions = ESDialogerTraceUtil.extractTraceInfoFromDraftOptions(draftOptions, {
+                            userStory: this.projectInfo.usedUserStory || '',
+                            ddl: this.projectInfo.usedInputDDL || '',
+                        })
+                    } catch (traceError) {
+                        console.error('[ESDialoger] 추적성 정보 추출 실패', traceError)
+                        const proceed = confirm(
+                            `Traceability information could not be built:\n\n${traceError.message}\n\n` +
+                            `You can still generate the model, but generated elements will not be linked ` +
+                            `back to requirement lines.\n\nContinue without traceability?`
+                        )
+                        if (!proceed) return
+                    }
 
                     
                     if(this.pbcResults.length > 0){
