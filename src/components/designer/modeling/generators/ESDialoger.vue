@@ -3095,9 +3095,11 @@ import { value } from 'jsonpath';
                     if(this.isServerProject) this.state.associatedProject = this.modelIds.projectId
                     if(this.isTerminalEnabled) this._makeCollectedMockDatas(draftOptions)
 
+                    // 두 값은 스키마상 string 이 필수. undefined/null 이면 검증이 통째로 실패해
+                    // ES 생성이 시작조차 못 한다 (DDL 을 안 쓴 프로젝트에서 발생 가능).
                     draftOptions = ESDialogerTraceUtil.extractTraceInfoFromDraftOptions(draftOptions, {
-                        userStory: this.projectInfo.usedUserStory,
-                        ddl: this.projectInfo.usedInputDDL,
+                        userStory: this.projectInfo.usedUserStory || '',
+                        ddl: this.projectInfo.usedInputDDL || '',
                     })
 
                     

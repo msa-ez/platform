@@ -111,6 +111,21 @@ class DataValidationUtil {
      * };
      * DataValidationUtil.isValidData(data5, schema5); // false (explicitTrimField가 minLength 미만)
      */
+    /**
+     * 검증 실패 사유(경로 포함)를 문자열로 반환. 통과하면 null.
+     * isValidData 는 boolean 만 돌려줘서, 호출부가 "무엇이 왜 틀렸는지" 를 사용자에게
+     * 보여주지 못하고 데이터 전체를 덤프하는 수밖에 없었다 (ES 생성 실패 팝업 사례).
+     */
+    static getValidationError(data, dataSchema, path = 'root') {
+        try {
+            return this._validateRecursively(data, dataSchema, path)
+                ? null
+                : `${path} does not match the expected schema`;
+        } catch (error) {
+            return error.message;
+        }
+    }
+
     static isValidData(data, dataSchema, path = 'root', slient = false) {
         try {
             return this._validateRecursively(data, dataSchema, path);

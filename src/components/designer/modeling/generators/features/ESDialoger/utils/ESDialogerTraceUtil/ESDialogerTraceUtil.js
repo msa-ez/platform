@@ -273,8 +273,13 @@ class ESDialogerTraceUtil {
             }
         };
 
-        if(!DataValidationUtil.isValidData(params, schema)) {
-            throw new Error("Invalid params : " + JSON.stringify(params));
+        // 실패 사유(경로 포함)를 그대로 노출한다. 이전에는 params 전체를 JSON 으로 덤프해
+        // 팝업이 수십 KB 짜리 draftOptions 로 채워지고, 정작 "어디가 왜 틀렸는지" 는
+        // 콘솔의 DataValidationUtil 로그를 따로 봐야 알 수 있었다.
+        const validationError = DataValidationUtil.getValidationError(params, schema)
+        if(validationError) {
+            console.error("[ESDialogerTraceUtil] draftOptions 검증 실패", { validationError, params })
+            throw new Error(`Invalid params — ${validationError}`);
         }
     }
     /**
