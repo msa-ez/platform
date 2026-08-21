@@ -685,6 +685,14 @@ import { value } from 'jsonpath';
                                 });
 
                                 // 결과를 해당 옵션의 structure에 previewAttributes로 추가
+                                // result 가 비어도 previewAttributes 는 반드시 존재해야 한다.
+                                // (스키마상 필수라 undefined 면 ES 생성 직전 검증에서 막힘)
+                                if (!result) {
+                                    console.warn(`[PreviewFields] 결과가 비어 previewAttributes 를 빈 배열로 설정: ${generatorKey}`);
+                                    option.structure.forEach(struct => {
+                                        if (!struct.previewAttributes) this.$set(struct, 'previewAttributes', [])
+                                    });
+                                }
                                 if (result) {
                                     option.structure.forEach(struct => {
                                         const assignment = result.find(
@@ -1307,6 +1315,17 @@ import { value } from 'jsonpath';
                             refs: numberOnlyRefs
                         };
                     }
+                    // 계약 보정: traceMap 의 각 항목은 refs(배열) 와 isDirectMatching(불리언) 을
+                    // 반드시 가져야 한다. 위 루프는 refs 가 없는 항목을 그대로 통과시키는데,
+                    // 그러면 ES 생성 직전 draftOptions 검증이
+                    // "traceMap.<key>.refs is required but got undefined" 로 막힌다.
+                    // 추적성 부가 데이터 하나 때문에 생성 자체가 실패하지 않도록 여기서 채운다.
+                    for (const entry of Object.values(convertedTraceMap)) {
+                        if (!entry || typeof entry !== 'object') continue;
+                        if (!Array.isArray(entry.refs)) entry.refs = [];
+                        if (typeof entry.isDirectMatching !== 'boolean') entry.isDirectMatching = false;
+                    }
+
                     // Firebase 직렬화를 위해 일반 객체로 저장 (Map 객체는 Firebase에서 직렬화되지 않음)
                     // 프론트엔드에서 사용할 때는 Map으로 변환하거나, 일반 객체로 사용
                     requirements.traceMap = convertedTraceMap
