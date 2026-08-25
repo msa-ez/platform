@@ -63,7 +63,7 @@ class TextChunker {
         // 이런 헤더가 있으면 US-단위로 묶어 청크를 나눈다 → mid-story 분할/overlap 누출 제거.
         // (overlap 기반 line 청킹은 한 story 의 끝 줄이 다음 청크에 반복되어, 인접 BC 로
         //  이벤트가 1개씩 새는 off-by-one 누출의 원인이었음.)
-        const usHeaderRe = /^\s*#{4,6}\s+\[[A-Za-z][\w-]*US-(?:FR|NFR)-\d+\]/;
+        const usHeaderRe = /^\s*#{4,6}\s+\[(?:[A-Za-z][\w-]*-)?US-(?:FR|NFR)-\d+\]/;
         const allLines = text.split('\n');
         if (allLines.some(l => usHeaderRe.test(l))) {
             return this._splitIntoChunksByUserStory(text, usHeaderRe);

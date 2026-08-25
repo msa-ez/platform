@@ -1125,7 +1125,9 @@ export default {
             const text = this.projectInfo && this.projectInfo.userStory
             if (!text) return []
             const lines = text.split('\n')
-            const headerRe = /^#####\s+\[([A-Za-z][\w-]*US-(?:FR|NFR)-\d+)\]\s+(.+?)\s*$/
+            // 접두사 없는 US-FR-001 / US-NFR-001 과
+            // 접두사형 PROJ-US-FR-001 / PROJ-US-NFR-001 을 모두 허용한다.
+            const headerRe = /^#####\s+\[((?:[A-Za-z][\w-]*-)?US-(?:FR|NFR)-\d+)\]\s+(.+?)\s*$/
             const sections = []
             let current = null
             for (let i = 0; i < lines.length; i++) {
@@ -1160,7 +1162,7 @@ export default {
             const usLines = (this.projectInfo && this.projectInfo.userStory)
                 ? this.projectInfo.userStory.split('\n') : []
             const sectionIds = new Set(sections.map(s => s.id))
-            const usIdRe = /\[?([A-Za-z][\w-]*US-(?:FR|NFR)-\d+)\]?/
+            const usIdRe = /\[?((?:[A-Za-z][\w-]*-)?US-(?:FR|NFR)-\d+)\]?/
 
             const findUsForRefs = (refs) => {
                 if (!Array.isArray(refs) || refs.length === 0 || sections.length === 0) return []
