@@ -1127,7 +1127,10 @@ export default {
             const lines = text.split('\n')
             // 접두사 없는 US-FR-001 / US-NFR-001 과
             // 접두사형 PROJ-US-FR-001 / PROJ-US-NFR-001 을 모두 허용한다.
-            const headerRe = /^#####\s+\[((?:[A-Za-z][\w-]*-)?US-(?:FR|NFR)-\d+)\]\s+(.+?)\s*$/
+            // 헤더 레벨(H4~H6)과 줄 앞 공백을 허용해 백엔드(es/project generator)·TextChunker 의
+            // us_header_re(^\s*#{4,6}) 와 규칙을 통일한다. 매트릭스 파서만 정확히 H5(^#####) 를
+            // 요구해, 문서가 H4/H6 를 쓰거나 앞 공백이 있으면 섹션 0개 → 전부 미매핑되던 불일치 제거.
+            const headerRe = /^\s*#{4,6}\s+\[((?:[A-Za-z][\w-]*-)?US-(?:FR|NFR)-\d+)\]\s+(.+?)\s*$/
             const sections = []
             let current = null
             for (let i = 0; i < lines.length; i++) {
